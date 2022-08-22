@@ -1,0 +1,125 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Periodos</ui:define>
+    <ui:define name="viewname">
+        <li>TRIBUNAL</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/periodos">Periodos</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmPeriodos">
+            <div class="grid crud-demo">
+                <div class="col-12">
+                    <div class="card">                        
+                        <p:toolbar styleClass="mb-2">
+                            <p:toolbarGroup>
+                                <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{periodoController.nuevo}" update="outPnlPeriodo" oncomplete="PF('dlgPeriodo').show()"
+                                                 styleClass="ui-button-success" style="margin-right: .5rem" />
+                                <p:commandButton id="btnEliminaRegistros" value="#{periodoController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{periodoController.eliminarPeriodoSeleccionadas}"
+                                                 styleClass="ui-button-danger" disabled="#{!periodoController.existePeriodosSeleccionadas()}" update="@this">
+                                    <p:confirm header="Confirmation" message="Delete the selected products?" icon="pi pi-exclamation-triangle" />
+                                </p:commandButton>                                
+                            </p:toolbarGroup>
+                            <p:toolbarGroup align="right">
+                                <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download" disabled="#{periodoController.periodoSeleccionado.id eq null}"/>
+                                <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty periodoController.listaPeriodos}">
+                                    <p:dataExporter type="pdf" target="tblPeriodos" fileName="Periodos"/>
+                                </p:commandButton>
+                            </p:toolbarGroup>
+                        </p:toolbar>
+
+                        <p:dataTable id="tblPeriodos" widgetVar="wdTablaPeriodos" var="periodo" value="#{periodoController.listaPeriodos}" reflow="true" styleClass=" card"
+                                     selection="#{periodoController.listaPeriodosSeleccionados}" rowKey="#{periodo.id}" rendered="#{not empty periodoController.listaPeriodos}"
+                                     paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" >
+                            <f:facet name="header">
+                                <div class="products-table-header">
+                                    <span style="font-weight: bold">Administracion de Periodos</span>
+                                </div>
+                            </f:facet>
+
+                            <p:ajax event="rowSelect" update=":frmPeriodos:btnEliminaRegistros" />
+                            <p:ajax event="rowUnselect" update=":frmPeriodos:btnEliminaRegistros" />
+                            <p:ajax event="rowSelectCheckbox" update=":frmPeriodos:btnEliminaRegistros" />
+                            <p:ajax event="rowUnselectCheckbox" update=":frmPeriodos:btnEliminaRegistros" />
+                            <p:ajax event="toggleSelect" update=":frmPeriodos:btnEliminaRegistros" />
+
+                            <p:column selectionMode="multiple" exportable="false"></p:column>
+                            <p:column headerText="id" sortBy="#{periodo.id}" filterBy="#{periodo.id}"><h:outputText value="#{periodo.id}" /></p:column>
+                            <p:column headerText="Nombre" sortBy="#{periodo.nombre}" filterBy="#{periodo.nombre}"  ><h:outputText value="#{periodo.nombre}" /></p:column>        
+
+                            <p:column headerText="Desde" sortBy="#{periodo.fechaInicio}" filterBy="#{periodo.fechaInicio}" >
+                                <h:outputText value="#{periodo.fechaInicio}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" />
+                                </h:outputText></p:column>
+                            <p:column headerText="Hasta" sortBy="#{periodo.fechaFin}" filterBy="#{periodo.fechaFin}" >
+                                <h:outputText value="#{periodo.fechaFin}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column exportable="false">
+                                <p:commandButton icon="pi pi-pencil" update=":frmPeriodos:outPnlPeriodo" oncomplete="PF('dlgPeriodo').show()"
+                                                 styleClass="edit-button rounded-button ui-button-success" process="@this">
+                                    <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
+                                </p:commandButton>
+                                <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                    <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+
+                        <p:dialog header="Detalles Registro" showEffect="fade" modal="true" widgetVar="dlgPeriodo" responsive="true">
+                            <p:outputPanel id="outPnlPeriodo" class="ui-fluid">
+                                <p:outputPanel rendered="#{not empty periodoController.periodoSeleccionado}">
+
+                                    <div class="field">
+                                        <p:outputLabel for="nombres" value="Nombres" />
+                                        <p:inputText id="nombres" value="#{periodoController.periodoSeleccionado.nombre}"  required="true"
+                                                     onkeyup="value = value.toUpperCase()" disabled="true"/>
+                                    </div>
+
+                                    <div class="field">
+                                        <p:outputLabel for="txtFechaInicio" value="Fecha Inicio" />
+                                        <p:datePicker showIcon="true" id="txtFechaInicio" value="#{periodoController.periodoSeleccionado.fechaInicio}" 
+                                                      monthNavigator="true" yearNavigator="true" pattern="dd-MM-yyyy" >                                            
+                                        </p:datePicker>
+
+                                    </div>
+                                    <div class="field">
+                                        <p:outputLabel for="txtFechaFin" value="Fecha Fin" />
+                                        <p:datePicker showIcon="true" id="txtFechaFin" value="#{periodoController.periodoSeleccionado.fechaFin}"
+                                                      monthNavigator="true" yearNavigator="true" locale="es" pattern="yyyy/MM/dd">                                            
+                                        </p:datePicker>
+                                    </div>
+
+                                </p:outputPanel>
+                            </p:outputPanel>
+
+                            <f:facet name="footer">
+                                <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{periodoController.guardar}" update="outPnlPeriodo, msgs" process="outPnlPeriodo @this" />                                 
+                                <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgPeriodo').hide()" class="ui-button-secondary" />
+                            </f:facet>
+                        </p:dialog>
+
+                        <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Delete the product?" header="Confirm" severity="warn">
+                            <p:commandButton value="Si" icon="pi pi-check" actionListener="#{periodoController.eliminarPeriodoSeleccionados}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                            <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                        </p:confirmDialog>
+
+                        <p:confirmDialog global="true" showEffect="fade" width="300">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                        </p:confirmDialog>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

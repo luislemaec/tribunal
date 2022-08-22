@@ -1,0 +1,162 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Personas</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/personas">Personas</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmPersonas">
+            <div class="grid">                
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>ADMINITRACION DE PERSONAS</h5>
+                    <p:toolbar >
+                        <p:toolbarGroup >
+                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{personaController.nuevaPersona}" update="outPnlPersonas" oncomplete="PF('dlgPersona').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                            <p:commandButton id="btnEliminaRegistros" value="#{personaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
+                                             styleClass="ui-button-danger" disabled="#{!personaController.existeIglesiaPersonasSeleccionadas()}" update="@this">
+                                <p:confirm header="Confirmation" message="Delete the selected products?" icon="pi pi-exclamation-triangle" />
+                            </p:commandButton> 
+                        </p:toolbarGroup>
+                        <p:toolbarGroup align="right" >                            
+                            <p:fileUpload mode="simple" skinSimple="true" label="Importar" listener="#{personaController.handleFileUpload}" dragDropSupport="false"  
+                                          invalidFileMessage="#{msg['msg.invalid.file']}" invalidSizeMessage="#{msg['msg.invalid.max.size.file']}" auto="true" oncomplete="PF('statusDialog').hide()"
+                                          update="frmPersonas, msgs" sizeLimit="2000000" fileLimit="1" allowTypes="/(\.|\/)(xlsx|xls|)$/"  multiple="false" cancelLabel="Cancelar" 
+                                          chooseIcon="pi pi-download" rendered="#{personaController.file eq null}"  disabled="#{personaController.iglesiaSeleccionado.id eq null}"
+                                          styleClass="ui-button-raised ui-button-info"/>
+                            <p:commandButton value="Exportar" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty personaController.listaIglesiaPersona}">
+                                <p:dataExporter type="pdf" target="tblPersonas" fileName="Personas"/>
+                            </p:commandButton>
+                            <p:commandButton value="Descargar" icon="pi pi-arrow-down" styleClass="m-1"  rendered="#{personaController.file ne null}"> 
+                                <p:fileDownload value="#{personaController.fileDown}"/>
+                            </p:commandButton>
+
+                        </p:toolbarGroup>
+                    </p:toolbar>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{personaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{personaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{personaController.obtieneParroquias()}" process="@this" update="frmPersonas"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{personaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}" process="@this" update="frmPersonas msgs"/>                            
+                                </p:selectOneMenu>
+                            </div>
+
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="iglesias" value="Iglesias" />
+                                <p:selectOneMenu id="iglesias" value="#{personaController.iglesiaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty personaController.listaIglesias}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"  itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>
+                                    <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}" process="@this" update="frmPersonas msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>                       
+                    </div>                        
+                </div>
+                <div class="col-12 md:col-12 lg:col-12">
+
+                    <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers" value="#{personaController.listaIglesiaPersona}" reflow="true" styleClass="products-table card"
+                                 selection="#{personaController.listaIglesiaPersonaSeleccionados}" rowKey="#{iglPers.id}" rendered="#{not empty personaController.listaIglesiaPersona}"
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                        <p:ajax event="rowSelect" update=":frmPersonas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselect" update=":frmPersonas:btnEliminaRegistros" />
+                        <p:ajax event="rowSelectCheckbox" update=":frmPersonas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselectCheckbox" update=":frmPersonas:btnEliminaRegistros" />
+                        <p:ajax event="toggleSelect" update=":frmPersonas:btnEliminaRegistros" />
+
+                        <p:column selectionMode="multiple" exportable="false"></p:column>
+                        <p:column headerText="Cedula" sortBy="#{iglPers.persona.documento}" filterBy="#{iglPers.persona.documento}"><h:outputText value="#{iglPers.persona.documento}" /></p:column>
+                        <p:column headerText="Nombre" sortBy="#{iglPers.persona.nombres}" filterBy="#{iglPers.persona.nombres}"  ><h:outputText value="#{iglPers.persona.nombres}" /></p:column>        
+                        <p:column headerText="Tratamiento" sortBy="#{iglPers.persona.tratamiento}" filterBy="#{iglPers.persona.tratamiento}" ><h:outputText value="#{iglPers.persona.tratamiento}" /></p:column>
+                        <p:column headerText="Sexo" sortBy="#{iglPers.persona.sexo}" filterBy="#{iglPers.persona.sexo}" ><h:outputText value="#{iglPers.persona.sexo}" /></p:column>                    
+                        <p:column headerText="Desde" sortBy="#{iglPers.desde}" filterBy="#{iglPers.desde}" ><h:outputText value="#{iglPers.desde}" /></p:column>
+                        <p:column headerText="Hasta" sortBy="#{iglPers.hasta}" filterBy="#{iglPers.hasta}" ><h:outputText value="#{iglPers.hasta}" /></p:column>
+                        <p:column exportable="false">
+                            <p:commandButton icon="pi pi-pencil" update=":frmPersonas:outPnlPersonas" oncomplete="PF('dlgPersona').show()"
+                                             styleClass="edit-button rounded-button ui-button-success" process="@this">
+                                <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
+                            </p:commandButton>
+                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+
+                <p:dialog header="Detalles Persona" showEffect="fade" modal="true" widgetVar="dlgPersona" responsive="true">
+                    <p:outputPanel id="outPnlPersonas" class="ui-fluid">
+                        <p:outputPanel rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
+
+                            <div class="field">
+                                <p:outputLabel for="cedula" value="Cédula" />
+                                <p:inputText id="cedula" value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}" disabled="#{ not empty personaController.iglesiaPersonaSeleccionado.persona.documento}" required="true">
+                                    <p:keyFilter for="cedula" mask="num"/>                        	
+                                    <p:ajax event="change" update="frmPersonas:outPnlPersonas msgs" listener="#{personaController.buscaPersonaPorCedula}" process="@this"/>
+                                    <f:validateLength minimum="10"></f:validateLength>
+                                </p:inputText>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="nombres" value="Nombres" />
+                                <p:inputText id="nombres" value="#{personaController.iglesiaPersonaSeleccionado.persona.nombres}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="apellidos" value="apellidos" />
+                                <p:inputText id="apellidos" value="#{personaController.iglesiaPersonaSeleccionado.persona.apellidos}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+                            <div class="field">
+                                <p:outputLabel for="sexo" value="Sexo" />
+                                <p:inputText id="sexo" value="#{personaController.iglesiaPersonaSeleccionado.persona.sexo}"  maxlength="1" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+                            <div class="field">
+                                <p:outputLabel for="iglesia" value="Iglesia" />
+                                <p:selectOneMenu id="iglesia" value="#{personaController.iglesiaPersonaSeleccionado.iglesia.id}" filter="true" filterMatchMode="contains" disabled="#{empty personaController.listaIglesias}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"  itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>                                                
+                                </p:selectOneMenu>                                        
+                            </div>
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{personaController.actualizarPersona}" update="outPnlPersonas, msgs" process="outPnlPersonas @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgPersona').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>
+
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Delete the product?" header="Confirm" severity="warn">
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                </p:confirmDialog>
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                </p:confirmDialog>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

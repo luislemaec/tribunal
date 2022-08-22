@@ -1,0 +1,52 @@
+@import './_layout_common';
+
+//main
+$bodyBgColor:#fdfdfd !default;
+
+//accent
+$accentColor: #1976D2 !default;
+$accentTextColor: #ffffff !default;
+
+//menu
+$darkMenuTitleTextColor:#656565 !default;
+$darkMenuTitleBorderBottomColor:#383838 !default;
+$darkMenuBgColor:#050505 !default;
+$darkMenuItemTextColor:#BBBBBB !default;
+$darkMenuItemIconColor:#BBBBBB !default;
+$darkMenuSubmenuBgColor:#1d1d1d !default;
+
+$lightMenuTitleTextColor:#828282 !default;
+$lightMenuTitleBorderBottomColor:#9b9b9b !default;
+$lightMenuBgColor:#ffffff !default;
+$lightMenuItemTextColor:#333333 !default;
+$lightMenuItemIconColor:#828282 !default;
+$lightMenuSubmenuBgColor:#efefef !default;
+
+$badgeTextColor:$primaryTextColor !default;
+$badgeBgColor:$primaryColor !default;
+
+//route bar
+$routeBarBgColor:#EFEFEF !default;
+$routeBarMenuItemTextColor:#828282 !default;
+$routeBarMenuItemIconColor:#828282 !default;
+
+//sidebar right
+$rightSidebarWidth: 16rem !default;
+$rightSidebarBg: #ffffff !default;
+
+//slim menu tooltip
+$slimMenuTooltipBgColor:#1B1B1B !default;
+$slimMenuTooltipTextColor:#BBBBBB !default;
+
+//footer
+$footerBgColor:#F3F3F3 !default;
+$footerTextColor:#1F1F1F !default;
+
+//right panel
+$rightPanelButtonBgColor:#050505 !default;
+$rightPanelButtonIconColor:#BBBBBB !default;
+$rightPanelBgColor:#050505 !default;
+$rightPanelHeaderBgColor:#323232 !default;
+$rightPanelHeaderTextColor:#ffffff !default;
+$rightPanelContentBgColor:#323232 !default;
+$rightPanelContentTextColor:#ffffff !default;

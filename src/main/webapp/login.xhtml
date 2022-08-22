@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="description" content="" />
+            <meta name="author" content="Luis Lema" />
+        </f:facet>
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>TEC</title>
+        <h:outputScript name="js/layout.js" library="ecuador-layout" />
+        <h:outputScript name="js/prism.js" library="ecuador-layout"/>
+    </h:head>
+
+    <h:body styleClass="login-body" >
+        <div class="login-topbar">
+            <h:link outcome="/dashboard" class="logo">
+                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+            </h:link>
+        </div>
+        <div class="login-image">
+            <div class="login-panel">
+                <h:form id="frmLogin">
+                <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
+                    <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"/>
+                    <div class="col-12">
+                        <div class="input-wrapper">
+                            <p:inputText id="usuario" required="true" value="#{loginBean.userName}"  validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}"  placeholder="Usuario" />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="input-wrapper">                            
+                            <p:inputText type="password" id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="contraseña" class="w-full"/>
+                        </div>
+                    </div>
+                    <div class="checkbox-container">     
+                        <p:commandButton value="#{msg['btn.login']}"  action="#{loginController.login()}" styleClass="ui-button-info" process="@form" update="frmLogin" />
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <a href="#" class="subinfo">
+                        <span>Olvido su contrasenia?</span>
+                    </a>
+                </h:form>
+            </div>
+        </div>               
+
+        <h:outputStylesheet name="css/primeicons.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+
+        <h:outputStylesheet name="css/demo.css" library="demo"/>
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

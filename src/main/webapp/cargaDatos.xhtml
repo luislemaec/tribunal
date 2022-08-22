@@ -1,0 +1,81 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Cargar Datos</ui:define>
+    <ui:define name="viewname">
+        <li>UI Kit</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/cargaDatos">Carga Datos</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="frmCargaDatos" enctype="multipart/form-data">
+            <div class="grid">                
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{cargarControl.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{cargarControl.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{cargarControl.obtieneParroquias()}" process="@this" update="frmCargaDatos"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{cargarControl.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{cargarControl.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change" listener="#{cargarControl.obtieneIglesiasPorParroquia()}" process="@this" update="frmCargaDatos msgs"/>                            
+                                </p:selectOneMenu>
+                            </div>
+
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="iglesias" value="Iglesias" />
+                                <p:selectOneMenu id="iglesias" value="#{cargarControl.iglesiaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty cargarControl.listaIglesias}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{cargarControl.listaIglesias}" var="iglesia"  itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>
+                                    <p:ajax event="change" listener="#{cargarControl.obtienePersonasPorIglesias()}" process="@this" update="frmCargaDatos msgs"/> 
+                                </p:selectOneMenu>
+                            </div>
+                        </div>                       
+                    </div>                        
+                </div>
+            </div>
+            <p:panel id="pnCargaDatos" header="FORMULARIO PARA CARGA DE ARCHIVOS AL SISTEMA" styleClass="mt-2" >
+
+                <p:fileUpload uploadLabel="Subir" listener="#{cargarControl.handleFileUpload}"  mode="advanced" dragDropSupport="false"  label="Examinar..."
+                              invalidFileMessage="#{msg['msg.invalid.file']}" invalidSizeMessage="#{msg['msg.invalid.max.size.file']}" auto="false" oncomplete="PF('statusDialog').hide()"
+                              update="frmCargaDatos" sizeLimit="2000000" fileLimit="1" allowTypes="/(\.|\/)(xlsx|xls|)$/"  multiple="false" cancelLabel="Cancelar"  rendered="#{cargarControl.file eq null}" />
+
+                <p:commandButton value="Descargar" icon="pi pi-arrow-down" styleClass="m-1"  rendered="#{cargarControl.file ne null}"> 
+                    <p:fileDownload value="#{cargarControl.fileDown}"/>
+                </p:commandButton>
+                <p:commandButton value="Cargar BD" action="#{cargarControl.upload}" styleClass="m-1 ui-button-outlined p-d-block" update="msgs frmCargaDatos" 
+                                 oncomplete="PF('statusDialog').hide()" rendered="#{cargarControl.file ne null}"/>
+
+            </p:panel> 
+
+            <p:panel header="Administración de Personas Cargados" id="pnListaPersonas" rendered="#{not empty cargarControl.listaPersonas}" class="mt-1 ui-fluid">                 
+                <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="persona" value="#{cargarControl.listaPersonas}" size="small" reflow="true" 
+                             paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true">
+
+                    <p:column headerText="Cedula" sortBy="#{persona.documento}" filterBy="#{persona.documento}" class="col-12 md:col-2" ><h:outputText value="#{persona.documento}" /></p:column>
+                    <p:column headerText="Nombre" sortBy="#{persona.nombres}" filterBy="#{persona.nombres}" class="col-12 md:col-2" ><h:outputText value="#{persona.nombres}" /></p:column>
+                    <p:column headerText="Apellidos" sortBy="#{persona.apellidos}" filterBy="#{persona.apellidos}" class="col-12 md:col-3"><h:outputText value="#{persona.apellidos}" /></p:column>
+                    <p:column headerText="Tratamiento" sortBy="#{persona.tratamiento}" filterBy="#{persona.tratamiento}" class="col-12 md:col-3"><h:outputText value="#{persona.tratamiento}" /></p:column>
+                    <p:column headerText="Sexo" sortBy="#{persona.sexo}" filterBy="#{persona.sexo}" class="col-12 md:col-3"><h:outputText value="#{persona.sexo}" /></p:column>                    
+
+                </p:dataTable>
+            </p:panel>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

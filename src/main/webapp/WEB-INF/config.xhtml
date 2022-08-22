@@ -1,0 +1,68 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <a tabindex="0" id="layout-config-button" class="layout-config-button">
+        <i class="pi pi-cog"/>
+    </a>
+
+    <div class="layout-config">
+        <h5>Menu Type</h5>
+        <h:form id="config-form">
+            <p:selectOneRadio value="#{guestPreferences.menuMode}" layout="pageDirection" onchange="PrimeFaces.EcuadorConfigurator.changeMenuMode(event.target.value)">
+                <f:selectItem itemLabel="Static" itemValue="layout-menu-static"/>
+                <f:selectItem itemLabel="Overlay" itemValue="layout-menu-overlay"/>
+                <f:selectItem itemLabel="Slim" itemValue="layout-menu-slim"/>
+                <f:selectItem itemLabel="Horizontal" itemValue="layout-menu-horizontal"/>
+                <p:ajax update="config-form" />
+            </p:selectOneRadio>
+
+            <hr/>
+
+            <h5>Menu Color</h5>
+            <p:selectOneRadio value="#{guestPreferences.menuColor}" layout="pageDirection" onchange="PrimeFaces.EcuadorConfigurator.changeMenuColor(event.target.value)" >
+                <f:selectItem itemLabel="Light" itemValue="light"/>
+                <f:selectItem itemLabel="Dark" itemValue="dark"/>
+                <p:ajax update="config-form" />
+            </p:selectOneRadio>
+
+            <hr/>
+
+            <h5>Input Style</h5>
+            <p:selectOneRadio value="#{guestPreferences.inputStyle}" layout="pageDirection"
+                              onchange="PrimeFaces.EcuadorConfigurator.updateInputStyle(event.target.value)">
+                <f:selectItem itemLabel="Outlined" itemValue="outlined"/>
+                <f:selectItem itemLabel="Filled" itemValue="filled"/>
+                <p:ajax/>
+            </p:selectOneRadio>
+
+            <hr/>
+
+            <h5>RTL</h5>
+            <p:toggleSwitch id="rtl-switch" value="#{guestPreferences.orientationRTL}" onchange="PrimeFaces.EcuadorConfigurator.changeMenuToRTL()">
+                <p:ajax onstart="PrimeFaces.EcuadorConfigurator.beforeResourceChange()" update="config-form" />
+            </p:toggleSwitch>
+
+            <hr/>
+
+            <h5>Themes</h5>
+            <div class="layout-themes">
+                <ui:repeat value="#{guestPreferences.menuThemes}" var="theme">
+                    <div>
+                        <p:commandLink actionListener="#{guestPreferences.setTheme(theme.file)}"
+                                       style="background-image: linear-gradient(to right, #{theme.color1}, #{theme.color2})"
+                                       title="#{theme.name}" process="@this" update="config-form"
+                                       onstart="PrimeFaces.EcuadorConfigurator.beforeResourceChange()"
+                                       oncomplete="PrimeFaces.EcuadorConfigurator.changeScheme('#{theme.file}')">
+                            <ui:fragment rendered="#{theme.file eq guestPreferences.theme}">
+                                <i class="pi pi-check" style="color: #ffffff"/>
+                            </ui:fragment>
+                        </p:commandLink>
+                    </div>
+                </ui:repeat>
+            </div>
+        </h:form>
+    </div>
+</ui:composition>

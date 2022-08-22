@@ -1,0 +1,138 @@
+@font-face {
+    font-family: montserrat-r;
+    src: url("#{resource['fonts/Montserrat-Regular.ttf']}")format("truetype");  
+
+    font-family: montserrat-b;
+    src: url("#{resource['fonts/Montserrat-Bold.ttf']}")format("truetype");
+
+    font-family: montserrat-l;
+    src: url("#{resource['fonts/Montserrat-Light.ttf']}")format("truetype");
+
+    font-family: montserrat-i;
+    src: url("#{resource['fonts/Montserrat-Italic.ttf']}")format("truetype");
+
+    font-family: montserrat-li;
+    src: url("#{resource['fonts/Montserrat-LightItalic.ttf']}")format("truetype");
+
+    font-family: montserrat-sb;
+    src: url("#{resource['fonts/Montserrat-SemiBold.ttf']}")format("truetype")
+}
+
+html {
+	/*font-family: montserrat-r;
+	font-size: 0.75rem;*/
+	-webkit-text-size-adjust: 100%;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+body .ui-widget {
+  font-family: montserrat-r;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+
+body .ui-panel .ui-panel-titlebar {
+	/*border: 1px solid #dee2e6;*/
+	border: 1px solid #90caf9;
+	/*background: #f8f9fa;*/
+	background: #bbdefb;
+	padding: 5px;
+	color: #000000;
+}
+
+
+body .ui-panel .ui-panel-content {
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  color: #495057;
+  padding: .5rem;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
+body .ui-menu.ui-menubar {
+	padding: 0.5rem;
+	background: #f8f9fa;
+	border-radius: 4px;
+}
+
+body .ui-datepicker .ui-datepicker-group {
+	padding: 0.30rem;
+}
+
+body .ui-datepicker .ui-datepicker-header {
+	margin: 0;
+	padding: 0.75rem;
+	line-height: normal;
+}
+
+body .ui-datepicker .ui-datepicker-calendar th>span {
+	width: 2.5rem;
+	height: 2.5rem;
+}
+
+body .ui-datepicker .ui-datepicker-calendar td {
+	padding: 0rem;
+	text-align: center;
+}
+
+body .ui-panelmenu h3.ui-panelmenu-header {
+	color: #000000;
+	border: 1px solid #90caf9;
+	background: #bbdefb;
+	padding: 0.60rem;
+}
+
+body .ui-panelmenu .ui-panelmenu-content .ui-menuitem-link {
+	padding: 0.60rem 0.50rem;
+	color: #495057;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s,
+		box-shadow 0.2s;
+}
+/*MODAL*/
+body .ui-dialog .ui-dialog-titlebar {
+	color: #000000;
+	border: 1px solid #64b5f6;
+	background: #bbdefb;
+	padding: 0.3rem;
+}
+
+body .ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-icon {
+	color: #000000;
+}
+
+body .ui-dialog .ui-dialog-footer {
+  border-top: 0 none;
+  background: #ffffff;
+  color: #495057;
+  padding: 0.25rem;
+  margin: 0;
+  text-align: right;
+}
+
+body .ui-dialog.ui-confirm-dialog .ui-dialog-content {
+  padding: .25rem;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+/*TABLAS*/
+body .ui-datatable thead th {
+  background: #e3f2fd;
+  color: #495057;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #bbdefb;
+  border-width: 0 0 1px 0;
+  text-align: left;
+  box-sizing: content-box;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+
+footer {
+    clear: both;
+    position: relative;
+    height: 200px;
+    margin-top: -200px;
+}

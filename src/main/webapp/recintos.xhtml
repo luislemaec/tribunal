@@ -1,0 +1,139 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Recintos</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/recintos">Recintos</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmRecintos">
+            <div class="grid">                
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>ADMINITRACIÓN DE RECINTOS</h5>
+                    <p:toolbar >
+                        <p:toolbarGroup >
+                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{recintoController.nuevaRecinto}" update="outPnlRecintos" oncomplete="PF('dlgRecinto').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                            <p:commandButton id="btnEliminaRegistros" value="#{recintoController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{recintoController.eliminarRecintosSeleccionados}"
+                                             styleClass="ui-button-danger" disabled="#{!recintoController.existeRecintosSeleccionados()}" update="@this">
+                                <p:confirm header="Confirmation" message="¿Esta seguro de eliminar?" icon="pi pi-exclamation-triangle" />
+                            </p:commandButton> 
+                        </p:toolbarGroup>
+                        <p:toolbarGroup align="right" >
+                            <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download" disabled="#{recintoController.recintoSeleccionado.id eq null}"/>
+                            <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty recintoController.listaRecintos}">
+                                <p:dataExporter type="pdf" target="tblRecintos" fileName="Recintos"/>
+                            </p:commandButton>
+                        </p:toolbarGroup>
+                    </p:toolbar>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{recintoController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{recintoController.obtieneParroquias()}" process="@this" update="frmRecintos"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{recintoController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{recintoController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change" listener="#{recintoController.obtieneRecintosPorParroquia()}" process="@this" update="frmRecintos msgs"/>                            
+                                </p:selectOneMenu>
+                            </div>
+
+
+                        </div>                       
+                    </div>                        
+                </div>
+                <div class="col-12 md:col-12 lg:col-12">
+
+                    <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto" value="#{recintoController.listaRecintos}" reflow="true" styleClass="products-table card"
+                                 selection="#{recintoController.listaRecintosSeleccionados}" rowKey="#{recinto.id}" rendered="#{not empty recintoController.listaRecintos}"
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                        <p:ajax event="rowSelect" update=":frmRecintos:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselect" update=":frmRecintos:btnEliminaRegistros" />
+                        <p:ajax event="rowSelectCheckbox" update=":frmRecintos:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselectCheckbox" update=":frmRecintos:btnEliminaRegistros" />
+                        <p:ajax event="toggleSelect" update=":frmRecintos:btnEliminaRegistros" />
+
+                        <p:column selectionMode="multiple" exportable="false"></p:column>
+                        <p:column headerText="ID" sortBy="#{recinto.id}" filterBy="#{recinto.id}"><h:outputText value="#{recinto.id}" /></p:column>
+                        <p:column headerText="NOMBRE" sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}"  ><h:outputText value="#{recinto.nombre}" /></p:column>        
+                        <p:column headerText="CANTÓN" sortBy="#{recinto.ubicacion.geograp.name}" filterBy="#{recinto.ubicacion.geograp.name}" ><h:outputText value="#{recinto.ubicacion.geograp.name}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacion.name}" filterBy="#{recinto.ubicacion.name}" ><h:outputText value="#{recinto.ubicacion.name}" /></p:column>
+                        <p:column headerText="ESTADO" sortBy="#{recinto.estado}" filterBy="#{recinto.estado}" ><h:outputText value="#{recinto.estado}" /></p:column>                    
+
+                        <p:column exportable="false">
+                            <p:commandButton icon="pi pi-pencil" update=":frmRecintos:outPnlRecintos" oncomplete="PF('dlgRecinto').show()"
+                                             styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{recintoController.cagraDatosRecintoSeleccionado}">
+                                <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />                                                                                        
+                            </p:commandButton>
+                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+
+                <p:dialog header="Detalles Recinto" showEffect="fade" modal="true" widgetVar="dlgRecinto" responsive="true">
+                    <p:outputPanel id="outPnlRecintos" class="ui-fluid">
+                        <p:outputPanel rendered="#{not empty recintoController.recintoSeleccionado}">
+
+                            <div class="field">
+                                <p:outputLabel for="nombre" value="Nombres" />
+                                <p:inputText id="nombre" value="#{recintoController.recintoSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="cantonSel" value="Cantón" />
+                                <p:selectOneMenu id="cantonSel" value="#{recintoController.cantonSeleccionado.id}"  filter="true" filterMatchMode="startsWith" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{recintoController.obtieneParroquias()}" process="@this" update="parroquiaSel"/>
+                                </p:selectOneMenu>                                        
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
+                                <p:selectOneMenu id="parroquiaSel" value="#{recintoController.recintoSeleccionado.ubicacion.id}" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{recintoController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
+                                </p:selectOneMenu>                                       
+                            </div>
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{recintoController.guardarRecintoSeleccionado}" update="outPnlRecintos, msgs" process="outPnlRecintos @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgRecinto').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>
+
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{recintoController.eliminarRecintoSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                </p:confirmDialog>
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                </p:confirmDialog>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web>
+<!-- 	Para autenticacion de una BD -->
+	<security-domain>ConsejoSecurityDomain</security-domain>
+	<!-- Para Autenticacion por ldap -->
+	<!--<security-domain>LDAP_CONSEJODECOMUNICACION</security-domain>
+	<use-jboss-authorization>true</use-jboss-authorization>  -->
+</jboss-web>

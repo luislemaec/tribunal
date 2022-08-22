@@ -1,0 +1,151 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <div class="layout-topbar">
+        <a href="#" id="topbar-menu-button">
+            <i class="pi pi-angle-left arrow"/>
+            <i class="pi pi-angle-up mobile"/>
+        </a>
+
+        <div class="search-input">
+            <i class="pi pi-search icon-search"/>
+            <p:inputText/>
+        </div>
+
+        <h:link outcome="/dashboard" styleClass="logo-container">
+            <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout" />
+        </h:link>
+
+        <a id="topbar-profile-menu-button" href="#">
+            <span>#{loginBean.usuario.username}</span>
+            <p:graphicImage name="images/avatar.png" library="ecuador-layout" styleClass="topbar-profile" />
+            <i class="pi pi-caret-down"/>
+        </a>
+
+        <ul id="topbar-usermenu" class="fadeInDown animated">
+            <li>
+                <a href="#">
+                    <i class="pi pi-fw pi-user"/>
+                    <span class="topbar-item-name">Profile</span>
+                    <span class="topbar-submenuitem-badge">4</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="pi pi-fw pi-cog"/>
+                    <span class="topbar-item-name">Settings</span>
+                    <span class="topbar-submenuitem-badge">2</span>
+                </a>
+                <ul>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-palette"/>
+                            <span>Change</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-star"/>
+                            <span>Favorites</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-lock"/>
+                            <span>Lock Screen</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-image"/>
+                            <span>Wallpaper</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="pi pi-fw pi-envelope"/>
+                    <span class="topbar-item-name">Messages</span>
+                </a>
+                <ul>
+                    <li role="menuitem">
+                        <a href="#" class="topbar-message">
+                            <p:graphicImage name="images/avatar-brooke.png" library="ecuador-layout" width="25"/>
+                            <span>Give me a call</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#" class="topbar-message">
+                            <p:graphicImage name="images/avatar-tom.png" library="ecuador-layout" width="25"/>
+                            <span>Reports attached</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#" class="topbar-message">
+                            <p:graphicImage name="images/avatar-maggie.png" library="ecuador-layout" width="25"/>
+                            <span>About your invoice</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#" class="topbar-message">
+                            <p:graphicImage name="images/avatar-lucas.png" library="ecuador-layout" width="25"/>
+                            <span>Meeting today</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="pi pi-fw pi-bell"/>
+                    <span class="topbar-item-name">Notifications</span>
+                </a>
+                <ul>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-sliders-h"/>
+                            <span>Pending tasks</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-calendar"/>
+                            <span>Meeting today</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-download"/>
+                            <span>Download</span>
+                        </a>
+                    </li>
+                    <li role="menuitem">
+                        <a href="#">
+                            <i class="pi pi-fw pi-ticket"/>
+                            <span>Book flight</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <p:divider />
+            <li>
+                <h:form id="formLogoutBar" rendered="#{loginBean.loggedIn}">
+                    <p:commandLink
+                        actionListener="#{loginBean.logout()}" process="@this">
+                        <i class="pi pi-fw pi-sign-out"></i>
+                        <span class="topbar-item-name">Logout</span> 
+                    </p:commandLink>                    
+                </h:form>
+            </li>
+        </ul>
+
+        <a href="#" id="right-panel-button">
+            <i class="pi pi-angle-double-left"/>
+        </a>
+    </div>
+    <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
+
+</ui:composition>

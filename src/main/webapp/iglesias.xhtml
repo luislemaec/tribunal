@@ -1,0 +1,127 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Iglesias</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/iglesias">Iglesias</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmIglesias"  >
+            <p:toolbar styleClass="mb-1" rendered="#{iglesiaController.iglesiaSeleccionado eq null}">
+                <p:toolbarGroup>
+                    <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{iglesiaController.nuevaIglesia}"
+                                     styleClass="ui-button-success" style="margin-right: .5rem" >
+                        <p:resetInput target=":frmNuevaIglesia:pnlIglesias"/>
+                    </p:commandButton>                               
+                    <p:commandButton id="btnEliminarLista" value="#{iglesiaController.getMensajeBotonEliminar()}" styleClass="ui-button-raised ui-button-danger" icon="pi pi-trash" disabled="#{!iglesiaController.existeIglesiasSeleccionadas()}" process="@this" oncomplete="PF('dlgEliminaIglesia').show()"/>
+                    <p:commandButton id="btnEditar" value="Actualizar" styleClass="ui-button-raised ui-button-info m-1" icon="pi pi-pencil" disabled="#{!iglesiaController.existeIglesiasSeleccionadas()}" actionListener="#{iglesiaController.editarIglesia}" process="@this" update=":frmNuevaIglesia"/>
+                </p:toolbarGroup>
+                <p:toolbarGroup align="right">
+                    <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download"/>
+                    <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false">
+                        <p:dataExporter type="pdf" target="dt-products" fileName="products"/>
+                    </p:commandButton>
+                </p:toolbarGroup>
+            </p:toolbar>
+            <p:panelGrid columns="4" layout="grid"
+                         columnClasses="col-12 md:col-6 lg:col-3, col-12 md:col-6 lg:col-3, col-12 md:col-6 lg:col-3, col-12 md:col-6 lg:col-3"
+                         contentStyleClass="ui-fluid card" rendered="#{iglesiaController.iglesiaSeleccionado eq null}">
+                <p:outputLabel for="canton" value="Cantón" />
+                <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith" >
+                    <f:selectItem itemLabel="Select" itemValue="" />
+                    <f:selectItems value="#{iglesiaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                    <p:ajax event="change"  listener="#{iglesiaController.obtieneParroquias()}" process="@this" update="parroquia :frmNuevaIglesia, frmIglesias"/>
+                </p:selectOneMenu>
+
+                <p:outputLabel for="parroquia" value="Parroquia" />
+                <p:selectOneMenu id="parroquia" value="#{iglesiaController.parroquiaSeleccionado.id}" >
+                    <f:selectItem itemLabel="Select" itemValue="" />
+                    <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                            
+                    <p:ajax event="change"  listener="#{iglesiaController.obtieneIglesiasPorParroquia()}" process="@this" />
+                </p:selectOneMenu>  
+
+            </p:panelGrid>
+
+            <p:dataTable id="tblIglesia" widgetVar="wdTblIglesia" var="iglesia" value="#{iglesiaController.listaIglesias}" size="small" reflow="true"  styleClass="mt-1 card"
+                         paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" rendered="#{not empty iglesiaController.listaIglesias}" 
+                         rowKey="#{iglesia.id}" selection="#{iglesiaController.listaIglesiasSeleccionadas}" >
+                <p:ajax event="rowSelect" update="frmIglesias"/>
+                <p:ajax event="rowUnselect" update="frmIglesias"/>
+                <p:ajax event="rowSelectCheckbox" update="frmIglesias"/>
+                <p:ajax event="rowUnselectCheckbox" update="frmIglesias"/>
+                <p:ajax event="toggleSelect" update="frmIglesias"/>
+                <p:column selectionMode="multiple" exportable="false" class="w-1"></p:column>
+                <p:column headerText="RUC" sortBy="#{iglesia.documento}" filterBy="#{iglesia.documento}" class="col-12 md:col-2" ><h:outputText value="#{iglesia.documento}" /></p:column>
+                <p:column headerText="Nombre" sortBy="#{iglesia.nombre}" filterBy="#{iglesia.nombre}" class="col-12 md:col-2" ><h:outputText value="#{iglesia.nombre}" /></p:column>                
+                <p:column headerText="Cantón" sortBy="#{iglesia.ubicacion.geograp.name}" filterBy="#{iglesia.ubicacion.geograp.name}" class="col-12 md:col-3"><h:outputText value="#{iglesia.ubicacion.geograp.name}" /></p:column>
+                <p:column headerText="Parroquia" sortBy="#{iglesia.ubicacion.name}" filterBy="#{iglesia.ubicacion.name}" class="col-12 md:col-3"><h:outputText value="#{iglesia.ubicacion.name}" /></p:column>
+            </p:dataTable>
+
+        </h:form>
+        <h:form id="frmNuevaIglesia">
+            <p:panel header="Nueva Iglesia" class="my-1 card" id="pnlIglesias" rendered="#{iglesiaController.iglesiaSeleccionado ne null}" >
+                <div class="grid">
+                    <div class="col-12">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="ruc" value="Documento" />
+                                <p:inputText id="ruc" value="#{iglesiaController.iglesiaSeleccionado.documento}" disabled="#{ not empty iglesiaController.iglesiaSeleccionado.documento}" required="true" maxlength="13">
+                                    <p:keyFilter for="ruc" mask="num"/>                        	
+                                    <p:ajax event="change" update="frmNuevaIglesia msgs" listener="#{iglesiaController.buscaIglesiaPorDocumento}" process="@this"/>
+                                    <f:validateLength minimum="13"></f:validateLength>
+                                </p:inputText>
+                            </div>
+
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="nombres" value="Nombres" />
+                                <p:inputText id="nombres" value="#{iglesiaController.iglesiaSeleccionado.nombre}"  required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="cantonSel" value="Cantón" />
+                                <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonSeleccionado.id}"  filter="true" filterMatchMode="startsWith" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{iglesiaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{iglesiaController.obtieneParroquias()}" process="@this" update="parroquiaSel"/>
+                                </p:selectOneMenu>                                    
+                            </div><!-- comment -->
+
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
+                                <p:selectOneMenu id="parroquiaSel" value="#{iglesiaController.iglesiaSeleccionado.ubicacion.id}" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
+                                </p:selectOneMenu>  
+                            </div>
+
+                            <div class="col-12 md:col-2 md:col-offset-4">
+                                <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{iglesiaController.actualizarIglesia}" update="pnlIglesias, msgs" process="@all" disabled="#{iglesiaController.iglesiaSeleccionado.id gt 0} or {iglesiaController.esNuevoRegistro}"/>
+                            </div>
+                            <div class="col-12 md:col-2">
+                                <p:commandButton value="Cancelar" icon="pi pi-times" class=" m-1 ui-button-secondary" update="pnlIglesias, msgs" actionListener="#{iglesiaController.cancelarIglesia}" process="@this"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </p:panel>
+            <!-- Confirm delete list -->
+            <p:confirmDialog widgetVar="dlgEliminaIglesia" showEffect="fade" 
+                             message="¿Esta seguro que desea eliminar registros seleccionados?" header="Confirmar" severity="warn">
+                <p:commandButton value="Si" icon="pi pi-check" actionListener="#{iglesiaController.eliminarIglesiaSeleccionadas()}"
+                                 process="@this" oncomplete="PF('dlgEliminaIglesia').hide()" update=":frmIglesias"/>
+                <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times"
+                                 onclick="PF('dlgEliminaIglesia').hide()"/>
+            </p:confirmDialog>
+        </h:form>
+
+    </ui:define>
+</ui:composition>
+
