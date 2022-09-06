@@ -14,6 +14,10 @@ public class MenuVO implements Serializable {
 
     @Setter
     @Getter
+    private String componenteId;
+
+    @Setter
+    @Getter
     private String labelMenu;
 
     @Setter
@@ -49,7 +53,7 @@ public class MenuVO implements Serializable {
 
     public MenuVO(Integer idMenu, String labelMenu, String actionMenu, String urlMenu, Integer idMenuParent,
             Integer idUser, Boolean endNode, Integer order, String icon) {
-        this.idMenu = idMenu;
+        this.idMenu = idMenu;        
         this.labelMenu = labelMenu;
         this.actionMenu = actionMenu;
         this.urlMenu = urlMenu;

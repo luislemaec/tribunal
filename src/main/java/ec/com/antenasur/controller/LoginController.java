@@ -153,6 +153,9 @@ public class LoginController implements Serializable {
         if (listaRolesUsuario != null) {
 
             try {
+                for (RolUsuario ur : listaRolesUsuario) {
+                    listRolesUserString.add(ur.getRol().getNombre());
+                }
                 getUsuario();
                 getPersona();
                 HttpServletRequest request = JsfUtil.getRequest();
@@ -164,7 +167,7 @@ public class LoginController implements Serializable {
                 request.login(loginBean.getUserName(), loginBean.getPassword());
 
                 loggedIn = true;
-                // loginBean.setRoles(listRolesUserString);
+                loginBean.setRoles(listRolesUserString);
                 loginBean.setLoggedIn(loggedIn);
                 loginBean.setTiempoSession(request.getSession().getMaxInactiveInterval());
 
@@ -216,7 +219,7 @@ public class LoginController implements Serializable {
     private void getUsuario() {
         try {
             if (loginBean.getUserName() != null) {
-                user = userFacade.findByUsuarioName(loginBean.getUserName());
+                this.user = userFacade.findByUsuarioName(loginBean.getUserName());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -226,7 +229,7 @@ public class LoginController implements Serializable {
     private void getPersona() {
         try {
             if (user != null) {
-                people = peopleFacade.finByPersonaDocument(user.getPersonsa().getDocumento());
+                this.people = peopleFacade.finByPersonaDocument(user.getPersonsa().getDocumento());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -269,6 +272,7 @@ public class LoginController implements Serializable {
             if (menu.getIdMenuParent() != null && menu.getIdMenuParent().equals(parentMenu.getId())) {
                 if (!menu.getEndNode()) {
                     DefaultSubMenu subMenu = new DefaultSubMenu();
+                    subMenu.setId(menu.getComponenteId());
                     subMenu.setLabel(menu.getLabelMenu());
                     subMenu.setIcon(menu.getIcon());
                     fillItems(menu, menus, subMenu, null);
@@ -276,11 +280,14 @@ public class LoginController implements Serializable {
 
                 } else {
                     DefaultMenuItem menuItem_ = new DefaultMenuItem();
+                    menuItem_.setId(menu.getComponenteId());
                     menuItem_.setValue(menu.getLabelMenu());
+                    menuItem_.setIcon(menu.getIcon());
+                    menuItem_.setOutcome(menu.getActionMenu());
                     menuItem_.setUrl(("S/N").equals(menu.getUrlMenu()) ? null : menu.getUrlMenu());
                     menuItem_.setCommand(menu.getActionMenu() == null || menu.getActionMenu().isEmpty() ? null
                             : menu.getActionMenu());
-                    menuItem_.setIcon(menu.getIcon());
+
                     menuModel.getElements().add(menuItem_);
                 }
             }

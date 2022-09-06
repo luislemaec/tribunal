@@ -1,103 +1,122 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:h="http://java.sun.com/jsf/html"
-                template="/WEB-INF/templates/default.xhtml"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui"
-                xmlns:f="http://xmlns.jcp.org/jsf/core"
-                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
-    <h:outputStylesheet name="css/primeflex.min.css" />
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Usuarios</ui:define>
+    <ui:define name="viewname">
+        <li>SEGURIDAD</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/padron">Usuarios</p:link>
+        </li>
+    </ui:define>
     <ui:define name="content">
         <h:form id="frmUsuarios" >
-            <p:panel header="Administración de Usuarios" id="pnListaUsuarios" rendered="#{not empty usuarioControlador.listaRolUsuarios}" class="mt-1 ui-fluid">                 
-                    <p:dataTable id="tblUsuarios" widgetVar="wdTablaUsuarios" var="rolUs" value="#{usuarioControlador.listaRolUsuarios}" size="small" reflow="true" 
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true">
+            <div class="grid ">
+                <div class="col-12">
+                    <div class="card "> 
+                        <p:dataTable id="tblUsuarios" widgetVar="wdTablaUsuarios" var="rolUs" value="#{usuarioControlador.listaRolUsuarios}" reflow="true" 
+                                     paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"
+                                     styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines mt-2">
 
-                        <p:column headerText="Correo" sortBy="#{rolUs.usuario.correo}" filterBy="#{rolUs.usuario.correo}" class="col-12 md:col-3"><h:outputText value="#{rolUs.usuario.correo}" /></p:column>
-                        <p:column headerText="Usuario" sortBy="#{rolUs.usuario.username}" filterBy="#{rolUs.usuario.username}" class="col-12 md:col-2" ><h:outputText value="#{rolUs.usuario.username}" /></p:column>
-                        <p:column headerText="Nombres" sortBy="#{rolUs.personsa.nombreComercial}" filterBy="#{rolUs.usuario.personsa.nombreComercial}" class="col-12 md:col-3"><h:outputText value="#{rolUs.usuario.personsa.nombreComercial}" /></p:column>
-                        <p:column headerText="Rol" sortBy="#{rolUs.rol.nombre}" filterBy="#{rolUs.rol.nombre}" ><h:outputText value="#{rolUs.rol.nombre}" class="col-12 md:col-3"/></p:column>
-                        
+                            <p:column headerText="Correo" sortBy="#{rolUs.usuario.correo}" filterBy="#{rolUs.usuario.correo}" styleClass="sm:w-max md:w-2 lg:w-3rem">
+                                <h:outputText value="#{rolUs.usuario.correo}" />
+                            </p:column>
+                            <p:column headerText="Usuario" sortBy="#{rolUs.usuario.username}" filterBy="#{rolUs.usuario.username}" styleClass="sm:w-max md:w-2 lg:w-3rem" >
+                                <h:outputText value="#{rolUs.usuario.username}" />
+                            </p:column>                    
+                            <p:column headerText="Nombres" sortBy="#{rolUs.personsa.nombres}" filterBy="#{rolUs.usuario.personsa.nombres}" styleClass="sm:w-max md:w-2 lg:w-6rem">
+                                <h:outputText value="#{rolUs.usuario.personsa.nombres} #{rolUs.usuario.personsa.apellidos}"/>
+                            </p:column>
+                            <p:column headerText="Rol" sortBy="#{rolUs.rol.nombre}" filterBy="#{rolUs.rol.nombre}" styleClass="sm:w-max md:w-2 lg:w-3rem">
+                                <h:outputText value="#{rolUs.rol.nombre}" class="col-12 md:col-3"/>
+                            </p:column>
 
-                        <p:column exportable="false" class="col-12 md:col-1">
-                        	<f:facet name="header">                                                                         
-                        		<p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{usuarioControlador.crearNuevoUsuario}"
-                        			update=":frmUsuarios:outPnlUsuario" oncomplete="PF('dlgUsuario').show()"
-                        			styleClass="ui-button-success fadeinleft animation-duration-500 animation-iteration-1 shadow-1" >
-                        			<p:resetInput target=":frmUsuarios:outPnlUsuario"/>
-                                </p:commandButton>                            
-                        	</f:facet>
-                            <p:commandButton icon="pi pi-pencil" update="frmUsuarios:outPnlUsuario" oncomplete="PF('dlgUsuario').show()"
-                                             styleClass="edit-button rounded-button ui-button-info" process="@this" action="#{usuarioControlador.obtenerDatosUsuarioSeleccionado()}"> 
-                                <f:setPropertyActionListener value="#{rolUs.usuario}" target="#{usuarioControlador.usuarioSeleccionado}"/>
-                                <f:setPropertyActionListener value="#{rolUs.rol}" target="#{usuarioControlador.rolSeleccionado}"/> 
-                                <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.rolUsuarioSeleccionado}"/>                                
-                                <p:resetInput target="frmUsuarios:outPnlUsuario"/>
-                            </p:commandButton>
-                            <p:commandButton class="ui-button-danger rounded-button ml-1" icon="pi pi-trash" process="@this"
-                                             oncomplete="PF('dlgEliminarUsuario').show()">
-                                <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.usuarioSeleccionado}"/>
-                            </p:commandButton>
-                        </p:column>
 
-                    </p:dataTable>  
-                    <p:dialog header="Detalle del rolUs" showEffect="fade" modal="true" widgetVar="dlgUsuario" responsive="true">
-                        <p:outputPanel id="outPnlUsuario" class="ui-fluid"> 
-                            <p:outputPanel rendered="#{not empty usuarioControlador.usuarioSeleccionado}">
+                            <p:column exportable="false" styleClass="sm:w-max md:w-2 lg:w-3rem">
+                                <f:facet name="header">                                                                         
+                                    <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{usuarioControlador.crearNuevoUsuario}"
+                                                     update=":frmUsuarios:outPnlUsuario" oncomplete="PF('dlgUsuario').show()"
+                                                     styleClass="ui-button-success fadeinleft animation-duration-500 animation-iteration-1 shadow-1" >
+                                        <p:resetInput target=":frmUsuarios:outPnlUsuario"/>
+                                    </p:commandButton>                            
+                                </f:facet>
+                                <p:commandButton icon="pi pi-pencil" update="frmUsuarios:outPnlUsuario" oncomplete="PF('dlgUsuario').show()"
+                                                 styleClass="edit-button rounded-button ui-button-info" process="@this" action="#{usuarioControlador.obtenerDatosUsuarioSeleccionado()}"> 
+                                    <f:setPropertyActionListener value="#{rolUs.usuario}" target="#{usuarioControlador.usuarioSeleccionado}"/>
+                                    <f:setPropertyActionListener value="#{rolUs.rol}" target="#{usuarioControlador.rolSeleccionado}"/> 
+                                    <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.rolUsuarioSeleccionado}"/>                                
+                                    <p:resetInput target="frmUsuarios:outPnlUsuario"/>
+                                </p:commandButton>
+                                <p:commandButton class="ui-button-danger rounded-button ml-1" icon="pi pi-trash" process="@this"
+                                                 oncomplete="PF('dlgEliminarUsuario').show()">
+                                    <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.usuarioSeleccionado}"/>
+                                </p:commandButton>
+                            </p:column>
 
-                                <div class="p-field">
-                                    <p:outputLabel for="cedula">Cédula</p:outputLabel>
-                                    <p:inputText id="cedula" value="#{usuarioControlador.usuarioSeleccionado.personsa.documento}" required="true" disabled="#{ (usuarioControlador.personaRegistroCivil ne null) or (not empty usuarioControlador.usuarioSeleccionado.personsa.documento)}">
-                                        <p:keyFilter for="cedula" mask="num"/>                        	
-                                        <p:ajax event="change" update="cedula, msgs nombres,rolUs,correo" listener="#{usuarioControlador.blurEvent}" process="@this"/>
-                                        <f:validateLength minimum="10"  ></f:validateLength>
-                                    </p:inputText>
-                                </div>
+                        </p:dataTable>  
+                        <p:dialog header="Detalle del rolUs" showEffect="fade" modal="true" widgetVar="dlgUsuario" responsive="true">
+                            <p:outputPanel id="outPnlUsuario" class="ui-fluid"> 
+                                <p:outputPanel rendered="#{not empty usuarioControlador.usuarioSeleccionado}">
 
-                                <div class="p-field">
-                                    <p:outputLabel for="nombres">Nombres</p:outputLabel>
-                                    <p:inputText id="nombres" value="#{usuarioControlador.usuarioSeleccionado.personsa.nombreComercial}" disabled="#{ not empty usuarioControlador.usuarioSeleccionado.personsa.nombreComercial}" />
-                                </div>
+                                    <div class="p-field">
+                                        <p:outputLabel for="cedula">Cédula</p:outputLabel>
+                                        <p:inputText id="cedula" value="#{usuarioControlador.usuarioSeleccionado.personsa.documento}" required="true" disabled="#{ (usuarioControlador.personaRegistroCivil ne null) or (not empty usuarioControlador.usuarioSeleccionado.personsa.documento)}">
+                                            <p:keyFilter for="cedula" mask="num"/>                        	
+                                            <p:ajax event="change" update="cedula, msgs nombres,rolUs,correo" listener="#{usuarioControlador.blurEvent}" process="@this"/>
+                                            <f:validateLength minimum="10"  ></f:validateLength>
+                                        </p:inputText>
+                                    </div>
 
-                                <div class="p-field">
-                                    <p:outputLabel for="rolUs">Usuario</p:outputLabel>
-                                    <p:inputText id="rolUs" value="#{usuarioControlador.usuarioSeleccionado.username}" required="true" disabled="#{ usuarioControlador.personaRegistroCivil eq null}"/>
-                                </div>
+                                    <div class="p-field">
+                                        <p:outputLabel for="nombres">Nombres</p:outputLabel>
+                                        <p:inputText id="nombres" value="#{usuarioControlador.usuarioSeleccionado.personsa.nombres}" disabled="#{ not empty usuarioControlador.usuarioSeleccionado.personsa.nombres}" />
+                                    </div>
 
-                                <div class="p-field">
-                                    <p:outputLabel for="correo">Correo</p:outputLabel>
-                                    <p:inputText id="correo" value="#{usuarioControlador.usuarioSeleccionado.correo}"/>
-                                </div>
+                                    <div class="p-field">
+                                        <p:outputLabel for="rolUs">Usuario</p:outputLabel>
+                                        <p:inputText id="rolUs" value="#{usuarioControlador.usuarioSeleccionado.username}" required="true" disabled="#{ usuarioControlador.personaRegistroCivil eq null}"/>
+                                    </div>
 
-                                <div class="p-field">
-                                    <p:outputLabel for="perfil">Perfil</p:outputLabel>
-                                    <p:selectOneMenu id="perfil" value="#{usuarioControlador.rolSeleccionado.id}" required="true" disabled="false" >
-                                        <f:selectItem itemLabel="Seleccione rol" itemValue=""/>
-                                        <f:selectItems value="#{usuarioControlador.listaRoles}" var="rol"  itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>  
-                                    </p:selectOneMenu>
-                                </div>
+                                    <div class="p-field">
+                                        <p:outputLabel for="correo">Correo</p:outputLabel>
+                                        <p:inputText id="correo" value="#{usuarioControlador.usuarioSeleccionado.correo}"/>
+                                    </div>
+
+                                    <div class="p-field">
+                                        <p:outputLabel for="perfil">Perfil</p:outputLabel>
+                                        <p:selectOneMenu id="perfil" value="#{usuarioControlador.rolSeleccionado.id}" required="true" disabled="false" >
+                                            <f:selectItem itemLabel="Seleccione rol" itemValue=""/>
+                                            <f:selectItems value="#{usuarioControlador.listaRoles}" var="rol"  itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>  
+                                        </p:selectOneMenu>
+                                    </div>
+                                </p:outputPanel>
                             </p:outputPanel>
-                        </p:outputPanel>
-                        <f:facet name="footer">
-                            <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{usuarioControlador.actualizarUsuario()}"
-                                             update="outPnlUsuario" process="outPnlUsuario @this msgs" oncomplete="PF('dlgUsuario').hide()" ajax="false"/>
-                            <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgUsuario').hide()"
-                                             class="ui-button-secondary"/>
-                        </f:facet>
-                    </p:dialog>   
-                    <p:confirmDialog widgetVar="dlgEliminarUsuario" showEffect="fade" width="300"
-                                     message="¿Está seguro que dese eliminar?" header="Confirm" severity="warn">
-                        <p:commandButton value="Si" icon="pi pi-check" actionListener="#{usuarioControlador.eliminarUsuario()}"
-                                         process="@this" oncomplete="PF('dlgEliminarUsuario').hide()" update="msgs, tblUsuarios"/>
-                        <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times"
-                                         onclick="PF('dlgEliminarUsuario').hide()"/>
-                    </p:confirmDialog>
+                            <f:facet name="footer">
+                                <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{usuarioControlador.actualizarUsuario()}"
+                                                 update="outPnlUsuario" process="outPnlUsuario @this msgs" oncomplete="PF('dlgUsuario').hide()" ajax="false"/>
+                                <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgUsuario').hide()"
+                                                 class="ui-button-secondary"/>
+                            </f:facet>
+                        </p:dialog>   
+                        <p:confirmDialog widgetVar="dlgEliminarUsuario" showEffect="fade" width="300"
+                                         message="¿Está seguro que dese eliminar?" header="Confirm" severity="warn">
+                            <p:commandButton value="Si" icon="pi pi-check" actionListener="#{usuarioControlador.eliminarUsuario()}"
+                                             process="@this" oncomplete="PF('dlgEliminarUsuario').hide()" update="msgs, tblUsuarios"/>
+                            <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times"
+                                             onclick="PF('dlgEliminarUsuario').hide()"/>
+                        </p:confirmDialog>
 
-                    <p:confirmDialog global="true" showEffect="fade" width="300">
-                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" update="tblUsuarios"/>
-                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
-                                         icon="pi pi-times"/>
-                    </p:confirmDialog>                
-            </p:panel>
+                        <p:confirmDialog global="true" showEffect="fade" width="300">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" update="tblUsuarios"/>
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                                             icon="pi pi-times"/>
+                        </p:confirmDialog>                        
+                    </div>
+                </div>
+            </div>
         </h:form>     
     </ui:define>
 </ui:composition>

@@ -68,7 +68,17 @@ public class ProcesoBean {
         listaProceso = procesoFacade.getProcesoPorUsuario(usuario);
     }
 
-    public void getListaProcesoFechas(Date fechaInicio, Date fechaFin) {
-        listaProceso = procesoFacade.getProcesoPorUsuario(fechaInicio, fechaFin);
+    public List<Proceso> getListaProcesoFechas(Date fechaInicio, Date fechaFin) {
+        return procesoFacade.getProcesoPorUsuario(fechaInicio, fechaFin);
+    }
+
+    public void okActivityRegister(String activity, String datos) {
+        try {
+            proceso = new Proceso(JsfUtil.getIPAddress());
+            proceso.setActividad(activity);
+            procesoFacade.create(proceso);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

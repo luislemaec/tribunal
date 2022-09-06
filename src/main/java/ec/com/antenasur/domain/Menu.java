@@ -97,12 +97,12 @@ public class Menu extends EntidadAuditable implements Serializable {
     @Getter
     @ManyToOne
     @JoinColumn(name = "menu_padre_id")
-    private Menu menu;
+    private Menu padre;
 
     // bi-directional many-to-one association to Menu
     @Setter
     @Getter
-    @OneToMany(mappedBy = "menu")
+    @OneToMany(mappedBy = "padre")
     private List<Menu> menus;
 
     // bi-directional many-to-one association to MenuRol

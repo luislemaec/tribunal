@@ -1,5 +1,6 @@
 package ec.com.antenasur.domain.generic;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,6 +11,12 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.CriteriaBuilder;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.hibernate.Filter;
 import org.hibernate.Session;
@@ -25,6 +32,26 @@ public abstract class AbstractFacade<T, E> {
     private Class<T> entityClass;
     private Class<E> primaryKeyClass;
 
+    @Setter
+    @Getter
+    private List<Predicate> wherePredicates = new ArrayList<>();
+
+    @Setter
+    @Getter
+    private List<Order> orderByPredicates = new ArrayList<>();
+
+    @Setter
+    @Getter
+    private CriteriaBuilder criteriaBuilder;
+
+    @Setter
+    @Getter
+    private CriteriaQuery<T> criteria;
+
+    @Setter
+    @Getter
+    private Root<T> record;
+
     public AbstractFacade(Class<T> entityClass) {
         this.entityClass = entityClass;
     }
@@ -34,13 +61,19 @@ public abstract class AbstractFacade<T, E> {
         this.primaryKeyClass = primaryKeyClass;
     }
 
+    public void initialize() {
+        this.criteriaBuilder = em.getCriteriaBuilder();
+        this.criteria = criteriaBuilder.createQuery(entityClass);
+        this.record = criteria.from(entityClass);
+    }
+
     protected EntityManager getEntityManager() {
         enableFilters();
         return em;
     }
 
     /**
-     * *********************************************************************
+     * *********************HABILITA FILTRO*******************************
      */
     private void enableFilters() {
         Session session = resolveHibernateSession();
@@ -61,6 +94,7 @@ public abstract class AbstractFacade<T, E> {
     public <T extends EntidadBase> T delete(T entidad) {
         entidad.setEstado(false);
         getEntityManager().merge(entidad);
+        em.flush();
         return entidad;
     }
 
@@ -72,7 +106,6 @@ public abstract class AbstractFacade<T, E> {
         } catch (NoResultException e) {
             return null;
         }
-
     }
 
     public T edit(T entity) {
@@ -168,7 +201,13 @@ public abstract class AbstractFacade<T, E> {
         } catch (NoResultException e) {
             return null;
         }
+    }
 
+    public Query buildQuery() {
+        getCriteria().select(getRecord())
+                .where((Predicate[]) getWherePredicates().toArray(new Predicate[getWherePredicates().size()]))
+                .orderBy((Order[]) getOrderByPredicates().toArray(new Order[getOrderByPredicates().size()]));
+        return em.createQuery(criteria);
     }
 
 }

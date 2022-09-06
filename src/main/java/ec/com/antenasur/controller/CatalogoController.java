@@ -36,51 +36,51 @@ import org.primefaces.PrimeFaces;
 @ViewScoped
 @Slf4j
 public class CatalogoController implements Serializable {
-
+    
     private static final long serialVersionUID = 1L;
-
+    
     private static final String ACTIVO = "ACTIVO";
     private static final String INACTIVO = "INACTIVO";
-
+    
     @Inject
     private LoginBean loginBean;
-
+    
     @Inject
     private CatalogoGeneralFacade catalogoFacade;
-
+    
     @Setter
     @Getter
     private CatalogoGeneral catalogoSeleccionado;
-
+    
     @Setter
     @Getter
     private List<CatalogoGeneral> listaCatalogoPadres, listaCatalogoHijos;
-
+    
     @Setter
     @Getter
     private TreeNode<CatalogoGeneral> root;
-
+    
     @Setter
     @Getter
     private TreeNode<?> selectedNode;
-
+    
     @SuppressWarnings("rawtypes")
     @Getter
     @Setter
     private TreeNode[] selectedNodes;
-
+    
     @PostConstruct
     private void init() {
         try {
             listaCatalogoPadres = catalogoFacade.findByFather();
             this.root = new CheckboxTreeNode<CatalogoGeneral>(listaCatalogoPadres.get(0), null);
             crearNodoRecursivo(listaCatalogoPadres, root);
-
+            
         } catch (Exception e) {
-
+            log.error("Error al inicializar valores", e);
         }
     }
-
+    
     public void crearNodoRecursivo(List<CatalogoGeneral> ObjData, TreeNode<CatalogoGeneral> nodoPadre) {
         try {
             for (CatalogoGeneral varnodo : ObjData) {//ObjData=Hijos del nodo padre, Lista de segundo nivel
@@ -93,10 +93,10 @@ public class CatalogoController implements Serializable {
                 }
             }
         } catch (Exception e) {
-            // LOG.error("ERROR EN CREAR NODO RECURSIVO", e);
+            log.error("ERROR EN CREAR NODO RECURSIVO", e);
         }
     }
-
+    
     public void onRowEdit(@SuppressWarnings("rawtypes") RowEditEvent<TreeNode> event) {
         try {
             this.catalogoSeleccionado = (CatalogoGeneral) event.getObject().getData();
@@ -106,22 +106,23 @@ public class CatalogoController implements Serializable {
                 this.init();
             }
         } catch (Exception e) {
+            log.error("Error al actualizar");
         }
-
+        
     }
-
+    
     public void onRowCancel(@SuppressWarnings("rawtypes") RowEditEvent<TreeNode> event) {
         this.catalogoSeleccionado = (CatalogoGeneral) event.getObject().getData();
         JsfUtil.addWarningMessage("Cancelado! " + catalogoSeleccionado.getNombre());
         catalogoSeleccionado = null;
         PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
     }
-
+    
     public void nuevoCatalogo() {
         this.catalogoSeleccionado = new CatalogoGeneral();
         this.catalogoSeleccionado.setPadre(new CatalogoGeneral());
     }
-
+    
     public void guardarCatalogo() {
         try {
             if (catalogoSeleccionado != null) {
@@ -138,9 +139,10 @@ public class CatalogoController implements Serializable {
             PrimeFaces.current().executeScript("PF('dlgCatalogo').hide()");
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
         } catch (Exception e) {
+            log.error("Error al guardar informacion", e);
         }
     }
-
+    
     public void eliminarCatalogoSeleccionado() {
         try {
             if (catalogoSeleccionado != null) {
@@ -149,9 +151,10 @@ public class CatalogoController implements Serializable {
                     JsfUtil.addSuccessMessage("Catálogo eliminado!");
                 }
             }
-            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo","msgs");
-            this.init();           
+            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
+            this.init();            
         } catch (Exception e) {
+            log.error("Error al eliminar catalogo", e);
         }
     }
 }

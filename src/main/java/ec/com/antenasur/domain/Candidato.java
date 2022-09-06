@@ -16,7 +16,9 @@ import javax.persistence.Table;
 import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
@@ -37,6 +39,9 @@ import org.hibernate.envers.Audited;
 
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
+
+@AllArgsConstructor
+@NoArgsConstructor
 public class Candidato extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -70,9 +75,6 @@ public class Candidato extends EntidadAuditable implements Serializable {
     @Getter
     @ManyToOne
     @JoinColumn(name = "cargo_id")
-    private Cargo cargo;
-
-    public Candidato() {
-    }
+    private CatalogoGeneral cargo;
 
 }

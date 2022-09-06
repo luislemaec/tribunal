@@ -78,7 +78,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> listaCatalogoHijo(Integer padreId) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId AND gc.estado=TRUE ORDER BY orden";
+            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("padreId", padreId);
             List<CatalogoGeneral> resultList = query.getResultList();

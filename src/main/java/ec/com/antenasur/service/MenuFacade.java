@@ -58,8 +58,8 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
             if (menusList != null) {
                 menus = new ArrayList<MenuVO>();
                 for (Menu menu : menusList) {
-                    if (menu.getMenu() != null) {
-                        parentMenu = (menu.getMenu().getId() != null || menu.getMenu().getId() != 0) ? menu.getMenu().getId()
+                    if (menu.getPadre() != null) {
+                        parentMenu = (menu.getPadre().getId() != null || menu.getPadre().getId() != 0) ? menu.getPadre().getId()
                                 : 0;
 
                         menus.add(new MenuVO(menu.getId(), menu.getNombre(), menu.getAccion(), menu.getUrl(), parentMenu, userId,
@@ -94,7 +94,7 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
                 Query queryIds1 = super.getEntityManager().createNativeQuery(sql);
                 queryIds1.setParameter("rols", rols);
                 queryIds1.setParameter("menuMnemonic", menuMnemonic);
-                List<Integer> menuIds =  queryIds1.getResultList();
+                List<Integer> menuIds = queryIds1.getResultList();
                 List<Integer> menuIds1 = new ArrayList<Integer>();
                 for (Integer item : menuIds) {
                     menuIds1.add(item.intValue());
@@ -127,4 +127,45 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
 
     }
 
+    public List<Menu> findByFather() {
+        try {
+            String sql = "FROM Menu m WHERE m.padre.id is null AND m.estado=TRUE ORDER BY orden";
+            TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
+            List<Menu> resultList = query.getResultList();
+            if (resultList != null && !resultList.isEmpty()) {
+                return resultList;
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public List<Menu> listaCatalogoHijo(Integer padreId) {
+        try {
+            String sql = "FROM Menu m WHERE m.padre.id=:padreId ORDER BY orden";
+            TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
+            query.setParameter("padreId", padreId);
+            List<Menu> resultList = query.getResultList();
+            if (resultList != null && !resultList.isEmpty()) {
+                return resultList;
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public List<Menu> getMenusFinales() {
+         try {
+            String sql = "FROM Menu m WHERE m.nodoFinal=TRUE ORDER BY orden";
+            TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
+            
+            List<Menu> resultList = query.getResultList();
+            if (resultList != null && !resultList.isEmpty()) {
+                return resultList;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
 }

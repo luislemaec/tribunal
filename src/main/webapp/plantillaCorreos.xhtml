@@ -1,0 +1,77 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                template="/WEB-INF/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:define name="title">Plantilla Correos</ui:define>
+
+    <ui:define name="viewname">
+        <li>SEGURIDAD</li>
+        <li>/</li>
+        <li><p:link outcome="/plantillaCorreos">Plantilla Correos</p:link></li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmPlantillaCorreo">
+            <div class="grid">
+                <div class="col-12 md:col-12 lg:col-12">
+                    <div class="card p-0">
+                        <div class="scalein animation-duration-500 animation-iteration-1 flex align-items-center justify-content-center
+                             font-bold bg-orange-400 text-black border-round m-0 p-2">Seleccione PLANTILLA de correo,campos a registrar o actualizar se mostraran en el formulario </div>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-6 lg:col-12" >
+                    <div class="card" >
+                        <div class="ui-fluid formgrid grid ">
+                            <p:outputLabel for="plantilla" value="CORREOS" />
+                            <p:selectOneMenu id="plantilla" value="#{plantillaCorreoController.plantillaCorreoSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                <f:selectItem itemLabel="Select" itemValue="" />
+                                <f:selectItems value="#{plantillaCorreoController.plantillasCorreos}" var="plantilla"  itemLabel="#{plantilla.asunto}" itemValue="#{plantilla.id}"/>                                    
+                                <p:ajax event="change"  listener="#{plantillaCorreoController.cargarPlantillaCorreoSeleccionado()}" process="@this" update="frmPlantillaCorreo"/>                                    
+                            </p:selectOneMenu>
+                        </div>
+                        <p:divider align="center" rendered="#{plantillaCorreoController.plantillaCorreoSeleccionado.id ne null}">
+                            <b>CORREO</b>
+                        </p:divider>
+                        <p:panel class="my-1 ui-fluid" id="pnlPlantilla" rendered="#{plantillaCorreoController.plantillaCorreoSeleccionado.id ne null}" >
+
+                            <div class="ui-fluid formgrid grid" style="display: #{plantillaCorreoController.plantillaCorreoSeleccionado.id > 0?'true':'none'}">
+                                <div class="field col-12 md:col-12 lg:col-12">
+                                    <p:outputLabel for="asunto" value="Asunto" />
+                                    <p:inputText id="asunto" value="#{plantillaCorreoController.plantillaCorreoSeleccionado.asunto}" required="true"  onkeyup="value = value.toUpperCase()">                                                                        
+                                    </p:inputText>
+                                </div>
+
+                                <div class="field col-12 md:col-12 lg:col-12">
+                                    <p:outputLabel for="editor" value="Mensaje" />                                
+                                    <pe:ckEditor id="editor" width="100%" height="300px"
+                                                 value="#{plantillaCorreoController.plantillaCorreoSeleccionado.mensaje}" 
+                                                 enterMode="CKEDITOR.ENTER_BR" font='Courier New' fontSize='11px' skin="office2013">                 
+                                    </pe:ckEditor>
+                                </div>
+
+                            </div>
+                            <f:facet name="footer">
+                                <div class="grid">
+                                    <div class="col-12 md:col-2 md:col-offset-4">                                        
+                                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{plantillaCorreoController.actualizarRegistro}" update="pnlPlantilla, msgs" process="pnlPlantilla @this" />
+                                    </div>
+                                    <div class="col-12 md:col-2">                                        
+                                        <p:commandButton value="Cancel" icon="pi pi-times"  class="ui-button-secondary" />
+                                    </div>
+                                </div>
+                            </f:facet>
+
+                        </p:panel>
+                    </div>
+                </div>
+            </div>            
+        </h:form>
+    </ui:define>
+
+</ui:composition>

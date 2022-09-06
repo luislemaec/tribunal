@@ -217,9 +217,10 @@ public class PersonaController implements Serializable {
                 iglesiaPersonaFacade.delete(item);
             }
         }
+        listaIglesiaPersona = iglesiaPersonaFacade.findAll();
         JsfUtil.addInfoMessage(+listaIglesiaPersonaSeleccionados.size() + " Personas eliminadas");
         this.listaIglesiaPersonaSeleccionados = null;
-        PrimeFaces.current().ajax().update("frmPersonas:pnListaPersonas", "msgs");
+        PrimeFaces.current().ajax().update("frmPersonas", "msgs");
         
     }
 

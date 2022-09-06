@@ -67,7 +67,7 @@
                     </div>                        
                 </div>
 
-                <div class="col-12 lg:col-12">
+                <div class="col-12 lg:col-12" style="display: #{padronController.listaNombresIglesias ne null?'true':'none'}">
                     <div class="card">
                         <h5>GENERAR PADRON</h5>
                         <p:pickList id="pckLIglesias" value="#{padronController.listaNombresIglesias}" 

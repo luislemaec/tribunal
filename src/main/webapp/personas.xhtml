@@ -76,23 +76,25 @@
                 </div>
                 <div class="col-12 md:col-12 lg:col-12">
 
-                    <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers" value="#{personaController.listaIglesiaPersona}" reflow="true" styleClass="products-table card"
+                    <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers" value="#{personaController.listaIglesiaPersona}" reflow="true" 
+                    
                                  selection="#{personaController.listaIglesiaPersonaSeleccionados}" rowKey="#{iglPers.id}" rendered="#{not empty personaController.listaIglesiaPersona}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines" >
                         <p:ajax event="rowSelect" update=":frmPersonas:btnEliminaRegistros" />
                         <p:ajax event="rowUnselect" update=":frmPersonas:btnEliminaRegistros" />
                         <p:ajax event="rowSelectCheckbox" update=":frmPersonas:btnEliminaRegistros" />
                         <p:ajax event="rowUnselectCheckbox" update=":frmPersonas:btnEliminaRegistros" />
                         <p:ajax event="toggleSelect" update=":frmPersonas:btnEliminaRegistros" />
 
-                        <p:column selectionMode="multiple" exportable="false"></p:column>
-                        <p:column headerText="Cedula" sortBy="#{iglPers.persona.documento}" filterBy="#{iglPers.persona.documento}"><h:outputText value="#{iglPers.persona.documento}" /></p:column>
+                        <p:column selectionMode="multiple" exportable="false" ></p:column>
+                        <p:column headerText="Cedula" sortBy="#{iglPers.persona.documento}" filterBy="#{iglPers.persona.documento}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.documento}" /></p:column>
                         <p:column headerText="Nombre" sortBy="#{iglPers.persona.nombres}" filterBy="#{iglPers.persona.nombres}"  ><h:outputText value="#{iglPers.persona.nombres}" /></p:column>        
-                        <p:column headerText="Tratamiento" sortBy="#{iglPers.persona.tratamiento}" filterBy="#{iglPers.persona.tratamiento}" ><h:outputText value="#{iglPers.persona.tratamiento}" /></p:column>
-                        <p:column headerText="Sexo" sortBy="#{iglPers.persona.sexo}" filterBy="#{iglPers.persona.sexo}" ><h:outputText value="#{iglPers.persona.sexo}" /></p:column>                    
-                        <p:column headerText="Desde" sortBy="#{iglPers.desde}" filterBy="#{iglPers.desde}" ><h:outputText value="#{iglPers.desde}" /></p:column>
-                        <p:column headerText="Hasta" sortBy="#{iglPers.hasta}" filterBy="#{iglPers.hasta}" ><h:outputText value="#{iglPers.hasta}" /></p:column>
-                        <p:column exportable="false">
+                        <p:column headerText="Tratamiento" sortBy="#{iglPers.persona.tratamiento}" filterBy="#{iglPers.persona.tratamiento}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.tratamiento}" /></p:column>
+                        <p:column headerText="Sexo" sortBy="#{iglPers.persona.sexo}" filterBy="#{iglPers.persona.sexo}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.sexo}" /></p:column>                    
+                        <p:column headerText="Desde" sortBy="#{iglPers.desde}" filterBy="#{iglPers.desde}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.desde}" /></p:column>
+                        <p:column headerText="Hasta" sortBy="#{iglPers.hasta}" filterBy="#{iglPers.hasta}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.hasta}" /></p:column>
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmPersonas:outPnlPersonas" oncomplete="PF('dlgPersona').show()"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />

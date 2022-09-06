@@ -86,7 +86,7 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         try {
             String sql = HQL
                     + " LEFT JOIN FETCH ip.persona p"
-                    + " WHERE p.documento=:cedula AND ip.estado=TRUE ORDER BY ip.id";
+                    + " WHERE p.documento=:cedula ORDER BY ip.id";
             TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
             query.setParameter("cedula", cedula);
             List<IglesiaPersona> result = query.getResultList();

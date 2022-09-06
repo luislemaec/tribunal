@@ -2,7 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
       xmlns:f="http://xmlns.jcp.org/jsf/core">
     <h:head>
         <f:facet name="first">
@@ -26,21 +25,22 @@
             </h:link>
         </div>
         <div class="login-image">
-            <div class="login-panel">
+            <div class="login-panel">                
                 <h:form id="frmLogin">
-                <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
+                    <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
                     <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"/>
-                    <div class="col-12">
+                    <div class="col-12 md:col-12 lg:col-12">
                         <div class="input-wrapper">
-                            <p:inputText id="usuario" required="true" value="#{loginBean.userName}"  validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}"  placeholder="Usuario" />
+                            <p:inputText id="usuario" required="true" value="#{loginBean.userName}"  validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}" placeholder="Usuario" />
                         </div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 md:col-12 lg:col-12 ui-fluid">
                         <div class="input-wrapper">                            
-                            <p:inputText type="password" id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="contraseña" class="w-full"/>
+                            <p:password id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}" 
+                            redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="Contraseña"/>
                         </div>
                     </div>
-                    <div class="checkbox-container">     
+                    <div class="col-12 md:col-12 lg:col-12 ">     
                         <p:commandButton value="#{msg['btn.login']}"  action="#{loginController.login()}" styleClass="ui-button-info" process="@form" update="frmLogin" />
                     </div>
 
@@ -49,6 +49,7 @@
                     <a href="#" class="subinfo">
                         <span>Olvido su contrasenia?</span>
                     </a>
+
                 </h:form>
             </div>
         </div>               

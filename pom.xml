@@ -182,10 +182,17 @@ language governing permissions and limitations under the License. -->
             <artifactId>primefaces</artifactId>
             <version>11.0.0</version>
         </dependency>
+        
         <dependency>
             <groupId>org.primefaces.extensions</groupId>
             <artifactId>primefaces-extensions</artifactId>
             <version>11.0.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.primefaces.extensions</groupId>
+            <artifactId>resources-ckeditor</artifactId>
+            <version>11.0.3</version>   
         </dependency>
         <!-- L O G S -->
         <dependency>

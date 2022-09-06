@@ -6,26 +6,9 @@
                 xmlns:pe="http://primefaces.org/ecuador">
 
     <div class="layout-sidebar">
-        <div class="layout-menu-title">MAIN MENU</div>
-        <h:form id="menuform">
-            <pe:menu widgetVar="me">
-                <p:menuitem id="m_dashboard" value="Escritorio" icon="pi pi-fw pi-home" outcome="/dashboard" />
-                <p:submenu id="m_components" label="Admin.." icon="pi pi-fw pi-briefcase" badge="15">
-                    <p:menuitem id="m_cargaDatos" value="Carga datos" icon="pi pi-fw pi-upload" outcome="/cargaDatos" />
-                    <p:menuitem id="m_personas" value="Personas" icon="pi pi-fw pi-users" outcome="/personas" />
-                    <p:menuitem id="m_iglesias" value="Iglesias" icon="pi pi-fw pi-building" outcome="/iglesias" />
-                    <p:menuitem id="m_recintos" value="Recintos" icon="pi pi-fw pi-clone" outcome="/recintos" />
-                    <p:menuitem id="m_mesas" value="Mesas" icon="pi pi-fw pi-tablet" outcome="/mesas" />
-                    <p:menuitem id="m_padron" value="Padron" icon="pi pi-fw pi-exclamation-circle" outcome="/padron" styleClass="rotated-icon"/>
-
-                </p:submenu>
-                <p:submenu id="m_primeblocks" label="TRIBUNAL" icon="pi pi-fw pi-prime">
-                    <p:menuitem id="m_autoridades" value="Autoridades" icon="pi pi-fw pi-eye" outcome="/autoridades"/>
-                    <p:menuitem id="m_periodos" value="Periodos" icon="pi pi-fw pi-calendar-plus" outcome="/periodos"/>
-                    <p:menuitem id="m_documentos" value="Documentos" icon="pi pi-fw pi-folder-open" outcome="/documentos"/>
-                    <p:menuitem id="m_catalogos" value="Catálogos" icon="pi pi-fw pi-book" outcome="/catalogos"/>
-                </p:submenu>
-            </pe:menu>
+        <div class="layout-menu-title">Menu Principal</div>
+        <h:form id="menuform" rendered="#{loginBean.loggedIn}">
+            <pe:menu widgetVar="me" model="#{loginBean.menuModel}"/>            
         </h:form>
     </div>
 </ui:composition>

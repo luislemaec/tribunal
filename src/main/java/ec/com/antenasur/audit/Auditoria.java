@@ -1,6 +1,5 @@
 package ec.com.antenasur.audit;
 
-
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import java.io.Serializable;
 import java.util.Date;
@@ -40,9 +39,8 @@ public class Auditoria extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_seq")
-    @SequenceGenerator(name = "audit_seq", sequenceName = "rpm_seq_audit_id")
+    @Id    
+    @GeneratedValue(strategy = GenerationType.IDENTITY)    
     @Column(name = "aud_id")
     @RevisionNumber
     private Integer id;

@@ -14,6 +14,8 @@ import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import java.util.Date;
+import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -51,9 +53,21 @@ public class Proceso extends EntidadAuditable implements Serializable {
     @Getter
     private String ip;
 
+    @Setter
+    @Getter
+    @Transient
+    private String horas;
 
+    @Setter
+    @Getter
+    @Transient
+    private String dias;
 
     public Proceso() {
+    }
+
+    public Proceso(String ip) {
+        this.ip = ip;
     }
 
 }

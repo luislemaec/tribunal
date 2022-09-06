@@ -17,7 +17,7 @@
         <h:form id="frmMesas">
             <div class="grid">                
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE Mesas</h5>
+                    <h5>ADMINITRACIÓN DE MESAS</h5>
                     <p:toolbar >
                         <p:toolbarGroup >
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{mesaController.nuevaMesa}" update="outPnlMesas" oncomplete="PF('dlgMesa').show()"
@@ -70,9 +70,10 @@
                 </div>
                 <div class="col-12 md:col-12 lg:col-12">
 
-                    <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="mesa" value="#{mesaController.listaMesas}" reflow="true" styleClass="products-table card"
+                    <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="mesa" value="#{mesaController.listaMesas}" reflow="true" 
                                  selection="#{mesaController.listaMesasSeleccionados}" rowKey="#{mesa.id}" rendered="#{not empty mesaController.listaMesas}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
                         <p:ajax event="rowSelect" update=":frmMesas:btnEliminaRegistros" />
                         <p:ajax event="rowUnselect" update=":frmMesas:btnEliminaRegistros" />
                         <p:ajax event="rowSelectCheckbox" update=":frmMesas:btnEliminaRegistros" />
@@ -80,19 +81,19 @@
                         <p:ajax event="toggleSelect" update=":frmMesas:btnEliminaRegistros" />
 
                         <p:column selectionMode="multiple" exportable="false"></p:column>
-                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}"><h:outputText value="#{mesa.id}" /></p:column>
-                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>
+                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
                         <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
-                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" ><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" ><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
-                        <p:column headerText="ESTADO" sortBy="#{mesa.estado}" filterBy="#{mesa.estado}" ><h:outputText value="#{mesa.estado}" /></p:column>                    
+                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
+                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
+                        <p:column headerText="ESTADO" sortBy="#{mesa.estado}" filterBy="#{mesa.estado}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estado}" /></p:column>                    
 
-                        <p:column exportable="false">
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{mesaController.cargaDatosMesaSeleccionado}">
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />                                                                                        
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />
                             </p:commandButton>
                         </p:column>

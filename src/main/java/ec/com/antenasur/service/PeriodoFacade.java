@@ -29,7 +29,6 @@ public class PeriodoFacade extends AbstractFacade<Periodo, Integer> {
         super(Periodo.class, Integer.class);
     }
 
-
     public Periodo getPeridoActivo() {
         try {
             String sql = HQL + " WHERE" + ACTIVOS + ORDENADO + " DESC";
@@ -43,6 +42,18 @@ public class PeriodoFacade extends AbstractFacade<Periodo, Integer> {
             return null;
         }
         return null;
+    }
+
+    public Periodo getPeriodoVigente() {
+        try {
+            String sql = HQL + ORDENADO + " DESC";
+            TypedQuery<Periodo> query = super.getEntityManager().createQuery(sql, Periodo.class);
+            Periodo result = query.getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }

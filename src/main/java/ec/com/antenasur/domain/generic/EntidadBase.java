@@ -9,6 +9,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.FilterDef;
+import org.hibernate.envers.Audited;
 
 /**
  * POJO Entidad base de la que heredan todas las entidades del negocio
@@ -27,6 +28,7 @@ public abstract class EntidadBase implements Serializable {
 
     @Getter
     @Setter
+    @Audited
     protected Boolean estado = true;
 
     @Getter

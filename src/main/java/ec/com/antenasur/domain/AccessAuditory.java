@@ -73,7 +73,7 @@ public class AccessAuditory implements Serializable {
         ip = ipAcces;
         status = false;
         active = false;
-        aplication = "seleccion_medios";
+        aplication = "SYS_TEC";
     }
 
 }

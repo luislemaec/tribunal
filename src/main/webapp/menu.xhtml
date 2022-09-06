@@ -1,0 +1,141 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Menu</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/menu">Menu</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmMenu">
+            <div class="layout-dashboard">
+                <div class="grid">           
+                    <div class="col-12 md:col-12 lg:col-12">
+                        <div class="card">
+                            <h4>ADMINISTRACION DE MENU</h4>
+                            <p:treeTable value="#{menuController.root}" var="menu" 
+                                         showGridlines="true" editable="true" id="trTblMenuo">
+                                <p:ajax event="rowEdit" listener="#{menuController.onRowEdit}" update="msgs"/>
+                                <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}" update="msgs"/>
+
+                                <p:column headerText="ID" sortBy="#{menu.id}" style="width: 7%;" responsivePriority="1">                                
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.id}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.id}" style="width:100%" disabled="true"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+
+                                <p:column headerText="ACCION" sortBy="#{menu.accion}" styleClass="w-auto" responsivePriority="1">                                
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.accion}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.accion}" style="width:100%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                
+                                 <p:column headerText="NODO FINAL" sortBy="#{menu.nodoFinal}" styleClass="w-auto" responsivePriority="1">                                
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.nodoFinal}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.nodoFinal}" style="width:100%" /></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                
+                                <p:column headerText="NOMBRE" sortBy="#{menu.nombre}" styleClass="w-auto" responsivePriority="1">                                
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.nombre}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.nombre}" style="width:100%" /></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="ORDEN"  style="width: 5%;" responsivePriority="3">                                
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.orden}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.orden}" style="width:100%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>                            
+
+                                <p:column headerText="ICONO" styleClass="w-auto" responsivePriority="4">
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.icono}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.icono}" style="width:100%" /></f:facet>
+                                    </p:cellEditor>                                
+                                </p:column>
+                                
+                                 <p:column headerText="URL" styleClass="w-auto" responsivePriority="4">
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.url}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.url}" style="width:100%" /></f:facet>
+                                    </p:cellEditor>                                
+                                </p:column>
+                                
+                                 <p:column headerText="componenteid" styleClass="w-auto" responsivePriority="4">
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{menu.componenteid}"/></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{menu.componenteid}" style="width:100%" /></f:facet>
+                                    </p:cellEditor>                                
+                                </p:column>
+
+                                <p:column style="width: 5%;" responsivePriority="5">
+                                    <f:facet name="header">                                                                         
+                                        <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{menuController.nuevoMenu}" update="frmMenu:outPnlMenu" oncomplete="PF('dlgMenuo').show()"
+                                                         styleClass="ui-button-success" style="margin-right: .5rem" />                             
+                                    </f:facet>
+                                    <p:rowEditor />
+                                    <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                        <f:setPropertyActionListener value="#{menu}" target="#{menuController.menuSeleccionado}" />
+                                    </p:commandButton>
+                                </p:column>
+                            </p:treeTable>
+                        </div>
+                    </div>
+                </div>
+
+                <p:dialog header="Detalles Menu" showEffect="fade" modal="true" widgetVar="dlgMenuo" responsive="true">
+                    <p:outputPanel id="outPnlMenu" class="ui-fluid">
+                        <p:outputPanel rendered="#{menuController.menuSeleccionado ne null}">
+
+                            <div class="field">
+                                <p:outputLabel for="nombre" value="Nombres" />
+                                <p:inputText id="nombre" value="#{menuController.menuSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="orden" value="Orden" />
+                                <p:inputText id="orden" value="#{menuController.menuSeleccionado.orden}"  required="true"/>
+                            </div>
+                            <div class="field">
+                                <p:outputLabel for="descripcion" value="Descripción" />
+                                <p:inputText id="descripcion" value="#{menuController.menuSeleccionado.descripcion}"  maxlength="150" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+                            <div class="field">
+                                <p:outputLabel for="padre" value="Padre" />
+                                <p:inputText id="padre" value="#{menuController.menuSeleccionado.padre.id}"  required="true"/>
+                            </div>
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{menuController.guardarMenu}" update="outPnlMenu, msgs" process="outPnlMenu @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgMenuo').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>         
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                </p:confirmDialog>
+
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Está seguro que desea eliminar?" header="Confirm" severity="warn">
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{menuController.eliminarMenuSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                </p:confirmDialog>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

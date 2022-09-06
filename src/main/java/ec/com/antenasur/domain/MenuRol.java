@@ -66,4 +66,9 @@ public class MenuRol extends EntidadAuditable implements Serializable {
     public MenuRol() {
     }
 
+    public MenuRol(Menu menu, Rol rol) {
+        this.menu = menu;
+        this.rol = rol;
+    }
+
 }

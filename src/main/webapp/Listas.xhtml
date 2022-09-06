@@ -1,0 +1,157 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Mesas</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/mesas">Mesas</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmMesas">
+            <div class="grid">                
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>ADMINITRACIÓN DE Mesas</h5>
+                    <p:toolbar >
+                        <p:toolbarGroup >
+                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{mesaController.nuevaMesa}" update="outPnlMesas" oncomplete="PF('dlgMesa').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                            <p:commandButton id="btnEliminaRegistros" value="#{mesaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{mesaController.eliminarMesasSeleccionados}"
+                                             styleClass="ui-button-danger" disabled="#{!mesaController.existeMesasSeleccionados()}" update="@this">
+                                <p:confirm header="Confirmation" message="¿Está Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
+                            </p:commandButton> 
+                        </p:toolbarGroup>
+                        <p:toolbarGroup align="right" >
+                            <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download" disabled="#{mesaController.mesaSeleccionado.id eq null}"/>
+                            <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty mesaController.listaMesas}">
+                                <p:dataExporter type="pdf" target="tblMesas" fileName="Mesas"/>
+                            </p:commandButton>
+                        </p:toolbarGroup>
+                    </p:toolbar>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{mesaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="frmMesas"/>
+                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="frmMesas"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-3">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{mesaController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorParroquia()}" process="@this" update="frmMesas msgs"/>                            
+                                </p:selectOneMenu>
+                            </div>
+                            
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="recintos" value="Recintos" />
+                                <p:selectOneMenu id="recintos" value="#{mesaController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorRecinto()}" process="@this" update="frmMesas msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+
+                        </div>                       
+                    </div>                        
+                </div>
+                <div class="col-12 md:col-12 lg:col-12">
+
+                    <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="mesa" value="#{mesaController.listaMesas}" reflow="true" styleClass="products-table card"
+                                 selection="#{mesaController.listaMesasSeleccionados}" rowKey="#{mesa.id}" rendered="#{not empty mesaController.listaMesas}"
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                        <p:ajax event="rowSelect" update=":frmMesas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselect" update=":frmMesas:btnEliminaRegistros" />
+                        <p:ajax event="rowSelectCheckbox" update=":frmMesas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselectCheckbox" update=":frmMesas:btnEliminaRegistros" />
+                        <p:ajax event="toggleSelect" update=":frmMesas:btnEliminaRegistros" />
+
+                        <p:column selectionMode="multiple" exportable="false"></p:column>
+                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}"><h:outputText value="#{mesa.id}" /></p:column>
+                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>
+                        <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
+                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" ><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" ><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
+                        <p:column headerText="ESTADO" sortBy="#{mesa.estado}" filterBy="#{mesa.estado}" ><h:outputText value="#{mesa.estado}" /></p:column>                    
+
+                        <p:column exportable="false">
+                            <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
+                                             styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{mesaController.cargaDatosMesaSeleccionado}">
+                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />                                                                                        
+                            </p:commandButton>
+                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+
+                <p:dialog header="Detalles Mesa" showEffect="fade" modal="true" widgetVar="dlgMesa" responsive="true">
+                    <p:outputPanel id="outPnlMesas" class="ui-fluid">
+                        <p:outputPanel rendered="#{not empty mesaController.mesaSeleccionado}">
+
+                            <div class="field">
+                                <p:outputLabel for="nombre" value="Nombres" />
+                                <p:inputText id="nombre" value="#{mesaController.mesaSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="cantonSel" value="Cantón" />
+                                <p:selectOneMenu id="cantonSel" value="#{mesaController.cantonSeleccionado.id}"  filter="true" filterMatchMode="startsWith" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="parroquiaSel"/>
+                                </p:selectOneMenu>                                        
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
+                                <p:selectOneMenu id="parroquiaSel" value="#{mesaController.mesaSeleccionado.ubicacion.id}" required="true">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
+                                </p:selectOneMenu>                                       
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="recinto" value="Recinto" />
+                                <p:selectOneMenu id="recinto" value="#{mesaController.mesaSeleccionado.recinto.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>                                                
+                                </p:selectOneMenu>  
+                            </div>
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{mesaController.guardarMesaSeleccionado}" update="outPnlMesas, msgs" process="outPnlMesas @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgMesa').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>
+
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{mesaController.eliminarMesaSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                </p:confirmDialog>
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                </p:confirmDialog>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedProperty;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import lombok.Getter;
@@ -18,9 +19,7 @@ import lombok.Setter;
 @RequestScoped
 public class InicioBean {
 
-    @Setter
-    @Getter
-    @ManagedProperty(value = "#{loginBean}")
+    @Inject
     private LoginBean loginBean;
 
     @Setter

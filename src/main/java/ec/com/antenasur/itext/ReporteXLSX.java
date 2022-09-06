@@ -1,4 +1,4 @@
-package ec.com.antenasur.util;
+package ec.com.antenasur.itext;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,14 +8,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -33,12 +33,18 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import ec.com.antenasur.util.Constantes;
 
-public class ReporteXLS {
+import javax.ejb.SessionContext;
+import ec.com.antenasur.domain.generic.BeanLocator;
+
+public class ReporteXLSX {
+
+    private static final Logger LOG = Logger.getLogger(ReporteXLSX.class);
 
     private static ExternalContext externalContext;
 
-    private static String LOGO;
+    private static String PATH_LOGO;
 
     private static XSSFWorkbook LIBRO;// Libro
 
@@ -46,11 +52,32 @@ public class ReporteXLS {
 
     private static FileInputStream stream;
 
+    public static String getNombreUsuarioAutenticado() {
+        String userName = null;
+        try {
+            SessionContext context = BeanLocator.getSessionContext();
+            userName = context.getCallerPrincipal().getName();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (userName == null || userName.isEmpty()) {
+            userName = "<desconocido>";
+        }
+        return userName;
+    }
+
     private static void inicializa() {
-        externalContext = FacesContext.getCurrentInstance().getExternalContext();
-        LOGO = externalContext.getRealPath("") + File.separator + "resources" + File.separator + "img" + File.separator
-                + "logo_consejo_417x150.png";
-        LIBRO = new XSSFWorkbook();
+        try {
+            externalContext = FacesContext.getCurrentInstance().getExternalContext();
+            ServletContext servletContext = (ServletContext) externalContext.getContext();
+            String webRoot = servletContext.getRealPath("/");
+
+            /*Agrega Banner cabecera al documento*/
+            PATH_LOGO = webRoot + "/resources/images/agreement/logo_certificate_417x150.png";
+            LIBRO = new XSSFWorkbook();
+        } catch (Exception e) {
+            LOG.error("ERROR AL INICIALIZAR VALORES" + e);
+        }
     }
 
     public static void nuevoExcel(String nombreReporte) {
@@ -58,74 +85,85 @@ public class ReporteXLS {
         HOJA = LIBRO.createSheet(nombreReporte);
         // Aqui Inserta Imagen
         try {
-            stream = new FileInputStream(LOGO);
+            stream = new FileInputStream(PATH_LOGO);
             setimagen(LIBRO, HOJA, nombreReporte, stream);
 
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(ReporteXLS.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("ERROR AL CREAR NUEVO EXCEL" + ex);
         }
     }
 
     public static void creaCabeceraTabla(String[] listColumnNames, int[] columnWidth) {
+        try {
+            XSSFFont fuenteTituloTabla = LIBRO.createFont();
+            fuenteTituloTabla.setColor(IndexedColors.AUTOMATIC.index);
+            fuenteTituloTabla.setBold(true);
 
-        XSSFFont fuenteTituloTabla = LIBRO.createFont();
-        fuenteTituloTabla.setColor(IndexedColors.AUTOMATIC.index);
-        fuenteTituloTabla.setBold(true);
+            XSSFCellStyle celdaTituloTabla = LIBRO.createCellStyle();
+            celdaTituloTabla.setAlignment(HorizontalAlignment.CENTER);
+            celdaTituloTabla.setWrapText(true);
+            celdaTituloTabla.setFont(fuenteTituloTabla);
 
-        XSSFCellStyle celdaTituloTabla = LIBRO.createCellStyle();
-        celdaTituloTabla.setAlignment(HorizontalAlignment.CENTER);
-        celdaTituloTabla.setWrapText(true);
-        celdaTituloTabla.setFont(fuenteTituloTabla);
-
-        Row encabezado = HOJA.createRow(5);
-        for (int i = 0; i < listColumnNames.length; i++) {
-            HOJA.setColumnWidth(i, columnWidth[i]);
-            Cell celda = encabezado.createCell(i);
-            celda.setCellValue(listColumnNames[i].toUpperCase());
-            celda.setCellStyle(celdaTituloTabla);
+            Row encabezado = HOJA.createRow(5);
+            for (int i = 0; i < listColumnNames.length; i++) {
+                HOJA.setColumnWidth(i, columnWidth[i]);
+                Cell celda = encabezado.createCell(i);
+                celda.setCellValue(listColumnNames[i].toUpperCase());
+                celda.setCellStyle(celdaTituloTabla);
+            }
+        } catch (Exception e) {
+            LOG.error("ERROR AL CREAR CABECERA DE TABLA" + e);
         }
-
     }
 
     public static void creaEspacioInformativo(String fecha, String hora, String responsable) {
+        try {
+            Row rfecha = HOJA.createRow(3);
+            Cell cfecha = rfecha.createCell(3);
+            cfecha.setCellValue("FECHA Y HORA:");
 
-        Row rfecha = HOJA.createRow(3);
-        Cell cfecha = rfecha.createCell(3);
-        cfecha.setCellValue("FECHA Y HORA:");
+            Cell cfecha_v = rfecha.createCell(4);
+            cfecha_v.setCellValue(fecha + " " + hora);
 
-        Cell cfecha_v = rfecha.createCell(4);
-        cfecha_v.setCellValue(fecha + " " + hora);
+            Row rResponsable = HOJA.createRow(4);
+            Cell cResponsable = rResponsable.createCell(3);
+            cResponsable.setCellValue("RESPONSABLE:");
 
-        Row rResponsable = HOJA.createRow(4);
-        Cell cResponsable = rResponsable.createCell(3);
-        cResponsable.setCellValue("RESPONSABLE:");
-
-        Cell cResponsable_v = rResponsable.createCell(4);
-        cResponsable_v.setCellValue(responsable);
+            Cell cResponsable_v = rResponsable.createCell(4);
+            cResponsable_v.setCellValue(responsable);
+        } catch (Exception e) {
+            LOG.error("ERROR AL CREAR ESPACIO INFORMATIVO" + e);
+        }
 
     }
 
-    public static void setFinalParagraph(String usernName, int tamanioLista) {
-        String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
-        String pieDePagina = " Documento generado por: " + usernName + " Fecha: " + date.substring(0, 10) + " Hora: "
-                + date.substring(11, 19);
-        Row pie = HOJA.createRow(tamanioLista + 7);
-        Cell celda = pie.createCell(3);
-        celda.setCellValue(pieDePagina);
-
+    public static void setFinalParagraph(int tamanioLista) {
+        try {
+            String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
+            String pieDePagina = " Documento generado por: " + getNombreUsuarioAutenticado() + " Fecha: " + date.substring(0, 10) + " Hora: "
+                    + date.substring(11, 19);
+            Row pie = HOJA.createRow(tamanioLista + 7);
+            Cell celda = pie.createCell(3);
+            celda.setCellValue(pieDePagina);
+        } catch (Exception e) {
+            LOG.error("ERROR AL AGREGAR PARRAFO FINAL" + e);
+        }
     }
 
     public static void creaContenidoTabla(String[][] listaDatos, String[] listColumnNames) {
-        int posRow = 1;
-        for (String[] medio : listaDatos) {
-            Row fila = HOJA.createRow(posRow + 5);
-            for (int i = 0; i < medio.length; i++) {
-                Cell celda = fila.createCell(i);
-                celda.setCellValue(medio[i]);
+        try {
+            int posRow = 1;
+            for (String[] medio : listaDatos) {
+                Row fila = HOJA.createRow(posRow + 5);
+                for (int i = 0; i < medio.length; i++) {
+                    Cell celda = fila.createCell(i);
+                    celda.setCellValue(medio[i]);
+                }
+                posRow++;
             }
-            posRow++;
+        } catch (Exception e) {
+            LOG.error("ERROR AL CREAR CONTENIDO DE TABLA" + e);
         }
-
     }
 
     public static void descargarExcel(String nombreReporte) {
@@ -140,18 +178,17 @@ public class ReporteXLS {
                 LIBRO.write(out);
                 out.flush();
             } catch (IOException ex) {
-                Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
+                LOG.error("ERROR AL DESCARGAR ARCHIVO EXCEL" + ex);
             }
             out.flush();
             FacesContext.getCurrentInstance().responseComplete();
         } catch (IOException ex) {
-            Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("ERROR AL DESCARGAR ARCHIVO EXCEL" + ex);
         }
     }
 
     public static void setimagen(XSSFWorkbook workbook, Sheet sheet, String name, InputStream file) {
         try {
-
             // TITULO DEL PROYECTO
             XSSFFont whiteFont = workbook.createFont();
             whiteFont.setColor(IndexedColors.AUTOMATIC.index);
@@ -217,7 +254,7 @@ public class ReporteXLS {
             pict.resize(3, 5);// Columna y fila hasta donde llega la Imagen
             sheet.createFreezePane(0, 6, 0, 6);// 0, 7, 0, 7
         } catch (Exception ex) {
-            ex.printStackTrace();
+            LOG.error("ERROR AL ASIGNAR IMAGEN AL ARCHIVO EXCEL" + ex);
         }
 
     }

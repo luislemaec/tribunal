@@ -1,0 +1,53 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Procesos</ui:define>
+    <ui:define name="viewname">
+        <li>SEGURIDAD</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/procesos">Procesos</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmProcesos">
+            <div class="grid ">
+                <div class="col-12">
+                    <div class="card ">                        
+                        <p:toolbar styleClass="mb-2">
+                            <p:toolbarGroup>                                                              
+                            </p:toolbarGroup>
+                            <p:toolbarGroup align="right">                                
+                                <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" action="#{procesoController.exportaPDF()}" disabled="#{empty procesoController.listaProceso}">                                    
+                                </p:commandButton>
+                            </p:toolbarGroup>
+                        </p:toolbar>
+
+                        <p:dataTable id="tblProcesos" widgetVar="wdTblProcesos" var="proceso" value="#{procesoController.listaProceso}" reflow="true"
+                                     rendered="#{not empty procesoController.listaProceso}" rowSelectMode="add"
+                                     paginator="true" rows="10" paginatorPosition="bottom" showGridlines="true" 
+                                     styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines" >                       
+
+                            <p:column headerText="id" sortBy="#{proceso.id}" filterBy="#{proceso.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{proceso.id}" /></p:column>
+                            <p:column headerText="Actividad" sortBy="#{proceso.actividad}" filterBy="#{proceso.actividad}"  ><h:outputText value="#{proceso.actividad}" /></p:column>
+                            <p:column headerText="Usuario crea" sortBy="#{proceso.usuarioCrea}" filterBy="#{proceso.usuarioCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{proceso.usuarioCrea}" /></p:column>        
+							<p:column headerText="IP" sortBy="#{proceso.ip}" filterBy="#{proceso.ip}" styleClass="sm:w-max md:w-2 lg:w-10rem" ><h:outputText value="#{proceso.ip}" /></p:column>
+                            <p:column headerText="Fecha creación" sortBy="#{proceso.fechaCrea}" filterBy="#{proceso.fechaCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem">
+                                <h:outputText value="#{proceso.fechaCrea}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" />
+                                </h:outputText></p:column>
+
+                        </p:dataTable>
+
+
+                    </div>
+                </div>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

@@ -19,16 +19,16 @@
             <div class="grid">
                 <div class="col-12 md:col-12 lg:col-12">
                     <p:dataTable id="tbtribunal" var="tribunal" value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
-                                 showGridlines="true" rendered="#{not empty personaController.listaIglesiaPersona}" styleClass="card" >
-                        <p:column headerText="Id" sortBy="#{tribunal.id}" rendered="#{loginBean.roles.contains('SITEC-Administrador')}">
+                                 showGridlines="true" rendered="#{not empty personaController.listaIglesiaPersona}" styleClass="shadow-1" >
+                        <p:column headerText="Id" sortBy="#{tribunal.id}" rendered="#{loginBean.roles.contains('SITEC-Administrador')}" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <h:outputText value="#{tribunal.id}" />
                         </p:column>
 
-                        <p:column headerText="Cargo" >
+                        <p:column headerText="Cargo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
                             <h:outputText value="#{tribunal.cargo.nombre}" />
                         </p:column>
 
-                        <p:column headerText="Periodo" >
+                        <p:column headerText="Periodo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
                             <h:outputText value="#{tribunal.periodo.nombre}" />
                         </p:column>
 
@@ -40,12 +40,12 @@
                             <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}" rendered="#{tribunal.iglesiaPersona.persona ne null}" />
 
                         </p:column>
-                        <p:column exportable="false">
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <p:commandButton icon="pi pi-user-edit" update=":frmPeriodos:outPnlAutoridad" oncomplete="PF('dlgAutoridad').show()"
                                              styleClass="edit-button rounded-button ui-button-info" process="@this" disabled="#{tribunal.iglesiaPersona.persona eq null}">
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-user-minus" process="@this" oncomplete="PF('dlgEliminaAutoridad').show()" disabled="#{tribunal.iglesiaPersona.persona eq null}" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-user-minus" process="@this" oncomplete="PF('dlgEliminaAutoridad').show()" disabled="#{tribunal.iglesiaPersona.persona eq null}" >
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
                             </p:commandButton>
                         </p:column>

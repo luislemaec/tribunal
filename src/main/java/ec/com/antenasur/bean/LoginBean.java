@@ -26,6 +26,7 @@ import ec.com.antenasur.domain.AccessAuditory;
 import ec.com.antenasur.domain.Persona;
 import ec.com.antenasur.domain.Usuario;
 import ec.com.antenasur.service.AccessFacade;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -147,7 +148,7 @@ public class LoginBean implements Serializable {
     public void logout() throws RuntimeException, IOException, ServletException {
         HttpServletRequest request = JsfUtil.getRequest();
         registerAdditory(request.getSession().getId().toString());
-        procesoBean.registraActividad("SALE DEL SISTEMA DE SELECCION DE MEDIOS");
+        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
         request.logout();
 
         FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
@@ -156,12 +157,6 @@ public class LoginBean implements Serializable {
 
     public void updateUsuario() throws RuntimeException, IOException, ServletException {
         JsfUtil.redirect("/paginas/administracion/actualizar.jsf");
-    }
-
-    public void logoutSessionExpired() throws RuntimeException, IOException {
-        HttpServletRequest request = JsfUtil.getRequest();
-        request.getSession().invalidate();
-        JsfUtil.redirect("/sessionExpired.xhtml");
     }
 
     public Map<String, Object> getContent() {
@@ -174,6 +169,7 @@ public class LoginBean implements Serializable {
     }
 
     public void cerrarSessionExpirada() throws RuntimeException, IOException {
+    	procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
         HttpServletRequest request = JsfUtil.getRequest();
         request.getSession().invalidate();
         JsfUtil.redirect("/errors/viewExpired.jsf");

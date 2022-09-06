@@ -61,9 +61,11 @@
                 </div>
                 <div class="col-12 md:col-12 lg:col-12">
 
-                    <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto" value="#{recintoController.listaRecintos}" reflow="true" styleClass="products-table card"
+                    <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto" value="#{recintoController.listaRecintos}" reflow="true" 
+                    
                                  selection="#{recintoController.listaRecintosSeleccionados}" rowKey="#{recinto.id}" rendered="#{not empty recintoController.listaRecintos}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"  >
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true"
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1"  >
                         <p:ajax event="rowSelect" update=":frmRecintos:btnEliminaRegistros" />
                         <p:ajax event="rowUnselect" update=":frmRecintos:btnEliminaRegistros" />
                         <p:ajax event="rowSelectCheckbox" update=":frmRecintos:btnEliminaRegistros" />
@@ -71,18 +73,18 @@
                         <p:ajax event="toggleSelect" update=":frmRecintos:btnEliminaRegistros" />
 
                         <p:column selectionMode="multiple" exportable="false"></p:column>
-                        <p:column headerText="ID" sortBy="#{recinto.id}" filterBy="#{recinto.id}"><h:outputText value="#{recinto.id}" /></p:column>
-                        <p:column headerText="NOMBRE" sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}"  ><h:outputText value="#{recinto.nombre}" /></p:column>        
-                        <p:column headerText="CANTÓN" sortBy="#{recinto.ubicacion.geograp.name}" filterBy="#{recinto.ubicacion.geograp.name}" ><h:outputText value="#{recinto.ubicacion.geograp.name}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacion.name}" filterBy="#{recinto.ubicacion.name}" ><h:outputText value="#{recinto.ubicacion.name}" /></p:column>
-                        <p:column headerText="ESTADO" sortBy="#{recinto.estado}" filterBy="#{recinto.estado}" ><h:outputText value="#{recinto.estado}" /></p:column>                    
+                        <p:column headerText="ID" sortBy="#{recinto.id}" filterBy="#{recinto.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{recinto.id}" /></p:column>
+                        <p:column headerText="NOMBRE" sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}" ><h:outputText value="#{recinto.nombre}" /></p:column>        
+                        <p:column headerText="CANTÓN" sortBy="#{recinto.ubicacion.geograp.name}" filterBy="#{recinto.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{recinto.ubicacion.geograp.name}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacion.name}" filterBy="#{recinto.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem" ><h:outputText value="#{recinto.ubicacion.name}" /></p:column>
+                        <p:column headerText="ESTADO" sortBy="#{recinto.estado}" filterBy="#{recinto.estado}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{recinto.estado}" /></p:column>                    
 
-                        <p:column exportable="false">
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmRecintos:outPnlRecintos" oncomplete="PF('dlgRecinto').show()"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{recintoController.cagraDatosRecintoSeleccionado}">
                                 <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />                                                                                        
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
                                 <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />
                             </p:commandButton>
                         </p:column>

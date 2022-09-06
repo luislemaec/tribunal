@@ -3,7 +3,8 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui"
-                template="/WEB-INF/template.xhtml">
+                template="/WEB-INF/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
 
     <ui:define name="title">Dashboard</ui:define>
 
@@ -14,12 +15,13 @@
     <ui:define name="content">
         <div class="layout-dashboard">
             <div class="grid">
+
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="overview-box sales">
                         <p:graphicImage name="images/icon-sales.png" library="ecuador-layout" styleClass="image-icon"/>
-                        <div class="overview-title">SALES</div>
+                        <div class="overview-title">RECINTOS</div>
                         <div class="overview-numbers">
-                            $ 32,700
+                            5
                         </div>
                         <div class="overview-subinfo grid">
                             <div class="col-6 progressbar">
@@ -32,9 +34,9 @@
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="overview-box views">
                         <p:graphicImage name="images/icon-views.png" library="ecuador-layout" style="margin-top:10px"/>
-                        <div class="overview-title">VIEWS</div>
+                        <div class="overview-title">MESAS</div>
                         <div class="overview-numbers">
-                            21,009
+                            10
                         </div>
                         <div class="overview-subinfo grid">
                             <div class="col-6 progressbar">
@@ -49,7 +51,7 @@
                         <p:graphicImage name="images/icon-users.png" library="ecuador-layout"/>
                         <div class="overview-title">PERSONAS</div>
                         <div class="overview-numbers">
-                            #{personaController.listaPersonas.size()}
+                            #{personaController.listaIglesiaPersona.size()}
                         </div>
                         <div class="overview-subinfo user">
                             <i class="pi pi-circle-on"/>
@@ -63,7 +65,7 @@
                                         styleClass="image-icon"/>
                         <div class="overview-title">IGLESIAS</div>
                         <div class="overview-numbers">
-                             #{iglesiaController.listaIglesias.size()}
+                            #{iglesiaController.listaIglesias.size()}
                         </div>
                         <div class="overview-subinfo checkin">
                             <i class="pi pi-circle-on"/>
@@ -71,10 +73,26 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-12 md:col-12 lg:col-12">
-                    <p:panel header="Upcoming Events" style="height:100%">
-                        <p:schedule value="#{calendarDemoView.eventModel}"/>
+
+                <div class="col-12 md:col-12 lg:col-4">
+                    <p:panel header="Account Timeline" styleClass="timeline" rendered="#{not empty procesoController.procesos}">
+                        <ul>
+                            <c:forEach var="item" items="#{procesoController.procesos}">
+                                <li>
+                                    <div class="date-indicator">
+                                        <span class="date">#{item.dias}</span>
+                                        <span class="time">#{item.horas}</span>
+                                    </div>
+                                    <div class="activity-link"></div>
+                                    <i class="pi pi-fw pi-circle-on #{item.actividad.contains('ERROR DE INGRESO AL SISTEMA')?'error':(item.actividad.contains('SALE DEL SISTEMA TEC')?'code':'success')}"/>
+                                    <div class="timeline-subject">
+                                        <span class="timeline-header">#{item.actividad}</span>
+                                        <span class="timeline-subheader">Usuario: #{item.usuarioCrea}</span>
+                                    </div>
+                                    <i class="pi pi-desktop device #{item.actividad.contains('ERROR DE INGRESO AL SISTEMA')?'error':(item.actividad.contains('SALE DEL SISTEMA TEC')?'code':'success')}"/>                                    
+                                </li>
+                            </c:forEach>                            
+                        </ul>
                     </p:panel>
                 </div>
             </div>
