@@ -1,0 +1,109 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Listas</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/listas">Listas</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmListas">
+            <div class="grid">                
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>ADMINITRACIÓN DE LISTAS</h5>
+                    <p:toolbar >
+                        <p:toolbarGroup >
+                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{listaController.nuevo}" update="outPnlListas" oncomplete="PF('dlgListas').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                            <p:commandButton id="btnEliminaRegistros" value="#{listaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{listaController.eliminarSeleccionados}"
+                                             styleClass="ui-button-danger" disabled="#{!listaController.existeSeleccionados()}" update="@this">
+                                <p:confirm header="Confirmation" message="¿Está Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
+                            </p:commandButton> 
+                        </p:toolbarGroup>
+                        <p:toolbarGroup align="right" >
+                            <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download" disabled="#{listaController.listaSeleccionado.id eq null}"/>
+                            <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty listaController.listas}">
+                                <p:dataExporter type="pdf" target="tblListas" fileName="Listas"/>
+                            </p:commandButton>
+                        </p:toolbarGroup>
+                    </p:toolbar>
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-12">
+
+                    <p:dataTable id="tblListas" widgetVar="wdTablaListas" var="lista" value="#{listaController.listas}" reflow="true" 
+                                 selection="#{listaController.listasSeleccionadas}" rowKey="#{lista.id}" rendered="#{not empty listaController.listas}"
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
+                        <p:ajax event="rowSelect" update=":frmListas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselect" update=":frmListas:btnEliminaRegistros" />
+                        <p:ajax event="rowSelectCheckbox" update=":frmListas:btnEliminaRegistros" />
+                        <p:ajax event="rowUnselectCheckbox" update=":frmListas:btnEliminaRegistros" />
+                        <p:ajax event="toggleSelect" update=":frmListas:btnEliminaRegistros" />
+
+                        <p:column selectionMode="multiple" exportable="false"></p:column>
+                        <p:column headerText="ID" sortBy="#{lista.id}" filterBy="#{lista.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{lista.id}" /></p:column>
+                        <p:column headerText="NOMBRE" sortBy="#{lista.nombre}" filterBy="#{lista.nombre}"  ><h:outputText value="#{lista.nombre}" /></p:column>
+                        <p:column headerText="SLOGAN" sortBy="#{lista.slogan}" filterBy="#{lista.slogan}"  ><h:outputText value="#{lista.slogan}" /></p:column>                        
+                        <p:column headerText="NUMERO" sortBy="#{lista.numero}" filterBy="#{lista.numero}"  ><h:outputText value="#{lista.numero}" /></p:column>                        
+
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
+                            <p:commandButton icon="pi pi-pencil" update=":frmListas:outPnlListas" oncomplete="PF('dlgListas').show()"
+                                             styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{listaController.cargaDatosMesaSeleccionado}">
+                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />                                                                                        
+                            </p:commandButton>
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+
+                <p:dialog header="Detalles Lista" showEffect="fade" modal="true" widgetVar="dlgListas" responsive="true">
+                    <p:outputPanel id="outPnlListas" class="ui-fluid">
+                        <p:outputPanel rendered="#{not empty listaController.listaSeleccionado}">
+
+                            <div class="field">
+                                <p:outputLabel for="txtNombre" value="Nombre" />
+                                <p:inputText id="txtNombre" value="#{listaController.listaSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field">
+                                <p:outputLabel for="txtSlogan" value="Slogan" />
+                                <p:inputText id="txtSlogan" value="#{listaController.listaSeleccionado.slogan}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+                            <div class="field">
+                                <p:outputLabel for="txtNumero" value="Numero" />
+                                <p:inputText id="txtNumero" value="#{listaController.listaSeleccionado.numero}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                            </div>
+
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{listaController.guardarSeleccionado}" update="outPnlListas, msgs" process="outPnlListas @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgListas').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>
+
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{listaController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                </p:confirmDialog>
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                </p:confirmDialog>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
