@@ -19,8 +19,8 @@ import org.primefaces.model.CheckboxTreeNode;
 import org.primefaces.model.TreeNode;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.CatalogoGeneral;
-import ec.com.antenasur.service.CatalogoGeneralFacade;
+import ec.com.antenasur.domain.tec.CatalogoGeneral;
+import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;

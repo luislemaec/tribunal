@@ -23,7 +23,7 @@ import ec.com.antenasur.domain.Geograp;
 import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.Persona;
-import ec.com.antenasur.service.CatalogoGeneralFacade;
+import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
 import ec.com.antenasur.service.GeograpFacade;
 import ec.com.antenasur.service.IglesiaFacade;
 import ec.com.antenasur.service.IglesiaPersonaFacade;

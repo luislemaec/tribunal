@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ec.com.antenasur.service;
+package ec.com.antenasur.service.tec;
 
 import ec.com.antenasur.domain.generic.AbstractFacade;
-import ec.com.antenasur.domain.Proceso;
+import ec.com.antenasur.domain.tec.Proceso;
 
 import java.util.List;
 import java.sql.Date;

@@ -1,4 +1,4 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
 import java.io.Serializable;
 
@@ -9,8 +9,12 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import ec.com.antenasur.domain.IglesiaPersona;
+import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
 import lombok.Getter;
@@ -23,7 +27,7 @@ import org.hibernate.envers.Audited;
  *
  */
 @Entity
-@Table(name = "cargos", schema = "tec")
+@Table(name = "miembros_jrv", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -31,26 +35,44 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
-
-@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
-public class Cargo extends EntidadAuditable implements Serializable {
+@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
+public class MiembrosJRV extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cargo_id")
     @Setter
     @Getter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "miem_id")
     private Integer id;
 
     @Setter
     @Getter
-    @Column(name = "cargo_nombre")
-    private String nombre;
+    @ManyToOne
+    @JoinColumn(name = "igpe_id")
+    private IglesiaPersona iglesiaPersona;
 
-    public Cargo() {
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "mesa_id")
+    private Mesa mesa;
+
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "periodo_id")
+    private Periodo periodo;
+
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "cargo_id")
+    private CatalogoGeneral cargo;
+
+    public MiembrosJRV() {
     }
 
 }

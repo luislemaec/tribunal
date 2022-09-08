@@ -86,7 +86,7 @@
                         <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
                         <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
                         <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
-                        <p:column headerText="ESTADO" sortBy="#{mesa.estado}" filterBy="#{mesa.estado}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estado}" /></p:column>                    
+                        <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                    
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"

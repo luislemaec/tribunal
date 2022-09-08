@@ -1,19 +1,18 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
+import ec.com.antenasur.domain.tec.TipoDocumento;
+import ec.com.antenasur.domain.tec.Mesa;
 import java.io.Serializable;
-import java.util.List;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
@@ -24,11 +23,11 @@ import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
 /**
- * The persistent class for the rpm_general_catalogue database table.
+ * The persistent class for the tec_recintos database table.
  *
  */
 @Entity
-@Table(name = "catalogo_general", schema = "tec")
+@Table(name = "documentos", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -38,56 +37,37 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
-public class CatalogoGeneral extends EntidadAuditable implements Serializable {
+public class Documentos extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Setter
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "catalogo_id")
+    @Column(name = "doc_id")
+    @Setter
+    @Getter
     private Integer id;
 
     @Setter
     @Getter
-    @Column(name = "catalogo_descripcion")
-    private String descripcion;
-
-    @Setter
-    @Getter
-    @Column(name = "catalogo_historial_id")
-    private Integer historial;
-
-    @Setter
-    @Getter
-    @Column(name = "catalogo_nombre")
+    @Column(name = "doc_nombre")
     private String nombre;
 
+    // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
-    @Column(name = "catalogo_orden")
-    private Integer orden;
-
+    @ManyToOne
+    @JoinColumn(name = "tipdoc_id")
+    private TipoDocumento tipoDocumento;
+    
+        // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
-    @Column(name = "catalogo_info")
-    private String info;
+    @ManyToOne
+    @JoinColumn(name = "mesa_id")
+    private Mesa mesa;
 
-    // bi-directional many-to-one association to GeneralCatalogue
-    @Setter
-    @Getter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "catalogo_padre_id")
-    private CatalogoGeneral padre;
-
-    // bi-directional many-to-one association to GeneralCatalogue
-    @Setter
-    @Getter
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "padre")
-    private List<CatalogoGeneral> listCatalogoGeneralHijos;
-
-    public CatalogoGeneral() {
+    public Documentos() {
     }
 
 }

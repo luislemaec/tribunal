@@ -95,7 +95,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public List<Geograp> findByFatherGeograp(Geograp geograp) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp=:geograp and m.status=true order by m.name ";            
+            String sql = "FROM Geograp m WHERE m.geograp=:geograp order by m.name ";            
             //Query query = super.getEntityManager().createQuery(sql);
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("geograp", geograp);

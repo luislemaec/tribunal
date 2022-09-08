@@ -11,10 +11,10 @@ import javax.inject.Named;
 import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Cargo;
-import ec.com.antenasur.domain.Periodo;
-import ec.com.antenasur.service.CargoFacade;
-import ec.com.antenasur.service.PeriodoFacade;
+import ec.com.antenasur.domain.tec.Cargo;
+import ec.com.antenasur.domain.tec.Periodo;
+import ec.com.antenasur.service.tec.CargoFacade;
+import ec.com.antenasur.service.tec.PeriodoFacade;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;

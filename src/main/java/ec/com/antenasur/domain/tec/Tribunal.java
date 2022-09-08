@@ -1,5 +1,6 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
+import ec.com.antenasur.domain.IglesiaPersona;
 import java.io.Serializable;
 
 import javax.persistence.AttributeOverride;
@@ -9,6 +10,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
@@ -18,8 +21,12 @@ import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
+/**
+ * The persistent class for the tec_recintos database table.
+ *
+ */
 @Entity
-@Table(name = "listas", schema = "tec")
+@Table(name = "tribunal", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -27,9 +34,9 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
-@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
-public class Lista extends EntidadAuditable implements Serializable {
+@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
+public class Tribunal extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,25 +44,28 @@ public class Lista extends EntidadAuditable implements Serializable {
     @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "lista_id")
+    @Column(name = "trib_id")
     private Integer id;
 
     @Setter
     @Getter
-    @Column(name = "lista_nombre")
-    private String nombre;
+    @ManyToOne
+    @JoinColumn(name = "igpe_id")
+    private IglesiaPersona iglesiaPersona;
 
     @Setter
     @Getter
-    @Column(name = "lista_slogan")
-    private String slogan;
+    @ManyToOne
+    @JoinColumn(name = "periodo_id")
+    private Periodo periodo;
 
     @Setter
     @Getter
-    @Column(name = "lista_numero")
-    private String numero;
+    @ManyToOne
+    @JoinColumn(name = "cargo_id")
+    private CatalogoGeneral cargo;
 
-    public Lista() {
+    public Tribunal() {
     }
 
 }

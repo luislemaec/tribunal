@@ -3,11 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ec.com.antenasur.service;
+package ec.com.antenasur.service.tec;
 
 import javax.ejb.Stateless;
 
-import ec.com.antenasur.domain.Cargo;
+import ec.com.antenasur.domain.tec.Cargo;
 import ec.com.antenasur.domain.generic.AbstractFacade;
 
 /**

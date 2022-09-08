@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ec.com.antenasur.service;
+package ec.com.antenasur.service.tec;
 
 import javax.ejb.Stateless;
 
-import ec.com.antenasur.domain.Candidato;
-import ec.com.antenasur.domain.CatalogoGeneral;
-import ec.com.antenasur.domain.Lista;
+import ec.com.antenasur.domain.tec.Candidato;
+import ec.com.antenasur.domain.tec.CatalogoGeneral;
+import ec.com.antenasur.domain.tec.Lista;
 import ec.com.antenasur.domain.generic.AbstractFacade;
 import java.util.List;
 import javax.persistence.TypedQuery;

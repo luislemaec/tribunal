@@ -1,11 +1,14 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
+import ec.com.antenasur.domain.Geograp;
 import java.io.Serializable;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,9 +16,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import ec.com.antenasur.enums.EstadoTarea;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -26,7 +29,7 @@ import org.hibernate.envers.Audited;
  *
  */
 @Entity
-@Table(name = "miembros_jrv", schema = "tec")
+@Table(name = "mesas", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -36,7 +39,7 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 @Audited
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
-public class MiembrosJRV extends EntidadAuditable implements Serializable {
+public class Mesa extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,34 +47,33 @@ public class MiembrosJRV extends EntidadAuditable implements Serializable {
     @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "miem_id")
+    @Column(name = "mesa_id")
     private Integer id;
 
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "igpe_id")
-    private IglesiaPersona iglesiaPersona;
+    @Column(name = "mesa_nombre")
+    private String nombre;
 
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "mesa_id")
-    private Mesa mesa;
+    @JoinColumn(name = "rec_id")
+    private Recinto recinto;
 
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "periodo_id")
-    private Periodo periodo;
+    @JoinColumn(name = "gelo_id")
+    private Geograp ubicacion;
 
-    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_tarea", length = 100)
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "cargo_id")
-    private CatalogoGeneral cargo;
+    @Setter
+    private EstadoTarea estadoTarea;
 
-    public MiembrosJRV() {
+    public Mesa() {
     }
 
 }

@@ -8,8 +8,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.domain.Proceso;
-import ec.com.antenasur.service.ProcesoFacade;
+import ec.com.antenasur.domain.tec.Proceso;
+import ec.com.antenasur.service.tec.ProcesoFacade;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;

@@ -9,110 +9,98 @@
         <li>Admin</li>
         <li>/</li>
         <li>
-            <p:link outcome="/candidatos">Acta de escrutinio</p:link>
+            <p:link outcome="/actaE">Acta de escrutinio</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
-        <h:form id="frmCandidatos">
+        <h:form id="frmActaE">
             <div class="grid">
-                <div class="col-12 md:col-12 lg:col-12">
+                <div class="col-12">
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-6">
-                                <div class="scalein animation-duration-500 animation-iteration-1 flex align-items-center justify-content-center
-                                     font-bold bg-cyan-500 text-white border-round m-1 px-1 py-5">Seleccione LISTA para agregar o quitar candidatos </div>
-                            </div>
-                            <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="rol" value="ROL" />
-                                <p:selectOneMenu id="rol" value="#{candidatoController.listaSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                     <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{candidatoController.listas}" var="lista"  itemLabel="#{lista.nombre}" itemValue="#{lista.id}"/>                                    
-                                    <p:ajax event="change"  listener="#{candidatoController.obtieneCandidatosPorListaSeleccionada()}" process="@this" update="frmCandidatos"/>                                    
+                                    <f:selectItems value="#{actaEController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaParroquiasPorCanton()}" process="@this" update="frmActaE, msgs"/>
                                 </p:selectOneMenu>
                             </div>
+                            <div class="field col-12 md:col-6 lg:col-6">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaRecintosPorParroquias()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="recintos" value="Recintos" />
+                                <p:selectOneMenu id="recintos" value="#{actaEController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty actaEController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaMesasPorRecintos()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="mesas" value="Mesas" />
+                                <p:selectOneMenu id="mesas" value="#{actaEController.mesaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty actaEController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.listaMesas}" var="mesa"  itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaDatosMesaSeleccionada()}" process="@this" update="frmActaE"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>                       
+                    </div>                        
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>REGISTRO DE VOTOS</h5>
+                    <p:dataTable id="tblActaE" widgetVar="wdTblCandidatos" var="actaE" value="#{actaEController.listaCamposActaE}" reflow="true" 
+                                 rendered="#{not empty actaEController.listaCamposActaE}"
+                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
+
+                        <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-2rem">
+                            <h:outputText value="#{actaE.id}" />
+                        </p:column>
+                        <p:column headerText="RECINTO" styleClass="sm:w-max md:w-4 lg:w-6rem">
+                            <h:outputText value="#{actaE.mesa.recinto.nombre}" />
+                        </p:column>
+                        <p:column headerText="MESA" styleClass="sm:w-max md:w-2 lg:w-6rem">
+                            <h:outputText value="#{actaE.mesa.nombre}" />
+                        </p:column>
+                        <p:column headerText="PERIODO" styleClass="sm:w-max md:w-1 lg:w-3rem">
+                            <h:outputText value="#{actaE.periodo.nombre}" />
+                        </p:column>  
+
+                        <p:column headerText="VOTOS" styleClass="sm:w-max md:w-1 lg:w-3rem" >
+                            <h:outputText value="#{actaE.categoria.nombre}" />
+                        </p:column>
+                        <p:column headerText="TOTAL " styleClass="sm:w-max md:w-1 lg:w-3rem" >                            
+                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="100" decimalPlaces="0" placeholder="15" required="true"/>                        
+                        </p:column> 
+
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
+                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
+                            </p:commandButton>
+                        </p:column>
+
+                    </p:dataTable>
+                    <div class="grid">
+                        <div class="col-12 md:col-4 lg:col-4 md:col-offset-4 md:flex mt-1">
+                            <p:commandButton id="btnRegistrar" update=":frmActaE:pnDetalleSeleccion tblActaE " value="#{msg['btn.guardar']}"  action="#{actaEController.guardaDatosMesaSeleccionada()}" 
+                                             ajax="false" styleClass="ui-button-success w-6 md:w-9 " rendered="#{not empty actaEController.listaCamposActaE}"/>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE CANDIDATOS</h5>
-                    <p:dataTable id="tblListas" widgetVar="wdTblCandidatos" var="candidato" value="#{candidatoController.candidatos}" reflow="true" 
-                                 rendered="#{not empty candidatoController.candidatos}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
-
-                        <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-3rem">
-                            <h:outputText value="#{candidato.id}" />
-                        </p:column>
-                        <p:column headerText="CARGO" styleClass="sm:w-max md:w-4 lg:w-9rem">
-                            <h:outputText value="#{candidato.cargo.nombre}" />
-                        </p:column>
-                        <p:column headerText="PERIODO" styleClass="sm:w-max md:w-1 lg:w-3rem">
-                            <h:outputText value="#{candidato.periodo.nombre}" />
-                        </p:column>  
-                        <p:column headerText="ASIGNAR" styleClass="sm:w-max md:w-4 lg:w-9rem" >
-                            <p:commandButton icon="pi pi-user-plus" update=":frmCandidatos" oncomplete="PF('dlgAsignaCandidato').show()"
-                                             styleClass="ui-button-raised rounded-button ui-button-success" process="@this" rendered="#{candidato.iglesiaPersona.persona eq null}">
-                                <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}"  />
-                            </p:commandButton>
-                            <h:outputText value="#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}" rendered="#{candidato.iglesiaPersona.persona ne null}" />                   
-                        </p:column>
-                        <p:column headerText="NUMERO" styleClass="sm:w-max md:w-1 lg:w-3rem" >
-                            <h:outputText value="#{candidato.lista.numero}" />
-                        </p:column>                        
-
-                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
-                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
-                                <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}" />
-                            </p:commandButton>
-                        </p:column>
-                    </p:dataTable>
-                </div>
-                <!-- DIALOG ASIGNA AUTORIDAD -->
-                <p:dialog  header="Asigna Candidato" showEffect="fade" modal="true" widgetVar="dlgAsignaCandidato" responsive="true">
-                    <p:outputPanel id="outPnlAsignaCandidatoBusca" class="ui-fluid" >
-                        <p:outputPanel rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona eq null}">
-                            <div class="formgroup-inline">
-                                <div class="field">
-                                    <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" 
-                                                 value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true"/>
-                                    <small class="ui-state-error">Ingrese número de cédula a buscar</small>
-                                </div>                                       
-                                <p:commandButton icon="pi pi-search" actionListener="#{candidatoController.buscaPersona}" update="outPnlAsignaCandidatoBusca, outPnlAsignaCandidato, msgs, outPnlFooter " process="outPnlAsignaCandidatoBusca @this" />
-                            </div>
-                        </p:outputPanel>
-                    </p:outputPanel>
-                    <p:outputPanel id="outPnlAsignaCandidato" class="ui-fluid">
-                        <p:outputPanel rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}">
-                            <div class="field">
-                                <p:outputLabel for="personaNombreBusca" value="Nombres" />                                   
-                                <p:inputText id="personaNombreBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.nombres}" required="true"/>
-                            </div>
-                            <div class="field">
-                                <p:outputLabel for="personaApellidoBusca" value="Apellidos" />                                   
-                                <p:inputText id="personaApellidoBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.apellidos}" required="true"/>
-                            </div>
-                            <div class="field">
-                                <p:outputLabel for="iglesiaNombreBusca" value="Iglesia" />                                   
-                                <p:inputText id="iglesiaNombreBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.iglesia.nombre}" required="true"/>
-                            </div>
-                        </p:outputPanel>
-                    </p:outputPanel>
-
-                    <f:facet name="footer" >
-                        <p:outputPanel id="outPnlFooter" class="ui-fluid">
-                            <p:commandButton id="btnGuardaAsignado" value="Guardar" icon="pi pi-check" actionListener="#{candidatoController.guardarCandidato}" 
-                                             update="outPnlAsignaCandidato, msgs" process="outPnlAsignaCandidato @this" rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}" />
-                            <p:commandButton id="btnCancelaAsignado" value="Cancel" icon="pi pi-times" onclick="PF('dlgAsignaCandidato').hide()" class="ui-button-secondary" 
-                                             rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}" />    
-                        </p:outputPanel>
-                    </f:facet>
-                </p:dialog>
                 <!-- FIN DIALOG ASIGNA AUTORIDAD -->
-
                 <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{candidatoController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{actaEController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
                     <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
                 </p:confirmDialog>
             </div>

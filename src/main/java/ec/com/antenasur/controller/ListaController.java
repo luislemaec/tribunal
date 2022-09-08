@@ -13,8 +13,8 @@ import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Lista;
-import ec.com.antenasur.service.ListaFacade;
+import ec.com.antenasur.domain.tec.Lista;
+import ec.com.antenasur.service.tec.ListaFacade;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;

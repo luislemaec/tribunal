@@ -1,4 +1,4 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
 import java.io.Serializable;
 
@@ -9,8 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
@@ -20,12 +18,8 @@ import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
-/**
- * The persistent class for the tec_recintos database table.
- *
- */
 @Entity
-@Table(name = "mesas", schema = "tec")
+@Table(name = "listas", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -33,9 +27,9 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
-@Audited
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
-public class Mesa extends EntidadAuditable implements Serializable {
+@Audited
+public class Lista extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,27 +37,25 @@ public class Mesa extends EntidadAuditable implements Serializable {
     @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "mesa_id")
+    @Column(name = "lista_id")
     private Integer id;
 
     @Setter
     @Getter
-    @Column(name = "mesa_nombre")
+    @Column(name = "lista_nombre")
     private String nombre;
 
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "rec_id")
-    private Recinto recinto;
+    @Column(name = "lista_slogan")
+    private String slogan;
 
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "gelo_id")
-    private Geograp ubicacion;
+    @Column(name = "lista_numero")
+    private String numero;
 
-    public Mesa() {
+    public Lista() {
     }
 
 }

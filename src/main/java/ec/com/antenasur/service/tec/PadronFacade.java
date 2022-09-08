@@ -3,17 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ec.com.antenasur.service;
+package ec.com.antenasur.service.tec;
 
 import ec.com.antenasur.domain.Iglesia;
-import ec.com.antenasur.domain.Mesa;
+import ec.com.antenasur.domain.tec.Mesa;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
-import ec.com.antenasur.domain.Padron;
+import ec.com.antenasur.domain.tec.Padron;
 import ec.com.antenasur.domain.generic.AbstractFacade;
 import javax.persistence.Query;
 

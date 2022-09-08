@@ -29,30 +29,13 @@ public class PlantillaCorreoFacade extends AbstractFacade<PlantillaCorreo, Integ
 
     public PlantillaCorreo buscarPorAsunto(String asunto) {
         try {
-            String sql = "FROM Rol r WHERE r.asunto=:asunto";
+            String sql = "FROM PlantillaCorreo r WHERE r.asunto=:asunto";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("asunto", asunto);
             List<PlantillaCorreo> resultList = query.getResultList();
 
             if (resultList != null && !resultList.isEmpty()) {
                 return resultList.get(0);
-            }
-
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
-
-    public List<PlantillaCorreo> getRolesAplicativoSeleccion() {
-        try {
-            String sql = "FROM PlantillaCorreo r WHERE r.nombre LIKE :rolSeleccion and r.estado=true";
-            Query query = super.getEntityManager().createQuery(sql);
-            query.setParameter("rolSeleccion", "SITEC-%");
-            List<PlantillaCorreo> resultList = query.getResultList();
-
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList;
             }
 
         } catch (NoResultException e) {

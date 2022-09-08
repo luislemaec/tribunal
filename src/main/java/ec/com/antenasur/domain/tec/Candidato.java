@@ -1,4 +1,4 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
 import java.io.Serializable;
 
@@ -13,9 +13,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import ec.com.antenasur.domain.IglesiaPersona;
+import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
@@ -25,7 +29,7 @@ import org.hibernate.envers.Audited;
  *
  */
 @Entity
-@Table(name = "documentos", schema = "tec")
+@Table(name = "candidatos", schema = "tec")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -33,39 +37,45 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
+
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
-public class Documentos extends EntidadAuditable implements Serializable {
+
+@AllArgsConstructor
+@NoArgsConstructor
+public class Candidato extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "doc_id")
     @Setter
     @Getter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cand_id")
     private Integer id;
 
     @Setter
     @Getter
-    @Column(name = "doc_nombre")
-    private String nombre;
+    @ManyToOne
+    @JoinColumn(name = "igpe_id")
+    private IglesiaPersona iglesiaPersona;
 
-    // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "tipdoc_id")
-    private TipoDocumento tipoDocumento;
-    
-        // bi-directional many-to-one association to Usuario
+    @JoinColumn(name = "lista_id")
+    private Lista lista;
+
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "mesa_id")
-    private Mesa mesa;
+    @JoinColumn(name = "periodo_id")
+    private Periodo periodo;
 
-    public Documentos() {
-    }
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "cargo_id")
+    private CatalogoGeneral cargo;
 
 }

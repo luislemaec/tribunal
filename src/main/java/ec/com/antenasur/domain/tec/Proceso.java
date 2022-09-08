@@ -1,4 +1,4 @@
-package ec.com.antenasur.domain;
+package ec.com.antenasur.domain.tec;
 
 import java.io.Serializable;
 
@@ -9,73 +9,65 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import java.util.Date;
+import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
-
 import org.hibernate.annotations.Filter;
-import org.hibernate.envers.Audited;
 
 /**
- * The persistent class for the tec_recintos database table.
+ * The persistent class for the sel_proceso database table.
  *
  */
 @Entity
-@Table(name = "padron", schema = "tec")
-
+@Table(name = "procesos", schema = "tec")
+@NamedQuery(name = "Proceso.findAll", query = "SELECT p FROM Proceso p")
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
     @AttributeOverride(name = "fechaCrea", column = @Column(name = "f_crea")),
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
-@Audited
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
-public class Padron extends EntidadAuditable implements Serializable {
+public class Proceso extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Setter
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "padron_id")
+    @Column(name = "proceso_id")
+    @Setter
+    @Getter
     private Integer id;
 
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "igpe_id")
-    private IglesiaPersona iglesiaPersona;
+    private String actividad;
 
     @Setter
     @Getter
-    @ManyToOne   
-    @JoinColumn(name = "mesa_id")
-    private Mesa mesa;
+    private String ip;
 
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "periodo_id")
-    private Periodo periodo;
+    @Transient
+    private String horas;
 
-    @Getter
     @Setter
-    @Column(name = "sufrago")
-    protected Boolean sufrago = false;
+    @Getter
+    @Transient
+    private String dias;
 
-    public Padron() {
+    public Proceso() {
     }
 
-    public Padron(Mesa mesa, Periodo periodo, IglesiaPersona iglesiaPersona) {
-        this.mesa = mesa;
-        this.periodo = periodo;
-        this.iglesiaPersona = iglesiaPersona;
+    public Proceso(String ip) {
+        this.ip = ip;
     }
+
 }

@@ -21,10 +21,10 @@ import org.apache.log4j.Logger;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
-import ec.com.antenasur.domain.Proceso;
+import ec.com.antenasur.domain.tec.Proceso;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.ReporteXLSX;
-import ec.com.antenasur.service.ProcesoFacade;
+import ec.com.antenasur.service.tec.ProcesoFacade;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
