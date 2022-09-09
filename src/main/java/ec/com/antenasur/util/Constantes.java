@@ -36,13 +36,32 @@ public class Constantes {
      * @author Luis Lema Retorna el path de la imagen para enviar al correo
      *
      */
-    public static final String getUrlAdjunto() {
+    public static final String getPathLogo() {
         ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
         return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "img"
                 + File.separator + "logo_consejo_417x150.png";
 
     }
 
+    public static final String getMontserratRegular() {
+        ExternalContext externalContext = JsfUtil.getExternalContext();
+        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
+                + File.separator + "Montserrat-Regular.ttf";
+    }
+
+    public static final String getHojaEstilo() {
+        return "p {font-size: 10pt; margin-top: 1em; margin-bottom: 1em; font-family: montsR;}"
+                + "h1{font-size: 37pt; font-family: montsB; color: #185285; margin-bottom: 1.2em;}"
+                + "#url{font-size: 18pt; font-family: montsSB; color: #36A9E1;}" //url                                                               
+                + "h3{font-size: 13pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
+                + "h4{font-size: 13pt; font-family: montsR; margin-top:6em}";//AUTORIDAD
+    }
+
+    /**
+     *
+     * @param value
+     * @return
+     */
     private static String loadFromExternalProperties(String value) {
         try {
             String realAdd = System.getProperty("jboss.home.dir") + "/standalone/configuration/rpm-catalogos.properties";

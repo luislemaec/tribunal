@@ -19,6 +19,8 @@ import ec.com.antenasur.domain.tec.Recinto;
 import ec.com.antenasur.service.tec.MesaFacade;
 import ec.com.antenasur.service.tec.RecintoFacade;
 import ec.com.antenasur.util.JsfUtil;
+import ec.com.antenasur.util.ModeloColumna;
+import ec.com.antenasur.util.ReflectionColumnModelBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,9 +81,16 @@ public class MesaController implements Serializable {
     @Getter
     private List<Recinto> listaRecintos;
 
+    @Setter
+    @Getter
+    private List<ModeloColumna> columnas = new ArrayList<ModeloColumna>(0);
+
     @PostConstruct
     private void init() {
         try {
+            this.columnas = new ReflectionColumnModelBuilder(Mesa.class).setExcludedProperties("id", "fechaCrea", "fechaActualiza", "usuarioCrea", "usuarioActualiza", 
+            		"estado","seleccionado","persisted").build();
+
             this.cantonSeleccionado = parroquiaSeleccionado = new Geograp();
             this.recintoSeleccionado = new Recinto();
             this.listaMesas = this.listaMesasSeleccionados = new ArrayList<>();

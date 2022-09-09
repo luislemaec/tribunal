@@ -16,17 +16,22 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.FontProvider;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
+import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.JsfUtil;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.faces.context.ExternalContext;
-import javax.servlet.ServletContext;
 
 /**
  *
@@ -43,20 +48,19 @@ public class ReportePFD {
 
     private static PdfWriter writer;
 
-    private static ExternalContext externalContext;
-
     private static String PATH_LOGO;
 
     private static PdfPTable table;
 
+    private static XMLWorkerHelper worker;
+
+    private static InputStream inputStream;
+
     private static void inicializa() {
         try {
-            externalContext = FacesContext.getCurrentInstance().getExternalContext();
-            ServletContext servletContext = (ServletContext) externalContext.getContext();
-            String webRoot = servletContext.getRealPath("/");
-
+            worker = XMLWorkerHelper.getInstance();
             /*Agrega Banner cabecera al documento*/
-            PATH_LOGO = webRoot + "/resources/img/logo_consejo_417x150.png";
+            PATH_LOGO = Constantes.getPathLogo();
         } catch (Exception e) {
             LOG.error("ERROR AL INICIALIZAR VALORES" + e);
         }
@@ -106,6 +110,16 @@ public class ReportePFD {
         }
     }
 
+    public static void addTableHeader(int numColumns, String tableTitle, String fontname, float size,
+            int style, BaseColor color) {
+
+        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, FontFactory.getFont(fontname, size, style, color)));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setBackgroundColor(new BaseColor(187, 222, 251));
+        cell.setColspan(numColumns);
+        table.addCell(cell);
+    }
+
     public static void setMetadataDocument(Document document, String nombreReporte) {
         try {
             document.addAuthor("Luis Lema");
@@ -147,16 +161,6 @@ public class ReportePFD {
         }
     }
 
-    public static void addTableHeader(int numColumns, String tableTitle, String fontname, float size,
-            int style, BaseColor color) {
-
-        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, FontFactory.getFont(fontname, size, style, color)));
-        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cell.setBackgroundColor(new BaseColor(187, 222, 251));
-        cell.setColspan(numColumns);
-        table.addCell(cell);
-    }
-
     public static void addImagen(String rutaImagen, float fitWidth, float fitHeight, int alignment, Document document)
             throws DocumentException {
         try {
@@ -170,7 +174,7 @@ public class ReportePFD {
 
     }
 
-    public static void addParagraph(Document document, String string) {
+    public static void addParagraph(String string) {
         try {
             document.add(new Paragraph(string));
         } catch (DocumentException ex) {
@@ -204,7 +208,7 @@ public class ReportePFD {
 
     public static void descargarPDF(String nombreReporte) {
         try {
-            HttpServletResponse response = (HttpServletResponse) externalContext.getResponse();
+            HttpServletResponse response = JsfUtil.getHttpServletResponse();
             OutputStream out = response.getOutputStream();
             response.setContentType("application/octet-stream");
             response.setHeader("Content-Disposition", "attachment;filename=\"" + nombreReporte + ".pdf\"");
@@ -241,7 +245,7 @@ public class ReportePFD {
         }
     }
 
-    public static void getWhiteParagraph() {
+    public static void agregaParrafoEnBlanco() {
         try {
             Paragraph parrafo = new Paragraph("\n",
                     FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
@@ -249,6 +253,16 @@ public class ReportePFD {
             document.add(parrafo);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void agregaHTML(String texto, String css, FontProvider fontProvider) {
+        try {
+            InputStream inputStreamCss = new ByteArrayInputStream(css.getBytes(("UTF-8")));
+            inputStream = new ByteArrayInputStream(texto.getBytes(("UTF-8")));
+            worker.parseXHtml(writer, document, inputStream, inputStreamCss, Charset.forName("UTF-8"), fontProvider);
+        } catch (IOException ex) {
+            Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

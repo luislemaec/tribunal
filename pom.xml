@@ -103,6 +103,12 @@ language governing permissions and limitations under the License. -->
             <artifactId>itextpdf</artifactId>
             <version>5.5.13.1</version>
         </dependency>
+        
+        <dependency>
+            <groupId>com.itextpdf.tool</groupId>
+            <artifactId>xmlworker</artifactId>
+            <version>5.5.13.2</version>
+        </dependency>
 
         <!-- M A I L -->
         <dependency>
@@ -111,6 +117,18 @@ language governing permissions and limitations under the License. -->
             <version>1.6.2</version>
         </dependency>
 
+        <!--APACHE-->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
         <dependency>

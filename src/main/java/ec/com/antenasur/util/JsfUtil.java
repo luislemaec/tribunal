@@ -14,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +29,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -52,12 +54,12 @@ public class JsfUtil implements Serializable {
         return FacesContext.getCurrentInstance().getExternalContext();
     }
 
-    public static HttpServletRequest getHttpServletRequest() {
-        return (HttpServletRequest) getExternalContext().getRequest();
-    }
-
     public static HttpSession geSession() {
         return (HttpSession) getExternalContext().getSession(true);
+    }
+
+    public static HttpServletResponse getHttpServletResponse() {
+        return (HttpServletResponse) getExternalContext().getResponse();
     }
 
     /**
@@ -91,9 +93,7 @@ public class JsfUtil implements Serializable {
     }
 
     public static HttpServletRequest getRequest() {
-        FacesContext context = FacesContext.getCurrentInstance();
-        HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        return request;
+        return (HttpServletRequest) getExternalContext().getRequest();
     }
 
     /**
@@ -103,6 +103,60 @@ public class JsfUtil implements Serializable {
      */
     public static String getHttpReferer() {
         return FacesContext.getCurrentInstance().getExternalContext().getRequestHeaderMap().get("referer");
+    }
+
+    /**
+     * Obtiene pagina inicial
+     *
+     * @return
+     */
+    public static String getStartPage() {
+        HttpServletRequest req = getRequest();
+        String url = req.getRequestURL().toString();
+        return url.substring(0, url.indexOf(req.getContextPath()) + req.getContextPath().length());
+    }
+
+    /**
+     * Devuelve un objeto cargado a session
+     *
+     * @param nombre
+     * @return object
+     */
+    public static Object devolverObjetoSession(final String nombre) {
+        HttpServletRequest request = getRequest();
+        return request.getSession().getAttribute(nombre);
+    }
+
+    /**
+     * Devuelve un objeto cargado a session y lo elimina
+     *
+     * @param nombre
+     * @return object
+     */
+    public static Object devolverEliminarObjetoSession(final String nombre) {
+        HttpServletRequest request = getRequest();
+        Object object = request.getSession().getAttribute(nombre);
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getExternalContext().getSessionMap().remove(nombre);
+        return object;
+    }
+
+    public static void eliminarObjetoSession(final String... nombre) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        for (String s : nombre) {
+            context.getExternalContext().getSessionMap().remove(s);
+        }
+    }
+
+    /**
+     * Carga objeto a session
+     *
+     * @param nombre
+     * @param object
+     */
+    public static void cargarObjetoSession(final String nombre, final Object object) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getExternalContext().getSessionMap().put(nombre, object);
     }
 
     /* M E N S A J E S */
@@ -388,13 +442,6 @@ public class JsfUtil implements Serializable {
         return valido;
     }
 
-    public static String getStartPage() {
-        FacesContext context = FacesContext.getCurrentInstance();
-        HttpServletRequest req = (HttpServletRequest) context.getExternalContext().getRequest();
-        String url = req.getRequestURL().toString();
-        return url.substring(0, url.indexOf(req.getContextPath()) + req.getContextPath().length());
-    }
-
     /**
      * Obtener valor de un archivo .properties de la aplicacion
      *
@@ -574,6 +621,23 @@ public class JsfUtil implements Serializable {
                 + fecha.get(Calendar.YEAR);
     }
 
+    public static String getFechaStringddMMYY(Date date) {
+        String fechaString = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(date);
+        return fechaString.substring(0, 10);        
+    }
+
+    public static String getHoraStringHHmmss(Date date) {
+        String fechaString = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(date);
+        return fechaString.substring(11, 19);        
+    }
+
+    public static String getFechaParaActas(Date date) {
+        Calendar fecha = Calendar.getInstance();
+        fecha.setTime(date);
+        return "a los " + fecha.get(Calendar.DAY_OF_MONTH) + " días del mes de " + mesText(fecha.get(Calendar.MONTH) + 1) + " de "
+                + fecha.get(Calendar.YEAR);
+    }
+
     public static Timestamp getTimestamp() {
         Date date = new Date();
         Timestamp ts = new Timestamp(date.getTime());
@@ -671,49 +735,6 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Carga objeto a session
-     *
-     * @param nombre
-     * @param object
-     */
-    public static void cargarObjetoSession(final String nombre, final Object object) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getExternalContext().getSessionMap().put(nombre, object);
-    }
-
-    /**
-     * Devuelve un objeto cargado a session
-     *
-     * @param nombre
-     * @return object
-     */
-    public static Object devolverObjetoSession(final String nombre) {
-        HttpServletRequest request = getRequest();
-        return request.getSession().getAttribute(nombre);
-    }
-
-    /**
-     * Devuelve un objeto cargado a session y lo elimina
-     *
-     * @param nombre
-     * @return object
-     */
-    public static Object devolverEliminarObjetoSession(final String nombre) {
-        HttpServletRequest request = getRequest();
-        Object object = request.getSession().getAttribute(nombre);
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getExternalContext().getSessionMap().remove(nombre);
-        return object;
-    }
-
-    public static void eliminarObjetoSession(final String... nombre) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        for (String s : nombre) {
-            context.getExternalContext().getSessionMap().remove(s);
-        }
-    }
-
-    /**
      * Valida si una pagina tiene permisos de acceso desde una session iniciada.
      *
      * @param pagina
@@ -731,24 +752,25 @@ public class JsfUtil implements Serializable {
     }
 
     public static boolean validarContrasenia(final String clave) {
-		boolean resultado = false;
-		Integer cadenaPass = clave.length();
-		if (cadenaPass > 7) {
-			Pattern pat = Pattern.compile("^(?=\\w*\\d)(?=\\w*[A-Z])(?=\\w*[a-z])\\S{8,16}$");
-			Matcher mat = pat.matcher(clave);
-			if (mat.matches()) {
-				resultado = true;
-			} else {
-				resultado = false;
-				JsfUtil.addInfoMessage(
-						"Debe tener al menos un dígito, una minúscula, una mayúscula y un mínimo 8 caracteres");
-			}
-		} else {
-			resultado = false;
-			JsfUtil.addErrorMessage("Por favor ingresar mínimo 8 caracteres en el ingreso de la contraseña");
-		}
-		return resultado;
-	}
+        boolean resultado = false;
+        Integer cadenaPass = clave.length();
+        if (cadenaPass > 7) {
+            Pattern pat = Pattern.compile("^(?=\\w*\\d)(?=\\w*[A-Z])(?=\\w*[a-z])\\S{8,16}$");
+            Matcher mat = pat.matcher(clave);
+            if (mat.matches()) {
+                resultado = true;
+            } else {
+                resultado = false;
+                JsfUtil.addInfoMessage(
+                        "Debe tener al menos un dígito, una minúscula, una mayúscula y un mínimo 8 caracteres");
+            }
+        } else {
+            resultado = false;
+            JsfUtil.addErrorMessage("Por favor ingresar mínimo 8 caracteres en el ingreso de la contraseña");
+        }
+        return resultado;
+    }
+
     /**
      * Devuelve direción ip del servidor
      */

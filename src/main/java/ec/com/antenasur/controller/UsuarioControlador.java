@@ -265,7 +265,7 @@ public class UsuarioControlador implements Serializable {
         textHtml = textHtml + Constantes.FIRMA_CORREO;
         List<String> emailsDestino = new ArrayList<>();
 
-        String pathAdjunto = Constantes.getUrlAdjunto();
+        String pathAdjunto = Constantes.getPathLogo();
         emailsDestino.add(usuarioSeleccionado.getCorreo());
 
         String asunto = "Creación de usuarios";

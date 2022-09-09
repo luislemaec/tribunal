@@ -49,19 +49,19 @@
                                 <p:selectOneMenu id="mesas" value="#{actaEController.mesaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty actaEController.listaRecintos}">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{actaEController.listaMesas}" var="mesa"  itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
-                                    <p:ajax event="change"  listener="#{actaEController.cargaDatosMesaSeleccionada()}" process="@this" update="frmActaE"/>
+                                    <p:ajax event="change" listener="#{actaEController.cargaDatosMesaSeleccionada()}" process="@this" update="frmActaE"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>                       
                     </div>                        
                 </div>
 
-                <div class="col-12 md:col-12 lg:col-12">
-                    <h5>REGISTRO DE VOTOS</h5>
+                <div class="col-12 md:col-12 lg:col-12" style="display: #{not empty actaEController.listaCamposActaE?'true':'none'}">
+
                     <p:dataTable id="tblActaE" widgetVar="wdTblCandidatos" var="actaE" value="#{actaEController.listaCamposActaE}" reflow="true" 
-                                 rendered="#{not empty actaEController.listaCamposActaE}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
+                                 rendered="#{not empty actaEController.listaCamposActaE and not empty actaEController.mesaSeleccionado }"
+                                 rowSelectMode="add" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1 card" >
 
                         <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-2rem">
                             <h:outputText value="#{actaE.id}" />
@@ -80,22 +80,32 @@
                             <h:outputText value="#{actaE.categoria.nombre}" />
                         </p:column>
                         <p:column headerText="TOTAL " styleClass="sm:w-max md:w-1 lg:w-3rem" >                            
-                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="100" decimalPlaces="0" placeholder="15" required="true"/>                        
+                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="100" decimalPlaces="0" placeholder="15" 
+                                           required="true" disabled="#{actaE.mesa.estadoTarea eq 'COMPLETADO'}"/>                        
                         </p:column> 
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
-                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this"
+                                             oncomplete="PF('dlgEliminaRegistro').show()"  disabled="#{actaE.mesa.estadoTarea eq 'COMPLETADO'}">
                                 <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
                             </p:commandButton>
                         </p:column>
-
+                        <f:facet name="header">
+                            <div class="grid">
+                                <div class="col-12 text-center ">
+                                    <b>REGISTRO DE VOTOS</b>
+                                </div>
+                            </div>
+                        </f:facet>
+                        <f:facet name="footer">
+                            <div class="grid">
+                                <div class="col-12 md:col-4 lg:col-4 md:col-offset-4 md:flex ">
+                                    <p:commandButton id="btnRegistrar" process=":frmActaE:tblActaE" value="#{msg['btn.guardar']}"  action="#{actaEController.guardaDatosMesaSeleccionada()}"  
+                                                     ajax="false" styleClass="ui-button-success w-6 md:w-9 " rendered="#{not empty actaEController.listaCamposActaE}" disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'}"/>
+                                </div>
+                            </div>
+                        </f:facet>
                     </p:dataTable>
-                    <div class="grid">
-                        <div class="col-12 md:col-4 lg:col-4 md:col-offset-4 md:flex mt-1">
-                            <p:commandButton id="btnRegistrar" update=":frmActaE:pnDetalleSeleccion tblActaE " value="#{msg['btn.guardar']}"  action="#{actaEController.guardaDatosMesaSeleccionada()}" 
-                                             ajax="false" styleClass="ui-button-success w-6 md:w-9 " rendered="#{not empty actaEController.listaCamposActaE}"/>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- FIN DIALOG ASIGNA AUTORIDAD -->

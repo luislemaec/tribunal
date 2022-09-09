@@ -55,7 +55,7 @@
                                     <p:ajax event="change" listener="#{mesaController.obtieneMesasPorParroquia()}" process="@this" update="frmMesas msgs"/>                            
                                 </p:selectOneMenu>
                             </div>
-                            
+
                             <div class="field col-12 lg:col-6">
                                 <p:outputLabel for="recintos" value="Recintos" />
                                 <p:selectOneMenu id="recintos" value="#{mesaController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaRecintos}">
@@ -81,12 +81,12 @@
                         <p:ajax event="toggleSelect" update=":frmMesas:btnEliminaRegistros" />
 
                         <p:column selectionMode="multiple" exportable="false"></p:column>
-                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
-                        <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
-                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
-                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
-                        <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                    
+                            <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
+                            <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
+                            <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
+                            <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
+                            <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
+                            <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                      
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
