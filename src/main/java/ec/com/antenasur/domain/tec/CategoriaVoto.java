@@ -53,6 +53,11 @@ public class CategoriaVoto extends EntidadAuditable implements Serializable {
     @Setter
     @Getter
     private Integer categoriaVoto;
+    
+    @Setter
+    @Getter
+    @Column(name = "cat_orden")
+    private Integer orden;
         
 
 }

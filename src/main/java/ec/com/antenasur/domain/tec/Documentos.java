@@ -17,6 +17,9 @@ import javax.persistence.Table;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import java.io.File;
+import java.util.Date;
+import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -53,19 +56,59 @@ public class Documentos extends EntidadAuditable implements Serializable {
     @Column(name = "doc_nombre")
     private String nombre;
 
+    @Setter
+    @Getter
+    @Column(name = "doc_path")
+    private String path;
+
     // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
     @ManyToOne
     @JoinColumn(name = "tipdoc_id")
     private TipoDocumento tipoDocumento;
-    
-        // bi-directional many-to-one association to Usuario
+
+    // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
     @ManyToOne
     @JoinColumn(name = "mesa_id")
     private Mesa mesa;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_extension")
+    private String extension;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_mime")
+    private String mime;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_codigo")
+    private String codigo;
+
+    @Setter
+    @Getter
+    @Transient
+    private byte[] contenidoDocumento;
+
+    @Setter
+    @Getter
+    @Transient
+    private File contenidoDocumentoFile;
+
+    @Setter
+    @Getter
+    @Transient
+    private String tipoContenido;
+
+    @Setter
+    @Getter
+    @Transient
+    private Date fechaModificacion;
 
     public Documentos() {
     }

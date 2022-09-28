@@ -623,12 +623,17 @@ public class JsfUtil implements Serializable {
 
     public static String getFechaStringddMMYY(Date date) {
         String fechaString = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(date);
-        return fechaString.substring(0, 10);        
+        return fechaString.substring(0, 10);
+    }
+
+    public static String getFechaStringYYYYMMddHHmm(Date date) {
+        String fechaString = new SimpleDateFormat("yyyyMMddHHmmss").format(date);
+        return fechaString.substring(0, 12);
     }
 
     public static String getHoraStringHHmmss(Date date) {
         String fechaString = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(date);
-        return fechaString.substring(11, 19);        
+        return fechaString.substring(11, 19);
     }
 
     public static String getFechaParaActas(Date date) {

@@ -29,6 +29,9 @@ import ec.com.antenasur.util.JsfUtil;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,6 +58,8 @@ public class ReportePFD {
     private static XMLWorkerHelper worker;
 
     private static InputStream inputStream;
+
+    private static Font fuente;
 
     private static void inicializa() {
         try {
@@ -99,21 +104,20 @@ public class ReportePFD {
     }
 
     public static void creaTablaCabecera(int numColumns, float[] columWidth, String tableTitle,
-            String[] listColumNames) {
+            String[] listColumNames, Font fuente) {
         try {
             table = new PdfPTable(numColumns);
             //table.setLockedWidth(true);
             table.setWidthPercentage(100);
-            addTableToDocument(numColumns, columWidth, tableTitle, listColumNames);
+            addTableToDocument(numColumns, columWidth, tableTitle, listColumNames, fuente);
 
         } catch (Exception e) {
         }
     }
 
-    public static void addTableHeader(int numColumns, String tableTitle, String fontname, float size,
-            int style, BaseColor color) {
+    public static void addTableHeader(int numColumns, String tableTitle, Font fuente) {
 
-        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, FontFactory.getFont(fontname, size, style, color)));
+        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, fuente));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setBackgroundColor(new BaseColor(187, 222, 251));
         cell.setColspan(numColumns);
@@ -132,26 +136,25 @@ public class ReportePFD {
     }
 
     public static void addTableToDocument(int numColumns, float[] columWidth, String tableTitle,
-            String[] listColumNames) {
+            String[] listColumNames, Font fuente) {
         try {
             table.setTotalWidth(columWidth);
-            addTableHeader(numColumns, tableTitle, "arial", 7, Font.BOLD, BaseColor.BLACK);
+            addTableHeader(numColumns, tableTitle, fuente);
 
             for (String columName : listColumNames) {
                 table.addCell(new PdfPCell(
-                        new Paragraph(columName, FontFactory.getFont("arial", 7, Font.BOLD, BaseColor.BLACK))));
+                        new Paragraph(columName, fuente)));
             }
-
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public static void creaContenidoTabla(String[][] listaDatos, String[] listColumnNames, int sizeFont) {
+    public static void creaContenidoTabla(String[][] listaDatos, String[] listColumnNames, Font fuente) {
         try {
             for (String[] medio : listaDatos) {
                 for (int i = 0; i < medio.length; i++) {
-                    table.addCell(new PdfPCell(new Paragraph(medio[i], FontFactory.getFont("arial", (sizeFont > 0 ? sizeFont : 6), Font.NORMAL, BaseColor.BLACK))));
+                    table.addCell(new PdfPCell(new Paragraph(medio[i], fuente)));
                 }
             }
             document.add(table);
@@ -229,6 +232,16 @@ public class ReportePFD {
         }
     }
 
+    public static void guardarDocumentosActasE(String nombreDocumento) {
+        try {
+            Path path = Paths.get("C:\\ARCHIVOS\\ACTASE\\" + nombreDocumento + ".pdf");
+            Files.write(path, baos.toByteArray());
+        } catch (IOException e) {
+            LOG.error("ERROR AL GUARDAR ARCHIVOS" + nombreDocumento, e);
+        }
+
+    }
+
     public static void getFinalParagraph(String nombreUsuario) {
         try {
             String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
@@ -265,4 +278,5 @@ public class ReportePFD {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
 }

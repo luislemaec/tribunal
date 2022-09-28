@@ -81,14 +81,19 @@
                         <p:ajax event="toggleSelect" update=":frmMesas:btnEliminaRegistros" />
 
                         <p:column selectionMode="multiple" exportable="false"></p:column>
-                            <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
-                            <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
-                            <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
-                            <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
-                            <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
-                            <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                      
+                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
+                        <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
+                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
+                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
+                        <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                      
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
+                            <p:commandButton  process="@this" icon="pi pi-list" oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Histórico" 
+                                              update="frmMesas:pndHistory " styleClass="ui-button-secondary">                             
+                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" /> 
+                            </p:commandButton>
+
                             <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{mesaController.cargaDatosMesaSeleccionado}">
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />                                                                                        
@@ -141,7 +146,36 @@
                         <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgMesa').hide()" class="ui-button-secondary" />
                     </f:facet>
                 </p:dialog>
+                <!-- DLG DOWNLOAD DOC -->
+                <p:dialog header="Descargar documentos históricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
+                    <p:dataTable var="doc" value="#{mesaController.documentos}"
+                                 widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
+                                 reflow="true" rows="5" paginator="true" paginatorPosition="top"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
+                                 rowsPerPageTemplate="5,10,15" >
 
+                        <p:column width="7%">
+                            <p:commandButton ajax="false" immediate="true" process="@this" icon="pi pi-download"  title="Descargar documento"  >
+                                <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}" />
+                                <p:fileDownload value="#{documentoBean.file}"></p:fileDownload>
+                            </p:commandButton>               
+                        </p:column>
+
+                        <p:column headerText="Nombre" ><h:outputText value="#{doc.nombre}" /></p:column>
+
+                        <p:column headerText="Código" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
+
+                        <p:column headerText="Estado" width="15%" >                            
+                            <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}" value="#{doc.estado?'Vigente':'Archivado'}"></p:tag>                                                                        
+                        </p:column>
+
+                        <p:column headerText="Fecha de creación" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
+
+                    </p:dataTable>
+                    <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
+                </p:dialog>
+                <!-- comment -->
                 <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
                     <p:commandButton value="Si" icon="pi pi-check" actionListener="#{mesaController.eliminarMesaSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
                     <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />

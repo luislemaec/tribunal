@@ -1,5 +1,8 @@
 package ec.com.antenasur.util;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -23,6 +26,8 @@ public class Constantes {
     public static final String ESTADO_PROCESO_ABORTADO = "ABORTADO";
     public static final String ESTADO_TAREA_COMPLETADA = "COMPLETADO";
 
+    /*TIPOS DE DOCUMENTOS*/
+    public static final Integer TIPO_ACTA_ESCRUTINIO = 1;
     /**
      * Retorna pirma del correo
      */
@@ -43,18 +48,50 @@ public class Constantes {
 
     }
 
-    public static final String getMontserratRegular() {
-        ExternalContext externalContext = JsfUtil.getExternalContext();
-        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
-                + File.separator + "Montserrat-Regular.ttf";
+    /*----------------------------------- FUENTE -----------------------------------*/
+    public static Font getFuenteCabeceraDefault(final float tamanioLetra) {
+        String aliasFuente = "Montserrat-Bold";
+        String pathFuente = getPathFuenteExterna("Montserrat-Bold.ttf");
+        FontFactory.register(pathFuente, aliasFuente);
+        return FontFactory.getFont(aliasFuente, tamanioLetra, Font.NORMAL, BaseColor.BLACK);
     }
 
+    public static Font getFuenteContenidoDefault(final float tamanioLetra) {
+        String aliasFuente = "Montserrat-Regular";
+        String pathFuente = getPathFuenteExterna("Montserrat-Regular.ttf");
+        FontFactory.register(pathFuente, aliasFuente);
+        return FontFactory.getFont(aliasFuente, tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+    }
+
+    public static Font getFuente(final String nombreFuenteConExtension, final float tamanioLetra, final int estiloFuente, final BaseColor color) {
+        String aliasFuente = nombreFuenteConExtension.replaceAll("ttf", "");
+        String pathFuente = getPathFuenteExterna(nombreFuenteConExtension);
+        FontFactory.register(pathFuente, aliasFuente);
+        return FontFactory.getFont(aliasFuente, tamanioLetra, estiloFuente, color);
+    }
+
+    public static final String getPathFuenteExterna(String nombreFuenteConExtension) {
+        ExternalContext externalContext = JsfUtil.getExternalContext();
+        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
+                + File.separator + nombreFuenteConExtension;
+    }
+
+    public static final String getPathArchivos() {
+        ExternalContext externalContext = JsfUtil.getExternalContext();
+        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
+                + File.separator;
+    }
+
+    /*----------------------------------- FIN FUENTE -----------------------------------*/
     public static final String getHojaEstilo() {
-        return "p {font-size: 10pt; margin-top: 1em; margin-bottom: 1em; font-family: montsR;}"
-                + "h1{font-size: 37pt; font-family: montsB; color: #185285; margin-bottom: 1.2em;}"
-                + "#url{font-size: 18pt; font-family: montsSB; color: #36A9E1;}" //url                                                               
-                + "h3{font-size: 13pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
-                + "h4{font-size: 13pt; font-family: montsR; margin-top:6em}";//AUTORIDAD
+        return "p {font-size: 10pt; margin-top: 1em; margin-bottom: 1em; font-family: montsR; line-height: 1.5;}"
+                + "h1{font-size: 20pt; font-family: montsB; color: #185285; margin-bottom: 1.2em;}"
+                + "h3{font-size: 18pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
+                + "h3{font-size: 16pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
+                + "h4{font-size: 14pt; font-family: montsR;}"
+                + "h5{font-size: 12pt; font-family: montsR;}"
+                + "#url{font-size: 10pt; font-family: montsSB; color: #36A9E1;}" //url                                 
+                + "table{width: 100%; border-collapse: collapse; border: 0px solid white; cellspacing:0; font-size: 10pt;}";//TABLAS
     }
 
     /**

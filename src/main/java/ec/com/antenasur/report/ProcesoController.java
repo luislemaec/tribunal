@@ -19,12 +19,17 @@ import javax.inject.Named;
 
 import org.apache.log4j.Logger;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.domain.tec.Proceso;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.service.tec.ProcesoFacade;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,7 +78,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
             fechaFin = fechaInicio = fechaActual = LocalDate.now();
             listaProceso = procesoFacade.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin));
             //listaProceso = procesoFacade.findAll();
-            procesaLista();            
+            procesaLista();
         } catch (Exception e) {
             LOG.error("ERROR AL CARGAR DATOS REPORTE " + getNombreReporte(), e);
         }
@@ -94,9 +99,9 @@ public class ProcesoController extends ReportTemplateController implements Seria
 
     private String calcularDias(java.util.Date fecha) {
         try {
-            String tmp = "";            
+            String tmp = "";
             LocalDate fechaTmp = fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            long numeroDiasL = DAYS.between(fechaTmp , fechaActual);
+            long numeroDiasL = DAYS.between(fechaTmp, fechaActual);
             int dias = (int) numeroDiasL;
             if (dias < 1) {
                 tmp = "Hoy";
@@ -105,18 +110,18 @@ public class ProcesoController extends ReportTemplateController implements Seria
                 tmp = dias + "d";
             }
             if (dias > 7 && dias <= 30) {
-            	long numeroSemanasL = WEEKS.between(fechaTmp , fechaActual);
-            	int semanasInt = (int) numeroSemanasL;                
+                long numeroSemanasL = WEEKS.between(fechaTmp, fechaActual);
+                int semanasInt = (int) numeroSemanasL;
                 tmp = semanasInt + "s";
             }
             if (dias > 30 && dias <= 365) {
-            	long numeroMesesL = MONTHS.between(fechaTmp , fechaActual);
-            	int mesesInt = (int) numeroMesesL;                
+                long numeroMesesL = MONTHS.between(fechaTmp, fechaActual);
+                int mesesInt = (int) numeroMesesL;
                 tmp = mesesInt + "m";
             }
             if (dias > 365) {
-            	long anionLong = YEARS.between(fechaTmp , fechaActual);
-            	int aniosInt = (int) anionLong;                
+                long anionLong = YEARS.between(fechaTmp, fechaActual);
+                int aniosInt = (int) anionLong;
                 tmp = aniosInt + "a";
             }
             return tmp;
@@ -141,10 +146,15 @@ public class ProcesoController extends ReportTemplateController implements Seria
     public void exportaPDF() {
         try {
             getListaStringDatos();
-            ReportePFD.nuevoPDF(getNombreReporte());
-            ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(), getNombresColumnas());
+            //(nombrefuenteExtencion,nombre
+            Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(10);
 
-            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), getTamanioLetra());
+            ReportePFD.nuevoPDF(getNombreReporte());
+            ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(), getNombresColumnas(), fuenteCabecerta);
+
+            Font fuenteContenido = Constantes.getFuenteContenidoDefault(10);
+
+            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), fuenteContenido);
             ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
             ReportePFD.descargarPDF(getNombreReporte());
             procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(), "NÚMERO DE REGISTROS: " + listaProceso.size());

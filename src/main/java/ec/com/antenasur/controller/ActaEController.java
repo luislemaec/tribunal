@@ -1,12 +1,10 @@
 package ec.com.antenasur.controller;
 
-import com.itextpdf.text.BaseColor;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.FontProvider;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -16,6 +14,12 @@ import javax.inject.Named;
 
 import org.primefaces.PrimeFaces;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.FontProvider;
+
+import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
@@ -23,40 +27,27 @@ import ec.com.antenasur.domain.Geograp;
 import ec.com.antenasur.domain.tec.Candidato;
 import ec.com.antenasur.domain.tec.CatalogoGeneral;
 import ec.com.antenasur.domain.tec.CategoriaVoto;
+import ec.com.antenasur.domain.tec.Documentos;
 import ec.com.antenasur.domain.tec.Escrutinio;
 import ec.com.antenasur.domain.tec.Lista;
 import ec.com.antenasur.domain.tec.Mesa;
 import ec.com.antenasur.domain.tec.Periodo;
 import ec.com.antenasur.domain.tec.PlantillaCorreo;
 import ec.com.antenasur.domain.tec.Recinto;
+import ec.com.antenasur.domain.tec.TipoDocumento;
 import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.UtilHtml;
-import ec.com.antenasur.report.ProcesoController;
 import ec.com.antenasur.report.ReportTemplateController;
-import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
-import ec.com.antenasur.service.IglesiaPersonaFacade;
-import ec.com.antenasur.service.tec.ListaFacade;
-import ec.com.antenasur.service.tec.MesaFacade;
-import ec.com.antenasur.service.tec.PadronFacade;
-import ec.com.antenasur.service.tec.PeriodoFacade;
-import ec.com.antenasur.service.tec.RecintoFacade;
 import ec.com.antenasur.service.tec.CategoriaVotoFacade;
 import ec.com.antenasur.service.tec.EscrutinioFacade;
+import ec.com.antenasur.service.tec.ListaFacade;
+import ec.com.antenasur.service.tec.MesaFacade;
+import ec.com.antenasur.service.tec.PeriodoFacade;
 import ec.com.antenasur.service.tec.PlantillaCorreoFacade;
+import ec.com.antenasur.service.tec.RecintoFacade;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
-import ec.com.antenasur.util.ModeloColumna;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.HashMap;
-import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +64,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ActaEController implements Serializable {
 
     private static final String DESTINATION = System.getProperty("java.io.tmpdir");
+
+    private static Path PATH_ARCHIVOS;
 
     private static final Integer TAMANIO_LETRA = 0;
 
@@ -100,19 +93,10 @@ public class ActaEController implements Serializable {
     private PlantillaCorreo plantillaCorreoSeleccionado;
 
     @Inject
-    private CatalogoGeneralFacade catalogoFacade;
-
-    @Inject
     private PeriodoFacade periodoFacade;
 
     @Inject
-    private IglesiaPersonaFacade iglesiaPersonaFacade;
-
-    @Inject
     private GeograpBean geograpBean;
-
-    @Inject
-    private PadronFacade padronFacade;
 
     @Inject
     private RecintoFacade recintoFacade;
@@ -125,6 +109,9 @@ public class ActaEController implements Serializable {
 
     @Inject
     private EscrutinioFacade escrutinioFacade;
+
+    @Inject
+    private DocumentoBean documentoBean;
 
     @Setter
     @Getter
@@ -210,7 +197,7 @@ public class ActaEController implements Serializable {
         this.listas = listaFacade.findAll();
 
         //CATEGORIA VOTOS, para registrar votos por mesas
-        this.categoriasVotos = categoriaVotoFacade.findAll();
+        this.categoriasVotos = categoriaVotoFacade.getCategoriasOrdenados();
 
         //IGLESIAS ASIGNADAS
         PrimeFaces.current().ajax().update("frmIglesias", "msgs");
@@ -230,7 +217,7 @@ public class ActaEController implements Serializable {
 
     public void cargaRecintosPorParroquias() {
         try {
-            List<Geograp> litaParroquiasTmp = new ArrayList();
+            List<Geograp> litaParroquiasTmp = new ArrayList<Geograp>();
             if (this.parroquiaSeleccionado != null && this.parroquiaSeleccionado.getId() != null) {
                 this.parroquiaSeleccionado = geograpBean.getById(this.parroquiaSeleccionado.getId());
 
@@ -316,7 +303,7 @@ public class ActaEController implements Serializable {
 
     private ReportTemplateController inicializaReporte() {
         ReportTemplateController documentoActaE = new ReportTemplateController(
-                "ACTA DE ESCRUTINOS " + mesaSeleccionado.getNombre(),
+                "ACTA-" + "R" + mesaSeleccionado.getRecinto().getId() + "-M" + mesaSeleccionado.getId() + "-" + JsfUtil.getFechaStringYYYYMMddHHmm(new Date()),
                 new float[]{20, 100, 40},
                 new int[]{1200, 3000, 4000},
                 new String[]{"Nro", "CATEGORIA", "TOTAL VOTOS"},
@@ -361,12 +348,20 @@ public class ActaEController implements Serializable {
                 parametros.put("nombreSecretario", "SECRETARIO");
                 parametros.put("nombreTesorero", "TESOREO");
                 parametros.put("nombreVocal", "VOCAL");
-                parametros.put("juntaNumero", mesaSeleccionado.getRecinto().getId().toString());
-                parametros.put("numeroMesa", mesaSeleccionado.getId().toString());
-                parametros.put("recintoNombre", mesaSeleccionado.getRecinto().getNombre());
+
+                parametros.put("nombreProvinica", mesaSeleccionado.getRecinto().getUbicacion().getGeograp().getGeograp().getName());
+                parametros.put("nombreCanton", mesaSeleccionado.getRecinto().getUbicacion().getGeograp().getName());
+                parametros.put("nombreCanton", mesaSeleccionado.getRecinto().getUbicacion().getGeograp().getName());
+                parametros.put("nombreParroquia", mesaSeleccionado.getRecinto().getUbicacion().getName());
                 parametros.put("fechaActa", fechaActa);
-                parametros.put("fechaRegistro", JsfUtil.getFechaStringddMMYY(fechaActual));
                 parametros.put("horaRegistro", JsfUtil.getHoraStringHHmmss(fechaActual));
+
+                parametros.put("numeroJunta", mesaSeleccionado.getRecinto().getId().toString());
+                parametros.put("numeroMesa", mesaSeleccionado.getId().toString());
+                parametros.put("nombreRecinto", mesaSeleccionado.getRecinto().getNombre());
+
+                parametros.put("fechaRegistro", JsfUtil.getFechaStringddMMYY(fechaActual));
+
             }
             return parametros;
         } catch (Exception e) {
@@ -375,40 +370,74 @@ public class ActaEController implements Serializable {
         }
     }
 
-    private void getPlantillaDocumento() {
-        //Carga variables
-        HashMap<String, String> parametros = getDatosActaE();
-        //trae plantilla
-        this.plantillaCorreoSeleccionado = plantillaCorreoFacade.buscarPorAsunto("BIENVENIDO");
+    private String getPlantillaDocumento(String nombrePlantilla) {
+        try {
+            HashMap<String, String> parametros = getDatosActaE();
+            //trae plantilla
+            this.plantillaCorreoSeleccionado = plantillaCorreoFacade.buscarPorAsunto(nombrePlantilla);
 
-        //Trae elimina llaves del texto
-        this.plantillaCorreoSeleccionado.setMensaje(plantillaCorreoSeleccionado.getMensaje().replaceAll("\\{|\\}", ""));
-        //RemplazaConstantes por variables
-        this.plantillaCorreoSeleccionado.setMensaje(UtilHtml.builTextHTMLToMail(parametros, plantillaCorreoSeleccionado.getMensaje()));
+            //Trae elimina llaves del texto
+            this.plantillaCorreoSeleccionado.setMensaje(plantillaCorreoSeleccionado.getMensaje().replaceAll("\\{|\\}", ""));
+            //RemplazaConstantes por variables
+            this.plantillaCorreoSeleccionado.setMensaje(UtilHtml.builTextHTMLToMail(parametros, plantillaCorreoSeleccionado.getMensaje()));
+            return this.plantillaCorreoSeleccionado.getMensaje();
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     public void exportaPDF(ReportTemplateController documentoActaE) {
         try {
-            getPlantillaDocumento();
+            Documentos documentoNuevo = new Documentos();
+            String txtContenidoActaE = getPlantillaDocumento("BIENVENIDO");
+            String txtResponsableActaE = getPlantillaDocumento("RESPONSABLES ACTA ESCRUTINIOS");
+
+            documentoNuevo.setExtension(".pdf");
+            documentoNuevo.setTipoDocumento(new TipoDocumento());
+            documentoNuevo.getTipoDocumento().setId(Constantes.TIPO_ACTA_ESCRUTINIO);
+            documentoNuevo.setMime("application/pdf");
+            documentoNuevo.setCodigo(documentoActaE.getNombreReporte());
+            documentoNuevo.setNombre(documentoActaE.getNombreReporte());
+            documentoNuevo.setPath("C:\\ARCHIVOS\\ACTASE\\"+documentoActaE.getNombreReporte()+".pdf");
+            documentoNuevo.setMesa(mesaSeleccionado);
 
             String pathCss = Constantes.getHojaEstilo();
-            
-            String pathMontsR = Constantes.getMontserratRegular();
+
+            float tamanioLetra = 10;//pnt
+            Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(tamanioLetra);
+            Font fuenteContenido = Constantes.getFuenteContenidoDefault(tamanioLetra);
+
+            String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Regular.ttf");
             FontFactory.register(pathMontsR, "montsR");
-            FontFactory.getFont("montsR", 10, Font.ITALIC, BaseColor.BLACK);
+            FontFactory.getFont("montsR", tamanioLetra, Font.NORMAL, BaseColor.BLACK);
 
             FontProvider fontProvider = FontFactory.getFontImp();
             ReportePFD.nuevoPDF(documentoActaE.getNombreReporte());
-            ReportePFD.agregaHTML(plantillaCorreoSeleccionado.getMensaje(), pathCss, fontProvider);
+            ReportePFD.agregaHTML(txtContenidoActaE, pathCss, fontProvider);
+
+            ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(), documentoActaE.getNombreReporte(), documentoActaE.getNombresColumnas(), fuenteCabecerta);
+            ReportePFD.creaContenidoTabla(documentoActaE.getListaDatos(), documentoActaE.getNombresColumnas(), fuenteContenido);
             ReportePFD.agregaParrafoEnBlanco();
-            ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(), documentoActaE.getNombreReporte(), documentoActaE.getNombresColumnas());
-            ReportePFD.creaContenidoTabla(documentoActaE.getListaDatos(), documentoActaE.getNombresColumnas(), documentoActaE.getTamanioLetra());
+            //TABLA PARA FIRMAS DE RESPONSABILIDAD
+            ReportePFD.agregaHTML(txtResponsableActaE, pathCss, fontProvider);
+
             ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
+            //GUARDA REFERENCIA DE DOCUMENTO EN BD
+            this.guardarDocumentoBD(documentoNuevo);
+            ReportePFD.guardarDocumentosActasE(documentoActaE.getNombreReporte());
             ReportePFD.descargarPDF(documentoActaE.getNombreReporte());
             procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
 
         } catch (Exception e) {
             log.error("ERROR AL EXPORTAR EXCEL DATOS REPORTE" + documentoActaE.getNombreReporte(), e);
+        }
+    }
+
+    private void guardarDocumentoBD(Documentos documentoNuevo) {
+        try {
+            documentoBean.guardarDocumento(documentoNuevo);
+        } catch (Exception e) {
         }
     }
 }

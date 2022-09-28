@@ -37,7 +37,7 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 @Audited
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
-public class MiembrosJRV extends EntidadAuditable implements Serializable {
+public class MiembroJRV extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -72,7 +72,7 @@ public class MiembrosJRV extends EntidadAuditable implements Serializable {
     @JoinColumn(name = "cargo_id")
     private CatalogoGeneral cargo;
 
-    public MiembrosJRV() {
+    public MiembroJRV() {
     }
 
 }
