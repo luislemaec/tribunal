@@ -19,6 +19,7 @@ import javax.persistence.Table;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
 import ec.com.antenasur.enums.EstadoTarea;
+import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -72,8 +73,18 @@ public class Mesa extends EntidadAuditable implements Serializable {
     @Getter
     @Setter
     private EstadoTarea estadoTarea;
+    
+    @Setter
+    @Getter
+    @Transient
+    private Boolean tieneDocumentos;
 
     public Mesa() {
+    }
+
+    public Mesa(Recinto recinto, Geograp ubicacion) {
+        this.recinto = recinto;
+        this.ubicacion = ubicacion;
     }
 
 }

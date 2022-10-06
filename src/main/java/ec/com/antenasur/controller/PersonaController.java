@@ -1,5 +1,6 @@
 package ec.com.antenasur.controller;
 
+import ec.com.antenasur.bean.DocumentoBean;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,12 +18,19 @@ import ec.com.antenasur.domain.Geograp;
 import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.Persona;
+import ec.com.antenasur.domain.tec.Documentos;
+import ec.com.antenasur.domain.tec.TipoDocumento;
 import ec.com.antenasur.service.GeograpFacade;
 import ec.com.antenasur.service.IglesiaFacade;
 import ec.com.antenasur.service.IglesiaPersonaFacade;
 import ec.com.antenasur.service.PersonaFacade;
 import ec.com.antenasur.util.JsfUtil;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,9 +57,13 @@ public class PersonaController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    //private static final Logger LOG = Logger.getLogger(cargarControl.class);
+    private static final String PATH_LISTA_MIEMBROS = "C:\\ARCHIVOS\\ACTASE\\";
+
     @Inject
     private LoginBean loginBean;
+
+    @Inject
+    private DocumentoBean documentoBean;
 
     @Inject
     private PersonaFacade personaFacade;
@@ -90,7 +102,7 @@ public class PersonaController implements Serializable {
 
     @Setter
     @Getter
-    private List<IglesiaPersona> listaIglesiaPersona, listaIglesiaPersonaSeleccionados;
+    private List<IglesiaPersona> listaIglesiaPersona, listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
 
     @Setter
     @Getter
@@ -221,7 +233,7 @@ public class PersonaController implements Serializable {
         JsfUtil.addInfoMessage(+listaIglesiaPersonaSeleccionados.size() + " Personas eliminadas");
         this.listaIglesiaPersonaSeleccionados = null;
         PrimeFaces.current().ajax().update("frmPersonas", "msgs");
-        
+
     }
 
     public void buscaPersonaPorCedula() {
@@ -308,13 +320,34 @@ public class PersonaController implements Serializable {
     public void cargaArchivoABD() {
         if (file != null) {
             procesaArchivo(file);
-            JsfUtil.addSuccessMessage(file.getFileName() + " is uploaded.");
+        }
+    }
+
+    public void guardarArchivoExcel() {
+        try {
+            int tamanioNombre = file.getFileName().length();
+            String extencion = file.getFileName().substring(tamanioNombre - 5, tamanioNombre);
+            String nombreArchivo = iglesiaSeleccionado.getNombre() + "-" + JsfUtil.getFechaStringYYYYMMddHHmm(new Date());
+            String pathCompleto = PATH_LISTA_MIEMBROS + nombreArchivo + extencion;
+
+            Documentos documentoNuevo = new Documentos(nombreArchivo, pathCompleto, new TipoDocumento(2),
+                    iglesiaSeleccionado.getId(), extencion, "application/" + extencion, nombreArchivo);
+            //GUARDA EN BD
+            documentoBean.guardarDocumento(documentoNuevo);
+
+            //ALMACENA EN DISCO DURO
+            Path path = Paths.get(pathCompleto);
+            Files.write(path, file.getContent());
+            JsfUtil.addSuccessMessage(nombreArchivo + " Almacenado");
+        } catch (IOException e) {
+            log.error("ERROR AL GUARDAR ARCHIVOS", e);
         }
     }
 
     public void procesaArchivo(UploadedFile file) {
         try {
             if (file != null && file.getContent() != null && file.getContent().length > 0 && file.getFileName() != null) {
+                guardarArchivoExcel();
                 if (excelMigracion != null) {
                     //Obtenemos la primera pestaña
                     XSSFSheet hojaUno = excelMigracion.getSheetAt(0);
@@ -324,6 +357,7 @@ public class PersonaController implements Serializable {
                     Row fila;
 
                     listaPersonas = new ArrayList<>();
+                    listaIglesiaPersonaExistente = new ArrayList<>();
                     listaIglesias = new ArrayList<>();
                     int contadorFila = 0;
 
@@ -336,7 +370,6 @@ public class PersonaController implements Serializable {
                         if (contadorFila >= 2) {
                             //inicia en la columna (columna B)
                             for (int contadorColumna = 1; contadorColumna < fila.getLastCellNum(); contadorColumna++) {
-
                                 Cell cell = fila.getCell(contadorColumna);
                                 if (contadorColumna < fila.getLastCellNum()) {
                                     switch (contadorColumna) {
@@ -357,17 +390,27 @@ public class PersonaController implements Serializable {
                                     }
                                 }
                             }
-                            Persona personaBuscado = personaFacade.buscarPorCedula(personaTmp.getDocumento());
-                            if (personaBuscado != null) {
-
+                            if (!personaTmp.getDocumento().isEmpty() && personaTmp.getDocumento() != null) {
+                                Persona personaBuscado = personaFacade.buscarPorCedula(personaTmp.getDocumento());
+                                if (personaBuscado != null) {
+                                    igpeTmp = iglesiaPersonaFacade.buscarPorCedulaPersona(personaBuscado.getDocumento());
+                                    if (igpeTmp != null) {
+                                        //Existe persona y esta asignado a Iglesia
+                                        igpeTmp.setNovedad("REGISTRADO EN IGLESIA");
+                                        listaIglesiaPersonaExistente.add(igpeTmp);
+                                    } else {
+                                        //Existe persona, asigna a iglesia
+                                        IglesiaPersona iglesiaPersonaNueva = new IglesiaPersona(iglesiaSeleccionado, personaBuscado);
+                                        iglesiaPersonaFacade.create(iglesiaPersonaNueva);
+                                    }
+                                } else {
+                                    Persona personaNuevo = personaFacade.create(personaTmp);
+                                    IglesiaPersona iglesiaPersonaNueva = new IglesiaPersona(iglesiaSeleccionado, personaNuevo);
+                                    iglesiaPersonaFacade.create(iglesiaPersonaNueva);
+                                }
                             } else {
-                                Persona personaNuevo = personaFacade.create(personaTmp);
-
-                                IglesiaPersona iglesiaPersonaNueva = new IglesiaPersona();
-                                iglesiaPersonaNueva.setPersona(personaNuevo);
-                                iglesiaPersonaNueva.setIglesia(iglesiaSeleccionado);
-
-                                iglesiaPersonaFacade.create(iglesiaPersonaNueva);
+                                IglesiaPersona iglesiaPersonaSinCedula = new IglesiaPersona(iglesiaSeleccionado, personaTmp, "SIN CEDULA");
+                                listaIglesiaPersonaExistente.add(iglesiaPersonaSinCedula);
                             }
                         }
                         contadorFila++;

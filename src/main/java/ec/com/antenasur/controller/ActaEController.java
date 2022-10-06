@@ -65,7 +65,7 @@ public class ActaEController implements Serializable {
 
     private static final String DESTINATION = System.getProperty("java.io.tmpdir");
 
-    private static Path PATH_ARCHIVOS;
+    private static final String PATH_ACTAS_ESCRUTINIO = "C:\\ARCHIVOS\\ACTASE\\";
 
     private static final Integer TAMANIO_LETRA = 0;
 
@@ -389,18 +389,14 @@ public class ActaEController implements Serializable {
 
     public void exportaPDF(ReportTemplateController documentoActaE) {
         try {
-            Documentos documentoNuevo = new Documentos();
             String txtContenidoActaE = getPlantillaDocumento("BIENVENIDO");
             String txtResponsableActaE = getPlantillaDocumento("RESPONSABLES ACTA ESCRUTINIOS");
 
-            documentoNuevo.setExtension(".pdf");
-            documentoNuevo.setTipoDocumento(new TipoDocumento());
-            documentoNuevo.getTipoDocumento().setId(Constantes.TIPO_ACTA_ESCRUTINIO);
-            documentoNuevo.setMime("application/pdf");
-            documentoNuevo.setCodigo(documentoActaE.getNombreReporte());
-            documentoNuevo.setNombre(documentoActaE.getNombreReporte());
-            documentoNuevo.setPath("C:\\ARCHIVOS\\ACTASE\\"+documentoActaE.getNombreReporte()+".pdf");
-            documentoNuevo.setMesa(mesaSeleccionado);
+            String extencion = ".pdf";
+            String pathCompleto = PATH_ACTAS_ESCRUTINIO + documentoActaE.getNombreReporte() + extencion;
+
+            Documentos documentoNuevo = new Documentos(documentoActaE.getNombreReporte(), pathCompleto, new TipoDocumento(Constantes.ACTA_ESCRUTINIO),
+                    mesaSeleccionado.getId(), extencion, "application/" + extencion, documentoActaE.getNombreReporte());
 
             String pathCss = Constantes.getHojaEstilo();
 

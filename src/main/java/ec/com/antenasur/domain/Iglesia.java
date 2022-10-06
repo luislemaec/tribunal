@@ -1,6 +1,7 @@
 package ec.com.antenasur.domain;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
@@ -13,10 +14,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
+import ec.com.antenasur.domain.tec.Documentos;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -65,6 +68,12 @@ public class Iglesia extends EntidadAuditable implements Serializable {
     @ManyToOne
     @JoinColumn(name = "gelo_id")
     private Geograp ubicacion;
+    
+    @Setter
+    @Getter
+    @Transient
+    private Boolean tieneDocumentos;
+    
 
     public Iglesia() {
     }

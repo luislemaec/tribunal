@@ -71,6 +71,14 @@ public class DocumentoBean implements Serializable {
         return documentoFacade.getDocumentosPorMesa(mesa);
     }
 
+    public List<Documentos> getDocumentosPorEntidadYTipoDoc(int entidadId, int tipoDocId) {
+        return documentoFacade.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+    }
+
+    public boolean getTieneDocumentosPorEntidadYTipoDoc(int entidadId, int tipoDocId) {
+        return documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+    }
+
     public void guardarDocumento(Documentos documento) {
         try {
             if (documento != null) {
@@ -86,7 +94,7 @@ public class DocumentoBean implements Serializable {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             if (documento.getNombre() != null) {
                 InputStream inp = new FileInputStream(documento.getPath());
-                OutputStream out =response.getOutputStream();
+                OutputStream out = response.getOutputStream();
                 response.setContentType("application/octet-stream");
                 response.setHeader("Content-Disposition", "attachment;filename=\"" + documento.getNombre() + ".pdf\"");
                 response.setDateHeader("Expires", 0);
@@ -101,7 +109,8 @@ public class DocumentoBean implements Serializable {
 
     /**
      * Descarga y visualiza a una buena ventana
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     public void descargarArchivoDirectorio() throws IOException {
         if (documento.getNombre() != null) {

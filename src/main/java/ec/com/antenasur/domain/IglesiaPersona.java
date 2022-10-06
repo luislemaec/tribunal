@@ -18,6 +18,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import ec.com.antenasur.domain.generic.EntidadAuditable;
 import ec.com.antenasur.domain.generic.EntidadBase;
 import java.sql.Timestamp;
+import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
@@ -75,7 +76,29 @@ public class IglesiaPersona extends EntidadAuditable implements Serializable {
     @Column(name = "igpe_f_hasta")
     private Timestamp hasta;
 
+    @Setter
+    @Getter
+    @Transient
+    private String novedad;
+
     public IglesiaPersona() {
     }
 
+    public IglesiaPersona(Iglesia iglesia, Persona persona, Timestamp desde, Timestamp hasta) {
+        this.iglesia = iglesia;
+        this.persona = persona;
+        this.desde = desde;
+        this.hasta = hasta;
+    }
+
+    public IglesiaPersona(Iglesia iglesia, Persona persona) {
+        this.iglesia = iglesia;
+        this.persona = persona;
+    }
+
+    public IglesiaPersona(Iglesia iglesia, Persona persona, String novedad) {
+        this.iglesia = iglesia;
+        this.persona = persona;
+        this.novedad = novedad;
+    }
 }

@@ -1,7 +1,6 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -9,12 +8,15 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.domain.Geograp;
 import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.IglesiaPersona;
+import ec.com.antenasur.domain.tec.Documentos;
 import ec.com.antenasur.service.GeograpFacade;
 import ec.com.antenasur.service.IglesiaFacade;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +39,9 @@ public class IglesiaController implements Serializable {
     //private static final Logger LOG = Logger.getLogger(cargarControl.class);
     @Inject
     private LoginBean loginBean;
+
+    @Inject
+    private DocumentoBean documentoBean;
 
     @Inject
     private IglesiaFacade iglesiaFacade;
@@ -70,22 +75,30 @@ public class IglesiaController implements Serializable {
 
     @Setter
     @Getter
-    private List<IglesiaPersona> listaIglesiaPersona;
+    private Boolean esNuevoRegistro;
 
     @Setter
     @Getter
-    private Boolean esNuevoRegistro;
+    private List<Documentos> documentos;
 
     @PostConstruct
     private void init() {
         try {
-            listaIglesiaPersona = new ArrayList<>();
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
             cantones = geograpFacade.findByFatherId(7);
             listaIglesias = iglesiaFacade.findAll();
             esNuevoRegistro = false;
+            cargaArchivoExcelListaMiembros();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
+        }
+    }
+
+    private void cargaArchivoExcelListaMiembros() {
+        if (listaIglesias != null && !listaIglesias.isEmpty()) {
+            for (Iglesia iglesiaTmp : listaIglesias) {
+                iglesiaTmp.setTieneDocumentos(documentoBean.getTieneDocumentosPorEntidadYTipoDoc(iglesiaTmp.getId(), Constantes.LISTA_MIEMBROS));
+            }
         }
     }
 
@@ -93,15 +106,15 @@ public class IglesiaController implements Serializable {
         if (cantonSeleccionado != null) {
             cantonSeleccionado = geograpFacade.find(cantonSeleccionado.getId());
             parroquias = geograpFacade.findByFatherId(cantonSeleccionado.getId());
-            
+
             obtieneIglesiasPorCanton();
         }
     }
-    
+
     private void obtieneIglesiasPorCanton() {
-    	if(parroquias!=null && !parroquias.isEmpty()) {
-    		listaIglesias=iglesiaFacade.getIglesiasPorParroquias(parroquias);
-    	}
+        if (parroquias != null && !parroquias.isEmpty()) {
+            listaIglesias = iglesiaFacade.getIglesiasPorParroquias(parroquias);
+        }
     }
 
     public void obtieneIglesiasPorParroquia() {
@@ -132,10 +145,8 @@ public class IglesiaController implements Serializable {
             cantonSeleccionado = iglesiaSeleccionado.getUbicacion().getGeograp();
             obtieneParroquias();
             listaIglesiasSeleccionadas.clear();
-            listaIglesias.clear();
-            //parroquiaSeleccionado=iglesiaSeleccionado.getUbicacion();
-            PrimeFaces.current().ajax().update("frmIglesias", "msgs", "frmNuevaIglesia");
-            //this.iglesiaSeleccionado = new Iglesia();	
+            listaIglesias.clear();           
+            PrimeFaces.current().ajax().update("frmIglesias", "msgs", "frmNuevaIglesia");            
         }
 
     }
@@ -215,6 +226,13 @@ public class IglesiaController implements Serializable {
             PrimeFaces.current().ajax().update("frmNuevaIglesia", "msgs", "frmIglesias");
         } catch (Exception e) {
         }
+    }
 
+    public void cargaArchivosListaMiembros() {
+        try {
+            documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(iglesiaSeleccionado.getId(), Constantes.LISTA_MIEMBROS);
+        } catch (Exception e) {
+            log.error("ERROR AL OBTENER DOCUMENTOS", e);
+        }
     }
 }

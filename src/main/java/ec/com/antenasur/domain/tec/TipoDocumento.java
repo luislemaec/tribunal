@@ -52,4 +52,8 @@ public class TipoDocumento extends EntidadAuditable implements Serializable {
     public TipoDocumento() {
     }
 
+    public TipoDocumento(Integer id) {
+        this.id = id;
+    }
+
 }

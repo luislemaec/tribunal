@@ -71,9 +71,8 @@ public class Documentos extends EntidadAuditable implements Serializable {
     // bi-directional many-to-one association to Usuario
     @Setter
     @Getter
-    @ManyToOne
-    @JoinColumn(name = "mesa_id")
-    private Mesa mesa;
+    @Column(name = "entidad_id")
+    private Integer entidadId;
 
     @Setter
     @Getter
@@ -113,4 +112,13 @@ public class Documentos extends EntidadAuditable implements Serializable {
     public Documentos() {
     }
 
+    public Documentos(String nombre, String path, TipoDocumento tipoDocumento, Integer entidadId, String extension, String mime, String codigo) {
+        this.nombre = nombre;
+        this.path = path;
+        this.tipoDocumento = tipoDocumento;
+        this.entidadId = entidadId;
+        this.extension = extension;
+        this.mime = mime;
+        this.codigo = codigo;
+    }
 }

@@ -89,7 +89,7 @@
                         <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>                      
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
-                            <p:commandButton  process="@this" icon="pi pi-list" oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Histórico" 
+                            <p:commandButton rendered="#{mesa.tieneDocumentos}" process="@this" icon="pi pi-list" oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Histórico" 
                                               update="frmMesas:pndHistory " styleClass="ui-button-secondary">                             
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" /> 
                             </p:commandButton>

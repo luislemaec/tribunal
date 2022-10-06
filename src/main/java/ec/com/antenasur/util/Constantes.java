@@ -27,7 +27,8 @@ public class Constantes {
     public static final String ESTADO_TAREA_COMPLETADA = "COMPLETADO";
 
     /*TIPOS DE DOCUMENTOS*/
-    public static final Integer TIPO_ACTA_ESCRUTINIO = 1;
+    public static final Integer ACTA_ESCRUTINIO = 1;
+    public static final Integer LISTA_MIEMBROS = 2;
     /**
      * Retorna pirma del correo
      */

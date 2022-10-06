@@ -63,6 +63,12 @@
                             <p:ajax event="rowUnselectCheckbox" update="frmIglesias"/>
                             <p:ajax event="toggleSelect" update="frmIglesias"/>
                             <p:column selectionMode="multiple" exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem"></p:column>
+                            <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-5rem">
+                                <p:commandButton rendered="#{iglesia.tieneDocumentos}" process="@this" icon="pi pi-list" action="#{iglesiaController.cargaArchivosListaMiembros()}" oncomplete="PF('pndHistory').show();" title="Histórico" 
+                                                 update="frmIglesias:pndHistory " styleClass="ui-button-raised ui-button-info">                             
+                                    <f:setPropertyActionListener value="#{iglesia}" target="#{iglesiaController.iglesiaSeleccionado}" /> 
+                                </p:commandButton>
+                            </p:column>
                             <p:column headerText="RUC" sortBy="#{iglesia.documento}" filterBy="#{iglesia.documento}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{iglesia.documento}" /></p:column>
                             <p:column headerText="Nombre" sortBy="#{iglesia.nombre}" filterBy="#{iglesia.nombre}"  ><h:outputText value="#{iglesia.nombre}" /></p:column>                
                             <p:column headerText="Cantón" sortBy="#{iglesia.ubicacion.geograp.name}" filterBy="#{iglesia.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{iglesia.ubicacion.geograp.name}" /></p:column>
@@ -71,6 +77,37 @@
                     </div>
                 </div>
             </div>
+            <!-- dlg download doc -->
+            <p:dialog header="Descargar documentos históricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
+                <p:dataTable var="doc" value="#{iglesiaController.documentos}"
+                             widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
+                             reflow="true" rows="5" paginator="true" paginatorPosition="top"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
+                             rowsPerPageTemplate="5,10,15" 
+                             rendered="#{iglesiaController.documentos ne null}">
+
+                    <p:column width="7%">
+                        <p:commandButton  styleClass="ui-button-raised ui-button-#{doc.extension.contains('.pdf')?'danger':'success'}" icon="pi pi-download" ajax="false" immediate="true" process="@this"   title="Descargar documento"  >
+                            <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}" />
+                            <p:fileDownload value="#{documentoBean.file}"></p:fileDownload>
+                        </p:commandButton>               
+                    </p:column>
+
+                    <p:column headerText="Nombre" ><h:outputText value="#{doc.nombre}" /></p:column>                                        
+
+                    <p:column headerText="Código" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
+
+                    <p:column headerText="Estado" width="15%" >                            
+                        <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}" value="#{doc.estado?'Vigente':'Archivado'}"></p:tag>                                                                        
+                    </p:column>
+
+                    <p:column headerText="Fecha de creación" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
+
+                </p:dataTable>
+                <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
+            </p:dialog>
+            <!-- \\ dlg download doc -->
         </h:form>
         <h:form id="frmNuevaIglesia">
             <p:panel header="Nueva Iglesia" class="my-1 card" id="pnlIglesias" rendered="#{iglesiaController.iglesiaSeleccionado ne null}" >
@@ -79,7 +116,7 @@
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-3">
                                 <p:outputLabel for="ruc" value="Documento" />
-                                <p:inputText id="ruc" value="#{iglesiaController.iglesiaSeleccionado.documento}" disabled="#{ not empty iglesiaController.iglesiaSeleccionado.documento}" required="true" maxlength="13">
+                                <p:inputText id="ruc" value="#{iglesiaController.documentos}" disabled="#{ not empty iglesiaController.iglesiaSeleccionado.documento}" required="true" maxlength="13">
                                     <p:keyFilter for="ruc" mask="num"/>                        	
                                     <p:ajax event="change" update="frmNuevaIglesia msgs" listener="#{iglesiaController.buscaIglesiaPorDocumento}" process="@this"/>
                                     <f:validateLength minimum="13"></f:validateLength>

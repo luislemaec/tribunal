@@ -15,11 +15,13 @@ import org.primefaces.PrimeFaces;
 import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.domain.Geograp;
+import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.tec.Documentos;
 import ec.com.antenasur.domain.tec.Mesa;
 import ec.com.antenasur.domain.tec.Recinto;
 import ec.com.antenasur.service.tec.MesaFacade;
 import ec.com.antenasur.service.tec.RecintoFacade;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import ec.com.antenasur.util.ModeloColumna;
 import ec.com.antenasur.util.ReflectionColumnModelBuilder;
@@ -35,84 +37,93 @@ import lombok.extern.slf4j.Slf4j;
 @ViewScoped
 @Slf4j
 public class MesaController implements Serializable {
-    
+
     private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private static final String FORMULARIO = "frmMesas";
     private static final String TABLA = "tblMesas";
     private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
     public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
-    
+
     @Inject
     private LoginBean loginBean;
-    
+
     @Inject
     private MesaFacade mesaFacade;
-    
+
     @Inject
     private RecintoFacade recintoFacade;
-    
+
     @Inject
     private GeograpBean geograpBean;
-    
+
     @Inject
     private DocumentoBean documentoBean;
-    
+
     @Setter
     @Getter
     private Mesa mesaSeleccionado;
-    
+
     @Setter
     @Getter
     private Recinto recintoSeleccionado;
-    
+
     @Setter
     @Getter
     private List<Geograp> cantones, parroquias;
-    
+
     @Setter
     @Getter
     private Geograp cantonSeleccionado, parroquiaSeleccionado;
-    
+
     @Setter
     @Getter
     private List<Mesa> listaMesas, listaMesasSeleccionados;
-    
+
     @Setter
     @Getter
     private List<Recinto> listaRecintos;
-    
+
     @Setter
     @Getter
     private List<ModeloColumna> columnas = new ArrayList<ModeloColumna>(0);
-    
+
     @Setter
     @Getter
     private List<Documentos> documentos;
-    
+
     @PostConstruct
     private void init() {
         try {
             this.columnas = new ReflectionColumnModelBuilder(Mesa.class).setExcludedProperties("id", "fechaCrea", "fechaActualiza", "usuarioCrea", "usuarioActualiza",
                     "estado", "seleccionado", "persisted").build();
-            
+
             this.cantonSeleccionado = parroquiaSeleccionado = new Geograp();
             this.recintoSeleccionado = new Recinto();
             this.listaMesas = this.listaMesasSeleccionados = new ArrayList<>();
             //Trae cantones de la provincia de Chimborazo
             this.cantones = geograpBean.getByFatherId(7);
             this.listaMesas = mesaFacade.findAll();
-            
+
+            cargaMesaTieneDocumentos();
             this.listaRecintos = recintoFacade.findAll();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
-    
+
+    private void cargaMesaTieneDocumentos() {
+        if (listaMesas != null && !listaMesas.isEmpty()) {
+            for (Mesa mesaTmp : listaMesas) {
+                mesaTmp.setTieneDocumentos(documentoBean.getTieneDocumentosPorEntidadYTipoDoc(mesaTmp.getId(), Constantes.ACTA_ESCRUTINIO));
+            }
+        }
+    }
+
     public void inicializaMesaSeleccionado() {
         if (listaMesas != null) {
             listaMesas.clear();
@@ -121,7 +132,7 @@ public class MesaController implements Serializable {
         this.mesaSeleccionado.setUbicacion(new Geograp());
         this.mesaSeleccionado.setRecinto(new Recinto());
     }
-    
+
     private List<Integer> listaIdParroquias(List<Geograp> parroquias) {
         try {
             List<Integer> listaIdParroquias = null;
@@ -136,15 +147,15 @@ public class MesaController implements Serializable {
             return null;
         }
     }
-    
+
     public void nuevaMesa() {
         inicializaMesaSeleccionado();
     }
-    
+
     public boolean existeMesasSeleccionados() {
         return this.listaMesasSeleccionados != null && !this.listaMesasSeleccionados.isEmpty();
     }
-    
+
     public String getMensajeBotonEliminar() {
         if (existeMesasSeleccionados()) {
             int size = this.listaMesasSeleccionados.size();
@@ -152,7 +163,7 @@ public class MesaController implements Serializable {
         }
         return "Eliminar";
     }
-    
+
     public void eliminarMesaSeleccionado() {
         if (mesaSeleccionado != null) {
             mesaSeleccionado = mesaFacade.delete(mesaSeleccionado);
@@ -160,12 +171,12 @@ public class MesaController implements Serializable {
         JsfUtil.addInfoMessage(MENSAJE_ELIMINA_OK);
         PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA, "msgs");
     }
-    
+
     public void obtieneParroquias() {
         if (cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpBean.getById(cantonSeleccionado.getId());
             parroquias = geograpBean.getByFatherId(cantonSeleccionado.getId());
-            
+
             listaRecintos = recintoFacade.getRecintosPorParroquias(parroquias);
             listaMesas = mesaFacade.getMesasPorRecintos(listaRecintos);
         } else {
@@ -174,20 +185,20 @@ public class MesaController implements Serializable {
             listaMesas.clear();
         }
     }
-    
+
     public void obtieneMesasPorParroquia() {
         if (parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpBean.getById(parroquiaSeleccionado.getId());
-            
+
             List<Integer> listaIdParroquias = new ArrayList<>();
             if (parroquiaSeleccionado != null) {
                 listaIdParroquias.add(parroquiaSeleccionado.getId());
             }
             listaRecintos = recintoFacade.getRecintosPorParroquias(parroquias);
             listaMesas = mesaFacade.getMesasPorRecintos(listaRecintos);
-            
+
             if (listaMesas == null) {
-                
+
                 JsfUtil.addWarningMessage("No existe registro de Iglesias en " + parroquiaSeleccionado.getName());
             } else {
                 JsfUtil.addInfoMessage(listaMesas.size() + " Iglesias registradas");
@@ -197,7 +208,7 @@ public class MesaController implements Serializable {
             listaMesas.clear();
         }
     }
-    
+
     public void guardarMesaSeleccionado() {
         try {
             if (mesaSeleccionado != null) {
@@ -213,7 +224,7 @@ public class MesaController implements Serializable {
                     Mesa iglesiaPersonaActualiza = mesaFacade.create(mesaSeleccionado);
                     if (iglesiaPersonaActualiza != null) {
                         JsfUtil.addSuccessMessage(MENSAJE_REGISTRA_OK);
-                        
+
                         mesaSeleccionado = null;
                         listaMesas = mesaFacade.findAll();
                         PrimeFaces.current().ajax().update("msgs", FORMULARIO);
@@ -225,7 +236,7 @@ public class MesaController implements Serializable {
         PrimeFaces.current().executeScript("PF('dlgMesa').hide()");
         PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA);
     }
-    
+
     public void eliminarMesasSeleccionados() {
         if (listaMesasSeleccionados != null) {
             for (Mesa item : listaMesasSeleccionados) {
@@ -235,7 +246,7 @@ public class MesaController implements Serializable {
         JsfUtil.addInfoMessage(+listaMesasSeleccionados.size() + MENSAJE_ELIMINA_OK);
         PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA, "msgs");
     }
-    
+
     public void cargaDatosMesaSeleccionado() {
         try {
             if (mesaSeleccionado.getId() != null) {
@@ -247,16 +258,16 @@ public class MesaController implements Serializable {
         } catch (Exception e) {
         }
     }
-    
+
     public void obtieneMesasPorRecinto() {
         if (recintoSeleccionado.getId() != null) {
             recintoSeleccionado = recintoFacade.find(recintoSeleccionado.getId());
-            
+
             List<Recinto> listaRecintosTmp = new ArrayList<>();
             if (recintoSeleccionado != null) {
                 listaRecintosTmp.add(recintoSeleccionado);
             }
-            
+
             listaMesas = mesaFacade.getMesasPorRecintos(listaRecintosTmp);
             if (listaMesas == null) {
                 JsfUtil.addWarningMessage("No existe registro de personas en " + recintoSeleccionado.getNombre());
@@ -267,10 +278,10 @@ public class MesaController implements Serializable {
             listaMesas.clear();
         }
     }
-    
+
     public void cargaActasE() {
         try {
-            documentos = documentoBean.getDocumentoPorMesa(mesaSeleccionado);
+            documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(mesaSeleccionado.getId(), Constantes.ACTA_ESCRUTINIO);
         } catch (Exception e) {
             log.error("ERROR AL OBTENER DOCUMENTOS", e);
         }

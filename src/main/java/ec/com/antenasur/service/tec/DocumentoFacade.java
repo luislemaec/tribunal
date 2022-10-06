@@ -46,6 +46,44 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         return null;
     }
 
+    public List<Documentos> getDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH d.tipoDocumento  tp"
+                    + " WHERE d.entidadId=:entidadId AND tp.id=:tipoDocId" + ORDENADO;
+            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
+            query.setParameter("entidadId", entidadId);
+            query.setParameter("tipoDocId", tipoDocId);
+            List<Documentos> result = query.getResultList();
+            if (result != null && !result.isEmpty()) {
+                return result;
+            }
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+    
+        public Boolean getTieneDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH d.tipoDocumento  tp"
+                    + " WHERE d.entidadId=:entidadId AND tp.id=:tipoDocId" + ORDENADO;
+            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
+            query.setParameter("entidadId", entidadId);
+            query.setParameter("tipoDocId", tipoDocId);
+            List<Documentos> result = query.getResultList();
+            if (result != null && !result.isEmpty()) {
+                return true;
+            }
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
     public Documentos obtenerDocumentoPorWorkspace(String workspace) {
         try {
             String sql = "FROM Documentos WHERE path =:workspace";
