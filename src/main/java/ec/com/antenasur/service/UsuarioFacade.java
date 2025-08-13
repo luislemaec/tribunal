@@ -15,8 +15,6 @@ import javax.persistence.TypedQuery;
 import ec.com.antenasur.domain.Usuario;
 import ec.com.antenasur.domain.generic.AbstractFacade;
 
-
-
 /**
  *
  * @author Luis Lema <lemaedu@gmail.com>
@@ -30,9 +28,9 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
     private static final String SQL = "FROM Usuario u ";
 
     /**
-     * 
-     * @param docuId, 
-     * @return 
+     *
+     * @param docuId,
+     * @return
      */
     public Usuario getUsuarioByRuc(String docuId) {
         try {
@@ -93,7 +91,7 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             String sql = SQL + "LEFT JOIN FETCH u.personsa p "
                     + "where u.username = :username and u.correo=:correo and  u.estado=true and p.estado=true ";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
-            query.setParameter("Usuarioname", username);
+            query.setParameter("username", username);
             query.setParameter("correo", correo);
             List<Usuario> resultList = query.getResultList();
             if (resultList != null && !resultList.isEmpty()) {

@@ -30,6 +30,7 @@ import ec.com.antenasur.domain.Menu;
 import ec.com.antenasur.domain.Persona;
 import ec.com.antenasur.domain.RolUsuario;
 import ec.com.antenasur.domain.Usuario;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import ec.com.antenasur.util.MenuVO;
 import lombok.Getter;
@@ -45,8 +46,6 @@ public class LoginController implements Serializable {
 
     @Inject
     private LoginBean loginBean;
-
-    private boolean loggedIn = false;
 
     @Inject
     private RolUsuarioFacade roleUserFacade;
@@ -125,23 +124,9 @@ public class LoginController implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-    }
-
-    public void getRolByUsername() {
-        if (loginBean.getUserName() != null) {
-            listaRolesUsuario = roleUserFacade.findByUserName(loginBean.getUserName());
-            if (listaRolesUsuario != null) {
-                for (RolUsuario ru : listaRolesUsuario) {
-                    listRolesTem.add(ru.getRol().getNombre());
-                }
-            }
-            loginBean.setRoles(listRolesTem);
-        }
     }
 
     public void login() throws Throwable {
-        loggedIn = false;
         listaRolesUsuario = new ArrayList<RolUsuario>();
         prefijoRoles = (String) JsfUtil.getProperty("roles.sitec", true);
         if (prefijoRoles != null) {
@@ -166,9 +151,8 @@ public class LoginController implements Serializable {
                 }
                 request.login(loginBean.getUserName(), loginBean.getPassword());
 
-                loggedIn = true;
                 loginBean.setRoles(listRolesUserString);
-                loginBean.setLoggedIn(loggedIn);
+                loginBean.setLoggedIn(true);
                 loginBean.setTiempoSession(request.getSession().getMaxInactiveInterval());
 
                 loginBean.setUsuario(user);
@@ -182,9 +166,15 @@ public class LoginController implements Serializable {
                 if (user.getPermanente()) {
                     fillMenuModel();
 
-                    if (user.getContraseniaTemp() != null && user.getPermanente() == true && user.getEstado() == true) {
-                        JsfUtil.redirect("/dashboard.jsf");
-                        procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
+                    if (user.getContraseniaTemp() == null && user.getPermanente() == true && user.getEstado() == true) {
+                    	if(loginBean.getRoles().contains(prefijoRoles+Constantes.getRolTecnico())) {
+                    		JsfUtil.redirect("/actaE.jsf");
+                            procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
+                    	}else {
+                    		JsfUtil.redirect("/dashboard.jsf");
+                            procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");	
+                    	}
+                        
                     } else {
                         JsfUtil.redirect("/dashboard.jsf");
                         procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
@@ -201,13 +191,7 @@ public class LoginController implements Serializable {
                 loginBean.setPassword("");
 
             }
-
-            JsfUtil.addErrorMessage("Usuario sin perfiles");
-
         }
-        JsfUtil.addErrorMessage("Usuario o contraseña incorrecto");
-        loginBean.setUserName("");
-        loginBean.setPassword("");
         try {
             accessFacade.create(accessAuditory);
         } catch (Exception e) {

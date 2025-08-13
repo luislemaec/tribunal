@@ -1,5 +1,7 @@
 package ec.com.antenasur.domain.tec;
 
+import ec.com.antenasur.domain.generic.EntidadAuditable;
+import ec.com.antenasur.domain.generic.EntidadBase;
 import java.io.Serializable;
 
 import javax.persistence.AttributeOverride;
@@ -11,22 +13,24 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.generic.EntidadAuditable;
-import ec.com.antenasur.domain.generic.EntidadBase;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
 /**
- * The persistent class for the tec_recintos database table.
+ * The persistent class for the mail_data database table.
  *
  */
+@Setter
+@Getter
+
 @Entity
-@Table(name = "miembros_jrv", schema = "tec")
+@Table(name = "correos_enviados", schema = "tec")
+@NamedQuery(name = "Correos.findAll", query = "SELECT c FROM Correo c")
 
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
@@ -34,44 +38,44 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
-@Audited
+
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
-public class MiembroJRV extends EntidadAuditable implements Serializable {
+@Audited
+public class Correo extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Setter
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "miem_id")
     private Integer id;
 
-    @Setter
-    @Getter
-    @ManyToOne
-    @JoinColumn(name = "igpe_id")
-    private IglesiaPersona iglesiaPersona;
+    //@Column(updatable = false)
+    @Column(name = "de")
+    private String de;
 
-    @Setter
-    @Getter
-    @ManyToOne
-    @JoinColumn(name = "mesa_id")
-    private Mesa mesa;
+    //@Column(updatable = false)
+    @Column(name = "para")
+    private String para;
 
-    @Setter
-    @Getter
-    @ManyToOne
-    @JoinColumn(name = "periodo_id")
-    private Periodo periodo;
+    @Column(name = "usu_id")
+    private Integer userId;
 
-    @Setter
-    @Getter
-    @ManyToOne
-    @JoinColumn(name = "cargo_id")
-    private CatalogoGeneral cargo;
+    @Column(name = "detalles")
+    private String detalles;
 
-    public MiembroJRV() {
+    @ManyToOne
+    @JoinColumn(name = "corr_plan_id")
+    private PlantillaCorreo plantillaCorreo;
+
+    public Correo() {
+
+    }
+
+    public Correo(String para, Integer userId, PlantillaCorreo plantillaCorreo,String detalles) {
+        this.para = para;
+        this.userId = userId;
+        this.plantillaCorreo = plantillaCorreo;
+        this.detalles = detalles;
     }
 
 }

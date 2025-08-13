@@ -16,4 +16,14 @@
 --
 
 -- You can use this file to load seed data into the database using SQL statements
-insert into Member (id, name, email, phone_number) values (0, 'John Smith', 'john.smith@mailinator.com', '2125551212') 
+ALTER SEQUENCE public.tb_iglesia_igl_id_seq RESTART WITH 1 OWNED BY public.tb_iglesia.igl_id;
+ALTER SEQUENCE public.tb_iglesia_igl_id_seq OWNER TO postgres;
+
+ALTER SEQUENCE public.tb_iglesia_persona_igpe_id_seq RESTART WITH 1 OWNED BY public.tb_iglesia_persona.igpe_id;
+ALTER SEQUENCE public.tb_iglesia_persona_igpe_id_seq OWNER TO postgres;
+
+ALTER SEQUENCE public.tb_persona_pers_id_seq RESTART WITH 8 OWNED BY public.tb_persona.pers_id;
+ALTER SEQUENCE public.tb_persona_pers_id_seq OWNER TO postgres;
+
+ALTER SEQUENCE tec.padron_padron_id_seq RESTART WITH 1 OWNED BY tec.padron.padron_id;
+ALTER SEQUENCE tec.padron_padron_id_seq OWNER TO postgres;

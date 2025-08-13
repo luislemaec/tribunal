@@ -36,5 +36,20 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
         }
         return null;
     }
+    
+    public List<Escrutinio> buscaCanton(Mesa mesa) {
+        try {
+            String sql = HQL + " WHERE e.mesa=:mesa ORDER BY e.categoria.orden";
+            TypedQuery<Escrutinio> query = super.getEntityManager().createQuery(sql, Escrutinio.class);
+            query.setParameter("mesa", mesa);
+            List<Escrutinio> result = query.getResultList();
+            if (result != null) {
+                return result;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
 
 }

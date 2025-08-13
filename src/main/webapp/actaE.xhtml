@@ -62,38 +62,27 @@
                                  rendered="#{not empty actaEController.listaCamposActaE and not empty actaEController.mesaSeleccionado }"
                                  rowSelectMode="add" showGridlines="true" 
                                  styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1 card" >
-
-                        <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-2rem">
-                            <h:outputText value="#{actaE.id}" />
-                        </p:column>
-                        <p:column headerText="RECINTO" styleClass="sm:w-max md:w-4 lg:w-6rem">
-                            <h:outputText value="#{actaE.mesa.recinto.nombre}" />
-                        </p:column>
-                        <p:column headerText="MESA" styleClass="sm:w-max md:w-2 lg:w-6rem">
-                            <h:outputText value="#{actaE.mesa.nombre}" />
-                        </p:column>
-                        <p:column headerText="PERIODO" styleClass="sm:w-max md:w-1 lg:w-3rem">
-                            <h:outputText value="#{actaE.periodo.nombre}" />
-                        </p:column>  
+                                 
 
                         <p:column headerText="VOTOS" styleClass="sm:w-max md:w-1 lg:w-3rem" >
                             <h:outputText value="#{actaE.categoria.nombre}" />
                         </p:column>
                         <p:column headerText="TOTAL " styleClass="sm:w-max md:w-1 lg:w-3rem" >                            
-                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="100" decimalPlaces="0" placeholder="15" 
-                                           required="true" disabled="#{actaE.mesa.estadoTarea eq 'COMPLETADO'}"/>                        
+                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="#{actaE.mesa.totalVotos}" decimalPlaces="0" placeholder="99" 
+                                           required="true" disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
+                                                     and loginBean.roles.contains('SITEC-Tecnico') }"/>                       
                         </p:column> 
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
                             <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this"
-                                             oncomplete="PF('dlgEliminaRegistro').show()"  disabled="#{actaE.mesa.estadoTarea eq 'COMPLETADO'}">
+                                             oncomplete="PF('dlgEliminaRegistro').show()"  >
                                 <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
                             </p:commandButton>
                         </p:column>
                         <f:facet name="header">
                             <div class="grid">
-                                <div class="col-12 text-center ">
-                                    <b>REGISTRO DE VOTOS</b>
+                                <div class="col-12 text-center">
+                                    REGISTRO DE VOTOS <b>RECINTO:</b> #{actaEController.listaCamposActaE.get(0).mesa.recinto.nombre} / <b>MESA:</b> #{actaEController.listaCamposActaE.get(0).mesa.nombre}
                                 </div>
                             </div>
                         </f:facet>
@@ -101,7 +90,8 @@
                             <div class="grid">
                                 <div class="col-12 md:col-4 lg:col-4 md:col-offset-4 md:flex ">
                                     <p:commandButton id="btnRegistrar" process=":frmActaE:tblActaE" value="#{msg['btn.guardar']}"  action="#{actaEController.guardaDatosMesaSeleccionada()}"  
-                                                     ajax="false" styleClass="ui-button-success w-6 md:w-9 " rendered="#{not empty actaEController.listaCamposActaE}" disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'}"/>
+                                                     ajax="false" styleClass="ui-button-success w-6 md:w-9 " disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
+                                                     and loginBean.roles.contains('SITEC-Tecnico') }"/>  
                                 </div>
                             </div>
                         </f:facet>

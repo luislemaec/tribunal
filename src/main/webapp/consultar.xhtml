@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      template="/WEB-INF/errors/error-template.xhtml"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="description" content="" />
+            <meta name="author" content="Luis Lema" />
+        </f:facet>
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>Consultar</title>
+        <h:outputScript name="js/layout.js" library="ecuador-layout" />
+        <h:outputScript name="js/prism.js" library="ecuador-layout"/>
+    </h:head>
+    <h:body styleClass="#{guestPreferences.inputStyleClass}">
+        <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
+        <div class="layout-wrapper #{guestPreferences.menuMode} layout-menu-#{guestPreferences.menuColor} #{guestPreferences.orientationRTL ? 'layout-rtl' : null}">            
+            <div class="layout-topbar">
+                <h:link outcome="/dashboard" styleClass="logo-container">
+                    <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout" />
+                </h:link>
+            </div>
+            <div class="layout-main">
+                <div class="layout-content">
+                    <div class="grid">                
+                        <h5>CONSULTA TU LUGAR DE VOTACIÓN</h5>
+                        <div class="col-12 ">
+                            <h:form id="frmLugar">
+                                <div class="card">
+                                    <div class="ui-fluid formgrid grid">
+                                        <div class="field col-12 md:col-6 lg:col-6">
+
+                                            <p:inputText  value="#{lugarVotacion.nombreCedula}"  required="true" onkeyup="value = value.toUpperCase()" label="Cedula o nombres" 
+                                                          placeholder="Digite cédula o nombres completos" requiredMessage="Cédula o nombre es requerido"/>
+                                        </div>
+                                        <div class="p-field col-12 md:col-6 lg:col-3 ">
+                                            <p:commandButton value="BUSCAR"  icon="pi pi-search"  action="#{lugarVotacion.buscarLugar()}" 
+                                                             ajax="false" styleClass="ui-button-info" update="@form, msgs" />
+                                        </div>
+                                    </div>                       
+                                </div>                        
+
+                                <c:forEach var="lugar" items="#{lugarVotacion.lugares}" >
+
+                                    <div class="card">
+                                        <div class="grid">
+                                            <div class="field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel value="NOMBRES: "/>
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-3">
+                                                <b>#{lugar.nombres}</b>
+                                            </div>
+
+                                            <div class="p-field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel value="CÉDULA:"/>
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-2">
+                                                <b> #{lugar.cedula} </b>
+                                            </div>
+
+                                            <div class="p-field col-12 md:col-6 lg:col-2">
+                                                <p:outputLabel  value="IGLESIA" />                                                
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-3">
+                                                <b> #{lugar.iglesia} / #{lugar.comunidad} </b>
+                                            </div>
+
+                                            <p:divider/>
+
+                                            <div class="p-field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel value="RECINTO:"/>                                   
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-5">
+                                                <b> #{lugar.recinto} </b>
+                                            </div>
+
+                                            <div class="p-field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel value="MESA:"/>
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-5">
+                                                <b> #{lugar.mesa} </b>
+                                            </div>                                          
+
+                                            <div class="p-field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel  value="PARROQUIA:"/>                                                
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-5">
+                                                <b> #{lugar.parroquia}</b>
+                                            </div>
+
+                                            <div class="p-field col-12 md:col-6 lg:col-1">
+                                                <p:outputLabel value="CANTON:"/>
+                                            </div>
+                                            <div class="field col-12 md:col-6 lg:col-5">
+                                                <b> #{lugar.canton} </b>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </h:form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h:outputStylesheet name="css/primeicons.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+
+        <h:outputStylesheet name="css/demo.css" library="demo"/>
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

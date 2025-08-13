@@ -73,7 +73,33 @@ public class Mesa extends EntidadAuditable implements Serializable {
     @Getter
     @Setter
     private EstadoTarea estadoTarea;
+
+    @Setter
+    @Getter    
+    private Integer totalVotos;
     
+    @Setter
+    @Getter    
+    private Integer totalPapetelasUso;
+    
+    @Setter
+    @Getter    
+    private Integer totalAusentismo;
+    
+    @Setter
+    @Getter    
+    private Boolean tieneErrorConteo;
+    
+    @Setter
+    @Getter    
+    private String observacion;
+         
+    @Setter
+    @Getter    
+    @Column(name = "u_responsable", length = 100)
+    private String responsable;
+
+
     @Setter
     @Getter
     @Transient

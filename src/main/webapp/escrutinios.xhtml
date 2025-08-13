@@ -1,0 +1,111 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="title">Escrutinio</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/actaE">Escrutinio</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmActaE">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-6">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{totalVotosController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{totalVotosController.cargaParroquiasPorCanton()}" process="@this" update="frmActaE, msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-6">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{totalVotosController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change"  listener="#{totalVotosController.cargaRecintosPorParroquia()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="recintos" value="Recintos" />
+                                <p:selectOneMenu id="recintos" value="#{totalVotosController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty recintoController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{totalVotosController.recintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                    <p:ajax event="change"  listener="#{totalVotosController.cargaMesasPorRecintos()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="mesas" value="Mesas" />
+                                <p:selectOneMenu id="mesas" value="#{totalVotosController.mesaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaMesas}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{totalVotosController.mesas}" var="mesa"  itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
+                                    <p:ajax event="change" listener="#{totalVotosController.cargaVotosPorMesas()}" process="@this" update="frmActaE"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>                       
+                    </div>                        
+                </div>
+
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="card">
+                        <h5>TOTAL RECINTOS: </h5>
+                        <b style="font-size: 25px">#{totalVotosController.recintos.size()}</b>                        
+                    </div>
+                </div>
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="card">
+                        <h5>TOTAL MESAS: </h5>
+                        <b style="font-size: 25px">#{totalVotosController.mesas.size()}</b>                        
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-3">
+                    <div class="card">
+                        <h5>TOTAL VOTANTES: </h5>
+                        <b style="font-size: 25px">#{totalVotosController.totalVotantes}</b>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-3">
+                    <div class="card">
+                        <h5>Mesas Escrutadas</h5>
+                        <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}" labelTemplate="{value}%" displayOnly="true"/>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-6 lg:col-6 ">
+                    <div class="card">
+                        <p:barChart model="#{totalVotosController.barModel}" />
+                    </div>
+                </div>
+
+
+                <div class="col-12 md:col-6 lg:col-6 ">
+                    <div class="card">
+
+                        <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="voto" value="#{totalVotosController.votos}" reflow="true" 
+                                     rendered="#{not empty totalVotosController.votos}"  showGridlines="true" 
+                                     styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" style="font-size: 20px;" >
+
+                            <p:column headerText="CATEGORÍA"><h:outputText value="#{voto[0]}" /></p:column>
+                            <p:column headerText="NÚMERO DE VOTOS"><h:outputText value="#{voto[1]}" /></p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

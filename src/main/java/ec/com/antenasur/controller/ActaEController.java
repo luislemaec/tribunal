@@ -1,7 +1,6 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,7 +64,8 @@ public class ActaEController implements Serializable {
 
     private static final String DESTINATION = System.getProperty("java.io.tmpdir");
 
-    private static final String PATH_ACTAS_ESCRUTINIO = "C:\\ARCHIVOS\\ACTASE\\";
+    //private static final String PATH_ACTAS_ESCRUTINIO = "C:\\ARCHIVOS\\ACTASE\\";
+    private static final String PATH_ACTAS_ESCRUTINIO = "/opt/ACTASE/";
 
     private static final Integer TAMANIO_LETRA = 0;
 
@@ -199,6 +199,12 @@ public class ActaEController implements Serializable {
         //CATEGORIA VOTOS, para registrar votos por mesas
         this.categoriasVotos = categoriaVotoFacade.getCategoriasOrdenados();
 
+        mesaSeleccionado = mesaFacade.getMesaPorUsuario(loginBean.getUserName());
+        if (mesaSeleccionado != null) {
+            cargaDatosMesaSeleccionada();
+        } else {
+            mesaSeleccionado = new Mesa();
+        }
         //IGLESIAS ASIGNADAS
         PrimeFaces.current().ajax().update("frmIglesias", "msgs");
 
@@ -277,21 +283,41 @@ public class ActaEController implements Serializable {
     public void guardaDatosMesaSeleccionada() {
         if (this.listaCamposActaE != null && !this.listaCamposActaE.isEmpty()) {
             try {
+                int totalPapeletasUso = 0;
                 for (Escrutinio itemActa : listaCamposActaE) {
                     if (itemActa.getId() != null) {
                         escrutinioFacade.edit(itemActa);
+                        totalPapeletasUso = totalPapeletasUso + itemActa.getTotalVotos();
                     } else {
                         escrutinioFacade.create(itemActa);
+                        totalPapeletasUso = totalPapeletasUso + itemActa.getTotalVotos();
                     }
                 }
                 mesaSeleccionado.setEstadoTarea(EstadoTarea.COMPLETADO);
-                mesaFacade.edit(mesaSeleccionado);
+                mesaSeleccionado.setTotalPapetelasUso(totalPapeletasUso);
+                if (mesaSeleccionado.getTotalVotos() == totalPapeletasUso) {
+                    mesaSeleccionado.setTieneErrorConteo(false);
+                    mesaSeleccionado.setObservacion("");
+                }
+                if (mesaSeleccionado.getTotalVotos() > totalPapeletasUso) {
+                    mesaSeleccionado.setTieneErrorConteo(true);
+                    mesaSeleccionado.setObservacion(mesaSeleccionado.getTotalVotos() - totalPapeletasUso + " PAPELETAS FALTANTES");
+                }
+                if (mesaSeleccionado.getTotalVotos() < totalPapeletasUso) {
+                    mesaSeleccionado.setTieneErrorConteo(true);
+                    mesaSeleccionado.setObservacion(totalPapeletasUso - mesaSeleccionado.getTotalVotos() + " PAPELETAS EXCEDENTES");
+                }
+                mesaSeleccionado = mesaFacade.edit(mesaSeleccionado);
 
                 ReportTemplateController documentoActaE = inicializaReporte();
                 getListaStringDatos(documentoActaE);
-                exportaPDF(documentoActaE);
+                exportaPDF(documentoActaE, mesaSeleccionado.getObservacion());
+                if (mesaSeleccionado.getTieneErrorConteo()) {
+                    JsfUtil.addWarningMessage("MESA CERRADO CON ERRORES " + mesaSeleccionado.getObservacion());
+                } else {
+                    JsfUtil.addSuccessMessage("MESA CERRADO CORRECTO");
+                }
 
-                JsfUtil.addSuccessMessage("MESA CERRADO CORRECTAMENTE");
                 PrimeFaces.current().ajax().update("msgs", FORMULARIO);
 
             } catch (Exception e) {
@@ -387,7 +413,7 @@ public class ActaEController implements Serializable {
 
     }
 
-    public void exportaPDF(ReportTemplateController documentoActaE) {
+    public void exportaPDF(ReportTemplateController documentoActaE, String observacion) {
         try {
             String txtContenidoActaE = getPlantillaDocumento("BIENVENIDO");
             String txtResponsableActaE = getPlantillaDocumento("RESPONSABLES ACTA ESCRUTINIOS");
@@ -415,6 +441,10 @@ public class ActaEController implements Serializable {
             ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(), documentoActaE.getNombreReporte(), documentoActaE.getNombresColumnas(), fuenteCabecerta);
             ReportePFD.creaContenidoTabla(documentoActaE.getListaDatos(), documentoActaE.getNombresColumnas(), fuenteContenido);
             ReportePFD.agregaParrafoEnBlanco();
+            if (!observacion.isEmpty()) {
+                ReportePFD.agregaParrafoObservacion(observacion);
+            }
+
             //TABLA PARA FIRMAS DE RESPONSABILIDAD
             ReportePFD.agregaHTML(txtResponsableActaE, pathCss, fontProvider);
 
@@ -422,7 +452,7 @@ public class ActaEController implements Serializable {
             //GUARDA REFERENCIA DE DOCUMENTO EN BD
             this.guardarDocumentoBD(documentoNuevo);
             ReportePFD.guardarDocumentosActasE(documentoActaE.getNombreReporte());
-            ReportePFD.descargarPDF(documentoActaE.getNombreReporte());
+            //ReportePFD.descargarPDF(documentoActaE.getNombreReporte());
             procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
 
         } catch (Exception e) {

@@ -1,0 +1,159 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml"
+
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="title">MJRV</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/mjrv">MJRV</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmMJRV">
+            <div class="grid">                
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h5>ADMINITRACIÓN DE MJRV</h5>
+                    <p:toolbar >
+                        <p:toolbarGroup >
+                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{jrvController.nuevo}" update="outPnlMesas" oncomplete="PF('dlgMesa').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                            <p:commandButton id="btnEliminaRegistros" value="#{jrvController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{jrvController.eliminarSeleccionados}"
+                                             styleClass="ui-button-danger" disabled="#{!jrvController.existeSeleccionados()}" update="@this">
+                                <p:confirm header="Confirmation" message="¿Está Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
+                            </p:commandButton> 
+                        </p:toolbarGroup>
+                        <p:toolbarGroup align="right" >                            
+                            <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty jrvController.listaMJRV}">
+                                <p:dataExporter type="pdf" target="tblMesas" fileName="Mesas"/>
+                            </p:commandButton>
+                        </p:toolbarGroup>
+                    </p:toolbar>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <ui:remove>
+                                <div class="field col-12 md:col-6 lg:col-3">
+                                    <p:outputLabel for="canton" value="Cantón" />
+                                    <p:selectOneMenu id="canton" value="#{jrvController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                        <f:selectItem itemLabel="Select" itemValue="" />
+                                        <f:selectItems value="#{jrvController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                        <p:ajax event="change"  listener="#{jrvController.obtieneParroquias()}" process="@this" update="frmMesas"/>                                        
+                                    </p:selectOneMenu>
+                                </div>
+                                <div class="field col-12 md:col-6 lg:col-3">
+                                    <p:outputLabel for="parroquia" value="Parroquia" />
+                                    <p:selectOneMenu id="parroquia" value="#{jrvController.parroquiaSeleccionado.id}">
+                                        <f:selectItem itemLabel="Select" itemValue="" />
+                                        <f:selectItems value="#{jrvController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                        <p:ajax event="change" listener="#{jrvController.obtieneMesasPorParroquia()}" process="@this" update="frmMesas msgs"/>                            
+                                    </p:selectOneMenu>
+                                </div>
+
+                                <div class="field col-12 lg:col-6">
+                                    <p:outputLabel for="recintos" value="Recintos" />
+                                    <p:selectOneMenu id="recintos" value="#{jrvController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty jrvController.listaRecintos}">
+                                        <f:selectItem itemLabel="Select" itemValue="" />
+                                        <f:selectItems value="#{jrvController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                        <p:ajax event="change" listener="#{jrvController.obtieneMesasPorRecinto()}" process="@this" update="frmMesas msgs"/>
+                                    </p:selectOneMenu>
+                                </div>
+                            </ui:remove>
+                        </div>                       
+                    </div>                        
+                </div>
+                <div class="col-12 md:col-12 lg:col-12">
+
+
+                </div>
+
+                <p:dialog header="Detalles Mesa" showEffect="fade" modal="true" widgetVar="dlgMesa" responsive="true">
+                    <p:outputPanel id="outPnlMesas" class="ui-fluid">
+                        <p:outputPanel >
+                            <c:forEach items="#{jrvController.columnas}" var="col">                               
+                                <div class="field">
+                                    <p:outputLabel for="id_#{col.property}" value="#{col.header}" />
+                                    <c:if test = "#{col.type.name.contains('CatalogoGeneral')}">
+                                        <p:selectOneMenu id="id_#{col.property}" value="#{jrvController.cargo.id}" filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Select" itemValue="" />
+                                            <f:selectItems value="#{catalogoBean.autoridadesMesa}" var="autoridadMesa"  itemLabel="#{autoridadMesa.nombre}" itemValue="#{autoridadMesa.id}"/>
+                                        </p:selectOneMenu>
+                                    </c:if>
+                                    <c:if test = "#{col.type.name.contains('IglesiaPersona')}">
+                                        <p:inputText id="id_#{col.property}" value="#{jrvController.iglesiaPersona.persona.documento}" maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>                                    	
+                                    </c:if>
+                                    <c:if test = "#{col.type.name.contains('Mesa')}">
+                                        <p:selectOneMenu id="id_#{col.property}" value="#{jrvController.cargo.id}" filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Select" itemValue="" />
+                                            <f:selectItems value="#{jrvController.cargos}" var="cargoI"  itemLabel="#{cargoI.nombre}" itemValue="#{cargoI.id}"/>
+                                        </p:selectOneMenu>                                    	
+                                    </c:if>
+                                    <c:if test = "#{col.type.name.contains('Periodo')}">
+                                        <p:selectOneMenu id="id_#{col.property}" value="#{jrvController.periodo.id}" filter="true" filterMatchMode="startsWith">                                            
+                                            <f:selectItems value="#{jrvController.periodos}" var="periodo"  itemLabel="#{periodo.nombre}" itemValue="#{periodo.id}"/>
+                                        </p:selectOneMenu>                                    	
+                                    </c:if>
+                                </div>
+                            </c:forEach>
+
+                        </p:outputPanel>
+                    </p:outputPanel>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{jrvController.guardarMesaSeleccionado}" update="outPnlMesas, msgs" process="outPnlMesas @this" />                                 
+                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgMesa').hide()" class="ui-button-secondary" />
+                    </f:facet>
+                </p:dialog>
+                <ui:remove>
+                    <!-- DLG DOWNLOAD DOC -->
+                    <p:dialog header="Descargar documentos históricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
+                        <p:dataTable var="doc" value="#{jrvController.documentos}"
+                                     widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
+                                     reflow="true" rows="5" paginator="true" paginatorPosition="top"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
+                                     rowsPerPageTemplate="5,10,15" >
+
+                            <p:column width="7%">
+                                <p:commandButton ajax="false" immediate="true" process="@this" icon="pi pi-download"  title="Descargar documento"  >
+                                    <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}" />
+                                    <p:fileDownload value="#{documentoBean.file}"></p:fileDownload>
+                                </p:commandButton>               
+                            </p:column>
+
+                            <p:column headerText="Nombre" ><h:outputText value="#{doc.nombre}" /></p:column>
+
+                            <p:column headerText="Código" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
+
+                            <p:column headerText="Estado" width="15%" >                            
+                                <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}" value="#{doc.estado?'Vigente':'Archivado'}"></p:tag>                                                                        
+                            </p:column>
+
+                            <p:column headerText="Fecha de creación" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
+
+                        </p:dataTable>
+                        <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
+                    </p:dialog>
+                    <!-- comment -->
+                    <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
+                        <p:commandButton value="Si" icon="pi pi-check" actionListener="#{jrvController.eliminarMesaSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
+                        <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
+                    </p:confirmDialog>
+
+                    <p:confirmDialog global="true" showEffect="fade" width="300">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
+                    </p:confirmDialog>
+                </ui:remove>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

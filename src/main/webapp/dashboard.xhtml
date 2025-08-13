@@ -21,13 +21,13 @@
                         <p:graphicImage name="images/icon-sales.png" library="ecuador-layout" styleClass="image-icon"/>
                         <div class="overview-title">RECINTOS</div>
                         <div class="overview-numbers">
-                            5
+                            #{dashboardController.totalRecintos}
                         </div>
                         <div class="overview-subinfo grid">
-                            <div class="col-6 progressbar">
+                            <div class="col-6 progressbar 99">
                                 <div class="progress sale"></div>
                             </div>
-                            <span class="col-6">23% more</span>
+                            <span class="col-6">99% </span>
                         </div>
                     </div>
                 </div>
@@ -36,13 +36,13 @@
                         <p:graphicImage name="images/icon-views.png" library="ecuador-layout" style="margin-top:10px"/>
                         <div class="overview-title">MESAS</div>
                         <div class="overview-numbers">
-                            10
+                            #{dashboardController.totalMesas}
                         </div>
                         <div class="overview-subinfo grid">
                             <div class="col-6 progressbar">
                                 <div class="progress view"></div>
                             </div>
-                            <span class="col-6">7% more</span>
+                            <span class="col-6"> #{mesaController.porcentajeMesasEscrutado} % Escrutados</span>
                         </div>
                     </div>
                 </div>
@@ -51,7 +51,7 @@
                         <p:graphicImage name="images/icon-users.png" library="ecuador-layout"/>
                         <div class="overview-title">PERSONAS</div>
                         <div class="overview-numbers">
-                            #{personaController.listaIglesiaPersona.size()}
+                            #{dashboardController.totalPersonas}
                         </div>
                         <div class="overview-subinfo user">
                             <i class="pi pi-circle-on"/>
@@ -65,7 +65,7 @@
                                         styleClass="image-icon"/>
                         <div class="overview-title">IGLESIAS</div>
                         <div class="overview-numbers">
-                            #{iglesiaController.listaIglesias.size()}
+                            #{dashboardController.totalIglesias}
                         </div>
                         <div class="overview-subinfo checkin">
                             <i class="pi pi-circle-on"/>
@@ -74,26 +74,107 @@
                     </div>
                 </div>
 
-                <div class="col-12 md:col-12 lg:col-4">
-                    <p:panel header="Account Timeline" styleClass="timeline" rendered="#{not empty procesoController.procesos}">
-                        <ul>
-                            <c:forEach var="item" items="#{procesoController.procesos}">
-                                <li>
-                                    <div class="date-indicator">
-                                        <span class="date">#{item.dias}</span>
-                                        <span class="time">#{item.horas}</span>
+                <div class="col-12 md:col-12 lg:col-12">
+                    <h:form id="frmLugar">
+                        <div class="card">
+                            <div class="ui-fluid formgrid grid">
+                                <div class="field col-12 md:col-6 lg:col-6">
+
+                                    <p:inputText  value="#{lugarVotacion.nombreCedula}"  required="true" onkeyup="value = value.toUpperCase()" label="Cedula o nombres" 
+                                                  placeholder="Digite cédula o nombres completos" requiredMessage="Cédula o nombre es requerido"/>
+                                </div>
+                                <div class="p-field col-12 md:col-6 lg:col-3 ">
+                                    <p:commandButton value="BUSCAR"  icon="pi pi-search"  action="#{lugarVotacion.buscarLugar()}" 
+                                                     ajax="false" styleClass="ui-button-info" update="@form, msgs" />
+                                </div>
+                            </div>                       
+                        </div>                        
+
+                        <c:forEach var="lugar" items="#{lugarVotacion.lugares}" >
+
+                            <div class="card">
+                                <div class="grid">
+                                    <div class="field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel value="NOMBRES: "/>
                                     </div>
-                                    <div class="activity-link"></div>
-                                    <i class="pi pi-fw pi-circle-on #{item.actividad.contains('ERROR DE INGRESO AL SISTEMA')?'error':(item.actividad.contains('SALE DEL SISTEMA TEC')?'code':'success')}"/>
-                                    <div class="timeline-subject">
-                                        <span class="timeline-header">#{item.actividad}</span>
-                                        <span class="timeline-subheader">Usuario: #{item.usuarioCrea}</span>
+                                    <div class="field col-12 md:col-6 lg:col-3">
+                                        <b>#{lugar.nombres}</b>
                                     </div>
-                                    <i class="pi pi-desktop device #{item.actividad.contains('ERROR DE INGRESO AL SISTEMA')?'error':(item.actividad.contains('SALE DEL SISTEMA TEC')?'code':'success')}"/>                                    
-                                </li>
-                            </c:forEach>                            
-                        </ul>
+
+                                    <div class="p-field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel value="CÉDULA:"/>
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-2">
+                                        <b> #{lugar.cedula} </b>
+                                    </div>
+
+                                    <div class="p-field col-12 md:col-6 lg:col-2">
+                                        <p:outputLabel  value="IGLESIA" />                                                
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-3">
+                                        <b> #{lugar.iglesia} / #{lugar.comunidad} </b>
+                                    </div>
+
+                                    <p:divider/>
+
+                                    <div class="p-field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel value="RECINTO:"/>                                   
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-5">
+                                        <b> #{lugar.recinto} </b>
+                                    </div>
+
+                                    <div class="p-field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel value="MESA:"/>
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-5">
+                                        <b> #{lugar.mesa} </b>
+                                    </div>                                          
+
+                                    <div class="p-field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel  value="PARROQUIA:"/>                                                
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-5">
+                                        <b> #{lugar.parroquia}</b>
+                                    </div>
+
+                                    <div class="p-field col-12 md:col-6 lg:col-1">
+                                        <p:outputLabel value="CANTON:"/>
+                                    </div>
+                                    <div class="field col-12 md:col-6 lg:col-5">
+                                        <b> #{lugar.canton} </b>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </h:form>
+
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-8">
+                    <p:panel header="Linea de tiempo" styleClass="timeline" rendered="#{not empty totalVotosController.totalVotos}">
+                        <p:dataTable var="voto" value="#{totalVotosController.totalVotos}"
+                                     widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
+                                     reflow="true" rows="5" paginator="true" paginatorPosition="top"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
+                                     rowsPerPageTemplate="5,10,15" 
+                                     rendered="#{totalVotosController.totalVotos ne null}">
+
+
+                            <p:column headerText="ID" ><h:outputText value="#{voto.id}" /></p:column> 
+                            <p:column headerText="Nombre" ><h:outputText value="#{voto.categoria}" /></p:column>                                        
+
+                            <p:column headerText="Total" width="15%" ><h:outputText value="#{voto.totalVotos}"/> </p:column>
+                            <p:column headerText="Recinto" width="15%" ><h:outputText value="#{voto.recinto.nombre}"/> </p:column>
+                            <p:column headerText="Mesa" width="15%" ><h:outputText value="#{voto.mesa.nombre}"/> </p:column>
+                            <p:column headerText="Canton" width="15%" ><h:outputText value="#{voto.geograp.geograp.name}"/> </p:column>
+                            <p:column headerText="Parroquia" width="15%" ><h:outputText value="#{voto.geograp.name}"/> </p:column>
+
+
+                        </p:dataTable>
                     </p:panel>
+
                 </div>
             </div>
         </div>

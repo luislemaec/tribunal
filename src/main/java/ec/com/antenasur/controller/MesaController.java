@@ -1,6 +1,5 @@
 package ec.com.antenasur.controller;
 
-import ec.com.antenasur.bean.DocumentoBean;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,13 +11,14 @@ import javax.inject.Named;
 
 import org.primefaces.PrimeFaces;
 
+import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.tec.Documentos;
 import ec.com.antenasur.domain.tec.Mesa;
 import ec.com.antenasur.domain.tec.Recinto;
+import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.service.tec.MesaFacade;
 import ec.com.antenasur.service.tec.RecintoFacade;
 import ec.com.antenasur.util.Constantes;
@@ -82,7 +82,7 @@ public class MesaController implements Serializable {
 
     @Setter
     @Getter
-    private List<Mesa> listaMesas, listaMesasSeleccionados;
+    private List<Mesa> listaMesas, listaMesasSeleccionados, mesasEscrutadas;
 
     @Setter
     @Getter
@@ -96,6 +96,10 @@ public class MesaController implements Serializable {
     @Getter
     private List<Documentos> documentos;
 
+    @Setter
+    @Getter
+    private float porcentajeMesasEscrutado;
+
     @PostConstruct
     private void init() {
         try {
@@ -105,9 +109,16 @@ public class MesaController implements Serializable {
             this.cantonSeleccionado = parroquiaSeleccionado = new Geograp();
             this.recintoSeleccionado = new Recinto();
             this.listaMesas = this.listaMesasSeleccionados = new ArrayList<>();
+            this.mesasEscrutadas = new ArrayList<>();
             //Trae cantones de la provincia de Chimborazo
             this.cantones = geograpBean.getByFatherId(7);
             this.listaMesas = mesaFacade.findAll();
+            mesasEscrutadas = mesaFacade.mesasEscrutadas(EstadoTarea.COMPLETADO);
+            if (mesasEscrutadas != null && !mesasEscrutadas.isEmpty()) {
+                porcentajeMesasEscrutado = (mesasEscrutadas.size() * 100) / listaMesas.size();
+            } else {
+                porcentajeMesasEscrutado = 0;
+            }
 
             cargaMesaTieneDocumentos();
             this.listaRecintos = recintoFacade.findAll();
@@ -191,17 +202,19 @@ public class MesaController implements Serializable {
             parroquiaSeleccionado = geograpBean.getById(parroquiaSeleccionado.getId());
 
             List<Integer> listaIdParroquias = new ArrayList<>();
+            List<Geograp> parroquiasTmp = new ArrayList<>();
             if (parroquiaSeleccionado != null) {
                 listaIdParroquias.add(parroquiaSeleccionado.getId());
+                parroquiasTmp.add(cantonSeleccionado);
             }
-            listaRecintos = recintoFacade.getRecintosPorParroquias(parroquias);
+            listaRecintos = recintoFacade.getRecintosPorParroquias(parroquiasTmp);
             listaMesas = mesaFacade.getMesasPorRecintos(listaRecintos);
 
             if (listaMesas == null) {
 
-                JsfUtil.addWarningMessage("No existe registro de Iglesias en " + parroquiaSeleccionado.getName());
+                JsfUtil.addWarningMessage("No existe registro de mesas en " + parroquiaSeleccionado.getName());
             } else {
-                JsfUtil.addInfoMessage(listaMesas.size() + " Iglesias registradas");
+                JsfUtil.addInfoMessage(listaMesas.size() + " mesas registradas");
             }
         } else {
             mesaSeleccionado = new Mesa();

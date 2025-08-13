@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="description" content="" />
+            <meta name="author" content="Luis Lema" />
+        </f:facet>
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>Recuperar contraseña</title>
+        <h:outputScript name="js/layout.js" library="ecuador-layout" />
+        <h:outputScript name="js/prism.js" library="ecuador-layout"/>
+    </h:head>
+
+    <h:body styleClass="login-body">
+        <div class="login-topbar">
+            <h:link outcome="/dashboard" class="logo">
+                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+            </h:link>
+        </div>
+        <div class="grid" >
+            <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
+                <p:panel header="#{msg['label.recovery.password.header']}"  >
+                    <h:form id="frmRecoveryPassword">
+                        <div class="col-12"  >
+                            <p:growl id="growl" life="4000" />
+                            <div class="grid ui-fluid">
+                                <div class="col-12">
+                                    <p:outputLabel for="user" value="#{msg['label.user']}"/>
+                                    <p:inputText id="user" required="true" value="#{olvidoClaveController.username}" placeholder="usuario" maxlength="13" validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}" styleClass="my-2"/>
+
+                                    <p:outputLabel for="mail" value="#{msg['label.email']}" />
+                                    <p:inputText id="mail" required="true" value="#{olvidoClaveController.correo}" placeholder="info@mail.com" validatorMessage="#{msg['msg.mail.validator']}" requiredMessage="#{msg['msg.mail.required']}" styleClass="my-2"/>
+                                </div>						
+                            </div> 
+                            
+                            <div align='center'> 
+                                <p:commandButton value="Recuperar clave" update="growl" action="#{olvidoClaveController.recuperarClave()}" styleClass="mx-1" ajax="false" />
+                                <p:separator />
+                                <h:outputLink value="#{request.contextPath}/index.html" >Regresar</h:outputLink>
+                            </div>
+                        </div>
+                    </h:form>
+                </p:panel>
+
+            </div>
+        </div>
+
+        <h:outputStylesheet name="css/primeicons.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+
+        <h:outputStylesheet name="css/demo.css" library="demo"/>
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

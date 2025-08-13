@@ -68,8 +68,8 @@ public class ProcesoBean {
         listaProceso = procesoFacade.getProcesoPorUsuario(usuario);
     }
 
-    public List<Proceso> getListaProcesoFechas(Date fechaInicio, Date fechaFin) {
-        return procesoFacade.getProcesoPorUsuario(fechaInicio, fechaFin);
+    public List<Proceso> getListaProcesoFechas(Date fechaInicio, Date fechaFin, String usuario) {
+        return procesoFacade.getProcesoPorUsuario(fechaInicio, fechaFin, usuario);
     }
 
     public void okActivityRegister(String activity, String datos) {

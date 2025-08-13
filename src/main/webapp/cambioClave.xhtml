@@ -2,75 +2,59 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
     <h:head>
-        <meta charset="utf-8" />
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="description" content="" />
+            <meta name="author" content="Luis Lema" />
+        </f:facet>
         <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="" />
-        <meta name="author" content="Luis Lema" />
-        <title>Login - Seleccion de Medios</title>
-        <h:outputStylesheet name="css/primeflex.min.css" />
-        <h:outputStylesheet name="css/login.css" />
-        <!--        <h:outputStylesheet name="css/styles.css" />
-                 <h:outputStylesheet name="css/bootstrap.min.css" /> -->
+        <title>Cambio clave </title>
+        <h:outputScript name="js/layout.js" library="ecuador-layout" />
+        <h:outputScript name="js/prism.js" library="ecuador-layout"/>
     </h:head>
 
-    <h:body style="background: #cfd8dc" >
-        <ui:insert name="header">
-            <ui:include src="/WEB-INF/templates/header.xhtml" />
-        </ui:insert>
+    <h:body styleClass="login-body">
+        <div class="login-topbar">
+            <h:link outcome="/dashboard" class="logo">
+                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+            </h:link>
+        </div>
         <h:form id="frmCambioContrasenia">
             <p:growl id="growl" life="4000" />
-            <div class="p-d-flex p-flex-column p-flex-md-row" >
-                <div class="p-col-12 p-md-4 p-md-offset-4">     
-                    <p:card style="background:  ">
-                        <f:facet name="header">
-                            <div class="p-col-12 p-md-6 p-md-offset-3">
-                            </div>                            
-                        </f:facet>
-                        <p:divider />
-                        <div class="p-grid ui-flex-inline">
-                            <div class="p-col-12 ">
-                                <div class="ui-inputgroup">
-                                    <span class="ui-inputgroup-addon"><i class="pi pi-lock"></i></span>
-                                    <p:password id="claveAnterior" required="true" value="#{cambioContraseniaControl.contraseniaTemporal}"  validatorMessage="#{msg['msg.passwordOld.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true"  placeholder="#{msg['msg.placeH.claveTemporat']}" />
-                                </div>
-                            </div>
+            <div class="grid " >
+                <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
+                    <div class="card">
+                        <h5><b>Cambio de clave</b></h5>
+                        <p:staticMessage severity="info" summary="INFORMACIÓN" detail="Estimado usuario, ingrese una clave fácil de recordar para usted y difícil de adivinar para el resto" style="width: 100%"/>
+
+                        <div class="col-12 ui-fluid">
+                            <p:password styleClass=" w-full mt-2" id="claveAnterior" required="true" value="#{cambioClaveController.claveTemporal}"  validatorMessage="#{msg['msg.passwordOld.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true"  placeholder="#{msg['msg.placeH.claveTemporat']}" />
+
+                            <p:password styleClass=" w-full my-3" id="password" required="true" value="#{cambioClaveController.clave1}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  toggleMask="true"  placeholder="contraseña"/>
+                            
+                            <p:password styleClass=" w-full" id="password2" required="true" value="#{cambioClaveController.clave2}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="repita la contraseña"/>
+
                         </div>
 
-                        <div class="p-grid ui-flex-inline">
-                            <div class="p-col-12 ">
-                                <div class="ui-inputgroup">
-                                    <span class="ui-inputgroup-addon"><i class="pi pi-lock"></i></span>
-                                    <p:password id="password" required="true" value="#{cambioContraseniaControl.contrasenia1}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="contraseña"/>
-                                </div>
-                            </div>
+                        <div align='center'> 
+                            <p:commandButton value="#{msg['btn.changue']}"  action="#{cambioClaveController.cambiarClave()}"  ajax="false" styleClass="ui-button-info" />
+                            <p:divider />
+                            <h:outputLink value="#{request.contextPath}/index.html" >Regresar</h:outputLink>
                         </div>
-                        <div class="p-grid ui-flex-inline">
-                            <div class="p-col-12 ">
-                                <div class="ui-inputgroup">
-                                    <span class="ui-inputgroup-addon"><i class="pi pi-lock"></i></span>
-                                    <p:password id="password2" required="true" value="#{cambioContraseniaControl.contrasenia2}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="repita la contraseña"/>
-                                </div>
-                            </div>
-                        </div>
-                        <p:divider />
+                    </div>
 
-                        <div class="p-grid ui-fluid">
-                            <div class="p-col-12 p-md-4 p-md-offset-4">
-                                <p:commandButton value="#{msg['btn.changue']}"  action="#{cambioContraseniaControl.cambiarContrasenia()}"  ajax="false" styleClass="ui-button-info" />
-                            </div>
-                        </div>
-                    </p:card>
-                </div>           
+                </div>         
             </div>
-
         </h:form>
-        <ui:insert name="footer" >
-            <ui:include src="/WEB-INF/templates/footer.xhtml" />
-        </ui:insert>
+        <h:outputStylesheet name="css/primeicons.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+
+        <h:outputStylesheet name="css/demo.css" library="demo"/>
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
     </h:body>
 </html>

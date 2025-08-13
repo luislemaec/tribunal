@@ -41,13 +41,16 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         return null;
     }
 
-    public List<Proceso> getProcesoPorUsuario(Date fechaInicio, Date fechaFin) {
+    public List<Proceso> getProcesoPorUsuario(Date fechaInicio, Date fechaFin, String usuario) {
         try {
             String hql = "from Proceso p "
-                    + " WHERE cast(p.fechaCrea as date) BETWEEN :fechaInicio AND :fechaFin ORDER BY p.fechaCrea DESC ";
+                    + " WHERE cast(p.fechaCrea as date) BETWEEN :fechaInicio AND :fechaFin "
+                    + " AND p.usuarioCrea=:usuario "
+                    + "ORDER BY p.fechaCrea DESC ";
             Query query = super.getEntityManager().createQuery(hql);
             query.setParameter("fechaInicio", fechaInicio);
             query.setParameter("fechaFin", fechaFin);
+            query.setParameter("usuario", usuario);
             List<Proceso> resultList = query.getResultList();
             if (resultList != null && !resultList.isEmpty()) {
                 return resultList;

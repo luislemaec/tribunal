@@ -43,7 +43,6 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
         return null;
     }
 
-
     public Iglesia getIglesiaPorDocumento(String documento) {
         try {
             String sql = HQL + " WHERE documento =:documento AND estado =TRUE ORDER BY id";
@@ -94,12 +93,12 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
         return null;
     }
 
-	public List<Iglesia> getIglesiasPorParroquias(List<Geograp> parroquias) {
-		try {
+    public List<Iglesia> getIglesiasPorParroquias(List<Geograp> parroquias) {
+        try {
             String sql = HQL + " LEFT JOIN FETCH ig.ubicacion ub"
                     + " WHERE  ub IN :parroquias ORDER BY ig.id";
             TypedQuery<Iglesia> query = super.getEntityManager().createQuery(sql, Iglesia.class);
-            query.setParameter("parroquias", parroquias);            
+            query.setParameter("parroquias", parroquias);
             List<Iglesia> result = query.getResultList();
             if (result.size() > 0) {
                 return result;
@@ -109,5 +108,25 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
             return null;
         }
         return null;
-	}
+    }
+
+    public Iglesia getIglesiaPorNombreNombreComunidadYUbicacion(Iglesia iglesiaTmp) {
+        try {
+            String sql = HQL + " LEFT JOIN FETCH ig.ubicacion ub"
+                    + " WHERE ub=:ubicacion AND ig.nombre=:nombreIglesia "
+                    + " AND ig.comunidad =:nombreComunidad ORDER BY ig.id";
+            TypedQuery<Iglesia> query = super.getEntityManager().createQuery(sql, Iglesia.class);
+            query.setParameter("ubicacion", iglesiaTmp.getUbicacion());
+            query.setParameter("nombreIglesia", iglesiaTmp.getNombre());
+            query.setParameter("nombreComunidad", iglesiaTmp.getComunidad());
+            List<Iglesia> result = query.getResultList();
+            if (result.size() > 0) {
+                return result.get(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
 }

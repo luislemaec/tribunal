@@ -155,6 +155,10 @@ public class Constantes {
     public static String getRolTesoreosMesa() {
         return "Tesorero-mesa";
     }
+    
+    public static String getRolTecnico() {
+        return "Tecnico";
+    }
 
     public static String getRolSecretarioMesa() {
         return "Secretario-mesa";

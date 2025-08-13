@@ -19,11 +19,17 @@ import ec.com.antenasur.domain.Iglesia;
 import ec.com.antenasur.domain.IglesiaPersona;
 import ec.com.antenasur.domain.Persona;
 import ec.com.antenasur.domain.tec.Documentos;
+import ec.com.antenasur.domain.tec.Mesa;
+import ec.com.antenasur.domain.tec.Padron;
+import ec.com.antenasur.domain.tec.Recinto;
 import ec.com.antenasur.domain.tec.TipoDocumento;
 import ec.com.antenasur.service.GeograpFacade;
 import ec.com.antenasur.service.IglesiaFacade;
 import ec.com.antenasur.service.IglesiaPersonaFacade;
 import ec.com.antenasur.service.PersonaFacade;
+import ec.com.antenasur.service.tec.MesaFacade;
+import ec.com.antenasur.service.tec.PadronFacade;
+import ec.com.antenasur.service.tec.RecintoFacade;
 import ec.com.antenasur.util.JsfUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,6 +76,15 @@ public class PersonaController implements Serializable {
 
     @Inject
     private IglesiaFacade iglesiaFacade;
+
+    @Inject
+    private RecintoFacade recintoFacade;
+
+    @Inject
+    private MesaFacade mesaFacade;
+
+    @Inject
+    private PadronFacade padronFacade;
 
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
@@ -136,7 +151,7 @@ public class PersonaController implements Serializable {
 
             listaIglesias = iglesiaFacade.findAll();
             //obtiene todas las iglesias
-            listaIglesiaPersona = iglesiaPersonaFacade.findAll();
+            listaIglesiaPersona = new ArrayList<>();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
@@ -365,9 +380,13 @@ public class PersonaController implements Serializable {
                         Iglesia iglesiaTmp = new Iglesia();
                         Persona personaTmp = new Persona();
                         IglesiaPersona igpeTmp = new IglesiaPersona();
+                        Recinto recintoTmp = new Recinto();
+                        Mesa mesaTmp = new Mesa();
+                        Padron padronTmp = new Padron();
+                        Geograp ubicacionTmp = new Geograp();
                         fila = filasInterator.next();
-                        //Inicia en la fila 3 {0,1,2,3,4..}
-                        if (contadorFila >= 2) {
+                        //Inicia en la fila 1 {0,1,2,3,4..}
+                        if (contadorFila >= 1) {
                             //inicia en la columna (columna B)
                             for (int contadorColumna = 1; contadorColumna < fila.getLastCellNum(); contadorColumna++) {
                                 Cell cell = fila.getCell(contadorColumna);
@@ -376,41 +395,58 @@ public class PersonaController implements Serializable {
                                         case 0:
                                             break;
                                         case 1:
-                                            String nombres = procesaTamanioColumna(cell.getStringCellValue().trim(), 100);
-                                            personaTmp.setNombres(!nombres.isEmpty() ? nombres.toUpperCase() : null);
+                                            String nombresPersona = procesaTamanioColumna(cell.getStringCellValue().trim(), 100);
+                                            personaTmp.setNombres(!nombresPersona.isEmpty() ? nombresPersona.toUpperCase() : null);
                                             break;
                                         case 2:
                                             String cedula = procesaTamanioColumna(cell.getStringCellValue().trim(), 11);
+                                            cedula = eliminaGionCedula(cedula);
                                             personaTmp.setDocumento(!cedula.isEmpty() ? cedula : null);
                                             break;
                                         case 3:
-                                            String sexo = procesaTamanioColumna(cell.getStringCellValue().trim(), 1);
-                                            personaTmp.setSexo(sexo);
+                                            String nombreIglesia = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
+                                            iglesiaTmp.setNombre(!nombreIglesia.isEmpty() ? nombreIglesia.toUpperCase() : null);
+                                            break;
+                                        case 5:
+                                            int ubicacion = (int) cell.getNumericCellValue();
+                                            ubicacionTmp.setId(ubicacion);
+                                            break;
+                                        case 6:
+                                            String nombreComunidad = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
+                                            iglesiaTmp.setComunidad(!nombreComunidad.isEmpty() ? nombreComunidad.toUpperCase() : null);
+                                            break;
+                                        case 9:
+                                            String nombreMesa = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
+                                            mesaTmp.setNombre(nombreMesa);
                                             break;
                                     }
                                 }
                             }
-                            if (!personaTmp.getDocumento().isEmpty() && personaTmp.getDocumento() != null) {
-                                Persona personaBuscado = personaFacade.buscarPorCedula(personaTmp.getDocumento());
-                                if (personaBuscado != null) {
-                                    igpeTmp = iglesiaPersonaFacade.buscarPorCedulaPersona(personaBuscado.getDocumento());
-                                    if (igpeTmp != null) {
-                                        //Existe persona y esta asignado a Iglesia
-                                        igpeTmp.setNovedad("REGISTRADO EN IGLESIA");
-                                        listaIglesiaPersonaExistente.add(igpeTmp);
-                                    } else {
-                                        //Existe persona, asigna a iglesia
-                                        IglesiaPersona iglesiaPersonaNueva = new IglesiaPersona(iglesiaSeleccionado, personaBuscado);
-                                        iglesiaPersonaFacade.create(iglesiaPersonaNueva);
-                                    }
+
+                            mesaTmp = mesaFacade.buscaPorNombreMesa(mesaTmp.getNombre());
+
+                            ubicacionTmp = geograpFacade.find(ubicacionTmp.getId());
+
+                            if (ubicacionTmp != null) {
+                                iglesiaTmp.setUbicacion(ubicacionTmp);
+                                Iglesia iglesiaTmpBusca = iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(iglesiaTmp);
+                                if (iglesiaTmpBusca == null) {
+                                    iglesiaTmp = iglesiaFacade.create(iglesiaTmp);
                                 } else {
-                                    Persona personaNuevo = personaFacade.create(personaTmp);
-                                    IglesiaPersona iglesiaPersonaNueva = new IglesiaPersona(iglesiaSeleccionado, personaNuevo);
-                                    iglesiaPersonaFacade.create(iglesiaPersonaNueva);
+                                    iglesiaTmp = iglesiaTmpBusca;
                                 }
-                            } else {
-                                IglesiaPersona iglesiaPersonaSinCedula = new IglesiaPersona(iglesiaSeleccionado, personaTmp, "SIN CEDULA");
-                                listaIglesiaPersonaExistente.add(iglesiaPersonaSinCedula);
+                            }
+
+                            personaTmp = personaFacade.create(personaTmp);
+
+                            if (iglesiaTmp != null && personaTmp != null) {
+                                igpeTmp = new IglesiaPersona(iglesiaTmp, personaTmp);
+                                igpeTmp = iglesiaPersonaFacade.create(igpeTmp);
+                            }
+                            if (igpeTmp != null) {
+                                padronTmp.setIglesiaPersona(igpeTmp);
+                                padronTmp.setMesa(mesaTmp);
+                                padronFacade.create(padronTmp);
                             }
                         }
                         contadorFila++;
@@ -437,6 +473,11 @@ public class PersonaController implements Serializable {
             nuevaCadena = cadena;
         }
         return nuevaCadena;
+    }
+
+    private String eliminaGionCedula(String cadena) {
+        return cadena.replace("-", "");
+
     }
 
 }

@@ -31,7 +31,7 @@
                             <p:fileUpload mode="simple" skinSimple="true" label="Importar" listener="#{personaController.handleFileUpload}" dragDropSupport="false"  
                                           invalidFileMessage="#{msg['msg.invalid.file']}" invalidSizeMessage="#{msg['msg.invalid.max.size.file']}" auto="true" oncomplete="PF('statusDialog').hide()"
                                           update="frmPersonas, msgs" sizeLimit="2000000" fileLimit="1" allowTypes="/(\.|\/)(xlsx|xls|)$/"  multiple="false" cancelLabel="Cancelar" 
-                                          chooseIcon="pi pi-download" rendered="#{personaController.file eq null}"  disabled="#{personaController.iglesiaSeleccionado.id eq null}"
+                                          chooseIcon="pi pi-download" rendered="#{personaController.file eq null}"  
                                           styleClass="ui-button-raised ui-button-info"/>
                             <p:commandButton value="Exportar" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty personaController.listaIglesiaPersona}">
                                 <p:dataExporter type="pdf" target="tblPersonas" fileName="Personas"/>

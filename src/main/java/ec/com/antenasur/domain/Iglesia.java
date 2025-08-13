@@ -60,6 +60,16 @@ public class Iglesia extends EntidadAuditable implements Serializable {
 
     @Setter
     @Getter
+    @Column(name = "igl_comunidad_barrio")
+    private String comunidad;
+
+    @Setter
+    @Getter
+    @Column(name = "igl_total_miembros")
+    private Integer totalMiembros;
+
+    @Setter
+    @Getter
     @Column(name = "igl_documento")
     private String documento;
 
@@ -68,12 +78,11 @@ public class Iglesia extends EntidadAuditable implements Serializable {
     @ManyToOne
     @JoinColumn(name = "gelo_id")
     private Geograp ubicacion;
-    
+
     @Setter
     @Getter
     @Transient
     private Boolean tieneDocumentos;
-    
 
     public Iglesia() {
     }

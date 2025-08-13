@@ -28,7 +28,10 @@ public class LoginFilterExcluder {
         excludeUrls.add("/javax.faces.resource/");
         excludeUrls.add("/errors/");
         excludeUrls.add("/index.html");
-        excludeUrls.add("/login.jsf");        
+        excludeUrls.add("/login.jsf");
+        excludeUrls.add("/olvidoClave.jsf");
+        excludeUrls.add("/recuperaClaveCorrecto.jsf");
+        excludeUrls.add("/consultar.jsf");
     }
 
     public boolean isExcludeUrl(String url) {
@@ -38,11 +41,10 @@ public class LoginFilterExcluder {
             }
         }
         return false;
-    }	
+    }
 
     public static LoginFilterExcluder getInstance(String contextPath) {
         return instance == null ? instance = new LoginFilterExcluder(contextPath) : instance;
     }
-    
 
 }

@@ -234,7 +234,7 @@ public class ReportePFD {
 
     public static void guardarDocumentosActasE(String nombreDocumento) {
         try {
-            Path path = Paths.get("C:\\ARCHIVOS\\ACTASE\\" + nombreDocumento + ".pdf");
+            Path path = Paths.get("/opt/ACTASE/" + nombreDocumento + ".pdf");
             Files.write(path, baos.toByteArray());
         } catch (IOException e) {
             LOG.error("ERROR AL GUARDAR ARCHIVOS" + nombreDocumento, e);
@@ -263,6 +263,17 @@ public class ReportePFD {
             Paragraph parrafo = new Paragraph("\n",
                     FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
+            document.add(parrafo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void agregaParrafoObservacion(String observacion) {
+        try {
+            Paragraph parrafo = new Paragraph("\n" + observacion,
+                    FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.RED));
+            parrafo.setAlignment(Element.ALIGN_LEFT);
             document.add(parrafo);
         } catch (Exception e) {
             e.printStackTrace();

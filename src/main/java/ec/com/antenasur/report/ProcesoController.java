@@ -76,7 +76,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private void init() {
         try {
             fechaFin = fechaInicio = fechaActual = LocalDate.now();
-            listaProceso = procesoFacade.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin));
+            listaProceso = procesoFacade.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin), loginBean.getUserName());
             //listaProceso = procesoFacade.findAll();
             procesaLista();
         } catch (Exception e) {

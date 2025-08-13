@@ -130,7 +130,6 @@ public class LoginBean implements Serializable {
                 accessAuditory.setLogout(JsfUtil.getTimestamp());
                 accessAuditory.setActive(false);
                 accessFacade.edit(accessAuditory);
-
             }
         } catch (Exception e) {
             log.info("Error");
@@ -169,7 +168,7 @@ public class LoginBean implements Serializable {
     }
 
     public void cerrarSessionExpirada() throws RuntimeException, IOException {
-    	procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
+        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
         HttpServletRequest request = JsfUtil.getRequest();
         request.getSession().invalidate();
         JsfUtil.redirect("/errors/viewExpired.jsf");
@@ -194,12 +193,10 @@ public class LoginBean implements Serializable {
      * @throws ServletException
      */
     public void passwordChangued() throws RuntimeException, IOException, ServletException {
-        HttpServletRequest request = JsfUtil.getRequest();
+        HttpServletRequest request = JsfUtil.getRequest();       
         registerAdditory(request.getSession().getId().toString());
-        request.logout();
-
-        FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
-        JsfUtil.redirect("/changuepasswordsuccess.jsf?faces-redirect=true");
+        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
+        request.getSession().invalidate();        
     }
 
 }

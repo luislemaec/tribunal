@@ -37,7 +37,7 @@
                     <div class="col-12 md:col-12 lg:col-12 ui-fluid">
                         <div class="input-wrapper">                            
                             <p:password id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}" 
-                            redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="Contraseña"/>
+                                        redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="Contraseña"/>
                         </div>
                     </div>
                     <div class="col-12 md:col-12 lg:col-12 ">     
@@ -46,10 +46,7 @@
 
                     <div class="separator"></div>
 
-                    <a href="#" class="subinfo">
-                        <span>Olvido su contrasenia?</span>
-                    </a>
-
+                    <h:outputLink value="#{request.contextPath}/olvidoClave.jsf" ><span>#{msg['label.recovery.password']}</span> </h:outputLink>
                 </h:form>
             </div>
         </div>               
