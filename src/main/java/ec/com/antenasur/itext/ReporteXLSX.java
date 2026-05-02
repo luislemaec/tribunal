@@ -36,7 +36,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import ec.com.antenasur.util.Constantes;
 
 import javax.ejb.SessionContext;
-import ec.com.antenasur.domain.generic.BeanLocator;
+import ec.com.antenasur.model.generic.BeanLocator;
 
 public class ReporteXLSX {
 

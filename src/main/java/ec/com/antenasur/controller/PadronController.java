@@ -1,53 +1,47 @@
 package ec.com.antenasur.controller;
 
-import ec.com.antenasur.bean.GeograpBean;
-import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Iglesia;
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.Padron;
-import ec.com.antenasur.domain.tec.Periodo;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.IglesiaFacade;
-import ec.com.antenasur.service.IglesiaPersonaFacade;
-import ec.com.antenasur.service.tec.MesaFacade;
-import ec.com.antenasur.service.tec.PadronFacade;
-import ec.com.antenasur.service.tec.PeriodoFacade;
-import ec.com.antenasur.service.tec.RecintoFacade;
-import ec.com.antenasur.util.JsfUtil;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.primefaces.PrimeFaces;
 
+import org.primefaces.PrimeFaces;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
+import ec.com.antenasur.bean.GeograpBean;
+import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.dto.MesaDTO;
+import ec.com.antenasur.dto.PadronDTO;
+import ec.com.antenasur.dto.RecintoDTO;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.service.IglesiaPersonaService;
+import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.tec.MesaService;
+import ec.com.antenasur.service.tec.PadronService;
+import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.service.tec.RecintoService;
+import ec.com.antenasur.util.JsfUtil;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 @Named
 @ViewScoped
 @Slf4j
 @NoArgsConstructor
 public class PadronController implements Serializable {
 
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-
     private static final long serialVersionUID = 1L;
 
-    //private static final Logger LOG = Logger.getLogger(cargarControl.class);
     @Inject
     private LoginBean loginBean;
 
@@ -55,22 +49,22 @@ public class PadronController implements Serializable {
     private GeograpBean geograpBean;
 
     @Inject
-    private PadronFacade padronFacade;
+    private PadronService padronService;
 
     @Inject
-    private RecintoFacade recintoFacade;
+    private RecintoService recintoService;
 
     @Inject
-    private IglesiaFacade iglesiaFacade;
+    private IglesiaService iglesiaService;
 
     @Inject
-    private MesaFacade mesaFacade;
+    private MesaService mesaService;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private PeriodoService periodoService;
 
     @Inject
-    private IglesiaPersonaFacade iglesiaPersonaFacade;
+    private IglesiaPersonaService iglesiaPersonaService;
 
     @Setter
     @Getter
@@ -82,44 +76,42 @@ public class PadronController implements Serializable {
 
     @Setter
     @Getter
-    private Recinto recintoSeleccionado;
+    private RecintoDTO recintoSeleccionado;
 
     @Setter
     @Getter
-    private List<Recinto> listaRecintos, listaRecintosSeleccionados;
+    private List<RecintoDTO> listaRecintos, listaRecintosSeleccionados;
 
     @Setter
     @Getter
-    private List<Padron> listaPadron, listaPadronSeleccionado;
+    private List<PadronDTO> listaPadron, listaPadronSeleccionado;
 
     @Setter
     @Getter
-    private List<Iglesia> listaIglesiasAsignadas, listaIglesiasPorAsignar;
+    private List<IglesiaDTO> listaIglesiasAsignadas, listaIglesiasPorAsignar;
 
     @Setter
     @Getter
-    private List<IglesiaPersona> listaIglesiaPersonas;
+    private List<MesaDTO> listaMesas, listaMesasCerradas;
 
     @Setter
     @Getter
-    private List<Mesa> listaMesas, listaMesasCerradas;
+    private MesaDTO mesaSeleccionado;
 
     @Setter
     @Getter
-    private Mesa mesaSeleccionado;
+    private PadronDTO padronSeleccionado;
 
     @Setter
     @Getter
-    private Padron padronSeleccionado;
-
-    @Setter
-    @Getter
-    private DualListModel<Iglesia> listaNombresIglesias;
+    private DualListModel<IglesiaDTO> listaNombresIglesias;
 
     @Setter
     @Getter
     private List<String> iglesiasOrigen, iglesiasDestino;
 
+    // NOTA: Periodo sigue como entidad — su DTO se creará en la iteración de
+    // catálogos.
     @Setter
     @Getter
     private Periodo periodoActivo;
@@ -127,10 +119,8 @@ public class PadronController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            //INICIALIZA VARIABLES
-            this.inicializaVariables();
-            //CARGA VALORES INICIALES
-            this.cargaDatosIniciales();
+            inicializaVariables();
+            cargaDatosIniciales();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
@@ -138,32 +128,27 @@ public class PadronController implements Serializable {
 
     private void inicializaVariables() {
         this.cantonSeleccionado = this.parroquiaSeleccionado = new Geograp();
-        this.recintoSeleccionado = new Recinto();
-        this.padronSeleccionado = new Padron();
-        this.mesaSeleccionado = new Mesa();
+        this.recintoSeleccionado = new RecintoDTO();
+        this.padronSeleccionado = new PadronDTO();
+        this.mesaSeleccionado = new MesaDTO();
     }
 
     private void cargaDatosIniciales() {
-        //PERIODO ACTIVO
-        this.periodoActivo = periodoFacade.getPeridoActivo();
-        //CANTONES
+        this.periodoActivo = periodoService.getPeridoActivo();
         this.cantones = geograpBean.getByFatherId(7);
-        //RECINTOS
-        this.listaRecintos = recintoFacade.findAll();
-        //MESAS
-        this.listaMesas = mesaFacade.getMesasPorRecintos(listaRecintos);
-        //PADRON
-        this.listaPadron = padronFacade.getPadronPorMesas(listaMesas);
-        //IGLESIAS ASIGNADAS
-        PrimeFaces.current().ajax().update("frmIglesias", "msgs");
-
+        this.listaRecintos = recintoService.listarDTOs();
+        this.listaMesas = mesaService.listarDTOs();
+        // El padrón se carga vía filtros (cantón/parroquia/recinto/mesa).
+        // Cargarlo aquí con TODAS las mesas dispara una query con JOIN FETCH
+        // sobre millones de filas y excede el timeout JTA de 5 min.
+        this.listaPadron = new ArrayList<>();
     }
 
-    private void reseteaVariables() {        
+    private void reseteaVariables() {
         this.listaRecintos = null;
         this.listaMesas = null;
         this.listaPadron = null;
-        this.listaIglesiasPorAsignar = listaIglesiasPorAsignar = null;
+        this.listaIglesiasPorAsignar = null;
         this.listaNombresIglesias = null;
     }
 
@@ -171,129 +156,96 @@ public class PadronController implements Serializable {
         if (cantonSeleccionado.getId() != null) {
             this.cantonSeleccionado = geograpBean.getById(this.cantonSeleccionado.getId());
             reseteaVariables();
-            parroquias=null;
-            
             this.parroquias = geograpBean.getByFatherId(this.cantonSeleccionado.getId());
             List<Integer> listaIdParroquias = geograpBean.getListaIdSGeograp(parroquias);
-            this.cargaDatosGeneraPiklist(parroquias, listaIdParroquias);
+            cargaDatosGeneraPiklist(parroquias, listaIdParroquias);
         }
-    }
-
-    private List<Integer> obtieneIdsIglesiasAsignadas(List<Integer> listaIdIglesias) {
-        if (listaIdIglesias != null && !listaIdIglesias.isEmpty()) {
-            if (!listaIglesiasAsignadas.isEmpty() && listaIglesiasAsignadas != null) {
-                for (Iglesia item : listaIglesiasAsignadas) {
-                    listaIdIglesias.add(item.getId());
-                }
-            }
-            return listaIdIglesias;
-        } else {
-            if (!listaIglesiasAsignadas.isEmpty() && listaIglesiasAsignadas != null) {
-                for (Iglesia item : listaIglesiasAsignadas) {
-                    listaIdIglesias.add(item.getId());
-                }
-            }
-            return listaIdIglesias;
-        }
-    }
-
-    private List<Iglesia> obtieneIglesiasEnPadron(List<Padron> listaPadronTmp) {
-        if (listaPadronTmp != null && !listaPadronTmp.isEmpty()) {
-            List<Iglesia> listaIglesiasTmp = new ArrayList<>();
-            for (Padron padron : listaPadronTmp) {
-                if (!listaIglesiasTmp.contains(padron.getIglesiaPersona().getIglesia())) {
-                    listaIglesiasTmp.add(padron.getIglesiaPersona().getIglesia());
-                }
-            }
-            if (!listaIglesiasTmp.isEmpty()) {
-                return listaIglesiasTmp;
-            }
-        } else {
-            return null;
-        }
-        return null;
     }
 
     public void obtieneListaDatosPorParroquia() {
-        if (this.parroquiaSeleccionado.getId() != null) {
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
             this.parroquiaSeleccionado = geograpBean.getById(this.parroquiaSeleccionado.getId());
-
             reseteaVariables();
-
             List<Geograp> parroquiasTmp = new ArrayList<>();
             List<Integer> parroquiasIdTmp = new ArrayList<>();
-            if (this.parroquiaSeleccionado != null) {
-                parroquiasTmp.add(this.parroquiaSeleccionado);
-                parroquiasIdTmp.add(parroquiaSeleccionado.getId());
-            }
-            this.cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
+            parroquiasTmp.add(parroquiaSeleccionado);
+            parroquiasIdTmp.add(parroquiaSeleccionado.getId());
+            cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
         }
     }
 
     public void obtieneListaDatosPorRecinto() {
-        if (recintoSeleccionado.getId() != null) {
-            recintoSeleccionado = recintoFacade.find(recintoSeleccionado.getId());
-
-            List<Integer> parroquiasIdTmp = new ArrayList<>();
+        if (recintoSeleccionado != null && recintoSeleccionado.getId() != null) {
+            recintoSeleccionado = recintoService.obtenerDTOPorId(recintoSeleccionado.getId());
+            if (recintoSeleccionado == null || recintoSeleccionado.getUbicacionId() == null) {
+                return;
+            }
+            Geograp ubicacion = geograpBean.getById(recintoSeleccionado.getUbicacionId());
             List<Geograp> parroquiasTmp = new ArrayList<>();
-            if (recintoSeleccionado != null) {
-                parroquiasIdTmp.add(recintoSeleccionado.getId());
-                parroquiasTmp.add(recintoSeleccionado.getUbicacion());
-            }
-            this.cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
-        }
-    }
-
-    private void cargaDatosGeneraPiklist(List<Geograp> parroquiasTmp, List<Integer> listaIdParroquias) {
-        if (parroquiasTmp != null) {
-            //RECINTOS        
-            this.listaRecintos = recintoFacade.getRecintosPorParroquias(parroquiasTmp);
-            //MESAS
-            if (listaRecintos != null) {
-                this.listaMesas = mesaFacade.getMesasPorRecintos(listaRecintos);
-                //PADRON
-                if (listaMesas != null) {
-                    this.listaPadron = padronFacade.getPadronPorMesas(listaMesas);
-                    //IDS IGLESIAS COMPLETOS EN PADRON
-                    if (listaPadron != null) {
-                        this.listaIglesiasAsignadas = obtieneIglesiasEnPadron(listaPadron);
-                        //IDS IGLESIAS COMPLETOS EN PADRON POR PARROQUIAS
-                        List<Integer> listaIdIglesias = padronFacade.obtieneIglesiasEnPadronCompletasPorUbicacion(listaIdParroquias);
-                        //IDS IGLESIAS COMPLETOS EN PADRON
-                        listaIdIglesias = obtieneIdsIglesiasAsignadas(listaIdIglesias != null ? listaIdIglesias : new ArrayList());
-
-                        this.listaIglesiasPorAsignar = iglesiaFacade.obtieneIglesiasPorAsignarPorIds(listaIdIglesias, listaIdParroquias);
-
-                        generaPickList();
-                    } else {
-                        JsfUtil.addInfoMessage("No existe padron");
-                    }
-                } else {
-                    JsfUtil.addInfoMessage("No existe mesas");
-                }
-            } else {
-                JsfUtil.addInfoMessage("No existe recintos");
-            }
+            List<Integer> parroquiasIdTmp = new ArrayList<>();
+            parroquiasTmp.add(ubicacion);
+            parroquiasIdTmp.add(recintoSeleccionado.getId());
+            cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
         }
     }
 
     public void obtieneListaDatosPorMesa() {
-        if (mesaSeleccionado.getId() != null) {
-            mesaSeleccionado = mesaFacade.find(mesaSeleccionado.getId());
-            List<Geograp> parroquiasTmp = new ArrayList<>();
-            List<Integer> parroquiasIdTmp = new ArrayList<>();
-
-            reseteaVariables();
-            if (mesaSeleccionado != null) {
-                this.recintoSeleccionado = mesaSeleccionado.getRecinto();
-                parroquiasTmp.add(recintoSeleccionado.getUbicacion());
-            }
-
-            parroquiasIdTmp.add(recintoSeleccionado.getId());
-
-            this.cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
-
+        if (mesaSeleccionado == null || mesaSeleccionado.getId() == null) {
+            return;
         }
+        mesaSeleccionado = mesaService.obtenerDTOPorId(mesaSeleccionado.getId());
+        reseteaVariables();
+        if (mesaSeleccionado == null || mesaSeleccionado.getRecinto() == null) {
+            return;
+        }
+        this.recintoSeleccionado = mesaSeleccionado.getRecinto();
+        if (recintoSeleccionado.getUbicacionId() == null) {
+            return;
+        }
+        Geograp ubicacion = geograpBean.getById(recintoSeleccionado.getUbicacionId());
+        List<Geograp> parroquiasTmp = new ArrayList<>();
+        List<Integer> parroquiasIdTmp = new ArrayList<>();
+        parroquiasTmp.add(ubicacion);
+        parroquiasIdTmp.add(recintoSeleccionado.getId());
+        cargaDatosGeneraPiklist(parroquiasTmp, parroquiasIdTmp);
+    }
+
+    private void cargaDatosGeneraPiklist(List<Geograp> parroquiasTmp, List<Integer> listaIdParroquias) {
+        if (parroquiasTmp == null) {
+            return;
+        }
+        this.listaRecintos = recintoService.listarDTOsPorParroquias(parroquiasTmp);
+        if (listaRecintos == null || listaRecintos.isEmpty()) {
+            JsfUtil.addInfoMessage("No existe recintos");
+            return;
+        }
+        this.listaMesas = mesaService.listarDTOs();
+        // filtrar mesas a las de los recintos cargados
+        this.listaMesas = filtrarMesasPorRecintoIds(listaMesas, extraerIds(listaRecintos));
+        if (listaMesas == null || listaMesas.isEmpty()) {
+            JsfUtil.addInfoMessage("No existe mesas");
+            return;
+        }
+        this.listaPadron = padronService.listarDTOsPorMesaIds(extraerIds(listaMesas));
+        if (listaPadron == null) {
+            JsfUtil.addInfoMessage("No existe padron");
+            return;
+        }
+        this.listaIglesiasAsignadas = padronService.obtenerIglesiasUnicasEnPadronDTO(listaPadron);
+
+        List<Integer> listaIdIglesias = padronService.obtieneIglesiasEnPadronCompletasPorUbicacion(listaIdParroquias);
+        if (listaIdIglesias == null) {
+            listaIdIglesias = new ArrayList<>();
+        }
+        if (listaIglesiasAsignadas != null) {
+            for (IglesiaDTO ig : listaIglesiasAsignadas) {
+                if (ig.getId() != null) {
+                    listaIdIglesias.add(ig.getId());
+                }
+            }
+        }
+        this.listaIglesiasPorAsignar = iglesiaService.listarDTOsPorAsignarPorIds(listaIdIglesias, listaIdParroquias);
+        generaPickList();
     }
 
     private void generaPickList() {
@@ -307,41 +259,45 @@ public class PadronController implements Serializable {
     }
 
     public void onTransfer(TransferEvent event) {
+        Integer mesaId = (mesaSeleccionado != null) ? mesaSeleccionado.getId() : null;
+        Integer periodoId = (periodoActivo != null) ? periodoActivo.getId() : null;
         for (Object item : event.getItems()) {
-            asignaIglesiaPersonaPadron((Iglesia) item);
+            IglesiaDTO ig = (IglesiaDTO) item;
+            padronService.asignarIglesiaAMesaPorIds(ig.getId(), mesaId, periodoId);
         }
-        //PADRON
-        this.listaPadron = padronFacade.getAllOrderbyId();
+        this.listaPadron = padronService.listarDTOsTodosOrdenados();
         JsfUtil.addSuccessMessage("Asigmado");
     }
 
-    public void onSelect(SelectEvent<Iglesia> event) {
+    public void onSelect(SelectEvent<IglesiaDTO> event) {
         JsfUtil.addInfoMessage("Seleccionado " + event.getObject().getNombre());
     }
 
-    /**
-     * Crea padron electroral
-     */
-    private List<Padron> asignaIglesiaPersonaPadron(Iglesia iglesia) {
-        try {
-            List<Padron> nuevaListaPadron = new ArrayList<>();
-            this.listaIglesiaPersonas = iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesia.getId());
-            if (listaIglesiaPersonas != null) {
-                for (IglesiaPersona iglesiaPersonaTmp : listaIglesiaPersonas) {
-                    //Busca si ya esta asignado en padron
-                    Padron padronBuscado = padronFacade.buscaPorPesonaPeriodoIglesia(iglesiaPersonaTmp.getId(), periodoActivo.getId());
-                    if (padronBuscado == null) {//
-                        Padron nuevoPadron = new Padron(mesaSeleccionado, periodoActivo, iglesiaPersonaTmp);
-                        nuevoPadron = padronFacade.create(nuevoPadron);
-                        nuevaListaPadron.add(nuevoPadron);
-                    }
-                }
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
+    private static List<Integer> extraerIds(List<? extends Object> dtos) {
+        List<Integer> ids = new ArrayList<>();
+        if (dtos == null) {
+            return ids;
         }
+        for (Object o : dtos) {
+            if (o instanceof MesaDTO) {
+                ids.add(((MesaDTO) o).getId());
+            } else if (o instanceof RecintoDTO) {
+                ids.add(((RecintoDTO) o).getId());
+            }
+        }
+        return ids;
     }
 
+    private static List<MesaDTO> filtrarMesasPorRecintoIds(List<MesaDTO> mesas, List<Integer> recintoIds) {
+        List<MesaDTO> resultado = new ArrayList<>();
+        if (mesas == null || recintoIds == null) {
+            return resultado;
+        }
+        for (MesaDTO m : mesas) {
+            if (m.getRecinto() != null && recintoIds.contains(m.getRecinto().getId())) {
+                resultado.add(m);
+            }
+        }
+        return resultado;
+    }
 }
-/*404*/

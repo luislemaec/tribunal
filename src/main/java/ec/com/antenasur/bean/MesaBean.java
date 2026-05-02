@@ -7,10 +7,10 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.tec.MesaFacade;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.service.tec.MesaService;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,11 +31,11 @@ public class MesaBean implements Serializable {
     private Recinto recinto;
 
     @Inject
-    private MesaFacade mesaFacade;
+    private MesaService mesaService;
 
     public List<Mesa> mesasPorParroquias(List<Geograp> parroquias) {
         try {
-            return mesaFacade.getMesasPorParroquias(parroquias);
+            return mesaService.getMesasPorParroquias(parroquias);
         } catch (Exception e) {
             return null;
         }
@@ -43,7 +43,7 @@ public class MesaBean implements Serializable {
 
     public List<Mesa> mesasEscrutadasPorRecintos(List<Recinto> recintos) {
         try {
-            return mesaFacade.getMesasEscrutadasPorRecintos(recintos);
+            return mesaService.getMesasEscrutadasPorRecintos(recintos);
         } catch (Exception e) {
             return null;
         }
@@ -51,7 +51,7 @@ public class MesaBean implements Serializable {
 
     public List<Mesa> mesasPorRecintos(List<Recinto> recintos) {
         try {
-            return mesaFacade.getMesasPorRecintos(recintos);
+            return mesaService.getMesasPorRecintos(recintos);
         } catch (Exception e) {
             return null;
         }
@@ -59,7 +59,7 @@ public class MesaBean implements Serializable {
 
     public List<Mesa> mesasPorRecinto(Recinto recinto) {
         try {
-            return mesaFacade.getMesasPorRecinto(recinto);
+            return mesaService.getMesasPorRecinto(recinto);
         } catch (Exception e) {
             return null;
         }
@@ -67,7 +67,7 @@ public class MesaBean implements Serializable {
 
     public Mesa mesaPorId(Integer idMesa) {
         try {
-            return mesaFacade.find(idMesa);
+            return mesaService.find(idMesa);
         } catch (Exception e) {
             return null;
         }
@@ -75,14 +75,14 @@ public class MesaBean implements Serializable {
 
     public int totalMesas() {
         try {
-            return mesaFacade.count();
+            return mesaService.count();
         } catch (Exception e) {
             return 0;
         }
     }
     public int totalVotantes() {
         try {
-            List<Mesa> mesaTm= mesaFacade.findAll();
+            List<Mesa> mesaTm= mesaService.findAll();
             int totalVotantes=0;
             if(mesaTm!=null) {
             	for(Mesa mesa:mesaTm) {

@@ -12,11 +12,14 @@ import javax.inject.Named;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.MesaBean;
 import ec.com.antenasur.bean.RecintoBean;
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.domain.tec.VwTotalVotos;
-import ec.com.antenasur.service.tec.VwTotalVotosFacade;
+import ec.com.antenasur.dto.ResumenVotosDTO;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.dto.VwTotalVotosDTO;
+import ec.com.antenasur.service.GeograpService;
+import ec.com.antenasur.service.tec.MesaService;
+import ec.com.antenasur.service.tec.VwTotalVotosService;
 import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
@@ -63,7 +66,13 @@ public class TotalVotosController implements Serializable {
     private LoginBean loginBean;
 
     @Inject
-    VwTotalVotosFacade vwTotalVotosFacade;
+    VwTotalVotosService vwTotalVotosService;
+
+    @Inject
+    private MesaService mesaService;
+
+    @Inject
+    private GeograpService geograpService;
 
     @Inject
     private GeograpBean geograpBean;
@@ -76,7 +85,7 @@ public class TotalVotosController implements Serializable {
 
     @Setter
     @Getter
-    private List<VwTotalVotos> totalVotos;
+    private List<VwTotalVotosDTO> totalVotos;
 
     @Setter
     @Getter
@@ -149,14 +158,8 @@ public class TotalVotosController implements Serializable {
 
     private void cargaParroquiaInicial() {
         try {
-            if (cantones != null) {
-                for (Geograp canton : cantones) {
-                    List<Geograp> parroquiasTmp = new ArrayList();
-                    parroquiasTmp = geograpBean.getByFatherGeograp(canton);
-                    for (Geograp parroquia : parroquiasTmp) {
-                        parroquias.add(parroquia);
-                    }
-                }
+            this.parroquias = geograpService.obtenerParroquiasDeCantones(cantones);
+            if (!parroquias.isEmpty()) {
                 this.cargaRecintosPorParroquia(parroquias);
                 this.cargaMesasPorRecintos(recintos);
                 this.cargaVotosPorMesas(mesas);
@@ -165,7 +168,6 @@ public class TotalVotosController implements Serializable {
         } catch (Exception e) {
             log.error("ERROR EN CARGAR PARROQUIAS INICIAL", e);
         }
-
     }
 
     /**
@@ -254,37 +256,19 @@ public class TotalVotosController implements Serializable {
 
     public void cargaMesasPorRecintos(List<Recinto> recintosTmp) {
         try {
-            if (mesas != null && !mesas.isEmpty()) {
-                mesas.clear();
-            }
-            if (mesasEscrutadas != null && !mesasEscrutadas.isEmpty()) {
-                mesasEscrutadas.clear();
-            }
-            this.mesas = mesaBean.mesasPorRecintos(recintosTmp);
-            this.mesasEscrutadas = mesaBean.mesasEscrutadasPorRecintos(recintosTmp);
-
-            if (mesas != null) {
-                totalVotantes = 0;
-                for (Mesa mesaTmp : mesas) {
-                    totalVotantes = totalVotantes + mesaTmp.getTotalVotos();
-                }
-            }
-
-            if (mesasEscrutadas != null && mesas != null) {
-                porcentajeMesasEscrutadas = (mesasEscrutadas.size() * 100) / mesas.size();
-            } else {
-                porcentajeMesasEscrutadas = 0;
-            }
-
+            ResumenVotosDTO resumen = mesaService.calcularResumenVotos(recintosTmp);
+            this.mesas = resumen.getMesas();
+            this.mesasEscrutadas = resumen.getMesasEscrutadas();
+            this.totalVotantes = resumen.getTotalVotantes();
+            this.porcentajeMesasEscrutadas = resumen.getPorcentajeMesasEscrutadas();
         } catch (Exception e) {
             log.error("ERROR EN CARGAR MESAS POR RECINTOS", e);
         }
-
     }
 
     public void cargaVotosPorMesas(List<Mesa> mesasTmp) {
         try {
-            this.votos = vwTotalVotosFacade.votosPorMesas(mesasTmp);
+            this.votos = vwTotalVotosService.votosPorMesas(mesasTmp);
             getReporteEstadistica();
         } catch (Exception e) {
             log.error("ERROR EN CARGAR VOTOS POR MESAS", e);

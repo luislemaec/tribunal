@@ -27,11 +27,16 @@
                             <p:column headerText="Usuario" sortBy="#{rolUs.usuario.username}" filterBy="#{rolUs.usuario.username}" styleClass="sm:w-max md:w-2 lg:w-3rem" >
                                 <h:outputText value="#{rolUs.usuario.username}" />
                             </p:column>                    
-                            <p:column headerText="Nombres" sortBy="#{rolUs.personsa.nombres}" filterBy="#{rolUs.usuario.personsa.nombres}" styleClass="sm:w-max md:w-2 lg:w-6rem">
-                                <h:outputText value="#{rolUs.usuario.personsa.nombres} #{rolUs.usuario.personsa.apellidos}"/>
+                            <p:column headerText="Nombres" sortBy="#{rolUs.usuario.personaNombres}" filterBy="#{rolUs.usuario.personaNombres}" styleClass="sm:w-max md:w-2 lg:w-6rem">
+                                <h:outputText value="#{rolUs.usuario.personaNombres} #{rolUs.usuario.personaApellidos}"/>
                             </p:column>
                             <p:column headerText="Rol" sortBy="#{rolUs.rol.nombre}" filterBy="#{rolUs.rol.nombre}" styleClass="sm:w-max md:w-2 lg:w-3rem">
-                                <h:outputText value="#{rolUs.rol.nombre}" class="col-12 md:col-3"/>
+                                <p:tag value="#{rolUs.rol.nombre}" severity="info"/>
+                            </p:column>
+                            <p:column headerText="Iglesia" sortBy="#{rolUs.usuario.iglesiaNombre}" filterBy="#{rolUs.usuario.iglesiaNombre}" styleClass="sm:w-max md:w-2 lg:w-6rem">
+                                <p:chip rendered="#{not empty rolUs.usuario.iglesiaNombre}"
+                                        label="#{rolUs.usuario.iglesiaNombre}" icon="pi pi-home"/>
+                                <h:outputText rendered="#{empty rolUs.usuario.iglesiaNombre}" value="—" styleClass="text-400"/>
                             </p:column>
 
 
@@ -44,15 +49,18 @@
                                     </p:commandButton>                            
                                 </f:facet>
                                 <p:commandButton icon="pi pi-pencil" update="frmUsuarios:outPnlUsuario" oncomplete="PF('dlgUsuario').show()"
-                                                 styleClass="edit-button rounded-button ui-button-info" process="@this" action="#{usuarioControlador.obtenerDatosUsuarioSeleccionado()}"> 
-                                    <f:setPropertyActionListener value="#{rolUs.usuario}" target="#{usuarioControlador.usuarioSeleccionado}"/>
-                                    <f:setPropertyActionListener value="#{rolUs.rol}" target="#{usuarioControlador.rolSeleccionado}"/> 
-                                    <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.rolUsuarioSeleccionado}"/>                                
+                                                 title="Editar usuario y rol"
+                                                 styleClass="edit-button rounded-button ui-button-info" process="@this"
+                                                 action="#{usuarioControlador.cargarParaEdicion(rolUs)}">
                                     <p:resetInput target="frmUsuarios:outPnlUsuario"/>
                                 </p:commandButton>
-                                <p:commandButton class="ui-button-danger rounded-button ml-1" icon="pi pi-trash" process="@this"
-                                                 oncomplete="PF('dlgEliminarUsuario').show()">
-                                    <f:setPropertyActionListener value="#{rolUs}" target="#{usuarioControlador.usuarioSeleccionado}"/>
+                                <p:commandButton class="ui-button-danger rounded-button ml-1" icon="pi pi-trash"
+                                                 actionListener="#{usuarioControlador.eliminarUsuario}"
+                                                 process="@this" update="tblUsuarios">
+                                    <f:setPropertyActionListener value="#{rolUs.usuario}" target="#{usuarioControlador.usuarioSeleccionado}"/>
+                                    <p:confirm header="Confirmar eliminación"
+                                               message="¿Está seguro que desea eliminar este usuario?"
+                                               icon="pi pi-exclamation-triangle"/>
                                 </p:commandButton>
                             </p:column>
 
@@ -63,16 +71,18 @@
 
                                     <div class="p-field">
                                         <p:outputLabel for="cedula">Cédula</p:outputLabel>
-                                        <p:inputText id="cedula" value="#{usuarioControlador.usuarioSeleccionado.personsa.documento}" required="true" disabled="#{ (usuarioControlador.personaRegistroCivil ne null) or (not empty usuarioControlador.usuarioSeleccionado.personsa.documento)}">
+                                        <p:inputText id="cedula" styleClass="mask-cedula" value="#{usuarioControlador.usuarioSeleccionado.personaDocumento}" required="true" disabled="#{ (usuarioControlador.personaRegistroCivil ne null) or (not empty usuarioControlador.usuarioSeleccionado.personaDocumento)}">
                                             <p:keyFilter for="cedula" mask="num"/>                        	
-                                            <p:ajax event="change" update="cedula, msgs nombres,rolUs,correo" listener="#{usuarioControlador.blurEvent}" process="@this"/>
+                                            <p:ajax event="change"
+                                                    update="cedula nombres rolUs correo iglesiaPanel msgs"
+                                                    listener="#{usuarioControlador.blurEvent}" process="@this"/>
                                             <f:validateLength minimum="10"  ></f:validateLength>
                                         </p:inputText>
                                     </div>
 
                                     <div class="p-field">
                                         <p:outputLabel for="nombres">Nombres</p:outputLabel>
-                                        <p:inputText id="nombres" value="#{usuarioControlador.usuarioSeleccionado.personsa.nombres}" disabled="#{ not empty usuarioControlador.usuarioSeleccionado.personsa.nombres}" />
+                                        <p:inputText id="nombres" value="#{usuarioControlador.usuarioSeleccionado.personaNombres}" disabled="#{ not empty usuarioControlador.usuarioSeleccionado.personaNombres}" />
                                     </div>
 
                                     <div class="p-field">
@@ -89,31 +99,39 @@
                                         <p:outputLabel for="perfil">Perfil</p:outputLabel>
                                         <p:selectOneMenu id="perfil" value="#{usuarioControlador.rolSeleccionado.id}" required="true" disabled="false" >
                                             <f:selectItem itemLabel="Seleccione rol" itemValue=""/>
-                                            <f:selectItems value="#{usuarioControlador.listaRoles}" var="rol"  itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>  
+                                            <f:selectItems value="#{usuarioControlador.listaRoles}" var="rol"  itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>
+                                            <p:ajax event="change" listener="#{usuarioControlador.cargarRolSeleccionado}"
+                                                    process="@this" update="iglesiaPanel"/>
                                         </p:selectOneMenu>
                                     </div>
+
+                                    <p:outputPanel id="iglesiaPanel">
+                                        <div class="p-field" rendered="#{usuarioControlador.rolRequiereIglesia}">
+                                            <p:outputLabel for="iglesia">Iglesia <span class="text-red-500">*</span></p:outputLabel>
+                                            <p:selectOneMenu id="iglesia"
+                                                             value="#{usuarioControlador.usuarioSeleccionado.iglesiaId}"
+                                                             filter="true" filterMatchMode="contains"
+                                                             required="#{usuarioControlador.rolRequiereIglesia}"
+                                                             requiredMessage="La iglesia es obligatoria para el rol IglesiaAdmin">
+                                                <f:selectItem itemLabel="Seleccione iglesia" itemValue=""/>
+                                                <f:selectItems value="#{usuarioControlador.listaIglesias}" var="igl"
+                                                               itemLabel="#{igl.nombre} - #{igl.comunidad}"
+                                                               itemValue="#{igl.id}"/>
+                                            </p:selectOneMenu>
+                                            <small class="text-500">Solo este usuario podrá gestionar miembros de la iglesia seleccionada.</small>
+                                        </div>
+                                    </p:outputPanel>
                                 </p:outputPanel>
                             </p:outputPanel>
                             <f:facet name="footer">
                                 <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{usuarioControlador.actualizarUsuario()}"
-                                                 update="outPnlUsuario" process="outPnlUsuario @this msgs" oncomplete="PF('dlgUsuario').hide()" ajax="false"/>
+                                                 update="outPnlUsuario tblUsuarios msgs"
+                                                 process="outPnlUsuario @this msgs"
+                                                 oncomplete="PF('dlgUsuario').hide()" ajax="false"/>
                                 <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgUsuario').hide()"
                                                  class="ui-button-secondary"/>
                             </f:facet>
                         </p:dialog>   
-                        <p:confirmDialog widgetVar="dlgEliminarUsuario" showEffect="fade" width="300"
-                                         message="¿Está seguro que dese eliminar?" header="Confirm" severity="warn">
-                            <p:commandButton value="Si" icon="pi pi-check" actionListener="#{usuarioControlador.eliminarUsuario()}"
-                                             process="@this" oncomplete="PF('dlgEliminarUsuario').hide()" update="msgs, tblUsuarios"/>
-                            <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times"
-                                             onclick="PF('dlgEliminarUsuario').hide()"/>
-                        </p:confirmDialog>
-
-                        <p:confirmDialog global="true" showEffect="fade" width="300">
-                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" update="tblUsuarios"/>
-                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
-                                             icon="pi pi-times"/>
-                        </p:confirmDialog>                        
                     </div>
                 </div>
             </div>

@@ -1,0 +1,61 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Growl global: cualquier FacesMessage globalOnly se pinta aquí.
+         autoUpdate evita tener que agregarlo a update="" en cada commandButton.
+         Va FUERA de un form para que update="msgs" desde otras páginas
+         lo siga resolviendo por id directo. -->
+    <p:growl id="msgs" widgetVar="msgs" globalOnly="true" showDetail="true"
+             autoUpdate="true" life="4000"/>
+
+    <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
+         consistente con el tema, sin necesidad de declararlo página por página.
+         Excluye el editor PrimeFaces (que usa title internamente). -->
+    <p:tooltip globalSelector="[title]:not(.p-editor *)" trackMouse="true"
+               showEffect="fade" hideEffect="fade"/>
+
+    <!-- ScrollTop: botón flotante "ir arriba" cuando se hace scroll.
+         Aplica a toda página con contenido largo (datatables, escrutinios). -->
+    <p:scrollTop target="window" threshold="400" icon="pi pi-arrow-up"
+                 styleClass="custom-scroll-top"/>
+
+    <!-- NotificationBar: banner de ambiente (solo se muestra fuera de PRODUCCIÓN
+         para que el usuario sepa con seguridad en qué entorno está trabajando). -->
+    <p:notificationBar widgetVar="nbAmbiente" position="top" effect="slide"
+                       autoDisplay="true"
+                       rendered="#{loginBean.loggedIn and loginBean.servidor ne 'P R O D U C C I Ó N'}"
+                       styleClass="ambiente-bar">
+        <h:panelGroup layout="block" style="text-align:center; padding:.4rem 1rem">
+            <i class="pi pi-info-circle" style="margin-right:.5rem"/>
+            <span>Ambiente: <b>#{loginBean.servidor}</b></span>
+            <span style="margin-left:1rem">— Sistema: <b>#{loginBean.sistema}</b></span>
+        </h:panelGroup>
+    </p:notificationBar>
+
+    <h:form id="frmGlobal">
+        <!-- ConfirmDialog global: cualquier botón con
+             <p:confirm header="..." message="..."/> usa este. -->
+        <p:confirmDialog global="true" widgetVar="cfm" showEffect="fade" hideEffect="fade"
+                         responsive="true" width="420">
+            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes"
+                             icon="pi pi-check"/>
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                             icon="pi pi-times"/>
+        </p:confirmDialog>
+
+        <!-- IdleMonitor: avisa a los 50 min, expira la sesión a los 60 min (web.xml). -->
+        <p:idleMonitor timeout="3000000">
+            <p:ajax event="idle" oncomplete="PF('dlgIdle').show()"/>
+        </p:idleMonitor>
+        <p:dialog widgetVar="dlgIdle" header="Sesión por expirar" modal="true"
+                  closable="false" resizable="false" width="380">
+            <p style="margin:0 0 1rem">Su sesión expirará por inactividad en pocos minutos.</p>
+            <p:commandButton value="Continuar" icon="pi pi-refresh" ajax="true"
+                             onclick="PF('dlgIdle').hide()" process="@this"/>
+        </p:dialog>
+    </h:form>
+
+</ui:composition>

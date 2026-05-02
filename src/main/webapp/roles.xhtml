@@ -65,9 +65,14 @@
                                              styleClass="ui-button-raised rounded-button ui-button-info" process="@this">
                                 <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}" />
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" 
+                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
+                                             actionListener="#{rolController.eliminarRolesSeleccionados}"
+                                             process="@this" update="@form"
                                              styleClass="ui-button-raised rounded-button ui-button-danger mx-1">
                                 <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este rol?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -98,15 +103,6 @@
                     </f:facet>
                 </p:dialog>
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Delete the product?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{rolController.eliminarRolesSeleccionados}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
-
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

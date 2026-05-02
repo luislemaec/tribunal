@@ -38,9 +38,9 @@
                                         <f:facet name="input"><p:inputText value="#{catalogo.nombre}" style="width:100%" onkeyup="value = value.toUpperCase()"/></f:facet>
                                     </p:cellEditor>
                                 </p:column>
-                                <p:column headerText="ORDEN"  style="width: 5%;" responsivePriority="3">                                
+                                <p:column headerText="ORDEN" sortBy="#{catalogo.orden}" style="width: 5%;" responsivePriority="3">
                                     <p:cellEditor>
-                                        <f:facet name="output"><h:outputText value="#{catalogo.orden}"/></f:facet>
+                                        <f:facet name="output"><p:badge value="#{catalogo.orden}" severity="info"/></f:facet>
                                         <f:facet name="input"><p:inputText value="#{catalogo.orden}" style="width:100%"/></f:facet>
                                     </p:cellEditor>
                                 </p:column>                            
@@ -58,8 +58,14 @@
                                                          styleClass="ui-button-success" style="margin-right: .5rem" />                             
                                     </f:facet>
                                     <p:rowEditor />
-                                    <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                    <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
+                                                     title="Eliminar registro"
+                                                     actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
+                                                     process="@this" update="@form">
                                         <f:setPropertyActionListener value="#{catalogo}" target="#{catalogoController.catalogoSeleccionado}" />
+                                        <p:confirm header="Confirmar eliminación"
+                                                   message="¿Está seguro que desea eliminar este registro?"
+                                                   icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                 </p:column>
                             </p:treeTable>
@@ -97,15 +103,6 @@
                     </f:facet>
                 </p:dialog>         
 
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
-
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Está seguro que desea eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{catalogoController.eliminarCatalogoSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

@@ -8,8 +8,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.domain.tec.Proceso;
-import ec.com.antenasur.service.tec.ProcesoFacade;
+import ec.com.antenasur.model.tec.Proceso;
+import ec.com.antenasur.service.tec.ProcesoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +23,7 @@ import lombok.Setter;
 public class ProcesoBean {
 
     @Inject
-    ProcesoFacade procesoFacade;
+    ProcesoService procesoService;
 
     @Setter
     @Getter
@@ -44,11 +44,11 @@ public class ProcesoBean {
         proceso = new Proceso();
         proceso.setActividad(actividad);
         proceso.setIp(JsfUtil.getIPAddress());
-        procesoFacade.create(proceso);
+        procesoService.create(proceso);
     }
 
     public List<Proceso> getTodoProceso() {
-        return procesoFacade.findAll();
+        return procesoService.findAll();
     }
 
     public void registraActividad(String actividad, String valorAnterior, String valorNuevo) {
@@ -56,27 +56,27 @@ public class ProcesoBean {
         proceso.setActividad(actividad);
         proceso.setIp(JsfUtil.getIPAddress());
 
-        procesoFacade.create(proceso);
+        procesoService.create(proceso);
 
     }
 
     public void getLista() {
-        listaProceso = procesoFacade.findAll();
+        listaProceso = procesoService.findAll();
     }
 
     public void getListaProcesoPorUsuario(String usuario) {
-        listaProceso = procesoFacade.getProcesoPorUsuario(usuario);
+        listaProceso = procesoService.getProcesoPorUsuario(usuario);
     }
 
     public List<Proceso> getListaProcesoFechas(Date fechaInicio, Date fechaFin, String usuario) {
-        return procesoFacade.getProcesoPorUsuario(fechaInicio, fechaFin, usuario);
+        return procesoService.getProcesoPorUsuario(fechaInicio, fechaFin, usuario);
     }
 
     public void okActivityRegister(String activity, String datos) {
         try {
             proceso = new Proceso(JsfUtil.getIPAddress());
             proceso.setActividad(activity);
-            procesoFacade.create(proceso);
+            procesoService.create(proceso);
         } catch (Exception e) {
             e.printStackTrace();
         }

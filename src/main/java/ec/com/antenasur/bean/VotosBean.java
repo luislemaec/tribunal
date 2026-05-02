@@ -7,10 +7,10 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.tec.VwTotalVotosFacade;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.service.tec.VwTotalVotosService;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +23,7 @@ public class VotosBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Inject
-    VwTotalVotosFacade vwTotalVotosFacade;
+    VwTotalVotosService vwTotalVotosService;
 
     @Setter
     @Getter
@@ -35,7 +35,7 @@ public class VotosBean implements Serializable {
 
     public List<Object[]> votosPorParroquias(List<Geograp> parroquias) {
         try {
-            return vwTotalVotosFacade.votosPorParroquias(parroquias);
+            return vwTotalVotosService.votosPorParroquias(parroquias);
         } catch (Exception e) {
             return null;
         }
@@ -43,7 +43,7 @@ public class VotosBean implements Serializable {
 
     public List<Object[]> votosPorRecintos(List<Recinto> recintos) {
         try {
-            return vwTotalVotosFacade.votosPorRecintos(recintos);
+            return vwTotalVotosService.votosPorRecintos(recintos);
         } catch (Exception e) {
             return null;
         }
@@ -51,7 +51,7 @@ public class VotosBean implements Serializable {
 
     public List<Object[]> votosPorMesas(List<Mesa> mesa) {
         try {
-            return vwTotalVotosFacade.votosPorMesas(mesa);
+            return vwTotalVotosService.votosPorMesas(mesa);
         } catch (Exception e) {
             return null;
         }

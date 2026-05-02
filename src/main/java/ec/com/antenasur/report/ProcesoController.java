@@ -25,10 +25,10 @@ import com.itextpdf.text.FontFactory;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
-import ec.com.antenasur.domain.tec.Proceso;
+import ec.com.antenasur.model.tec.Proceso;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.ReporteXLSX;
-import ec.com.antenasur.service.tec.ProcesoFacade;
+import ec.com.antenasur.service.tec.ProcesoService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -51,7 +51,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private ProcesoBean procesoBean;
 
     @Inject
-    ProcesoFacade procesoFacade;
+    ProcesoService procesoService;
 
     @Setter
     @Getter
@@ -76,8 +76,8 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private void init() {
         try {
             fechaFin = fechaInicio = fechaActual = LocalDate.now();
-            listaProceso = procesoFacade.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin), loginBean.getUserName());
-            //listaProceso = procesoFacade.findAll();
+            listaProceso = procesoService.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin), loginBean.getUserName());
+            //listaProceso = procesoService.findAll();
             procesaLista();
         } catch (Exception e) {
             LOG.error("ERROR AL CARGAR DATOS REPORTE " + getNombreReporte(), e);
@@ -134,7 +134,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
 
     public void searchData() {
         if (getFechaInicio() != null && getFechaFin() != null) {
-            listaProceso = procesoFacade.findAll();
+            listaProceso = procesoService.findAll();
             if (listaProceso != null) {
                 JsfUtil.addInfoMessage(listaProceso.size() + " Procesos encontrados");
             } else {

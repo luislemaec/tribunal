@@ -7,8 +7,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.service.GeograpFacade;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.service.GeograpService;
 import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +18,7 @@ import lombok.Setter;
 public class GeograpBean {
 
     @Inject
-    private GeograpFacade geograpFacade;
+    private GeograpService geograpService;
 
     @Setter
     @Getter
@@ -34,7 +34,7 @@ public class GeograpBean {
 
     public Geograp getById(Integer gelo_id) {
         try {
-            return geograpFacade.find(gelo_id);
+            return geograpService.find(gelo_id);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -43,7 +43,7 @@ public class GeograpBean {
 
     public Geograp findByFatherId(Integer gelo_id) {
         try {
-            return geograpFacade.findByFather_Id(gelo_id);
+            return geograpService.findByFather_Id(gelo_id);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -52,7 +52,7 @@ public class GeograpBean {
 
     public List<Geograp> getByFatherGeograp(Geograp geograp) {
         try {
-            return geograpFacade.findByFatherGeograp(geograp);
+            return geograpService.findByFatherGeograp(geograp);
         } catch (Exception e) {
             return null;
         }
@@ -60,7 +60,7 @@ public class GeograpBean {
 
     public List<Geograp> getByFatherId(Integer gelo_id) {
         try {
-            return geograpFacade.findByFatherId(gelo_id);
+            return geograpService.findByFatherId(gelo_id);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

@@ -9,26 +9,22 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Menu;
-import ec.com.antenasur.domain.MenuRol;
-import ec.com.antenasur.domain.Rol;
-import ec.com.antenasur.service.MenuFacade;
-import ec.com.antenasur.service.MenuRolFacade;
-import ec.com.antenasur.service.RolFacade;
-import ec.com.antenasur.util.JsfUtil;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.CheckboxTreeNode;
 import org.primefaces.model.TreeNode;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- * @fecha 10-08-2022 15:53
- */
+import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.MenuDTO;
+import ec.com.antenasur.dto.MenuRolDTO;
+import ec.com.antenasur.dto.RolDTO;
+import ec.com.antenasur.service.MenuRolService;
+import ec.com.antenasur.service.MenuService;
+import ec.com.antenasur.service.RolService;
+import ec.com.antenasur.util.JsfUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 @Named
 @ViewScoped
 @Slf4j
@@ -40,71 +36,64 @@ public class PermisosController implements Serializable {
     private LoginBean loginBean;
 
     @Inject
-    private MenuRolFacade menuRolFacade;
+    private MenuRolService menuRolService;
 
     @Inject
-    private RolFacade rolFacade;
+    private RolService rolService;
 
     @Inject
-    private MenuFacade menuFacade;
+    private MenuService menuService;
 
     @Setter
     @Getter
-    private MenuRol menuRolSeleccionado;
+    private MenuRolDTO menuRolSeleccionado;
 
     @Setter
     @Getter
-    private List<MenuRol> listaMenuRoles, listaMenuRolHijos;
+    private List<MenuRolDTO> listaMenuRoles, listaMenuRolHijos;
 
     @Getter
-    private Rol rolSeleccionado;
-
-    @Setter
-    @Getter
-    private List<Rol> roles;
+    private RolDTO rolSeleccionado;
 
     @Setter
     @Getter
-    private List<Menu> listaMenuPadres, listaMenuHijos;
+    private List<RolDTO> roles;
 
     @Setter
     @Getter
-    private TreeNode<MenuRol> root;
+    private List<MenuDTO> listaMenuPadres, listaMenuHijos;
+
+    @Setter
+    @Getter
+    private TreeNode<MenuRolDTO> root;
 
     @PostConstruct
     private void init() {
         try {
-            rolSeleccionado = new Rol();
-            this.listaMenuPadres = menuFacade.findByFather();
-
-            roles = rolFacade.findAll();
+            rolSeleccionado = new RolDTO();
+            this.listaMenuPadres = menuService.listarDTOsPadres();
+            roles = rolService.listarDTOs();
         } catch (Exception e) {
             log.error("Error al inicializar valores", e);
         }
     }
 
-    public void crearNodoRecursivo(List<MenuRol> ObjData, TreeNode<MenuRol> nodoPadre) {
+    public void crearNodoRecursivo(List<MenuRolDTO> objData, TreeNode<MenuRolDTO> nodoPadre) {
         try {
-            for (MenuRol varnodo : ObjData) {//ObjData=Hijos del nodo padre, Lista de segundo nivel
-                TreeNode<MenuRol> nodoHijo = new CheckboxTreeNode<MenuRol>(varnodo, nodoPadre);
-                List<Menu> listaHijos = menuFacade.listaCatalogoHijo(varnodo.getMenu().getId());
+            for (MenuRolDTO varnodo : objData) {
+                TreeNode<MenuRolDTO> nodoHijo = new CheckboxTreeNode<MenuRolDTO>(varnodo, nodoPadre);
+                Integer menuPadreId = (varnodo.getMenu() != null) ? varnodo.getMenu().getId() : null;
+                List<MenuDTO> listaHijos = menuService.listarDTOsHijosDe(menuPadreId);
+                if (listaHijos == null || listaHijos.isEmpty()) {
+                    continue;
+                }
                 listaMenuRolHijos = new ArrayList<>();
-                if (listaHijos != null) {
-                    for (Menu menu : listaHijos) {
-                        MenuRol menuRolBuscado = menuRolFacade.getPorMenuYRol(menu, rolSeleccionado);
-                        if (menuRolBuscado != null) {
-                            this.listaMenuRolHijos.add(menuRolBuscado);
-                        } else {
-                            MenuRol tmpMenuRol = new MenuRol(menu, rolSeleccionado);
-                            tmpMenuRol.setEstado(false);
-                            this.listaMenuRolHijos.add(tmpMenuRol);
-                        }
-                    }
-                    if (listaMenuRolHijos != null) {
-                        if (!listaMenuRolHijos.isEmpty()) {
-                            this.crearNodoRecursivo(listaMenuRolHijos, nodoHijo);
-                        }
-                    }
+                for (MenuDTO menu : listaHijos) {
+                    listaMenuRolHijos.add(
+                            menuRolService.obtenerOPrepararDTOPorMenuYRolIds(menu.getId(), rolSeleccionado.getId()));
+                }
+                if (!listaMenuRolHijos.isEmpty()) {
+                    crearNodoRecursivo(listaMenuRolHijos, nodoHijo);
                 }
             }
         } catch (Exception e) {
@@ -112,30 +101,28 @@ public class PermisosController implements Serializable {
         }
     }
 
-    public void setRolSeleccionado(Rol rol) {
+    public void setRolSeleccionado(RolDTO rol) {
         try {
-            rolSeleccionado = rolFacade.find(rol.getId());
+            if (rol != null && rol.getId() != null) {
+                rolSeleccionado = rolService.obtenerDTOPorId(rol.getId());
+            }
         } catch (Exception e) {
         }
     }
 
     public void obtieneMenuPorRol() {
         try {
-            if (this.rolSeleccionado != null) {
-                setRolSeleccionado(this.rolSeleccionado);
-                this.listaMenuRoles = new ArrayList<>();
-
-                for (Menu menu : listaMenuPadres) {
-                    MenuRol menuRolBuscado = menuRolFacade.getPorMenuYRol(menu, rolSeleccionado);
-                    if (menuRolBuscado != null) {
-                        this.listaMenuRoles.add(menuRolBuscado);
-                    } else {
-                        MenuRol tmpMenuRol = new MenuRol(menu, rolSeleccionado);
-                        tmpMenuRol.setEstado(false);
-                        this.listaMenuRoles.add(tmpMenuRol);
-                    }
-                }
-                this.root = new CheckboxTreeNode<MenuRol>(listaMenuRoles.get(0), null);
+            if (this.rolSeleccionado == null || this.rolSeleccionado.getId() == null) {
+                return;
+            }
+            setRolSeleccionado(this.rolSeleccionado);
+            this.listaMenuRoles = new ArrayList<>();
+            for (MenuDTO menu : listaMenuPadres) {
+                listaMenuRoles.add(
+                        menuRolService.obtenerOPrepararDTOPorMenuYRolIds(menu.getId(), rolSeleccionado.getId()));
+            }
+            if (!listaMenuRoles.isEmpty()) {
+                this.root = new CheckboxTreeNode<MenuRolDTO>(listaMenuRoles.get(0), null);
                 crearNodoRecursivo(listaMenuRoles, root);
             }
         } catch (Exception e) {
@@ -143,24 +130,24 @@ public class PermisosController implements Serializable {
         }
     }
 
-    public void guardarMenuRol(MenuRol menuRol) {
+    public void guardarMenuRol(MenuRolDTO menuRol) {
         try {
             if (menuRol != null && rolSeleccionado != null) {
-                menuRolSeleccionado = new MenuRol();
-                menuRolSeleccionado = menuRol;                
-                if (menuRolSeleccionado.getId()!=null && menuRolSeleccionado.getId() > 0) {
-                    menuRolSeleccionado = menuRolFacade.edit(menuRolSeleccionado);
-                    JsfUtil.addInfoMessage("PERMISOS ACTUALIZADOS");
-                } else {
-                    menuRolSeleccionado = menuRolFacade.create(menuRol);
-                    JsfUtil.addSuccessMessage(menuRolSeleccionado.getMenu().getNombre() + " ASIGNADO A " + menuRolSeleccionado.getRol().getNombre());
+                MenuRolDTO persistido = menuRolService.guardarDesdeDTO(menuRol);
+                if (persistido != null) {
+                    menuRolSeleccionado = persistido;
+                    if (menuRol.getId() != null && menuRol.getId() > 0) {
+                        JsfUtil.addInfoMessage("PERMISOS ACTUALIZADOS");
+                    } else {
+                        JsfUtil.addSuccessMessage(persistido.getMenu().getNombre()
+                                + " ASIGNADO A " + persistido.getRol().getNombre());
+                    }
                 }
             }
-            this.init();
+            init();
             PrimeFaces.current().ajax().update("frmPermisos:trTblCatalogo");
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR ASIGNACION DE PERMISOS", e);
         }
     }
-
 }

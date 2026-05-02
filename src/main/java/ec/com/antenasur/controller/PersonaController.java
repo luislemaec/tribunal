@@ -1,9 +1,13 @@
 package ec.com.antenasur.controller;
 
-import ec.com.antenasur.bean.DocumentoBean;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -11,55 +15,42 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.primefaces.PrimeFaces;
-
-import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Iglesia;
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.Persona;
-import ec.com.antenasur.domain.tec.Documentos;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.Padron;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.domain.tec.TipoDocumento;
-import ec.com.antenasur.service.GeograpFacade;
-import ec.com.antenasur.service.IglesiaFacade;
-import ec.com.antenasur.service.IglesiaPersonaFacade;
-import ec.com.antenasur.service.PersonaFacade;
-import ec.com.antenasur.service.tec.MesaFacade;
-import ec.com.antenasur.service.tec.PadronFacade;
-import ec.com.antenasur.service.tec.RecintoFacade;
-import ec.com.antenasur.util.JsfUtil;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import ec.com.antenasur.bean.DocumentoBean;
+import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.FilaPadronImportadaDTO;
+import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Documentos;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.TipoDocumento;
+import ec.com.antenasur.service.GeograpService;
+import ec.com.antenasur.service.IglesiaPersonaService;
+import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.PersonaService;
+import ec.com.antenasur.dto.CronogramaFaseDTO;
+import ec.com.antenasur.service.tec.CronogramaService;
+import ec.com.antenasur.service.tec.MesaService;
+import ec.com.antenasur.service.tec.PadronService;
+import ec.com.antenasur.service.tec.RecintoService;
+import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.ExcelPadronParser;
+import ec.com.antenasur.util.JsfUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class PersonaController implements Serializable {
-
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
 
     private static final long serialVersionUID = 1L;
 
@@ -72,36 +63,40 @@ public class PersonaController implements Serializable {
     private DocumentoBean documentoBean;
 
     @Inject
-    private PersonaFacade personaFacade;
+    private PersonaService personaService;
 
     @Inject
-    private IglesiaFacade iglesiaFacade;
+    private IglesiaService iglesiaService;
 
     @Inject
-    private RecintoFacade recintoFacade;
+    private RecintoService recintoService;
 
     @Inject
-    private MesaFacade mesaFacade;
+    private MesaService mesaService;
 
     @Inject
-    private PadronFacade padronFacade;
+    private PadronService padronService;
 
     @Inject
-    private IglesiaPersonaFacade iglesiaPersonaFacade;
+    private IglesiaPersonaService iglesiaPersonaService;
 
     @Inject
-    private GeograpFacade geograpFacade;
+    private GeograpService geograpService;
 
-    @Getter
-    private Persona personaSeleccionado;
+    @Inject
+    private CronogramaService cronogramaService;
 
     @Setter
     @Getter
-    private Iglesia iglesiaSeleccionado;
+    private PersonaDTO personaSeleccionado;
 
     @Setter
     @Getter
-    private IglesiaPersona iglesiaPersonaSeleccionado;
+    private IglesiaDTO iglesiaSeleccionado;
+
+    @Setter
+    @Getter
+    private IglesiaPersonaDTO iglesiaPersonaSeleccionado;
 
     @Setter
     @Getter
@@ -113,11 +108,11 @@ public class PersonaController implements Serializable {
 
     @Setter
     @Getter
-    private List<Iglesia> listaIglesias;
+    private List<IglesiaDTO> listaIglesias;
 
     @Setter
     @Getter
-    private List<IglesiaPersona> listaIglesiaPersona, listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
+    private List<IglesiaPersonaDTO> listaIglesiaPersona, listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
 
     @Setter
     @Getter
@@ -137,7 +132,32 @@ public class PersonaController implements Serializable {
 
     @Setter
     @Getter
-    private List<Persona> listaPersonas;
+    private List<PersonaDTO> listaPersonas;
+
+    /**
+     * Bandera derivada del usuario logueado: true si su rol es IglesiaAdmin
+     * y tiene una iglesia asignada. Cuando es true, la vista debe ocultar
+     * los selectores de cantón/parroquia/iglesia (operará solo sobre su iglesia).
+     */
+    @Getter
+    private boolean restringidoAIglesia;
+
+    /** Progreso de actualización: [total, actualizados, porcentaje]. */
+    private int[] progreso = {0, 0, 0};
+
+    public int getTotalMiembros() { return progreso[0]; }
+    public int getMiembrosActualizados() { return progreso[1]; }
+    public int getMiembrosPendientes() { return progreso[0] - progreso[1]; }
+    public int getPorcentajeActualizacion() { return progreso[2]; }
+    public boolean isActualizacionCompleta() { return progreso[0] > 0 && progreso[1] == progreso[0]; }
+
+    /** Fase vigente del cronograma electoral (alimenta el banner superior). */
+    @Getter
+    private CronogramaFaseDTO faseVigente;
+
+    /** Indica si la fase vigente permite editar el padrón. Bloquea botones. */
+    @Getter
+    private boolean puedeEditarPadron;
 
     @PostConstruct
     private void init() {
@@ -145,28 +165,61 @@ public class PersonaController implements Serializable {
             listaIglesias = new ArrayList<>();
             listaIglesiaPersona = new ArrayList<>();
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
-            iglesiaSeleccionado = new Iglesia();
+            iglesiaSeleccionado = new IglesiaDTO();
 
-            cantones = geograpFacade.findByFatherId(7);
+            // Cronograma electoral: alimenta banner y permisos de edición.
+            faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
+            puedeEditarPadron = cronogramaService.permiteEdicionPadron();
 
-            listaIglesias = iglesiaFacade.findAll();
-            //obtiene todas las iglesias
-            listaIglesiaPersona = new ArrayList<>();
+            // Detección de rol IglesiaAdmin: si el usuario logueado tiene este
+            // rol y una iglesia asignada, lo confinamos a esa iglesia y
+            // precargamos sus miembros directamente.
+            if (esUsuarioIglesiaAdminConIglesia()) {
+                restringidoAIglesia = true;
+                Integer iglesiaId = loginBean.getUsuario().getIglesiaId();
+                iglesiaSeleccionado = iglesiaService.obtenerDTOPorId(iglesiaId);
+                listaIglesias = new ArrayList<>();
+                listaIglesias.add(iglesiaSeleccionado);
+                listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaId);
+                progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
+                return;
+            }
+
+            // Camino normal (admin global): permite filtrar por cantón/parroquia.
+            cantones = geograpService.findByFatherId(7);
+            listaIglesias = iglesiaService.listarDTOs();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
+    private boolean esUsuarioIglesiaAdminConIglesia() {
+        if (loginBean == null || loginBean.getUsuario() == null
+                || loginBean.getUsuario().getIglesiaId() == null
+                || loginBean.getRoles() == null) {
+            return false;
+        }
+        String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
+        String rolIglesia = (prefijo == null ? "" : prefijo) + Constantes.getRolIglesiaAdmin();
+        for (String r : loginBean.getRoles()) {
+            if (rolIglesia.equals(r)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void obtieneParroquias() {
         if (cantonSeleccionado.getId() != null) {
-            cantonSeleccionado = geograpFacade.find(cantonSeleccionado.getId());
-            parroquias = geograpFacade.findByFatherId(cantonSeleccionado.getId());
-
-            listaIglesiaPersona = iglesiaPersonaFacade.getIglesiasPersonasPorParroquias(parroquias);
-            listaIglesias = iglesiaFacade.getIglesiasPorParroquias(parroquias);
+            cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
+            parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquias);
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
         } else {
-            parroquias.clear();
-            iglesiaSeleccionado = new Iglesia();
+            if (parroquias != null) {
+                parroquias.clear();
+            }
+            iglesiaSeleccionado = new IglesiaDTO();
             listaIglesias.clear();
             listaIglesiaPersona.clear();
         }
@@ -174,31 +227,28 @@ public class PersonaController implements Serializable {
 
     public void obtieneIglesiasPorParroquia() {
         if (parroquiaSeleccionado.getId() != null) {
-            parroquiaSeleccionado = geograpFacade.find(parroquiaSeleccionado.getId());
-
+            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
             List<Geograp> parroquiasTmp = new ArrayList<>();
             parroquiasTmp.add(parroquiaSeleccionado);
-
-            listaIglesias = iglesiaFacade.getIglesiasPorParroquias(parroquiasTmp);
-            listaIglesiaPersona = iglesiaPersonaFacade.getIglesiasPersonasPorParroquias(parroquiasTmp);
-            if (listaIglesias == null) {
-
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiasTmp);
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquiasTmp);
+            if (listaIglesias == null || listaIglesias.isEmpty()) {
                 JsfUtil.addWarningMessage("No existe registro de Iglesias en " + parroquiaSeleccionado.getName());
             } else {
                 JsfUtil.addInfoMessage(listaIglesias.size() + " Iglesias registradas");
             }
         } else {
-            iglesiaSeleccionado = new Iglesia();
+            iglesiaSeleccionado = new IglesiaDTO();
             listaIglesias.clear();
             listaIglesiaPersona.clear();
         }
     }
 
     public void obtienePersonasPorIglesias() {
-        if (iglesiaSeleccionado.getId() != null) {
-            iglesiaSeleccionado = iglesiaFacade.find(iglesiaSeleccionado.getId());
-            listaIglesiaPersona = iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesiaSeleccionado.getId());
-            if (listaIglesiaPersona == null) {
+        if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+            iglesiaSeleccionado = iglesiaService.obtenerDTOPorId(iglesiaSeleccionado.getId());
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
+            if (listaIglesiaPersona == null || listaIglesiaPersona.isEmpty()) {
                 JsfUtil.addWarningMessage("No existe registro de personas en " + iglesiaSeleccionado.getNombre());
             } else {
                 JsfUtil.addInfoMessage(listaIglesiaPersona.size() + " personas registradas");
@@ -208,18 +258,15 @@ public class PersonaController implements Serializable {
         }
     }
 
-    /**
-     * Inicializa medio seleccionado
-     */
     public void inicializaPersonaSeleccionado() {
         if (listaIglesiaPersona != null) {
             listaIglesiaPersona.clear();
         }
-        iglesiaPersonaSeleccionado = new IglesiaPersona();
-        iglesiaPersonaSeleccionado.setPersona(new Persona());
-        iglesiaPersonaSeleccionado.setIglesia(new Iglesia());
-        this.iglesiaSeleccionado = new Iglesia();
-        this.personaSeleccionado = new Persona();
+        iglesiaPersonaSeleccionado = new IglesiaPersonaDTO();
+        iglesiaPersonaSeleccionado.setPersona(new PersonaDTO());
+        iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
+        this.iglesiaSeleccionado = new IglesiaDTO();
+        this.personaSeleccionado = new PersonaDTO();
     }
 
     public void nuevaPersona() {
@@ -239,84 +286,137 @@ public class PersonaController implements Serializable {
     }
 
     public void eliminarIglesiaPersonaSeleccionadas() {
+        int eliminadas = 0;
         if (listaIglesiaPersonaSeleccionados != null) {
-            for (IglesiaPersona item : listaIglesiaPersonaSeleccionados) {
-                iglesiaPersonaFacade.delete(item);
+            List<Integer> ids = new ArrayList<>();
+            for (IglesiaPersonaDTO item : listaIglesiaPersonaSeleccionados) {
+                if (item.getId() != null) {
+                    ids.add(item.getId());
+                }
             }
+            eliminadas = iglesiaPersonaService.eliminarPorIds(ids);
         }
-        listaIglesiaPersona = iglesiaPersonaFacade.findAll();
-        JsfUtil.addInfoMessage(+listaIglesiaPersonaSeleccionados.size() + " Personas eliminadas");
+        listaIglesiaPersona = iglesiaPersonaService.listarDTOs();
+        JsfUtil.addInfoMessage(eliminadas + " Personas eliminadas");
         this.listaIglesiaPersonaSeleccionados = null;
         PrimeFaces.current().ajax().update("frmPersonas", "msgs");
-
     }
 
     public void buscaPersonaPorCedula() {
-        if (iglesiaPersonaSeleccionado != null) {
-            Persona personaBuscado = personaFacade.buscarPorCedula(iglesiaPersonaSeleccionado.getPersona().getDocumento());
-            if (personaBuscado != null) {
-                iglesiaPersonaSeleccionado.setPersona(personaBuscado);
-                JsfUtil.addInfoMessage("Persona con CI: " + personaBuscado.getDocumento() + " ya se encuentra registrado ");
-            }
+        if (iglesiaPersonaSeleccionado == null || iglesiaPersonaSeleccionado.getPersona() == null) {
+            return;
+        }
+        PersonaDTO encontrada = personaService.buscarDTOPorDocumento(iglesiaPersonaSeleccionado.getPersona().getDocumento());
+        if (encontrada != null) {
+            iglesiaPersonaSeleccionado.setPersona(encontrada);
+            JsfUtil.addInfoMessage("Persona con CI: " + encontrada.getDocumento() + " ya se encuentra registrado ");
         }
     }
 
     public void actualizarPersona() {
         try {
-            setPersonaSeleccionado(iglesiaPersonaSeleccionado.getPersona());
-            setIglesiaSeleccionado(iglesiaPersonaSeleccionado.getIglesia());
-            iglesiaPersonaSeleccionado.setPersona(getPersonaSeleccionado());
-            iglesiaPersonaSeleccionado.setIglesia(getIglesiaSeleccionado());
-            if (personaSeleccionado != null && iglesiaSeleccionado != null) {
-                if (this.iglesiaPersonaSeleccionado.getId() != null
-                        && this.iglesiaPersonaSeleccionado.getIglesia() != null
-                        && this.iglesiaPersonaSeleccionado.getPersona() != null) {
-                    IglesiaPersona iglesiaPersonaActualiza = iglesiaPersonaFacade.edit(iglesiaPersonaSeleccionado);
-                    if (iglesiaPersonaActualiza != null) {
-                        JsfUtil.addSuccessMessage("Persona actualido");
-                        iglesiaSeleccionado = null;
-                        personaSeleccionado = null;
-                        iglesiaPersonaSeleccionado = null;
-                        listaIglesiaPersona = iglesiaPersonaFacade.findAll();
-                        PrimeFaces.current().ajax().update("msgs", "frmIglesias");
-                    }
-                } else {
-                    IglesiaPersona iglesiaPersonaActualiza = iglesiaPersonaFacade.create(iglesiaPersonaSeleccionado);
-                    if (iglesiaPersonaActualiza != null) {
-                        JsfUtil.addSuccessMessage("Persona agregado");
-                        iglesiaSeleccionado = null;
-                        personaSeleccionado = null;
-                        iglesiaPersonaSeleccionado = null;
-                        PrimeFaces.current().ajax().update("msgs", "frmIglesias");
-                    }
+            boolean esActualizacion = iglesiaPersonaSeleccionado != null
+                    && iglesiaPersonaSeleccionado.getId() != null;
+            // Si el contexto está restringido a una iglesia (IglesiaAdmin),
+            // forzamos el binding a esa iglesia para evitar registros cruzados.
+            if (restringidoAIglesia && iglesiaPersonaSeleccionado != null
+                    && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+                iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
+            }
+            if (!cronogramaService.permiteEdicionPadron()) {
+                JsfUtil.addErrorMessage("La actualización del padrón está cerrada por el cronograma electoral.");
+                return;
+            }
+            IglesiaPersonaDTO persistido = iglesiaPersonaService.guardarDesdeDTO(iglesiaPersonaSeleccionado);
+            if (persistido != null) {
+                JsfUtil.addSuccessMessage(esActualizacion ? "Persona actualizada" : "Persona registrada y marcada como actualizada");
+                personaSeleccionado = null;
+                iglesiaPersonaSeleccionado = null;
+                // Refresca lista de miembros y recalcula progreso (la edición
+                // mueve f_actualiza vía @PreUpdate de Hibernate, lo cual hace
+                // que la regla "delta > 2s" del DTO marque actualizada).
+                if (restringidoAIglesia && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+                    listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
+                    progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
+                } else if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+                    listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
+                    progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
                 }
             }
         } catch (Exception e) {
+            log.error("Error al guardar persona", e);
         }
         PrimeFaces.current().executeScript("PF('dlgPersona').hide()");
-        PrimeFaces.current().ajax().update("frmPersonas:messages", "frmPersonas:tblPersonas");
+        PrimeFaces.current().ajax().update("frmPersonas");
     }
 
-    private void setPersonaSeleccionado(Persona persona) {
+    /**
+     * Genera y descarga el acta PDF de actualización de miembros de la iglesia
+     * actualmente cargada en {@code iglesiaSeleccionado}. El acta marca
+     * "PARCIAL" cuando el porcentaje no es 100% para evidenciar que aún hay
+     * miembros pendientes. Solo lista los miembros ya marcados como actualizados.
+     */
+    public void generarActaActualizacion() {
         try {
-            if (persona != null) {
-                if (persona.getId() != null) {
-                    this.personaSeleccionado = personaFacade.edit(persona);
-                } else {
-                    this.personaSeleccionado = personaFacade.create(persona);
-                }
+            if (iglesiaSeleccionado == null || iglesiaSeleccionado.getId() == null) {
+                JsfUtil.addWarningMessage("Seleccione una iglesia primero");
+                return;
             }
+            List<IglesiaPersonaDTO> actualizados = iglesiaPersonaService
+                    .listarDTOsActualizadosPorIglesia(iglesiaSeleccionado.getId());
+
+            String nombreReporte = "ACTA_ACTUALIZACION_" + iglesiaSeleccionado.getNombre()
+                    .replaceAll("[^A-Za-z0-9]", "_");
+            ec.com.antenasur.itext.ReportePFD.nuevoPDF(nombreReporte);
+
+            String tituloPrefijo = isActualizacionCompleta() ? "" : "[PARCIAL " + getPorcentajeActualizacion() + "%] ";
+            String titulo = tituloPrefijo + "ACTA DE ACTUALIZACIÓN DE MIEMBROS";
+            String[] columnas = {"#", "CÉDULA", "NOMBRES", "APELLIDOS", "FECHA ACTUALIZACIÓN"};
+            float[] anchos = {30, 90, 130, 130, 100};
+
+            com.itextpdf.text.Font fuenteCab = ec.com.antenasur.util.Constantes.getFuenteCabeceraDefault(10);
+            ec.com.antenasur.itext.ReportePFD.creaTablaCabecera(columnas.length, anchos, titulo, columnas, fuenteCab);
+
+            // Encabezado adicional con datos de la iglesia
+            ec.com.antenasur.itext.ReportePFD.addParagraph(
+                    "Iglesia: " + iglesiaSeleccionado.getNombre()
+                            + "  |  Comunidad: " + (iglesiaSeleccionado.getComunidad() == null ? "—" : iglesiaSeleccionado.getComunidad())
+                            + "  |  Total miembros: " + getTotalMiembros()
+                            + "  |  Actualizados: " + getMiembrosActualizados()
+                            + "  |  Pendientes: " + getMiembrosPendientes());
+            ec.com.antenasur.itext.ReportePFD.agregaParrafoEnBlanco();
+
+            String[][] datos = new String[actualizados.size()][columnas.length];
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+            for (int i = 0; i < actualizados.size(); i++) {
+                IglesiaPersonaDTO ip = actualizados.get(i);
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = ip.getPersona() != null ? safe(ip.getPersona().getDocumento()) : "";
+                datos[i][2] = ip.getPersona() != null ? safe(ip.getPersona().getNombres()) : "";
+                datos[i][3] = ip.getPersona() != null ? safe(ip.getPersona().getApellidos()) : "";
+                datos[i][4] = ip.getFechaActualiza() != null ? fmt.format(ip.getFechaActualiza()) : "";
+            }
+            com.itextpdf.text.Font fuenteCont = ec.com.antenasur.util.Constantes.getFuenteContenidoDefault(9);
+            ec.com.antenasur.itext.ReportePFD.creaContenidoTabla(datos, columnas, fuenteCont);
+
+            String userName = (loginBean.getUsuario() != null && loginBean.getUsuario().getUsername() != null)
+                    ? loginBean.getUsuario().getUsername() : "—";
+            ec.com.antenasur.itext.ReportePFD.getFinalParagraph(userName);
+            ec.com.antenasur.itext.ReportePFD.descargarPDF(nombreReporte);
         } catch (Exception e) {
+            log.error("Error al generar acta de actualización", e);
+            JsfUtil.addErrorMessage("No se pudo generar el acta. Intente nuevamente.");
         }
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
     }
 
     public void handleFileUpload(FileUploadEvent event) {
         try {
             file = event.getFile();
             if (file != null && file.getContent() != null && file.getContent().length > 0 && file.getFileName() != null) {
-                /**
-                 * Obtiene el excel cargado para su posterior tratamiento
-                 */
                 excelMigracion = new XSSFWorkbook(file.getInputStream());
                 if (excelMigracion == null) {
                     JsfUtil.addFatalMessage("Error al procesar archivo");
@@ -347,10 +447,8 @@ public class PersonaController implements Serializable {
 
             Documentos documentoNuevo = new Documentos(nombreArchivo, pathCompleto, new TipoDocumento(2),
                     iglesiaSeleccionado.getId(), extencion, "application/" + extencion, nombreArchivo);
-            //GUARDA EN BD
             documentoBean.guardarDocumento(documentoNuevo);
 
-            //ALMACENA EN DISCO DURO
             Path path = Paths.get(pathCompleto);
             Files.write(path, file.getContent());
             JsfUtil.addSuccessMessage(nombreArchivo + " Almacenado");
@@ -361,123 +459,32 @@ public class PersonaController implements Serializable {
 
     public void procesaArchivo(UploadedFile file) {
         try {
-            if (file != null && file.getContent() != null && file.getContent().length > 0 && file.getFileName() != null) {
-                guardarArchivoExcel();
-                if (excelMigracion != null) {
-                    //Obtenemos la primera pestaña
-                    XSSFSheet hojaUno = excelMigracion.getSheetAt(0);
-                    //Obtenemos el interator  que nos permite recorrer cada una de las filas que contiene.
-                    Iterator<Row> filasInterator = hojaUno.iterator();
-
-                    Row fila;
-
-                    listaPersonas = new ArrayList<>();
-                    listaIglesiaPersonaExistente = new ArrayList<>();
-                    listaIglesias = new ArrayList<>();
-                    int contadorFila = 0;
-
-                    while (filasInterator.hasNext()) {
-                        Iglesia iglesiaTmp = new Iglesia();
-                        Persona personaTmp = new Persona();
-                        IglesiaPersona igpeTmp = new IglesiaPersona();
-                        Recinto recintoTmp = new Recinto();
-                        Mesa mesaTmp = new Mesa();
-                        Padron padronTmp = new Padron();
-                        Geograp ubicacionTmp = new Geograp();
-                        fila = filasInterator.next();
-                        //Inicia en la fila 1 {0,1,2,3,4..}
-                        if (contadorFila >= 1) {
-                            //inicia en la columna (columna B)
-                            for (int contadorColumna = 1; contadorColumna < fila.getLastCellNum(); contadorColumna++) {
-                                Cell cell = fila.getCell(contadorColumna);
-                                if (contadorColumna < fila.getLastCellNum()) {
-                                    switch (contadorColumna) {
-                                        case 0:
-                                            break;
-                                        case 1:
-                                            String nombresPersona = procesaTamanioColumna(cell.getStringCellValue().trim(), 100);
-                                            personaTmp.setNombres(!nombresPersona.isEmpty() ? nombresPersona.toUpperCase() : null);
-                                            break;
-                                        case 2:
-                                            String cedula = procesaTamanioColumna(cell.getStringCellValue().trim(), 11);
-                                            cedula = eliminaGionCedula(cedula);
-                                            personaTmp.setDocumento(!cedula.isEmpty() ? cedula : null);
-                                            break;
-                                        case 3:
-                                            String nombreIglesia = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
-                                            iglesiaTmp.setNombre(!nombreIglesia.isEmpty() ? nombreIglesia.toUpperCase() : null);
-                                            break;
-                                        case 5:
-                                            int ubicacion = (int) cell.getNumericCellValue();
-                                            ubicacionTmp.setId(ubicacion);
-                                            break;
-                                        case 6:
-                                            String nombreComunidad = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
-                                            iglesiaTmp.setComunidad(!nombreComunidad.isEmpty() ? nombreComunidad.toUpperCase() : null);
-                                            break;
-                                        case 9:
-                                            String nombreMesa = procesaTamanioColumna(cell.getStringCellValue().trim(), 255);
-                                            mesaTmp.setNombre(nombreMesa);
-                                            break;
-                                    }
-                                }
-                            }
-
-                            mesaTmp = mesaFacade.buscaPorNombreMesa(mesaTmp.getNombre());
-
-                            ubicacionTmp = geograpFacade.find(ubicacionTmp.getId());
-
-                            if (ubicacionTmp != null) {
-                                iglesiaTmp.setUbicacion(ubicacionTmp);
-                                Iglesia iglesiaTmpBusca = iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(iglesiaTmp);
-                                if (iglesiaTmpBusca == null) {
-                                    iglesiaTmp = iglesiaFacade.create(iglesiaTmp);
-                                } else {
-                                    iglesiaTmp = iglesiaTmpBusca;
-                                }
-                            }
-
-                            personaTmp = personaFacade.create(personaTmp);
-
-                            if (iglesiaTmp != null && personaTmp != null) {
-                                igpeTmp = new IglesiaPersona(iglesiaTmp, personaTmp);
-                                igpeTmp = iglesiaPersonaFacade.create(igpeTmp);
-                            }
-                            if (igpeTmp != null) {
-                                padronTmp.setIglesiaPersona(igpeTmp);
-                                padronTmp.setMesa(mesaTmp);
-                                padronFacade.create(padronTmp);
-                            }
-                        }
-                        contadorFila++;
-                    }
-                    listaPersonas = personaFacade.findAll();
-                    // cerramos el libro excel
-                    excelMigracion.close();
-                } else {
-                    JsfUtil.addWarningMessage("Archivo formato incorrecto");
-                }
+            if (file == null || file.getContent() == null || file.getContent().length == 0
+                    || file.getFileName() == null) {
+                return;
+            }
+            guardarArchivoExcel();
+            if (excelMigracion == null) {
+                JsfUtil.addWarningMessage("Archivo formato incorrecto");
+                return;
             }
 
+            List<FilaPadronImportadaDTO> filas = ExcelPadronParser.parsear(excelMigracion);
+            for (FilaPadronImportadaDTO filaDto : filas) {
+                Mesa mesa = filaDto.getNombreMesa() != null
+                        ? mesaService.buscaPorNombreMesa(filaDto.getNombreMesa()) : null;
+                Geograp ubicacion = filaDto.getUbicacionId() != null
+                        ? geograpService.find(filaDto.getUbicacionId()) : null;
+                if (ubicacion != null) {
+                    filaDto.getIglesia().setUbicacion(ubicacion);
+                }
+                padronService.importarFilaPadron(filaDto.getPersona(), filaDto.getIglesia(), mesa);
+            }
+
+            listaPersonas = personaService.listarDTOs();
+            excelMigracion.close();
         } catch (Exception e) {
             log.error("ERROR AL CARGAR ARCHIVO", e);
         }
     }
-
-    private String procesaTamanioColumna(String cadena, int tamanioColumna) {
-        int tamanioCadena = cadena.length();
-        String nuevaCadena = "";
-        if (tamanioCadena > tamanioColumna) {
-            nuevaCadena = cadena.substring(0, tamanioColumna - 1);
-        } else {
-            nuevaCadena = cadena;
-        }
-        return nuevaCadena;
-    }
-
-    private String eliminaGionCedula(String cadena) {
-        return cadena.replace("-", "");
-
-    }
-
 }

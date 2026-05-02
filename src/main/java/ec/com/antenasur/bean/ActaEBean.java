@@ -1,15 +1,15 @@
 package ec.com.antenasur.bean;
 
-import ec.com.antenasur.domain.Persona;
+import ec.com.antenasur.model.Persona;
 import java.io.Serializable;
 
 import javax.enterprise.context.RequestScoped;
 
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.MiembroJRV;
-import ec.com.antenasur.domain.tec.PlantillaCorreo;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.tec.MiembroJRVFacade;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.MiembroJRV;
+import ec.com.antenasur.model.tec.PlantillaCorreo;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.service.tec.MiembroJRVService;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -55,7 +55,7 @@ public class ActaEBean implements Serializable {
     private Persona vocal;
 
     @Inject
-    private MiembroJRVFacade miembroJRVFacade;
+    private MiembroJRVService miembroJRVService;
 
     public ActaEBean(Mesa mesa, PlantillaCorreo plantillaDocumento) {
         this.mesa = mesa;
@@ -71,7 +71,7 @@ public class ActaEBean implements Serializable {
         try {
             if (mesa != null) {
                 this.recinto = mesa.getRecinto();
-                miembrosJRV = miembroJRVFacade.getJRVPorMesa(mesa);
+                miembrosJRV = miembroJRVService.getJRVPorMesa(mesa);
                 cargaAutoridadesMesa();
             }
         } catch (Exception e) {

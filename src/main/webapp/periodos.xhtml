@@ -55,21 +55,33 @@
                             <p:column headerText="Nombre" sortBy="#{periodo.nombre}" filterBy="#{periodo.nombre}"  ><h:outputText value="#{periodo.nombre}" /></p:column>        
 
                             <p:column headerText="Desde" sortBy="#{periodo.fechaInicio}" filterBy="#{periodo.fechaInicio}" >
-                                <h:outputText value="#{periodo.fechaInicio}" >
-                                    <f:convertDateTime pattern="dd-MM-yyyy" />
-                                </h:outputText></p:column>
+                                <p:chip icon="pi pi-calendar">
+                                    <h:outputText value="#{periodo.fechaInicio}">
+                                        <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                    </h:outputText>
+                                </p:chip>
+                            </p:column>
                             <p:column headerText="Hasta" sortBy="#{periodo.fechaFin}" filterBy="#{periodo.fechaFin}" >
-                                <h:outputText value="#{periodo.fechaFin}" >
-                                    <f:convertDateTime pattern="dd-MM-yyyy" />
-                                </h:outputText>
+                                <p:chip icon="pi pi-calendar-times">
+                                    <h:outputText value="#{periodo.fechaFin}">
+                                        <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                    </h:outputText>
+                                </p:chip>
                             </p:column>
                             <p:column exportable="false">
                                 <p:commandButton icon="pi pi-pencil" update=":frmPeriodos:outPnlPeriodo" oncomplete="PF('dlgPeriodo').show()"
+                                                 title="Editar período"
                                                  styleClass="edit-button rounded-button ui-button-success" process="@this">
                                     <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
                                 </p:commandButton>
-                                <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                                <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
+                                                 title="Eliminar período"
+                                                 actionListener="#{periodoController.eliminarPeriodoSeleccionados}"
+                                                 process="@this" update="@form">
                                     <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
+                                    <p:confirm header="Confirmar eliminación"
+                                               message="¿Está seguro de eliminar este período?"
+                                               icon="pi pi-exclamation-triangle"/>
                                 </p:commandButton>
                             </p:column>
                         </p:dataTable>
@@ -107,15 +119,6 @@
                             </f:facet>
                         </p:dialog>
 
-                        <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Delete the product?" header="Confirm" severity="warn">
-                            <p:commandButton value="Si" icon="pi pi-check" actionListener="#{periodoController.eliminarPeriodoSeleccionados}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                            <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                        </p:confirmDialog>
-
-                        <p:confirmDialog global="true" showEffect="fade" width="300">
-                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                        </p:confirmDialog>
                     </div>
                 </div>
             </div>

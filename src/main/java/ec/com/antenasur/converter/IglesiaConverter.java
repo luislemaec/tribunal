@@ -1,6 +1,6 @@
 package ec.com.antenasur.converter;
 
-import ec.com.antenasur.domain.Iglesia;
+import ec.com.antenasur.model.Iglesia;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;

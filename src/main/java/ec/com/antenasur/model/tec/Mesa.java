@@ -1,0 +1,116 @@
+package ec.com.antenasur.model.tec;
+
+import ec.com.antenasur.model.Geograp;
+import java.io.Serializable;
+
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import ec.com.antenasur.model.generic.EntidadAuditable;
+import ec.com.antenasur.model.generic.EntidadBase;
+import ec.com.antenasur.enums.EstadoTarea;
+import javax.persistence.Transient;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Filter;
+import org.hibernate.envers.Audited;
+
+/**
+ * The persistent class for the tec_recintos database table.
+ *
+ */
+@Entity
+@Table(name = "mesas", schema = "tec")
+
+@AttributeOverrides({
+    @AttributeOverride(name = "estado", column = @Column(name = "estado")),
+    @AttributeOverride(name = "fechaCrea", column = @Column(name = "f_crea")),
+    @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
+    @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
+    @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
+@Audited
+@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
+public class Mesa extends EntidadAuditable implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Setter
+    @Getter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "mesa_id")
+    private Integer id;
+
+    @Setter
+    @Getter
+    @Column(name = "mesa_nombre")
+    private String nombre;
+
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "rec_id")
+    private Recinto recinto;
+
+    @Setter
+    @Getter
+    @ManyToOne
+    @JoinColumn(name = "gelo_id")
+    private Geograp ubicacion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_tarea", length = 100)
+    @Getter
+    @Setter
+    private EstadoTarea estadoTarea;
+
+    @Setter
+    @Getter    
+    private Integer totalVotos;
+    
+    @Setter
+    @Getter    
+    private Integer totalPapetelasUso;
+    
+    @Setter
+    @Getter    
+    private Integer totalAusentismo;
+    
+    @Setter
+    @Getter    
+    private Boolean tieneErrorConteo;
+    
+    @Setter
+    @Getter    
+    private String observacion;
+         
+    @Setter
+    @Getter    
+    @Column(name = "u_responsable", length = 100)
+    private String responsable;
+
+
+    @Setter
+    @Getter
+    @Transient
+    private Boolean tieneDocumentos;
+
+    public Mesa() {
+    }
+
+    public Mesa(Recinto recinto, Geograp ubicacion) {
+        this.recinto = recinto;
+        this.ubicacion = ubicacion;
+    }
+
+}

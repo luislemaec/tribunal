@@ -80,9 +80,9 @@ public class ReportTemplateController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            /* listClassification = catalogueFacade.findByFatherNametoAdmin(Constant.getClasificacion());
-            listScope = catalogueFacade.findByFatherName(Constant.getAlcance());
-            listType = catalogueFacade.findByFatherName(Constant.getTipo());
+            /* listClassification = catalogueService.findByFatherNametoAdmin(Constant.getClasificacion());
+            listScope = catalogueService.findByFatherName(Constant.getAlcance());
+            listType = catalogueService.findByFatherName(Constant.getTipo());
             classification = scoped = type = "TODOS";
              */
         } catch (Exception e) {

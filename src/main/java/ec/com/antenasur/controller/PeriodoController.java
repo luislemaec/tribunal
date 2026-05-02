@@ -11,65 +11,55 @@ import javax.inject.Named;
 import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.tec.Cargo;
-import ec.com.antenasur.domain.tec.Periodo;
-import ec.com.antenasur.service.tec.CargoFacade;
-import ec.com.antenasur.service.tec.PeriodoFacade;
+import ec.com.antenasur.dto.CargoDTO;
+import ec.com.antenasur.dto.PeriodoDTO;
+import ec.com.antenasur.service.tec.CargoService;
+import ec.com.antenasur.service.tec.PeriodoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class PeriodoController implements Serializable {
 
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-
     private static final long serialVersionUID = 1L;
 
-    //private static final Logger LOG = Logger.getLogger(cargarControl.class);
     @Inject
     private LoginBean loginBean;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private PeriodoService periodoService;
 
     @Inject
-    private CargoFacade cargoFacade;
+    private CargoService cargoService;
 
     @Setter
     @Getter
-    private Periodo periodoSeleccionado;
+    private PeriodoDTO periodoSeleccionado;
 
     @Setter
     @Getter
-    private List<Periodo> listaPeriodos, listaPeriodosSeleccionados;
+    private List<PeriodoDTO> listaPeriodos, listaPeriodosSeleccionados;
 
     @Setter
     @Getter
-    private List<Cargo> listaCargos;
+    private List<CargoDTO> listaCargos;
 
     @PostConstruct
     private void init() {
         try {
-            listaPeriodos = periodoFacade.findAll();
-            listaCargos = cargoFacade.findAll();
-
+            listaPeriodos = periodoService.listarDTOs();
+            listaCargos = cargoService.listarDTOs();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
     public void inicializaPersonaSeleccionado() {
-
-        periodoSeleccionado = new Periodo();
-
+        periodoSeleccionado = new PeriodoDTO();
     }
 
     public void nuevo() {
@@ -89,37 +79,33 @@ public class PeriodoController implements Serializable {
     }
 
     public void eliminarPeriodoSeleccionados() {
+        int eliminados = 0;
         if (listaPeriodosSeleccionados != null) {
-            for (Periodo item : listaPeriodosSeleccionados) {                
-                periodoFacade.delete(item);
+            for (PeriodoDTO item : listaPeriodosSeleccionados) {
+                if (item.getId() != null && periodoService.eliminarPorId(item.getId()) != null) {
+                    eliminados++;
+                }
             }
         }
-        JsfUtil.addInfoMessage(+listaPeriodosSeleccionados.size() + " Personas eliminadas");
+        JsfUtil.addInfoMessage(eliminados + " Periodos eliminados");
         PrimeFaces.current().ajax().update("frmPeriodos:pnListaPeriodos", "msgs");
         this.listaPeriodosSeleccionados = null;
     }
 
     public void guardar() {
         try {
-            if (periodoSeleccionado != null) {            	
-                if (this.periodoSeleccionado.getId() != null) {                	                
-                    Periodo periodoActualiza = periodoFacade.edit(periodoSeleccionado);
-                    if (periodoActualiza != null) {
-                        JsfUtil.addSuccessMessage("Actualido correctamente");
-
-                        listaPeriodos = periodoFacade.findAll();
-                        PrimeFaces.current().ajax().update("msgs", "frmPeriodos");
-                    }
-                } else {
-                    periodoSeleccionado = periodoFacade.create(periodoSeleccionado);
-                    if (periodoSeleccionado != null) {
-                        JsfUtil.addSuccessMessage("Persona agregado");
-                        listaPeriodos = periodoFacade.findAll();
-                        PrimeFaces.current().ajax().update("msgs", "frmPeriodos");
-                    }
-                }
+            if (periodoSeleccionado == null) {
+                return;
+            }
+            boolean esEdicion = periodoSeleccionado.getId() != null;
+            PeriodoDTO persistido = periodoService.guardarDesdeDTO(periodoSeleccionado);
+            if (persistido != null) {
+                JsfUtil.addSuccessMessage(esEdicion ? "Actualido correctamente" : "Periodo agregado");
+                listaPeriodos = periodoService.listarDTOs();
+                PrimeFaces.current().ajax().update("msgs", "frmPeriodos");
             }
         } catch (Exception e) {
+            log.error("ERROR AL GUARDAR PERIODO", e);
         }
         PrimeFaces.current().executeScript("PF('dlgPeriodo').hide()");
         PrimeFaces.current().ajax().update("frmPeriodos:msgs", "frmPeriodos:tblPeriodos");

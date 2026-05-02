@@ -75,17 +75,28 @@
                         <p:column selectionMode="multiple" exportable="false"></p:column>
                         <p:column headerText="ID" sortBy="#{recinto.id}" filterBy="#{recinto.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{recinto.id}" /></p:column>
                         <p:column headerText="NOMBRE" sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}" ><h:outputText value="#{recinto.nombre}" /></p:column>        
-                        <p:column headerText="CANTÓN" sortBy="#{recinto.ubicacion.geograp.name}" filterBy="#{recinto.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{recinto.ubicacion.geograp.name}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacion.name}" filterBy="#{recinto.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem" ><h:outputText value="#{recinto.ubicacion.name}" /></p:column>
-                        <p:column headerText="ESTADO" sortBy="#{recinto.estado}" filterBy="#{recinto.estado}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{recinto.estado}" /></p:column>                    
+                        <p:column headerText="CANTÓN" sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{recinto.cantonNombre}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacionNombre}" filterBy="#{recinto.ubicacionNombre}" styleClass="sm:w-max md:w-2 lg:w-20rem" ><h:outputText value="#{recinto.ubicacionNombre}" /></p:column>
+                        <p:column headerText="ESTADO" sortBy="#{recinto.estadoTarea}" filterBy="#{recinto.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-8rem" >
+                            <p:tag value="#{recinto.estadoTarea}"
+                                   severity="#{recinto.estadoTarea eq 'COMPLETADO' ? 'success' : (recinto.estadoTarea eq 'INICIADA' ? 'warning' : (recinto.estadoTarea eq 'ABORTADO' ? 'danger' : 'info'))}"
+                                   icon="#{recinto.estadoTarea eq 'COMPLETADO' ? 'pi pi-check' : (recinto.estadoTarea eq 'ABORTADO' ? 'pi pi-times' : 'pi pi-clock')}"/>
+                        </p:column>                    
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmRecintos:outPnlRecintos" oncomplete="PF('dlgRecinto').show()"
+                                             title="Editar recinto"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{recintoController.cagraDatosRecintoSeleccionado}">
                                 <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />                                                                                        
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash"
+                                             title="Eliminar recinto"
+                                             actionListener="#{recintoController.eliminarRecintoSeleccionado}"
+                                             process="@this" update=":frmRecintos">
                                 <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este recinto?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -111,7 +122,7 @@
 
                             <div class="field">
                                 <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
-                                <p:selectOneMenu id="parroquiaSel" value="#{recintoController.recintoSeleccionado.ubicacion.id}" required="true">
+                                <p:selectOneMenu id="parroquiaSel" value="#{recintoController.recintoSeleccionado.ubicacionId}" required="true">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{recintoController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
                                 </p:selectOneMenu>                                       
@@ -125,15 +136,6 @@
                     </f:facet>
                 </p:dialog>
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{recintoController.eliminarRecintoSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
-
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

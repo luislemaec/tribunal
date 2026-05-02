@@ -1,14 +1,14 @@
 package ec.com.antenasur.bean;
 
 import ec.com.antenasur.controller.OlvidoClaveController;
-import ec.com.antenasur.domain.tec.PlantillaCorreo;
+import ec.com.antenasur.model.tec.PlantillaCorreo;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.service.tec.PlantillaCorreoFacade;
+import ec.com.antenasur.service.tec.PlantillaCorreoService;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,7 +32,7 @@ public class PlantillaCorreoBean implements Serializable {
     private static final String CORREO_CAMBIO_CONTRASENIA = "CAMBIO CLAVE";
 
     @Inject
-    private PlantillaCorreoFacade plantillaCorreoFacade;
+    private PlantillaCorreoService plantillaCorreoService;
 
     @Getter
     @Setter
@@ -49,7 +49,7 @@ public class PlantillaCorreoBean implements Serializable {
 
     public PlantillaCorreo obtieneCorreoOlvidoClave() {
         try {
-            this.plantillaCorreo = plantillaCorreoFacade.buscarPorAsunto(CORREO_OLVIDO_CONTRASENA);
+            this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_OLVIDO_CONTRASENA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
@@ -59,7 +59,7 @@ public class PlantillaCorreoBean implements Serializable {
 
     public PlantillaCorreo obtieneCorreoCambioClave() {
         try {
-            this.plantillaCorreo = plantillaCorreoFacade.buscarPorAsunto(CORREO_CAMBIO_CONTRASENIA);
+            this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_CAMBIO_CONTRASENIA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
@@ -69,7 +69,7 @@ public class PlantillaCorreoBean implements Serializable {
 
     public PlantillaCorreo obtieneCorreoRecuperarClave() {
         try {
-            this.plantillaCorreo = plantillaCorreoFacade.buscarPorAsunto(CORREO_RECUPERAR_CLAVE);
+            this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_RECUPERAR_CLAVE);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
@@ -79,7 +79,7 @@ public class PlantillaCorreoBean implements Serializable {
 
     public PlantillaCorreo obtieneCorreoPorAsunto(String asunto) {
         try {
-            this.plantillaCorreo = plantillaCorreoFacade.buscarPorAsunto(asunto);
+            this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(asunto);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);

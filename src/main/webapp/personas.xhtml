@@ -15,17 +15,51 @@
 
     <ui:define name="content">
         <h:form id="frmPersonas">
-            <div class="grid">                
+            <div class="grid">
+                <!-- Banner de cronograma electoral.
+                     Si no hay fase vigente, modo solo lectura.
+                     Severidad mapea a estilos: INFO (azul), SUCCESS (verde),
+                     WARNING (ámbar), URGENT (rojo). -->
+                <div class="col-12" rendered="#{personaController.faseVigente ne null}">
+                    <h:panelGroup layout="block"
+                                  rendered="#{personaController.faseVigente ne null}"
+                                  styleClass="p-3 mb-2 border-round shadow-1"
+                                  style="background:#{personaController.faseVigente.severidad eq 'URGENT' ? '#fee2e2' : (personaController.faseVigente.severidad eq 'WARNING' ? '#fef3c7' : (personaController.faseVigente.severidad eq 'SUCCESS' ? '#dcfce7' : '#dbeafe'))};
+                                         border-left:4px solid #{personaController.faseVigente.severidad eq 'URGENT' ? '#dc2626' : (personaController.faseVigente.severidad eq 'WARNING' ? '#d97706' : (personaController.faseVigente.severidad eq 'SUCCESS' ? '#16a34a' : '#2563eb'))};">
+                        <i class="pi pi-#{personaController.faseVigente.severidad eq 'URGENT' ? 'exclamation-triangle' : (personaController.faseVigente.severidad eq 'SUCCESS' ? 'check-circle' : 'info-circle')}"
+                           style="font-size:1.2rem; margin-right:.5rem"/>
+                        <b>#{personaController.faseVigente.titulo}</b>
+                        <span style="margin-left:.5rem">— #{personaController.faseVigente.mensaje}</span>
+                        <p:tag value="#{personaController.faseVigente.diasRestantes} días restantes"
+                               severity="#{personaController.faseVigente.severidad eq 'URGENT' ? 'danger' : (personaController.faseVigente.severidad eq 'WARNING' ? 'warning' : 'info')}"
+                               style="margin-left:.8rem"/>
+                    </h:panelGroup>
+                </div>
+                <!-- Banner cuando no hay cronograma activo: solo lectura -->
+                <div class="col-12" rendered="#{personaController.faseVigente eq null}">
+                    <h:panelGroup layout="block"
+                                  styleClass="p-3 mb-2 border-round"
+                                  style="background:#f3f4f6; border-left:4px solid #6b7280;">
+                        <i class="pi pi-lock" style="margin-right:.5rem"/>
+                        <b>Sin cronograma activo:</b>
+                        no hay un proceso electoral en curso. La pantalla está en modo solo lectura.
+                    </h:panelGroup>
+                </div>
+
                 <div class="col-12 md:col-12 lg:col-12">
                     <h5>ADMINITRACION DE PERSONAS</h5>
                     <p:toolbar >
                         <p:toolbarGroup >
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{personaController.nuevaPersona}" update="outPnlPersonas" oncomplete="PF('dlgPersona').show()"
-                                             styleClass="ui-button-success" style="margin-right: .5rem" />
+                                             styleClass="ui-button-success" style="margin-right: .5rem"
+                                             disabled="#{not personaController.puedeEditarPadron}"
+                                             title="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
                             <p:commandButton id="btnEliminaRegistros" value="#{personaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
-                                             styleClass="ui-button-danger" disabled="#{!personaController.existeIglesiaPersonasSeleccionadas()}" update="@this">
+                                             styleClass="ui-button-danger"
+                                             disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
+                                             update="@this">
                                 <p:confirm header="Confirmation" message="Delete the selected products?" icon="pi pi-exclamation-triangle" />
-                            </p:commandButton> 
+                            </p:commandButton>
                         </p:toolbarGroup>
                         <p:toolbarGroup align="right" >                            
                             <p:fileUpload mode="simple" skinSimple="true" label="Importar" listener="#{personaController.handleFileUpload}" dragDropSupport="false"  
@@ -45,7 +79,56 @@
                 </div>
                 <div class="col-12">
                     <div class="card">
-                        <div class="ui-fluid formgrid grid">
+                        <!-- Banner para usuarios IglesiaAdmin: contexto fijo a su iglesia -->
+                        <h:panelGroup layout="block"
+                                      rendered="#{personaController.restringidoAIglesia}"
+                                      styleClass="p-3 mb-3 border-round"
+                                      style="background:#eff6ff; border-left:4px solid #2563eb;">
+                            <i class="pi pi-info-circle" style="color:#2563eb; margin-right:.5rem"/>
+                            <b>Iglesia asignada:</b>
+                            Está gestionando los miembros de
+                            <b>'#{personaController.iglesiaSeleccionado.nombre}'</b>.
+                            Solo verá y modificará miembros de esta iglesia.
+                        </h:panelGroup>
+
+                        <!-- Barra de progreso de actualización + KPIs.
+                             Visible cuando hay una iglesia cargada (admin global
+                             que filtró o IglesiaAdmin con su iglesia). -->
+                        <h:panelGroup layout="block"
+                                      rendered="#{personaController.iglesiaSeleccionado.id ne null}"
+                                      styleClass="p-3 mb-3 border-round shadow-1"
+                                      style="background:#fff;">
+                            <div class="grid">
+                                <div class="col-12 md:col-3">
+                                    <span class="block text-500 text-sm">Total miembros</span>
+                                    <p:badge value="#{personaController.totalMiembros}" severity="info" size="large"/>
+                                </div>
+                                <div class="col-12 md:col-3">
+                                    <span class="block text-500 text-sm">Actualizados</span>
+                                    <p:badge value="#{personaController.miembrosActualizados}" severity="success" size="large"/>
+                                </div>
+                                <div class="col-12 md:col-3">
+                                    <span class="block text-500 text-sm">Pendientes</span>
+                                    <p:badge value="#{personaController.miembrosPendientes}" severity="warning" size="large"/>
+                                </div>
+                                <div class="col-12 md:col-3 text-right">
+                                    <p:commandButton value="Generar acta" icon="pi pi-file-pdf"
+                                                     ajax="false"
+                                                     title="Descargar acta PDF de actualización"
+                                                     actionListener="#{personaController.generarActaActualizacion}"
+                                                     styleClass="ui-button-help"
+                                                     disabled="#{personaController.totalMiembros eq 0}"/>
+                                </div>
+                            </div>
+                            <div style="margin-top:.6rem">
+                                <p:progressBar value="#{personaController.porcentajeActualizacion}"
+                                               labelTemplate="{value}% actualizado"
+                                               displayOnly="true"/>
+                            </div>
+                        </h:panelGroup>
+
+                        <!-- Filtros de cantón/parroquia/iglesia: solo admin global -->
+                        <div class="ui-fluid formgrid grid" rendered="#{not personaController.restringidoAIglesia}">
                             <div class="field col-12 md:col-6 lg:col-3">
                                 <p:outputLabel for="canton" value="Cantón" />
                                 <p:selectOneMenu id="canton" value="#{personaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
@@ -59,7 +142,7 @@
                                 <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaSeleccionado.id}">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{personaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                                    <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}" process="@this" update="frmPersonas msgs"/>                            
+                                    <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}" process="@this" update="frmPersonas msgs"/>
                                 </p:selectOneMenu>
                             </div>
 
@@ -71,8 +154,8 @@
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}" process="@this" update="frmPersonas msgs"/>
                                 </p:selectOneMenu>
                             </div>
-                        </div>                       
-                    </div>                        
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12 md:col-12 lg:col-12">
 
@@ -94,69 +177,114 @@
                         <p:column headerText="Sexo" sortBy="#{iglPers.persona.sexo}" filterBy="#{iglPers.persona.sexo}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.sexo}" /></p:column>                    
                         <p:column headerText="Desde" sortBy="#{iglPers.desde}" filterBy="#{iglPers.desde}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.desde}" /></p:column>
                         <p:column headerText="Hasta" sortBy="#{iglPers.hasta}" filterBy="#{iglPers.hasta}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.hasta}" /></p:column>
+                        <p:column headerText="Estado" sortBy="#{iglPers.actualizada}" filterBy="#{iglPers.actualizada}" styleClass="sm:w-max md:w-1 lg:w-9rem">
+                            <p:tag rendered="#{iglPers.actualizada}" value="Actualizada" severity="success" icon="pi pi-check-circle"/>
+                            <p:tag rendered="#{not iglPers.actualizada}" value="Pendiente" severity="warning" icon="pi pi-clock"/>
+                        </p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmPersonas:outPnlPersonas" oncomplete="PF('dlgPersona').show()"
+                                             title="#{personaController.puedeEditarPadron ? 'Editar y marcar como actualizada' : 'Edición bloqueada por cronograma'}"
+                                             disabled="#{not personaController.puedeEditarPadron}"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
+                                             actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
+                                             process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este registro?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
                 </div>
 
-                <p:dialog header="Detalles Persona" showEffect="fade" modal="true" widgetVar="dlgPersona" responsive="true">
+                <p:dialog header="Datos del miembro" showEffect="fade" hideEffect="fade" modal="true"
+                          widgetVar="dlgPersona" responsive="true" width="640" closeOnEscape="true">
                     <p:outputPanel id="outPnlPersonas" class="ui-fluid">
                         <p:outputPanel rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
 
-                            <div class="field">
-                                <p:outputLabel for="cedula" value="Cédula" />
-                                <p:inputText id="cedula" value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}" disabled="#{ not empty personaController.iglesiaPersonaSeleccionado.persona.documento}" required="true">
-                                    <p:keyFilter for="cedula" mask="num"/>                        	
-                                    <p:ajax event="change" update="frmPersonas:outPnlPersonas msgs" listener="#{personaController.buscaPersonaPorCedula}" process="@this"/>
-                                    <f:validateLength minimum="10"></f:validateLength>
-                                </p:inputText>
-                            </div>
+                            <div class="formgrid grid">
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="cedula" value="Cédula *"/>
+                                    <p:inputText id="cedula" styleClass="mask-cedula"
+                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}"
+                                                 required="true" maxlength="10"
+                                                 placeholder="0000000000">
+                                        <p:keyFilter for="cedula" mask="num"/>
+                                        <p:ajax event="change"
+                                                update="frmPersonas:outPnlPersonas msgs"
+                                                listener="#{personaController.buscaPersonaPorCedula}" process="@this"/>
+                                        <f:validateLength minimum="10" maximum="10"/>
+                                    </p:inputText>
+                                </div>
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="sexo" value="Sexo"/>
+                                    <p:selectOneMenu id="sexo"
+                                                     value="#{personaController.iglesiaPersonaSeleccionado.persona.sexo}">
+                                        <f:selectItem itemLabel="Seleccione..." itemValue=""/>
+                                        <f:selectItem itemLabel="Masculino" itemValue="M"/>
+                                        <f:selectItem itemLabel="Femenino" itemValue="F"/>
+                                    </p:selectOneMenu>
+                                </div>
 
-                            <div class="field">
-                                <p:outputLabel for="nombres" value="Nombres" />
-                                <p:inputText id="nombres" value="#{personaController.iglesiaPersonaSeleccionado.persona.nombres}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
-                            </div>
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="nombres" value="Nombres *"/>
+                                    <p:inputText id="nombres"
+                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.nombres}"
+                                                 maxlength="100" required="true"
+                                                 onkeyup="value = value.toUpperCase()"/>
+                                </div>
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="apellidos" value="Apellidos *"/>
+                                    <p:inputText id="apellidos"
+                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.apellidos}"
+                                                 maxlength="100" required="true"
+                                                 onkeyup="value = value.toUpperCase()"/>
+                                </div>
 
-                            <div class="field">
-                                <p:outputLabel for="apellidos" value="apellidos" />
-                                <p:inputText id="apellidos" value="#{personaController.iglesiaPersonaSeleccionado.persona.apellidos}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
-                            </div>
-                            <div class="field">
-                                <p:outputLabel for="sexo" value="Sexo" />
-                                <p:inputText id="sexo" value="#{personaController.iglesiaPersonaSeleccionado.persona.sexo}"  maxlength="1" required="true" onkeyup="value = value.toUpperCase()"/>
-                            </div>
-                            <div class="field">
-                                <p:outputLabel for="iglesia" value="Iglesia" />
-                                <p:selectOneMenu id="iglesia" value="#{personaController.iglesiaPersonaSeleccionado.iglesia.id}" filter="true" filterMatchMode="contains" disabled="#{empty personaController.listaIglesias}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"  itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>                                                
-                                </p:selectOneMenu>                                        
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="tratamiento" value="Tratamiento"/>
+                                    <p:inputText id="tratamiento"
+                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.tratamiento}"
+                                                 maxlength="50"
+                                                 onkeyup="value = value.toUpperCase()"/>
+                                </div>
+                                <div class="field col-12 md:col-6"
+                                     rendered="#{not personaController.restringidoAIglesia}">
+                                    <p:outputLabel for="iglesia" value="Iglesia *"/>
+                                    <p:selectOneMenu id="iglesia"
+                                                     value="#{personaController.iglesiaPersonaSeleccionado.iglesia.id}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     disabled="#{empty personaController.listaIglesias}"
+                                                     required="true">
+                                        <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
+                                        <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
+                                                       itemLabel="#{iglesia.nombre}" itemValue="#{iglesia.id}"/>
+                                    </p:selectOneMenu>
+                                </div>
+                                <!-- IglesiaAdmin: muestra la iglesia fija (read-only) -->
+                                <div class="field col-12 md:col-6"
+                                     rendered="#{personaController.restringidoAIglesia}">
+                                    <p:outputLabel value="Iglesia"/>
+                                    <p:chip label="#{personaController.iglesiaSeleccionado.nombre}"
+                                            icon="pi pi-home"/>
+                                </div>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
 
                     <f:facet name="footer">
-                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{personaController.actualizarPersona}" update="outPnlPersonas, msgs" process="outPnlPersonas @this" />                                 
-                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgPersona').hide()" class="ui-button-secondary" />
+                        <p:commandButton value="Guardar" icon="pi pi-check"
+                                         actionListener="#{personaController.actualizarPersona}"
+                                         update=":frmPersonas" process="outPnlPersonas @this"/>
+                        <p:commandButton value="Cancelar" icon="pi pi-times"
+                                         onclick="PF('dlgPersona').hide()"
+                                         class="ui-button-secondary" type="button"/>
                     </f:facet>
                 </p:dialog>
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Delete the product?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
-
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

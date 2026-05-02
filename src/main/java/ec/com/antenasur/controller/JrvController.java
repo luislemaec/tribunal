@@ -1,142 +1,98 @@
 package ec.com.antenasur.controller;
 
-import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Iglesia;
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.Persona;
-import ec.com.antenasur.domain.tec.CatalogoGeneral;
-import ec.com.antenasur.domain.tec.Documentos;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.domain.tec.MiembroJRV;
-import ec.com.antenasur.domain.tec.Periodo;
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
-import ec.com.antenasur.service.tec.MesaFacade;
-import ec.com.antenasur.service.tec.MiembroJRVFacade;
-import ec.com.antenasur.service.tec.PeriodoFacade;
-import ec.com.antenasur.util.JsfUtil;
-import ec.com.antenasur.util.ModeloColumna;
-import ec.com.antenasur.util.ReflectionColumnModelBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import org.primefaces.PrimeFaces;
+
+import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.CatalogoGeneralDTO;
+import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.dto.MiembroJRVDTO;
+import ec.com.antenasur.dto.PeriodoDTO;
+import ec.com.antenasur.model.tec.MiembroJRV;
+import ec.com.antenasur.service.tec.CatalogoGeneralService;
+import ec.com.antenasur.service.tec.MiembroJRVService;
+import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.util.JsfUtil;
+import ec.com.antenasur.util.ModeloColumna;
+import ec.com.antenasur.util.ReflectionColumnModelBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.primefaces.PrimeFaces;
-import org.primefaces.component.datatable.DataTable;
-import org.primefaces.component.datatable.DataTableBase;
-import org.primefaces.component.dialog.Dialog;
-import org.primefaces.component.dialog.DialogBase;
-import org.primefaces.component.outputpanel.OutputPanel;
-import org.primefaces.component.outputpanel.OutputPanelBase;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class JrvController implements Serializable {
 
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-
     private static final long serialVersionUID = 1L;
 
     private static final String FORMULARIO = "frmMJRV";
     private static final String TABLA = "tblMJRV";
-    private static final String MENSAJE_REGISTRA_OK = "Miembro de JRV registrado";
-    private static final String MENSAJE_ACTUALIZA_OK = "Miembro de JRV actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Miembro de JRV eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;
 
     @Inject
-    private MiembroJRVFacade mjrvFacade;
+    private MiembroJRVService mjrvService;
 
     @Inject
-    private CatalogoGeneralFacade catalogoFacade;
+    private CatalogoGeneralService catalogoService;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private PeriodoService periodoService;
 
     @Setter
     @Getter
-    private MiembroJRV mjrvSeleccionado;
+    private MiembroJRVDTO mjrvSeleccionado;
 
     @Setter
     @Getter
-    private List<MiembroJRV> listaMJRV, listaMJRVSeleccionados;
+    private List<MiembroJRVDTO> listaMJRV, listaMJRVSeleccionados;
 
     @Setter
     @Getter
-    private List<Documentos> documentos;
-
-
-    @Setter
-    @Getter
-    private CatalogoGeneral cargo;
+    private CatalogoGeneralDTO cargo;
 
     @Setter
     @Getter
-    private Periodo periodo;
+    private PeriodoDTO periodo;
 
     @Setter
     @Getter
-    private IglesiaPersona iglesiaPersona;
+    private IglesiaPersonaDTO iglesiaPersona;
 
     @Setter
     @Getter
-    private List<Periodo> periodos;
+    private List<PeriodoDTO> periodos;
 
     @Setter
     @Getter
     private List<ModeloColumna> columnas = new ArrayList<ModeloColumna>(0);
 
     public JrvController() {
-        this.columnas = new ReflectionColumnModelBuilder(MiembroJRV.class).setExcludedProperties("id", "fechaCrea", "fechaActualiza", "usuarioCrea", "usuarioActualiza",
+        this.columnas = new ReflectionColumnModelBuilder(MiembroJRV.class).setExcludedProperties(
+                "id", "fechaCrea", "fechaActualiza", "usuarioCrea", "usuarioActualiza",
                 "estado", "seleccionado", "persisted").build();
     }
 
     @PostConstruct
     private void init() {
-        periodo = new Periodo();
-        cargo = new CatalogoGeneral();
-        iglesiaPersona = new IglesiaPersona(new Iglesia(), new Persona());
-
-        columnas.size();
-
-        periodos = periodoFacade.findAll();
-        periodo = periodos.get(0);
-
-        DialogBase dlgMjrv = new Dialog();
-        dlgMjrv.setWidgetVar("dlgMjrv2");
-        dlgMjrv.setHeader("Registrar MIRV");
-        dlgMjrv.setShowEffect("fade");
-        dlgMjrv.setModal(true);
-        dlgMjrv.setResponsive(true);
-        dlgMjrv.setClosable(false);
-
-        OutputPanelBase outPl1 = new OutputPanel();
-        outPl1.setId("outPnlMesas2");
-        outPl1.setStyleClass("ui-fluid");
-
-        OutputPanelBase outPl2 = new OutputPanel();
-
-        outPl1.getChildren().add(outPl2);
-        dlgMjrv.getChildren().add(outPl1);
-
-        PrimeFaces.current().executeScript("PF(dlgMjrv2).show()");
-        PrimeFaces.current().ajax().update("dlgMjrv2");
-
+        periodo = new PeriodoDTO();
+        cargo = new CatalogoGeneralDTO();
+        iglesiaPersona = new IglesiaPersonaDTO();
+        periodos = periodoService.listarDTOs();
+        if (periodos != null && !periodos.isEmpty()) {
+            periodo = periodos.get(0);
+        }
     }
 
     public void nuevo() {
@@ -147,8 +103,7 @@ public class JrvController implements Serializable {
         if (listaMJRV != null) {
             listaMJRV.clear();
         }
-        this.mjrvSeleccionado = new MiembroJRV();
-
+        this.mjrvSeleccionado = new MiembroJRVDTO();
     }
 
     public boolean existeSeleccionados() {
@@ -156,12 +111,15 @@ public class JrvController implements Serializable {
     }
 
     public void eliminarSeleccionados() {
+        int eliminados = 0;
         if (listaMJRVSeleccionados != null) {
-            for (MiembroJRV item : listaMJRVSeleccionados) {
-                mjrvFacade.delete(item);
+            for (MiembroJRVDTO item : listaMJRVSeleccionados) {
+                if (item.getId() != null && mjrvService.eliminarPorId(item.getId()) != null) {
+                    eliminados++;
+                }
             }
         }
-        JsfUtil.addInfoMessage(+listaMJRVSeleccionados.size() + MENSAJE_ELIMINA_OK);
+        JsfUtil.addInfoMessage(eliminados + " " + MENSAJE_ELIMINA_OK);
         PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA, "msgs");
     }
 
@@ -172,5 +130,4 @@ public class JrvController implements Serializable {
         }
         return "Eliminar";
     }
-
 }

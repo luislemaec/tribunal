@@ -63,19 +63,29 @@
                         <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
                         <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
                         <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
-                        <p:column headerText="CANTÓN" sortBy="#{mesa.ubicacion.geograp.name}" filterBy="#{mesa.ubicacion.geograp.name}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.ubicacion.geograp.name}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacion.name}" filterBy="#{mesa.ubicacion.name}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacion.name}" /></p:column>
-                        <p:column headerText="CONTEO VOTOS" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.estadoTarea}" /></p:column>
-                        <p:column headerText="TOTAL VOTOS" sortBy="#{mesa.totalVotos}"  styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.totalVotos}" /></p:column>
-                        <p:column headerText="TIENE ERROR EN CONTEO" sortBy="#{mesa.tieneErrorConteo}"  styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.tieneErrorConteo}" /></p:column>
+                        <p:column headerText="CANTÓN" sortBy="#{mesa.cantonNombre}" filterBy="#{mesa.cantonNombre}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.cantonNombre}" /></p:column>
+                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacionNombre}" filterBy="#{mesa.ubicacionNombre}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacionNombre}" /></p:column>
+                        <p:column headerText="CONTEO" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-8rem" >
+                            <p:tag value="#{mesa.estadoTarea}"
+                                   severity="#{mesa.estadoTarea eq 'COMPLETADO' ? 'success' : (mesa.estadoTarea eq 'EN_PROCESO' ? 'warning' : 'info')}"
+                                   icon="#{mesa.estadoTarea eq 'COMPLETADO' ? 'pi pi-check' : 'pi pi-clock'}"/>
+                        </p:column>
+                        <p:column headerText="VOTOS" sortBy="#{mesa.totalVotos}"  styleClass="sm:w-max md:w-1 lg:w-6rem" >
+                            <p:badge value="#{mesa.totalVotos}" severity="info"/>
+                        </p:column>
+                        <p:column headerText="ERROR" sortBy="#{mesa.tieneErrorConteo}"  styleClass="sm:w-max md:w-1 lg:w-6rem" >
+                            <p:tag rendered="#{mesa.tieneErrorConteo}" value="Sí" severity="danger" icon="pi pi-times-circle"/>
+                            <p:tag rendered="#{not mesa.tieneErrorConteo}" value="OK" severity="success" icon="pi pi-check-circle"/>
+                        </p:column>
                         <p:column headerText="OBSERVACION" sortBy="#{mesa.observacion}"  styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.observacion}" /></p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
-                            <p:commandButton icon="pi pi-list" update="frmMesas:pndHistory " rendered="#{mesa.tieneDocumentos}" process="@this"  oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Histórico" 
-                                               styleClass="ui-button-secondary">                             
+                            <p:commandButton icon="pi pi-list" update="frmMesas:pndHistory " rendered="#{mesa.tieneDocumentos}" process="@this"  oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Ver historial de actas"
+                                               styleClass="ui-button-secondary rounded-button">                             
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" /> 
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
+                                             title="Editar mesa"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{mesaController.cargaDatosMesaSeleccionado}">
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />                                                                                        
                             </p:commandButton>
@@ -104,7 +114,7 @@
 
                             <div class="field">
                                 <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
-                                <p:selectOneMenu id="parroquiaSel" value="#{mesaController.mesaSeleccionado.ubicacion.id}" required="true">
+                                <p:selectOneMenu id="parroquiaSel" value="#{mesaController.mesaSeleccionado.ubicacionId}" required="true">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{mesaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
                                 </p:selectOneMenu>                                       
@@ -159,16 +169,6 @@
                     </p:dataTable>
                     <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
                 </p:dialog>
-                <!-- comment -->
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{mesaController.eliminarMesaSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
-
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

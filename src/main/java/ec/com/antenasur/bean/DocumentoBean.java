@@ -22,9 +22,9 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 
-import ec.com.antenasur.domain.tec.Documentos;
-import ec.com.antenasur.domain.tec.Mesa;
-import ec.com.antenasur.service.tec.DocumentoFacade;
+import ec.com.antenasur.model.tec.Documentos;
+import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.service.tec.DocumentoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,7 +44,7 @@ public class DocumentoBean implements Serializable {
     private static final String PATH_DESTINO = System.getProperty("java.io.tmpdir") + File.separator;
 
     @Inject
-    private DocumentoFacade documentoFacade;
+    private DocumentoService documentoService;
 
     @Setter
     @Getter
@@ -68,21 +68,21 @@ public class DocumentoBean implements Serializable {
     }
 
     public List<Documentos> getDocumentoPorMesa(Mesa mesa) {
-        return documentoFacade.getDocumentosPorMesa(mesa);
+        return documentoService.getDocumentosPorMesa(mesa);
     }
 
     public List<Documentos> getDocumentosPorEntidadYTipoDoc(int entidadId, int tipoDocId) {
-        return documentoFacade.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+        return documentoService.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }
 
     public boolean getTieneDocumentosPorEntidadYTipoDoc(int entidadId, int tipoDocId) {
-        return documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+        return documentoService.getTieneDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }
 
     public void guardarDocumento(Documentos documento) {
         try {
             if (documento != null) {
-                documento = documentoFacade.create(documento);
+                documento = documentoService.create(documento);
             }
         } catch (Exception e) {
         }

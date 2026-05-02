@@ -52,15 +52,24 @@
                         <p:column headerText="ID" sortBy="#{lista.id}" filterBy="#{lista.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{lista.id}" /></p:column>
                         <p:column headerText="NOMBRE" sortBy="#{lista.nombre}" filterBy="#{lista.nombre}"  ><h:outputText value="#{lista.nombre}" /></p:column>
                         <p:column headerText="SLOGAN" sortBy="#{lista.slogan}" filterBy="#{lista.slogan}"  ><h:outputText value="#{lista.slogan}" /></p:column>                        
-                        <p:column headerText="NUMERO" sortBy="#{lista.numero}" filterBy="#{lista.numero}"  ><h:outputText value="#{lista.numero}" /></p:column>                        
+                        <p:column headerText="NUMERO" sortBy="#{lista.numero}" filterBy="#{lista.numero}" styleClass="sm:w-max md:w-1 lg:w-5rem">
+                            <p:badge value="#{lista.numero}" severity="warning"/>
+                        </p:column>                        
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmListas:outPnlListas" oncomplete="PF('dlgListas').show()"
+                                             title="Editar lista"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{listaController.cargaDatosMesaSeleccionado}">
                                 <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />                                                                                        
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash"
+                                             title="Eliminar lista"
+                                             actionListener="#{listaController.eliminarSeleccionado}"
+                                             process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar esta lista?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -93,15 +102,6 @@
                     </f:facet>
                 </p:dialog>
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{listaController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
-
-                <p:confirmDialog global="true" showEffect="fade" width="300">
-                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>

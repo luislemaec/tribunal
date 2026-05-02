@@ -8,35 +8,28 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.primefaces.PrimeFaces;
+
 import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Geograp;
-import ec.com.antenasur.domain.Iglesia;
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.tec.Documentos;
-import ec.com.antenasur.service.GeograpFacade;
-import ec.com.antenasur.service.IglesiaFacade;
+import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.Documentos;
+import ec.com.antenasur.service.GeograpService;
+import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.primefaces.PrimeFaces;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class IglesiaController implements Serializable {
 
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-
     private static final long serialVersionUID = 1L;
 
-    //private static final Logger LOG = Logger.getLogger(cargarControl.class);
     @Inject
     private LoginBean loginBean;
 
@@ -44,10 +37,10 @@ public class IglesiaController implements Serializable {
     private DocumentoBean documentoBean;
 
     @Inject
-    private IglesiaFacade iglesiaFacade;
+    private IglesiaService iglesiaService;
 
     @Inject
-    private GeograpFacade geograpFacade;
+    private GeograpService geograpService;
 
     @Setter
     @Getter
@@ -55,11 +48,7 @@ public class IglesiaController implements Serializable {
 
     @Setter
     @Getter
-    private Iglesia iglesia, iglesiaSeleccionado;
-
-    @Setter
-    @Getter
-    private IglesiaPersona iglesiaPersona;
+    private IglesiaDTO iglesiaSeleccionado;
 
     @Setter
     @Getter
@@ -71,7 +60,7 @@ public class IglesiaController implements Serializable {
 
     @Setter
     @Getter
-    private List<Iglesia> listaIglesias, listaIglesiasSeleccionadas;
+    private List<IglesiaDTO> listaIglesias, listaIglesiasSeleccionadas, listaIglesiasFiltrada;
 
     @Setter
     @Getter
@@ -85,70 +74,64 @@ public class IglesiaController implements Serializable {
     private void init() {
         try {
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
-            cantones = geograpFacade.findByFatherId(7);
-            listaIglesias = iglesiaFacade.findAll();
+            cantones = geograpService.findByFatherId(7);
+            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
             esNuevoRegistro = false;
-            cargaArchivoExcelListaMiembros();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
-    private void cargaArchivoExcelListaMiembros() {
-        if (listaIglesias != null && !listaIglesias.isEmpty()) {
-            for (Iglesia iglesiaTmp : listaIglesias) {
-                iglesiaTmp.setTieneDocumentos(documentoBean.getTieneDocumentosPorEntidadYTipoDoc(iglesiaTmp.getId(), Constantes.LISTA_MIEMBROS));
-            }
-        }
-    }
-
     public void obtieneParroquias() {
-        if (cantonSeleccionado != null) {
-            cantonSeleccionado = geograpFacade.find(cantonSeleccionado.getId());
-            parroquias = geograpFacade.findByFatherId(cantonSeleccionado.getId());
-
+        if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
+            cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
+            parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
             obtieneIglesiasPorCanton();
         }
     }
 
     private void obtieneIglesiasPorCanton() {
         if (parroquias != null && !parroquias.isEmpty()) {
-            listaIglesias = iglesiaFacade.getIglesiasPorParroquias(parroquias);
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
         }
     }
 
     public void obtieneIglesiasPorParroquia() {
-        if (parroquiaSeleccionado != null) {
-            parroquiaSeleccionado = geograpFacade.find(parroquiaSeleccionado.getId());
-            listaIglesias = iglesiaFacade.getIglesiasPorParroquia(parroquiaSeleccionado);
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
+            listaIglesias = iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
             PrimeFaces.current().ajax().update("frmIglesias", "msgs");
         }
     }
 
     public void inicializaIglesiaSeleccionado() {
         esNuevoRegistro = true;
-        listaIglesias.clear();
-        iglesiaSeleccionado = new Iglesia();
-        iglesiaSeleccionado.setUbicacion(new Geograp());
+        if (listaIglesias != null) {
+            listaIglesias.clear();
+        }
+        iglesiaSeleccionado = new IglesiaDTO();
     }
 
     public void nuevaIglesia() {
         inicializaIglesiaSeleccionado();
         PrimeFaces.current().ajax().update("frmIglesias", "msgs", "frmNuevaIglesia", "dv1");
-        //this.iglesiaSeleccionado = new Iglesia();
     }
 
     public void editarIglesia() {
-        if (existeIglesiasSeleccionadas()) {
-            iglesiaSeleccionado = new Iglesia();
-            iglesiaSeleccionado = listaIglesiasSeleccionadas.get(0);
-            cantonSeleccionado = iglesiaSeleccionado.getUbicacion().getGeograp();
-            obtieneParroquias();
-            listaIglesiasSeleccionadas.clear();
-            listaIglesias.clear();           
-            PrimeFaces.current().ajax().update("frmIglesias", "msgs", "frmNuevaIglesia");            
+        if (!existeIglesiasSeleccionadas()) {
+            return;
         }
-
+        iglesiaSeleccionado = listaIglesiasSeleccionadas.get(0);
+        if (iglesiaSeleccionado.getUbicacionId() != null) {
+            Geograp parroquia = geograpService.find(iglesiaSeleccionado.getUbicacionId());
+            if (parroquia != null && parroquia.getGeograp() != null) {
+                cantonSeleccionado = parroquia.getGeograp();
+                obtieneParroquias();
+            }
+        }
+        listaIglesiasSeleccionadas.clear();
+        listaIglesias.clear();
+        PrimeFaces.current().ajax().update("frmIglesias", "msgs", "frmNuevaIglesia");
     }
 
     public boolean existeIglesiasSeleccionadas() {
@@ -160,77 +143,101 @@ public class IglesiaController implements Serializable {
             int size = this.listaIglesiasSeleccionadas.size();
             return size > 1 ? size + " Iglesias seleccionadas" : "1 iglesia seleccionada";
         }
-
         return "Eliminar";
     }
 
     public void eliminarIglesiaSeleccionadas() {
         if (listaIglesiasSeleccionadas != null) {
-            for (Iglesia item : listaIglesiasSeleccionadas) {
-                iglesiaFacade.delete(item);
+            int eliminadas = 0;
+            for (IglesiaDTO item : listaIglesiasSeleccionadas) {
+                if (iglesiaService.eliminarPorId(item.getId()) != null) {
+                    eliminadas++;
+                }
             }
+            JsfUtil.addInfoMessage(eliminadas + " Iglesias eliminadas");
         }
-        listaIglesias = iglesiaFacade.findAll();
-        JsfUtil.addInfoMessage(+listaIglesiasSeleccionadas.size() + " Iglesias eliminadas");
+        listaIglesias = iglesiaService.listarDTOs();
         PrimeFaces.current().ajax().update("frmIglesias:tblIglesia", "msgs");
         this.listaIglesiasSeleccionadas = null;
     }
 
     public void buscaIglesiaPorDocumento() {
-        if (iglesiaSeleccionado != null) {
-            Iglesia iglesiaBuscado = iglesiaFacade.getIglesiaPorDocumento(iglesiaSeleccionado.getDocumento());
-            if (iglesiaBuscado != null) {
-                iglesiaSeleccionado = iglesiaBuscado;
-                cantonSeleccionado = iglesiaSeleccionado.getUbicacion().getGeograp();
-                obtieneParroquias();
-                esNuevoRegistro = false;
-                JsfUtil.addInfoMessage("Iglesia con CI: " + iglesiaBuscado.getDocumento() + " ya se encuentra registrado ");
+        if (iglesiaSeleccionado == null) {
+            return;
+        }
+        IglesiaDTO encontrada = iglesiaService.buscarDTOPorDocumento(iglesiaSeleccionado.getDocumento());
+        if (encontrada != null) {
+            iglesiaSeleccionado = encontrada;
+            if (encontrada.getUbicacionId() != null) {
+                Geograp parroquia = geograpService.find(encontrada.getUbicacionId());
+                if (parroquia != null && parroquia.getGeograp() != null) {
+                    cantonSeleccionado = parroquia.getGeograp();
+                    obtieneParroquias();
+                }
             }
+            esNuevoRegistro = false;
+            JsfUtil.addInfoMessage("Iglesia con CI: " + encontrada.getDocumento() + " ya se encuentra registrado ");
         }
     }
 
     public void actualizarIglesia() {
         try {
-            if (iglesiaSeleccionado != null && iglesiaSeleccionado.getUbicacion() != null) {
-                if (iglesiaSeleccionado.getId() != null) {
-                    Iglesia iglesiaActualiza = iglesiaFacade.edit(iglesiaSeleccionado);
-                    if (iglesiaActualiza != null) {
-                        JsfUtil.addSuccessMessage("Iglesia actualido");
-                        iglesiaSeleccionado = null;
-                        listaIglesias = iglesiaFacade.findAll();
-                        PrimeFaces.current().ajax().update("frmNuevaIglesia", "msgs", "frmIglesias");
-                    }
-                } else {
-                    Iglesia iglesiaNueva = iglesiaFacade.create(iglesiaSeleccionado);
-                    if (iglesiaNueva != null) {
-                        JsfUtil.addSuccessMessage("Iglesia registraga");
-                        iglesiaSeleccionado = null;
-                        listaIglesias = iglesiaFacade.findAll();
-                        PrimeFaces.current().ajax().update("frmNuevaIglesia", "msgs", "frmIglesias");
-                    }
-                }
-            } else {
+            if (iglesiaSeleccionado == null || iglesiaSeleccionado.getUbicacionId() == null) {
                 JsfUtil.addErrorMessage("Complete datos requeridos");
+                return;
             }
-
+            boolean esEdicion = iglesiaSeleccionado.getId() != null;
+            IglesiaDTO persistida = iglesiaService.guardarDesdeDTO(iglesiaSeleccionado);
+            if (persistida != null) {
+                JsfUtil.addSuccessMessage(esEdicion ? "Iglesia actualido" : "Iglesia registraga");
+                iglesiaSeleccionado = null;
+                listaIglesias = iglesiaService.listarDTOs();
+                PrimeFaces.current().ajax().update("frmNuevaIglesia", "msgs", "frmIglesias");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("ERROR AL ACTUALIZAR IGLESIA", e);
         }
     }
 
     public void cancelarIglesia() {
         try {
             iglesiaSeleccionado = null;
-            listaIglesias = iglesiaFacade.findAll();
+            listaIglesias = iglesiaService.listarDTOs();
             JsfUtil.addWarningMessage("Registro Cancelado");
             PrimeFaces.current().ajax().update("frmNuevaIglesia", "msgs", "frmIglesias");
         } catch (Exception e) {
         }
     }
 
+    public long getIglesiasConDocumentos() {
+        if (listaIglesias == null) {
+            return 0;
+        }
+        long count = 0;
+        for (IglesiaDTO i : listaIglesias) {
+            if (Boolean.TRUE.equals(i.getTieneDocumentos())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public long getIglesiasSinDocumentos() {
+        if (listaIglesias == null) {
+            return 0;
+        }
+        return listaIglesias.size() - getIglesiasConDocumentos();
+    }
+
+    public int getCantonesCount() {
+        return cantones != null ? cantones.size() : 0;
+    }
+
     public void cargaArchivosListaMiembros() {
         try {
-            documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(iglesiaSeleccionado.getId(), Constantes.LISTA_MIEMBROS);
+            if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+                documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(iglesiaSeleccionado.getId(), Constantes.LISTA_MIEMBROS);
+            }
         } catch (Exception e) {
             log.error("ERROR AL OBTENER DOCUMENTOS", e);
         }

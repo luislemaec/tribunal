@@ -26,6 +26,8 @@ public class SendEmail implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final String CONTENT_TYPE = "text/html; charset=utf-8";
     private static final String PASSWORD_MAIL = "lui$.l3m@"; // "Usuario01";
+    private static final java.util.logging.Logger LOG =
+            java.util.logging.Logger.getLogger(SendEmail.class.getName());
 
     /**
      * Enviar Correo a Varios Destinos en lista con adjunto
@@ -43,6 +45,11 @@ public class SendEmail implements Serializable {
             InitialContext ctx = new InitialContext();
             // Session session = (Session) ctx.lookup("jdniMail"); //Glassfish-payara SERVER
             Session session = (Session) ctx.lookup("java:jboss/mail/Rpm");
+            // Truststore del servidor SMTP no está en la JVM (entorno interno):
+            // confiamos en cualquier certificado para evitar SSLHandshakeException
+            // PKIX path building failed. Aceptable solo en redes corporativas.
+            session.getProperties().setProperty("mail.smtp.ssl.trust", "*");
+            session.getProperties().setProperty("mail.smtp.starttls.enable", "true");
 
             mensaje = "<img src='cid:image'>" + mensaje;
             // Se compone la parte del texto
@@ -82,9 +89,9 @@ public class SendEmail implements Serializable {
             t.close();
             return true;
         } catch (MessagingException e) {
-            e.printStackTrace();
+            LOG.warning("No se pudo enviar correo: " + e.getMessage());
         } catch (Throwable e) {
-            e.printStackTrace();
+            LOG.warning("Error inesperado al enviar correo: " + e.getMessage());
         }
         return false;
     }
@@ -105,6 +112,8 @@ public class SendEmail implements Serializable {
             InitialContext ctx = new InitialContext();
 
             Session session = (Session) ctx.lookup("java:jboss/mail/Rpm");
+            session.getProperties().setProperty("mail.smtp.ssl.trust", "*");
+            session.getProperties().setProperty("mail.smtp.starttls.enable", "true");
 
             // Se compone la parte del texto
             ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
@@ -160,9 +169,9 @@ public class SendEmail implements Serializable {
             t.close();
             return true;
         } catch (MessagingException e) {
-            e.printStackTrace();
+            LOG.warning("No se pudo enviar correo: " + e.getMessage());
         } catch (Throwable e) {
-            e.printStackTrace();
+            LOG.warning("Error inesperado al enviar correo: " + e.getMessage());
         }
         return false;
     }

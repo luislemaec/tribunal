@@ -10,9 +10,9 @@ import javax.inject.Named;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.MesaBean;
 import ec.com.antenasur.bean.RecintoBean;
-import ec.com.antenasur.service.IglesiaFacade;
-import ec.com.antenasur.service.PersonaFacade;
-import ec.com.antenasur.service.tec.PadronFacade;
+import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.PersonaService;
+import ec.com.antenasur.service.tec.PadronService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,10 +48,10 @@ public class DashboardController implements Serializable {
     private RecintoBean recintoBean;
 
     @Inject
-    private PadronFacade padronFacade;
+    private PadronService padronService;
 
     @Inject
-    private IglesiaFacade iglesiaFacade;
+    private IglesiaService iglesiaService;
 
     @Setter
     @Getter
@@ -65,7 +65,7 @@ public class DashboardController implements Serializable {
     private void init() {
         try {
             totalPersonas = mesaBean.totalVotantes();
-            totalIglesias = iglesiaFacade.count();
+            totalIglesias = iglesiaService.count();
             totalMesas = mesaBean.totalMesas();
             totalRecintos = recintoBean.totalRecintos();
         } catch (Exception e) {

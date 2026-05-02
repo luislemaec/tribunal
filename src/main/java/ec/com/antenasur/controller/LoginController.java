@@ -3,7 +3,6 @@ package ec.com.antenasur.controller;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -19,17 +18,14 @@ import org.primefaces.model.menu.MenuModel;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
-import ec.com.antenasur.service.AccessFacade;
-import ec.com.antenasur.service.MenuFacade;
-import ec.com.antenasur.service.PersonaFacade;
-import ec.com.antenasur.service.RolFacade;
-import ec.com.antenasur.service.RolUsuarioFacade;
-import ec.com.antenasur.service.UsuarioFacade;
-import ec.com.antenasur.domain.AccessAuditory;
-import ec.com.antenasur.domain.Menu;
-import ec.com.antenasur.domain.Persona;
-import ec.com.antenasur.domain.RolUsuario;
-import ec.com.antenasur.domain.Usuario;
+import ec.com.antenasur.dto.AuthDataDTO;
+import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.dto.RolUsuarioDTO;
+import ec.com.antenasur.dto.UsuarioDTO;
+import ec.com.antenasur.model.AccessAuditory;
+import ec.com.antenasur.service.AccessService;
+import ec.com.antenasur.service.MenuService;
+import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import ec.com.antenasur.util.MenuVO;
@@ -48,42 +44,37 @@ public class LoginController implements Serializable {
     private LoginBean loginBean;
 
     @Inject
-    private RolUsuarioFacade roleUserFacade;
+    private UsuarioService userService;
 
     @Inject
-    private RolFacade rolFacade;
+    private MenuService menuService;
 
     @Inject
-    private UsuarioFacade userFacade;
+    private AccessService accessService;
 
     @Inject
-    private PersonaFacade peopleFacade;
-
-    @Inject
-    private MenuFacade menuFacade;
-
-    @Inject
-    private AccessFacade accessFacade;
+    ProcesoBean procesoBean;
 
     @Setter
     @Getter
-    private List<RolUsuario> listaRolesUsuario = new ArrayList<RolUsuario>();
+    private List<RolUsuarioDTO> listaRolesUsuario = new ArrayList<>();
 
     @Setter
     @Getter
-    private List<String> listRolesUserString = new ArrayList<>(), listRolesTem = new ArrayList<>();
+    private List<String> listRolesUserString = new ArrayList<>();
 
     @Setter
     @Getter
-    private List<Menu> menus = new ArrayList<Menu>();
+    private List<String> listRolesTem = new ArrayList<>();
 
     @Setter
     @Getter
-    private Usuario user = new Usuario();
+    private UsuarioDTO user = new UsuarioDTO();
 
     @Setter
-    private Persona people;
+    private PersonaDTO people;
 
+    /** Entidad de auditoría — uso interno persistente, no se expone a la vista. */
     @Setter
     private AccessAuditory accessAuditory = new AccessAuditory();
 
@@ -101,9 +92,6 @@ public class LoginController implements Serializable {
     @Getter
     private String prefijoRoles;
 
-    @Inject
-    ProcesoBean procesoBean;
-
     @PostConstruct
     private void init() {
         try {
@@ -114,12 +102,11 @@ public class LoginController implements Serializable {
                     request.logout();
                 }
             } else if (loginBean.getUserName() != null && loginBean.isLoggedIn()) {
-                if (loginBean.getUsuario().getPermanente()) {
+                if (Boolean.TRUE.equals(loginBean.getUsuario().getPermanente())) {
                     JsfUtil.redirect("/dashboard.jsf");
                 } else {
                     JsfUtil.redirect("/pages/login/firstLogin.jsf");
                 }
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,22 +114,18 @@ public class LoginController implements Serializable {
     }
 
     public void login() throws Throwable {
-        listaRolesUsuario = new ArrayList<RolUsuario>();
         prefijoRoles = (String) JsfUtil.getProperty("roles.sitec", true);
-        if (prefijoRoles != null) {
-            listaRolesUsuario = roleUserFacade.findByUserNameAndRoleName2(loginBean.getUserName(), prefijoRoles + "%");
-        }
+
+        AuthDataDTO authData = userService.resolverDatosAutenticacion(loginBean.getUserName(), prefijoRoles);
+        listaRolesUsuario = authData.getRolesUsuario();
+        listRolesUserString = authData.getNombresRoles();
+        this.user = authData.getUsuario();
+        this.people = authData.getPersona();
 
         accessAuditory = new AccessAuditory(loginBean.getUserName(), JsfUtil.getTimestamp(), JsfUtil.getIPAddress());
 
-        if (listaRolesUsuario != null) {
-
+        if (authData.isResolved()) {
             try {
-                for (RolUsuario ur : listaRolesUsuario) {
-                    listRolesUserString.add(ur.getRol().getNombre());
-                }
-                getUsuario();
-                getPersona();
                 HttpServletRequest request = JsfUtil.getRequest();
                 HttpSession httpSession = request.getSession(false);
 
@@ -154,7 +137,6 @@ public class LoginController implements Serializable {
                 loginBean.setRoles(listRolesUserString);
                 loginBean.setLoggedIn(true);
                 loginBean.setTiempoSession(request.getSession().getMaxInactiveInterval());
-
                 loginBean.setUsuario(user);
                 loginBean.setPersona(people);
 
@@ -163,22 +145,21 @@ public class LoginController implements Serializable {
                 accessAuditory.setSession(httpSession.getId());
                 accessAuditory.setActive(true);
                 httpSession.setAttribute("loginBean", loginBean);
-                if (user.getPermanente()) {
-                    fillMenuModel();
 
-                    if (user.getContraseniaTemp() == null && user.getPermanente() == true && user.getEstado() == true) {
-                    	if(loginBean.getRoles().contains(prefijoRoles+Constantes.getRolTecnico())) {
-                    		JsfUtil.redirect("/actaE.jsf");
-                            procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
-                    	}else {
-                    		JsfUtil.redirect("/dashboard.jsf");
-                            procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");	
-                    	}
-                        
+                if (Boolean.TRUE.equals(user.getPermanente())) {
+                    fillMenuModel();
+                    boolean tienePassTemp = Boolean.TRUE.equals(user.getTienePasswordTemporal());
+                    boolean estadoOk = Boolean.TRUE.equals(user.getEstado());
+                    if (!tienePassTemp && estadoOk) {
+                        if (loginBean.getRoles().contains(prefijoRoles + Constantes.getRolTecnico())) {
+                            JsfUtil.redirect("/actaE.jsf");
+                        } else {
+                            JsfUtil.redirect("/dashboard.jsf");
+                        }
+                        procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
                     } else {
                         JsfUtil.redirect("/dashboard.jsf");
                         procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
-
                     }
                 } else {
                     cargarPaginasCambioClave();
@@ -189,68 +170,29 @@ public class LoginController implements Serializable {
                 procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
                 loginBean.setUserName("");
                 loginBean.setPassword("");
-
             }
         }
         try {
-            accessFacade.create(accessAuditory);
+            accessService.create(accessAuditory);
         } catch (Exception e) {
             procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
         }
-
     }
 
-    private void getUsuario() {
-        try {
-            if (loginBean.getUserName() != null) {
-                this.user = userFacade.findByUsuarioName(loginBean.getUserName());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void getPersona() {
-        try {
-            if (user != null) {
-                this.people = peopleFacade.finByPersonaDocument(user.getPersonsa().getDocumento());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void fillMenuModel() throws Throwable { // String mnemonic = (String)
+    public void fillMenuModel() throws Throwable {
         String mnemonic = (String) JsfUtil.getProperty("roles.mnemonic", true);
-        /*
-        for (RolUsuario rolUsuario : listaRolesUsuario) {
-            if (!rolUsuario.getRol().getNombre().startsWith(prefijoRoles)) {
-                Rol r = rolFacade.findByName(prefijoRoles + rolUsuario.getRol().getNombre());
-                if (r != null) {
-                    rolUsuario.setRol(r);
-                } else {
-                    System.out.println("No se encontró el rol " + prefijoRoles + rolUsuario.getRol().getNombre()
-                            + " para generar el menú");
-                    loginBean.logout();
-                    return;
-                }
-            }
-        }
-         */
-        List<MenuVO> menus = menuFacade.getMenusByrols(listaRolesUsuario, mnemonic);
+        List<MenuVO> menus = menuService.getMenusByrolsDTO(listaRolesUsuario, mnemonic);
 
-        cargarPaginasSession(menus);
+        JsfUtil.cargarObjetoSession("listaPermisos", menuService.extraerPaginasPermitidas(menus));
 
         if (menus == null) {
-            System.out.println("Error al generar el menú con los roles de Usuario");
             JsfUtil.addErrorMessage("Error al generar el menú con los roles de Usuario");
             loginBean.logout();
             return;
         }
 
         menuModel = new DefaultMenuModel();
-
-        Menu parentMenu = menuFacade.findByMenuName(mnemonic);
+        ec.com.antenasur.model.Menu parentMenu = menuService.findByMenuName(mnemonic);
 
         for (MenuVO menu : menus) {
             if (menu.getIdMenuParent() != null && menu.getIdMenuParent().equals(parentMenu.getId())) {
@@ -261,7 +203,6 @@ public class LoginController implements Serializable {
                     subMenu.setIcon(menu.getIcon());
                     fillItems(menu, menus, subMenu, null);
                     menuModel.getElements().add(subMenu);
-
                 } else {
                     DefaultMenuItem menuItem_ = new DefaultMenuItem();
                     menuItem_.setId(menu.getComponenteId());
@@ -271,7 +212,6 @@ public class LoginController implements Serializable {
                     menuItem_.setUrl(("S/N").equals(menu.getUrlMenu()) ? null : menu.getUrlMenu());
                     menuItem_.setCommand(menu.getActionMenu() == null || menu.getActionMenu().isEmpty() ? null
                             : menu.getActionMenu());
-
                     menuModel.getElements().add(menuItem_);
                 }
             }
@@ -279,29 +219,10 @@ public class LoginController implements Serializable {
         loginBean.setMenuModel(menuModel);
     }
 
-    private void cargarPaginasSession(final List<MenuVO> listaPermisos) {
-        List<String> listaPaginas = new ArrayList<String>();
-        for (MenuVO en : listaPermisos) {
-            listaPaginas.add(extraerPagina(en.getUrlMenu()));
-        }
-        listaPaginas.add("inicio.jsf");
-        listaPaginas.add("cambioClave.jsf");
-        JsfUtil.cargarObjetoSession("listaPermisos", listaPaginas);
-    }
-
     private void cargarPaginasCambioClave() {
-        List<String> listaPaginas = new ArrayList<String>();
+        List<String> listaPaginas = new ArrayList<>();
         listaPaginas.add("cambioClave.jsf");
         JsfUtil.cargarObjetoSession("listaPermisos", listaPaginas);
-    }
-
-    private String extraerPagina(String url) {
-        StringTokenizer str = new StringTokenizer(url == null ? "" : url, "/");
-        String retorno = null;
-        while (str.hasMoreTokens()) {
-            retorno = str.nextToken();
-        }
-        return retorno;
     }
 
     private DefaultMenuItem fillItems(MenuVO menu_, List<MenuVO> menus, DefaultSubMenu menuParent,
@@ -311,12 +232,7 @@ public class LoginController implements Serializable {
                 if (menu.getEndNode()) {
                     DefaultMenuItem menuItem_ = new DefaultMenuItem();
                     menuItem_.setValue(menu.getLabelMenu());
-                    boolean result = false;//
-                    if (!result) {
-                        menuItem_.setUrl(("S/N").equals(menu.getUrlMenu()) ? null : menu.getUrlMenu());
-                    } else {
-                        menuItem_.setUrl("/pages/application/pendingReport.xhtml");
-                    }
+                    menuItem_.setUrl(("S/N").equals(menu.getUrlMenu()) ? null : menu.getUrlMenu());
                     menuItem_.setCommand(menu.getActionMenu() == null || menu.getActionMenu().isEmpty() ? null
                             : menu.getActionMenu());
                     menuItem_.setIcon(menu.getIcon());
@@ -340,5 +256,4 @@ public class LoginController implements Serializable {
             submenuChild.getElements().add(menus_);
         }
     }
-
 }

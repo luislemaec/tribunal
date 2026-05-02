@@ -1,13 +1,13 @@
 package ec.com.antenasur.bean;
 
-import ec.com.antenasur.domain.tec.CatalogoGeneral;
+import ec.com.antenasur.model.tec.CatalogoGeneral;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
+import ec.com.antenasur.service.tec.CatalogoGeneralService;
 
 import java.io.Serializable;
 import java.util.List;
@@ -30,7 +30,7 @@ public class CatalogoBean implements Serializable {
     private static final String AUTORIDADES_CONPOCIIECH = "CARGO AUTORIDADES CONPOCIIECH";
 
     @Inject
-    CatalogoGeneralFacade catalogoFacade;
+    CatalogoGeneralService catalogoService;
 
     @Setter
     @Getter
@@ -45,15 +45,15 @@ public class CatalogoBean implements Serializable {
     }
 
     public List<CatalogoGeneral> getAutoridadesMesa() {
-        return catalogoFacade.findByFatherName(AUTORIDADES_MESA);
+        return catalogoService.findByFatherName(AUTORIDADES_MESA);
     }
 
     public List<CatalogoGeneral> getAutoridadesTribunal() {
-        return catalogoFacade.findByFatherName(AUTORIDADES_TRIBUNAL);
+        return catalogoService.findByFatherName(AUTORIDADES_TRIBUNAL);
     }
 
     public List<CatalogoGeneral> getAutoridadesConpociiech() {
-        return catalogoFacade.findByFatherName(AUTORIDADES_CONPOCIIECH);
+        return catalogoService.findByFatherName(AUTORIDADES_CONPOCIIECH);
     }
 
 }

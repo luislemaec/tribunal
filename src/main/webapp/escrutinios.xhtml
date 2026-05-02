@@ -15,9 +15,20 @@
     </ui:define>
 
     <ui:define name="content">
+        <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
+        <p:blockUI block="frmActaE" trigger="frmActaE">
+            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#f59e0b"/>
+            <h5 style="margin:.5rem 0 0; color:#fff">Calculando escrutinio...</h5>
+        </p:blockUI>
+
         <h:form id="frmActaE">
             <div class="grid">
                 <div class="col-12">
+                    <p:divider align="left" type="solid">
+                        <span class="p-tag" style="background:#dcfce7; color:#166534">
+                            <i class="pi pi-chart-pie" style="margin-right:.4rem"/>Resumen de escrutinio
+                        </span>
+                    </p:divider>
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-6">
@@ -59,28 +70,45 @@
 
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="card">
-                        <h5>TOTAL RECINTOS: </h5>
-                        <b style="font-size: 25px">#{totalVotosController.recintos.size()}</b>                        
+                        <div class="flex justify-content-between align-items-center">
+                            <div>
+                                <span class="block text-500 font-medium text-sm">RECINTOS</span>
+                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.recintos.size()}</span>
+                            </div>
+                            <p:tag value="#{totalVotosController.recintos.size()}" severity="info" icon="pi pi-map-marker"/>
+                        </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="card">
-                        <h5>TOTAL MESAS: </h5>
-                        <b style="font-size: 25px">#{totalVotosController.mesas.size()}</b>                        
+                        <div class="flex justify-content-between align-items-center">
+                            <div>
+                                <span class="block text-500 font-medium text-sm">MESAS</span>
+                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.mesas.size()}</span>
+                            </div>
+                            <p:tag value="#{totalVotosController.mesas.size()}" severity="warning" icon="pi pi-list"/>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-12 md:col-12 lg:col-3">
                     <div class="card">
-                        <h5>TOTAL VOTANTES: </h5>
-                        <b style="font-size: 25px">#{totalVotosController.totalVotantes}</b>
+                        <div class="flex justify-content-between align-items-center">
+                            <div>
+                                <span class="block text-500 font-medium text-sm">VOTANTES</span>
+                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.totalVotantes}</span>
+                            </div>
+                            <p:tag value="#{totalVotosController.totalVotantes}" severity="success" icon="pi pi-users"/>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-12 md:col-12 lg:col-3">
                     <div class="card">
-                        <h5>Mesas Escrutadas</h5>
-                        <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}" labelTemplate="{value}%" displayOnly="true"/>
+                        <span class="block text-500 font-medium text-sm">Mesas escrutadas</span>
+                        <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}"
+                                       labelTemplate="{value}%" displayOnly="true"
+                                       title="Porcentaje de mesas con escrutinio completado"/>
                     </div>
                 </div>
 
@@ -98,8 +126,8 @@
                                      rendered="#{not empty totalVotosController.votos}"  showGridlines="true" 
                                      styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" style="font-size: 20px;" >
 
-                            <p:column headerText="CATEGORÍA"><h:outputText value="#{voto[0]}" /></p:column>
-                            <p:column headerText="NÚMERO DE VOTOS"><h:outputText value="#{voto[1]}" /></p:column>
+                            <p:column headerText="CATEGORÍA"><p:chip label="#{voto[0]}" icon="pi pi-tag"/></p:column>
+                            <p:column headerText="NÚMERO DE VOTOS"><p:badge value="#{voto[1]}" severity="info"/></p:column>
                         </p:dataTable>
                     </div>
                 </div>

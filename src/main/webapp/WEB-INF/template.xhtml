@@ -14,8 +14,22 @@
             <meta name="apple-mobile-web-app-capable" content="yes" />
         </f:facet>
         <title><ui:insert name="title">PrimeFaces Ecuador</ui:insert></title>
-        <h:outputScript name="js/layout.js" library="ecuador-layout" />       
+        <h:outputScript name="js/layout.js" library="ecuador-layout" />
         <h:outputScript name="js/prism.js" library="ecuador-layout"/>
+
+        <!-- ===================== Tier 1 globals (CDN) ===================== -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
+        <h:outputStylesheet name="css/tribunal-globals.css" library="demo"/>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+        <h:outputScript name="js/tribunal-globals.js" library="demo"/>
+        <!-- =============================================================== -->
+
         <ui:insert name="head"/>
     </h:head>
 
@@ -23,6 +37,7 @@
         <div class="layout-wrapper #{guestPreferences.menuMode} layout-menu-#{guestPreferences.menuColor} #{guestPreferences.orientationRTL ? 'layout-rtl' : null}">
             <ui:include src="/WEB-INF/navegacion.xhtml" />
             <ui:include src="/WEB-INF/status.xhtml" />
+            <ui:include src="/WEB-INF/globals.xhtml" />
 
             <ui:include src="./toopbar.xhtml" />
             <ui:include src="./right_panel.xhtml" />

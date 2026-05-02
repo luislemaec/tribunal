@@ -12,31 +12,23 @@ import javax.inject.Named;
 import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.tec.Candidato;
-import ec.com.antenasur.domain.tec.CatalogoGeneral;
-import ec.com.antenasur.domain.IglesiaPersona;
-import ec.com.antenasur.domain.tec.Lista;
-import ec.com.antenasur.domain.tec.Periodo;
-import ec.com.antenasur.service.tec.CandidatoFacade;
-import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
-import ec.com.antenasur.service.IglesiaPersonaFacade;
-import ec.com.antenasur.service.tec.ListaFacade;
-import ec.com.antenasur.service.tec.PeriodoFacade;
+import ec.com.antenasur.dto.CandidatoDTO;
+import ec.com.antenasur.model.tec.CatalogoGeneral;
+import ec.com.antenasur.model.tec.Lista;
+import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.service.tec.CandidatoService;
+import ec.com.antenasur.service.tec.CatalogoGeneralService;
+import ec.com.antenasur.service.tec.ListaService;
+import ec.com.antenasur.service.tec.PeriodoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class CandidatoController implements Serializable {
-
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
 
     private static final long serialVersionUID = 1L;
 
@@ -51,19 +43,20 @@ public class CandidatoController implements Serializable {
     private LoginBean loginBean;
 
     @Inject
-    private ListaFacade listaFacade;
+    private ListaService listaService;
 
     @Inject
-    private CandidatoFacade candidatoFacade;
+    private CandidatoService candidatoService;
 
     @Inject
-    private CatalogoGeneralFacade catalogoFacade;
+    private CatalogoGeneralService catalogoService;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private PeriodoService periodoService;
 
-    @Inject
-    private IglesiaPersonaFacade iglesiaPersonaFacade;
+    // NOTA: Lista, Periodo, CatalogoGeneral siguen como entidades porque son
+    // catálogos cuyo dominio aún no se ha migrado a DTO. Cuando se migren
+    // (iteraciones futuras), estos campos pasarán a sus respectivos DTOs.
 
     @Setter
     @Getter
@@ -75,7 +68,7 @@ public class CandidatoController implements Serializable {
 
     @Setter
     @Getter
-    private List<Candidato> candidatos;
+    private List<CandidatoDTO> candidatos;
 
     @Setter
     @Getter
@@ -87,7 +80,7 @@ public class CandidatoController implements Serializable {
 
     @Setter
     @Getter
-    private Candidato candidatoSeleccionado;
+    private CandidatoDTO candidatoSeleccionado;
 
     @Setter
     @Getter
@@ -98,66 +91,56 @@ public class CandidatoController implements Serializable {
         try {
             this.listaSeleccionado = new Lista();
             this.listas = new ArrayList<>();
-
-            this.periodoVigente = periodoFacade.getPeriodoVigente();
-
-            this.listas = listaFacade.findAll();
-            this.cargosCandidatos = catalogoFacade.listaCatalogoHijo(8);
-
+            this.periodoVigente = periodoService.getPeriodoVigente();
+            this.listas = listaService.findAll();
+            this.cargosCandidatos = catalogoService.listaCatalogoHijo(8);
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
     public void obtieneCandidatosPorListaSeleccionada() {
-        if (listaSeleccionado != null && listaSeleccionado.getId() != null) {
+        if (listaSeleccionado == null || listaSeleccionado.getId() == null || cargosCandidatos == null) {
             this.candidatos = new ArrayList<>();
-            for (CatalogoGeneral cargo : cargosCandidatos) {
-                Candidato candidatoBuscado = candidatoFacade.getPorCargoYLista(cargo, listaSeleccionado);
-                if (candidatoBuscado != null) {
-                    candidatos.add(candidatoBuscado);
-                } else {
-                    Candidato nuevoCandidato = new Candidato(null, null, listaSeleccionado, periodoVigente, cargo);
-                    candidatos.add(nuevoCandidato);
-                }
-            }
+            return;
         }
+        List<Integer> cargoIds = new ArrayList<>();
+        for (CatalogoGeneral cargo : cargosCandidatos) {
+            cargoIds.add(cargo.getId());
+        }
+        Integer periodoId = (periodoVigente != null) ? periodoVigente.getId() : null;
+        this.candidatos = candidatoService.listarDTOsPorLista(listaSeleccionado.getId(), periodoId, cargoIds);
     }
 
     public void buscaPersona() {
         try {
-            IglesiaPersona iglesiaPersonaBuscado = iglesiaPersonaFacade.buscarPorCedulaPersona(cedulaBuscar);
-            if (iglesiaPersonaBuscado != null) {
-                candidatoSeleccionado.setIglesiaPersona(iglesiaPersonaBuscado);
+            CandidatoDTO actualizado = candidatoService.asignarPersonaPorCedula(candidatoSeleccionado, cedulaBuscar);
+            if (actualizado != null) {
+                candidatoSeleccionado = actualizado;
                 JsfUtil.addInfoMessage("PERSONA SELECCIONADA");
             } else {
                 JsfUtil.addWarningMessage("PERSONA NO ENCONTRADA");
             }
-            PrimeFaces.current().ajax().update(FORMULARIO + ":outPnlAsignaCandidatoBusca", FORMULARIO + ":outPnlAsignaCandidato", "msgs");
+            PrimeFaces.current().ajax().update(FORMULARIO + ":outPnlAsignaCandidatoBusca",
+                    FORMULARIO + ":outPnlAsignaCandidato", "msgs");
         } catch (Exception e) {
         }
     }
 
     public void guardarCandidato() {
         try {
-            if (candidatoSeleccionado != null) {
-                if (this.candidatoSeleccionado.getId() != null) {
-                    Candidato candidatoActualiza = candidatoFacade.edit(candidatoSeleccionado);
-                    if (candidatoActualiza != null) {
-                        JsfUtil.addSuccessMessage(MENSAJE_ACTUALIZA_OK);
-
-                        PrimeFaces.current().ajax().update("msgs", FORMULARIO);
-                    }
-                } else {
-                    candidatoSeleccionado = candidatoFacade.create(candidatoSeleccionado);
-                    if (candidatoSeleccionado != null) {
-                        JsfUtil.addSuccessMessage(MENSAJE_REGISTRA_OK);
-                        PrimeFaces.current().ajax().update("msgs", FORMULARIO);
-                    }
-                }
+            if (candidatoSeleccionado == null) {
+                return;
+            }
+            boolean esEdicion = candidatoSeleccionado.getId() != null;
+            CandidatoDTO persistido = candidatoService.guardarDesdeDTO(candidatoSeleccionado);
+            if (persistido != null) {
+                candidatoSeleccionado = persistido;
+                JsfUtil.addSuccessMessage(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
+                PrimeFaces.current().ajax().update("msgs", FORMULARIO);
             }
         } catch (Exception e) {
-            log.error("ERROR AL GUARDAR AUTORIDADES", e);
+            log.error("ERROR AL GUARDAR CANDIDATO", e);
         }
         PrimeFaces.current().executeScript("PF('dlgPeriodo').hide()");
         PrimeFaces.current().ajax().update(FORMULARIO, FORMULARIO + ":" + TABLA);
@@ -165,8 +148,8 @@ public class CandidatoController implements Serializable {
 
     public void eliminarSeleccionado() {
         try {
-            if (candidatoSeleccionado != null) {
-                candidatoFacade.delete(candidatoSeleccionado);
+            if (candidatoSeleccionado != null && candidatoSeleccionado.getId() != null) {
+                candidatoService.eliminarPorId(candidatoSeleccionado.getId());
             }
             this.obtieneCandidatosPorListaSeleccionada();
             candidatoSeleccionado = null;
@@ -176,5 +159,4 @@ public class CandidatoController implements Serializable {
             log.error("ERROR EN ELIMINAR AL CANDIDATO", e);
         }
     }
-
 }

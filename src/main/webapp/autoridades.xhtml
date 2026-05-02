@@ -25,11 +25,11 @@
                         </p:column>
 
                         <p:column headerText="Cargo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
-                            <h:outputText value="#{tribunal.cargo.nombre}" />
+                            <h:outputText value="#{tribunal.cargoNombre}" />
                         </p:column>
 
                         <p:column headerText="Periodo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
-                            <h:outputText value="#{tribunal.periodo.nombre}" />
+                            <h:outputText value="#{tribunal.periodoNombre}" />
                         </p:column>
 
                         <p:column headerText="Nombres">
@@ -45,8 +45,14 @@
                                              styleClass="edit-button rounded-button ui-button-info" process="@this" disabled="#{tribunal.iglesiaPersona.persona eq null}">
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
                             </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-user-minus" process="@this" oncomplete="PF('dlgEliminaAutoridad').show()" disabled="#{tribunal.iglesiaPersona.persona eq null}" >
+                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-user-minus"
+                                             actionListener="#{tribunalController.eliminarPeriodoSeleccionados}"
+                                             process="@this" update="@form"
+                                             disabled="#{tribunal.iglesiaPersona.persona eq null}">
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro que desea eliminar esta autoridad?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -58,13 +64,13 @@
 
                                 <div class="field">
                                     <p:outputLabel for="cargo" value="Cargo" />
-                                    <p:inputText id="cargo" value="#{tribunalController.tribunalSeleccionado.cargo.nombre}" required="true"
+                                    <p:inputText id="cargo" value="#{tribunalController.tribunalSeleccionado.cargoNombre}" required="true"
                                                  onkeyup="value = value.toUpperCase()" disabled="true"/>
                                 </div>
 
                                 <div class="field">
                                     <p:outputLabel for="periodo" value="Periodo" />                                   
-                                    <p:inputText id="periodo" value="#{tribunalController.tribunalSeleccionado.periodo.nombre}" required="true"
+                                    <p:inputText id="periodo" value="#{tribunalController.tribunalSeleccionado.periodoNombre}" required="true"
                                                  onkeyup="value = value.toUpperCase()" disabled="true"/>
 
                                 </div>
@@ -88,7 +94,7 @@
                             <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona eq null}">
                                 <div class="formgroup-inline">
                                     <div class="field">
-                                        <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" 
+                                        <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
                                                      value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
                                         <small class="ui-state-error">Ingrese numero de cédula a buscar</small>
                                     </div>                                       
@@ -128,15 +134,7 @@
                     </p:dialog>
                     <!-- FIN DIALOG ASIGNA AUTORIDAD -->
 
-                    <p:confirmDialog widgetVar="dlgEliminaAutoridad" showEffect="fade" width="300" message="¿Esta seguro que desea eliminar?" header="Confirm" severity="warn">
-                        <p:commandButton value="Si" icon="pi pi-check" actionListener="#{tribunalController.eliminarPeriodoSeleccionados}" process="@this" oncomplete="PF('dlgEliminaAutoridad').hide()"/>
-                        <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaAutoridad').hide()" />
-                    </p:confirmDialog><!-- comment -->
 
-                    <p:confirmDialog global="true" showEffect="fade" width="300">
-                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
-                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
-                    </p:confirmDialog>
                 </div>                    
             </div><!-- end grid -->
         </h:form>

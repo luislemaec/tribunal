@@ -11,23 +11,17 @@ import javax.inject.Named;
 import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.Rol;
-import ec.com.antenasur.service.RolFacade;
+import ec.com.antenasur.dto.RolDTO;
+import ec.com.antenasur.service.RolService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- */
 @Named
 @ViewScoped
 @Slf4j
 public class RolController implements Serializable {
-
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
 
     private static final long serialVersionUID = 1L;
 
@@ -35,41 +29,35 @@ public class RolController implements Serializable {
     private static final String TABLA = "tblRol";
     private static final String MENSAJE_REGISTRA_OK = "Rol registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Rol actualizado";
-    private static final String MENSAJE_ELIMINA_OK = "Rol eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;
 
     @Inject
-    private RolFacade rolFacade;
+    private RolService rolService;
 
     @Getter
     @Setter
-    private Rol rolSeleccionado;
+    private RolDTO rolSeleccionado;
 
     @Setter
     @Getter
-    private List<Rol> roles, rolesSeleccionados;
+    private List<RolDTO> roles, rolesSeleccionados;
 
     @PostConstruct
     private void init() {
         try {
-            roles = rolFacade.findAll();
+            roles = rolService.listarDTOs();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
-    /**
-     * Inicializa medio seleccionado
-     */
     public void inicializaRolSeleccionado() {
         if (roles != null) {
             roles.clear();
         }
-        rolSeleccionado = new Rol();
-
+        rolSeleccionado = new RolDTO();
     }
 
     public void nuevoRol() {
@@ -89,49 +77,45 @@ public class RolController implements Serializable {
     }
 
     public void eliminarRolesSeleccionados() {
+        int eliminados = 0;
         if (rolesSeleccionados != null) {
-            for (Rol item : rolesSeleccionados) {
-                rolFacade.delete(item);
+            for (RolDTO item : rolesSeleccionados) {
+                if (item.getId() != null && rolService.eliminarPorId(item.getId()) != null) {
+                    eliminados++;
+                }
             }
         }
-        roles = rolFacade.findAll();
-        JsfUtil.addInfoMessage(+rolesSeleccionados.size() + " Roles eliminados");
+        roles = rolService.listarDTOs();
+        JsfUtil.addInfoMessage(eliminados + " Roles eliminados");
         this.rolesSeleccionados = null;
         PrimeFaces.current().ajax().update(FORMULARIO, "msgs");
-
     }
 
     public void buscaRolPorNombre() {
-        if (rolSeleccionado != null) {
-            Rol rolBuscado = rolFacade.buscaPorNombre(rolSeleccionado.getNombre());
-            if (rolBuscado != null) {
-                rolSeleccionado = rolBuscado;
-                JsfUtil.addInfoMessage("Rol " + rolBuscado.getNombre() + " ya se encuentra registrado ");
+        if (rolSeleccionado != null && rolSeleccionado.getNombre() != null) {
+            RolDTO encontrado = rolService.buscarDTOPorNombre(rolSeleccionado.getNombre());
+            if (encontrado != null) {
+                rolSeleccionado = encontrado;
+                JsfUtil.addInfoMessage("Rol " + encontrado.getNombre() + " ya se encuentra registrado ");
             }
         }
     }
 
     public void actualizarRegistro() {
         try {
-            if (rolSeleccionado != null) {
-                if (this.rolSeleccionado.getId() != null) {
-                    Rol rolActualiza = rolFacade.edit(rolSeleccionado);
-                    if (rolActualiza != null) {
-                        JsfUtil.addSuccessMessage(MENSAJE_ACTUALIZA_OK);
-                        roles = rolFacade.findAll();
-                        PrimeFaces.current().ajax().update("msgs", FORMULARIO);
-                    }
-                } else {
-                    Rol rolNuevo = rolFacade.create(rolSeleccionado);
-                    if (rolNuevo != null) {
-                        JsfUtil.addSuccessMessage(MENSAJE_REGISTRA_OK);
-                        PrimeFaces.current().ajax().update("msgs", FORMULARIO);
-                    }
-                }
-                rolSeleccionado = null;
+            if (rolSeleccionado == null) {
+                return;
             }
+            boolean esEdicion = rolSeleccionado.getId() != null;
+            RolDTO persistido = rolService.guardarDesdeDTO(rolSeleccionado);
+            if (persistido != null) {
+                JsfUtil.addSuccessMessage(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
+                roles = rolService.listarDTOs();
+                PrimeFaces.current().ajax().update("msgs", FORMULARIO);
+            }
+            rolSeleccionado = null;
         } catch (Exception e) {
-            log.error("ERROR EN AGUARDAR ROL");
+            log.error("ERROR EN GUARDAR ROL", e);
         }
         PrimeFaces.current().executeScript("PF('dlgRol').hide()");
         PrimeFaces.current().ajax().update(FORMULARIO, FORMULARIO + ":" + TABLA);

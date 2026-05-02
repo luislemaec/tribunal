@@ -1,158 +1,140 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
 import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.primefaces.PrimeFaces;
 import org.primefaces.event.RowEditEvent;
 import org.primefaces.model.CheckboxTreeNode;
 import org.primefaces.model.TreeNode;
 
 import ec.com.antenasur.bean.LoginBean;
-import ec.com.antenasur.domain.tec.CatalogoGeneral;
-import ec.com.antenasur.service.tec.CatalogoGeneralFacade;
+import ec.com.antenasur.dto.CatalogoGeneralDTO;
+import ec.com.antenasur.service.tec.CatalogoGeneralService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.primefaces.PrimeFaces;
 
-/**
- *
- * @author Luis Lema <lemaedu@gmail.com>
- * @fecha 10-08-2022 15:53
- */
 @Named
 @ViewScoped
 @Slf4j
 public class CatalogoController implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
-    private static final String ACTIVO = "ACTIVO";
-    private static final String INACTIVO = "INACTIVO";
-    
+
     @Inject
     private LoginBean loginBean;
-    
+
     @Inject
-    private CatalogoGeneralFacade catalogoFacade;
-    
+    private CatalogoGeneralService catalogoService;
+
     @Setter
     @Getter
-    private CatalogoGeneral catalogoSeleccionado;
-    
+    private CatalogoGeneralDTO catalogoSeleccionado;
+
     @Setter
     @Getter
-    private List<CatalogoGeneral> listaCatalogoPadres, listaCatalogoHijos;
-    
+    private List<CatalogoGeneralDTO> listaCatalogoPadres, listaCatalogoHijos;
+
     @Setter
     @Getter
-    private TreeNode<CatalogoGeneral> root;
-    
+    private TreeNode<CatalogoGeneralDTO> root;
+
     @Setter
     @Getter
     private TreeNode<?> selectedNode;
-    
+
     @SuppressWarnings("rawtypes")
     @Getter
     @Setter
     private TreeNode[] selectedNodes;
-    
+
     @PostConstruct
     private void init() {
         try {
-            listaCatalogoPadres = catalogoFacade.findByFather();
-            this.root = new CheckboxTreeNode<CatalogoGeneral>(listaCatalogoPadres.get(0), null);
-            crearNodoRecursivo(listaCatalogoPadres, root);
-            
+            listaCatalogoPadres = catalogoService.listarDTOsPorPadre();
+            if (listaCatalogoPadres != null && !listaCatalogoPadres.isEmpty()) {
+                this.root = new CheckboxTreeNode<CatalogoGeneralDTO>(listaCatalogoPadres.get(0), null);
+                crearNodoRecursivo(listaCatalogoPadres, root);
+            }
         } catch (Exception e) {
             log.error("Error al inicializar valores", e);
         }
     }
-    
-    public void crearNodoRecursivo(List<CatalogoGeneral> ObjData, TreeNode<CatalogoGeneral> nodoPadre) {
+
+    public void crearNodoRecursivo(List<CatalogoGeneralDTO> objData, TreeNode<CatalogoGeneralDTO> nodoPadre) {
         try {
-            for (CatalogoGeneral varnodo : ObjData) {//ObjData=Hijos del nodo padre, Lista de segundo nivel
-                TreeNode<CatalogoGeneral> nodoHijo = new CheckboxTreeNode<CatalogoGeneral>(varnodo, nodoPadre);
-                List<CatalogoGeneral> listaHijos = catalogoFacade.listaCatalogoHijo(varnodo.getId());
-                if (listaHijos != null) {
-                    if (!listaHijos.isEmpty()) {
-                        this.crearNodoRecursivo(listaHijos, nodoHijo);
-                    }
+            for (CatalogoGeneralDTO varnodo : objData) {
+                TreeNode<CatalogoGeneralDTO> nodoHijo = new CheckboxTreeNode<CatalogoGeneralDTO>(varnodo, nodoPadre);
+                List<CatalogoGeneralDTO> listaHijos = catalogoService.listarDTOsHijosDe(varnodo.getId());
+                if (listaHijos != null && !listaHijos.isEmpty()) {
+                    crearNodoRecursivo(listaHijos, nodoHijo);
                 }
             }
         } catch (Exception e) {
             log.error("ERROR EN CREAR NODO RECURSIVO", e);
         }
     }
-    
-    public void onRowEdit(@SuppressWarnings("rawtypes") RowEditEvent<TreeNode> event) {
+
+    @SuppressWarnings("rawtypes")
+    public void onRowEdit(RowEditEvent<TreeNode> event) {
         try {
-            this.catalogoSeleccionado = (CatalogoGeneral) event.getObject().getData();
+            this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
             if (catalogoSeleccionado != null) {
-                catalogoSeleccionado = catalogoFacade.edit(catalogoSeleccionado);
+                catalogoSeleccionado = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
                 JsfUtil.addSuccessMessage("Catálogo actualizado!");
-                this.init();
+                init();
             }
         } catch (Exception e) {
-            log.error("Error al actualizar");
+            log.error("Error al actualizar", e);
         }
-        
     }
-    
-    public void onRowCancel(@SuppressWarnings("rawtypes") RowEditEvent<TreeNode> event) {
-        this.catalogoSeleccionado = (CatalogoGeneral) event.getObject().getData();
+
+    @SuppressWarnings("rawtypes")
+    public void onRowCancel(RowEditEvent<TreeNode> event) {
+        this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
         JsfUtil.addWarningMessage("Cancelado! " + catalogoSeleccionado.getNombre());
         catalogoSeleccionado = null;
         PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
     }
-    
+
     public void nuevoCatalogo() {
-        this.catalogoSeleccionado = new CatalogoGeneral();
-        this.catalogoSeleccionado.setPadre(new CatalogoGeneral());
+        this.catalogoSeleccionado = new CatalogoGeneralDTO();
     }
-    
+
     public void guardarCatalogo() {
         try {
-            if (catalogoSeleccionado != null) {
-                if (catalogoSeleccionado.getId() != null) {
-                    catalogoSeleccionado = catalogoFacade.edit(catalogoSeleccionado);
-                    JsfUtil.addSuccessMessage("Catálogo acualizaco!");
-                } else {
-                    catalogoSeleccionado = catalogoFacade.create(catalogoSeleccionado);
-                    JsfUtil.addSuccessMessage("Catálogo creado!");
-                }
-                catalogoSeleccionado = null;
+            if (catalogoSeleccionado == null) {
+                return;
             }
-            this.init();
+            boolean esEdicion = catalogoSeleccionado.getId() != null;
+            CatalogoGeneralDTO persistido = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
+            if (persistido != null) {
+                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
+            }
+            catalogoSeleccionado = null;
+            init();
             PrimeFaces.current().executeScript("PF('dlgCatalogo').hide()");
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
         } catch (Exception e) {
             log.error("Error al guardar informacion", e);
         }
     }
-    
+
     public void eliminarCatalogoSeleccionado() {
         try {
-            if (catalogoSeleccionado != null) {
-                if (catalogoSeleccionado.getId() != null) {                    
-                    catalogoSeleccionado = catalogoFacade.delete(catalogoSeleccionado);
-                    JsfUtil.addSuccessMessage("Catálogo eliminado!");
-                }
+            if (catalogoSeleccionado != null && catalogoSeleccionado.getId() != null) {
+                catalogoService.eliminarPorId(catalogoSeleccionado.getId());
+                JsfUtil.addSuccessMessage("Catálogo eliminado!");
             }
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
-            this.init();            
+            init();
         } catch (Exception e) {
             log.error("Error al eliminar catalogo", e);
         }

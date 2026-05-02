@@ -1,6 +1,6 @@
 package ec.com.antenasur.audit;
 
-import ec.com.antenasur.domain.generic.EntidadAuditable;
+import ec.com.antenasur.model.generic.EntidadAuditable;
 import java.io.Serializable;
 import java.util.Date;
 import javax.naming.Name;

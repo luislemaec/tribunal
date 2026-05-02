@@ -160,6 +160,19 @@ public class Constantes {
         return "Tecnico";
     }
 
+    public static String getRolIglesiaAdmin() {
+        return "IglesiaAdmin";
+    }
+
+    /**
+     * Rol del Tribunal Electoral. El cargo interno (Presidente, Secretario,
+     * Vocal, Veedor) se distingue mediante {@code tb_tribunal} para evitar
+     * explosión de roles RBAC.
+     */
+    public static String getRolTribunal() {
+        return "Tribunal";
+    }
+
     public static String getRolSecretarioMesa() {
         return "Secretario-mesa";
     }

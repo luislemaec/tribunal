@@ -45,11 +45,11 @@
                         <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-3rem">
                             <h:outputText value="#{candidato.id}" />
                         </p:column>
-                        <p:column headerText="CARGO" styleClass="sm:w-max md:w-4 lg:w-9rem">
-                            <h:outputText value="#{candidato.cargo.nombre}" />
+                        <p:column headerText="CARGO" sortBy="#{candidato.cargoNombre}" filterBy="#{candidato.cargoNombre}" styleClass="sm:w-max md:w-4 lg:w-9rem">
+                            <p:chip label="#{candidato.cargoNombre}" icon="pi pi-briefcase"/>
                         </p:column>
-                        <p:column headerText="PERIODO" styleClass="sm:w-max md:w-1 lg:w-3rem">
-                            <h:outputText value="#{candidato.periodo.nombre}" />
+                        <p:column headerText="PERIODO" sortBy="#{candidato.periodoNombre}" styleClass="sm:w-max md:w-1 lg:w-3rem">
+                            <p:tag value="#{candidato.periodoNombre}" severity="info"/>
                         </p:column>  
                         <p:column headerText="ASIGNAR" styleClass="sm:w-max md:w-4 lg:w-9rem" >
                             <p:commandButton icon="pi pi-user-plus" update=":frmCandidatos" oncomplete="PF('dlgAsignaCandidato').show()"
@@ -58,13 +58,19 @@
                             </p:commandButton>
                             <h:outputText value="#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}" rendered="#{candidato.iglesiaPersona.persona ne null}" />                   
                         </p:column>
-                        <p:column headerText="NUMERO" styleClass="sm:w-max md:w-1 lg:w-3rem" >
-                            <h:outputText value="#{candidato.lista.numero}" />
+                        <p:column headerText="NUMERO" sortBy="#{candidato.listaNumero}" styleClass="sm:w-max md:w-1 lg:w-3rem" >
+                            <p:badge value="#{candidato.listaNumero}" severity="warning"/>
                         </p:column>                        
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
-                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this" oncomplete="PF('dlgEliminaRegistro').show()" >
+                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash"
+                                             title="Eliminar candidato"
+                                             actionListener="#{candidatoController.eliminarSeleccionado}"
+                                             process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este candidato?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -75,7 +81,7 @@
                         <p:outputPanel rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona eq null}">
                             <div class="formgroup-inline">
                                 <div class="field">
-                                    <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" 
+                                    <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
                                                  value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true"/>
                                     <small class="ui-state-error">Ingrese número de cédula a buscar</small>
                                 </div>                                       
@@ -111,10 +117,6 @@
                 </p:dialog>
                 <!-- FIN DIALOG ASIGNA AUTORIDAD -->
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{candidatoController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
 
 
             </div>

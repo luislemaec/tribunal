@@ -1,12 +1,12 @@
 package ec.com.antenasur.bean;
 
-import ec.com.antenasur.domain.Geograp;
+import ec.com.antenasur.model.Geograp;
 import java.io.Serializable;
 
 import javax.enterprise.context.RequestScoped;
 
-import ec.com.antenasur.domain.tec.Recinto;
-import ec.com.antenasur.service.tec.RecintoFacade;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.service.tec.RecintoService;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,11 +26,11 @@ public class RecintoBean implements Serializable {
     private Recinto recinto;
 
     @Inject
-    private RecintoFacade recintoFacade;
+    private RecintoService recintoService;
 
     public List<Recinto> recintosPorParroquias(List<Geograp> parroquias) {
         try {
-            return recintoFacade.getRecintosPorParroquias(parroquias);
+            return recintoService.getRecintosPorParroquias(parroquias);
         } catch (Exception e) {
             return null;
         }
@@ -38,7 +38,7 @@ public class RecintoBean implements Serializable {
 
     public Recinto recintosPorId(Integer idRecinto) {
         try {
-            return recintoFacade.find(idRecinto);
+            return recintoService.find(idRecinto);
         } catch (Exception e) {
             return null;
         }
@@ -46,7 +46,7 @@ public class RecintoBean implements Serializable {
 
     public int totalRecintos() {
         try {
-            return recintoFacade.count();
+            return recintoService.count();
         } catch (Exception e) {
             return 0;
         }

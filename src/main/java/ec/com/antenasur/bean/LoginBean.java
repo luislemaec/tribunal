@@ -22,10 +22,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.hibernate.validator.constraints.Email;
 import org.primefaces.model.menu.MenuModel;
 
-import ec.com.antenasur.domain.AccessAuditory;
-import ec.com.antenasur.domain.Persona;
-import ec.com.antenasur.domain.Usuario;
-import ec.com.antenasur.service.AccessFacade;
+import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.dto.UsuarioDTO;
+import ec.com.antenasur.model.AccessAuditory;
+import ec.com.antenasur.service.AccessService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -53,11 +53,11 @@ public class LoginBean implements Serializable {
     private String email;
 
     @Setter
-    private Usuario usuario;
+    private UsuarioDTO usuario;
 
     @Setter
     @Getter
-    private Persona persona;
+    private PersonaDTO persona;
 
     private Map<String, Object> content;
 
@@ -82,7 +82,7 @@ public class LoginBean implements Serializable {
     private int tiempoSession;
 
     @Inject
-    private AccessFacade accessFacade;
+    private AccessService accessService;
 
     @Setter
     private AccessAuditory accessAuditory;
@@ -116,20 +116,20 @@ public class LoginBean implements Serializable {
         }
     }
 
-    public Usuario getUsuario() {
+    public UsuarioDTO getUsuario() {
         if (usuario == null) {
-            usuario = new Usuario();
+            usuario = new UsuarioDTO();
         }
         return usuario;
     }
 
     private void registerAdditory(String session) {
         try {
-            accessAuditory = accessFacade.findBySession(session);
+            accessAuditory = accessService.findBySession(session);
             if (accessAuditory != null) {
                 accessAuditory.setLogout(JsfUtil.getTimestamp());
                 accessAuditory.setActive(false);
-                accessFacade.edit(accessAuditory);
+                accessService.edit(accessAuditory);
             }
         } catch (Exception e) {
             log.info("Error");

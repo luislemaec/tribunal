@@ -87,7 +87,7 @@
                                         </p:selectOneMenu>
                                     </c:if>
                                     <c:if test = "#{col.type.name.contains('IglesiaPersona')}">
-                                        <p:inputText id="id_#{col.property}" value="#{jrvController.iglesiaPersona.persona.documento}" maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>                                    	
+                                        <p:inputText id="id_#{col.property}" styleClass="mask-cedula" value="#{jrvController.iglesiaPersona.persona.documento}" maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>                                    	
                                     </c:if>
                                     <c:if test = "#{col.type.name.contains('Mesa')}">
                                         <p:selectOneMenu id="id_#{col.property}" value="#{jrvController.cargo.id}" filter="true" filterMatchMode="startsWith">

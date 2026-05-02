@@ -1,0 +1,54 @@
+/* tribunal-globals.css — overrides finos sobre las libs Tier 1 */
+
+/* NProgress: usar color primario Ecuador */
+#nprogress .bar      { background: #f59e0b !important; height: 3px; }
+#nprogress .peg      { box-shadow: 0 0 10px #f59e0b, 0 0 5px #f59e0b !important; }
+
+/* Toastr: bordes redondeados + sombra suave */
+.toast               { border-radius: 8px !important; box-shadow: 0 6px 18px rgba(0,0,0,.15) !important; }
+.toast-top-right     { top: 70px !important; }
+
+/* SweetAlert2: alinear con tema Ecuador */
+.swal2-popup         { border-radius: 12px !important; font-family: inherit !important; }
+.swal2-title         { font-size: 1.1rem !important; }
+
+/* Inputmask placeholder más sutil */
+input[data-inputmask]::placeholder { color: #cbd5e1; }
+
+/* ScrollTop flotante con color Ecuador */
+.custom-scroll-top.ui-scrolltop {
+    background: #f59e0b !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,.18) !important;
+    width: 2.5rem !important; height: 2.5rem !important;
+    right: 1.5rem !important; bottom: 1.5rem !important;
+}
+.custom-scroll-top.ui-scrolltop:hover { background: #d97706 !important; }
+
+/* NotificationBar de ambiente */
+.ambiente-bar {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b) !important;
+    color: #1f2937 !important;
+    font-size: .85rem !important;
+    border-bottom: 1px solid #d97706 !important;
+}
+
+/* BlockUI: contenido centrado con texto blanco sobre overlay oscuro */
+.ui-blockui-content { text-align: center; padding: 1.5rem; }
+.ui-blockui { background: rgba(15, 23, 42, 0.55) !important; }
+
+/* SpeedDial del dashboard: posición flotante (no choca con scrollTop) */
+.ui-speeddial { position: fixed !important; right: 1.5rem !important; bottom: 5rem !important; z-index: 999; }
+.dashboard-speeddial.ui-button {
+    background: #2563eb !important; border-color: #2563eb !important;
+    width: 3rem !important; height: 3rem !important;
+    box-shadow: 0 6px 14px rgba(37,99,235,.35) !important;
+}
+.dashboard-speeddial.ui-button:hover { background: #1d4ed8 !important; }
+
+/* Tooltips: tipografía coherente */
+.ui-tooltip .ui-tooltip-text {
+    font-size: .8rem !important;
+    padding: .35rem .6rem !important;
+    border-radius: 6px !important;
+}

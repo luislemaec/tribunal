@@ -64,8 +64,8 @@
                                  styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1 card" >
                                  
 
-                        <p:column headerText="VOTOS" styleClass="sm:w-max md:w-1 lg:w-3rem" >
-                            <h:outputText value="#{actaE.categoria.nombre}" />
+                        <p:column headerText="VOTOS" sortBy="#{actaE.categoriaNombre}" styleClass="sm:w-max md:w-1 lg:w-3rem" >
+                            <p:chip label="#{actaE.categoriaNombre}" icon="pi pi-tag"/>
                         </p:column>
                         <p:column headerText="TOTAL " styleClass="sm:w-max md:w-1 lg:w-3rem" >                            
                             <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="#{actaE.mesa.totalVotos}" decimalPlaces="0" placeholder="99" 
@@ -74,9 +74,13 @@
                         </p:column> 
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
-                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash" process="@this"
-                                             oncomplete="PF('dlgEliminaRegistro').show()"  >
+                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash"
+                                             actionListener="#{actaEController.eliminarSeleccionado}"
+                                             process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este registro?"
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                         <f:facet name="header">
@@ -99,10 +103,6 @@
                 </div>
 
                 <!-- FIN DIALOG ASIGNA AUTORIDAD -->
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
-                    <p:commandButton value="Si" icon="pi pi-check" actionListener="#{actaEController.eliminarSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
-                </p:confirmDialog>
             </div>
         </h:form>
     </ui:define>
