@@ -1,0 +1,8 @@
+/.tern-project
+/.metadata/
+/.settings/
+/target/
+/.classpath
+.project
+.tern-project
+/faces-config.NavData

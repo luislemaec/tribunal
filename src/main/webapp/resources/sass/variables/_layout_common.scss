@@ -1,0 +1,14 @@
+//common
+$fontFamily:'Montserrat',sans-serif !default;
+$fontSize:13px !default;
+$textColor:#333333 !default;
+$textSecondaryColor:lighten($textColor,25%) !default;
+$borderRadius:0px !default;
+$transitionDuration:.3s !default;
+$dividerColor:#dee2e6 !default;
+$animationDuration:.4s !default;
+$animationTimingFunction:cubic-bezier(.05,.74,.2,.99) !default;
+$overlayBorder:0 none !default;
+$overlayShadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12) !default;
+$tabletBreakpoint:991px !default;
+$phoneBreakpoint:576px !default;

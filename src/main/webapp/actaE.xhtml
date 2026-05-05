@@ -1,0 +1,110 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="title">Acta de escrutinio</ui:define>
+    <ui:define name="viewname">
+        <li>Admin</li>
+        <li>/</li>
+        <li>
+            <p:link outcome="/actaE">Acta de escrutinio</p:link>
+        </li>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmActaE">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="ui-fluid formgrid grid">
+                            <div class="field col-12 md:col-6 lg:col-6">
+                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaParroquiasPorCanton()}" process="@this" update="frmActaE, msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-6 lg:col-6">
+                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaRecintosPorParroquias()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="recintos" value="Recintos" />
+                                <p:selectOneMenu id="recintos" value="#{actaEController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty actaEController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                    <p:ajax event="change"  listener="#{actaEController.cargaMesasPorRecintos()}" process="@this" update="frmActaE msgs"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 lg:col-6">
+                                <p:outputLabel for="mesas" value="Mesas" />
+                                <p:selectOneMenu id="mesas" value="#{actaEController.mesaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty actaEController.listaRecintos}">
+                                    <f:selectItem itemLabel="Select" itemValue="" />
+                                    <f:selectItems value="#{actaEController.listaMesas}" var="mesa"  itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
+                                    <p:ajax event="change" listener="#{actaEController.cargaDatosMesaSeleccionada()}" process="@this" update="frmActaE"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>                       
+                    </div>                        
+                </div>
+
+                <div class="col-12 md:col-12 lg:col-12" style="display: #{not empty actaEController.listaCamposActaE?'true':'none'}">
+
+                    <p:dataTable id="tblActaE" widgetVar="wdTblCandidatos" var="actaE" value="#{actaEController.listaCamposActaE}" reflow="true" 
+                                 rendered="#{not empty actaEController.listaCamposActaE and not empty actaEController.mesaSeleccionado }"
+                                 rowSelectMode="add" showGridlines="true" 
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1 card" >
+                                 
+
+                        <p:column headerText="VOTOS" sortBy="#{actaE.categoriaNombre}" styleClass="sm:w-max md:w-1 lg:w-3rem" >
+                            <p:chip label="#{actaE.categoriaNombre}" icon="pi pi-tag"/>
+                        </p:column>
+                        <p:column headerText="TOTAL " styleClass="sm:w-max md:w-1 lg:w-3rem" >                            
+                            <p:inputNumber value="#{actaE.totalVotos}" label="Total" minValue="0" maxValue="#{actaE.mesa.totalVotos}" decimalPlaces="0" placeholder="99" 
+                                           required="true" disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
+                                                     and loginBean.roles.contains('SITEC-Tecnico') }"/>                       
+                        </p:column> 
+
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
+                            <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash"
+                                             actionListener="#{actaEController.eliminarSeleccionado}"
+                                             process="@this" update="@form">
+                                <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este registro?"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </p:column>
+                        <f:facet name="header">
+                            <div class="grid">
+                                <div class="col-12 text-center">
+                                    REGISTRO DE VOTOS <b>RECINTO:</b> #{actaEController.listaCamposActaE.get(0).mesa.recinto.nombre} / <b>MESA:</b> #{actaEController.listaCamposActaE.get(0).mesa.nombre}
+                                </div>
+                            </div>
+                        </f:facet>
+                        <f:facet name="footer">
+                            <div class="grid">
+                                <div class="col-12 md:col-4 lg:col-4 md:col-offset-4 md:flex ">
+                                    <p:commandButton id="btnRegistrar" process=":frmActaE:tblActaE" value="#{msg['btn.guardar']}"  action="#{actaEController.guardaDatosMesaSeleccionada()}"  
+                                                     ajax="false" styleClass="ui-button-success w-6 md:w-9 " disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
+                                                     and loginBean.roles.contains('SITEC-Tecnico') }"/>  
+                                </div>
+                            </div>
+                        </f:facet>
+                    </p:dataTable>
+                </div>
+
+                <!-- FIN DIALOG ASIGNA AUTORIDAD -->
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

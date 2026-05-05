@@ -1,0 +1,11 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:ui="http://java.sun.com/jsf/facelets" 
+      xmlns:p="http://primefaces.org/ui" >
+
+    <ui:composition>
+        <p:idleMonitor timeout="#{loginBean.tiempoSession * 100}">
+            <p:ajax event="idle" listener="#{loginBean.cerrarSessionExpirada()}" />
+            <p:ajax event="active" listener="#{loginBean.cerrarSessionExpirada()}" />
+        </p:idleMonitor>
+    </ui:composition>
+</html>

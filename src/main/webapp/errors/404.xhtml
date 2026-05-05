@@ -1,0 +1,18 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui" template="/errors/error-template.xhtml">
+    <ui:define name="content">
+
+        <div class="top">
+            <p:graphicImage name="images/curvy-left.svg" library="ecuador-layout" class="left"/>
+            <p:graphicImage name="images/404.svg" library="ecuador-layout" class="main"/>
+            <p:graphicImage name="images/curvy-right.svg" library="ecuador-layout" class="right"/>
+            <span>404</span>
+            <div class="seperator"></div>
+        </div>
+        <div class="bottom">
+            <span class="exception-panel-header">Error 404!</span>
+            <span class="exception-panel-subheader">Página no encontrada..</span>
+           <p:linkButton outcome="/dashboard.jsf" value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
+        </div><!-- comment -->
+
+    </ui:define>
+</ui:composition>

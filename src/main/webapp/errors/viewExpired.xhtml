@@ -1,0 +1,21 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                template="/errors/error-template.xhtml">
+    <ui:define name="content">
+        <div class="top">
+            <p:graphicImage name="images/curvy-left.svg" library="ecuador-layout" class="left"/>
+            <p:graphicImage name="images/logout.svg" library="ecuador-layout" class="main"/>
+            <p:graphicImage name="images/curvy-right.svg" library="ecuador-layout" class="right"/>
+            <span>SALIR</span>
+            <div class="seperator"></div>
+        </div>
+        <div class="bottom">            
+            <span class="exception-panel-subheader">Sesión finalizada</span>
+            <h:link outcome="/login" styleClass="ui-button-raised ui-button-info" > 
+                <i class="pi pi pi-home"> Ir a Inicio</i>                
+            </h:link>                             
+        </div><!-- comment --> 
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+        </f:facet>   
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>TEC</title>
+    </h:head>
+    <h:body styleClass="exception-body">
+
+        <div class="exception-topbar">
+            <h:link outcome="/dashboard"  class="logo">
+                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+            </h:link>
+        </div><!-- comment -->
+        <div class="exception-panel">
+            <ui:insert name="content">
+                <h:outputText value="INSERT CONTENT FOR ERROR TEMPLATE" />
+            </ui:insert>
+        </div>
+
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

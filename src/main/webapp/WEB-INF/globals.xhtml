@@ -1,0 +1,61 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Growl global con presentación profesional.
+         id="msgs" + autoUpdate="true" hace que cualquier
+         JsfUtil.addInfoMessage(...) / addSuccessMessage(...) etc. aparezca
+         automáticamente sin necesitar update="msgs" en cada commandButton.
+         widgetVar="msgs" permite invocarlo desde JS vía Tribunal.toast.*
+         (ver tribunal-globals.js → showToast → renderMessage). -->
+    <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
+             showDetail="true" showSummary="true" sticky="false"
+             life="5000" autoUpdate="true"/>
+
+    <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
+         consistente con el tema, sin necesidad de declararlo página por página.
+         Excluye el editor PrimeFaces (que usa title internamente). -->
+    <p:tooltip globalSelector="[title]:not(.p-editor *)" trackMouse="true"
+               showEffect="fade" hideEffect="fade"/>
+
+    <!-- ScrollTop: botón flotante "ir arriba" cuando se hace scroll.
+         Aplica a toda página con contenido largo (datatables, escrutinios). -->
+    <p:scrollTop target="window" threshold="400" icon="pi pi-arrow-up"
+                 styleClass="custom-scroll-top"/>
+
+    <!-- Indicador de ambiente: chip flotante discreto en la esquina inferior
+         izquierda (solo fuera de PRODUCCIÓN). Reemplaza al notificationBar
+         full-width que ocupaba demasiado espacio sin aportar valor. -->
+    <h:panelGroup layout="block"
+                  rendered="#{loginBean.loggedIn and loginBean.servidor ne 'P R O D U C C I Ó N'}"
+                  styleClass="ambiente-chip">
+        <i class="pi pi-server" style="margin-right:.4rem"/>
+        <b>#{loginBean.servidor}</b>
+    </h:panelGroup>
+
+    <h:form id="frmGlobal">
+        <!-- ConfirmDialog global: cualquier botón con
+             <p:confirm header="..." message="..."/> usa este. -->
+        <p:confirmDialog global="true" widgetVar="cfm" showEffect="fade" hideEffect="fade"
+                         responsive="true" width="420">
+            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes"
+                             icon="pi pi-check"/>
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                             icon="pi pi-times"/>
+        </p:confirmDialog>
+
+        <!-- IdleMonitor: avisa a los 50 min, expira la sesión a los 60 min (web.xml). -->
+        <p:idleMonitor timeout="3000000">
+            <p:ajax event="idle" oncomplete="PF('dlgIdle').show()"/>
+        </p:idleMonitor>
+        <p:dialog widgetVar="dlgIdle" header="Sesión por expirar" modal="true"
+                  closable="false" resizable="false" width="380">
+            <p style="margin:0 0 1rem">Su sesión expirará por inactividad en pocos minutos.</p>
+            <p:commandButton value="Continuar" icon="pi pi-refresh" ajax="true"
+                             onclick="PF('dlgIdle').hide()" process="@this"/>
+        </p:dialog>
+    </h:form>
+
+</ui:composition>

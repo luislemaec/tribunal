@@ -1,0 +1,12 @@
+$primaryColor:#2D8EE3 !default;
+$primaryTextColor:#ffffff !default;
+
+$topbarBgLeftColor:#2872B4 !default;
+$topbarBgRightColor:#26BED0 !default;
+$topbarSidebarButtonColor:#ffffff !default;
+$topbarIconHoverBgColor:#18558A !default;
+$topbarMenuHoverBgColor:#0991A5 !default;
+$topbarProfileTextColor:#ffffff !default;
+$activeSubMenuItemTextColor:$primaryColor !default;
+
+@import '../../sass/layout/_layout';

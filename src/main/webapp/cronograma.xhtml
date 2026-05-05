@@ -1,0 +1,594 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="title">Cronograma electoral</ui:define>
+
+    <ui:define name="viewname">
+        <li>Tribunal</li>
+        <li>/</li>
+        <li><p:link outcome="/cronograma">Cronograma</p:link></li>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <!-- =====================================================================
+             Variables EL reutilizadas en la página (evita duplicar EL y bind a
+             expresiones complejas dispersas).
+             ===================================================================== -->
+        <c:set var="proceso" value="#{cronogramaController.procesoSeleccionado}" scope="request"/>
+        <c:set var="fases"   value="#{cronogramaController.fases}" scope="request"/>
+        <c:set var="hayProceso" value="#{proceso ne null and proceso.id ne null}" scope="request"/>
+        <c:set var="totalFases" value="#{empty fases ? 0 : fases.size()}" scope="request"/>
+        <c:set var="totalProcesos"
+               value="#{empty cronogramaController.procesos ? 0 : cronogramaController.procesos.size()}"
+               scope="request"/>
+
+        <!-- BlockUI mientras hay un ajax en curso sobre el formulario principal -->
+        <p:blockUI block="frmCronograma" trigger="frmCronograma">
+            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem; color:#f59e0b"/>
+            <h5 style="margin:.5rem 0 0; color:#fff">Procesando cronograma...</h5>
+        </p:blockUI>
+
+        <h:form id="frmCronograma">
+
+            <!-- =================================================================
+                 1. CABECERA DE PÁGINA
+                 ================================================================= -->
+            <div class="grid">
+                <div class="col-12">
+                    <div class="page-header">
+                        <div>
+                            <h3>
+                                <i class="pi pi-calendar-plus" style="margin-right:.5rem"/>
+                                Cronograma electoral
+                            </h3>
+                            <p class="subtitle">
+                                Defina las fases del proceso electoral y los plazos en que cada acción está habilitada.
+                            </p>
+                        </div>
+                        <p:tag rendered="#{proceso.activo}"
+                               value="Proceso ACTIVO" severity="success" icon="pi pi-bolt"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================================================================
+                 2. KPIs (4 tarjetas resumen)
+                 ================================================================= -->
+            <div class="grid">
+                <ui:fragment>
+                    <!-- KPI 1: procesos registrados -->
+                    <div class="col-12 md:col-6 lg:col-3">
+                        <div class="kpi-card flex justify-content-between align-items-center">
+                            <div>
+                                <span class="label">Procesos registrados</span>
+                                <span class="value">#{totalProcesos}</span>
+                            </div>
+                            <p:badge value="#{totalProcesos}" severity="info" size="large"/>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2: proceso seleccionado -->
+                    <div class="col-12 md:col-6 lg:col-3">
+                        <div class="kpi-card flex justify-content-between align-items-center">
+                            <div>
+                                <span class="label">Proceso seleccionado</span>
+                                <span class="value value--ellip">
+                                    #{empty proceso.nombre ? '—' : proceso.nombre}
+                                </span>
+                            </div>
+                            <p:tag rendered="#{proceso.activo}"
+                                   value="Activo" severity="success" icon="pi pi-check"/>
+                            <p:tag rendered="#{not proceso.activo}"
+                                   value="Inactivo" severity="warning" icon="pi pi-pause"/>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3: fases configuradas -->
+                    <div class="col-12 md:col-6 lg:col-3">
+                        <div class="kpi-card flex justify-content-between align-items-center">
+                            <div>
+                                <span class="label">Fases configuradas</span>
+                                <span class="value">#{totalFases}</span>
+                            </div>
+                            <p:badge value="#{totalFases}" severity="warning" size="large"/>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4: catálogo enum -->
+                    <div class="col-12 md:col-6 lg:col-3">
+                        <div class="kpi-card flex justify-content-between align-items-center">
+                            <div>
+                                <span class="label">Catálogo de fases</span>
+                                <span class="value">#{cronogramaController.totalFasesCatalogo}</span>
+                            </div>
+                            <p:tag value="ENUM" severity="info" icon="pi pi-list"/>
+                        </div>
+                    </div>
+                </ui:fragment>
+            </div>
+
+            <!-- =================================================================
+                 3. PROCESO ELECTORAL (cabecera editable)
+                 ================================================================= -->
+            <p:divider align="left" type="solid">
+                <span class="divider-tag divider-tag--info">
+                    <i class="pi pi-flag" style="margin-right:.4rem"/>Proceso electoral
+                </span>
+            </p:divider>
+
+            <div class="surface-card shadow-1 border-round p-3 mb-3">
+
+                <p:toolbar styleClass="toolbar-flat mb-3">
+                    <p:toolbarGroup>
+                        <p:outputLabel value="Proceso:" styleClass="font-medium mr-2"/>
+                        <p:selectOneMenu id="cmbProceso"
+                                         value="#{proceso.id}"
+                                         filter="true" filterMatchMode="contains"
+                                         converter="javax.faces.Integer"
+                                         style="min-width:240px">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}"/>
+                            <f:selectItems value="#{cronogramaController.procesos}"
+                                           var="p"
+                                           itemLabel="#{p.nombre} #{p.activo ? '(ACTIVO)' : ''}"
+                                           itemValue="#{p.id}"/>
+                            <p:ajax listener="#{cronogramaController.cargarFasesDelProceso}"
+                                    update="@form"/>
+                        </p:selectOneMenu>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+                        <p:commandButton value="Nuevo proceso" icon="pi pi-plus"
+                                         type="button"
+                                         actionListener="#{cronogramaController.nuevoProceso}"
+                                         title="Crear un nuevo proceso electoral"
+                                         styleClass="ui-button-secondary mr-2"
+                                         update="@form"/>
+                        <p:commandButton value="Guardar proceso" icon="pi pi-save"
+                                         actionListener="#{cronogramaController.guardarProceso}"
+                                         title="Guardar cambios del proceso"
+                                         styleClass="ui-button-success"
+                                         update="@form"/>
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+                <p:tabView styleClass="mt-2">
+
+                    <!-- TAB 3.1: Identificación -->
+                    <p:tab title="Identificación" titleStyleClass="font-medium">
+                        <div class="formgrid grid">
+
+                            <div class="field col-12 md:col-6">
+                                <p:outputLabel for="nombre" value="Nombre del proceso *"/>
+                                <p:inputText id="nombre"
+                                             value="#{proceso.nombre}"
+                                             maxlength="150" required="true"
+                                             placeholder="Ej: Elecciones 2026"/>
+                            </div>
+
+                            <div class="field col-12 md:col-3 flex align-items-end">
+                                <p:selectBooleanCheckbox id="activo" value="#{proceso.activo}"/>
+                                <p:outputLabel for="activo" value="Marcar como ACTIVO"
+                                               style="margin-left:.5rem"/>
+                            </div>
+
+                            <div class="field col-12 md:col-3 flex align-items-end">
+                                <p:chip rendered="#{proceso.activo}"
+                                        label="Único activo del sistema"
+                                        icon="pi pi-bolt"/>
+                            </div>
+
+                            <div class="field col-12">
+                                <p:outputLabel for="descripcion" value="Descripción"/>
+                                <p:inputTextarea id="descripcion"
+                                                 value="#{proceso.descripcion}"
+                                                 rows="2" maxlength="500" autoResize="false"
+                                                 placeholder="Detalle breve del proceso, normativa de referencia, alcance..."/>
+                            </div>
+                        </div>
+                    </p:tab>
+
+                    <!-- TAB 3.2: Calendario maestro -->
+                    <p:tab title="Calendario maestro" titleStyleClass="font-medium">
+                        <div class="formgrid grid">
+
+                            <div class="field col-12 md:col-6">
+                                <p:outputLabel for="fIni" value="Fecha de inicio"/>
+                                <p:datePicker id="fIni" showIcon="true"
+                                              pattern="dd/MM/yyyy"
+                                              value="#{proceso.fechaInicio}"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <p:outputLabel for="fFin" value="Fecha de fin"/>
+                                <p:datePicker id="fFin" showIcon="true"
+                                              pattern="dd/MM/yyyy"
+                                              value="#{proceso.fechaFin}"/>
+                            </div>
+
+                            <div class="field col-12">
+                                <h:panelGroup layout="block" styleClass="callout callout--neutral">
+                                    <i class="pi pi-info-circle"/>
+                                    <span>
+                                        Este es el rango global del proceso. Las fases del cronograma
+                                        deben caer dentro de este intervalo.
+                                    </span>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </p:tab>
+                </p:tabView>
+            </div>
+
+            <!-- =================================================================
+                 4. FASES DEL CRONOGRAMA
+                 ================================================================= -->
+            <p:divider align="left" type="solid">
+                <span class="divider-tag divider-tag--warning">
+                    <i class="pi pi-list" style="margin-right:.4rem"/>Fases del cronograma
+                </span>
+            </p:divider>
+
+            <p:outputPanel id="panelFases" layout="block"
+                           styleClass="surface-card shadow-1 border-round p-3">
+
+                <p:toolbar styleClass="toolbar-flat mb-3">
+                    <p:toolbarGroup>
+                        <p:commandButton value="Nueva fase" icon="pi pi-plus"
+                                         actionListener="#{cronogramaController.crearFase}"
+                                         process="@this"
+                                         update=":frmCronograma:dlgFaseContent"
+                                         resetValues="true"
+                                         oncomplete="PF('dlgFase').show()"
+                                         title="Agregar fase al cronograma"
+                                         styleClass="ui-button-success mr-2"
+                                         disabled="#{not hayProceso}">
+                            <p:resetInput target=":frmCronograma:dlgFaseContent"/>
+                        </p:commandButton>
+
+                        <p:commandButton value="Recargar" icon="pi pi-refresh"
+                                         actionListener="#{cronogramaController.cargarFasesDelProceso}"
+                                         title="Recargar listado"
+                                         styleClass="ui-button-secondary"
+                                         update="@form"/>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+                        <p:commandButton value="Exportar PDF" icon="pi pi-file-pdf"
+                                         ajax="false"
+                                         disabled="#{empty fases}"
+                                         title="Descargar listado a PDF"
+                                         styleClass="ui-button-help mr-2">
+                            <p:dataExporter type="pdf" target="tblFases" fileName="cronograma_fases"/>
+                        </p:commandButton>
+
+                        <p:commandButton value="Exportar XLS" icon="pi pi-file-excel"
+                                         ajax="false"
+                                         disabled="#{empty fases}"
+                                         title="Descargar listado a Excel"
+                                         styleClass="ui-button-warning">
+                            <p:dataExporter type="xls" target="tblFases" fileName="cronograma_fases"/>
+                        </p:commandButton>
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+                <!-- DataTable de fases (solo si hay datos) -->
+                <p:dataTable id="tblFases" widgetVar="wdTblFases"
+                             var="f"
+                             value="#{fases}"
+                             rendered="#{not empty fases}"
+                             paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
+                             reflow="true" showGridlines="true" sortMode="multiple"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
+                             emptyMessage="Sin fases que coincidan con el filtro"
+                             styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines">
+
+                    <f:facet name="header">
+                        <div class="flex justify-content-between align-items-center">
+                            <span class="font-medium">
+                                <i class="pi pi-calendar" style="margin-right:.4rem"/>
+                                #{totalFases} fases registradas
+                            </span>
+                            <span class="p-input-icon-left">
+                                <i class="pi pi-search"/>
+                                <p:inputText id="globalFilter" placeholder="Buscar..."
+                                             onkeyup="PF('wdTblFases').filter()"/>
+                            </span>
+                        </div>
+                    </f:facet>
+
+                    <p:column headerText="#" sortBy="#{f.orden}"
+                              style="width:4rem; text-align:center">
+                        <p:badge value="#{f.orden}" severity="info"/>
+                    </p:column>
+
+                    <p:column headerText="Fase"
+                              sortBy="#{f.fase}" filterBy="#{f.fase}" filterMatchMode="contains">
+                        <p:chip label="#{f.fase}" icon="pi pi-tag"/>
+                    </p:column>
+
+                    <p:column headerText="Título"
+                              sortBy="#{f.titulo}" filterBy="#{f.titulo}" filterMatchMode="contains">
+                        <h:outputText value="#{f.titulo}" styleClass="font-medium"/>
+                    </p:column>
+
+                    <p:column headerText="Desde" sortBy="#{f.fechaInicio}" style="width:10rem">
+                        <p:chip icon="pi pi-calendar">
+                            <h:outputText value="#{f.fechaInicio}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:chip>
+                    </p:column>
+
+                    <p:column headerText="Hasta" sortBy="#{f.fechaFin}" style="width:10rem">
+                        <p:chip icon="pi pi-calendar-times">
+                            <h:outputText value="#{f.fechaFin}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:chip>
+                    </p:column>
+
+                    <p:column headerText="Severidad" style="width:8rem; text-align:center">
+                        <c:set var="sev" value="#{f.severidad}"/>
+                        <p:tag value="#{sev}"
+                               severity="#{sev eq 'URGENT' ? 'danger' : (sev eq 'WARNING' ? 'warning' : (sev eq 'SUCCESS' ? 'success' : 'info'))}"
+                               icon="#{sev eq 'URGENT' ? 'pi pi-exclamation-triangle' : (sev eq 'SUCCESS' ? 'pi pi-check-circle' : 'pi pi-info-circle')}"/>
+                    </p:column>
+
+                    <p:column headerText="Edición" style="width:7rem; text-align:center">
+                        <p:tag rendered="#{f.permiteEdicion}"
+                               value="Permite" severity="success" icon="pi pi-unlock"/>
+                        <p:tag rendered="#{not f.permiteEdicion}"
+                               value="Bloqueada" severity="warning" icon="pi pi-lock"/>
+                    </p:column>
+
+                    <p:column headerText="Estado" style="width:8rem; text-align:center">
+                        <p:tag rendered="#{f.vigente}"
+                               value="Vigente" severity="success" icon="pi pi-check"/>
+                        <p:tag rendered="#{f.futura}"
+                               value="Futura — #{f.diasRestantes}d" severity="info" icon="pi pi-clock"/>
+                        <p:tag rendered="#{f.pasada}"
+                               value="Finalizada" severity="warning" icon="pi pi-history"/>
+                    </p:column>
+
+                    <p:column exportable="false" style="width:7rem; text-align:center">
+                        <p:commandButton icon="pi pi-pencil"
+                                         actionListener="#{cronogramaController.editarFase(f)}"
+                                         process="@this"
+                                         update=":frmCronograma:dlgFaseContent"
+                                         resetValues="true"
+                                         oncomplete="PF('dlgFase').show()"
+                                         title="Editar fase"
+                                         styleClass="rounded-button ui-button-info mr-1">
+                            <p:resetInput target=":frmCronograma:dlgFaseContent"/>
+                        </p:commandButton>
+
+                        <p:commandButton icon="pi pi-trash"
+                                         actionListener="#{cronogramaController.eliminarFase(f)}"
+                                         process="@this"
+                                         update=":frmCronograma:panelFases"
+                                         title="Eliminar fase"
+                                         styleClass="rounded-button ui-button-danger">
+                            <p:confirm header="Confirmar eliminación"
+                                       message="¿Eliminar esta fase del cronograma?"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Empty state -->
+                <h:panelGroup layout="block"
+                              rendered="#{empty fases}"
+                              styleClass="empty-state">
+                    <i class="pi pi-calendar icon-lg"/>
+                    <h4>Sin fases registradas</h4>
+                    <p>Aún no hay fases asociadas a este proceso electoral. Comience agregando la primera.</p>
+                    <p:commandButton value="Agregar primera fase" icon="pi pi-plus"
+                                     actionListener="#{cronogramaController.crearFase}"
+                                     process="@this"
+                                     update=":frmCronograma:dlgFaseContent"
+                                     resetValues="true"
+                                     oncomplete="PF('dlgFase').show()"
+                                     styleClass="ui-button-success"
+                                     disabled="#{not hayProceso}">
+                        <p:resetInput target=":frmCronograma:dlgFaseContent"/>
+                    </p:commandButton>
+                </h:panelGroup>
+            </p:outputPanel>
+
+            <!-- =================================================================
+                 5. DIÁLOGO: CREAR / EDITAR FASE
+                 ================================================================= -->
+            <!-- IMPORTANTE: el dialog NO usa appendTo="@(body)".
+                 Si lo hiciéramos, el contenido se movería fuera del form en
+                 el DOM y PrimeFaces NO serializaría los inputs en el submit
+                 → el guardado recibiría valores vacíos y "se borraría todo".
+                 Tampoco usamos dynamic="true": el contenido se renderiza
+                 con la página y los <p:resetInput> + recarga del DTO en
+                 editarFase() ya garantizan estado limpio al abrir. -->
+            <p:dialog widgetVar="dlgFase"
+                      header="Fase del cronograma"
+                      modal="true" width="720" responsive="true"
+                      showEffect="fade" hideEffect="fade" closeOnEscape="true">
+
+                <p:outputPanel id="dlgFaseContent" class="ui-fluid">
+
+                    <!-- Mensajes inline del diálogo: errores/warnings de
+                         validación del service se muestran aquí, en contexto.
+                         globalOnly="false" + redisplay para que el growl
+                         general no se apropie de TODOS los mensajes. -->
+                    <p:messages id="dlgMessages" closable="true" showDetail="true"
+                                redisplay="false" styleClass="mb-2"/>
+
+                    <!-- TabView SIN dynamic/cache="false": los inputs de tabs no
+                         visibles deben permanecer en el DOM para que se envíen
+                         al servidor en el submit. Si se ponen lazy, el cambio
+                         de tab descarta los valores de los otros tabs. -->
+                    <p:tabView>
+
+                        <!-- TAB 5.1: Identificación de la fase -->
+                        <p:tab title="Identificación" titleStyleClass="font-medium">
+                            <div class="formgrid grid">
+
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="fase" value="Fase del catálogo"/>
+                                    <p:selectOneMenu id="fase"
+                                                     value="#{cronogramaController.faseSeleccionada.fase}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     required="true">
+                                        <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}"/>
+                                        <f:selectItems value="#{cronogramaController.fasesDisponibles}"
+                                                       var="x" itemLabel="#{x}" itemValue="#{x}"/>
+                                    </p:selectOneMenu>
+                                </div>
+
+                                <div class="field col-12 md:col-3">
+                                    <p:outputLabel for="orden" value="Orden"/>
+                                    <p:inputNumber id="orden"
+                                                   value="#{cronogramaController.faseSeleccionada.orden}"
+                                                   decimalPlaces="0" minValue="0"/>
+                                </div>
+
+                                <div class="field col-12 md:col-3">
+                                    <p:outputLabel for="severidad" value="Severidad"/>
+                                    <p:selectOneMenu id="severidad"
+                                                     value="#{cronogramaController.faseSeleccionada.severidad}">
+                                        <f:selectItems value="#{cronogramaController.severidadesDisponibles}"
+                                                       var="s" itemLabel="#{s}" itemValue="#{s}"/>
+                                    </p:selectOneMenu>
+                                </div>
+
+                                <div class="field col-12">
+                                    <p:outputLabel for="titulo" value="Título"/>
+                                    <p:inputText id="titulo"
+                                                 value="#{cronogramaController.faseSeleccionada.titulo}"
+                                                 maxlength="150"
+                                                 placeholder="Ej: Actualización de padrón"/>
+                                </div>
+                            </div>
+                        </p:tab>
+
+                        <!-- TAB 5.2: Calendario -->
+                        <p:tab title="Calendario" titleStyleClass="font-medium">
+                            <div class="formgrid grid">
+
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="fIniDlg" value="Inicio"/>
+                                    <p:datePicker id="fIniDlg"
+                                                  value="#{cronogramaController.faseSeleccionada.fechaInicio}"
+                                                  mindate="#{proceso.fechaInicio}"
+                                                  maxdate="#{cronogramaController.faseSeleccionada.fechaFin ne null ? cronogramaController.faseSeleccionada.fechaFin : proceso.fechaFin}"
+                                                  showIcon="true" showTime="true" showButtonBar="true"
+                                                  pattern="dd/MM/yyyy HH:mm" required="true"
+                                                  requiredMessage="La fecha de inicio es obligatoria">
+                                        <p:ajax event="dateSelect" update="fFinDlg"/>
+                                    </p:datePicker>
+                                    <small class="text-500">Mínimo: #{proceso.fechaInicio ne null ? '' : 'sin tope'}
+                                        <h:outputText rendered="#{proceso.fechaInicio ne null}"
+                                                      value="#{proceso.fechaInicio}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                    </small>
+                                </div>
+
+                                <div class="field col-12 md:col-6">
+                                    <p:outputLabel for="fFinDlg" value="Fin"/>
+                                    <p:datePicker id="fFinDlg"
+                                                  value="#{cronogramaController.faseSeleccionada.fechaFin}"
+                                                  mindate="#{cronogramaController.faseSeleccionada.fechaInicio ne null ? cronogramaController.faseSeleccionada.fechaInicio : proceso.fechaInicio}"
+                                                  maxdate="#{proceso.fechaFin}"
+                                                  showIcon="true" showTime="true" showButtonBar="true"
+                                                  pattern="dd/MM/yyyy HH:mm" required="true"
+                                                  requiredMessage="La fecha de fin es obligatoria">
+                                        <p:ajax event="dateSelect" update="fIniDlg"/>
+                                    </p:datePicker>
+                                    <small class="text-500">Máximo: #{proceso.fechaFin ne null ? '' : 'sin tope'}
+                                        <h:outputText rendered="#{proceso.fechaFin ne null}"
+                                                      value="#{proceso.fechaFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                    </small>
+                                </div>
+
+                                <div class="field col-12">
+                                    <h:panelGroup layout="block" styleClass="callout callout--warning">
+                                        <i class="pi pi-info-circle"/>
+                                        <span>
+                                            La fase queda <b>vigente</b> mientras la fecha actual esté
+                                            dentro del rango. Las fechas deben caer dentro del rango
+                                            del proceso electoral.
+                                        </span>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </p:tab>
+
+                        <!-- TAB 5.3: Mensaje del banner -->
+                        <p:tab title="Mensaje banner" titleStyleClass="font-medium">
+                            <div class="formgrid grid">
+
+                                <div class="field col-12">
+                                    <p:outputLabel for="mensaje" value="Texto del banner"/>
+                                    <p:inputTextarea id="mensaje"
+                                                     value="#{cronogramaController.faseSeleccionada.mensaje}"
+                                                     rows="4" maxlength="1000" autoResize="false"
+                                                     placeholder="Texto que verán los usuarios en la cabecera del sistema durante esta fase"/>
+                                </div>
+
+                                <div class="field col-12">
+                                    <h:panelGroup layout="block" styleClass="callout callout--info">
+                                        <i class="pi pi-comment"/>
+                                        <span>
+                                            Este mensaje aparece en la página de personas (y otras
+                                            que consumen el cronograma) según la severidad elegida.
+                                        </span>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </p:tab>
+
+                        <!-- TAB 5.4: Permisos -->
+                        <p:tab title="Permisos" titleStyleClass="font-medium">
+                            <div class="formgrid grid">
+                                <div class="field col-12">
+                                    <h:panelGroup layout="block" styleClass="callout callout--success">
+                                        <p:selectBooleanCheckbox id="permite"
+                                                                 value="#{cronogramaController.faseSeleccionada.permiteEdicion}"/>
+                                        <p:outputLabel for="permite"
+                                                       value="Permitir edición del padrón en esta fase"
+                                                       style="margin-left:.5rem; font-weight:600"/>
+                                        <p style="margin:.5rem 0 0 1.7rem; color:#166534">
+                                            Cuando está marcado, los IglesiaAdmin pueden agregar,
+                                            editar y eliminar miembros de su iglesia. Cuando no,
+                                            la pantalla queda en modo solo lectura.
+                                        </p>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </p:tab>
+
+                    </p:tabView>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Guardar" icon="pi pi-check"
+                                     actionListener="#{cronogramaController.guardarFase}"
+                                     process=":frmCronograma:dlgFaseContent @this"
+                                     update=":frmCronograma:panelFases :frmCronograma:dlgFaseContent"
+                                     oncomplete="if(args &amp;&amp; !args.validationFailed &amp;&amp; !args.faseError) PF('dlgFase').hide()"
+                                     styleClass="ui-button-success"/>
+                    <p:commandButton value="Cancelar" icon="pi pi-times" type="button"
+                                     onclick="PF('dlgFase').hide()"
+                                     styleClass="ui-button-secondary"/>
+                </f:facet>
+            </p:dialog>
+
+        </h:form>
+    </ui:define>
+</ui:composition>
