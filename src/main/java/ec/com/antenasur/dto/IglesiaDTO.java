@@ -34,6 +34,10 @@ public class IglesiaDTO implements Serializable {
     private Integer cantonId;
     /** nombre del cantón. Derivado en {@link #fromEntity}. */
     private String cantonNombre;
+    /** id de la provincia (padre del cantón). Derivado en {@link #fromEntity}. */
+    private Integer provinciaId;
+    /** nombre de la provincia. Derivado en {@link #fromEntity}. */
+    private String provinciaNombre;
     /** Versión para control de edición concurrente. Nunca editable por el usuario. */
     private Long version;
     private Boolean tieneDocumentos;
@@ -56,6 +60,10 @@ public class IglesiaDTO implements Serializable {
             if (i.getUbicacion().getGeograp() != null) {
                 dto.setCantonId(i.getUbicacion().getGeograp().getId());
                 dto.setCantonNombre(i.getUbicacion().getGeograp().getName());
+                if (i.getUbicacion().getGeograp().getGeograp() != null) {
+                    dto.setProvinciaId(i.getUbicacion().getGeograp().getGeograp().getId());
+                    dto.setProvinciaNombre(i.getUbicacion().getGeograp().getGeograp().getName());
+                }
             }
         }
         return dto;

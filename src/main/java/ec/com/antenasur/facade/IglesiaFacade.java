@@ -18,11 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 
     static final String HQL = " FROM Iglesia ig";
-    /** HQL base con ubicación (parroquia) y cantón (padre de la parroquia) ya cargados. */
+    /** HQL base con parroquia, cantón y provincia (3 niveles) ya cargados eager. */
     static final String HQL_CON_CANTON =
             " FROM Iglesia ig"
             + " LEFT JOIN FETCH ig.ubicacion ub"
-            + " LEFT JOIN FETCH ub.geograp canton";
+            + " LEFT JOIN FETCH ub.geograp canton"
+            + " LEFT JOIN FETCH canton.geograp provincia";
 
     public IglesiaFacade() {
         super(Iglesia.class, Integer.class);

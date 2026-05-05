@@ -1,6 +1,7 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -56,12 +57,20 @@ public class IglesiaController implements Serializable {
     @Getter
     private IglesiaDTO iglesiaSeleccionado;
 
-    /** Lista de cantones — compartida entre filtros y diálogo (solo lectura en diálogo). */
+    // ── Provincias (cargadas al inicio, compartidas entre filtro y diálogo) ──
     @Setter
     @Getter
-    private List<Geograp> cantones;
+    private List<Geograp> provincias;
 
     // ── Estado exclusivo del filtro geográfico (toolbar) ─────────────────────
+    @Setter
+    @Getter
+    private Integer provinciaFiltroId;
+
+    @Setter
+    @Getter
+    private List<Geograp> cantonesFiltro;
+
     @Setter
     @Getter
     private List<Geograp> parroquias;
@@ -71,6 +80,14 @@ public class IglesiaController implements Serializable {
     private Geograp parroquiaSeleccionado, cantonSeleccionado;
 
     // ── Estado exclusivo del diálogo Nueva / Editar ──────────────────────────
+    @Setter
+    @Getter
+    private Integer provinciaDialogoId;
+
+    @Setter
+    @Getter
+    private List<Geograp> cantonesDialogo;
+
     /**
      * ID del cantón seleccionado dentro del diálogo. Se usa Integer puro (no
      * Geograp) para evitar ambigüedades del IntegerConverter de JSF al
@@ -130,7 +147,18 @@ public class IglesiaController implements Serializable {
         try {
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
             cantonDialogoId = null;
-            cantones = geograpService.findByFatherId(7);
+            provinciaDialogoId = null;
+
+            // Carga provincias dinámicamente usando el nodo 7 (provincia conocida)
+            // como referencia para encontrar el padre (zona/país) de todas las provincias.
+            Geograp provRef = geograpService.find(7);
+            if (provRef != null && provRef.getGeograp() != null) {
+                provincias = geograpService.findByFatherId(provRef.getGeograp().getId());
+            }
+            if (provincias == null) {
+                provincias = Collections.emptyList();
+            }
+
             listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
@@ -144,19 +172,76 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    /** Usado por el filtro geográfico (toolbar): carga parroquias Y filtra la tabla por cantón. */
+    // ── Filtro geográfico ────────────────────────────────────────────────────
+
+    /**
+     * Filtro: cuando cambia la provincia carga los cantones correspondientes,
+     * limpia cantón/parroquia y filtra la tabla por la provincia seleccionada.
+     */
+    public void obtieneCantonesFiltro() {
+        cantonesFiltro = null;
+        cantonSeleccionado = new Geograp();
+        parroquias = null;
+        parroquiaSeleccionado = new Geograp();
+
+        if (provinciaFiltroId != null) {
+            cantonesFiltro = geograpService.findByFatherId(provinciaFiltroId);
+            List<Geograp> parroquiasDeProvincia = geograpService.obtenerParroquiasDeCantones(cantonesFiltro);
+            if (parroquiasDeProvincia != null && !parroquiasDeProvincia.isEmpty()) {
+                listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiasDeProvincia);
+            } else {
+                listaIglesias = Collections.emptyList();
+            }
+        } else {
+            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+        }
+    }
+
+    /** Filtro: cuando cambia el cantón carga parroquias y filtra la tabla. */
     public void obtieneParroquias() {
         if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
             parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
+            parroquiaSeleccionado = new Geograp();
             obtieneIglesiasPorCanton();
         }
     }
 
+    private void obtieneIglesiasPorCanton() {
+        if (parroquias != null && !parroquias.isEmpty()) {
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
+        }
+    }
+
+    public void obtieneIglesiasPorParroquia() {
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
+            listaIglesias = iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
+            PrimeFaces.current().ajax().update("frmIglesias", "msgs");
+        }
+    }
+
+    // ── Diálogo Nueva / Editar ───────────────────────────────────────────────
+
     /**
-     * Usado por el combo de cantón dentro del diálogo: carga parroquias en
-     * parroquiasDialogo y fuerza re-selección de parroquia. No toca el estado
-     * del filtro geográfico ni listaIglesias.
+     * Diálogo: cuando cambia la provincia carga los cantones del diálogo,
+     * limpia la selección de cantón y parroquia sin tocar el estado del filtro.
+     */
+    public void obtieneCantonesDialogo() {
+        cantonDialogoId = null;
+        cantonesDialogo = null;
+        parroquiasDialogo = null;
+        if (iglesiaSeleccionado != null) {
+            iglesiaSeleccionado.setUbicacionId(null);
+        }
+        if (provinciaDialogoId != null) {
+            cantonesDialogo = geograpService.findByFatherId(provinciaDialogoId);
+        }
+    }
+
+    /**
+     * Diálogo: cuando cambia el cantón carga las parroquias del diálogo.
+     * No toca el estado del filtro geográfico ni listaIglesias.
      */
     public void obtieneParroquiasEnDialogo() {
         if (cantonDialogoId != null) {
@@ -169,30 +254,30 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    private void obtieneIglesiasPorCanton() {
-        if (parroquias != null && !parroquias.isEmpty()) {
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
-        }
-    }
-
     /**
-     * Carga el id del cantón y la lista de parroquias del diálogo a partir de
-     * la parroquia de la iglesia. Sin tocar el estado del filtro.
+     * Carga provincia, cantón y parroquias del diálogo a partir de la parroquia
+     * de la iglesia. Sin tocar el estado del filtro.
      *
-     * Estrategia 1 — cantonId del DTO (más confiable, viene del JOIN FETCH eager).
+     * Estrategia 1 — datos del DTO (más confiable, viene del JOIN FETCH eager).
      * Estrategia 2 — SQL nativo sobre gelo_parent_id (robusto ante @Filter).
      * Estrategia 3 — navegación por entidad (fallback final).
      */
     private void cargarParroquiasParaDialogo(Integer parroquiaId) {
         cantonDialogoId = null;
+        provinciaDialogoId = null;
+        cantonesDialogo = null;
         parroquiasDialogo = null;
 
         if (parroquiaId == null) return;
 
-        // Estrategia 1: cantonId del DTO
+        // Estrategia 1: cantonId y provinciaId del DTO
         if (iglesiaSeleccionado != null && iglesiaSeleccionado.getCantonId() != null) {
             cantonDialogoId = iglesiaSeleccionado.getCantonId();
             parroquiasDialogo = geograpService.findByFatherId(cantonDialogoId);
+            if (iglesiaSeleccionado.getProvinciaId() != null) {
+                provinciaDialogoId = iglesiaSeleccionado.getProvinciaId();
+                cantonesDialogo = geograpService.findByFatherId(provinciaDialogoId);
+            }
             return;
         }
 
@@ -201,28 +286,32 @@ public class IglesiaController implements Serializable {
         if (canton != null && canton.getId() != null) {
             cantonDialogoId = canton.getId();
             parroquiasDialogo = geograpService.findByFatherId(cantonDialogoId);
+            Geograp provincia = geograpService.findParentOf(cantonDialogoId);
+            if (provincia != null) {
+                provinciaDialogoId = provincia.getId();
+                cantonesDialogo = geograpService.findByFatherId(provinciaDialogoId);
+            }
             return;
         }
 
         // Estrategia 3: navegación directa por entidad
         Geograp parroquia = geograpService.find(parroquiaId);
-        if (parroquia != null && parroquia.getGeograp() != null
-                && parroquia.getGeograp().getId() != null) {
+        if (parroquia != null && parroquia.getGeograp() != null) {
             cantonDialogoId = parroquia.getGeograp().getId();
             parroquiasDialogo = geograpService.findByFatherId(cantonDialogoId);
+            if (parroquia.getGeograp().getGeograp() != null) {
+                provinciaDialogoId = parroquia.getGeograp().getGeograp().getId();
+                cantonesDialogo = geograpService.findByFatherId(provinciaDialogoId);
+            }
         }
     }
 
-    public void obtieneIglesiasPorParroquia() {
-        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
-            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
-            listaIglesias = iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
-            PrimeFaces.current().ajax().update("frmIglesias", "msgs");
-        }
-    }
+    // ── Acciones de la tabla ─────────────────────────────────────────────────
 
     public void nuevaIglesia() {
         iglesiaSeleccionado = new IglesiaDTO();
+        provinciaDialogoId = null;
+        cantonesDialogo = null;
         cantonDialogoId = null;
         parroquiasDialogo = null;
         esNuevoRegistro = true;
@@ -269,7 +358,6 @@ public class IglesiaController implements Serializable {
     /** Eliminación desde la columna Acciones — iglesiaSeleccionado ya viene seteado via f:setPropertyActionListener. */
     public void eliminarIglesiaFila() {
         if (iglesiaSeleccionado == null) return;
-        // Re-validar permiso en el momento del click, no solo al cargar la página
         if (!cronogramaService.permiteRegistroIglesias()) {
             JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             iglesiaSeleccionado = null;
@@ -352,6 +440,10 @@ public class IglesiaController implements Serializable {
                 rechazarConMensaje("El nombre de la iglesia es obligatorio.");
                 return;
             }
+            if (provinciaDialogoId == null) {
+                rechazarConMensaje("Seleccione la provincia.");
+                return;
+            }
             if (cantonDialogoId == null) {
                 rechazarConMensaje("Seleccione el cantón.");
                 return;
@@ -377,12 +469,6 @@ public class IglesiaController implements Serializable {
             IglesiaDTO persistida = iglesiaService.guardarDesdeDTO(iglesiaSeleccionado);
             if (persistida != null) {
                 JsfUtil.addSuccessMessage(esEdicion ? "Iglesia actualizada correctamente." : "Iglesia registrada correctamente.");
-                // No anulamos iglesiaSeleccionado: el form del diálogo aún se re-renderiza
-                // por update="@form" antes de cerrarse vía oncomplete, y un null haría
-                // explotar bindings como #{iglesiaSeleccionado.ubicacionId}.
-                // Lo reemplazamos por el DTO persistido (con id, version y demás campos
-                // actualizados). nuevaIglesia()/editarIglesiaFila() lo sobrescribirán
-                // en la próxima apertura del diálogo.
                 iglesiaSeleccionado = persistida;
                 refrescarLista();
                 PrimeFaces.current().ajax().update("frmIglesias", "frmStats", "frmProgreso", "msgs");
@@ -390,7 +476,6 @@ public class IglesiaController implements Serializable {
                 rechazarConMensaje("No se pudo guardar la iglesia. Verifique que la parroquia seleccionada sea válida.");
             }
         } catch (NegocioException e) {
-            // Regla de negocio (RUC duplicado, conflicto de versión, etc.) — no loguear stack trace
             rechazarConMensaje(e.getMessage());
         } catch (Exception e) {
             log.error("Error al guardar iglesia", e);
@@ -410,6 +495,13 @@ public class IglesiaController implements Serializable {
 
     public void cancelarIglesia() {
         iglesiaSeleccionado = null;
+        provinciaFiltroId = null;
+        cantonesFiltro = null;
+        cantonSeleccionado = new Geograp();
+        parroquias = null;
+        parroquiaSeleccionado = new Geograp();
+        provinciaDialogoId = null;
+        cantonesDialogo = null;
         cantonDialogoId = null;
         parroquiasDialogo = null;
         refrescarLista();
@@ -444,10 +536,6 @@ public class IglesiaController implements Serializable {
             return 0;
         }
         return listaIglesias.size() - getIglesiasConDocumentos();
-    }
-
-    public int getCantonesCount() {
-        return cantones != null ? cantones.size() : 0;
     }
 
     public void cargaArchivosListaMiembros() {
