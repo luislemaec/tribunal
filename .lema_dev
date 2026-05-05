@@ -1,0 +1,84 @@
+[33mcommit a8b4d149340023fc1fc044f80bf413294ac87b9d[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m
+Author: luis.lema <lemaedu@gmail.com>
+Date:   Tue May 5 07:11:59 2026 -0500
+
+    Tec v1.0.3
+    Actualiza Cronograma
+
+[33mcommit 67b94b671e783b58c32522c4516570d78d577e1a[m
+Merge: f9ed0e0 c89527c
+Author: luis.lema <lemaedu@gmail.com>
+Date:   Sat May 2 10:18:28 2026 -0500
+
+    Merge branch 'master' of https://github.com/luislemaec/tribunal
+
+[33mcommit f9ed0e01b7a994bfe56b99273abe17abc135374f[m
+Author: luis.lema <lemaedu@gmail.com>
+Date:   Sat May 2 10:06:39 2026 -0500
+
+    Tec v1.0.2
+    Actualiza Arquitectura
+
+[33mcommit c89527c3a7a35735aad8529e664c7a11a614c2bf[m
+Author: luislemaec <luislema.ec@gmail.com>
+Date:   Wed Aug 13 11:13:26 2025 -0500
+
+    Add files via upload
+
+[33mcommit 3a6fbd930ec9db7b40327c6edce75726db4a54db[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Wed Aug 13 10:37:17 2025 -0500
+
+    v1.0.1
+    Actualiza
+
+[33mcommit d2f4761cd511ba36a8153c93da463850d57e3b61[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Thu Oct 6 11:18:02 2022 -0500
+
+    Mesa.   Permite descargar Actas de Escrutinios
+                Registra Votacion
+                    Genera acta de escrutinios
+    Iglesias.       Descargar archivo excel cargado Inicialmente
+
+[33mcommit a17e8081b4dad8627dba360ed90bbef83ebf4e05[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Wed Sep 28 17:12:53 2022 -0500
+
+    El sistema permite descargar actas de Escrutinios generados previamente
+
+[33mcommit adf8e168e8dc8db0856e3be8f5b2d9d821ac9729[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Fri Sep 9 13:36:30 2022 -0500
+
+    Genera Documento Acta de Escrutinios
+
+[33mcommit 8353910a6949a70c99644f0d493869a9d03813fa[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Thu Sep 8 08:34:27 2022 -0500
+
+    Agrga modulo para administracion de agrupaciones politicas o listas
+
+[33mcommit 195b4b25f4124aff97874b16976865c6a78f6f2d[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Thu Sep 8 08:13:35 2022 -0500
+
+    Agrga modulo para administracion de agrupaciones politicas o listas
+
+[33mcommit 4c1a74054d518f2b488d452423eea4daa6d74c8b[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Thu Sep 8 08:02:26 2022 -0500
+
+    Agrega acta de Escrutinios
+
+[33mcommit da2c6835c6aacfa80740a53cf0f944da62dc3481[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Tue Sep 6 14:16:13 2022 -0500
+
+    Actualización del Sistema
+
+[33mcommit abda4139f662d1c37b5101c43a6c9cf4a4d0e63d[m
+Author: Luis Lema <llema@consejodecomunicacion.gob.ec>
+Date:   Mon Aug 22 12:15:03 2022 -0500
+
+    Proyecto Inicial
