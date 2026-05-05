@@ -62,6 +62,11 @@ public class GeograpService {
         return geograpFacade.findByFatherGeograp(geograp);
     }
 
+    /** Retorna el Geograp padre (cantón) de la parroquia con el id dado. */
+    public Geograp findParentOf(Integer childId) {
+        return geograpFacade.findParentOf(childId);
+    }
+
     /**
      * Devuelve la unión de todas las parroquias hijas de los cantones dados.
      * Útil para reportes a nivel provincial donde se necesita iterar sobre

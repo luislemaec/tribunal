@@ -140,10 +140,9 @@ language governing permissions and limitations under the License. -->
                     <groupId>commons-codec</groupId>
                     <artifactId>commons-codec</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-math3</artifactId>
-                </exclusion>
+                <!-- NO excluir commons-math3: POI 5.x lo usa en
+                     RootProperty.setSize -> ArithmeticUtils.mulAndCheck al
+                     escribir archivos XLS (HSSFWorkbook.write). -->
             </exclusions>
         </dependency>
 

@@ -34,6 +34,8 @@ public class IglesiaDTO implements Serializable {
     private Integer cantonId;
     /** nombre del cantón. Derivado en {@link #fromEntity}. */
     private String cantonNombre;
+    /** Versión para control de edición concurrente. Nunca editable por el usuario. */
+    private Long version;
     private Boolean tieneDocumentos;
 
     public static IglesiaDTO fromEntity(Iglesia i) {
@@ -47,6 +49,7 @@ public class IglesiaDTO implements Serializable {
         dto.setTotalMiembros(i.getTotalMiembros());
         dto.setDocumento(i.getDocumento());
         dto.setTieneDocumentos(i.getTieneDocumentos());
+        dto.setVersion(i.getVersion());
         if (i.getUbicacion() != null) {
             dto.setUbicacionId(i.getUbicacion().getId());
             dto.setUbicacionNombre(i.getUbicacion().getName());

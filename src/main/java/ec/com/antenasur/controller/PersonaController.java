@@ -371,8 +371,8 @@ public class PersonaController implements Serializable {
 
             String tituloPrefijo = isActualizacionCompleta() ? "" : "[PARCIAL " + getPorcentajeActualizacion() + "%] ";
             String titulo = tituloPrefijo + "ACTA DE ACTUALIZACIÓN DE MIEMBROS";
-            String[] columnas = {"#", "CÉDULA", "NOMBRES", "APELLIDOS", "FECHA ACTUALIZACIÓN"};
-            float[] anchos = {30, 90, 130, 130, 100};
+            String[] columnas = {"#", "CÉDULA", "NOMBRES", "FECHA ACTUALIZACIÓN"};
+            float[] anchos = {30, 90, 200, 120};
 
             com.itextpdf.text.Font fuenteCab = ec.com.antenasur.util.Constantes.getFuenteCabeceraDefault(10);
             ec.com.antenasur.itext.ReportePFD.creaTablaCabecera(columnas.length, anchos, titulo, columnas, fuenteCab);
@@ -393,8 +393,7 @@ public class PersonaController implements Serializable {
                 datos[i][0] = String.valueOf(i + 1);
                 datos[i][1] = ip.getPersona() != null ? safe(ip.getPersona().getDocumento()) : "";
                 datos[i][2] = ip.getPersona() != null ? safe(ip.getPersona().getNombres()) : "";
-                datos[i][3] = ip.getPersona() != null ? safe(ip.getPersona().getApellidos()) : "";
-                datos[i][4] = ip.getFechaActualiza() != null ? fmt.format(ip.getFechaActualiza()) : "";
+                datos[i][3] = ip.getFechaActualiza() != null ? fmt.format(ip.getFechaActualiza()) : "";
             }
             com.itextpdf.text.Font fuenteCont = ec.com.antenasur.util.Constantes.getFuenteContenidoDefault(9);
             ec.com.antenasur.itext.ReportePFD.creaContenidoTabla(datos, columnas, fuenteCont);

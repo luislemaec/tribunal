@@ -48,7 +48,10 @@
                                 Cronograma electoral
                             </h3>
                             <p class="subtitle">
-                                Defina las fases del proceso electoral y los plazos en que cada acción está habilitada.
+                                Defina las fases del proceso electoral (10 bloques: registro inicial,
+                                gestión de miembros, convocatoria, candidaturas, organización electoral,
+                                campaña, jornada electoral, escrutinio, resultados y cierre)
+                                y los plazos en que cada acción está habilitada.
                             </p>
                         </div>
                         <p:tag rendered="#{proceso.activo}"
@@ -388,7 +391,12 @@
                               styleClass="empty-state">
                     <i class="pi pi-calendar icon-lg"/>
                     <h4>Sin fases registradas</h4>
-                    <p>Aún no hay fases asociadas a este proceso electoral. Comience agregando la primera.</p>
+                    <p>
+                        Aún no hay fases asociadas a este proceso. El catálogo incluye los 10 bloques
+                        del proceso electoral: registro inicial, gestión de miembros, convocatoria,
+                        candidaturas, organización electoral, campaña, jornada electoral, escrutinio,
+                        resultados y cierre.
+                    </p>
                     <p:commandButton value="Agregar primera fase" icon="pi pi-plus"
                                      actionListener="#{cronogramaController.crearFase}"
                                      process="@this"
@@ -469,7 +477,7 @@
                                     <p:inputText id="titulo"
                                                  value="#{cronogramaController.faseSeleccionada.titulo}"
                                                  maxlength="150"
-                                                 placeholder="Ej: Actualización de padrón"/>
+                                                 placeholder="Ej: Actualización de miembros"/>
                                 </div>
                             </div>
                         </p:tab>
@@ -545,8 +553,10 @@
                                     <h:panelGroup layout="block" styleClass="callout callout--info">
                                         <i class="pi pi-comment"/>
                                         <span>
-                                            Este mensaje aparece en la página de personas (y otras
-                                            que consumen el cronograma) según la severidad elegida.
+                                            Este mensaje aparece en la cabecera del sistema durante la fase activa.
+                                            Úselo para informar a los usuarios sobre la etapa en curso
+                                            (p. ej.: «Período de inscripción de candidaturas abierto»,
+                                            «Jornada electoral en curso — no se permiten cambios»).
                                         </span>
                                     </h:panelGroup>
                                 </div>
@@ -561,12 +571,14 @@
                                         <p:selectBooleanCheckbox id="permite"
                                                                  value="#{cronogramaController.faseSeleccionada.permiteEdicion}"/>
                                         <p:outputLabel for="permite"
-                                                       value="Permitir edición del padrón en esta fase"
+                                                       value="Permitir edición de miembros en esta fase"
                                                        style="margin-left:.5rem; font-weight:600"/>
                                         <p style="margin:.5rem 0 0 1.7rem; color:#166534">
                                             Cuando está marcado, los IglesiaAdmin pueden agregar,
-                                            editar y eliminar miembros de su iglesia. Cuando no,
-                                            la pantalla queda en modo solo lectura.
+                                            editar y eliminar miembros de su iglesia. Aplica
+                                            principalmente en la fase
+                                            <b>ACTUALIZACION_MIEMBROS</b> (bloque 2 — Gestión de miembros).
+                                            Fuera de esa fase la pantalla queda en modo solo lectura.
                                         </p>
                                     </h:panelGroup>
                                 </div>

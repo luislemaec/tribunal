@@ -1,19 +1,24 @@
 package ec.com.antenasur.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.GeograpFacade;
 import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.tec.DocumentoFacade;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
+import lombok.extern.slf4j.Slf4j;
 
 @Stateless
+@Slf4j
 public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFacade> {
 
     @Inject
@@ -54,18 +59,6 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(iglesiaTmp);
     }
 
-    /**
-     * Marca cada iglesia con su flag {@code tieneDocumentos} consultando si
-     * existe al menos un documento del tipo dado vinculado a su id. Modifica
-     * la lista in-place; no persiste cambios (es un flag transitorio para la
-     * vista). No-op si la lista es null o vacía.
-     */
-    /**
-     * Marca el flag {@code tieneDocumentos} en cada iglesia de la lista. Usa
-     * una sola query agregada
-     * ({@link DocumentoFacade#getEntidadesIdsConDocumentos}) en lugar de
-     * 1 query por iglesia. Antes: O(N) round-trips a BD; ahora: O(1).
-     */
     public void marcarConTieneDocumentos(List<Iglesia> iglesias, Integer tipoDocumentoId) {
         if (iglesias == null || iglesias.isEmpty() || tipoDocumentoId == null) {
             return;
@@ -90,17 +83,19 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     public List<IglesiaDTO> listarDTOsPorParroquias(List<Geograp> parroquias) {
+        if (parroquias == null || parroquias.isEmpty()) {
+            return Collections.emptyList();
+        }
         return mapearLista(iglesiaFacade.getIglesiasPorParroquias(parroquias));
     }
 
     public List<IglesiaDTO> listarDTOsPorParroquia(Geograp parroquia) {
+        if (parroquia == null || parroquia.getId() == null) {
+            return Collections.emptyList();
+        }
         return mapearLista(iglesiaFacade.getIglesiasPorParroquia(parroquia));
     }
 
-    /**
-     * Variante de {@link #listarDTOs()} que rellena el flag
-     * {@code tieneDocumentos} en cada DTO antes de retornar.
-     */
     public List<IglesiaDTO> listarDTOsConFlagDocumentos(Integer tipoDocumentoId) {
         List<Iglesia> iglesias = iglesiaFacade.findAll();
         marcarConTieneDocumentos(iglesias, tipoDocumentoId);
@@ -108,11 +103,33 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Persiste la iglesia descrita por el DTO. Si {@code id} es null, crea;
-     * si tiene id, hidrata la entidad existente con los campos del DTO. La
-     * ubicación se resuelve por {@link IglesiaDTO#getUbicacionId()} contra
-     * {@link GeograpFacade}; si el id es null la iglesia se persiste sin
-     * ubicación (caso poco frecuente).
+     * Retorna true si ya existe otra iglesia con el mismo nombre, parroquia y comunidad.
+     * La comparación es case-insensitive y descarta espacios extremos.
+     * Al editar, excluye el propio registro vía {@code idExcluir}.
+     */
+    public boolean existeDuplicado(String nombre, Integer ubicacionId, String comunidad, Integer idExcluir) {
+        String nombreN = normalizar(nombre);
+        if (nombreN == null || ubicacionId == null) return false;
+        Geograp ubicacion = geograpFacade.find(ubicacionId);
+        if (ubicacion == null) return false;
+        Iglesia tmp = new Iglesia();
+        tmp.setNombre(nombreN);
+        tmp.setComunidad(normalizar(comunidad));
+        tmp.setUbicacion(ubicacion);
+        Iglesia encontrada = iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(tmp);
+        if (encontrada == null) return false;
+        return idExcluir == null || !encontrada.getId().equals(idExcluir);
+    }
+
+    /**
+     * Persiste la iglesia descrita por el DTO aplicando normalización de strings
+     * (trim + uppercase) antes de persistir.
+     *
+     * Reglas de negocio aplicadas:
+     * - RUC real no puede repetirse en dos iglesias distintas.
+     * - Código genérico existente se conserva en ediciones sin cambio de RUC.
+     * - En edición, la versión del DTO debe coincidir con la de la BD para detectar
+     *   ediciones concurrentes (lanzará {@link NegocioException} si hay conflicto).
      */
     public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
         if (dto == null) {
@@ -120,22 +137,96 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         }
         Geograp ubicacion = (dto.getUbicacionId() != null)
                 ? geograpFacade.find(dto.getUbicacionId()) : null;
-
-        if (dto.getId() == null) {
-            Iglesia nueva = dto.toEntity();
-            nueva.setUbicacion(ubicacion);
-            return IglesiaDTO.fromEntity(iglesiaFacade.create(nueva));
-        }
-        Iglesia actual = iglesiaFacade.find(dto.getId());
-        if (actual == null) {
+        if (ubicacion == null) {
+            log.warn("guardarDesdeDTO: ubicacionId={} no encontrado", dto.getUbicacionId());
             return null;
         }
-        actual.setNombre(dto.getNombre());
-        actual.setComunidad(dto.getComunidad());
+
+        String nombre    = normalizar(dto.getNombre());
+        String comunidad = normalizar(dto.getComunidad());
+
+        if (dto.getId() == null) {
+            // ── NUEVO REGISTRO ──────────────────────────────────────────────
+            String documento = resolverDocumento(dto.getDocumento());
+            validarRucUnico(documento, null);
+            Iglesia nueva = dto.toEntity();
+            nueva.setNombre(nombre);
+            nueva.setComunidad(comunidad);
+            nueva.setDocumento(documento);
+            nueva.setUbicacion(ubicacion);
+            Iglesia creada = iglesiaFacade.create(nueva);
+            return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(creada.getId()));
+        }
+
+        // ── EDICIÓN ─────────────────────────────────────────────────────────
+        Iglesia actual = iglesiaFacade.find(dto.getId());
+        if (actual == null) {
+            log.warn("guardarDesdeDTO: iglesia id={} no encontrada para edición", dto.getId());
+            return null;
+        }
+
+        // Control de edición concurrente: versión del DTO debe coincidir con la BD
+        if (dto.getVersion() != null && !dto.getVersion().equals(actual.getVersion())) {
+            throw new NegocioException(
+                "El registro fue modificado por otro usuario mientras lo editaba. "
+                + "Cierre el diálogo, recargue los datos e intente nuevamente.");
+        }
+
+        // Preservar el código genérico existente — no re-generar en cada edición
+        String documento;
+        if (esDocumentoGenerico(dto.getDocumento())
+                && dto.getDocumento().equals(actual.getDocumento())) {
+            documento = actual.getDocumento();
+        } else {
+            documento = resolverDocumento(dto.getDocumento());
+        }
+
+        validarRucUnico(documento, dto.getId());
+
+        actual.setNombre(nombre);
+        actual.setComunidad(comunidad);
+        actual.setDocumento(documento);
         actual.setTotalMiembros(dto.getTotalMiembros());
-        actual.setDocumento(dto.getDocumento());
         actual.setUbicacion(ubicacion);
-        return IglesiaDTO.fromEntity(iglesiaFacade.edit(actual));
+        iglesiaFacade.edit(actual);
+        return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(actual.getId()));
+    }
+
+    /**
+     * Valida que el RUC real no esté ya asignado a otra iglesia.
+     * Los códigos genéricos (000…) no se validan por unicidad ya que el advisory lock
+     * en la BD los garantiza distintos.
+     */
+    private void validarRucUnico(String documento, Integer idExcluir) {
+        if (documento == null || esDocumentoGenerico(documento)) return;
+        Iglesia existente = iglesiaFacade.getIglesiaPorDocumento(documento);
+        if (existente != null && !existente.getId().equals(idExcluir)) {
+            throw new NegocioException(
+                "El RUC " + documento + " ya está registrado en la iglesia \"" + existente.getNombre() + "\".");
+        }
+    }
+
+    /** Delega en {@link IglesiaFacade#generarDocumentoGenerico()}. */
+    public String generarDocumentoGenerico() {
+        return iglesiaFacade.generarDocumentoGenerico();
+    }
+
+    /**
+     * Calcula el progreso de registro/actualización de iglesias dentro del
+     * rango de fechas de la fase activa.
+     *
+     * @return array [total, procesadas, porcentaje]
+     */
+    public int[] calcularProgresoRegistro(Date desde, Date hasta) {
+        int[] resultado = {0, 0, 0};
+        if (desde == null || hasta == null) return resultado;
+        int total = iglesiaFacade.count();
+        if (total == 0) return resultado;
+        long procesadas = iglesiaFacade.countActualizadasEnRango(desde, hasta);
+        resultado[0] = total;
+        resultado[1] = (int) procesadas;
+        resultado[2] = (int) Math.round((procesadas * 100.0) / total);
+        return resultado;
     }
 
     public IglesiaDTO eliminarPorId(Integer id) {
@@ -150,21 +241,45 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     public IglesiaDTO buscarDTOPorDocumento(String documento) {
-        if (documento == null || documento.isEmpty()) {
+        if (documento == null || documento.trim().isEmpty()) {
             return null;
         }
-        return IglesiaDTO.fromEntity(iglesiaFacade.getIglesiaPorDocumento(documento));
+        return IglesiaDTO.fromEntity(iglesiaFacade.getIglesiaPorDocumento(documento.trim()));
     }
 
     public List<IglesiaDTO> listarDTOsPorAsignarPorIds(List<Integer> idsExcluir, List<Integer> idsParroquias) {
         return mapearLista(iglesiaFacade.obtieneIglesiasPorAsignarPorIds(idsExcluir, idsParroquias));
     }
 
-    private List<IglesiaDTO> mapearLista(List<Iglesia> iglesias) {
-        List<IglesiaDTO> resultado = new ArrayList<>();
-        if (iglesias == null) {
-            return resultado;
+    // ----- helpers privados -----
+
+    /** Trim + uppercase; retorna null si el string resultante está vacío. */
+    private static String normalizar(String s) {
+        if (s == null) return null;
+        String r = s.trim().toUpperCase();
+        return r.isEmpty() ? null : r;
+    }
+
+    /**
+     * Si el documento es genérico (preview asignado en el toggle), re-genera uno
+     * nuevo dentro de la transacción activa para garantizar unicidad concurrente.
+     */
+    private String resolverDocumento(String documento) {
+        if (esDocumentoGenerico(documento)) {
+            return iglesiaFacade.generarDocumentoGenerico();
         }
+        return documento != null ? documento.trim() : null;
+    }
+
+    private static boolean esDocumentoGenerico(String doc) {
+        return doc != null && doc.startsWith("000000000000");
+    }
+
+    private List<IglesiaDTO> mapearLista(List<Iglesia> iglesias) {
+        if (iglesias == null || iglesias.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<IglesiaDTO> resultado = new ArrayList<>(iglesias.size());
         for (Iglesia i : iglesias) {
             resultado.add(IglesiaDTO.fromEntity(i));
         }

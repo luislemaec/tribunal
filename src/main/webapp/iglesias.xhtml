@@ -86,6 +86,56 @@
         </h:form>
 
         <!-- ======================================================
+             BARRA DE PROGRESO — FASE ACTIVA
+             ====================================================== -->
+        <h:form id="frmProgreso">
+            <p:outputPanel rendered="#{iglesiaController.faseVigente ne null}" styleClass="mb-3">
+                <div class="card">
+                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-3">
+                        <div>
+                            <span class="font-semibold text-900">
+                                Progreso de inscripción —
+                                <h:outputText value="#{iglesiaController.faseVigente.titulo}"
+                                              styleClass="text-primary"/>
+                            </span>
+                            <p class="text-600 text-sm mt-1 mb-0">
+                                Iglesias registradas o actualizadas dentro del período de la fase vigente.
+                            </p>
+                        </div>
+                        <div class="mt-2 md:mt-0 text-right">
+                            <span class="text-900 font-bold text-2xl">#{iglesiaController.progresoRegistro[1]}</span>
+                            <span class="text-500 text-sm"> / #{iglesiaController.progresoRegistro[0]} iglesias</span>
+                            <span class="ml-2 font-bold text-xl
+                                #{iglesiaController.progresoRegistro[2] ge 100 ? 'text-green-600' :
+                                  iglesiaController.progresoRegistro[2] ge 50  ? 'text-blue-600'  : 'text-orange-500'}">
+                                (#{iglesiaController.progresoRegistro[2]}%)
+                            </span>
+                        </div>
+                    </div>
+                    <p:progressBar value="#{iglesiaController.progresoRegistro[2]}"
+                                   styleClass="#{iglesiaController.progresoRegistro[2] ge 100 ? 'progress-green' :
+                                                iglesiaController.progresoRegistro[2] ge 50  ? 'progress-blue'  : 'progress-orange'}"
+                                   style="height: 1.25rem; border-radius: 0.5rem;"/>
+                    <div class="flex justify-content-between mt-1">
+                        <small class="text-500">
+                            Inicio: <h:outputText value="#{iglesiaController.faseVigente.fechaInicio}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                        </small>
+                        <small class="text-500">
+                            Fin: <h:outputText value="#{iglesiaController.faseVigente.fechaFin}">
+                                     <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                 </h:outputText>
+                            <h:outputText rendered="#{iglesiaController.faseVigente.diasRestantes gt 0}"
+                                          value=" · #{iglesiaController.faseVigente.diasRestantes} días restantes"
+                                          styleClass="text-orange-500 font-medium"/>
+                        </small>
+                    </div>
+                </div>
+            </p:outputPanel>
+        </h:form>
+
+        <!-- ======================================================
              FILTROS GEOGRÁFICOS
              ====================================================== -->
         <h:form id="frmFiltros">
@@ -98,8 +148,9 @@
                     <div class="field col-12 md:col-4">
                         <label for="canton" class="text-700 font-medium">Cantón</label>
                         <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full">
-                            <f:selectItem itemLabel="-- Todos los cantones --" itemValue=""/>
+                                         filter="true" filterMatchMode="contains"
+                                         placeholder="-- Todos los cantones --"
+                                         styleClass="w-full">
                             <f:selectItems value="#{iglesiaController.cantones}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneParroquias()}"
@@ -109,8 +160,9 @@
                     <div class="field col-12 md:col-4">
                         <label for="parroquia" class="text-700 font-medium">Parroquia</label>
                         <p:selectOneMenu id="parroquia" value="#{iglesiaController.parroquiaSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full">
-                            <f:selectItem itemLabel="-- Todas las parroquias --" itemValue=""/>
+                                         filter="true" filterMatchMode="contains"
+                                         placeholder="-- Todas las parroquias --"
+                                         styleClass="w-full">
                             <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorParroquia()}"
@@ -133,23 +185,33 @@
         <h:form id="frmIglesias">
             <div class="card">
 
+                <!-- BANNER FASE -->
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+                <p:outputPanel rendered="#{not iglesiaController.puedeRegistrarIglesia}" styleClass="mb-3">
+                    <div class="flex align-items-center surface-100 border-round p-3 gap-2">
+                        <i class="pi pi-lock text-orange-500 text-xl"/>
+                        <span class="text-700">
+                            El registro de iglesias está habilitado únicamente durante la fase
+                            <strong>Inscripción de Iglesias</strong> del cronograma electoral.
+                            <h:outputText rendered="#{iglesiaController.faseVigente ne null}"
+                                          value=" Fase vigente: #{iglesiaController.faseVigente.titulo}."/>
+                            <h:outputText rendered="#{iglesiaController.faseVigente eq null}"
+                                          value=" Actualmente no hay fase vigente."/>
+                        </span>
+                    </div>
+                </p:outputPanel>
+
                 <!-- TOOLBAR -->
                 <p:toolbar styleClass="mb-3 border-none p-0">
                     <p:toolbarGroup align="left">
                         <p:commandButton value="Nueva" icon="pi pi-plus"
                                          styleClass="ui-button-success mr-2"
+                                         disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          actionListener="#{iglesiaController.nuevaIglesia}"
                                          oncomplete="PF('dlgIglesia').show()"
                                          update=":frmDlgIglesia">
                             <p:resetInput target=":frmDlgIglesia"/>
-                        </p:commandButton>
-                        <p:commandButton id="btnEditar" value="Editar" icon="pi pi-pencil"
-                                         styleClass="ui-button-info mr-2"
-                                         disabled="#{!iglesiaController.existeIglesiasSeleccionadas() or iglesiaController.listaIglesiasSeleccionadas.size() gt 1}"
-                                         actionListener="#{iglesiaController.editarIglesia}"
-                                         oncomplete="PF('dlgIglesia').show()"
-                                         process="@this" update=":frmDlgIglesia">
-                            <p:tooltip for="@parent" value="Editar la iglesia seleccionada"/>
+                            <p:tooltip for="@parent" value="Disponible durante la fase Inscripción de Iglesias"/>
                         </p:commandButton>
                         <p:commandButton id="btnEliminarLista"
                                          value="#{iglesiaController.getMensajeBotonEliminar()}"
@@ -159,7 +221,7 @@
                                          actionListener="#{iglesiaController.eliminarIglesiaSeleccionadas}"
                                          process="@this" update=":frmIglesias :frmStats">
                             <p:confirm header="Confirmar eliminación"
-                                       message="Las iglesias seleccionadas serán marcadas como eliminadas. ¿Continuar?"
+                                       message="Las #{iglesiaController.listaIglesiasSeleccionadas.size()} iglesias seleccionadas serán eliminadas. ¿Continuar?"
                                        icon="pi pi-exclamation-triangle"/>
                             <p:tooltip for="@parent" value="Eliminar las iglesias seleccionadas"/>
                         </p:commandButton>
@@ -215,9 +277,9 @@
                         </div>
                     </f:facet>
 
-                    <p:ajax event="rowSelectCheckbox" update=":frmIglesias:btnEliminarLista :frmIglesias:btnEditar"/>
-                    <p:ajax event="rowUnselectCheckbox" update=":frmIglesias:btnEliminarLista :frmIglesias:btnEditar"/>
-                    <p:ajax event="toggleSelect" update=":frmIglesias:btnEliminarLista :frmIglesias:btnEditar"/>
+                    <p:ajax event="rowSelectCheckbox" update=":frmIglesias:btnEliminarLista"/>
+                    <p:ajax event="rowUnselectCheckbox" update=":frmIglesias:btnEliminarLista"/>
+                    <p:ajax event="toggleSelect" update=":frmIglesias:btnEliminarLista"/>
 
                     <p:column selectionMode="multiple" exportable="false"
                               styleClass="text-center" style="width:3rem"/>
@@ -260,7 +322,9 @@
                     </p:column>
 
                     <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:9rem">
+                              styleClass="text-center" style="width:13rem">
+
+                        <!-- Ver detalle -->
                         <p:commandButton icon="pi pi-eye"
                                          styleClass="ui-button-rounded ui-button-text ui-button-info"
                                          title="Ver detalle"
@@ -269,6 +333,36 @@
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
                         </p:commandButton>
+
+                        <!-- Editar fila — usa 'action' (no 'actionListener') para que se ejecute
+                             DESPUÉS de f:setPropertyActionListener y así iglesiaSeleccionado
+                             ya esté asignado cuando editarIglesiaFila lea sus campos. -->
+                        <p:commandButton icon="pi pi-pencil"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Editar iglesia' : 'Solo disponible en fase Inscripción de Iglesias'}"
+                                         disabled="#{not iglesiaController.puedeRegistrarIglesia}"
+                                         action="#{iglesiaController.editarIglesiaFila}"
+                                         oncomplete="PF('dlgIglesia').show()"
+                                         process="@this" update=":frmDlgIglesia">
+                            <f:setPropertyActionListener value="#{iglesia}"
+                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
+                        </p:commandButton>
+
+                        <!-- Eliminar fila — mismo patrón: action para garantizar el orden. -->
+                        <p:commandButton icon="pi pi-trash"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Eliminar iglesia' : 'Solo disponible en fase Inscripción de Iglesias'}"
+                                         disabled="#{not iglesiaController.puedeRegistrarIglesia}"
+                                         action="#{iglesiaController.eliminarIglesiaFila}"
+                                         process="@this" update=":frmIglesias :frmProgreso :frmStats">
+                            <f:setPropertyActionListener value="#{iglesia}"
+                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
+                            <p:confirm header="Confirmar eliminación"
+                                       message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+
+                        <!-- Documentos históricos -->
                         <p:commandButton icon="pi pi-folder-open"
                                          styleClass="ui-button-rounded ui-button-text ui-button-success"
                                          title="Ver documentos históricos"
@@ -282,93 +376,155 @@
                     </p:column>
 
                 </p:dataTable>
+
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="380">
+                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                                     styleClass="ui-button-danger" type="button"
+                                     onclick="PF('dlgConfirm').accept()"/>
+                    <p:commandButton value="Cancelar" icon="pi pi-times"
+                                     styleClass="ui-button-secondary ml-2" type="button"
+                                     onclick="PF('dlgConfirm').reject()"/>
+                </p:confirmDialog>
+
             </div>
         </h:form>
 
         <!-- ======================================================
-             DIÁLOGO: NUEVO / EDITAR IGLESIA
+             DIÁLOGO: NUEVO / EDITAR IGLESIA (formulario plano)
              ====================================================== -->
         <h:form id="frmDlgIglesia">
+            <!-- IMPORTANTE: NO usar appendTo="@(body)" aquí.
+                 Mueve el DOM del diálogo fuera del <form>, lo que hace que la
+                 serialización AJAX (jQuery $.serialize) no incluya los inputs
+                 del diálogo y los valores de cantón / parroquia / nombre lleguen
+                 nulos al servidor en el guardado. -->
             <p:dialog widgetVar="dlgIglesia"
                       header="#{iglesiaController.iglesiaSeleccionado.id eq null ? 'Nueva Iglesia' : 'Editar Iglesia'}"
                       modal="true" responsive="true" closable="true" closeOnEscape="true"
-                      width="720" dynamic="true" appendTo="@(body)">
+                      width="760">
 
-                <p:tabView id="tabsIglesia">
-                    <p:tab title="Datos generales" titleStyleClass="font-medium">
-                        <div class="formgrid grid">
-                            <div class="field col-12 md:col-6">
-                                <label for="ruc" class="font-medium text-700">
-                                    RUC <span class="text-red-500">*</span>
-                                </label>
-                                <p:inputText id="ruc" value="#{iglesiaController.iglesiaSeleccionado.documento}"
-                                             required="true" maxlength="13"
-                                             disabled="#{not empty iglesiaController.iglesiaSeleccionado.documento}"
-                                             styleClass="w-full mask-ruc">
-                                    <p:keyFilter for="@this" mask="num"/>
-                                    <p:ajax event="change" update="@form msgs"
-                                            listener="#{iglesiaController.buscaIglesiaPorDocumento}" process="@this"/>
-                                    <f:validateLength minimum="13" maximum="13"/>
-                                </p:inputText>
-                                <small class="text-500">13 dígitos numéricos</small>
-                            </div>
-                            <div class="field col-12 md:col-6">
-                                <label for="nombres" class="font-medium text-700">
-                                    Nombre <span class="text-red-500">*</span>
-                                </label>
-                                <p:inputText id="nombres" value="#{iglesiaController.iglesiaSeleccionado.nombre}"
-                                             required="true" maxlength="255"
-                                             onkeyup="value = value.toUpperCase()" styleClass="w-full"/>
-                            </div>
+                <div class="formgrid grid">
 
-                            <div class="field col-12 md:col-8">
-                                <label for="comunidad" class="font-medium text-700">Comunidad / Barrio</label>
-                                <p:inputText id="comunidad" value="#{iglesiaController.iglesiaSeleccionado.comunidad}"
-                                             maxlength="255" onkeyup="value = value.toUpperCase()"
-                                             styleClass="w-full"/>
-                            </div>
-                            <div class="field col-12 md:col-4">
-                                <label for="totalMiembros" class="font-medium text-700">Total miembros</label>
-                                <p:inputNumber id="totalMiembros"
-                                               value="#{iglesiaController.iglesiaSeleccionado.totalMiembros}"
-                                               minValue="0" decimalPlaces="0" thousandSeparator="."
-                                               styleClass="w-full"/>
-                            </div>
-                        </div>
-                    </p:tab>
+                    <!-- ¿Tiene RUC? + campo RUC -->
+                    <div class="field col-12">
+                        <label class="font-medium text-700 block mb-2">¿La iglesia tiene RUC?</label>
+                        <p:outputPanel id="tieneRucPanel" layout="block">
+                            <p:commandButton id="btnConRuc"
+                                             value="Sí, tiene RUC"
+                                             icon="pi pi-check"
+                                             styleClass="mr-2 #{iglesiaController.tieneRuc ? 'ui-button-success' : 'ui-button-outlined ui-button-secondary'}"
+                                             disabled="#{not iglesiaController.rucToggleHabilitado}"
+                                             actionListener="#{iglesiaController.seleccionarConRuc}"
+                                             process="@this" update="tieneRucPanel rucPanel">
+                                <p:tooltip for="@parent"
+                                           rendered="#{not iglesiaController.rucToggleHabilitado}"
+                                           value="El tipo de documento ya fue asignado y no puede cambiarse."/>
+                            </p:commandButton>
+                            <p:commandButton id="btnSinRuc"
+                                             value="No tiene RUC"
+                                             icon="pi pi-ban"
+                                             styleClass="#{not iglesiaController.tieneRuc ? 'ui-button-warning' : 'ui-button-outlined ui-button-secondary'}"
+                                             disabled="#{not iglesiaController.rucToggleHabilitado}"
+                                             actionListener="#{iglesiaController.seleccionarSinRuc}"
+                                             process="@this" update="tieneRucPanel rucPanel">
+                                <p:tooltip for="@parent"
+                                           rendered="#{not iglesiaController.rucToggleHabilitado}"
+                                           value="El tipo de documento ya fue asignado y no puede cambiarse."/>
+                            </p:commandButton>
+                        </p:outputPanel>
+                    </div>
 
-                    <p:tab title="Ubicación" titleStyleClass="font-medium">
-                        <div class="formgrid grid">
-                            <div class="field col-12 md:col-6">
-                                <label for="cantonSel" class="font-medium text-700">
-                                    Cantón <span class="text-red-500">*</span>
-                                </label>
-                                <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonSeleccionado.id}"
-                                                 filter="true" filterMatchMode="contains" required="true"
-                                                 styleClass="w-full">
-                                    <f:selectItem itemLabel="-- Seleccione cantón --" itemValue=""/>
-                                    <f:selectItems value="#{iglesiaController.cantones}" var="canton"
-                                                   itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                                    <p:ajax event="change" listener="#{iglesiaController.obtieneParroquias()}"
-                                            process="@this" update="parroquiaSel"/>
-                                </p:selectOneMenu>
-                            </div>
-                            <div class="field col-12 md:col-6">
-                                <label for="parroquiaSel" class="font-medium text-700">
-                                    Parroquia <span class="text-red-500">*</span>
-                                </label>
-                                <p:selectOneMenu id="parroquiaSel"
-                                                 value="#{iglesiaController.iglesiaSeleccionado.ubicacionId}"
-                                                 filter="true" filterMatchMode="contains" required="true"
-                                                 styleClass="w-full">
-                                    <f:selectItem itemLabel="-- Seleccione parroquia --" itemValue=""/>
-                                    <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"
-                                                   itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                                </p:selectOneMenu>
-                            </div>
-                        </div>
-                    </p:tab>
-                </p:tabView>
+                    <!-- RUC -->
+                    <p:outputPanel id="rucPanel" layout="block" styleClass="field col-12 md:col-5">
+                        <label for="ruc" class="font-medium text-700">
+                            RUC
+                            <h:outputText rendered="#{iglesiaController.tieneRuc}"
+                                          value=" *" styleClass="text-red-500"/>
+                        </label>
+
+                        <!-- Tiene RUC: campo editable con validación -->
+                        <p:inputText id="ruc"
+                                     rendered="#{iglesiaController.tieneRuc}"
+                                     value="#{iglesiaController.iglesiaSeleccionado.documento}"
+                                     required="true" maxlength="13"
+                                     styleClass="w-full">
+                            <p:keyFilter mask="num"/>
+                            <p:ajax event="change" update="@form"
+                                    listener="#{iglesiaController.buscaIglesiaPorDocumento}"
+                                    process="@this"/>
+                            <f:validateLength minimum="13" maximum="13"/>
+                        </p:inputText>
+
+                        <!-- Sin RUC: campo deshabilitado mostrando el código genérico -->
+                        <p:inputText id="rucGenerico"
+                                     rendered="#{not iglesiaController.tieneRuc}"
+                                     value="#{iglesiaController.iglesiaSeleccionado.documento}"
+                                     disabled="true" styleClass="w-full"/>
+
+                        <small class="text-500">
+                            <h:outputText rendered="#{iglesiaController.tieneRuc}"
+                                          value="13 dígitos numéricos"/>
+                            <h:outputText rendered="#{not iglesiaController.tieneRuc}"
+                                          value="Código genérico asignado automáticamente"
+                                          styleClass="text-orange-500 font-medium"/>
+                        </small>
+                    </p:outputPanel>
+
+                    <!-- Nombre -->
+                    <div class="field col-12 md:col-7">
+                        <label for="nombres" class="font-medium text-700">
+                            Nombre <span class="text-red-500">*</span>
+                        </label>
+                        <p:inputText id="nombres" value="#{iglesiaController.iglesiaSeleccionado.nombre}"
+                                     required="true" maxlength="255"
+                                     onkeyup="value = value.toUpperCase()" styleClass="w-full"/>
+                    </div>
+
+                    <!-- Comunidad -->
+                    <div class="field col-12">
+                        <label for="comunidad" class="font-medium text-700">Comunidad / Barrio</label>
+                        <p:inputText id="comunidad" value="#{iglesiaController.iglesiaSeleccionado.comunidad}"
+                                     maxlength="255" onkeyup="value = value.toUpperCase()"
+                                     styleClass="w-full"/>
+                    </div>
+
+                    <!-- Cantón (estado exclusivo del diálogo).
+                         IMPORTANTE: NO usar filter="true" aquí. PrimeFaces 11 tiene
+                         un bug en que tras update AJAX del form el trigger label del
+                         selectOneMenu con filter retiene el estado anterior y se
+                         concatenan etiquetas (ej: "COLTARIOBAMBA"). Para 22 cantones
+                         no se necesita filter. Validación en el controlador. -->
+                    <div class="field col-12 md:col-6">
+                        <label for="cantonSel" class="font-medium text-700">
+                            Cantón <span class="text-red-500">*</span>
+                        </label>
+                        <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonDialogoId}"
+                                         styleClass="w-full">
+                            <f:selectItem itemLabel="-- Seleccione cantón --"
+                                          itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{iglesiaController.cantones}" var="canton"
+                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                            <p:ajax event="change" listener="#{iglesiaController.obtieneParroquiasEnDialogo()}"
+                                    process="@this" update="parroquiaSel"/>
+                        </p:selectOneMenu>
+                    </div>
+
+                    <!-- Parroquia (estado exclusivo del diálogo). -->
+                    <div class="field col-12 md:col-6">
+                        <label for="parroquiaSel" class="font-medium text-700">
+                            Parroquia <span class="text-red-500">*</span>
+                        </label>
+                        <p:selectOneMenu id="parroquiaSel"
+                                         value="#{iglesiaController.iglesiaSeleccionado.ubicacionId}"
+                                         styleClass="w-full">
+                            <f:selectItem itemLabel="-- Seleccione parroquia --"
+                                          itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{iglesiaController.parroquiasDialogo}" var="parroquia"
+                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                        </p:selectOneMenu>
+                    </div>
+
+                </div>
 
                 <f:facet name="footer">
                     <div class="flex justify-content-end mt-2">
@@ -376,12 +532,12 @@
                                          styleClass="ui-button-secondary mr-2"
                                          actionListener="#{iglesiaController.cancelarIglesia}"
                                          oncomplete="PF('dlgIglesia').hide()"
-                                         process="@this" update=":frmIglesias msgs"/>
+                                         process="@this" update=":frmIglesias"/>
                         <p:commandButton value="Guardar" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{iglesiaController.actualizarIglesia}"
                                          oncomplete="if (!args.validationFailed) PF('dlgIglesia').hide()"
-                                         process="@form" update="@form :frmIglesias msgs"/>
+                                         process="@form" update="@form :frmIglesias :frmProgreso :frmStats"/>
                     </div>
                 </f:facet>
             </p:dialog>

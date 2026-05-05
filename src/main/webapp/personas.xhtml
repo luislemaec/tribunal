@@ -190,6 +190,8 @@
                             </p:commandButton>
                             <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
                                              actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
+                                             disabled="#{not personaController.puedeEditarPadron}"
+                                             title="#{personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma'}"
                                              process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
                                 <p:confirm header="Confirmar eliminación"
@@ -236,14 +238,6 @@
                                                  maxlength="100" required="true"
                                                  onkeyup="value = value.toUpperCase()"/>
                                 </div>
-                                <div class="field col-12 md:col-6">
-                                    <p:outputLabel for="apellidos" value="Apellidos *"/>
-                                    <p:inputText id="apellidos"
-                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.apellidos}"
-                                                 maxlength="100" required="true"
-                                                 onkeyup="value = value.toUpperCase()"/>
-                                </div>
-
                                 <div class="field col-12 md:col-6">
                                     <p:outputLabel for="tratamiento" value="Tratamiento"/>
                                     <p:inputText id="tratamiento"

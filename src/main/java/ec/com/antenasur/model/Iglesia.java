@@ -15,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.Version;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
@@ -78,6 +79,17 @@ public class Iglesia extends EntidadAuditable implements Serializable {
     @ManyToOne
     @JoinColumn(name = "gelo_id")
     private Geograp ubicacion;
+
+    /**
+     * Control de edición concurrente — Hibernate incrementa en cada UPDATE.
+     * El default 0 garantiza que filas migradas o nuevas nunca queden en NULL,
+     * lo que rompería {@code Versioning.increment} con NullPointerException.
+     */
+    @Setter
+    @Getter
+    @Version
+    @Column(name = "igl_version", nullable = false, columnDefinition = "BIGINT NOT NULL DEFAULT 0")
+    private Long version;
 
     @Setter
     @Getter

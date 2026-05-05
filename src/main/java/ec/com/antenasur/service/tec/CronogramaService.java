@@ -68,6 +68,19 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         return vigente.getFase() != null && vigente.getFase().defaultPermiteEdicionPadron();
     }
 
+    /**
+     * Indica si el registro/edición de iglesias está habilitado.
+     * Se permite únicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
+     *
+     * <p>No usa {@code cref_permite_edicion} porque ese campo es exclusivo del
+     * control del padrón de miembros ({@link #permiteEdicionPadron()}).
+     */
+    public boolean permiteRegistroIglesias() {
+        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
+        if (vigente == null) return false;
+        return vigente.getFase() == FaseElectoral.INSCRIPCION_IGLESIAS;
+    }
+
     public CronogramaFaseDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;
         return CronogramaFaseDTO.fromEntity(cronogramaFaseFacade.find(id));

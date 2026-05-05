@@ -95,8 +95,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public List<Geograp> findByFatherGeograp(Geograp geograp) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp=:geograp order by m.name ";            
-            //Query query = super.getEntityManager().createQuery(sql);
+            String sql = "FROM Geograp m WHERE m.geograp=:geograp order by m.name ";
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("geograp", geograp);
             List<Geograp> resultList = query.getResultList();
@@ -108,5 +107,28 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
             return null;
         }
         return null;
+    }
+
+    /**
+     * Devuelve el Geograp padre (cantón) de la parroquia indicada consultando
+     * directamente la columna {@code gelo_parent_id} vía SQL nativo.
+     * Se usa SQL nativo para evitar que el {@code @Filter} activo de Hibernate
+     * interfiera con la navegación por la relación {@code @ManyToOne}.
+     */
+    @SuppressWarnings("unchecked")
+    public Geograp findParentOf(Integer childId) {
+        if (childId == null) return null;
+        try {
+            Query q = getEntityManager().createNativeQuery(
+                    "SELECT gelo_parent_id FROM public.tb_geograp WHERE gelo_id = :id");
+            q.setParameter("id", childId);
+            Object parentId = q.getSingleResult();
+            if (parentId == null) return null;
+            return find(((Number) parentId).intValue());
+        } catch (NoResultException e) {
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
