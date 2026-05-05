@@ -4,16 +4,18 @@
  *
  * Integra:
  *   - NProgress: barra superior durante ajax JSF/PrimeFaces
- *   - Toastr: notificaciones (puente con FacesMessages)
- *   - SweetAlert2: helper global Tribunal.confirm(...)
+ *   - PrimeFaces <p:growl widgetVar="msgs"> (definido en globals.xhtml)
+ *     accesible vía Tribunal.toast.* y Tribunal.notify(...)
+ *   - SweetAlert2: helper global Tribunal.confirm(...) / Tribunal.alert(...)
  *   - Inputmask: máscaras automáticas para .mask-cedula, .mask-ruc,
  *     .mask-fecha, .mask-telefono
  *
- * Requiere que template.xhtml cargue desde CDN (en este orden):
- *   nprogress.js / .css
- *   toastr.min.js / .css
- *   sweetalert2.all.min.js
+ * Todos los assets se sirven localmente desde resources/demo (sin CDN).
+ * El template.xhtml los carga vía h:outputScript/Stylesheet en este orden:
+ *   nprogress.min.css/js
+ *   sweetalert2.min.css / sweetalert2.all.min.js
  *   jquery.inputmask.min.js
+ *   tribunal-globals.js (este archivo)
  * ============================================================ */
 (function (global) {
     'use strict';
@@ -21,25 +23,46 @@
     var Tribunal = global.Tribunal || {};
 
     // ------------------------------------------------------------------
-    // Toastr (configuración por defecto)
+    // Notificaciones flotantes — PrimeFaces <p:growl widgetVar="msgs">
+    //
+    // El componente está definido en /WEB-INF/globals.xhtml con autoUpdate,
+    // de modo que aplica a todas las páginas del sistema.
+    //
+    // Uso desde JS de página:
+    //   Tribunal.toast.success('Operación exitosa');
+    //   Tribunal.toast.warn('Cuidado', 'Verifique los datos');
+    //
+    // Uso desde controllers Java (recomendado):
+    //   JsfUtil.addInfoMessage(...) / addSuccessMessage(...) / etc.
+    //   El growl con autoUpdate los muestra sin tocar UI.
     // ------------------------------------------------------------------
-    if (global.toastr) {
-        toastr.options = {
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            timeOut: 4000,
-            extendedTimeOut: 1500,
-            newestOnTop: true,
-            preventDuplicates: true
-        };
-        Tribunal.toast = {
-            info:    function (m, t) { toastr.info(m, t || ''); },
-            success: function (m, t) { toastr.success(m, t || ''); },
-            warn:    function (m, t) { toastr.warning(m, t || ''); },
-            error:   function (m, t) { toastr.error(m, t || ''); }
-        };
+    /**
+     * Muestra un mensaje en el <p:growl widgetVar="msgs"> global.
+     * En PrimeFaces 11 el growl expone renderMessage(msg) como API JS.
+     * El objeto debe tener {severity, summary, detail}.
+     */
+    function showToast(severity, summary, detail) {
+        if (!global.PF) { return; }
+        var widget = PF('msgs');
+        if (!widget) { return; }
+        try {
+            widget.renderMessage({
+                severity: severity || 'info',
+                summary: summary || '',
+                detail: detail || ''
+            });
+        } catch (e) {
+            // Fallback: log si la versión de PF no expone renderMessage.
+            if (global.console) { console.warn('PF growl renderMessage no disponible:', e); }
+        }
     }
+
+    Tribunal.toast = {
+        info:    function (m, t) { showToast('info',    t || 'Información', m); },
+        success: function (m, t) { showToast('success', t || 'Éxito',       m); },
+        warn:    function (m, t) { showToast('warn',    t || 'Advertencia', m); },
+        error:   function (m, t) { showToast('error',   t || 'Error',       m); }
+    };
 
     // ------------------------------------------------------------------
     // SweetAlert2 helpers
@@ -78,23 +101,16 @@
     }
 
     // ------------------------------------------------------------------
-    // Puente FacesMessages -> Toastr
-    // Para usarlo: en cualquier página, agrega:
-    //   <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
-    //            autoUpdate="true" showDetail="true"/>
-    // y luego invoca Tribunal.flushFacesMessages() después del ajax,
-    // o deja que el observer de abajo lo capture automáticamente.
+    // Puente programático FacesMessages -> growl
+    // Útil cuando el JS necesita emitir un mensaje con la misma forma
+    // que produce el server (severity + summary + detail).
     // ------------------------------------------------------------------
     Tribunal.notify = function (severity, summary, detail) {
-        if (!global.toastr) { return; }
-        var msg = (detail && detail.length) ? detail : (summary || '');
-        switch ((severity || 'info').toLowerCase()) {
-            case 'error': case 'fatal': toastr.error(msg, summary); break;
-            case 'warn':  case 'warning': toastr.warning(msg, summary); break;
-            case 'info':  toastr.info(msg, summary); break;
-            case 'success': toastr.success(msg, summary); break;
-            default: toastr.info(msg, summary);
-        }
+        var s = (severity || 'info').toLowerCase();
+        if (s === 'fatal' || s === 'error')   { showToast('error',   summary, detail); return; }
+        if (s === 'warn'  || s === 'warning') { showToast('warn',    summary, detail); return; }
+        if (s === 'success')                  { showToast('success', summary, detail); return; }
+        showToast('info', summary, detail);
     };
 
     // ------------------------------------------------------------------

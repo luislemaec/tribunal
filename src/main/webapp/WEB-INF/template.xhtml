@@ -17,17 +17,26 @@
         <h:outputScript name="js/layout.js" library="ecuador-layout" />
         <h:outputScript name="js/prism.js" library="ecuador-layout"/>
 
-        <!-- ===================== Tier 1 globals (CDN) ===================== -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"/>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css"/>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
-        <h:outputStylesheet name="css/tribunal-globals.css" library="demo"/>
+        <!-- ===================== Globals (assets locales) =================
+             Todos los assets se sirven localmente desde resources/demo,
+             sin dependencia de CDNs externos. Los archivos se cargan a
+             través del ResourceHandler de JSF (h:outputStylesheet/Script)
+             para que el cacheo y versionado lo gestione el servidor.
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
-        <h:outputScript name="js/tribunal-globals.js" library="demo"/>
+             Para mensajes/notificaciones se usa <p:growl> de PrimeFaces 11
+             (definido en /WEB-INF/globals.xhtml).
+
+             Orden de carga: CSS primero, luego JS. tribunal-globals.js
+             depende de las libs anteriores, por lo que va al final.
+             ================================================================ -->
+        <h:outputStylesheet name="css/nprogress.min.css"     library="demo"/>
+        <h:outputStylesheet name="css/sweetalert2.min.css"   library="demo"/>
+        <h:outputStylesheet name="css/tribunal-globals.css"  library="demo"/>
+
+        <h:outputScript name="js/nprogress.min.js"           library="demo"/>
+        <h:outputScript name="js/sweetalert2.all.min.js"     library="demo"/>
+        <h:outputScript name="js/jquery.inputmask.min.js"    library="demo"/>
+        <h:outputScript name="js/tribunal-globals.js"        library="demo"/>
         <!-- =============================================================== -->
 
         <ui:insert name="head"/>

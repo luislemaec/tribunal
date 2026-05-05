@@ -73,6 +73,124 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         return CronogramaFaseDTO.fromEntity(cronogramaFaseFacade.find(id));
     }
 
+    /**
+     * Resultado de la validación de una fase antes de guardar. Contiene
+     * errores fatales (bloquean) y advertencias (informan al usuario pero
+     * no impiden guardar).
+     */
+    public static class ValidacionFase {
+        private final List<String> errores = new ArrayList<>();
+        private final List<String> advertencias = new ArrayList<>();
+        public boolean esValida() { return errores.isEmpty(); }
+        public List<String> getErrores() { return errores; }
+        public List<String> getAdvertencias() { return advertencias; }
+        public void error(String m) { errores.add(m); }
+        public void advertencia(String m) { advertencias.add(m); }
+    }
+
+    /**
+     * Valida una fase candidata a guardar. Verifica:
+     * <ul>
+     *   <li>Campos obligatorios (fase, fechas, título).</li>
+     *   <li>Que fechaInicio sea anterior a fechaFin.</li>
+     *   <li>Que el rango de la fase caiga dentro del rango del proceso.</li>
+     *   <li>Que no haya OTRA fase con el mismo enum FaseElectoral en el
+     *       mismo proceso (advertencia: dos veces ACTUALIZACION_PADRON
+     *       suele ser un error humano).</li>
+     *   <li>Que no haya OTRA fase del mismo proceso con rango solapado
+     *       (advertencia: superposición temporal puede ser intencional).</li>
+     * </ul>
+     */
+    public ValidacionFase validar(CronogramaFaseDTO dto) {
+        ValidacionFase v = new ValidacionFase();
+        if (dto == null) {
+            v.error("No hay datos para validar");
+            return v;
+        }
+        // 1. Campos obligatorios
+        if (dto.getFase() == null) {
+            v.error("Debe seleccionar la fase del catálogo");
+        }
+        if (dto.getTitulo() == null || dto.getTitulo().trim().isEmpty()) {
+            v.error("El título es obligatorio");
+        }
+        if (dto.getFechaInicio() == null) {
+            v.error("La fecha de inicio es obligatoria");
+        }
+        if (dto.getFechaFin() == null) {
+            v.error("La fecha de fin es obligatoria");
+        }
+        if (dto.getProcesoId() == null) {
+            v.error("Debe asociar la fase a un proceso electoral");
+        }
+        if (!v.esValida()) {
+            return v; // sin fechas o ids no tiene sentido seguir
+        }
+
+        // 2. Coherencia de rango
+        if (!dto.getFechaInicio().before(dto.getFechaFin())) {
+            v.error("La fecha de inicio debe ser anterior a la fecha de fin");
+            return v;
+        }
+        long durMs = dto.getFechaFin().getTime() - dto.getFechaInicio().getTime();
+        if (durMs < 60000L) { // < 1 minuto
+            v.error("La duración de la fase debe ser mayor a un minuto");
+            return v;
+        }
+
+        // 3. Rango contra el proceso electoral
+        ProcesoElectoral proceso = procesoElectoralFacade.find(dto.getProcesoId());
+        if (proceso == null) {
+            v.error("El proceso electoral no existe");
+            return v;
+        }
+        if (proceso.getFechaInicio() != null
+                && dto.getFechaInicio().before(proceso.getFechaInicio())) {
+            v.error("La fase inicia antes que el proceso electoral ("
+                    + formatear(proceso.getFechaInicio()) + ")");
+        }
+        if (proceso.getFechaFin() != null
+                && dto.getFechaFin().after(proceso.getFechaFin())) {
+            v.error("La fase termina después que el proceso electoral ("
+                    + formatear(proceso.getFechaFin()) + ")");
+        }
+
+        // 4. Duplicados y superposiciones (consultando otras fases del proceso)
+        List<CronogramaFase> otras = cronogramaFaseFacade.listarPorProceso(dto.getProcesoId());
+        if (otras != null) {
+            for (CronogramaFase f : otras) {
+                // ignoramos la propia fase si es edición
+                if (dto.getId() != null && dto.getId().equals(f.getId())) continue;
+
+                // 4a. Misma fase enum repetida en el proceso
+                if (f.getFase() != null && f.getFase().equals(dto.getFase())) {
+                    v.advertencia("Ya existe otra fase '" + dto.getFase()
+                            + "' en este proceso (id #" + f.getId() + ")");
+                }
+                // 4b. Solapamiento de rangos
+                if (rangosSolapan(dto.getFechaInicio(), dto.getFechaFin(),
+                        f.getFechaInicio(), f.getFechaFin())) {
+                    v.advertencia("Rango solapado con la fase '"
+                            + (f.getFase() == null ? "?" : f.getFase().name())
+                            + "' (" + formatear(f.getFechaInicio())
+                            + " — " + formatear(f.getFechaFin()) + ")");
+                }
+            }
+        }
+        return v;
+    }
+
+    private static boolean rangosSolapan(java.util.Date aIni, java.util.Date aFin,
+                                         java.util.Date bIni, java.util.Date bFin) {
+        if (aIni == null || aFin == null || bIni == null || bFin == null) return false;
+        return aIni.before(bFin) && bIni.before(aFin);
+    }
+
+    private static String formatear(java.util.Date d) {
+        if (d == null) return "—";
+        return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(d);
+    }
+
     public List<CronogramaFaseDTO> listarDTOsPorProceso(Integer procesoId) {
         List<CronogramaFaseDTO> r = new ArrayList<>();
         if (procesoId == null) return r;

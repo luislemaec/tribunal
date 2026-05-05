@@ -151,20 +151,22 @@ public class CronogramaController implements Serializable {
                 }
                 faseSeleccionada.setProcesoId(procesoSeleccionado.getId());
             }
-            // Validaciones de negocio mínimas (la UI ya marca required, esto
-            // es defensa en service-side).
-            if (faseSeleccionada.getFase() == null) {
-                JsfUtil.addErrorMessage("Seleccione la fase del catálogo");
+            // Validación delegada al service: errores fatales bloquean,
+            // advertencias se muestran como warning sin impedir el guardado.
+            CronogramaService.ValidacionFase val = cronogramaService.validar(faseSeleccionada);
+            if (!val.esValida()) {
+                for (String e : val.getErrores()) {
+                    JsfUtil.addErrorMessage(e);
+                }
+                // Flag para que el oncomplete del botón mantenga el diálogo
+                // abierto (los errores de negocio NO disparan args.validationFailed).
+                org.primefaces.PrimeFaces.current().ajax().addCallbackParam("faseError", true);
                 return;
             }
-            if (faseSeleccionada.getFechaInicio() == null || faseSeleccionada.getFechaFin() == null) {
-                JsfUtil.addErrorMessage("Las fechas de inicio y fin son obligatorias");
-                return;
+            for (String w : val.getAdvertencias()) {
+                JsfUtil.addWarningMessage(w);
             }
-            if (faseSeleccionada.getFechaInicio().after(faseSeleccionada.getFechaFin())) {
-                JsfUtil.addErrorMessage("La fecha de inicio no puede ser posterior a la fecha de fin");
-                return;
-            }
+
             boolean esEdicion = faseSeleccionada.getId() != null;
             CronogramaFaseDTO p = cronogramaService.guardarDesdeDTO(faseSeleccionada);
             if (p != null) {
@@ -176,7 +178,7 @@ public class CronogramaController implements Serializable {
             }
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR FASE", e);
-            JsfUtil.addErrorMessage("Error inesperado al guardar la fase");
+            JsfUtil.addErrorMessage("Error inesperado al guardar la fase: " + e.getMessage());
         }
     }
 

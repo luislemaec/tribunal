@@ -4,12 +4,15 @@
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui">
 
-    <!-- Growl global: cualquier FacesMessage globalOnly se pinta aquí.
-         autoUpdate evita tener que agregarlo a update="" en cada commandButton.
-         Va FUERA de un form para que update="msgs" desde otras páginas
-         lo siga resolviendo por id directo. -->
-    <p:growl id="msgs" widgetVar="msgs" globalOnly="true" showDetail="true"
-             autoUpdate="true" life="4000"/>
+    <!-- Growl global con presentación profesional.
+         id="msgs" + autoUpdate="true" hace que cualquier
+         JsfUtil.addInfoMessage(...) / addSuccessMessage(...) etc. aparezca
+         automáticamente sin necesitar update="msgs" en cada commandButton.
+         widgetVar="msgs" permite invocarlo desde JS vía Tribunal.toast.*
+         (ver tribunal-globals.js → showToast → renderMessage). -->
+    <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
+             showDetail="true" showSummary="true" sticky="false"
+             life="5000" autoUpdate="true"/>
 
     <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
          consistente con el tema, sin necesidad de declararlo página por página.
@@ -22,18 +25,15 @@
     <p:scrollTop target="window" threshold="400" icon="pi pi-arrow-up"
                  styleClass="custom-scroll-top"/>
 
-    <!-- NotificationBar: banner de ambiente (solo se muestra fuera de PRODUCCIÓN
-         para que el usuario sepa con seguridad en qué entorno está trabajando). -->
-    <p:notificationBar widgetVar="nbAmbiente" position="top" effect="slide"
-                       autoDisplay="true"
-                       rendered="#{loginBean.loggedIn and loginBean.servidor ne 'P R O D U C C I Ó N'}"
-                       styleClass="ambiente-bar">
-        <h:panelGroup layout="block" style="text-align:center; padding:.4rem 1rem">
-            <i class="pi pi-info-circle" style="margin-right:.5rem"/>
-            <span>Ambiente: <b>#{loginBean.servidor}</b></span>
-            <span style="margin-left:1rem">— Sistema: <b>#{loginBean.sistema}</b></span>
-        </h:panelGroup>
-    </p:notificationBar>
+    <!-- Indicador de ambiente: chip flotante discreto en la esquina inferior
+         izquierda (solo fuera de PRODUCCIÓN). Reemplaza al notificationBar
+         full-width que ocupaba demasiado espacio sin aportar valor. -->
+    <h:panelGroup layout="block"
+                  rendered="#{loginBean.loggedIn and loginBean.servidor ne 'P R O D U C C I Ó N'}"
+                  styleClass="ambiente-chip">
+        <i class="pi pi-server" style="margin-right:.4rem"/>
+        <b>#{loginBean.servidor}</b>
+    </h:panelGroup>
 
     <h:form id="frmGlobal">
         <!-- ConfirmDialog global: cualquier botón con

@@ -4,9 +4,26 @@
 #nprogress .bar      { background: #f59e0b !important; height: 3px; }
 #nprogress .peg      { box-shadow: 0 0 10px #f59e0b, 0 0 5px #f59e0b !important; }
 
-/* Toastr: bordes redondeados + sombra suave */
-.toast               { border-radius: 8px !important; box-shadow: 0 6px 18px rgba(0,0,0,.15) !important; }
-.toast-top-right     { top: 70px !important; }
+/* p:growl (PF 11) — presentación profesional */
+.ui-growl            { top: 70px !important; right: 20px !important; }
+.ui-growl-item-container {
+    border-radius: 10px !important;
+    box-shadow: 0 8px 22px rgba(0,0,0,.18) !important;
+    margin-bottom: .75rem !important;
+}
+.ui-growl-item-container.ui-growl-info    { border-left: 5px solid #2563eb !important; }
+.ui-growl-item-container.ui-growl-success { border-left: 5px solid #16a34a !important; }
+.ui-growl-item-container.ui-growl-warn    { border-left: 5px solid #d97706 !important; }
+.ui-growl-item-container.ui-growl-error,
+.ui-growl-item-container.ui-growl-fatal   { border-left: 5px solid #dc2626 !important; }
+.ui-growl-title {
+    font-weight: 700 !important;
+    font-size: .95rem !important;
+}
+.ui-growl-message p {
+    font-size: .85rem !important;
+    margin-top: .25rem !important;
+}
 
 /* SweetAlert2: alinear con tema Ecuador */
 .swal2-popup         { border-radius: 12px !important; font-family: inherit !important; }
@@ -25,13 +42,26 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
 }
 .custom-scroll-top.ui-scrolltop:hover { background: #d97706 !important; }
 
-/* NotificationBar de ambiente */
-.ambiente-bar {
-    background: linear-gradient(90deg, #fbbf24, #f59e0b) !important;
-    color: #1f2937 !important;
-    font-size: .85rem !important;
-    border-bottom: 1px solid #d97706 !important;
+/* Chip flotante de ambiente (DESARROLLO/PRUEBAS).
+   Discreto en la esquina inferior izquierda, no invade la cabecera. */
+.ambiente-chip {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1f2937;
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    box-shadow: 0 4px 12px rgba(217,119,6,.35);
+    z-index: 999;
+    user-select: none;
+    opacity: .92;
+    transition: opacity .15s ease;
 }
+.ambiente-chip:hover { opacity: 1; }
 
 /* BlockUI: contenido centrado con texto blanco sobre overlay oscuro */
 .ui-blockui-content { text-align: center; padding: 1.5rem; }
@@ -45,6 +75,45 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     box-shadow: 0 6px 14px rgba(37,99,235,.35) !important;
 }
 .dashboard-speeddial.ui-button:hover { background: #1d4ed8 !important; }
+
+/* ============================================================
+ * Patrones reutilizables del sistema (callouts, page header, KPI)
+ * Usados por: cronograma.xhtml, personas.xhtml y otras páginas.
+ * ============================================================ */
+
+/* Cabecera de página (título + subtítulo + tag opcional) */
+.page-header             { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+.page-header h3          { color:#1e3a8a; margin:0; }
+.page-header .subtitle   { color:#6b7280; margin:.25rem 0 0; }
+
+/* KPI cards en grilla superior */
+.kpi-card                { background:#fff; border-radius:.5rem; box-shadow:0 1px 2px rgba(0,0,0,.06); padding:1rem; }
+.kpi-card .label         { display:block; color:#6b7280; font-weight:500; font-size:.85rem; }
+.kpi-card .value         { display:block; color:#111827; font-weight:700; font-size:1.5rem; }
+.kpi-card .value--ellip  { font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Callouts informativos (paneles laterales con borde de color) */
+.callout                 { padding:.75rem 1rem; border-radius:.5rem; border-left:3px solid; }
+.callout i               { margin-right:.5rem; }
+.callout--info           { background:#dbeafe; border-color:#2563eb; color:#1e40af; }
+.callout--warning        { background:#fef3c7; border-color:#d97706; color:#92400e; }
+.callout--success        { background:#f0fdf4; border-color:#16a34a; color:#166534; }
+.callout--neutral        { background:#f8fafc; border-color:#94a3b8; color:#475569; }
+.callout--danger         { background:#fee2e2; border-color:#dc2626; color:#991b1b; }
+
+/* Empty state genérico */
+.empty-state             { padding:2.5rem 1rem; text-align:center; border-radius:.5rem; background:#f8fafc; border:2px dashed #cbd5e1; }
+.empty-state i.icon-lg   { font-size:3rem; color:#94a3b8; }
+.empty-state h4          { margin:.75rem 0 .5rem; color:#374151; }
+.empty-state p           { color:#6b7280; margin-bottom:.75rem; }
+
+/* Toolbar transparente embebido en card */
+.toolbar-flat.ui-toolbar { background:transparent; border:0; padding:0; }
+
+/* Divider con tag inline */
+.divider-tag             { padding:.25rem .6rem; border-radius:.25rem; font-size:.8rem; }
+.divider-tag--info       { background:#dbeafe; color:#1e40af; }
+.divider-tag--warning    { background:#fef3c7; color:#92400e; }
 
 /* Tooltips: tipografía coherente */
 .ui-tooltip .ui-tooltip-text {
