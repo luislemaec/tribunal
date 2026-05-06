@@ -1,7 +1,9 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -13,6 +15,7 @@ import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.exception.NegocioException;
@@ -351,8 +354,13 @@ public class IglesiaController implements Serializable {
         }
     }
 
+    /**
+     * Identifica códigos genéricos. Real Ecuadorian RUCs jamás empiezan con "00"
+     * (códigos de provincia 01-24), por lo que el prefijo de 2 ceros es un
+     * discriminador estable independiente del valor de la secuencia.
+     */
     private boolean esDocumentoGenerico(String documento) {
-        return documento != null && documento.startsWith("000000000000");
+        return documento != null && documento.startsWith("00");
     }
 
     /** Eliminación desde la columna Acciones — iglesiaSeleccionado ya viene seteado via f:setPropertyActionListener. */
@@ -546,6 +554,45 @@ public class IglesiaController implements Serializable {
         } catch (Exception e) {
             log.error("Error al obtener documentos de iglesia id={}", iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null, e);
             JsfUtil.addErrorMessage("No se pudieron cargar los documentos.");
+        }
+    }
+
+    public void exportarExcel() {
+        try {
+            List<IglesiaDTO> lista = listaIglesias != null ? listaIglesias : Collections.emptyList();
+            String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+            String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
+
+            ReporteXLSX.nuevoExcel("Listado de Iglesias");
+            ReporteXLSX.creaEspacioInformativo(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
+
+            String[] columnas = {
+                "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
+                "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS", "DOCUMENTOS"
+            };
+            int[] anchos = { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500, 3500 };
+            ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+
+            String[][] datos = new String[lista.size()][columnas.length];
+            for (int i = 0; i < lista.size(); i++) {
+                IglesiaDTO ig = lista.get(i);
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = ig.getDocumento() != null ? ig.getDocumento() : "";
+                datos[i][2] = ig.getNombre() != null ? ig.getNombre() : "";
+                datos[i][3] = ig.getComunidad() != null ? ig.getComunidad() : "";
+                datos[i][4] = ig.getProvinciaNombre() != null ? ig.getProvinciaNombre() : "";
+                datos[i][5] = ig.getCantonNombre() != null ? ig.getCantonNombre() : "";
+                datos[i][6] = ig.getUbicacionNombre() != null ? ig.getUbicacionNombre() : "";
+                datos[i][7] = ig.getTotalMiembros() != null ? String.valueOf(ig.getTotalMiembros()) : "";
+                datos[i][8] = Boolean.TRUE.equals(ig.getTieneDocumentos()) ? "Sí" : "No";
+            }
+
+            ReporteXLSX.creaContenidoTabla(datos, columnas);
+            ReporteXLSX.setFinalParagraph(lista.size());
+            ReporteXLSX.descargarExcel("iglesias");
+        } catch (Exception e) {
+            log.error("Error al exportar Excel de iglesias", e);
+            JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");
         }
     }
 }

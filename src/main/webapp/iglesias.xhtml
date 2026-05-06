@@ -290,10 +290,9 @@
                                             pageOnly="false"/>
                         </p:commandButton>
                         <p:commandButton value="Excel" icon="pi pi-file-excel"
-                                         styleClass="ui-button-outlined ui-button-success" ajax="false">
-                            <p:dataExporter type="xls" target="tblIglesia" fileName="iglesias"
-                                            pageOnly="false"/>
-                        </p:commandButton>
+                                         styleClass="ui-button-outlined ui-button-success"
+                                         actionListener="#{iglesiaController.exportarExcel}"
+                                         ajax="false"/>
                     </div>
                 </div>
 
@@ -338,9 +337,9 @@
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.documento}"/>
                         </f:facet>
-                        <p:tag rendered="#{not empty iglesia.documento and iglesia.documento.startsWith('000000000000')}"
+                        <p:tag rendered="#{not empty iglesia.documento and iglesia.documento.startsWith('00')}"
                                value="Genérico" icon="pi pi-tag" severity="warning"/>
-                        <h:outputText rendered="#{not empty iglesia.documento and not iglesia.documento.startsWith('000000000000')}"
+                        <h:outputText rendered="#{not empty iglesia.documento and not iglesia.documento.startsWith('00')}"
                                       value="#{iglesia.documento}" styleClass="text-sm text-900"
                                       style="font-family:monospace"/>
                         <h:outputText rendered="#{empty iglesia.documento}" value="—" styleClass="text-400"/>
@@ -653,9 +652,9 @@
                     <div class="grid">
                         <div class="col-12 md:col-6 mb-2">
                             <span class="block text-500 text-xs font-medium uppercase mb-1">RUC / Código</span>
-                            <p:tag rendered="#{not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('000000000000')}"
+                            <p:tag rendered="#{not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00')}"
                                    value="Genérico" icon="pi pi-tag" severity="warning"/>
-                            <span rendered="#{not (not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('000000000000'))}"
+                            <span rendered="#{not (not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00'))}"
                                   class="text-900 font-medium" style="font-family:monospace">
                                 <h:outputText value="#{iglesiaController.iglesiaSeleccionado.documento}"/>
                             </span>

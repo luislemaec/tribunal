@@ -128,45 +128,53 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
         }
     }
 
-    /**
-     * Genera el siguiente código genérico secuencial (0000000000001, 0000000000002…).
-     *
-     * Usa pg_advisory_xact_lock (vía JDBC directo) para garantizar exclusión mutua
-     * dentro de la transacción activa: dos EJBs concurrentes no obtienen el mismo número.
-     * El lock se libera automáticamente al commit/rollback de la transacción.
-     *
-     * La llamada se hace con doWork de Hibernate para evitar que Hibernate intente
-     * mapear el tipo void de retorno de pg_advisory_xact_lock (JDBC type 1111).
-     */
-    @SuppressWarnings("unchecked")
-    public String generarDocumentoGenerico() {
-        // Lock transaccional exclusivo vía JDBC directo — evita race condition
-        try {
-            getEntityManager().unwrap(org.hibernate.Session.class)
-                .doWork(conn -> {
-                    try (java.sql.PreparedStatement ps =
-                             conn.prepareStatement("SELECT pg_advisory_xact_lock(20250101)")) {
-                        ps.execute();
-                    }
-                });
-        } catch (Exception e) {
-            log.warn("No se pudo adquirir advisory lock para RUC genérico", e);
-        }
+    /** Nombre de la secuencia PostgreSQL que genera los códigos genéricos. */
+    private static final String SEQ_CODIGO_GENERICO = "seq_iglesia_codigo_generico";
 
-        javax.persistence.Query q = getEntityManager().createNativeQuery(
-                "SELECT igl_documento FROM public.tb_iglesia"
-                + " WHERE igl_documento LIKE '000000000000%'"
-                + " ORDER BY igl_documento DESC LIMIT 1");
-        List<Object> r = q.getResultList();
-        if (r == null || r.isEmpty()) {
-            return "0000000000001";
-        }
+    /**
+     * Genera el siguiente código genérico secuencial (13 dígitos zero-padded).
+     *
+     * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atómica por diseño:
+     * elimina race conditions sin advisory locks y garantiza que un valor nunca se reuse,
+     * incluso si se elimina la última iglesia con código genérico.
+     *
+     * La secuencia se crea de forma idempotente en la primera invocación, alineada al
+     * mayor código existente en {@code tb_iglesia} para no colisionar con datos previos.
+     */
+    public String generarDocumentoGenerico() {
+        asegurarSecuenciaCodigoGenerico();
+        Number proximo = (Number) getEntityManager()
+                .createNativeQuery("SELECT nextval('" + SEQ_CODIGO_GENERICO + "')")
+                .getSingleResult();
+        return String.format("%013d", proximo.longValue());
+    }
+
+    /**
+     * Crea la secuencia si no existe, alineada a {@code MAX(igl_documento) + 1} de
+     * los códigos genéricos previos (cualquier documento de 13 dígitos numéricos
+     * que empiece con "00" — los RUC reales ecuatorianos nunca empiezan con 00,
+     * provincias 01-24).
+     *
+     * Idempotente: tras la primera ejecución, el bloque DO no hace nada.
+     */
+    private void asegurarSecuenciaCodigoGenerico() {
         try {
-            long ultimo = Long.parseLong(r.get(0).toString().trim());
-            return String.format("%013d", ultimo + 1);
-        } catch (NumberFormatException e) {
-            log.error("RUC genérico no parseable: {}", r.get(0), e);
-            return "0000000000001";
+            String sql =
+                "DO $$ "
+              + "DECLARE max_val BIGINT; "
+              + "BEGIN "
+              + "  IF NOT EXISTS (SELECT 1 FROM pg_class "
+              + "                 WHERE relkind='S' AND relname='" + SEQ_CODIGO_GENERICO + "') THEN "
+              + "    SELECT COALESCE(MAX(CAST(igl_documento AS BIGINT)), 0) INTO max_val "
+              + "    FROM public.tb_iglesia "
+              + "    WHERE igl_documento ~ '^00[0-9]{11}$'; "
+              + "    EXECUTE format('CREATE SEQUENCE " + SEQ_CODIGO_GENERICO + " START %s', max_val + 1); "
+              + "  END IF; "
+              + "END $$;";
+            getEntityManager().createNativeQuery(sql).executeUpdate();
+        } catch (Exception e) {
+            log.error("No se pudo asegurar la existencia de la secuencia " + SEQ_CODIGO_GENERICO, e);
+            throw e;
         }
     }
 

@@ -122,6 +122,66 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         }
     }
 
+    /**
+     * Devuelve el vínculo activo más reciente para la persona identificada
+     * por su DOCUMENTO (cédula), independiente del id interno de la persona.
+     *
+     * <p>Pensado para entornos donde existen filas duplicadas en
+     * {@code tb_persona} con el mismo documento (caso real en producción).
+     * El método {@link #getVigentePorPersonaId(Integer)} requiere conocer el
+     * id exacto, pero {@code finByPersonaDocument} devuelve la persona con
+     * id ASC y el vínculo en {@code tb_iglesia_persona} podría apuntar al
+     * id duplicado mayor — generando "sin iglesia" falso. Esta variante
+     * resuelve por documento y evita ese problema.
+     */
+    public IglesiaPersona getVigentePorDocumentoPersona(String documento) {
+        if (documento == null || documento.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH ip.iglesia i"
+                    + " LEFT JOIN FETCH ip.persona p"
+                    + " WHERE p.documento = :documento"
+                    + "   AND ip.estado = TRUE"
+                    + "   AND p.estado = TRUE"
+                    + " ORDER BY ip.id DESC";
+            TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
+            query.setParameter("documento", documento.trim());
+            query.setMaxResults(1);
+            List<IglesiaPersona> result = query.getResultList();
+            return (result != null && !result.isEmpty()) ? result.get(0) : null;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Devuelve el vínculo activo entre la iglesia y la persona indicadas, o
+     * {@code null} si no existe ninguno. Útil para garantizar idempotencia al
+     * crear el vínculo desde el flujo de asignación de admins.
+     */
+    public IglesiaPersona findByIglesiaAndPersona(Integer iglesiaId, Integer personaId) {
+        if (iglesiaId == null || personaId == null) {
+            return null;
+        }
+        try {
+            String sql = HQL
+                    + " WHERE ip.iglesia.id = :iglesiaId"
+                    + "   AND ip.persona.id = :personaId"
+                    + "   AND ip.estado = TRUE"
+                    + " ORDER BY ip.id DESC";
+            TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
+            query.setParameter("iglesiaId", iglesiaId);
+            query.setParameter("personaId", personaId);
+            query.setMaxResults(1);
+            List<IglesiaPersona> result = query.getResultList();
+            return (result != null && !result.isEmpty()) ? result.get(0) : null;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
     public IglesiaPersona buscarPorCedulaPersona(String cedula) {
         try {
             String sql = HQL

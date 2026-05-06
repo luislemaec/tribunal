@@ -63,6 +63,18 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     }
 
     /**
+     * Variante por DOCUMENTO de persona: robusta contra duplicados en
+     * {@code tb_persona}. Cuando dos filas tienen el mismo documento pero
+     * distintos ids, {@link #obtenerIglesiaDePersona(Integer)} puede fallar
+     * (porque depende del id) — esta versión joinea por documento y evita
+     * el falso "sin iglesia asignada".
+     */
+    public Iglesia obtenerIglesiaDePersonaPorDocumento(String documento) {
+        IglesiaPersona ip = iglesiaPersonaFacade.getVigentePorDocumentoPersona(documento);
+        return (ip != null) ? ip.getIglesia() : null;
+    }
+
+    /**
      * Persiste el binding iglesia-persona junto con la persona contenida.
      * Si la persona ya existe (id != null) hace edit; si no, hace create. Lo
      * mismo aplica al propio {@link IglesiaPersona}. Operación atómica por
@@ -180,6 +192,47 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             }
         }
         return IglesiaPersonaDTO.fromEntity(ip);
+    }
+
+    /**
+     * Crea el vínculo {@link IglesiaPersona} entre la persona y la iglesia
+     * indicadas si aún no existe. Idempotente: si ya hay un vínculo activo,
+     * lo retorna sin tocar BD.
+     *
+     * @return par (vinculo, fueCreado) — {@code fueCreado=true} cuando se
+     *         persistió un nuevo vínculo, {@code false} cuando ya existía.
+     *         Devuelve {@code null} si los argumentos son inválidos o la
+     *         iglesia/persona no existen.
+     */
+    public ResultadoVinculo crearVinculoSiNoExiste(Integer iglesiaId, Integer personaId) {
+        if (iglesiaId == null || personaId == null) {
+            return null;
+        }
+        IglesiaPersona existente = iglesiaPersonaFacade.findByIglesiaAndPersona(iglesiaId, personaId);
+        if (existente != null) {
+            return new ResultadoVinculo(existente, false);
+        }
+        Iglesia iglesia = iglesiaFacade.find(iglesiaId);
+        Persona persona = personaFacade.find(personaId);
+        if (iglesia == null || persona == null) {
+            return null;
+        }
+        IglesiaPersona nuevo = new IglesiaPersona(iglesia, persona);
+        nuevo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
+        IglesiaPersona creado = iglesiaPersonaFacade.create(nuevo);
+        return new ResultadoVinculo(creado, true);
+    }
+
+    /** Resultado de {@link #crearVinculoSiNoExiste(Integer, Integer)}. */
+    public static class ResultadoVinculo {
+        private final IglesiaPersona vinculo;
+        private final boolean creado;
+        public ResultadoVinculo(IglesiaPersona vinculo, boolean creado) {
+            this.vinculo = vinculo;
+            this.creado = creado;
+        }
+        public IglesiaPersona getVinculo() { return vinculo; }
+        public boolean fueCreado() { return creado; }
     }
 
     /**

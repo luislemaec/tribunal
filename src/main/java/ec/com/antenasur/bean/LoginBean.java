@@ -102,15 +102,13 @@ public class LoginBean implements Serializable {
     private void init() {
         try {
             sistema = (String) JsfUtil.getProperty("sistema", true);
-            servidor = JsfUtil.obtieneIpServidor();
-            servidor = "D E S A R R O L L O";
-            if (servidor.equals("192.168.26.38")) {
-                servidor = "P R U E B A S";
-            }
-            if (servidor.equals("192.168.26.26")) {
-                servidor = "P R O D U C C I Ó N";
-            }
-
+            // Etiqueta del ambiente. Se lee de la system property -Dapp.environment;
+            // si no está definida, asume DESARROLLO. Antes este bloque hacía dos
+            // reverse-DNS lookups via InetAddress.getLocalHost() cuyo resultado se
+            // descartaba inmediatamente — eso bloqueaba la primera carga del login
+            // hasta 30s en redes con DNS lento. Para definir el ambiente real,
+            // arranque WildFly con -Dapp.environment="P R O D U C C I Ó N" (etc.).
+            servidor = System.getProperty("app.environment", "D E S A R R O L L O");
         } catch (Exception e) {
             e.printStackTrace();
         }

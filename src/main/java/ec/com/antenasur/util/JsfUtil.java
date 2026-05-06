@@ -780,12 +780,11 @@ public class JsfUtil implements Serializable {
      * Devuelve direción ip del servidor
      */
     public static String obtieneIpServidor() {
-        InetAddress direccion;
         try {
-            direccion = InetAddress.getLocalHost();
-            String nombreDelHost = direccion.getHostName();// nombre host
-            String IP_local = direccion.getHostAddress();// ip como String
-            return IP_local;
+            // No llamar getHostName(): dispara un reverse DNS lookup adicional
+            // que puede bloquear hasta 30s en redes mal configuradas y aquí no
+            // se usaba. getHostAddress() devuelve la IP sin resolver nombres.
+            return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return "";

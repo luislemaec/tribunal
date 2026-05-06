@@ -3,8 +3,7 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
                 xmlns:p="http://primefaces.org/ui"
-                template="/WEB-INF/template.xhtml"
-                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+                template="/WEB-INF/template.xhtml">
 
     <ui:define name="title">Dashboard</ui:define>
 
@@ -15,13 +14,30 @@
     <ui:define name="content">
         <div class="layout-dashboard">
 
-            <!-- SpeedDial: accesos rápidos flotantes (esquina inferior derecha).
-                 Coexiste con scrollTop global pero a distinta posición. -->
+            <!-- Bienvenida -->
+            <div class="grid mb-3">
+                <div class="col-12">
+                    <div class="surface-card shadow-1 border-round-lg p-4">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0ea5e9,#22d3ee);flex-shrink:0">
+                                <i class="pi pi-home text-white" style="font-size:1.5rem"/>
+                            </div>
+                            <div>
+                                <h2 class="m-0 text-900 font-bold text-2xl">Sistema Electoral</h2>
+                                <p class="text-500 mt-1 mb-0 text-sm">Resumen general del proceso electoral.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accesos rápidos: SpeedDial flotante (ligero, sin queries). -->
             <h:form id="frmSpeedDial">
                 <p:speedDial type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="Nueva iglesia"
+                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="Iglesias"
                                 styleClass="ui-button-success"/>
                     <p:menuitem outcome="/recintos" icon="pi pi-map-marker" title="Recintos"
                                 styleClass="ui-button-info"/>
@@ -38,175 +54,75 @@
                 </span>
             </p:divider>
 
+            <!-- KPIs — todos provienen de DashboardController (queries livianas COUNT/SUM). -->
             <div class="grid">
 
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="overview-box sales">
-                        <p:graphicImage name="images/icon-sales.png" library="ecuador-layout" styleClass="image-icon"/>
-                        <div class="overview-title">RECINTOS</div>
-                        <div class="overview-numbers">
-                            #{dashboardController.totalRecintos}
-                        </div>
-                        <div class="overview-subinfo grid">
-                            <div class="col-6 progressbar 99">
-                                <div class="progress sale"></div>
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-bottom:3px solid #3b82f6">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
+                                <i class="pi pi-map-marker text-white"/>
                             </div>
-                            <span class="col-6">99% </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="overview-box views">
-                        <p:graphicImage name="images/icon-views.png" library="ecuador-layout" style="margin-top:10px"/>
-                        <div class="overview-title">MESAS</div>
-                        <div class="overview-numbers">
-                            #{dashboardController.totalMesas}
-                        </div>
-                        <div class="overview-subinfo grid">
-                            <div class="col-6 progressbar">
-                                <div class="progress view"></div>
+                            <div>
+                                <span class="block text-500 text-xs font-medium uppercase">Recintos</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalRecintos}</span>
                             </div>
-                            <span class="col-6"> #{mesaController.porcentajeMesasEscrutado} % Escrutados</span>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="overview-box users">
-                        <p:graphicImage name="images/icon-users.png" library="ecuador-layout"/>
-                        <div class="overview-title">PERSONAS</div>
-                        <div class="overview-numbers">
-                            #{dashboardController.totalPersonas}
-                        </div>
-                        <div class="overview-subinfo user">
-                            <p:tag value="Activo" severity="info" icon="pi pi-circle-on"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="overview-box checkins">
-                        <p:graphicImage name="images/icon-checkin.png" library="ecuador-layout"
-                                        styleClass="image-icon"/>
-                        <div class="overview-title">IGLESIAS</div>
-                        <div class="overview-numbers">
-                            #{dashboardController.totalIglesias}
-                        </div>
-                        <div class="overview-subinfo checkin">
-                            <p:tag value="Activo" severity="success" icon="pi pi-circle-on"/>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 md:col-12 lg:col-12">
-                    <p:divider align="left" type="solid">
-                        <span class="p-tag" style="background:#eff6ff; color:#1e40af">
-                            <i class="pi pi-search" style="margin-right:.4rem"/>Consulta de lugar de votación
-                        </span>
-                    </p:divider>
-                    <h:form id="frmLugar">
-                        <div class="card">
-                            <div class="ui-fluid formgrid grid">
-                                <div class="field col-12 md:col-6 lg:col-6">
-
-                                    <p:inputText value="#{lugarVotacion.nombreCedula}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" label="Cedula o nombres"
-                                                 title="Ingrese cédula completa o parte del nombre"
-                                                 placeholder="Digite cédula o nombres completos"
-                                                 requiredMessage="Cédula o nombre es requerido"/>
-                                </div>
-                                <div class="p-field col-12 md:col-6 lg:col-3 ">
-                                    <p:commandButton value="BUSCAR"  icon="pi pi-search"  action="#{lugarVotacion.buscarLugar()}" 
-                                                     ajax="false" styleClass="ui-button-info" update="@form, msgs" />
-                                </div>
-                            </div>                       
-                        </div>                        
-
-                        <c:forEach var="lugar" items="#{lugarVotacion.lugares}" >
-
-                            <div class="card">
-                                <div class="grid">
-                                    <div class="field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel value="NOMBRES: "/>
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-3">
-                                        <b>#{lugar.nombres}</b>
-                                    </div>
-
-                                    <div class="p-field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel value="CÉDULA:"/>
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-2">
-                                        <p:chip label="#{lugar.cedula}" icon="pi pi-id-card"/>
-                                    </div>
-
-                                    <div class="p-field col-12 md:col-6 lg:col-2">
-                                        <p:outputLabel  value="IGLESIA" />                                                
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-3">
-                                        <b> #{lugar.iglesia} / #{lugar.comunidad} </b>
-                                    </div>
-
-                                    <p:divider/>
-
-                                    <div class="p-field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel value="RECINTO:"/>                                   
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-5">
-                                        <b> #{lugar.recinto} </b>
-                                    </div>
-
-                                    <div class="p-field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel value="MESA:"/>
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-5">
-                                        <b> #{lugar.mesa} </b>
-                                    </div>                                          
-
-                                    <div class="p-field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel  value="PARROQUIA:"/>                                                
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-5">
-                                        <b> #{lugar.parroquia}</b>
-                                    </div>
-
-                                    <div class="p-field col-12 md:col-6 lg:col-1">
-                                        <p:outputLabel value="CANTON:"/>
-                                    </div>
-                                    <div class="field col-12 md:col-6 lg:col-5">
-                                        <b> #{lugar.canton} </b>
-                                    </div>
-                                </div>
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-bottom:3px solid #f59e0b">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f59e0b,#fbbf24);flex-shrink:0">
+                                <i class="pi pi-list text-white"/>
                             </div>
-                        </c:forEach>
-                    </h:form>
-
+                            <div>
+                                <span class="block text-500 text-xs font-medium uppercase">Mesas</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalMesas}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-12 md:col-12 lg:col-8">
-                    <p:panel header="Linea de tiempo" styleClass="timeline" rendered="#{not empty totalVotosController.totalVotos}">
-                        <p:dataTable var="voto" value="#{totalVotosController.totalVotos}"
-                                     widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
-                                     reflow="true" rows="5" paginator="true" paginatorPosition="top"
-                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
-                                     rowsPerPageTemplate="5,10,15" 
-                                     rendered="#{totalVotosController.totalVotos ne null}">
-
-
-                            <p:column headerText="ID" ><h:outputText value="#{voto.id}" /></p:column> 
-                            <p:column headerText="Nombre" ><h:outputText value="#{voto.categoria}" /></p:column>                                        
-
-                            <p:column headerText="Total" width="15%" ><h:outputText value="#{voto.totalVotos}"/> </p:column>
-                            <p:column headerText="Recinto" width="15%" ><h:outputText value="#{voto.recintoNombre}"/> </p:column>
-                            <p:column headerText="Mesa" width="15%" ><h:outputText value="#{voto.mesaNombre}"/> </p:column>
-                            <p:column headerText="Canton" width="15%" ><h:outputText value="#{voto.cantonNombre}"/> </p:column>
-                            <p:column headerText="Parroquia" width="15%" ><h:outputText value="#{voto.geograpNombre}"/> </p:column>
-
-
-                        </p:dataTable>
-                    </p:panel>
-
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-bottom:3px solid #22c55e">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
+                                <i class="pi pi-users text-white"/>
+                            </div>
+                            <div>
+                                <span class="block text-500 text-xs font-medium uppercase">Personas</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalPersonas}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-bottom:3px solid #8b5cf6">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
+                                <i class="pi pi-building text-white"/>
+                            </div>
+                            <div>
+                                <span class="block text-500 text-xs font-medium uppercase">Iglesias</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalIglesias}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
         </div>
     </ui:define>
 

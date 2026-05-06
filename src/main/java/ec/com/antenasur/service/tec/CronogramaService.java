@@ -81,6 +81,17 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         return vigente.getFase() == FaseElectoral.INSCRIPCION_IGLESIAS;
     }
 
+    /**
+     * Indica si la asignación/reasignación de usuarios IglesiaAdmin a iglesias
+     * está habilitada. Se permite únicamente cuando la fase vigente es
+     * {@link FaseElectoral#ASIGNACION_USUARIOS}.
+     */
+    public boolean permiteAsignacionUsuarios() {
+        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
+        if (vigente == null) return false;
+        return vigente.getFase() == FaseElectoral.ASIGNACION_USUARIOS;
+    }
+
     public CronogramaFaseDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;
         return CronogramaFaseDTO.fromEntity(cronogramaFaseFacade.find(id));

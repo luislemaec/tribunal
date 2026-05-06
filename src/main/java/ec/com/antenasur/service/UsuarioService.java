@@ -179,6 +179,10 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         // Si la persona se creó en este flujo y se asignó una iglesia,
         // registramos el vínculo en tb_iglesia_persona para que el usuario
         // figure como miembro/admin de esa iglesia desde el inicio.
+        // Para personas EXISTENTES se confía en que el caller (controller)
+        // gestione el vínculo via IglesiaPersonaService.crearVinculoSiNoExiste,
+        // que es idempotente y aplica las reglas de negocio (bloqueo si la
+        // persona ya pertenece a otra iglesia, etc.).
         if (personaEsNueva && iglesia != null) {
             IglesiaPersona vinculo = new IglesiaPersona();
             vinculo.setPersona(creado.getUsuario().getPersonsa());
@@ -216,6 +220,54 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         }
         actualizarUsuarioConRol(actual, rolUsuarioActual, nuevoRol);
         return UsuarioDTO.fromEntity(actual);
+    }
+
+    /**
+     * Devuelve el {@link UsuarioDTO} del IglesiaAdmin asignado a la iglesia
+     * indicada, o {@code null} si la iglesia aún no tiene admin.
+     */
+    public UsuarioDTO obtenerAdminDeIglesia(Integer iglesiaId) {
+        if (iglesiaId == null) {
+            return null;
+        }
+        Usuario admin = usuarioFacade.findAdminByIglesiaId(iglesiaId);
+        return UsuarioDTO.fromEntity(admin);
+    }
+
+    /**
+     * Quita el rol IglesiaAdmin al usuario que actualmente administra la
+     * iglesia indicada: limpia el vínculo {@code u.iglesia} y soft-deletea
+     * la(s) relación(es) {@link RolUsuario} con rol IglesiaAdmin. El usuario
+     * permanece activo para poder ser reasignado a otra iglesia o desempeñar
+     * otros roles.
+     *
+     * @return DTO del admin previo (en su nuevo estado, sin iglesia), o
+     *         {@code null} si la iglesia no tenía admin.
+     */
+    public UsuarioDTO removerAdminDeIglesia(Integer iglesiaId) {
+        if (iglesiaId == null) {
+            return null;
+        }
+        Usuario admin = usuarioFacade.findAdminByIglesiaId(iglesiaId);
+        if (admin == null) {
+            return null;
+        }
+        admin.setIglesia(null);
+        usuarioFacade.edit(admin);
+        // Soft-delete de los RolUsuario IglesiaAdmin del usuario. Otros roles
+        // (Superadmin, Iglesia, etc.) se conservan: la persona puede seguir
+        // operando en el sistema con las atribuciones que le queden.
+        List<RolUsuario> rus = rolUsuarioFacade.findByUserNameAndRoleName2(
+                admin.getUsername(), "%IglesiaAdmin");
+        if (rus != null) {
+            for (RolUsuario ru : rus) {
+                if (ru.getRol() != null && ru.getRol().getNombre() != null
+                        && ru.getRol().getNombre().endsWith("IglesiaAdmin")) {
+                    rolUsuarioFacade.delete(ru);
+                }
+            }
+        }
+        return UsuarioDTO.fromEntity(admin);
     }
 
     /** Devuelve el DTO de un usuario por id, o null si no existe. */
@@ -384,13 +436,12 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             }
         }
 
+        // findByUsuarioName ahora trae u.personsa via JOIN FETCH, así que la
+        // persona se mapea en una sola query (antes se hacían 2 round-trips).
         Usuario usuario = usuarioFacade.findByUsuarioName(userName);
         data.setUsuario(UsuarioDTO.fromEntity(usuario));
-
-        if (usuario != null && usuario.getPersonsa() != null
-                && usuario.getPersonsa().getDocumento() != null) {
-            Persona persona = personaFacade.finByPersonaDocument(usuario.getPersonsa().getDocumento());
-            data.setPersona(PersonaDTO.fromEntity(persona));
+        if (usuario != null && usuario.getPersonsa() != null) {
+            data.setPersona(PersonaDTO.fromEntity(usuario.getPersonsa()));
         }
         return data;
     }

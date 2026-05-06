@@ -28,6 +28,23 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
     }
 
     /**
+     * Suma {@code totalVotos} de todas las mesas activas en una sola query
+     * agregada. Reemplaza el patrón anti-rendimiento de cargar TODAS las
+     * mesas y sumar en Java (que en MesaBean.totalVotantes hacía findAll() +
+     * iteración, generando lazy-loads N+1 al accionar getTotalVotos en
+     * algunas implementaciones JPA).
+     */
+    public long sumTotalVotos() {
+        try {
+            String sql = "SELECT COALESCE(SUM(m.totalVotos), 0) FROM Mesa m WHERE " + ACTIVOS;
+            Long total = super.getEntityManager().createQuery(sql, Long.class).getSingleResult();
+            return total != null ? total : 0L;
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
+
+    /**
      *
      * @param nombreRecinto
      * @return

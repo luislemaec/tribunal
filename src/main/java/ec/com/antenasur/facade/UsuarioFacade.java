@@ -71,7 +71,11 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
     public Usuario findByUsuarioName(String username) {
 
         try {
-            String sql = SQL + " where u.username = :username and u.estado=true";
+            // JOIN FETCH la persona para que resolverDatosAutenticacion no tenga
+            // que hacer una segunda query a tb_persona. Único caller hoy es ese
+            // service, todos los demás flujos se benefician sin cambios.
+            String sql = SQL + "LEFT JOIN FETCH u.personsa p"
+                    + " where u.username = :username and u.estado=true";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
             query.setParameter("username", username);
             List<Usuario> resultList = query.getResultList();
@@ -152,6 +156,49 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             return null;
         }
         return null;
+    }
+
+    /**
+     * Devuelve el {@link Usuario} IglesiaAdmin asignado a la iglesia indicada,
+     * o {@code null} si la iglesia aún no tiene admin. Identifica al admin por
+     * el vínculo directo {@code u.iglesia} (solo IglesiaAdmin queda con iglesia
+     * asignada por convención del flujo de creación).
+     */
+    public Usuario findAdminByIglesiaId(Integer iglesiaId) {
+        if (iglesiaId == null) {
+            return null;
+        }
+        try {
+            String sql = SQL
+                    + "LEFT JOIN FETCH u.personsa p"
+                    + " WHERE u.iglesia.id = :iglesiaId AND u.estado = TRUE"
+                    + " ORDER BY u.id DESC";
+            TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
+            query.setParameter("iglesiaId", iglesiaId);
+            query.setMaxResults(1);
+            List<Usuario> result = query.getResultList();
+            return (result != null && !result.isEmpty()) ? result.get(0) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Devuelve todos los usuarios IglesiaAdmin activos del sistema (uno por
+     * iglesia asignada). Pensado para construir un mapa iglesiaId → admin sin
+     * disparar N+1 al listar iglesias en la pantalla de asignación.
+     */
+    public List<Usuario> findAllIglesiaAdmins() {
+        try {
+            String sql = SQL
+                    + "LEFT JOIN FETCH u.personsa p"
+                    + " LEFT JOIN FETCH u.iglesia i"
+                    + " WHERE u.iglesia IS NOT NULL AND u.estado = TRUE";
+            TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
+            return query.getResultList();
+        } catch (Exception e) {
+            return java.util.Collections.emptyList();
+        }
     }
 
     /**

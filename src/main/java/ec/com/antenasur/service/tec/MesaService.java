@@ -43,6 +43,11 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         return mesaFacade.buscaRecintoPorNombre(nombreRecinto);
     }
 
+    /** Suma totalVotos de todas las mesas activas en una sola query agregada. */
+    public long sumTotalVotos() {
+        return mesaFacade.sumTotalVotos();
+    }
+
     public List<Mesa> getMesasPorParroquias(List<Geograp> parroquias) {
         return mesaFacade.getMesasPorParroquias(parroquias);
     }
