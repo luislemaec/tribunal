@@ -1,6 +1,7 @@
 package ec.com.antenasur.service.tec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ejb.Stateless;
@@ -41,8 +42,14 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Devuelve la fase vigente del proceso electoral activo, o {@code null}
-     * si no hay proceso activo o si todas las fases están fuera de rango.
+     * Devuelve la fase con menor {@code orden} que esté vigente en el proceso
+     * activo, o {@code null} si no hay proceso activo o todas las fases están
+     * fuera de rango. Útil para el <b>banner general</b> de la aplicación.
+     *
+     * <p>Cuando varias fases se solapan temporalmente esta llamada retorna
+     * solo la de mayor prioridad (menor orden). Para validar permisos de una
+     * funcionalidad concreta use los métodos {@code permite*()} de este servicio,
+     * que evalúan <em>todas</em> las fases activas simultáneamente.
      */
     public CronogramaFaseDTO getFaseVigenteDelProcesoActivo() {
         ProcesoElectoral activo = procesoElectoralFacade.getActivo();
@@ -52,44 +59,144 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Indica si la fase vigente permite edición del padrón. Combina la
-     * columna {@code cref_permite_edicion} (override del admin) con el
-     * default semántico del enum {@link FaseElectoral}.
+     * Devuelve todas las fases activas del proceso electoral activo.
+     * A diferencia de {@link #getFaseVigenteDelProcesoActivo()}, no limita
+     * a una sola fase: expone correctamente los solapamientos.
+     */
+    public List<CronogramaFaseDTO> getFasesVigenteDelProcesoActivo() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) return Collections.emptyList();
+        List<CronogramaFaseDTO> result = new ArrayList<>();
+        for (CronogramaFase f : cronogramaFaseFacade.getVigentesPorProceso(activo.getId())) {
+            result.add(CronogramaFaseDTO.fromEntity(f));
+        }
+        return result;
+    }
+
+    /**
+     * Devuelve el DTO de {@link FaseElectoral#ACTUALIZACION_MIEMBROS} para el
+     * proceso activo, <b>sin filtro de fecha</b>. El flag {@code vigente} del
+     * DTO indica si la fase está dentro de su ventana temporal ahora mismo.
      *
-     * <p>Sin proceso activo o sin fase vigente devuelve {@code false}
-     * (modo seguro: nada se edita fuera del cronograma).
+     * <p>Usar esta variante para la UI (banner de cronograma): muestra la
+     * configuración de la fase aunque todavía no haya comenzado o ya haya
+     * terminado. Para el control de permisos de escritura usar
+     * {@link #permiteEdicionPadron()}.
+     */
+    public CronogramaFaseDTO getFaseActualizacionMiembros() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) return null;
+        return CronogramaFaseDTO.fromEntity(
+                cronogramaFaseFacade.getFasePorTipo(activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS));
+    }
+
+    /**
+     * Fase configurada inmediatamente anterior a {@link FaseElectoral#ACTUALIZACION_MIEMBROS}
+     * según {@code orden}, o {@code null} si no existe o si ACTUALIZACION_MIEMBROS
+     * no tiene {@code orden} asignado. Sin filtro de fecha.
+     */
+    public CronogramaFaseDTO getFaseAnteriorAActualizacion() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) return null;
+        CronogramaFase ref = cronogramaFaseFacade.getFasePorTipo(
+                activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS);
+        if (ref == null || ref.getOrden() == null) return null;
+        return CronogramaFaseDTO.fromEntity(
+                cronogramaFaseFacade.getFaseAnterior(activo.getId(), ref.getOrden()));
+    }
+
+    /**
+     * Fase configurada inmediatamente siguiente a {@link FaseElectoral#ACTUALIZACION_MIEMBROS}
+     * según {@code orden}, o {@code null} si no existe o si ACTUALIZACION_MIEMBROS
+     * no tiene {@code orden} asignado. Sin filtro de fecha.
+     */
+    public CronogramaFaseDTO getFaseSiguienteAActualizacion() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) return null;
+        CronogramaFase ref = cronogramaFaseFacade.getFasePorTipo(
+                activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS);
+        if (ref == null || ref.getOrden() == null) return null;
+        return CronogramaFaseDTO.fromEntity(
+                cronogramaFaseFacade.getFaseSiguiente(activo.getId(), ref.getOrden()));
+    }
+
+    // ── helpers privados ──────────────────────────────────────────────────────
+
+    /**
+     * Devuelve todas las fases activas del proceso activo como entidades JPA.
+     * Centraliza la consulta para que los métodos {@code permite*()} no
+     * repitan la lógica de obtener el proceso activo.
+     */
+    private List<CronogramaFase> getFasesVigentesInternas() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) return Collections.emptyList();
+        return cronogramaFaseFacade.getVigentesPorProceso(activo.getId());
+    }
+
+    // ── validación de permisos por fase ───────────────────────────────────────
+
+    /**
+     * Indica si la edición del padrón de miembros está habilitada.
+     *
+     * <p>Evalúa <em>todas</em> las fases activas del proceso (no solo la de
+     * menor {@code orden}). Retorna {@code true} si alguna fase activa cumple
+     * al menos una de estas condiciones:
+     * <ol>
+     *   <li>Tiene {@code cref_permite_edicion = true} (override explícito del admin).</li>
+     *   <li>Tiene {@code cref_permite_edicion IS NULL} y
+     *       {@code fase = ACTUALIZACION_MIEMBROS} (default semántico del enum).</li>
+     * </ol>
+     *
+     * <p>Un override {@code cref_permite_edicion = false} en una fase bloquea
+     * solo esa fase; las demás fases activas se siguen evaluando.
+     *
+     * <p>Sin proceso activo o sin ninguna fase vigente retorna {@code false}
+     * (modo seguro).
      */
     public boolean permiteEdicionPadron() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        if (vigente.getPermiteEdicion() != null) {
-            return vigente.getPermiteEdicion();
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (Boolean.TRUE.equals(f.getPermiteEdicion())) {
+                return true;
+            }
+            if (f.getPermiteEdicion() == null
+                    && f.getFase() != null
+                    && f.getFase().defaultPermiteEdicionPadron()) {
+                return true;
+            }
         }
-        return vigente.getFase() != null && vigente.getFase().defaultPermiteEdicionPadron();
+        return false;
     }
 
     /**
      * Indica si el registro/edición de iglesias está habilitado.
-     * Se permite únicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
      *
-     * <p>No usa {@code cref_permite_edicion} porque ese campo es exclusivo del
-     * control del padrón de miembros ({@link #permiteEdicionPadron()}).
+     * <p>Evalúa todas las fases activas; retorna {@code true} si alguna de
+     * ellas es {@link FaseElectoral#INSCRIPCION_IGLESIAS}, con independencia
+     * de otras fases que puedan estar activas en paralelo.
      */
     public boolean permiteRegistroIglesias() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        return vigente.getFase() == FaseElectoral.INSCRIPCION_IGLESIAS;
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (FaseElectoral.INSCRIPCION_IGLESIAS == f.getFase()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Indica si la asignación/reasignación de usuarios IglesiaAdmin a iglesias
-     * está habilitada. Se permite únicamente cuando la fase vigente es
-     * {@link FaseElectoral#ASIGNACION_USUARIOS}.
+     * está habilitada.
+     *
+     * <p>Evalúa todas las fases activas; retorna {@code true} si alguna de
+     * ellas es {@link FaseElectoral#ASIGNACION_USUARIOS}.
      */
     public boolean permiteAsignacionUsuarios() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        return vigente.getFase() == FaseElectoral.ASIGNACION_USUARIOS;
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (FaseElectoral.ASIGNACION_USUARIOS == f.getFase()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public CronogramaFaseDTO obtenerDTOPorId(Integer id) {

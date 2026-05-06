@@ -175,11 +175,18 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             ip.setPersona(persona);
             ip.setDesde(dto.getDesde());
             ip.setHasta(dto.getHasta());
+            // Conserva el valor existente si el DTO llega con null (retrocompatibilidad)
+            ip.setHabilitadoPadron(dto.getHabilitadoPadron() != null
+                    ? dto.getHabilitadoPadron()
+                    : (ip.getHabilitadoPadron() != null ? ip.getHabilitadoPadron() : Boolean.TRUE));
             ip = iglesiaPersonaFacade.edit(ip);
         } else {
             IglesiaPersona nueva = new IglesiaPersona(iglesia, persona);
             nueva.setDesde(dto.getDesde());
             nueva.setHasta(dto.getHasta());
+            // Por defecto habilitado: el admin puede desmarcarlo explícitamente
+            nueva.setHabilitadoPadron(dto.getHabilitadoPadron() != null
+                    ? dto.getHabilitadoPadron() : Boolean.TRUE);
             ip = iglesiaPersonaFacade.create(nueva);
             // Marca como "actualizada" desde su creación: forzamos
             // fechaActualiza = fechaCrea + 3s para que la regla del DTO

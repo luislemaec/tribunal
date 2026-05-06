@@ -76,6 +76,26 @@ public class IglesiaPersona extends EntidadAuditable implements Serializable {
     @Column(name = "igpe_f_hasta")
     private Timestamp hasta;
 
+    /**
+     * Indica si este miembro está habilitado para formar parte del padrón
+     * electoral de la iglesia. Un miembro puede pertenecer a la iglesia sin
+     * necesariamente estar incluido en el padrón.
+     *
+     * <p>Columna: {@code igpe_habilitado_padron}. Valor por defecto en BD:
+     * {@code TRUE} (retrocompatibilidad con registros anteriores a la migración).
+     * Null en BD se interpreta como {@code true} en la capa DTO.
+     *
+     * <p>DDL requerido (ejecutar una sola vez):
+     * <pre>
+     * ALTER TABLE public.tb_iglesia_persona
+     *   ADD COLUMN IF NOT EXISTS igpe_habilitado_padron BOOLEAN DEFAULT TRUE;
+     * </pre>
+     */
+    @Setter
+    @Getter
+    @Column(name = "igpe_habilitado_padron")
+    private Boolean habilitadoPadron;
+
     @Setter
     @Getter
     @Transient
