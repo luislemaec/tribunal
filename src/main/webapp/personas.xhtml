@@ -16,27 +16,195 @@
     <ui:define name="content">
         <h:form id="frmPersonas">
             <div class="grid">
-                <!-- Banner de cronograma electoral.
-                     Si no hay fase vigente, modo solo lectura.
-                     Severidad mapea a estilos: INFO (azul), SUCCESS (verde),
-                     WARNING (Ã¡mbar), URGENT (rojo). -->
-                <div class="col-12" rendered="#{personaController.faseVigente ne null}">
+                <!-- ═══════════════════════════════════════════════════════
+                     TIMELINE DE CRONOGRAMA
+                     Muestra: fase anterior / ACTUALIZACION_MIEMBROS / fase siguiente
+                     La adyacencia se determina por cref_orden, no por fechas.
+                     Pueden existir otras fases activas en paralelo.
+                     ═══════════════════════════════════════════════════════ -->
+
+                <!-- TIMELINE: visible cuando ACTUALIZACION_MIEMBROS está configurada -->
+                <div class="col-12"
+                     rendered="#{personaController.faseActualizacionMiembros ne null}">
+                    <div class="surface-card shadow-1 border-round p-3 mb-2">
+
+                        <!-- Cabecera del timeline -->
+                        <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-calendar text-primary"/>
+                                <span class="font-semibold text-900">Cronograma electoral</span>
+                                <h:outputText rendered="#{personaController.faseVigente ne null}"
+                                              value="— #{personaController.faseVigente.titulo}"
+                                              styleClass="text-500 text-sm"/>
+                            </div>
+                            <p:tag rendered="#{personaController.puedeEditarPadron}"
+                                   value="Edición habilitada" icon="pi pi-pencil" severity="success"/>
+                            <p:tag rendered="#{not personaController.puedeEditarPadron}"
+                                   value="Edición bloqueada" icon="pi pi-lock" severity="warning"/>
+                        </div>
+
+                        <!-- 3 cards -->
+                        <div class="grid">
+
+                            <!-- ── Fase anterior ── -->
+                            <div class="col-12 md:col-4">
+                                <!-- sin datos -->
+                                <h:panelGroup layout="block"
+                                              rendered="#{personaController.faseAnterior eq null}"
+                                              styleClass="p-3 border-round surface-50 text-center"
+                                              style="min-height:6rem;border:1px dashed #e5e7eb">
+                                    <i class="pi pi-minus text-300"/>
+                                    <p class="text-400 text-xs m-0 mt-1">Sin fase anterior</p>
+                                </h:panelGroup>
+                                <!-- con datos -->
+                                <h:panelGroup layout="block"
+                                              rendered="#{personaController.faseAnterior ne null}"
+                                              styleClass="p-3 border-round h-full"
+                                              style="background:#{personaController.faseAnterior.pasada ? '#f9fafb' : '#dbeafe'};
+                                                     border-left:3px solid #{personaController.faseAnterior.pasada ? '#9ca3af' : '#3b82f6'}">
+                                    <div class="flex align-items-center gap-1 mb-2">
+                                        <i class="pi pi-chevron-left text-400 text-xs"/>
+                                        <span class="text-xs text-500 font-medium uppercase">Fase anterior</span>
+                                    </div>
+                                    <span class="block font-semibold text-800 text-sm">
+                                        <h:outputText value="#{personaController.faseAnterior.titulo}"/>
+                                    </span>
+                                    <small class="block text-500 text-xs mt-1">
+                                        <h:outputText value="#{personaController.faseAnterior.fechaInicio}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                        <span> — </span>
+                                        <h:outputText value="#{personaController.faseAnterior.fechaFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                    </small>
+                                    <p:tag rendered="#{personaController.faseAnterior.vigente}"
+                                           value="En curso" severity="info" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseAnterior.pasada}"
+                                           value="Completada" severity="secondary" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseAnterior.futura}"
+                                           value="Próxima" severity="info" styleClass="mt-2"/>
+                                </h:panelGroup>
+                            </div>
+
+                            <!-- ── Fase actual: ACTUALIZACION_MIEMBROS ── -->
+                            <div class="col-12 md:col-4">
+                                <h:panelGroup layout="block"
+                                              styleClass="p-3 border-round h-full"
+                                              style="background:#{personaController.faseActualizacionMiembros.vigente
+                                                         ? (personaController.puedeEditarPadron ? '#dcfce7' : '#fef3c7')
+                                                         : (personaController.faseActualizacionMiembros.pasada ? '#f3f4f6' : '#eff6ff')};
+                                                     border:2px solid #{personaController.faseActualizacionMiembros.vigente
+                                                         ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
+                                                         : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}">
+                                    <div class="flex align-items-center gap-1 mb-2">
+                                        <i class="pi #{personaController.faseActualizacionMiembros.vigente
+                                                       ? (personaController.puedeEditarPadron ? 'pi-check-circle' : 'pi-exclamation-triangle')
+                                                       : (personaController.faseActualizacionMiembros.pasada ? 'pi-check-circle' : 'pi-clock')} text-sm"
+                                           style="color:#{personaController.faseActualizacionMiembros.vigente
+                                                    ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
+                                                    : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}"/>
+                                        <span class="text-xs font-bold uppercase"
+                                              style="color:#{personaController.faseActualizacionMiembros.vigente
+                                                       ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
+                                                       : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}">
+                                            Fase actual — este módulo
+                                        </span>
+                                    </div>
+                                    <span class="block font-bold text-900 text-sm">
+                                        <h:outputText value="#{personaController.faseActualizacionMiembros.titulo}"/>
+                                    </span>
+                                    <small class="block text-500 text-xs mt-1">
+                                        <h:outputText value="#{personaController.faseActualizacionMiembros.fechaInicio}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                        <span> — </span>
+                                        <h:outputText value="#{personaController.faseActualizacionMiembros.fechaFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                    </small>
+                                    <!-- tag según estado -->
+                                    <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and personaController.puedeEditarPadron}"
+                                           value="#{personaController.faseActualizacionMiembros.diasRestantes} días restantes"
+                                           severity="success" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and not personaController.puedeEditarPadron}"
+                                           value="Bloqueada por configuración" severity="warning" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseActualizacionMiembros.futura}"
+                                           value="Próximamente" severity="info" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseActualizacionMiembros.pasada}"
+                                           value="Fase cerrada" severity="secondary" styleClass="mt-2"/>
+                                </h:panelGroup>
+                            </div>
+
+                            <!-- ── Fase siguiente ── -->
+                            <div class="col-12 md:col-4">
+                                <!-- sin datos -->
+                                <h:panelGroup layout="block"
+                                              rendered="#{personaController.faseSiguiente eq null}"
+                                              styleClass="p-3 border-round surface-50 text-center"
+                                              style="min-height:6rem;border:1px dashed #e5e7eb">
+                                    <i class="pi pi-minus text-300"/>
+                                    <p class="text-400 text-xs m-0 mt-1">Sin fase siguiente</p>
+                                </h:panelGroup>
+                                <!-- con datos -->
+                                <h:panelGroup layout="block"
+                                              rendered="#{personaController.faseSiguiente ne null}"
+                                              styleClass="p-3 border-round h-full"
+                                              style="background:#f0f9ff;
+                                                     border-left:3px solid #{personaController.faseSiguiente.pasada ? '#9ca3af' : '#3b82f6'}">
+                                    <div class="flex align-items-center gap-1 mb-2">
+                                        <span class="text-xs text-500 font-medium uppercase">Fase siguiente</span>
+                                        <i class="pi pi-chevron-right text-400 text-xs"/>
+                                    </div>
+                                    <span class="block font-semibold text-800 text-sm">
+                                        <h:outputText value="#{personaController.faseSiguiente.titulo}"/>
+                                    </span>
+                                    <small class="block text-500 text-xs mt-1">
+                                        <h:outputText value="#{personaController.faseSiguiente.fechaInicio}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                        <span> — </span>
+                                        <h:outputText value="#{personaController.faseSiguiente.fechaFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </h:outputText>
+                                    </small>
+                                    <p:tag rendered="#{personaController.faseSiguiente.vigente}"
+                                           value="En curso" severity="info" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseSiguiente.pasada}"
+                                           value="Completada" severity="secondary" styleClass="mt-2"/>
+                                    <p:tag rendered="#{personaController.faseSiguiente.futura}"
+                                           value="Próxima" severity="info" styleClass="mt-2"/>
+                                </h:panelGroup>
+                            </div>
+
+                        </div><!-- /grid 3 cards -->
+                    </div>
+                </div>
+
+                <!-- Fallback B: proceso activo pero ACTUALIZACION_MIEMBROS no configurada -->
+                <div class="col-12"
+                     rendered="#{personaController.faseActualizacionMiembros eq null
+                                 and personaController.faseVigente ne null}">
                     <h:panelGroup layout="block"
-                                  rendered="#{personaController.faseVigente ne null}"
                                   styleClass="p-3 mb-2 border-round shadow-1"
-                                  style="background:#{personaController.faseVigente.severidad eq 'URGENT' ? '#fee2e2' : (personaController.faseVigente.severidad eq 'WARNING' ? '#fef3c7' : (personaController.faseVigente.severidad eq 'SUCCESS' ? '#dcfce7' : '#dbeafe'))};
-                                         border-left:4px solid #{personaController.faseVigente.severidad eq 'URGENT' ? '#dc2626' : (personaController.faseVigente.severidad eq 'WARNING' ? '#d97706' : (personaController.faseVigente.severidad eq 'SUCCESS' ? '#16a34a' : '#2563eb'))};">
-                        <i class="pi pi-#{personaController.faseVigente.severidad eq 'URGENT' ? 'exclamation-triangle' : (personaController.faseVigente.severidad eq 'SUCCESS' ? 'check-circle' : 'info-circle')}"
-                           style="font-size:1.2rem; margin-right:.5rem"/>
-                        <b>#{personaController.faseVigente.titulo}</b>
-                        <span style="margin-left:.5rem">â€” #{personaController.faseVigente.mensaje}</span>
-                        <p:tag value="#{personaController.faseVigente.diasRestantes} dÃ­as restantes"
-                               severity="#{personaController.faseVigente.severidad eq 'URGENT' ? 'danger' : (personaController.faseVigente.severidad eq 'WARNING' ? 'warning' : 'info')}"
-                               style="margin-left:.8rem"/>
+                                  style="background:#dbeafe; border-left:4px solid #2563eb;">
+                        <div class="flex align-items-center flex-wrap gap-2">
+                            <i class="pi pi-info-circle" style="font-size:1.2rem; color:#2563eb"/>
+                            <b><h:outputText value="#{personaController.faseVigente.titulo}"/></b>
+                            <h:outputText rendered="#{not empty personaController.faseVigente.mensaje}"
+                                          value="— #{personaController.faseVigente.mensaje}"/>
+                            <p:tag value="#{personaController.faseVigente.diasRestantes} días restantes"
+                                   severity="info" style="margin-left:.5rem"/>
+                            <p:tag value="Actualización de miembros no programada"
+                                   icon="pi pi-lock" severity="warning"/>
+                        </div>
                     </h:panelGroup>
                 </div>
-                <!-- Banner cuando no hay cronograma activo: solo lectura -->
-                <div class="col-12" rendered="#{personaController.faseVigente eq null}">
+
+                <!-- Fallback C: sin proceso electoral activo -->
+                <div class="col-12"
+                     rendered="#{personaController.faseActualizacionMiembros eq null
+                                 and personaController.faseVigente eq null}">
                     <h:panelGroup layout="block"
                                   styleClass="p-3 mb-2 border-round"
                                   style="background:#f3f4f6; border-left:4px solid #6b7280;">
@@ -170,16 +338,82 @@
                         <p:ajax event="rowUnselectCheckbox" update=":frmPersonas:btnEliminaRegistros" />
                         <p:ajax event="toggleSelect" update=":frmPersonas:btnEliminaRegistros" />
 
-                        <p:column selectionMode="multiple" exportable="false" ></p:column>
-                        <p:column headerText="Cedula" sortBy="#{iglPers.persona.documento}" filterBy="#{iglPers.persona.documento}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.documento}" /></p:column>
-                        <p:column headerText="Nombre" sortBy="#{iglPers.persona.nombres}" filterBy="#{iglPers.persona.nombres}"  ><h:outputText value="#{iglPers.persona.nombres}" /></p:column>        
-                        <p:column headerText="Tratamiento" sortBy="#{iglPers.persona.tratamiento}" filterBy="#{iglPers.persona.tratamiento}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.tratamiento}" /></p:column>
-                        <p:column headerText="Sexo" sortBy="#{iglPers.persona.sexo}" filterBy="#{iglPers.persona.sexo}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.persona.sexo}" /></p:column>                    
-                        <p:column headerText="Desde" sortBy="#{iglPers.desde}" filterBy="#{iglPers.desde}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.desde}" /></p:column>
-                        <p:column headerText="Hasta" sortBy="#{iglPers.hasta}" filterBy="#{iglPers.hasta}" styleClass="sm:w-max md:w-1 lg:w-10rem"><h:outputText value="#{iglPers.hasta}" /></p:column>
-                        <p:column headerText="Estado" sortBy="#{iglPers.actualizada}" filterBy="#{iglPers.actualizada}" styleClass="sm:w-max md:w-1 lg:w-9rem">
-                            <p:tag rendered="#{iglPers.actualizada}" value="Actualizada" severity="success" icon="pi pi-check-circle"/>
-                            <p:tag rendered="#{not iglPers.actualizada}" value="Pendiente" severity="warning" icon="pi pi-clock"/>
+                        <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
+
+                        <!-- Cédula: columna independiente con búsqueda y ordenamiento -->
+                        <p:column headerText="Cédula"
+                                  sortBy="#{iglPers.persona.documento}"
+                                  filterBy="#{iglPers.persona.documento}"
+                                  filterMatchMode="contains"
+                                  filterPlaceholder="Buscar cédula…"
+                                  style="width:9rem">
+                            <h:outputText value="#{iglPers.persona.documento}"
+                                          styleClass="font-medium text-800 text-sm"/>
+                        </p:column>
+
+                        <!-- ── Columna MIEMBRO (stacked) ────────────────────────────────────
+                             Apellidos + Nombres en negrita (nombre completo en orden electoral)
+                             + pill de sexo M/F con color. La cédula vive en su propia columna.
+                             Sort y filter por apellidos; el placeholder lo indica al usuario.
+                             ─────────────────────────────────────────────────────────────── -->
+                        <p:column headerText="Miembro"
+                                  sortBy="#{iglPers.persona.apellidos}"
+                                  filterBy="#{iglPers.persona.apellidos}"
+                                  filterMatchMode="contains"
+                                  filterPlaceholder="Filtrar por apellido…"
+                                  style="min-width:14rem">
+                            <f:facet name="export">
+                                <h:outputText value="#{iglPers.persona.apellidos} #{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>
+                            </f:facet>
+                            <div class="flex align-items-center gap-2">
+                                <!-- Nombre completo: Apellidos primero (orden padrón electoral) -->
+                                <span class="font-semibold text-800 text-sm">
+                                    <h:outputText rendered="#{not empty iglPers.persona.apellidos}"
+                                                  value="#{iglPers.persona.apellidos} "/>
+                                    <h:outputText value="#{iglPers.persona.nombres}"/>
+                                </span>
+                                <!-- Pill de sexo con color -->
+                                <ui:fragment rendered="#{iglPers.persona.sexo eq 'M'}">
+                                    <span style="background:#dbeafe;color:#1d4ed8;font-size:.65rem;
+                                                 font-weight:700;padding:.1rem .45rem;
+                                                 border-radius:1rem;letter-spacing:.03em;white-space:nowrap">M</span>
+                                </ui:fragment>
+                                <ui:fragment rendered="#{iglPers.persona.sexo eq 'F'}">
+                                    <span style="background:#fce7f3;color:#be185d;font-size:.65rem;
+                                                 font-weight:700;padding:.1rem .45rem;
+                                                 border-radius:1rem;letter-spacing:.03em;white-space:nowrap">F</span>
+                                </ui:fragment>
+                            </div>
+                        </p:column>
+
+                        <!-- Habilitado para padrón electoral -->
+                        <p:column headerText="Padrón" sortBy="#{iglPers.habilitadoPadron}"
+                                  filterBy="#{iglPers.habilitadoPadron}"
+                                  styleClass="text-center" style="width:9rem" exportable="false">
+                            <f:facet name="export">
+                                <h:outputText value="#{iglPers.habilitadoPadron ? 'Habilitado' : 'No habilitado'}"/>
+                            </f:facet>
+                            <p:tag rendered="#{iglPers.habilitadoPadron}"
+                                   value="Habilitado" severity="success" icon="pi pi-check-circle"/>
+                            <p:tag rendered="#{not iglPers.habilitadoPadron}"
+                                   value="No habilitado" severity="secondary" icon="pi pi-ban"/>
+                        </p:column>
+
+                        <!-- Estado de revisión en el ciclo de actualización -->
+                        <p:column headerText="Revisión" sortBy="#{iglPers.actualizada}"
+                                  filterBy="#{iglPers.actualizada}" style="width:10rem" exportable="false">
+                            <f:facet name="export">
+                                <h:outputText value="#{iglPers.actualizada ? 'Revisado' : 'Pendiente'}"/>
+                            </f:facet>
+                            <p:tag rendered="#{iglPers.actualizada}"
+                                   value="Revisado" severity="success" icon="pi pi-check"/>
+                            <p:tag rendered="#{not iglPers.actualizada}"
+                                   value="Pendiente" severity="warning" icon="pi pi-clock"/>
+                            <h:outputText rendered="#{iglPers.actualizada and iglPers.fechaActualiza ne null}"
+                                          value="#{iglPers.fechaActualiza}"
+                                          styleClass="block text-500 text-xs mt-1">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
                         </p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmPersonas:outPnlPersonas" oncomplete="PF('dlgPersona').show()"
@@ -209,7 +443,7 @@
 
                             <div class="formgrid grid">
                                 <div class="field col-12 md:col-6">
-                                    <p:outputLabel for="cedula" value="CÃ©dula *"/>
+                                    <p:outputLabel for="cedula" value="Cédula"/>
                                     <p:inputText id="cedula" styleClass="mask-cedula"
                                                  value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}"
                                                  required="true" maxlength="10"
@@ -239,12 +473,13 @@
                                                  onkeyup="value = value.toUpperCase()"/>
                                 </div>
                                 <div class="field col-12 md:col-6">
-                                    <p:outputLabel for="tratamiento" value="Tratamiento"/>
-                                    <p:inputText id="tratamiento"
-                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.tratamiento}"
-                                                 maxlength="50"
+                                    <p:outputLabel for="apellidos" value="Apellidos"/>
+                                    <p:inputText id="apellidos"
+                                                 value="#{personaController.iglesiaPersonaSeleccionado.persona.apellidos}"
+                                                 maxlength="100"
                                                  onkeyup="value = value.toUpperCase()"/>
                                 </div>
+
                                 <div class="field col-12 md:col-6"
                                      rendered="#{not personaController.restringidoAIglesia}">
                                     <p:outputLabel for="iglesia" value="Iglesia *"/>
@@ -264,6 +499,37 @@
                                     <p:outputLabel value="Iglesia"/>
                                     <p:chip label="#{personaController.iglesiaSeleccionado.nombre}"
                                             icon="pi pi-home"/>
+                                </div>
+
+                                <!-- ── Habilitado para padrón electoral ── -->
+                                <div class="field col-12">
+                                    <div class="flex align-items-start justify-content-between p-3 border-round"
+                                         style="background:#f8fafc; border:1px solid #e2e8f0; gap:1rem;">
+                                        <div class="flex flex-column gap-1 flex-auto">
+                                            <span class="font-semibold text-800">
+                                                <i class="pi pi-id-card mr-2 text-primary"/>
+                                                Habilitado para padrón electoral
+                                            </span>
+                                            <small class="text-500 line-height-3">
+                                                Un miembro puede pertenecer a la iglesia sin necesariamente
+                                                formar parte del padrón electoral. Active esta opción
+                                                solo para miembros que cumplen los requisitos de
+                                                participación electoral establecidos por la organización.
+                                            </small>
+                                        </div>
+                                        <div class="flex flex-column align-items-center gap-2" style="min-width:6rem;">
+                                            <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="Habilitado" severity="success"
+                                                   icon="pi pi-check-circle" style="white-space:nowrap"/>
+                                            <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="No habilitado" severity="secondary"
+                                                   icon="pi pi-ban" style="white-space:nowrap"/>
+                                            <p:toggleSwitch id="habilitadoPadron"
+                                                            value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}">
+                                                <p:ajax update="frmPersonas:outPnlPersonas"/>
+                                            </p:toggleSwitch>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </p:outputPanel>

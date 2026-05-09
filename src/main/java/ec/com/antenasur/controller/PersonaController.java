@@ -151,11 +151,37 @@ public class PersonaController implements Serializable {
     public int getPorcentajeActualizacion() { return progreso[2]; }
     public boolean isActualizacionCompleta() { return progreso[0] > 0 && progreso[1] == progreso[0]; }
 
-    /** Fase vigente del cronograma electoral (alimenta el banner superior). */
+    /**
+     * Fase de menor orden vigente en el proceso activo (banner general del
+     * proceso). Puede ser cualquier fase del ciclo electoral.
+     */
     @Getter
     private CronogramaFaseDTO faseVigente;
 
-    /** Indica si la fase vigente permite editar el padrÃ³n. Bloquea botones. */
+    /**
+     * Configuración de {@link ec.com.antenasur.enums.FaseElectoral#ACTUALIZACION_MIEMBROS}
+     * en el proceso activo (presente aunque la fase no esté vigente ahora).
+     * El flag {@code vigente} del DTO indica si la ventana de fechas está activa.
+     * Alimenta el card central del timeline de cronograma.
+     */
+    @Getter
+    private CronogramaFaseDTO faseActualizacionMiembros;
+
+    /**
+     * Fase inmediatamente anterior a ACTUALIZACION_MIEMBROS por {@code orden}.
+     * Puede ser pasada, vigente o futura (sin filtro de fecha). Null si no existe.
+     */
+    @Getter
+    private CronogramaFaseDTO faseAnterior;
+
+    /**
+     * Fase inmediatamente siguiente a ACTUALIZACION_MIEMBROS por {@code orden}.
+     * Puede ser pasada, vigente o futura (sin filtro de fecha). Null si no existe.
+     */
+    @Getter
+    private CronogramaFaseDTO faseSiguiente;
+
+    /** Indica si la fase activa permite editar el padrón. Bloquea botones. */
     @Getter
     private boolean puedeEditarPadron;
 
@@ -167,8 +193,15 @@ public class PersonaController implements Serializable {
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
             iglesiaSeleccionado = new IglesiaDTO();
 
-            // Cronograma electoral: alimenta banner y permisos de ediciÃ³n.
+            // Cronograma electoral: timeline del módulo personas.
+            // faseVigente            → fase de mayor prioridad (menor orden) activa ahora.
+            // faseActualizacionMiembros → config de ACTUALIZACION_MIEMBROS (sin filtro de fecha).
+            // faseAnterior / faseSiguiente → fases adyacentes por orden (sin filtro de fecha).
+            // puedeEditarPadron     → evaluado sobre TODAS las fases activas simultáneas.
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
+            faseActualizacionMiembros = cronogramaService.getFaseActualizacionMiembros();
+            faseAnterior = cronogramaService.getFaseAnteriorAActualizacion();
+            faseSiguiente = cronogramaService.getFaseSiguienteAActualizacion();
             puedeEditarPadron = cronogramaService.permiteEdicionPadron();
 
             // DetecciÃ³n de rol IglesiaAdmin: si el usuario logueado tiene este
@@ -265,6 +298,8 @@ public class PersonaController implements Serializable {
         iglesiaPersonaSeleccionado = new IglesiaPersonaDTO();
         iglesiaPersonaSeleccionado.setPersona(new PersonaDTO());
         iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
+        // Por defecto habilitado para padrón: el admin puede desmarcarlo
+        iglesiaPersonaSeleccionado.setHabilitadoPadron(Boolean.TRUE);
         this.iglesiaSeleccionado = new IglesiaDTO();
         this.personaSeleccionado = new PersonaDTO();
     }
@@ -329,7 +364,18 @@ public class PersonaController implements Serializable {
             }
             IglesiaPersonaDTO persistido = iglesiaPersonaService.guardarDesdeDTO(iglesiaPersonaSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esActualizacion ? "Persona actualizada" : "Persona registrada y marcada como actualizada");
+                String nombreMiembro = (persistido.getPersona() != null
+                        && persistido.getPersona().getNombres() != null)
+                        ? persistido.getPersona().getNombres() : "";
+                boolean enPadron = Boolean.TRUE.equals(persistido.getHabilitadoPadron());
+                String estadoPadron = enPadron ? " · Habilitado para padrón" : " · No habilitado para padrón";
+                if (esActualizacion) {
+                    JsfUtil.addSuccessMessage("Miembro actualizado correctamente: "
+                            + nombreMiembro + estadoPadron);
+                } else {
+                    JsfUtil.addSuccessMessage("Miembro registrado correctamente: "
+                            + nombreMiembro + estadoPadron);
+                }
                 personaSeleccionado = null;
                 iglesiaPersonaSeleccionado = null;
                 // Refresca lista de miembros y recalcula progreso (la ediciÃ³n

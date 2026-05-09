@@ -1,6 +1,7 @@
 package ec.com.antenasur.service.tec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.ejb.Stateless;
@@ -42,7 +43,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
 
     /**
      * Devuelve la fase vigente del proceso electoral activo, o {@code null}
-     * si no hay proceso activo o si todas las fases estÃ¡n fuera de rango.
+     * si no hay proceso activo o si todas las fases están fuera de rango.
      */
     public CronogramaFaseDTO getFaseVigenteDelProcesoActivo() {
         ProcesoElectoral activo = procesoElectoralFacade.getActivo();
@@ -52,44 +53,55 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Indica si la fase vigente permite ediciÃ³n del padrÃ³n. Combina la
+     * Indica si la fase vigente permite edición del padrón. Combina la
      * columna {@code cref_permite_edicion} (override del admin) con el
-     * default semÃ¡ntico del enum {@link FaseElectoral}.
+     * default semántico del enum {@link FaseElectoral}.
      *
      * <p>Sin proceso activo o sin fase vigente devuelve {@code false}
      * (modo seguro: nada se edita fuera del cronograma).
      */
     public boolean permiteEdicionPadron() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        if (vigente.getPermiteEdicion() != null) {
-            return vigente.getPermiteEdicion();
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (Boolean.TRUE.equals(f.getPermiteEdicion())) {
+                return true;
+            }
+            if (f.getPermiteEdicion() == null
+                    && f.getFase() != null
+                    && f.getFase().defaultPermiteEdicionPadron()) {
+                return true;
+            }
         }
-        return vigente.getFase() != null && vigente.getFase().defaultPermiteEdicionPadron();
+        return false;
     }
 
     /**
-     * Indica si el registro/ediciÃ³n de iglesias estÃ¡ habilitado.
-     * Se permite Ãºnicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
+     * Indica si el registro/edición de iglesias está habilitado.
+     * Se permite únicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
      *
      * <p>No usa {@code cref_permite_edicion} porque ese campo es exclusivo del
-     * control del padrÃ³n de miembros ({@link #permiteEdicionPadron()}).
+     * control del padrón de miembros ({@link #permiteEdicionPadron()}).
      */
     public boolean permiteRegistroIglesias() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        return vigente.getFase() == FaseElectoral.INSCRIPCION_IGLESIAS;
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (FaseElectoral.INSCRIPCION_IGLESIAS == f.getFase()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * Indica si la asignaciÃ³n/reasignaciÃ³n de usuarios IglesiaAdmin a iglesias
-     * estÃ¡ habilitada. Se permite Ãºnicamente cuando la fase vigente es
+     * Indica si la asignación/reasignación de usuarios IglesiaAdmin a iglesias
+     * está habilitada. Se permite únicamente cuando la fase vigente es
      * {@link FaseElectoral#ASIGNACION_USUARIOS}.
      */
     public boolean permiteAsignacionUsuarios() {
-        CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
-        if (vigente == null) return false;
-        return vigente.getFase() == FaseElectoral.ASIGNACION_USUARIOS;
+        for (CronogramaFase f : getFasesVigentesInternas()) {
+            if (FaseElectoral.ASIGNACION_USUARIOS == f.getFase()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public CronogramaFaseDTO obtenerDTOPorId(Integer id) {
