@@ -5,15 +5,15 @@
  */
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.MiembroJRV;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.Mesa;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -22,7 +22,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class MiembroJRVFacade extends AbstractFacade<MiembroJRV, Integer> {
 
-    private static final String HQL = " FROM MiembroJRV jrv";
+    private static final String HQL = " SELECT jrv FROM MiembroJRV jrv";
     private static final String ORDENADO = " ORDER BY jrv.id";
 
     public MiembroJRVFacade() {

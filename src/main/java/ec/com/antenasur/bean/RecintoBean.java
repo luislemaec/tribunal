@@ -3,13 +3,13 @@ package ec.com.antenasur.bean;
 import ec.com.antenasur.model.Geograp;
 import java.io.Serializable;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.service.tec.RecintoService;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

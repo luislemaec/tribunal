@@ -7,9 +7,9 @@ package ec.com.antenasur.facade;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.AccessAuditory;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -27,7 +27,7 @@ public class AccessFacade extends AbstractFacade<AccessAuditory, Integer> {
 
     public AccessAuditory findBySession(String session) {
         try {
-            String sql = "FROM AccessAuditory a WHERE a.session =:session ORDER BY id";
+            String sql = "SELECT a FROM AccessAuditory a WHERE a.session =:session ORDER BY id";
             TypedQuery<AccessAuditory> query = super.getEntityManager().createQuery(sql, AccessAuditory.class);
             query.setParameter("session", session);
             List<AccessAuditory> result = query.getResultList();
@@ -43,7 +43,7 @@ public class AccessFacade extends AbstractFacade<AccessAuditory, Integer> {
 
     public List<AccessAuditory> findAllOrderByIdDesc() {
         try {
-            String sql = "FROM AccessAuditory ORDER BY id DESC";
+            String sql = "SELECT e FROM AccessAuditory e ORDER BY id DESC";
             TypedQuery<AccessAuditory> query = super.getEntityManager().createQuery(sql, AccessAuditory.class);
             List<AccessAuditory> result = query.getResultList();
             if (result.size() > 0) {

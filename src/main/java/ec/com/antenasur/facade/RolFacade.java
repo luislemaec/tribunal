@@ -7,9 +7,9 @@ package ec.com.antenasur.facade;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
 
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -29,7 +29,7 @@ public class RolFacade extends AbstractFacade<Rol, Integer> {
 
     public Rol buscaPorNombre(String nombre) {
         try {
-            String sql = "FROM Rol r WHERE r.nombre=:nombre";
+            String sql = "SELECT r FROM Rol r WHERE r.nombre=:nombre";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("nombre", nombre);
             List<Rol> resultList = query.getResultList();
@@ -46,7 +46,7 @@ public class RolFacade extends AbstractFacade<Rol, Integer> {
 
     public List<Rol> getRolesAplicativoSeleccion() {
         try {
-            String sql = "FROM Rol r WHERE r.nombre LIKE :rolSeleccion and r.estado=true";
+            String sql = "SELECT r FROM Rol r WHERE r.nombre LIKE :rolSeleccion and r.estado=true";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("rolSeleccion", "SITEC-%");
             List<Rol> resultList = query.getResultList();

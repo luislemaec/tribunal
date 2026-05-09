@@ -12,12 +12,13 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
@@ -40,7 +41,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOG = Logger.getLogger(ReportTemplateController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReportTemplateController.class);
 
     private static final Integer TAMANIO_LETRA = 0;
 
@@ -138,7 +139,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
             if (listaProceso != null) {
                 JsfUtil.addInfoMessage(listaProceso.size() + " Procesos encontrados");
             } else {
-                JsfUtil.addWarningMessage("No se obtubieron resultado de búsqueda");
+                JsfUtil.addWarningMessage("No se obtubieron resultado de bÃƒÂºsqueda");
             }
         }
     }
@@ -157,7 +158,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
             ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), fuenteContenido);
             ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
             ReportePFD.descargarPDF(getNombreReporte());
-            procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(), "NÚMERO DE REGISTROS: " + listaProceso.size());
+            procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(), "NÃƒÅ¡MERO DE REGISTROS: " + listaProceso.size());
 
         } catch (Exception e) {
             LOG.error("ERROR AL EXPORTAR EXCEL DATOS REPORTE" + getNombreReporte(), e);
@@ -173,7 +174,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
             ReporteXLSX.creaContenidoTabla(getListaDatos(), getNombresColumnas());
             ReporteXLSX.setFinalParagraph(listaProceso.size());
             ReporteXLSX.descargarExcel(getNombreReporte());
-            procesoBean.okActivityRegister("DESCARGA REPORTE(XLS) " + getNombreReporte(), "NÚMERO DE REGISTROS: " + listaProceso.size());
+            procesoBean.okActivityRegister("DESCARGA REPORTE(XLS) " + getNombreReporte(), "NÃƒÅ¡MERO DE REGISTROS: " + listaProceso.size());
         } catch (Exception e) {
             LOG.error("ERROR AL EXPORTAR EXCEL " + getNombreReporte(), e);
         }

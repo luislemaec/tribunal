@@ -3,8 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.CandidatoDTO;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
@@ -49,12 +49,12 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     /**
      * Devuelve los candidatos de una lista para los cargos dados; si un cargo
      * no tiene candidato asignado, lo representa con un Candidato placeholder
-     * (sin id, sin persona) para que la vista pueda exponerlo como slot vacío.
+     * (sin id, sin persona) para que la vista pueda exponerlo como slot vacÃ­o.
      *
-     * @param lista lista política seleccionada (no null, con id)
-     * @param periodo período al que pertenecen los candidatos (no null)
+     * @param lista lista polÃ­tica seleccionada (no null, con id)
+     * @param periodo perÃ­odo al que pertenecen los candidatos (no null)
      * @param cargos cargos a iterar (orden definido por el caller)
-     * @return lista del mismo tamaño que {@code cargos}; vacía si la lista o
+     * @return lista del mismo tamaÃ±o que {@code cargos}; vacÃ­a si la lista o
      *         alguno de los argumentos es null/incompleto
      */
     public List<Candidato> obtenerCandidatosPorLista(Lista lista, Periodo periodo, List<CatalogoGeneral> cargos) {
@@ -87,8 +87,8 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     }
 
     /**
-     * Versión DTO de {@link #obtenerCandidatosPorLista}: devuelve la lista de
-     * candidatos para una lista política dada. Para los cargos sin candidato
+     * VersiÃ³n DTO de {@link #obtenerCandidatosPorLista}: devuelve la lista de
+     * candidatos para una lista polÃ­tica dada. Para los cargos sin candidato
      * asignado retorna placeholders (DTO sin id, con cargo/lista/periodo
      * referenciados por id+nombre).
      */
@@ -161,9 +161,9 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     }
 
     /**
-     * Asigna a un candidato una IglesiaPersona resuelta por su cédula.
-     * Devuelve null si no existe persona con esa cédula. NO persiste — el
-     * caller decide cuándo guardar el candidato completo.
+     * Asigna a un candidato una IglesiaPersona resuelta por su cÃ©dula.
+     * Devuelve null si no existe persona con esa cÃ©dula. NO persiste â€” el
+     * caller decide cuÃ¡ndo guardar el candidato completo.
      */
     public CandidatoDTO asignarPersonaPorCedula(CandidatoDTO candidatoDto, String cedula) {
         if (candidatoDto == null || cedula == null || cedula.isEmpty()) {

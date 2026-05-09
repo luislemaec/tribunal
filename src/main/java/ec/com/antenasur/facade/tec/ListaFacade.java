@@ -6,7 +6,7 @@
 package ec.com.antenasur.facade.tec;
 
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Lista;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -18,7 +18,7 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class ListaFacade extends AbstractFacade<Lista, Integer> {
 
-    private static final String HQL = " FROM Lista l";
+    private static final String HQL = " SELECT l FROM Lista l";
     private static final String ORDENADO = " ORDER BY l.id";
 
     public ListaFacade() {

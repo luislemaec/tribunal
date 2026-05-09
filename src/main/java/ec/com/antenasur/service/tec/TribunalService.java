@@ -2,8 +2,8 @@ package ec.com.antenasur.service.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 
@@ -78,7 +78,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
     }
 
     /**
-     * Asigna a un DTO una IglesiaPersona resuelta por cédula. NO persiste.
+     * Asigna a un DTO una IglesiaPersona resuelta por cÃ©dula. NO persiste.
      */
     public TribunalDTO asignarPersonaPorCedula(TribunalDTO dto, String cedula) {
         if (dto == null || cedula == null || cedula.isEmpty()) return dto;
@@ -90,7 +90,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
 
     /**
      * Devuelve la lista de autoridades vigentes; si faltan cargos, agrega
-     * placeholders (TribunalDTO sin id) por cada cargo que no esté asignado.
+     * placeholders (TribunalDTO sin id) por cada cargo que no estÃ© asignado.
      */
     public List<TribunalDTO> listarAutoridadesConPlaceholders(Integer periodoId, Integer cargoPadreId) {
         List<TribunalDTO> resultado = new ArrayList<>();

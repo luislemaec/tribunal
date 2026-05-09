@@ -6,14 +6,14 @@
 package ec.com.antenasur.facade;
 
 import ec.com.antenasur.model.Menu;
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.MenuRol;
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import java.util.List;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -22,7 +22,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class MenuRolFacade extends AbstractFacade<MenuRol, Integer> {
 
-    static final String HQL = " FROM MenuRol mr";
+    static final String HQL = " SELECT mr FROM MenuRol mr";
 
     public MenuRolFacade() {
         super(MenuRol.class, Integer.class);

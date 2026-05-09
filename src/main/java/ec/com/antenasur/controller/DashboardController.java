@@ -2,10 +2,10 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.MesaBean;
@@ -36,7 +36,7 @@ public class DashboardController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;

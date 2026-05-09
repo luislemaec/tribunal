@@ -3,9 +3,9 @@ package ec.com.antenasur.facade.tec;
 import ec.com.antenasur.model.Geograp;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.Recinto;
@@ -19,7 +19,7 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class MesaFacade extends AbstractFacade<Mesa, Integer> {
 
-    private static final String HQL = " FROM Mesa m";
+    private static final String HQL = " SELECT m FROM Mesa m";
     private static final String ACTIVOS = " m.estado = TRUE";
     private static final String ORDENADO = " ORDER BY m.id";
 
@@ -29,9 +29,9 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
 
     /**
      * Suma {@code totalVotos} de todas las mesas activas en una sola query
-     * agregada. Reemplaza el patrón anti-rendimiento de cargar TODAS las
-     * mesas y sumar en Java (que en MesaBean.totalVotantes hacía findAll() +
-     * iteración, generando lazy-loads N+1 al accionar getTotalVotos en
+     * agregada. Reemplaza el patrÃƒÂ³n anti-rendimiento de cargar TODAS las
+     * mesas y sumar en Java (que en MesaBean.totalVotantes hacÃƒÂ­a findAll() +
+     * iteraciÃƒÂ³n, generando lazy-loads N+1 al accionar getTotalVotos en
      * algunas implementaciones JPA).
      */
     public long sumTotalVotos() {

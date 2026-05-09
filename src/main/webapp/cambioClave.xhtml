@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:h="jakarta.faces.html"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
+      xmlns:f="jakarta.faces.core">
     <h:head>
         <f:facet name="first">
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -30,14 +30,14 @@
                 <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
                     <div class="card">
                         <h5><b>Cambio de clave</b></h5>
-                        <p:staticMessage severity="info" summary="INFORMACIÓN" detail="Estimado usuario, ingrese una clave fácil de recordar para usted y difícil de adivinar para el resto" style="width: 100%"/>
+                        <p:staticMessage severity="info" summary="INFORMACIÃ“N" detail="Estimado usuario, ingrese una clave fÃ¡cil de recordar para usted y difÃ­cil de adivinar para el resto" style="width: 100%"/>
 
                         <div class="col-12 ui-fluid">
                             <p:password styleClass=" w-full mt-2" id="claveAnterior" required="true" value="#{cambioClaveController.claveTemporal}"  validatorMessage="#{msg['msg.passwordOld.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true"  placeholder="#{msg['msg.placeH.claveTemporat']}" />
 
-                            <p:password styleClass=" w-full my-3" id="password" required="true" value="#{cambioClaveController.clave1}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  toggleMask="true"  placeholder="contraseña"/>
+                            <p:password styleClass=" w-full my-3" id="password" required="true" value="#{cambioClaveController.clave1}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  toggleMask="true"  placeholder="contraseÃ±a"/>
                             
-                            <p:password styleClass=" w-full" id="password2" required="true" value="#{cambioClaveController.clave2}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="repita la contraseña"/>
+                            <p:password styleClass=" w-full" id="password2" required="true" value="#{cambioClaveController.clave2}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="repita la contraseÃ±a"/>
 
                         </div>
 

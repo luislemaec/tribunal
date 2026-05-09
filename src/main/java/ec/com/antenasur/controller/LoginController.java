@@ -4,12 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import org.primefaces.model.menu.DefaultMenuItem;
 import org.primefaces.model.menu.DefaultMenuModel;
@@ -74,7 +74,7 @@ public class LoginController implements Serializable {
     @Setter
     private PersonaDTO people;
 
-    /** Entidad de auditoría — uso interno persistente, no se expone a la vista. */
+    /** Entidad de auditorÃ­a â€” uso interno persistente, no se expone a la vista. */
     @Setter
     private AccessAuditory accessAuditory = new AccessAuditory();
 
@@ -95,13 +95,15 @@ public class LoginController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            if (JsfUtil.getRequestParameter("loginBean") != null && JsfUtil.getRequestParameter("loginBean") != ""
-                    && !Boolean.parseBoolean(JsfUtil.getRequestParameter("loginBean"))) {
+            String paramLoginBean = JsfUtil.getRequestParameter("loginBean");
+            if (paramLoginBean != null && !paramLoginBean.isEmpty()
+                    && !Boolean.parseBoolean(paramLoginBean)) {
                 HttpServletRequest request = JsfUtil.getRequest();
                 if (request.getUserPrincipal() != null) {
                     request.logout();
                 }
-            } else if (loginBean.getUserName() != null && loginBean.isLoggedIn()) {
+            } else if (loginBean != null && loginBean.getUserName() != null && loginBean.isLoggedIn()
+                    && loginBean.getUsuario() != null) {
                 if (Boolean.TRUE.equals(loginBean.getUsuario().getPermanente())) {
                     JsfUtil.redirect("/dashboard.jsf");
                 } else {
@@ -109,12 +111,14 @@ public class LoginController implements Serializable {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error en init() de LoginController", e);
         }
     }
 
     public void login() throws Throwable {
+        log.info("=== LOGIN START === userName='{}'", loginBean != null ? loginBean.getUserName() : "null");
         prefijoRoles = (String) JsfUtil.getProperty("roles.sitec", true);
+        log.info("prefijoRoles resuelto: '{}'", prefijoRoles);
 
         AuthDataDTO authData = userService.resolverDatosAutenticacion(loginBean.getUserName(), prefijoRoles);
         listaRolesUsuario = authData.getRolesUsuario();
@@ -122,61 +126,94 @@ public class LoginController implements Serializable {
         this.user = authData.getUsuario();
         this.people = authData.getPersona();
 
+        log.info("Resultado resolverDatosAutenticacion -> usuario={}, roles={}, isResolved={}",
+                user != null ? user.getUsername() : "null",
+                listRolesUserString,
+                authData.isResolved());
+
         accessAuditory = new AccessAuditory(loginBean.getUserName(), JsfUtil.getTimestamp(), JsfUtil.getIPAddress());
 
-        if (authData.isResolved()) {
+        if (!authData.isResolved()) {
+            // Diagnóstico explícito: antes era fallo silencioso
+            String motivo;
+            if (user == null) {
+                motivo = "Usuario no existe o está inactivo";
+            } else if (listaRolesUsuario == null || listaRolesUsuario.isEmpty()) {
+                motivo = "El usuario no tiene roles asignados con prefijo '" + prefijoRoles + "' (ni es Superadmin)";
+            } else {
+                motivo = "Datos de autenticación incompletos";
+            }
+            log.warn("Login rechazado por isResolved()=false. Motivo: {}", motivo);
+            JsfUtil.addErrorMessage("Usuario o contraseña incorrecto");
+            procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA - " + motivo);
             try {
-                HttpServletRequest request = JsfUtil.getRequest();
-                HttpSession httpSession = request.getSession(false);
+                accessAuditory.setStatus(false);
+                accessService.create(accessAuditory);
+            } catch (Exception ignored) { }
+            return;
+        }
 
-                if (request.getUserPrincipal() != null) {
-                    request.logout();
-                }
-                request.login(loginBean.getUserName(), loginBean.getPassword());
+        try {
+            HttpServletRequest request = JsfUtil.getRequest();
+            HttpSession httpSession = request.getSession(false);
 
-                loginBean.setRoles(listRolesUserString);
-                loginBean.setLoggedIn(true);
-                loginBean.setTiempoSession(request.getSession().getMaxInactiveInterval());
-                loginBean.setUsuario(user);
-                loginBean.setPersona(people);
+            if (request.getUserPrincipal() != null) {
+                request.logout();
+            }
+            log.info("Invocando request.login() para '{}'", loginBean.getUserName());
+            request.login(loginBean.getUserName(), loginBean.getPassword());
+            log.info("request.login() OK");
 
-                accessAuditory.setBrowser(request.getHeader("User-Agent"));
-                accessAuditory.setStatus(true);
-                accessAuditory.setSession(httpSession.getId());
-                accessAuditory.setActive(true);
-                httpSession.setAttribute("loginBean", loginBean);
+            loginBean.setRoles(listRolesUserString);
+            loginBean.setLoggedIn(true);
+            loginBean.setTiempoSession(request.getSession().getMaxInactiveInterval());
+            loginBean.setUsuario(user);
+            loginBean.setPersona(people);
 
-                if (Boolean.TRUE.equals(user.getPermanente())) {
-                    fillMenuModel();
-                    boolean tienePassTemp = Boolean.TRUE.equals(user.getTienePasswordTemporal());
-                    boolean estadoOk = Boolean.TRUE.equals(user.getEstado());
-                    if (!tienePassTemp && estadoOk) {
-                        if (loginBean.getRoles().contains(prefijoRoles + Constantes.getRolTecnico())) {
-                            JsfUtil.redirect("/actaE.jsf");
-                        } else {
-                            JsfUtil.redirect("/dashboard.jsf");
-                        }
-                        procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
+            accessAuditory.setBrowser(request.getHeader("User-Agent"));
+            accessAuditory.setStatus(true);
+            accessAuditory.setSession(httpSession.getId());
+            accessAuditory.setActive(true);
+            httpSession.setAttribute("loginBean", loginBean);
+
+            if (Boolean.TRUE.equals(user.getPermanente())) {
+                fillMenuModel();
+                boolean tienePassTemp = Boolean.TRUE.equals(user.getTienePasswordTemporal());
+                boolean estadoOk = Boolean.TRUE.equals(user.getEstado());
+                String destino;
+                if (!tienePassTemp && estadoOk) {
+                    if (loginBean.getRoles().contains(prefijoRoles + Constantes.getRolTecnico())) {
+                        destino = "/actaE.jsf";
                     } else {
-                        JsfUtil.redirect("/dashboard.jsf");
-                        procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
+                        destino = "/dashboard.jsf";
                     }
                 } else {
-                    cargarPaginasCambioClave();
-                    JsfUtil.redirect("/cambioClave.jsf");
+                    destino = "/dashboard.jsf";
                 }
-            } catch (Exception e) {
-                JsfUtil.addErrorMessage("Usuario o contraseña incorrecto");
-                procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
-                loginBean.setUserName("");
-                loginBean.setPassword("");
+                log.info("Redireccionando a {}", destino);
+                procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
+                JsfUtil.redirect(destino);
+            } else {
+                cargarPaginasCambioClave();
+                log.info("Redireccionando a /cambioClave.jsf");
+                JsfUtil.redirect("/cambioClave.jsf");
             }
+        } catch (Exception e) {
+            log.error("Error durante request.login() o redirect para usuario '{}'", loginBean.getUserName(), e);
+            JsfUtil.addErrorMessage("Usuario o contraseña incorrecto");
+            procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
+            loginBean.setUserName("");
+            loginBean.setPassword("");
+            accessAuditory.setStatus(false);
         }
+
         try {
             accessService.create(accessAuditory);
         } catch (Exception e) {
+            log.error("Error guardando AccessAuditory", e);
             procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
         }
+        log.info("=== LOGIN END ===");
     }
 
     public void fillMenuModel() throws Throwable {
@@ -186,7 +223,7 @@ public class LoginController implements Serializable {
         JsfUtil.cargarObjetoSession("listaPermisos", menuService.extraerPaginasPermitidas(menus));
 
         if (menus == null) {
-            JsfUtil.addErrorMessage("Error al generar el menú con los roles de Usuario");
+            JsfUtil.addErrorMessage("Error al generar el menÃº con los roles de Usuario");
             loginBean.logout();
             return;
         }

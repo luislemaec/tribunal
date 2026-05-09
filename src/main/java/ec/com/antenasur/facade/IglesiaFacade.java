@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
@@ -17,10 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 
-    static final String HQL = " FROM Iglesia ig";
-    /** HQL base con parroquia, cantón y provincia (3 niveles) ya cargados eager. */
+    static final String HQL = " SELECT ig FROM Iglesia ig";
+    /** HQL base con parroquia, cantÃƒÂ³n y provincia (3 niveles) ya cargados eager. */
     static final String HQL_CON_CANTON =
-            " FROM Iglesia ig"
+            " SELECT ig FROM Iglesia ig"
             + " LEFT JOIN FETCH ig.ubicacion ub"
             + " LEFT JOIN FETCH ub.geograp canton"
             + " LEFT JOIN FETCH canton.geograp provincia";
@@ -30,7 +30,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
     }
 
     /**
-     * Carga todas las iglesias activas con parroquia y cantón en un solo JOIN,
+     * Carga todas las iglesias activas con parroquia y cantÃƒÂ³n en un solo JOIN,
      * garantizando que {@code IglesiaDTO.fromEntity()} siempre tenga acceso
      * a {@code ubicacion.geograp} sin depender de lazy-load ni del @Filter activo.
      */
@@ -60,7 +60,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
         }
     }
 
-    /** Carga una iglesia por id con parroquia y cantón ya inicializados (evita lazy-load posterior). */
+    /** Carga una iglesia por id con parroquia y cantÃƒÂ³n ya inicializados (evita lazy-load posterior). */
     public Iglesia findConCanton(Integer id) {
         if (id == null) return null;
         try {
@@ -128,18 +128,18 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
         }
     }
 
-    /** Nombre de la secuencia PostgreSQL que genera los códigos genéricos. */
+    /** Nombre de la secuencia PostgreSQL que genera los cÃƒÂ³digos genÃƒÂ©ricos. */
     private static final String SEQ_CODIGO_GENERICO = "seq_iglesia_codigo_generico";
 
     /**
-     * Genera el siguiente código genérico secuencial (13 dígitos zero-padded).
+     * Genera el siguiente cÃƒÂ³digo genÃƒÂ©rico secuencial (13 dÃƒÂ­gitos zero-padded).
      *
-     * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atómica por diseño:
+     * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atÃƒÂ³mica por diseÃƒÂ±o:
      * elimina race conditions sin advisory locks y garantiza que un valor nunca se reuse,
-     * incluso si se elimina la última iglesia con código genérico.
+     * incluso si se elimina la ÃƒÂºltima iglesia con cÃƒÂ³digo genÃƒÂ©rico.
      *
-     * La secuencia se crea de forma idempotente en la primera invocación, alineada al
-     * mayor código existente en {@code tb_iglesia} para no colisionar con datos previos.
+     * La secuencia se crea de forma idempotente en la primera invocaciÃƒÂ³n, alineada al
+     * mayor cÃƒÂ³digo existente en {@code tb_iglesia} para no colisionar con datos previos.
      */
     public String generarDocumentoGenerico() {
         asegurarSecuenciaCodigoGenerico();
@@ -151,11 +151,11 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 
     /**
      * Crea la secuencia si no existe, alineada a {@code MAX(igl_documento) + 1} de
-     * los códigos genéricos previos (cualquier documento de 13 dígitos numéricos
-     * que empiece con "00" — los RUC reales ecuatorianos nunca empiezan con 00,
+     * los cÃƒÂ³digos genÃƒÂ©ricos previos (cualquier documento de 13 dÃƒÂ­gitos numÃƒÂ©ricos
+     * que empiece con "00" Ã¢â‚¬â€ los RUC reales ecuatorianos nunca empiezan con 00,
      * provincias 01-24).
      *
-     * Idempotente: tras la primera ejecución, el bloque DO no hace nada.
+     * Idempotente: tras la primera ejecuciÃƒÂ³n, el bloque DO no hace nada.
      */
     private void asegurarSecuenciaCodigoGenerico() {
         try {
@@ -179,7 +179,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
     }
 
     /**
-     * Cuenta iglesias cuya fecha de actividad (actualización o creación) cae
+     * Cuenta iglesias cuya fecha de actividad (actualizaciÃƒÂ³n o creaciÃƒÂ³n) cae
      * dentro del rango [{@code desde}, {@code hasta}].
      */
     public long countActualizadasEnRango(Date desde, Date hasta) {
@@ -208,7 +208,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
             List<Iglesia> result = query.getResultList();
             return result.isEmpty() ? null : result.get(0);
         } catch (Exception e) {
-            log.error("Error al buscar iglesia por nombre/comunidad/ubicación", e);
+            log.error("Error al buscar iglesia por nombre/comunidad/ubicaciÃƒÂ³n", e);
             return null;
         }
     }

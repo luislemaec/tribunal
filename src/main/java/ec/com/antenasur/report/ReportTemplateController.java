@@ -3,9 +3,10 @@ package ec.com.antenasur.report;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.primefaces.event.SelectEvent;
 
 import lombok.Getter;
@@ -15,7 +16,7 @@ public class ReportTemplateController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOG = Logger.getLogger(ReportTemplateController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReportTemplateController.class);
 
     @Setter
     @Getter

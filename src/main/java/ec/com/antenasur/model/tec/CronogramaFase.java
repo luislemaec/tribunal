@@ -3,20 +3,20 @@ package ec.com.antenasur.model.tec;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 import ec.com.antenasur.enums.FaseElectoral;
 import ec.com.antenasur.enums.SeveridadCronograma;
@@ -28,9 +28,9 @@ import org.hibernate.annotations.Filter;
 
 /**
  * Fase del cronograma electoral asociada a un {@link ProcesoElectoral}.
- * Define la ventana temporal en que la fase está vigente y si permite
- * edición del padrón. El banner del sistema toma {@code titulo}, {@code mensaje}
- * y {@code severidad} para componer la notificación visible.
+ * Define la ventana temporal en que la fase estÃ¡ vigente y si permite
+ * ediciÃ³n del padrÃ³n. El banner del sistema toma {@code titulo}, {@code mensaje}
+ * y {@code severidad} para componer la notificaciÃ³n visible.
  */
 @Entity
 @Table(name = "cronograma_fase", schema = "tec")

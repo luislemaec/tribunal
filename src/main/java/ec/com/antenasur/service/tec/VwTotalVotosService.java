@@ -2,8 +2,8 @@ package ec.com.antenasur.service.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 

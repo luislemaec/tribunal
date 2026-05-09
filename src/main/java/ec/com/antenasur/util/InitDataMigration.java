@@ -1,23 +1,23 @@
 package ec.com.antenasur.util;
 
-import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Migraciones automáticas que se ejecutan al desplegar la aplicación.
+ * Migraciones automÃ¡ticas que se ejecutan al desplegar la aplicaciÃ³n.
  *
- * Cada bloque de migración debe ser idempotente: ejecutarlo varias veces no
- * debe alterar el resultado más allá de la primera ejecución.
+ * Cada bloque de migraciÃ³n debe ser idempotente: ejecutarlo varias veces no
+ * debe alterar el resultado mÃ¡s allÃ¡ de la primera ejecuciÃ³n.
  *
- * No se introduce ningún framework de migraciones (Flyway/Liquibase) para
- * mantener mínima la huella; cuando crezca el número de migraciones conviene
+ * No se introduce ningÃºn framework de migraciones (Flyway/Liquibase) para
+ * mantener mÃ­nima la huella; cuando crezca el nÃºmero de migraciones conviene
  * migrar a uno de ellos.
  */
 @Singleton
@@ -34,12 +34,12 @@ public class InitDataMigration {
     }
 
     /**
-     * Cuando se agregó {@code @Version igl_version} a la entidad {@code Iglesia},
-     * Hibernate creó la columna sin default, dejando NULL en todas las filas
+     * Cuando se agregÃ³ {@code @Version igl_version} a la entidad {@code Iglesia},
+     * Hibernate creÃ³ la columna sin default, dejando NULL en todas las filas
      * preexistentes. Eso hace que el siguiente UPDATE lance NullPointerException
      * en {@code Versioning.increment(next(null))}.
      *
-     * Aquí rellenamos a 0 las filas con version NULL para que la primera edición
+     * AquÃ­ rellenamos a 0 las filas con version NULL para que la primera ediciÃ³n
      * pueda incrementar correctamente a 1.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -49,13 +49,13 @@ public class InitDataMigration {
                     "UPDATE public.tb_iglesia SET igl_version = 0 WHERE igl_version IS NULL")
                     .executeUpdate();
             if (actualizadas > 0) {
-                log.info("Migración: igl_version inicializada a 0 en {} fila(s) de tb_iglesia.", actualizadas);
+                log.info("MigraciÃ³n: igl_version inicializada a 0 en {} fila(s) de tb_iglesia.", actualizadas);
             }
         } catch (Exception e) {
-            // No lanzamos: la migración es best-effort. Si falla aquí (p.ej. la
-            // columna aún no existe en un primer arranque), Hibernate la creará
-            // en este mismo despliegue y la próxima activación rellenará.
-            log.warn("Migración igl_version omitida: {}", e.getMessage());
+            // No lanzamos: la migraciÃ³n es best-effort. Si falla aquÃ­ (p.ej. la
+            // columna aÃºn no existe en un primer arranque), Hibernate la crearÃ¡
+            // en este mismo despliegue y la prÃ³xima activaciÃ³n rellenarÃ¡.
+            log.warn("MigraciÃ³n igl_version omitida: {}", e.getMessage());
         }
     }
 }

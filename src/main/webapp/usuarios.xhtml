@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Usuarios</ui:define>
@@ -36,7 +36,7 @@
                             <p:column headerText="Iglesia" sortBy="#{rolUs.usuario.iglesiaNombre}" filterBy="#{rolUs.usuario.iglesiaNombre}" styleClass="sm:w-max md:w-2 lg:w-6rem">
                                 <p:chip rendered="#{not empty rolUs.usuario.iglesiaNombre}"
                                         label="#{rolUs.usuario.iglesiaNombre}" icon="pi pi-home"/>
-                                <h:outputText rendered="#{empty rolUs.usuario.iglesiaNombre}" value="—" styleClass="text-400"/>
+                                <h:outputText rendered="#{empty rolUs.usuario.iglesiaNombre}" value="â€”" styleClass="text-400"/>
                             </p:column>
 
 
@@ -58,8 +58,8 @@
                                                  actionListener="#{usuarioControlador.eliminarUsuario}"
                                                  process="@this" update="tblUsuarios">
                                     <f:setPropertyActionListener value="#{rolUs.usuario}" target="#{usuarioControlador.usuarioSeleccionado}"/>
-                                    <p:confirm header="Confirmar eliminación"
-                                               message="¿Está seguro que desea eliminar este usuario?"
+                                    <p:confirm header="Confirmar eliminaciÃ³n"
+                                               message="Â¿EstÃ¡ seguro que desea eliminar este usuario?"
                                                icon="pi pi-exclamation-triangle"/>
                                 </p:commandButton>
                             </p:column>
@@ -70,7 +70,7 @@
                                 <p:outputPanel rendered="#{not empty usuarioControlador.usuarioSeleccionado}">
 
                                     <div class="p-field">
-                                        <p:outputLabel for="cedula">Cédula</p:outputLabel>
+                                        <p:outputLabel for="cedula">CÃ©dula</p:outputLabel>
                                         <p:inputText id="cedula" styleClass="mask-cedula" value="#{usuarioControlador.usuarioSeleccionado.personaDocumento}" required="true" disabled="#{ (usuarioControlador.personaRegistroCivil ne null) or (not empty usuarioControlador.usuarioSeleccionado.personaDocumento)}">
                                             <p:keyFilter for="cedula" mask="num"/>                        	
                                             <p:ajax event="change"
@@ -118,7 +118,7 @@
                                                                itemLabel="#{igl.nombre} - #{igl.comunidad}"
                                                                itemValue="#{igl.id}"/>
                                             </p:selectOneMenu>
-                                            <small class="text-500">Solo este usuario podrá gestionar miembros de la iglesia seleccionada.</small>
+                                            <small class="text-500">Solo este usuario podrÃ¡ gestionar miembros de la iglesia seleccionada.</small>
                                         </div>
                                     </p:outputPanel>
                                 </p:outputPanel>

@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Listas</ui:define>
@@ -17,14 +17,14 @@
         <h:form id="frmListas">
             <div class="grid">                
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE LISTAS</h5>
+                    <h5>ADMINITRACIÃ“N DE LISTAS</h5>
                     <p:toolbar >
                         <p:toolbarGroup >
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{listaController.nuevo}" update="outPnlListas" oncomplete="PF('dlgListas').show()"
                                              styleClass="ui-button-success" style="margin-right: .5rem" />
                             <p:commandButton id="btnEliminaRegistros" value="#{listaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{listaController.eliminarSeleccionados}"
                                              styleClass="ui-button-danger" disabled="#{!listaController.existeSeleccionados()}" update="@this">
-                                <p:confirm header="Confirmation" message="¿Está Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
+                                <p:confirm header="Confirmation" message="Â¿EstÃ¡ Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
                             </p:commandButton> 
                         </p:toolbarGroup>
                         <p:toolbarGroup align="right" >
@@ -67,8 +67,8 @@
                                              actionListener="#{listaController.eliminarSeleccionado}"
                                              process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro de eliminar esta lista?"
+                                <p:confirm header="Confirmar eliminaciÃ³n"
+                                           message="Â¿EstÃ¡ seguro de eliminar esta lista?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>

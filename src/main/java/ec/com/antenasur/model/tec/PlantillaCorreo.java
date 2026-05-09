@@ -2,16 +2,16 @@ package ec.com.antenasur.model.tec;
 
 import java.io.Serializable;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
 import ec.com.antenasur.model.generic.EntidadBase;
@@ -50,14 +50,21 @@ public class PlantillaCorreo extends EntidadAuditable implements Serializable {
 
     @Setter
     @Getter
+    @Column(name = "asunto", length = 500)
     private String asunto;
 
+    /**
+     * Cuerpo de la plantilla de correo (HTML). Mapeado a TEXT en PostgreSQL
+     * porque puede contener contenido extenso (>255 chars).
+     */
     @Setter
     @Getter
+    @Column(name = "mensaje", columnDefinition = "TEXT")
     private String mensaje;
 
     @Setter
     @Getter
+    @Column(name = "descripcion", length = 500)
     private String descripcion;
 
     public PlantillaCorreo() {

@@ -3,8 +3,8 @@ package ec.com.antenasur.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.MenuRolDTO;
 import ec.com.antenasur.facade.MenuFacade;
@@ -40,12 +40,12 @@ public class MenuRolService extends AbstractService<MenuRol, Integer, MenuRolFac
     }
 
     /**
-     * Devuelve la asignación menu-rol existente, o un placeholder transitorio
-     * (sin id, {@code estado=false}) si todavía no existe. Útil para
-     * construir árboles de permisos donde cada nodo necesita un MenuRol —
-     * existente o no — para el binding del checkbox.
+     * Devuelve la asignaciÃ³n menu-rol existente, o un placeholder transitorio
+     * (sin id, {@code estado=false}) si todavÃ­a no existe. Ãštil para
+     * construir Ã¡rboles de permisos donde cada nodo necesita un MenuRol â€”
+     * existente o no â€” para el binding del checkbox.
      *
-     * @return MenuRol nunca null si se reciben menu y rol válidos
+     * @return MenuRol nunca null si se reciben menu y rol vÃ¡lidos
      */
     public MenuRol obtenerOPrepararPorMenuYRol(Menu menu, Rol rol) {
         if (menu == null || rol == null) {
@@ -75,7 +75,7 @@ public class MenuRolService extends AbstractService<MenuRol, Integer, MenuRolFac
     }
 
     /**
-     * Versión DTO de {@link #obtenerOPrepararPorMenuYRol(Menu, Rol)}: recibe
+     * VersiÃ³n DTO de {@link #obtenerOPrepararPorMenuYRol(Menu, Rol)}: recibe
      * ids, retorna un MenuRolDTO existente o un placeholder transitorio (sin
      * id, estado=false).
      */

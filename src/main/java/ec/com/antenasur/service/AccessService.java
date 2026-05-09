@@ -3,8 +3,8 @@ package ec.com.antenasur.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.AccessAuditoryDTO;
 import ec.com.antenasur.facade.AccessFacade;
@@ -13,7 +13,7 @@ import ec.com.antenasur.model.AccessAuditory;
 /**
  * {@link AccessAuditory} no hereda de {@code EntidadBase} (no se aplica el
  * filtro de soft-delete), por lo que este service no extiende
- * {@link AbstractService}. Expone explícitamente las operaciones que los
+ * {@link AbstractService}. Expone explÃ­citamente las operaciones que los
  * consumidores usan.
  */
 @Stateless

@@ -7,9 +7,9 @@ package ec.com.antenasur.facade.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
 
 import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -29,7 +29,7 @@ public class PlantillaCorreoFacade extends AbstractFacade<PlantillaCorreo, Integ
 
     public PlantillaCorreo buscarPorAsunto(String asunto) {
         try {
-            String sql = "FROM PlantillaCorreo r WHERE r.asunto=:asunto";
+            String sql = "SELECT r FROM PlantillaCorreo r WHERE r.asunto=:asunto";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("asunto", asunto);
             List<PlantillaCorreo> resultList = query.getResultList();

@@ -3,9 +3,9 @@ package ec.com.antenasur.bean;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Mesa;

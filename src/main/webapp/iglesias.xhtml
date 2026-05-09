@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
@@ -26,7 +26,7 @@
                         <i class="pi pi-building text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">Gestión de Iglesias</h2>
+                        <h2 class="m-0 text-900 font-bold text-2xl">GestiÃ³n de Iglesias</h2>
                         <p class="text-500 mt-1 mb-0 text-sm">Administre el registro de iglesias, ubicaciones y documentos asociados.</p>
                     </div>
                 </div>
@@ -115,7 +115,7 @@
         </h:form>
 
         <!-- ======================================================
-             BARRA DE PROGRESO — FASE ACTIVA
+             BARRA DE PROGRESO â€” FASE ACTIVA
              ====================================================== -->
         <h:form id="frmProgreso">
             <p:outputPanel rendered="#{iglesiaController.faseVigente ne null}" styleClass="mb-2" layout="block">
@@ -124,7 +124,7 @@
                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
                         <div class="flex align-items-center gap-2">
                             <i class="pi pi-chart-line text-primary"></i>
-                            <span class="font-semibold text-900">Progreso de inscripción —
+                            <span class="font-semibold text-900">Progreso de inscripciÃ³n â€”
                                 <span class="text-primary">
                                     <h:outputText value="#{iglesiaController.faseVigente.titulo}"/>
                                 </span>
@@ -157,7 +157,7 @@
                                      <f:convertDateTime pattern="dd/MM/yyyy"/>
                                  </h:outputText>
                             <h:outputText rendered="#{iglesiaController.faseVigente.diasRestantes gt 0}"
-                                          value=" · #{iglesiaController.faseVigente.diasRestantes} días restantes"
+                                          value=" Â· #{iglesiaController.faseVigente.diasRestantes} dÃ­as restantes"
                                           styleClass="text-orange-500 font-medium"/>
                         </small>
                     </div>
@@ -166,7 +166,7 @@
         </h:form>
 
         <!-- ======================================================
-             FILTROS GEOGRÁFICOS (colapsable)
+             FILTROS GEOGRÃFICOS (colapsable)
              ====================================================== -->
         <h:form id="frmFiltros">
             <p:panel toggleable="true" collapsed="false"
@@ -174,7 +174,7 @@
                 <f:facet name="header">
                     <div class="flex align-items-center gap-2">
                         <i class="pi pi-filter text-primary"></i>
-                        <span class="font-semibold text-900">Filtros geográficos</span>
+                        <span class="font-semibold text-900">Filtros geogrÃ¡ficos</span>
                         <p:tag rendered="#{iglesiaController.provinciaFiltroId ne null}"
                                value="Activo" severity="info" icon="pi pi-check-circle"
                                styleClass="ml-1"/>
@@ -194,7 +194,7 @@
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-3">
-                        <label for="canton" class="text-700 font-medium text-sm">Cantón</label>
+                        <label for="canton" class="text-700 font-medium text-sm">CantÃ³n</label>
                         <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
                                          placeholder="-- Todos los cantones --"
@@ -241,8 +241,8 @@
                     <div class="flex align-items-center gap-2 surface-100 border-round-lg p-3">
                         <i class="pi pi-lock text-orange-500 text-xl flex-shrink-0"/>
                         <span class="text-700 text-sm">
-                            El registro está habilitado únicamente durante la fase
-                            <strong>Inscripción de Iglesias</strong>.
+                            El registro estÃ¡ habilitado Ãºnicamente durante la fase
+                            <strong>InscripciÃ³n de Iglesias</strong>.
                             <h:outputText rendered="#{iglesiaController.faseVigente ne null}"
                                           value=" Fase vigente: #{iglesiaController.faseVigente.titulo}."/>
                             <h:outputText rendered="#{iglesiaController.faseVigente eq null}"
@@ -261,7 +261,7 @@
                                          oncomplete="PF('dlgIglesia').show()"
                                          update=":frmDlgIglesia">
                             <p:resetInput target=":frmDlgIglesia"/>
-                            <p:tooltip for="@parent" value="Disponible durante la fase Inscripción de Iglesias"/>
+                            <p:tooltip for="@parent" value="Disponible durante la fase InscripciÃ³n de Iglesias"/>
                         </p:commandButton>
                         <p:commandButton id="btnEliminarLista"
                                          value="#{iglesiaController.getMensajeBotonEliminar()}"
@@ -270,8 +270,8 @@
                                          disabled="#{!iglesiaController.existeIglesiasSeleccionadas()}"
                                          actionListener="#{iglesiaController.eliminarIglesiaSeleccionadas}"
                                          process="@this" update=":frmIglesias :frmStats">
-                            <p:confirm header="Confirmar eliminación"
-                                       message="Las #{iglesiaController.listaIglesiasSeleccionadas.size()} iglesias seleccionadas serán eliminadas. ¿Continuar?"
+                            <p:confirm header="Confirmar eliminaciÃ³n"
+                                       message="Las #{iglesiaController.listaIglesiasSeleccionadas.size()} iglesias seleccionadas serÃ¡n eliminadas. Â¿Continuar?"
                                        icon="pi pi-exclamation-triangle"/>
                             <p:tooltip for="@parent" value="Eliminar las iglesias seleccionadas"/>
                         </p:commandButton>
@@ -316,7 +316,7 @@
                             <span class="text-lg text-900 font-bold">Listado de Iglesias</span>
                             <span class="p-input-icon-left">
                                 <i class="pi pi-search"></i>
-                                <p:inputText id="globalFilter" placeholder="Búsqueda global..."
+                                <p:inputText id="globalFilter" placeholder="BÃºsqueda global..."
                                              onkeyup="PF('wdTblIglesia').filter()"
                                              styleClass="w-full md:w-18rem"/>
                             </span>
@@ -330,19 +330,19 @@
                     <p:column selectionMode="multiple" exportable="false"
                               styleClass="text-center" style="width:3rem"/>
 
-                    <!-- RUC con badge genérico -->
-                    <p:column headerText="RUC / Código" sortBy="#{iglesia.documento}"
+                    <!-- RUC con badge genÃ©rico -->
+                    <p:column headerText="RUC / CÃ³digo" sortBy="#{iglesia.documento}"
                               filterBy="#{iglesia.documento}" filterMatchMode="contains"
                               style="width:10rem">
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.documento}"/>
                         </f:facet>
                         <p:tag rendered="#{not empty iglesia.documento and iglesia.documento.startsWith('00')}"
-                               value="Genérico" icon="pi pi-tag" severity="warning"/>
+                               value="GenÃ©rico" icon="pi pi-tag" severity="warning"/>
                         <h:outputText rendered="#{not empty iglesia.documento and not iglesia.documento.startsWith('00')}"
                                       value="#{iglesia.documento}" styleClass="text-sm text-900"
                                       style="font-family:monospace"/>
-                        <h:outputText rendered="#{empty iglesia.documento}" value="—" styleClass="text-400"/>
+                        <h:outputText rendered="#{empty iglesia.documento}" value="â€”" styleClass="text-400"/>
                     </p:column>
 
                     <!-- Nombre con avatar de iniciales -->
@@ -363,8 +363,8 @@
                         </div>
                     </p:column>
 
-                    <!-- Ubicación (provincia + cantón + parroquia apilados) -->
-                    <p:column headerText="Ubicación" sortBy="#{iglesia.provinciaNombre}"
+                    <!-- UbicaciÃ³n (provincia + cantÃ³n + parroquia apilados) -->
+                    <p:column headerText="UbicaciÃ³n" sortBy="#{iglesia.provinciaNombre}"
                               filterBy="#{iglesia.provinciaNombre}" filterMatchMode="contains"
                               style="width:15rem">
                         <f:facet name="export">
@@ -396,7 +396,7 @@
                         <!-- action (no actionListener) para garantizar el orden tras f:setPropertyActionListener -->
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Editar iglesia' : 'Solo disponible en fase Inscripción de Iglesias'}"
+                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Editar iglesia' : 'Solo disponible en fase InscripciÃ³n de Iglesias'}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          action="#{iglesiaController.editarIglesiaFila}"
                                          oncomplete="PF('dlgIglesia').show()"
@@ -407,20 +407,20 @@
 
                         <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Eliminar iglesia' : 'Solo disponible en fase Inscripción de Iglesias'}"
+                                         title="#{iglesiaController.puedeRegistrarIglesia ? 'Eliminar iglesia' : 'Solo disponible en fase InscripciÃ³n de Iglesias'}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          action="#{iglesiaController.eliminarIglesiaFila}"
                                          process="@this" update=":frmIglesias :frmProgreso :frmStats">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
-                            <p:confirm header="Confirmar eliminación"
-                                       message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
+                            <p:confirm header="Confirmar eliminaciÃ³n"
+                                       message="Â¿Eliminar la iglesia '#{iglesia.nombre}'? El registro serÃ¡ dado de baja."
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
 
                         <p:commandButton icon="pi pi-folder-open"
                                          styleClass="ui-button-rounded ui-button-text ui-button-success"
-                                         title="Ver documentos históricos"
+                                         title="Ver documentos histÃ³ricos"
                                          rendered="#{iglesia.tieneDocumentos}"
                                          action="#{iglesiaController.cargaArchivosListaMiembros()}"
                                          oncomplete="PF('pndHistory').show()"
@@ -433,7 +433,7 @@
                 </p:dataTable>
 
                 <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="380">
-                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                    <p:commandButton value="SÃ­, eliminar" icon="pi pi-check"
                                      styleClass="ui-button-danger" type="button"
                                      onclick="PF('dlgConfirm').accept()"/>
                     <p:commandButton value="Cancelar" icon="pi pi-times"
@@ -445,8 +445,8 @@
         </h:form>
 
         <!-- ======================================================
-             DIÁLOGO: NUEVO / EDITAR IGLESIA
-             IMPORTANTE: NO usar appendTo="@(body)" — mueve el DOM
+             DIÃLOGO: NUEVO / EDITAR IGLESIA
+             IMPORTANTE: NO usar appendTo="@(body)" â€” mueve el DOM
              fuera del <form> y los inputs no se serializan en AJAX.
              ====================================================== -->
         <h:form id="frmDlgIglesia">
@@ -455,20 +455,20 @@
                       modal="true" responsive="true" closable="true" closeOnEscape="true"
                       width="840">
 
-                <!-- Sección: Identificación -->
+                <!-- SecciÃ³n: IdentificaciÃ³n -->
                 <div class="flex align-items-center gap-2 mb-2">
                     <i class="pi pi-id-card text-primary"></i>
-                    <span class="font-semibold text-700 text-sm uppercase">Identificación</span>
+                    <span class="font-semibold text-700 text-sm uppercase">IdentificaciÃ³n</span>
                 </div>
 
                 <div class="formgrid grid">
 
                     <!-- Toggle RUC -->
                     <div class="field col-12">
-                        <label class="font-medium text-700 block mb-2 text-sm">¿La iglesia tiene RUC?</label>
+                        <label class="font-medium text-700 block mb-2 text-sm">Â¿La iglesia tiene RUC?</label>
                         <p:outputPanel id="tieneRucPanel" layout="block">
                             <p:commandButton id="btnConRuc"
-                                             value="Sí, tiene RUC"
+                                             value="SÃ­, tiene RUC"
                                              icon="pi pi-check"
                                              styleClass="mr-2 #{iglesiaController.tieneRuc ? 'ui-button-success' : 'ui-button-outlined ui-button-secondary'}"
                                              disabled="#{not iglesiaController.rucToggleHabilitado}"
@@ -516,9 +516,9 @@
                                      disabled="true" styleClass="w-full"/>
                         <small class="text-500">
                             <h:outputText rendered="#{iglesiaController.tieneRuc}"
-                                          value="13 dígitos numéricos"/>
+                                          value="13 dÃ­gitos numÃ©ricos"/>
                             <h:outputText rendered="#{not iglesiaController.tieneRuc}"
-                                          value="Código genérico asignado automáticamente"
+                                          value="CÃ³digo genÃ©rico asignado automÃ¡ticamente"
                                           styleClass="text-orange-500 font-medium"/>
                         </small>
                     </p:outputPanel>
@@ -548,16 +548,16 @@
 
                 <p:divider styleClass="my-2"/>
 
-                <!-- Sección: Ubicación geográfica -->
+                <!-- SecciÃ³n: UbicaciÃ³n geogrÃ¡fica -->
                 <div class="flex align-items-center gap-2 mb-2">
                     <i class="pi pi-map-marker text-primary"></i>
-                    <span class="font-semibold text-700 text-sm uppercase">Ubicación geográfica</span>
+                    <span class="font-semibold text-700 text-sm uppercase">UbicaciÃ³n geogrÃ¡fica</span>
                 </div>
 
                 <div class="formgrid grid">
 
-                    <!-- Provincia (estado exclusivo del diálogo).
-                         NO usar filter="true" — bug PrimeFaces 11 concatena etiquetas tras update AJAX. -->
+                    <!-- Provincia (estado exclusivo del diÃ¡logo).
+                         NO usar filter="true" â€” bug PrimeFaces 11 concatena etiquetas tras update AJAX. -->
                     <div class="field col-12 md:col-4">
                         <label for="provinciaDlg" class="font-medium text-700 text-sm">
                             Provincia <span class="text-red-500">*</span>
@@ -573,14 +573,14 @@
                         </p:selectOneMenu>
                     </div>
 
-                    <!-- Cantón (estado exclusivo del diálogo) -->
+                    <!-- CantÃ³n (estado exclusivo del diÃ¡logo) -->
                     <div class="field col-12 md:col-4">
                         <label for="cantonSel" class="font-medium text-700 text-sm">
-                            Cantón <span class="text-red-500">*</span>
+                            CantÃ³n <span class="text-red-500">*</span>
                         </label>
                         <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonDialogoId}"
                                          styleClass="w-full">
-                            <f:selectItem itemLabel="-- Seleccione cantón --"
+                            <f:selectItem itemLabel="-- Seleccione cantÃ³n --"
                                           itemValue="#{null}" noSelectionOption="true"/>
                             <f:selectItems value="#{iglesiaController.cantonesDialogo}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -589,7 +589,7 @@
                         </p:selectOneMenu>
                     </div>
 
-                    <!-- Parroquia (estado exclusivo del diálogo) -->
+                    <!-- Parroquia (estado exclusivo del diÃ¡logo) -->
                     <div class="field col-12 md:col-4">
                         <label for="parroquiaSel" class="font-medium text-700 text-sm">
                             Parroquia <span class="text-red-500">*</span>
@@ -624,7 +624,7 @@
         </h:form>
 
         <!-- ======================================================
-             DIÁLOGO: DETALLE (SOLO LECTURA)
+             DIÃLOGO: DETALLE (SOLO LECTURA)
              ====================================================== -->
         <h:form id="frmDetalle">
             <p:dialog widgetVar="dlgDetalle" header="Detalle de la Iglesia"
@@ -648,12 +648,12 @@
                                value="Sin docs" severity="warning" icon="pi pi-exclamation-triangle"/>
                     </div>
 
-                    <!-- Datos de identificación -->
+                    <!-- Datos de identificaciÃ³n -->
                     <div class="grid">
                         <div class="col-12 md:col-6 mb-2">
-                            <span class="block text-500 text-xs font-medium uppercase mb-1">RUC / Código</span>
+                            <span class="block text-500 text-xs font-medium uppercase mb-1">RUC / CÃ³digo</span>
                             <p:tag rendered="#{not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00')}"
-                                   value="Genérico" icon="pi pi-tag" severity="warning"/>
+                                   value="GenÃ©rico" icon="pi pi-tag" severity="warning"/>
                             <span rendered="#{not (not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00'))}"
                                   class="text-900 font-medium" style="font-family:monospace">
                                 <h:outputText value="#{iglesiaController.iglesiaSeleccionado.documento}"/>
@@ -669,8 +669,8 @@
 
                     <p:divider styleClass="my-2"/>
 
-                    <!-- Ubicación en forma de breadcrumb -->
-                    <span class="block text-500 text-xs font-medium uppercase mb-2">Ubicación</span>
+                    <!-- UbicaciÃ³n en forma de breadcrumb -->
+                    <span class="block text-500 text-xs font-medium uppercase mb-2">UbicaciÃ³n</span>
                     <div class="flex flex-wrap align-items-center gap-1">
                         <p:tag value="#{iglesiaController.iglesiaSeleccionado.provinciaNombre}"
                                icon="pi pi-map" severity="info"/>
@@ -692,10 +692,10 @@
         </h:form>
 
         <!-- ======================================================
-             DIÁLOGO: DOCUMENTOS HISTÓRICOS
+             DIÃLOGO: DOCUMENTOS HISTÃ“RICOS
              ====================================================== -->
         <h:form id="frmDocs">
-            <p:dialog header="Documentos — #{iglesiaController.iglesiaSeleccionado.nombre}"
+            <p:dialog header="Documentos â€” #{iglesiaController.iglesiaSeleccionado.nombre}"
                       id="pndHistory" widgetVar="pndHistory"
                       closable="true" modal="true" responsive="true"
                       dynamic="true" width="900" appendTo="@(body)">
@@ -725,7 +725,7 @@
                         </div>
                     </p:column>
 
-                    <p:column headerText="Código" style="width:10rem">
+                    <p:column headerText="CÃ³digo" style="width:10rem">
                         <h:outputText value="#{doc.codigo}" styleClass="text-sm" style="font-family:monospace"/>
                     </p:column>
 
@@ -735,7 +735,7 @@
                                icon="#{doc.estado ? 'pi pi-check' : 'pi pi-archive'}"/>
                     </p:column>
 
-                    <p:column headerText="Fecha de creación" style="width:10rem">
+                    <p:column headerText="Fecha de creaciÃ³n" style="width:10rem">
                         <h:outputText value="#{doc.fechaCrea}">
                             <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                         </h:outputText>

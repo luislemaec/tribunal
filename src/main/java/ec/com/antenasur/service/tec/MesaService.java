@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.ResumenVotosDTO;
@@ -99,7 +99,7 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
 
     /**
      * Variante que rellena el flag {@code tieneDocumentos} en cada DTO antes
-     * de retornar (idéntico patrón a {@code IglesiaService.listarDTOsConFlagDocumentos}).
+     * de retornar (idÃ©ntico patrÃ³n a {@code IglesiaService.listarDTOsConFlagDocumentos}).
      */
     public List<MesaDTO> listarDTOsConFlagDocumentos(Integer tipoDocumentoId) {
         List<Mesa> mesas = mesaFacade.findAll();
@@ -171,10 +171,10 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
     /**
      * Construye un resumen para los recintos dados: lista mesas activas, mesas
      * escrutadas (COMPLETADO), suma {@code totalVotos} de cada mesa y calcula
-     * el porcentaje escrutado. Maneja correctamente el caso de listas vacías
+     * el porcentaje escrutado. Maneja correctamente el caso de listas vacÃ­as
      * (porcentaje 0, sin {@code ArithmeticException}).
      *
-     * @param recintos recintos a filtrar; si null/vacío, retorna un resumen vacío
+     * @param recintos recintos a filtrar; si null/vacÃ­o, retorna un resumen vacÃ­o
      */
     public ResumenVotosDTO calcularResumenVotos(List<Recinto> recintos) {
         ResumenVotosDTO resumen = new ResumenVotosDTO();
@@ -209,12 +209,12 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
      * Marca cada mesa con su flag {@code tieneDocumentos} consultando si
      * existe al menos un documento del tipo dado vinculado a su id. Modifica
      * la lista in-place; no persiste cambios. No-op si la lista es null o
-     * vacía.
+     * vacÃ­a.
      */
     /**
      * Marca el flag {@code tieneDocumentos} en cada mesa con una sola query
-     * agregada (igual optimización que {@code IglesiaService}). Reemplaza el
-     * patrón N+1 anterior.
+     * agregada (igual optimizaciÃ³n que {@code IglesiaService}). Reemplaza el
+     * patrÃ³n N+1 anterior.
      */
     public void marcarConTieneDocumentos(List<Mesa> mesas, Integer tipoDocumentoId) {
         if (mesas == null || mesas.isEmpty() || tipoDocumentoId == null) {

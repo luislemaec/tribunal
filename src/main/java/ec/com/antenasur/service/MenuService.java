@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.MenuDTO;
 import ec.com.antenasur.dto.RolUsuarioDTO;
@@ -52,8 +52,8 @@ public class MenuService extends AbstractService<Menu, Integer, MenuFacade> {
     }
 
     /**
-     * Devuelve las páginas (último segmento de la URL) permitidas para los
-     * menús dados, más las páginas siempre disponibles ({@code inicio.jsf} y
+     * Devuelve las pÃ¡ginas (Ãºltimo segmento de la URL) permitidas para los
+     * menÃºs dados, mÃ¡s las pÃ¡ginas siempre disponibles ({@code inicio.jsf} y
      * {@code cambioClave.jsf}).
      */
     public List<String> extraerPaginasPermitidas(List<MenuVO> menusUsuario) {
@@ -106,7 +106,7 @@ public class MenuService extends AbstractService<Menu, Integer, MenuFacade> {
     }
 
     /**
-     * Versión DTO de {@link #getMenusByrols(List, String)}: reconstruye stubs
+     * VersiÃ³n DTO de {@link #getMenusByrols(List, String)}: reconstruye stubs
      * de RolUsuario+Rol+Usuario con solo ids (suficiente para la query que
      * usa MenuFacade) y delega.
      */

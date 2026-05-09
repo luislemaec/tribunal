@@ -6,13 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.servlet.ServletException;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.ServletException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.PlantillaCorreoBean;
@@ -31,7 +32,7 @@ import lombok.Setter;
 public class CambioClaveController implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOG = Logger.getLogger(CambioClaveController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CambioClaveController.class);
 
     @Inject
     LoginBean loginBean;
@@ -73,14 +74,14 @@ public class CambioClaveController implements Serializable {
     public void cambiarClave() throws RuntimeException, IOException, ServletException {
         try {
             if (usuario == null) {
-                JsfUtil.addWarningMessage("Usuario o contraseña incorrecta");
+                JsfUtil.addWarningMessage("Usuario o contraseÃƒÂ±a incorrecta");
                 return;
             }
             if (claveTemporal.isEmpty() || clave1.isEmpty() || clave2.isEmpty()) {
                 return;
             }
             if (!clave1.equals(clave2)) {
-                JsfUtil.addFatalMessage("Las contraseñas no coinciden");
+                JsfUtil.addFatalMessage("Las contraseÃƒÂ±as no coinciden");
                 return;
             }
             if (!JsfUtil.validarContrasenia(clave1)) {
@@ -92,7 +93,7 @@ public class CambioClaveController implements Serializable {
 
             enviarCorreoCambioClave();
             JsfUtil.addSuccessMessage("Cambio de clave exitoso");
-            procesoBean.registraActividad("CAMBIA CONTRASEÑA");
+            procesoBean.registraActividad("CAMBIA CONTRASEÃƒâ€˜A");
             loginBean.passwordChangued();
             JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
         } catch (Exception e) {

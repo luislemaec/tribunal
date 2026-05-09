@@ -3,8 +3,8 @@ package ec.com.antenasur.util;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.servlet.ServletContext;
 
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;

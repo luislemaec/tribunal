@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 
@@ -31,7 +31,7 @@ public class ListaController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Lista registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Lista actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Lista eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;

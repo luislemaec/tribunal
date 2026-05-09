@@ -1,7 +1,7 @@
 package ec.com.antenasur.model.tec;
 
 import java.io.Serializable;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Immutable;
 

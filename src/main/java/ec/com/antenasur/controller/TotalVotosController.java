@@ -4,10 +4,10 @@ import ec.com.antenasur.bean.GeograpBean;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.MesaBean;
@@ -24,23 +24,11 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.axes.cartesian.CartesianScales;
-import org.primefaces.model.charts.axes.cartesian.linear.CartesianLinearAxes;
-import org.primefaces.model.charts.axes.cartesian.linear.CartesianLinearTicks;
-import org.primefaces.model.charts.bar.BarChartDataSet;
-import org.primefaces.model.charts.bar.BarChartModel;
-import org.primefaces.model.charts.bar.BarChartOptions;
-import org.primefaces.model.charts.donut.DonutChartModel;
-import org.primefaces.model.charts.hbar.HorizontalBarChartModel;
-import org.primefaces.model.charts.optionconfig.animation.Animation;
-import org.primefaces.model.charts.optionconfig.legend.Legend;
-import org.primefaces.model.charts.optionconfig.legend.LegendLabel;
-import org.primefaces.model.charts.optionconfig.title.Title;
-
-import org.primefaces.model.charts.hbar.HorizontalBarChartDataSet;
-
-import org.primefaces.model.charts.donut.DonutChartDataSet;
+// TODO [MIGRACION-PF15]: PrimeFaces 14+ eliminó las clases tipadas de charts
+// (BarChartModel, DonutChartModel, HorizontalBarChartModel y todas las
+// clases de org.primefaces.model.charts.*). Refactorizar usando la API
+// de <p:chart> con un modelo Chart.js JSON crudo o una librería externa.
+// Se conservan campos como Object para mantener bindings EL existentes.
 
 /**
  *
@@ -60,7 +48,7 @@ public class TotalVotosController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;
@@ -118,17 +106,18 @@ public class TotalVotosController implements Serializable {
     @Getter
     private Mesa mesaSeleccionado;
 
+    // TODO [MIGRACION-PF15]: tipos cambiaron a Object; refactorizar a Chart.js JSON (p:chart en PF 15)
     @Setter
     @Getter
-    private BarChartModel barModel;
+    private Object barModel;
 
     @Setter
     @Getter
-    private DonutChartModel donutModel;
+    private Object donutModel;
 
     @Setter
     @Getter
-    private HorizontalBarChartModel hbarModel;
+    private Object hbarModel;
 
     @Setter
     @Getter
@@ -277,15 +266,27 @@ public class TotalVotosController implements Serializable {
     }
 
     private void getReporteEstadistica() {
-        try {
-            createBarModel();
-            //createDonutModel();
-            createHorizontalBarModel();
-        } catch (Exception e) {
-            log.error("ERROR AL CARGAR DATOS REPORTE ESTADISTICO", e);
-        }
+        // TODO [MIGRACION-PF15]: Reactivar cuando se refactoricen los charts a la nueva API de p:chart (Chart.js JSON).
+        // try {
+        //     createBarModel();
+        //     createHorizontalBarModel();
+        // } catch (Exception e) {
+        //     log.error("ERROR AL CARGAR DATOS REPORTE ESTADISTICO", e);
+        // }
     }
 
+    /* ================================================================
+     * CHARTS - DESACTIVADO TEMPORALMENTE
+     * ================================================================
+     * PrimeFaces 14+ eliminó BarChartModel, DonutChartModel,
+     * HorizontalBarChartModel y el paquete org.primefaces.model.charts.*.
+     *
+     * Para reactivar: refactorizar usando <p:chart> con un modelo
+     * Chart.js JSON crudo (ver showcase de PrimeFaces 15) o usar una
+     * librería externa de gráficos (e.g. Chart.js directo en JS).
+     * Lógica original preservada en el control de versiones.
+     * ================================================================ */
+    /*
     public void createBarModel() {
         barModel = new BarChartModel();
         ChartData data = new ChartData();
@@ -455,5 +456,6 @@ public class TotalVotosController implements Serializable {
 
         donutModel.setData(data);
     }
+    */
 
 }

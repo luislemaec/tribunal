@@ -3,9 +3,9 @@ package ec.com.antenasur.bean;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import ec.com.antenasur.dto.VwLugarVotacionDTO;
 import ec.com.antenasur.service.tec.VwLugarVotacionService;
@@ -42,7 +42,7 @@ public class LugarVotacionBean implements Serializable {
                 procesoBean.registraActividad("BUSCA LUGAR VOTACION " + nombreCedula);
                 JsfUtil.addSuccessMessage(lugares.size() + " LUGAR ENCONTRADO");
             } else {
-                JsfUtil.addWarningMessage("NO SE ENCONTRO LUGAR DE VOTACIÓN");
+                JsfUtil.addWarningMessage("NO SE ENCONTRO LUGAR DE VOTACIÃ“N");
             }
             nombreCedula = "";
         } catch (Exception e) {

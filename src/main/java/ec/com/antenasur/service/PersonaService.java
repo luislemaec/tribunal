@@ -3,8 +3,8 @@ package ec.com.antenasur.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.PersonaDTO;
 import ec.com.antenasur.facade.PersonaFacade;
@@ -47,7 +47,7 @@ public class PersonaService extends AbstractService<Persona, Integer, PersonaFac
         return PersonaDTO.fromEntity(personaFacade.find(id));
     }
 
-    /** Busca por documento (cédula/RUC) y retorna DTO; null si no existe. */
+    /** Busca por documento (cÃ©dula/RUC) y retorna DTO; null si no existe. */
     public PersonaDTO buscarDTOPorDocumento(String documento) {
         if (documento == null || documento.isEmpty()) {
             return null;
@@ -63,7 +63,7 @@ public class PersonaService extends AbstractService<Persona, Integer, PersonaFac
     /**
      * Persiste la persona descrita por el DTO. Si el id es null hace
      * {@code create}, si no, hidrata la entidad existente con los campos del
-     * DTO y hace {@code edit} (preservando relaciones y campos de auditoría
+     * DTO y hace {@code edit} (preservando relaciones y campos de auditorÃ­a
      * que el DTO no expone).
      */
     public PersonaDTO guardarDesdeDTO(PersonaDTO dto) {
@@ -85,7 +85,7 @@ public class PersonaService extends AbstractService<Persona, Integer, PersonaFac
         return PersonaDTO.fromEntity(personaFacade.edit(actual));
     }
 
-    /** Soft-delete por id. Retorna el DTO post-borrado o null si no existía. */
+    /** Soft-delete por id. Retorna el DTO post-borrado o null si no existÃ­a. */
     public PersonaDTO eliminarPorId(Integer id) {
         if (id == null) {
             return null;

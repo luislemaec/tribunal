@@ -9,9 +9,9 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.IglesiaPersona;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.generic.AbstractFacade;
 
@@ -22,16 +22,16 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer> {
 
-    static final String HQL = "FROM IglesiaPersona ip";
+    static final String HQL = "SELECT ip FROM IglesiaPersona ip";
 
     public IglesiaPersonaFacade() {
         super(IglesiaPersona.class, Integer.class);
     }
 
     /**
-     * Devuelve el vínculo iglesia-persona vigente más reciente para una
+     * Devuelve el vÃƒÂ­nculo iglesia-persona vigente mÃƒÂ¡s reciente para una
      * persona dada. "Vigente" = estado activo. Si la persona pertenece a
-     * varias iglesias históricamente, retorna la última registrada.
+     * varias iglesias histÃƒÂ³ricamente, retorna la ÃƒÂºltima registrada.
      */
     public IglesiaPersona getVigentePorPersonaId(Integer personaId) {
         if (personaId == null) {
@@ -91,15 +91,15 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 
     /**
      * Trae IglesiaPersona activos por parroquia(s) hidratando en una sola
-     * query las relaciones que la vista/DTO consultan después
+     * query las relaciones que la vista/DTO consultan despuÃƒÂ©s
      * ({@code iglesia}, {@code iglesia.ubicacion}, {@code persona}). Evita
      * N+1: sin estos JOIN FETCH, mapear cada IglesiaPersona a DTO disparaba
      * una query por persona y otra por iglesia, multiplicando el tiempo de
      * respuesta hasta sobrepasar el timeout JTA (300s) y romper la
-     * transacción.
+     * transacciÃƒÂ³n.
      *
      * <p>Filtra por {@code ip.estado = TRUE} para excluir soft-deleted y
-     * limita por relación con la lista de parroquias.
+     * limita por relaciÃƒÂ³n con la lista de parroquias.
      */
     public List<IglesiaPersona> getIglesiasPersonasPorParroquias(List<Geograp> parroquias) {
         if (parroquias == null || parroquias.isEmpty()) {
@@ -123,15 +123,15 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
     }
 
     /**
-     * Devuelve el vínculo activo más reciente para la persona identificada
-     * por su DOCUMENTO (cédula), independiente del id interno de la persona.
+     * Devuelve el vÃƒÂ­nculo activo mÃƒÂ¡s reciente para la persona identificada
+     * por su DOCUMENTO (cÃƒÂ©dula), independiente del id interno de la persona.
      *
      * <p>Pensado para entornos donde existen filas duplicadas en
-     * {@code tb_persona} con el mismo documento (caso real en producción).
-     * El método {@link #getVigentePorPersonaId(Integer)} requiere conocer el
+     * {@code tb_persona} con el mismo documento (caso real en producciÃƒÂ³n).
+     * El mÃƒÂ©todo {@link #getVigentePorPersonaId(Integer)} requiere conocer el
      * id exacto, pero {@code finByPersonaDocument} devuelve la persona con
-     * id ASC y el vínculo en {@code tb_iglesia_persona} podría apuntar al
-     * id duplicado mayor — generando "sin iglesia" falso. Esta variante
+     * id ASC y el vÃƒÂ­nculo en {@code tb_iglesia_persona} podrÃƒÂ­a apuntar al
+     * id duplicado mayor Ã¢â‚¬â€ generando "sin iglesia" falso. Esta variante
      * resuelve por documento y evita ese problema.
      */
     public IglesiaPersona getVigentePorDocumentoPersona(String documento) {
@@ -157,9 +157,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
     }
 
     /**
-     * Devuelve el vínculo activo entre la iglesia y la persona indicadas, o
-     * {@code null} si no existe ninguno. Útil para garantizar idempotencia al
-     * crear el vínculo desde el flujo de asignación de admins.
+     * Devuelve el vÃƒÂ­nculo activo entre la iglesia y la persona indicadas, o
+     * {@code null} si no existe ninguno. ÃƒÅ¡til para garantizar idempotencia al
+     * crear el vÃƒÂ­nculo desde el flujo de asignaciÃƒÂ³n de admins.
      */
     public IglesiaPersona findByIglesiaAndPersona(Integer iglesiaId, Integer personaId) {
         if (iglesiaId == null || personaId == null) {

@@ -7,25 +7,27 @@ package ec.com.antenasur.facade;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.model.generic.AbstractFacade;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *
  * @author Luis Lema <lemaedu@gmail.com>
  */
 @Stateless
+@Slf4j
 public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     public UsuarioFacade() {
         super(Usuario.class, Integer.class);
     }
-    private static final String SQL = "FROM Usuario u ";
+    private static final String SQL = "SELECT u FROM Usuario u ";
 
     /**
      *
@@ -69,11 +71,8 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
     }
 
     public Usuario findByUsuarioName(String username) {
-
+        // Intento 1: con LEFT JOIN FETCH para evitar segunda query a Persona.
         try {
-            // JOIN FETCH la persona para que resolverDatosAutenticacion no tenga
-            // que hacer una segunda query a tb_persona. Único caller hoy es ese
-            // service, todos los demás flujos se benefician sin cambios.
             String sql = SQL + "LEFT JOIN FETCH u.personsa p"
                     + " where u.username = :username and u.estado=true";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
@@ -83,11 +82,28 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             if (resultList != null && !resultList.isEmpty()) {
                 return resultList.get(0);
             }
+            log.warn("findByUsuarioName('{}'): JOIN FETCH ejecutado sin error pero sin resultados", username);
         } catch (Exception e) {
-            return null;
+            log.error("findByUsuarioName('{}'): JOIN FETCH lanzÃ³ excepciÃ³n, probarÃ© fallback sin fetch", username, e);
+        }
+
+        // Intento 2 (fallback): query simple sin JOIN FETCH. Persona se cargarÃ¡
+        // lazy si se accede despuÃ©s. Defensivo ante cambios de Hibernate 6.
+        try {
+            String sqlSimple = SQL + " where u.username = :username and u.estado=true";
+            TypedQuery<Usuario> query = super.getEntityManager().createQuery(sqlSimple, Usuario.class);
+            query.setParameter("username", username);
+            List<Usuario> resultList = query.getResultList();
+
+            if (resultList != null && !resultList.isEmpty()) {
+                log.info("findByUsuarioName('{}'): resuelto vÃ­a fallback simple", username);
+                return resultList.get(0);
+            }
+            log.warn("findByUsuarioName('{}'): fallback simple tampoco encontrÃ³ resultado", username);
+        } catch (Exception e2) {
+            log.error("findByUsuarioName('{}'): fallback simple tambiÃ©n fallÃ³", username, e2);
         }
         return null;
-
     }
 
     public Usuario findUsuarioByRucOrMail(String username, String correo) {
@@ -160,9 +176,9 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     /**
      * Devuelve el {@link Usuario} IglesiaAdmin asignado a la iglesia indicada,
-     * o {@code null} si la iglesia aún no tiene admin. Identifica al admin por
-     * el vínculo directo {@code u.iglesia} (solo IglesiaAdmin queda con iglesia
-     * asignada por convención del flujo de creación).
+     * o {@code null} si la iglesia aÃƒÂºn no tiene admin. Identifica al admin por
+     * el vÃƒÂ­nculo directo {@code u.iglesia} (solo IglesiaAdmin queda con iglesia
+     * asignada por convenciÃƒÂ³n del flujo de creaciÃƒÂ³n).
      */
     public Usuario findAdminByIglesiaId(Integer iglesiaId) {
         if (iglesiaId == null) {
@@ -185,8 +201,8 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     /**
      * Devuelve todos los usuarios IglesiaAdmin activos del sistema (uno por
-     * iglesia asignada). Pensado para construir un mapa iglesiaId → admin sin
-     * disparar N+1 al listar iglesias en la pantalla de asignación.
+     * iglesia asignada). Pensado para construir un mapa iglesiaId Ã¢â€ â€™ admin sin
+     * disparar N+1 al listar iglesias en la pantalla de asignaciÃƒÂ³n.
      */
     public List<Usuario> findAllIglesiaAdmins() {
         try {

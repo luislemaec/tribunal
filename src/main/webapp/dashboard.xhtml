@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <!-- Accesos rápidos: SpeedDial flotante (ligero, sin queries). -->
+            <!-- Accesos rÃ¡pidos: SpeedDial flotante (ligero, sin queries). -->
             <h:form id="frmSpeedDial">
                 <p:speedDial type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
@@ -54,7 +54,7 @@
                 </span>
             </p:divider>
 
-            <!-- KPIs — todos provienen de DashboardController (queries livianas COUNT/SUM). -->
+            <!-- KPIs â€” todos provienen de DashboardController (queries livianas COUNT/SUM). -->
             <div class="grid">
 
                 <div class="col-12 md:col-6 lg:col-3">

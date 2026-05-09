@@ -1,19 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+    <persistence-unit name="tribunalPU">
+        <jta-data-source>java:jboss/datasources/TribunalDS</jta-data-source>
 
-<persistence version="2.1"
-   xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="
-        http://xmlns.jcp.org/xml/ns/persistence
-        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
-   <persistence-unit name="tribunalPU">
-      <jta-data-source>java:jboss/datasources/TribunalDS</jta-data-source>
+        <properties>
+            <!--
+                Notas:
+                - hibernate.dialect: NO se especifica — Hibernate 6 lo auto-detecta vía JDBC metadata.
+                - hibernate.transaction.flush_before_completion: removido — ignorado por HEM en Hibernate 6
+                  (el flush antes de commit JTA ya está garantizado por el contenedor).
+                - hibernate.hbm2ddl.auto: en producción cambiar a "validate" (o "none") y aplicar
+                  cambios de schema con scripts versionados (Flyway/Liquibase).
+            -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.show_sql" value="false"/>
+            <property name="hibernate.format_sql" value="true"/>
 
-      <properties>
-		 <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-		 <property name="hibernate.hbm2ddl.auto" value="update"/>
-		 <property name="hibernate.show_sql" value="false"/>
-		 <property name="hibernate.format_sql" value="true"/>
-		 <property name="hibernate.transaction.flush_before_completion" value="true"/>
-      </properties>
-   </persistence-unit>
+            <!--
+                JPA compliance RELAJADO para mantener compatibilidad con queries existentes
+                que vienen de Hibernate 5. WildFly 39 activa JPA strict mode por default,
+                lo cual rompe:
+                  1) "JOIN FETCH alias"  (la JPA spec prohíbe alias en fetch joins; Hibernate 5
+                     lo permitía como extensión y el código del proyecto lo usa extensivamente).
+                  2) Algunas formas de implicit-select.
+                Al poner query compliance = false volvemos al comportamiento permisivo
+                de Hibernate 5 sin tener que refactorizar 30+ queries.
+                Si en el futuro se desea adoptar JPA strict, los aliases en fetch joins deben
+                eliminarse o los joins separarse en JOIN (con alias) + JOIN FETCH (sin alias).
+            -->
+            <property name="hibernate.jpa.compliance.query" value="false"/>
+        </properties>
+    </persistence-unit>
 </persistence>

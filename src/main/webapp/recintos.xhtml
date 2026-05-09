@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Recintos</ui:define>
@@ -17,14 +17,14 @@
         <h:form id="frmRecintos">
             <div class="grid">                
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE RECINTOS</h5>
+                    <h5>ADMINITRACIÃ“N DE RECINTOS</h5>
                     <p:toolbar >
                         <p:toolbarGroup >
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{recintoController.nuevaRecinto}" update="outPnlRecintos" oncomplete="PF('dlgRecinto').show()"
                                              styleClass="ui-button-success" style="margin-right: .5rem" />
                             <p:commandButton id="btnEliminaRegistros" value="#{recintoController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{recintoController.eliminarRecintosSeleccionados}"
                                              styleClass="ui-button-danger" disabled="#{!recintoController.existeRecintosSeleccionados()}" update="@this">
-                                <p:confirm header="Confirmation" message="¿Esta seguro de eliminar?" icon="pi pi-exclamation-triangle" />
+                                <p:confirm header="Confirmation" message="Â¿Esta seguro de eliminar?" icon="pi pi-exclamation-triangle" />
                             </p:commandButton> 
                         </p:toolbarGroup>
                         <p:toolbarGroup align="right" >
@@ -39,7 +39,7 @@
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-3">
-                                <p:outputLabel for="canton" value="Cantón" />
+                                <p:outputLabel for="canton" value="CantÃ³n" />
                                 <p:selectOneMenu id="canton" value="#{recintoController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -75,7 +75,7 @@
                         <p:column selectionMode="multiple" exportable="false"></p:column>
                         <p:column headerText="ID" sortBy="#{recinto.id}" filterBy="#{recinto.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{recinto.id}" /></p:column>
                         <p:column headerText="NOMBRE" sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}" ><h:outputText value="#{recinto.nombre}" /></p:column>        
-                        <p:column headerText="CANTÓN" sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{recinto.cantonNombre}" /></p:column>
+                        <p:column headerText="CANTÃ“N" sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{recinto.cantonNombre}" /></p:column>
                         <p:column headerText="PARROQUIA" sortBy="#{recinto.ubicacionNombre}" filterBy="#{recinto.ubicacionNombre}" styleClass="sm:w-max md:w-2 lg:w-20rem" ><h:outputText value="#{recinto.ubicacionNombre}" /></p:column>
                         <p:column headerText="ESTADO" sortBy="#{recinto.estadoTarea}" filterBy="#{recinto.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-8rem" >
                             <p:tag value="#{recinto.estadoTarea}"
@@ -94,8 +94,8 @@
                                              actionListener="#{recintoController.eliminarRecintoSeleccionado}"
                                              process="@this" update=":frmRecintos">
                                 <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}" />
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro de eliminar este recinto?"
+                                <p:confirm header="Confirmar eliminaciÃ³n"
+                                           message="Â¿EstÃ¡ seguro de eliminar este recinto?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
@@ -112,7 +112,7 @@
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="cantonSel" value="Cantón" />
+                                <p:outputLabel for="cantonSel" value="CantÃ³n" />
                                 <p:selectOneMenu id="cantonSel" value="#{recintoController.cantonSeleccionado.id}"  filter="true" filterMatchMode="startsWith" required="true">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>

@@ -10,16 +10,16 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
-import javax.enterprise.context.SessionScoped;
-import javax.faces.context.FacesContext;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
-import org.hibernate.validator.constraints.Email;
+import jakarta.validation.constraints.Email;
 import org.primefaces.model.menu.MenuModel;
 
 import ec.com.antenasur.dto.PersonaDTO;
@@ -103,11 +103,11 @@ public class LoginBean implements Serializable {
         try {
             sistema = (String) JsfUtil.getProperty("sistema", true);
             // Etiqueta del ambiente. Se lee de la system property -Dapp.environment;
-            // si no está definida, asume DESARROLLO. Antes este bloque hacía dos
+            // si no estÃ¡ definida, asume DESARROLLO. Antes este bloque hacÃ­a dos
             // reverse-DNS lookups via InetAddress.getLocalHost() cuyo resultado se
-            // descartaba inmediatamente — eso bloqueaba la primera carga del login
+            // descartaba inmediatamente â€” eso bloqueaba la primera carga del login
             // hasta 30s en redes con DNS lento. Para definir el ambiente real,
-            // arranque WildFly con -Dapp.environment="P R O D U C C I Ó N" (etc.).
+            // arranque WildFly con -Dapp.environment="P R O D U C C I Ã“ N" (etc.).
             servidor = System.getProperty("app.environment", "D E S A R R O L L O");
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,7 +135,7 @@ public class LoginBean implements Serializable {
     }
 
     /**
-     * Método para cerrar sesión
+     * MÃ©todo para cerrar sesiÃ³n
      *
      * @return
      * @throws IOException

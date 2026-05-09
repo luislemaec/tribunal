@@ -9,13 +9,14 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -35,12 +36,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import ec.com.antenasur.util.Constantes;
 
-import javax.ejb.SessionContext;
+import jakarta.ejb.SessionContext;
 import ec.com.antenasur.model.generic.BeanLocator;
 
 public class ReporteXLSX {
 
-    private static final Logger LOG = Logger.getLogger(ReporteXLSX.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReporteXLSX.class);
 
     private static ExternalContext externalContext;
 

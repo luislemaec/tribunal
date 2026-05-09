@@ -10,10 +10,10 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -28,7 +28,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public List<Geograp> findByFatherId(Integer idFather) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
+            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("idFather", idFather);
             List<Geograp> resultList = query.getResultList();
@@ -44,7 +44,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public Geograp findByFather_Id(Integer idFather) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
+            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
             //Query query = super.getEntityManager().createQuery(sql);
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("idFather", idFather);
@@ -61,7 +61,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public Geograp findByGeograpName(String nameGeograp) {
         try {
-            String sql = "FROM Geograp m WHERE m.name=:nameGeograp and m.status=true";
+            String sql = "SELECT m FROM Geograp m WHERE m.name=:nameGeograp and m.status=true";
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("nameGeograp", nameGeograp);
             List<Geograp> resultList = query.getResultList();
@@ -77,7 +77,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public Geograp findByFatherIdAndGeographName(Integer idFather, String nameGeograp) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp.id=:idFather AND m.name LIKE '%'||:nameGeograp||'%' and m.status=true";
+            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather AND m.name LIKE '%'||:nameGeograp||'%' and m.status=true";
             
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("idFather", idFather);
@@ -95,7 +95,7 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
     public List<Geograp> findByFatherGeograp(Geograp geograp) {
         try {
-            String sql = "FROM Geograp m WHERE m.geograp=:geograp order by m.name ";
+            String sql = "SELECT m FROM Geograp m WHERE m.geograp=:geograp order by m.name ";
             TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
             query.setParameter("geograp", geograp);
             List<Geograp> resultList = query.getResultList();
@@ -110,10 +110,10 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
     }
 
     /**
-     * Devuelve el Geograp padre (cantón) de la parroquia indicada consultando
-     * directamente la columna {@code gelo_parent_id} vía SQL nativo.
+     * Devuelve el Geograp padre (cantÃƒÂ³n) de la parroquia indicada consultando
+     * directamente la columna {@code gelo_parent_id} vÃƒÂ­a SQL nativo.
      * Se usa SQL nativo para evitar que el {@code @Filter} activo de Hibernate
-     * interfiera con la navegación por la relación {@code @ManyToOne}.
+     * interfiera con la navegaciÃƒÂ³n por la relaciÃƒÂ³n {@code @ManyToOne}.
      */
     @SuppressWarnings("unchecked")
     public Geograp findParentOf(Integer childId) {

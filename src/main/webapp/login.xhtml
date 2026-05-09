@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:h="jakarta.faces.html"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
+      xmlns:f="jakarta.faces.core">
     <h:head>
         <f:facet name="first">
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -36,7 +36,7 @@
                     <div class="col-12 md:col-12 lg:col-12 ui-fluid">
                         <div class="input-wrapper">                            
                             <p:password id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}" 
-                                        redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="Contraseña"/>
+                                        redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="ContraseÃ±a"/>
                         </div>
                     </div>
                     <div class="col-12 md:col-12 lg:col-12 ">     

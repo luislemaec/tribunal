@@ -3,8 +3,8 @@ package ec.com.antenasur.itext;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.faces.context.FacesContext;
-import javax.servlet.ServletContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.servlet.ServletContext;
 
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
@@ -16,9 +16,9 @@ import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 
 /**
- * Clase agrega cabecera y pie de página a documentos generados con iText
+ * Clase agrega cabecera y pie de pÃ¡gina a documentos generados con iText
  *
- * @author Luis Lema <lemaedu@gmail.com> / Consejo de Comunicacación
+ * @author Luis Lema <lemaedu@gmail.com> / Consejo de ComunicacaciÃ³n
  * @version 1.0.0 / 30-11-2021
  *
  */

@@ -21,18 +21,18 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.faces.FacesException;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.context.ResponseWriter;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.faces.FacesException;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.ResponseWriter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.primefaces.component.api.AjaxSource;
 import org.primefaces.component.api.UIOutcomeTarget;
 import org.primefaces.component.menu.AbstractMenu;
 import org.primefaces.component.menu.BaseMenuRenderer;
 import org.primefaces.component.menuitem.UIMenuItem;
 import org.primefaces.component.submenu.UISubmenu;
-import org.primefaces.expression.SearchExpressionFacade;
+import org.primefaces.expression.SearchExpressionUtils;
 import org.primefaces.model.menu.MenuElement;
 import org.primefaces.model.menu.MenuItem;
 import org.primefaces.model.menu.Separator;
@@ -242,7 +242,7 @@ public class EcuadorMenuRenderer extends BaseMenuRenderer {
             else {
                 writer.writeAttribute("href", "#", null);
 
-                UIComponent form = ComponentTraversalUtils.closestForm(context, menu);
+                UIComponent form = ComponentTraversalUtils.closestForm(menu);
                 if(form == null) {
                     throw new FacesException("MenuItem must be inside a form element");
                 }
@@ -318,34 +318,21 @@ public class EcuadorMenuRenderer extends BaseMenuRenderer {
     @Override
     protected void encodeScript(FacesContext context, AbstractMenu abstractMenu) throws IOException {
         EcuadorMenu menu = (EcuadorMenu) abstractMenu;
-        String clientId = menu.getClientId(context);
-        WidgetBuilder wb = getWidgetBuilder(context);
-        wb.init("Ecuador", menu.resolveWidgetVar(), clientId)
-                .attr("statefulScroll", menu.isStatefulScroll());
-        wb.finish();
 
-        HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+        // pathname para que el widget conozca la URL actual (resaltado de menú activo).
+        HttpServletRequest req = (HttpServletRequest) context.getExternalContext().getRequest();
         String pathname = req.getContextPath() + req.getServletPath();
 
-        ResponseWriter rw = context.getResponseWriter();
-        rw.startElement("script", null);
-        rw.writeAttribute("id", clientId + "_s", null);
-        rw.writeAttribute("type", "text/javascript", null);
-        rw.write("PrimeFaces.cw(\"Ecuador\",\"");
-        rw.write(menu.resolveWidgetVar());
-        rw.write("\",{id:\"");
-        rw.write(clientId);
-        rw.write("\",");
-        // attrs
-        rw.write("statefulScroll:");
-        rw.write(String.valueOf(menu.isStatefulScroll()));
-        rw.write(",");
-        rw.write("pathname:\"");
-        rw.write(pathname);
-        rw.write("\"");
-
-        rw.write("});");
-        rw.endElement("script");
+        // UNA sola inicialización del widget vía WidgetBuilder. PrimeFaces 15
+        // emite el PrimeFaces.cw(...) correcto y respeta CSP. Antes había DOS
+        // (wb.finish + script manual con el mismo id), lo que en PF 15 causaba
+        // que la segunda inicialización destruyera los event handlers de la
+        // primera y los menús dejaran de expandirse.
+        WidgetBuilder wb = getWidgetBuilder(context);
+        wb.init("Ecuador", menu)
+                .attr("statefulScroll", menu.isStatefulScroll())
+                .attr("pathname", pathname);
+        wb.finish();
     }
     
     protected String createAjaxRequest(FacesContext context, AjaxSource source, UIComponent form) {
@@ -356,7 +343,7 @@ public class EcuadorMenuRenderer extends BaseMenuRenderer {
 
         builder.init()
                 .source(clientId)
-                .form(SearchExpressionFacade.resolveClientId(context, component, source.getForm()))
+                .form(SearchExpressionUtils.resolveClientId(context, component, source.getForm()))
                 .process(component, source.getProcess())
                 .update(component, source.getUpdate())
                 .async(source.isAsync())

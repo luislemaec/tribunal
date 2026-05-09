@@ -3,10 +3,10 @@ package ec.com.antenasur.bean;
 import ec.com.antenasur.controller.OlvidoClaveController;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import ec.com.antenasur.service.tec.PlantillaCorreoService;
 
@@ -14,7 +14,8 @@ import java.io.Serializable;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -25,7 +26,7 @@ import org.apache.log4j.Logger;
 public class PlantillaCorreoBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOG = Logger.getLogger(OlvidoClaveController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OlvidoClaveController.class);
 
     private static final String CORREO_RECUPERAR_CLAVE = "CORREO RECUPERAR CLAVE";
     private static final String CORREO_OLVIDO_CONTRASENA = "CORREO OLVIDO CONTRASENA";
@@ -52,7 +53,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_OLVIDO_CONTRASENA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
             return null;
         }
     }
@@ -62,7 +63,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_CAMBIO_CONTRASENIA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
             return null;
         }
     }
@@ -72,7 +73,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_RECUPERAR_CLAVE);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
             return null;
         }
     }
@@ -82,7 +83,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(asunto);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
             return null;
         }
     }
@@ -92,7 +93,7 @@ public class PlantillaCorreoBean implements Serializable {
             plantillaCorreo.setMensaje(plantillaCorreo.getMensaje().replaceAll("\\{|\\}", ""));
             return plantillaCorreo;
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÑA", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
             return null;
         }
     }

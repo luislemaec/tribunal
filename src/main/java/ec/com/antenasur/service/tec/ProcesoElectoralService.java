@@ -3,8 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.ProcesoElectoralDTO;
 import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
@@ -42,7 +42,7 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
 
     /**
      * Persiste el proceso desde DTO. Si {@code activo=true}, desmarca todos
-     * los demás antes de persistir éste — solo uno puede estar activo a la vez.
+     * los demÃ¡s antes de persistir Ã©ste â€” solo uno puede estar activo a la vez.
      */
     public ProcesoElectoralDTO guardarDesdeDTO(ProcesoElectoralDTO dto) {
         if (dto == null) return null;

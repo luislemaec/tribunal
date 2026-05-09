@@ -3,8 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.Date;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.facade.tec.ProcesoFacade;
 import ec.com.antenasur.model.tec.Proceso;

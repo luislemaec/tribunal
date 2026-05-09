@@ -11,8 +11,8 @@ import ec.com.antenasur.model.tec.Proceso;
 import java.util.List;
 import java.sql.Date;
 
-import javax.ejb.Stateless;
-import javax.persistence.Query;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.Query;
 
 /**
  *
@@ -27,7 +27,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
 
     public List<Proceso> getProcesoPorUsuario(String usuario) {
         try {
-            String hql = "from Proceso p WHERE p.usuarioCrea=:usuario  AND m.estado=TRUE";
+            String hql = "SELECT p FROM Proceso p WHERE p.usuarioCrea=:usuario  AND m.estado=TRUE";
             Query query = super.getEntityManager().createQuery(hql);
             query.setParameter("usuario", usuario);
             List<Proceso> resultList = query.getResultList();
@@ -43,7 +43,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
 
     public List<Proceso> getProcesoPorUsuario(Date fechaInicio, Date fechaFin, String usuario) {
         try {
-            String hql = "from Proceso p "
+            String hql = "SELECT p FROM Proceso p "
                     + " WHERE cast(p.fechaCrea as date) BETWEEN :fechaInicio AND :fechaFin "
                     + " AND p.usuarioCrea=:usuario "
                     + "ORDER BY p.fechaCrea DESC ";

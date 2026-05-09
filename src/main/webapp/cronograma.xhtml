@@ -1,8 +1,8 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
-                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:c="jakarta.tags.core"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
@@ -17,7 +17,7 @@
     <ui:define name="content">
 
         <!-- =====================================================================
-             Variables EL reutilizadas en la página (evita duplicar EL y bind a
+             Variables EL reutilizadas en la pÃ¡gina (evita duplicar EL y bind a
              expresiones complejas dispersas).
              ===================================================================== -->
         <c:set var="proceso" value="#{cronogramaController.procesoSeleccionado}" scope="request"/>
@@ -37,7 +37,7 @@
         <h:form id="frmCronograma">
 
             <!-- =================================================================
-                 1. CABECERA DE PÁGINA
+                 1. CABECERA DE PÃGINA
                  ================================================================= -->
             <div class="grid">
                 <div class="col-12">
@@ -49,9 +49,9 @@
                             </h3>
                             <p class="subtitle">
                                 Defina las fases del proceso electoral (10 bloques: registro inicial,
-                                gestión de miembros, convocatoria, candidaturas, organización electoral,
-                                campaña, jornada electoral, escrutinio, resultados y cierre)
-                                y los plazos en que cada acción está habilitada.
+                                gestiÃ³n de miembros, convocatoria, candidaturas, organizaciÃ³n electoral,
+                                campaÃ±a, jornada electoral, escrutinio, resultados y cierre)
+                                y los plazos en que cada acciÃ³n estÃ¡ habilitada.
                             </p>
                         </div>
                         <p:tag rendered="#{proceso.activo}"
@@ -82,7 +82,7 @@
                             <div>
                                 <span class="label">Proceso seleccionado</span>
                                 <span class="value value--ellip">
-                                    #{empty proceso.nombre ? '—' : proceso.nombre}
+                                    #{empty proceso.nombre ? 'â€”' : proceso.nombre}
                                 </span>
                             </div>
                             <p:tag rendered="#{proceso.activo}"
@@ -103,11 +103,11 @@
                         </div>
                     </div>
 
-                    <!-- KPI 4: catálogo enum -->
+                    <!-- KPI 4: catÃ¡logo enum -->
                     <div class="col-12 md:col-6 lg:col-3">
                         <div class="kpi-card flex justify-content-between align-items-center">
                             <div>
-                                <span class="label">Catálogo de fases</span>
+                                <span class="label">CatÃ¡logo de fases</span>
                                 <span class="value">#{cronogramaController.totalFasesCatalogo}</span>
                             </div>
                             <p:tag value="ENUM" severity="info" icon="pi pi-list"/>
@@ -162,8 +162,8 @@
 
                 <p:tabView styleClass="mt-2">
 
-                    <!-- TAB 3.1: Identificación -->
-                    <p:tab title="Identificación" titleStyleClass="font-medium">
+                    <!-- TAB 3.1: IdentificaciÃ³n -->
+                    <p:tab title="IdentificaciÃ³n" titleStyleClass="font-medium">
                         <div class="formgrid grid">
 
                             <div class="field col-12 md:col-6">
@@ -182,12 +182,12 @@
 
                             <div class="field col-12 md:col-3 flex align-items-end">
                                 <p:chip rendered="#{proceso.activo}"
-                                        label="Único activo del sistema"
+                                        label="Ãšnico activo del sistema"
                                         icon="pi pi-bolt"/>
                             </div>
 
                             <div class="field col-12">
-                                <p:outputLabel for="descripcion" value="Descripción"/>
+                                <p:outputLabel for="descripcion" value="DescripciÃ³n"/>
                                 <p:inputTextarea id="descripcion"
                                                  value="#{proceso.descripcion}"
                                                  rows="2" maxlength="500" autoResize="false"
@@ -316,7 +316,7 @@
                         <p:chip label="#{f.fase}" icon="pi pi-tag"/>
                     </p:column>
 
-                    <p:column headerText="Título"
+                    <p:column headerText="TÃ­tulo"
                               sortBy="#{f.titulo}" filterBy="#{f.titulo}" filterMatchMode="contains">
                         <h:outputText value="#{f.titulo}" styleClass="font-medium"/>
                     </p:column>
@@ -344,7 +344,7 @@
                                icon="#{sev eq 'URGENT' ? 'pi pi-exclamation-triangle' : (sev eq 'SUCCESS' ? 'pi pi-check-circle' : 'pi pi-info-circle')}"/>
                     </p:column>
 
-                    <p:column headerText="Edición" style="width:7rem; text-align:center">
+                    <p:column headerText="EdiciÃ³n" style="width:7rem; text-align:center">
                         <p:tag rendered="#{f.permiteEdicion}"
                                value="Permite" severity="success" icon="pi pi-unlock"/>
                         <p:tag rendered="#{not f.permiteEdicion}"
@@ -355,7 +355,7 @@
                         <p:tag rendered="#{f.vigente}"
                                value="Vigente" severity="success" icon="pi pi-check"/>
                         <p:tag rendered="#{f.futura}"
-                               value="Futura — #{f.diasRestantes}d" severity="info" icon="pi pi-clock"/>
+                               value="Futura â€” #{f.diasRestantes}d" severity="info" icon="pi pi-clock"/>
                         <p:tag rendered="#{f.pasada}"
                                value="Finalizada" severity="warning" icon="pi pi-history"/>
                     </p:column>
@@ -378,8 +378,8 @@
                                          update=":frmCronograma:panelFases"
                                          title="Eliminar fase"
                                          styleClass="rounded-button ui-button-danger">
-                            <p:confirm header="Confirmar eliminación"
-                                       message="¿Eliminar esta fase del cronograma?"
+                            <p:confirm header="Confirmar eliminaciÃ³n"
+                                       message="Â¿Eliminar esta fase del cronograma?"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
                     </p:column>
@@ -392,9 +392,9 @@
                     <i class="pi pi-calendar icon-lg"/>
                     <h4>Sin fases registradas</h4>
                     <p>
-                        Aún no hay fases asociadas a este proceso. El catálogo incluye los 10 bloques
-                        del proceso electoral: registro inicial, gestión de miembros, convocatoria,
-                        candidaturas, organización electoral, campaña, jornada electoral, escrutinio,
+                        AÃºn no hay fases asociadas a este proceso. El catÃ¡logo incluye los 10 bloques
+                        del proceso electoral: registro inicial, gestiÃ³n de miembros, convocatoria,
+                        candidaturas, organizaciÃ³n electoral, campaÃ±a, jornada electoral, escrutinio,
                         resultados y cierre.
                     </p>
                     <p:commandButton value="Agregar primera fase" icon="pi pi-plus"
@@ -411,14 +411,14 @@
             </p:outputPanel>
 
             <!-- =================================================================
-                 5. DIÁLOGO: CREAR / EDITAR FASE
+                 5. DIÃLOGO: CREAR / EDITAR FASE
                  ================================================================= -->
             <!-- IMPORTANTE: el dialog NO usa appendTo="@(body)".
-                 Si lo hiciéramos, el contenido se movería fuera del form en
-                 el DOM y PrimeFaces NO serializaría los inputs en el submit
-                 → el guardado recibiría valores vacíos y "se borraría todo".
+                 Si lo hiciÃ©ramos, el contenido se moverÃ­a fuera del form en
+                 el DOM y PrimeFaces NO serializarÃ­a los inputs en el submit
+                 â†’ el guardado recibirÃ­a valores vacÃ­os y "se borrarÃ­a todo".
                  Tampoco usamos dynamic="true": el contenido se renderiza
-                 con la página y los <p:resetInput> + recarga del DTO en
+                 con la pÃ¡gina y los <p:resetInput> + recarga del DTO en
                  editarFase() ya garantizan estado limpio al abrir. -->
             <p:dialog widgetVar="dlgFase"
                       header="Fase del cronograma"
@@ -427,25 +427,25 @@
 
                 <p:outputPanel id="dlgFaseContent" class="ui-fluid">
 
-                    <!-- Mensajes inline del diálogo: errores/warnings de
-                         validación del service se muestran aquí, en contexto.
+                    <!-- Mensajes inline del diÃ¡logo: errores/warnings de
+                         validaciÃ³n del service se muestran aquÃ­, en contexto.
                          globalOnly="false" + redisplay para que el growl
                          general no se apropie de TODOS los mensajes. -->
                     <p:messages id="dlgMessages" closable="true" showDetail="true"
                                 redisplay="false" styleClass="mb-2"/>
 
                     <!-- TabView SIN dynamic/cache="false": los inputs de tabs no
-                         visibles deben permanecer en el DOM para que se envíen
+                         visibles deben permanecer en el DOM para que se envÃ­en
                          al servidor en el submit. Si se ponen lazy, el cambio
                          de tab descarta los valores de los otros tabs. -->
                     <p:tabView>
 
-                        <!-- TAB 5.1: Identificación de la fase -->
-                        <p:tab title="Identificación" titleStyleClass="font-medium">
+                        <!-- TAB 5.1: IdentificaciÃ³n de la fase -->
+                        <p:tab title="IdentificaciÃ³n" titleStyleClass="font-medium">
                             <div class="formgrid grid">
 
                                 <div class="field col-12 md:col-6">
-                                    <p:outputLabel for="fase" value="Fase del catálogo"/>
+                                    <p:outputLabel for="fase" value="Fase del catÃ¡logo"/>
                                     <p:selectOneMenu id="fase"
                                                      value="#{cronogramaController.faseSeleccionada.fase}"
                                                      filter="true" filterMatchMode="contains"
@@ -473,11 +473,11 @@
                                 </div>
 
                                 <div class="field col-12">
-                                    <p:outputLabel for="titulo" value="Título"/>
+                                    <p:outputLabel for="titulo" value="TÃ­tulo"/>
                                     <p:inputText id="titulo"
                                                  value="#{cronogramaController.faseSeleccionada.titulo}"
                                                  maxlength="150"
-                                                 placeholder="Ej: Actualización de miembros"/>
+                                                 placeholder="Ej: ActualizaciÃ³n de miembros"/>
                                 </div>
                             </div>
                         </p:tab>
@@ -497,7 +497,7 @@
                                                   requiredMessage="La fecha de inicio es obligatoria">
                                         <p:ajax event="dateSelect" update="fFinDlg"/>
                                     </p:datePicker>
-                                    <small class="text-500">Mínimo: #{proceso.fechaInicio ne null ? '' : 'sin tope'}
+                                    <small class="text-500">MÃ­nimo: #{proceso.fechaInicio ne null ? '' : 'sin tope'}
                                         <h:outputText rendered="#{proceso.fechaInicio ne null}"
                                                       value="#{proceso.fechaInicio}">
                                             <f:convertDateTime pattern="dd/MM/yyyy"/>
@@ -516,7 +516,7 @@
                                                   requiredMessage="La fecha de fin es obligatoria">
                                         <p:ajax event="dateSelect" update="fIniDlg"/>
                                     </p:datePicker>
-                                    <small class="text-500">Máximo: #{proceso.fechaFin ne null ? '' : 'sin tope'}
+                                    <small class="text-500">MÃ¡ximo: #{proceso.fechaFin ne null ? '' : 'sin tope'}
                                         <h:outputText rendered="#{proceso.fechaFin ne null}"
                                                       value="#{proceso.fechaFin}">
                                             <f:convertDateTime pattern="dd/MM/yyyy"/>
@@ -528,7 +528,7 @@
                                     <h:panelGroup layout="block" styleClass="callout callout--warning">
                                         <i class="pi pi-info-circle"/>
                                         <span>
-                                            La fase queda <b>vigente</b> mientras la fecha actual esté
+                                            La fase queda <b>vigente</b> mientras la fecha actual estÃ©
                                             dentro del rango. Las fechas deben caer dentro del rango
                                             del proceso electoral.
                                         </span>
@@ -546,7 +546,7 @@
                                     <p:inputTextarea id="mensaje"
                                                      value="#{cronogramaController.faseSeleccionada.mensaje}"
                                                      rows="4" maxlength="1000" autoResize="false"
-                                                     placeholder="Texto que verán los usuarios en la cabecera del sistema durante esta fase"/>
+                                                     placeholder="Texto que verÃ¡n los usuarios en la cabecera del sistema durante esta fase"/>
                                 </div>
 
                                 <div class="field col-12">
@@ -554,9 +554,9 @@
                                         <i class="pi pi-comment"/>
                                         <span>
                                             Este mensaje aparece en la cabecera del sistema durante la fase activa.
-                                            Úselo para informar a los usuarios sobre la etapa en curso
-                                            (p. ej.: «Período de inscripción de candidaturas abierto»,
-                                            «Jornada electoral en curso — no se permiten cambios»).
+                                            Ãšselo para informar a los usuarios sobre la etapa en curso
+                                            (p. ej.: Â«PerÃ­odo de inscripciÃ³n de candidaturas abiertoÂ»,
+                                            Â«Jornada electoral en curso â€” no se permiten cambiosÂ»).
                                         </span>
                                     </h:panelGroup>
                                 </div>
@@ -571,13 +571,13 @@
                                         <p:selectBooleanCheckbox id="permite"
                                                                  value="#{cronogramaController.faseSeleccionada.permiteEdicion}"/>
                                         <p:outputLabel for="permite"
-                                                       value="Permitir edición de miembros en esta fase"
+                                                       value="Permitir ediciÃ³n de miembros en esta fase"
                                                        style="margin-left:.5rem; font-weight:600"/>
                                         <p style="margin:.5rem 0 0 1.7rem; color:#166534">
-                                            Cuando está marcado, los IglesiaAdmin pueden agregar,
+                                            Cuando estÃ¡ marcado, los IglesiaAdmin pueden agregar,
                                             editar y eliminar miembros de su iglesia. Aplica
                                             principalmente en la fase
-                                            <b>ACTUALIZACION_MIEMBROS</b> (bloque 2 — Gestión de miembros).
+                                            <b>ACTUALIZACION_MIEMBROS</b> (bloque 2 â€” GestiÃ³n de miembros).
                                             Fuera de esa fase la pantalla queda en modo solo lectura.
                                         </p>
                                     </h:panelGroup>

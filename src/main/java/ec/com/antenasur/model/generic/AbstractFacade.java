@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -146,7 +146,7 @@ public abstract class AbstractFacade<T, E> {
         try {
             CriteriaQuery cq = getEntityManager().getCriteriaBuilder().createQuery();
             cq.select(cq.from(entityClass));
-            javax.persistence.Query q = getEntityManager().createQuery(cq);
+            jakarta.persistence.Query q = getEntityManager().createQuery(cq);
             q.setMaxResults(range[1] - range[0]);
             q.setFirstResult(range[0]);
             return q.getResultList();
@@ -158,9 +158,9 @@ public abstract class AbstractFacade<T, E> {
     public int count() {
         try {
             CriteriaQuery cq = getEntityManager().getCriteriaBuilder().createQuery();
-            javax.persistence.criteria.Root<T> rt = cq.from(entityClass);
+            jakarta.persistence.criteria.Root<T> rt = cq.from(entityClass);
             cq.select(getEntityManager().getCriteriaBuilder().count(rt));
-            javax.persistence.Query q = getEntityManager().createQuery(cq);
+            jakarta.persistence.Query q = getEntityManager().createQuery(cq);
             return ((Long) q.getSingleResult()).intValue();
         } catch (NoResultException e) {
             return 0;

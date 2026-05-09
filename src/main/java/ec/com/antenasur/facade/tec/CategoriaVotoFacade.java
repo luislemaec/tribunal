@@ -1,12 +1,12 @@
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.CategoriaVoto;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import java.util.List;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -21,7 +21,7 @@ public class CategoriaVotoFacade extends AbstractFacade<CategoriaVoto, Integer> 
 
     public List<CategoriaVoto> getCategoriasOrdenados() {
         try {
-            String sql = "FROM CategoriaVoto gc ORDER BY orden";
+            String sql = "SELECT gc FROM CategoriaVoto gc ORDER BY orden";
             TypedQuery<CategoriaVoto> query = super.getEntityManager().createQuery(sql, CategoriaVoto.class);
             List<CategoriaVoto> resultList = query.getResultList();
 

@@ -5,7 +5,7 @@
  */
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -14,9 +14,9 @@ import ec.com.antenasur.model.tec.Mesa;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -25,7 +25,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
 
-    private static final String HQL = " FROM Documentos d";
+    private static final String HQL = " SELECT d FROM Documentos d";
     private static final String ORDENADO = " ORDER BY d.id";
 
     public DocumentoFacade() {
@@ -92,7 +92,7 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
      * N consultas {@link #getTieneDocumentosPorEntidadYTipoDoc} (1 query por
      * entidad) por una sola query agregada.
      *
-     * <p>Antes: 1000 iglesias → 1001 queries SQL solo para marcar el flag.
+     * <p>Antes: 1000 iglesias Ã¢â€ â€™ 1001 queries SQL solo para marcar el flag.
      * Ahora: 2 queries (findAll + esta).
      */
     public Set<Integer> getEntidadesIdsConDocumentos(Integer tipoDocId) {
@@ -117,7 +117,7 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
 
     public Documentos obtenerDocumentoPorWorkspace(String workspace) {
         try {
-            String sql = "FROM Documentos WHERE path =:workspace";
+            String sql = "SELECT e FROM Documentos e WHERE path =:workspace";
             Query query = super.getEntityManager().createQuery(sql);
             query.setParameter("workspace", workspace);
             List<Documentos> resultList = query.getResultList();

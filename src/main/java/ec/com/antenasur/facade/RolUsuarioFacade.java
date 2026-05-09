@@ -7,10 +7,10 @@ package ec.com.antenasur.facade;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.RolUsuario;

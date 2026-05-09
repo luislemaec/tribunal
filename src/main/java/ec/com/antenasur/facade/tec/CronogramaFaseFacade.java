@@ -3,9 +3,9 @@ package ec.com.antenasur.facade.tec;
 import java.util.Date;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.CronogramaFase;
@@ -18,7 +18,7 @@ public class CronogramaFaseFacade extends AbstractFacade<CronogramaFase, Integer
     }
 
     public List<CronogramaFase> listarPorProceso(Integer procesoId) {
-        String hql = "FROM CronogramaFase f WHERE f.proceso.id = :pid ORDER BY f.orden, f.fechaInicio";
+        String hql = "SELECT f FROM CronogramaFase f WHERE f.proceso.id = :pid ORDER BY f.orden, f.fechaInicio";
         TypedQuery<CronogramaFase> q = super.getEntityManager().createQuery(hql, CronogramaFase.class);
         q.setParameter("pid", procesoId);
         return q.getResultList();
@@ -30,7 +30,7 @@ public class CronogramaFaseFacade extends AbstractFacade<CronogramaFase, Integer
      */
     public CronogramaFase getVigentePorProceso(Integer procesoId) {
         try {
-            String hql = "FROM CronogramaFase f"
+            String hql = "SELECT f FROM CronogramaFase f"
                     + " WHERE f.proceso.id = :pid"
                     + " AND :ahora BETWEEN f.fechaInicio AND f.fechaFin"
                     + " ORDER BY f.orden ASC, f.id ASC";

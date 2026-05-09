@@ -3,10 +3,10 @@ package ec.com.antenasur.controller;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.RowEditEvent;
@@ -88,7 +88,7 @@ public class MenuController implements Serializable {
             this.menuSeleccionado = (MenuDTO) event.getObject().getData();
             if (menuSeleccionado != null) {
                 menuSeleccionado = menuService.guardarDesdeDTO(menuSeleccionado);
-                JsfUtil.addSuccessMessage("Catálogo actualizado!");
+                JsfUtil.addSuccessMessage("CatÃ¡logo actualizado!");
                 init();
             }
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class MenuController implements Serializable {
             boolean esEdicion = menuSeleccionado.getId() != null;
             MenuDTO persistido = menuService.guardarDesdeDTO(menuSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
+                JsfUtil.addSuccessMessage(esEdicion ? "CatÃ¡logo actualizado!" : "CatÃ¡logo creado!");
             }
             menuSeleccionado = null;
             init();
@@ -131,7 +131,7 @@ public class MenuController implements Serializable {
         try {
             if (menuSeleccionado != null && menuSeleccionado.getId() != null) {
                 menuService.eliminarPorId(menuSeleccionado.getId());
-                JsfUtil.addSuccessMessage("Catálogo eliminado!");
+                JsfUtil.addSuccessMessage("CatÃ¡logo eliminado!");
             }
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
             init();

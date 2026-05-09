@@ -1,12 +1,12 @@
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Escrutinio;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.Mesa;
 import java.util.List;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -15,7 +15,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
 
-    private static final String HQL = " FROM Escrutinio e";
+    private static final String HQL = " SELECT e FROM Escrutinio e";
     private static final String ORDENADO = " ORDER BY e.id";
 
     public EscrutinioFacade() {

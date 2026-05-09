@@ -7,9 +7,9 @@ package ec.com.antenasur.facade.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -27,7 +27,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> findByFatherCatalogue(CatalogoGeneral generalCatalogue) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre=:generalCatalogue AND gc.estado=TRUE";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre=:generalCatalogue AND gc.estado=TRUE";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("generalCatalogue", generalCatalogue);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -43,7 +43,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public CatalogoGeneral findByName(String catalogoNombre) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.nombre=:catalogoNombre AND gc.estado=TRUE";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.nombre=:catalogoNombre AND gc.estado=TRUE";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("catalogoNombre", catalogoNombre);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -61,7 +61,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
     public List<CatalogoGeneral> findByFatherName(String catalogoNombre) {
         try {
 
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.nombre=:catalogoNombre AND gc.estado=TRUE ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.nombre=:catalogoNombre AND gc.estado=TRUE ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("catalogoNombre", catalogoNombre);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -78,7 +78,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> listaCatalogoHijo(Integer padreId) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("padreId", padreId);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -101,7 +101,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
      */
     public List<CatalogoGeneral> listaCatalogoHijo(Integer padreId, List<Integer> listaIdCargos) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId AND gc.id NOT IN :listaIdCargos AND gc.estado=TRUE ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.id=:padreId AND gc.id NOT IN :listaIdCargos AND gc.estado=TRUE ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("padreId", padreId);
             query.setParameter("listaIdCargos", listaIdCargos);
@@ -117,7 +117,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> findByFather() {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.id is null AND gc.estado=TRUE ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.id is null AND gc.estado=TRUE ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             List<CatalogoGeneral> resultList = query.getResultList();
             if (resultList != null && !resultList.isEmpty()) {
@@ -130,7 +130,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public CatalogoGeneral findByFatherIdAndCatalogueName(Integer idPadre, String nombreCatalogo) {
         try {
-            String sql = "FROM CatalogoGeneral m WHERE m.padre.id=:idPadre AND m.nombre LIKE '%'||:nombreCatalogo||'%'";
+            String sql = "SELECT m FROM CatalogoGeneral m WHERE m.padre.id=:idPadre AND m.nombre LIKE '%'||:nombreCatalogo||'%'";
 
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("idPadre", idPadre);
@@ -149,7 +149,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
     public List<CatalogoGeneral> findByFatherName2(String nombreCatalogo) {
         try {
 
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.nombre=:nombreCatalogo ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.nombre=:nombreCatalogo ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("nombreCatalogo", nombreCatalogo);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -166,7 +166,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> findByFatherNameInactive(String nombreCatalogo) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.padre.nombre=:nombreCatalogo AND gc.estado=false ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.nombre=:nombreCatalogo AND gc.estado=false ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("nombreCatalogo", nombreCatalogo);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -183,7 +183,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public CatalogoGeneral findByNameAll(String nombreCatalogo) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.nombre=:nombreCatalogo";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.nombre=:nombreCatalogo";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("nombreCatalogo", nombreCatalogo);
             List<CatalogoGeneral> resultList = query.getResultList();
@@ -206,7 +206,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
      */
     public CatalogoGeneral findByNamelike(String nombreCatalogo, int tamanioCadena) {
         try {
-            String sql = "FROM CatalogoGeneral gc WHERE gc.nombre LIKE CONCAT(:generalCatalogueName,'%')";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.nombre LIKE CONCAT(:generalCatalogueName,'%')";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             query.setParameter("nombreCatalogo", nombreCatalogo.substring(0, tamanioCadena));
             List<CatalogoGeneral> resultList = query.getResultList();

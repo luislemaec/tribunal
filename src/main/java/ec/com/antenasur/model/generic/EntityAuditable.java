@@ -2,9 +2,9 @@ package ec.com.antenasur.model.generic;
 
 import java.util.Date;
 
-import javax.ejb.SessionContext;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import jakarta.ejb.SessionContext;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 /**
  * <b> AGREGAR DESCRIPCION. </b>

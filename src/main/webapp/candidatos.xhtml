@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Candidatos</ui:define>
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE CANDIDATOS</h5>
+                    <h5>ADMINITRACIÃ“N DE CANDIDATOS</h5>
                     <p:dataTable id="tblListas" widgetVar="wdTblCandidatos" var="candidato" value="#{candidatoController.candidatos}" reflow="true" 
                                  rendered="#{not empty candidatoController.candidatos}"
                                  paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
@@ -68,8 +68,8 @@
                                              actionListener="#{candidatoController.eliminarSeleccionado}"
                                              process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}" />
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro de eliminar este candidato?"
+                                <p:confirm header="Confirmar eliminaciÃ³n"
+                                           message="Â¿EstÃ¡ seguro de eliminar este candidato?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
@@ -83,7 +83,7 @@
                                 <div class="field">
                                     <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
                                                  value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true"/>
-                                    <small class="ui-state-error">Ingrese número de cédula a buscar</small>
+                                    <small class="ui-state-error">Ingrese nÃºmero de cÃ©dula a buscar</small>
                                 </div>                                       
                                 <p:commandButton icon="pi pi-search" actionListener="#{candidatoController.buscaPersona}" update="outPnlAsignaCandidatoBusca, outPnlAsignaCandidato, msgs, outPnlFooter " process="outPnlAsignaCandidatoBusca @this" />
                             </div>

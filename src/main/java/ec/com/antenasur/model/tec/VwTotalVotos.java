@@ -4,15 +4,15 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.generic.EntidadBase;
 
 import java.io.Serializable;
-import javax.persistence.Column;
-import javax.persistence.ConstraintMode;
-import javax.persistence.Entity;
-import javax.persistence.ForeignKey;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.ConstraintMode;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.Immutable;
@@ -26,7 +26,7 @@ import lombok.Setter;
  * <p>Como es una vista (no una tabla), no admite constraints. Los
  * {@code @JoinColumn} llevan {@code ConstraintMode.NO_CONSTRAINT} para que
  * Hibernate (con {@code hbm2ddl.auto=update}) no intente generar FKs que
- * fallarían contra la vista. La entidad es {@code @Immutable} — solo lectura.
+ * fallarÃ­an contra la vista. La entidad es {@code @Immutable} â€” solo lectura.
  */
 @Entity
 @Immutable

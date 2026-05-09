@@ -23,14 +23,14 @@ import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.el.ELContext;
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.el.ELContext;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  *
@@ -70,7 +70,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Obtiene un parámetro vía request por GET.
+     * Obtiene un parÃ¡metro vÃ­a request por GET.
      *
      * @param key
      * @return
@@ -82,7 +82,7 @@ public class JsfUtil implements Serializable {
 
     /**
      * Redirect a request to the specified URL, and cause the
-     * responseComplete(), esa descripción lo dice todo!
+     * responseComplete(), esa descripciÃ³n lo dice todo!
      *
      * @param url
      * @throws RuntimeException, IOException
@@ -97,7 +97,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Obtiene la URL desde dónde viene la petición.
+     * Obtiene la URL desde dÃ³nde viene la peticiÃ³n.
      *
      * @return
      */
@@ -161,10 +161,10 @@ public class JsfUtil implements Serializable {
 
     /* M E N S A J E S */
     /**
-     * Añade un mensaje de <code>error</code> a la pila de mensajes del
+     * AÃ±ade un mensaje de <code>error</code> a la pila de mensajes del
      * FacesContext.
      *
-     * @param ex Excepción capturada, para mostrar el stacktrace, por ejemplo.
+     * @param ex ExcepciÃ³n capturada, para mostrar el stacktrace, por ejemplo.
      * @param defaultMsg Mensaje general.
      */
     public static void addErrorMessage(Exception ex, String defaultMsg) {
@@ -177,7 +177,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade mensajes de error en manera de bucle.
+     * AÃ±ade mensajes de error en manera de bucle.
      *
      * @param messages
      */
@@ -188,7 +188,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade un mensaje de <code>error</code> a la pila de mensajes del
+     * AÃ±ade un mensaje de <code>error</code> a la pila de mensajes del
      * FacesContext.
      *
      * @param msg El mensaje en general.
@@ -213,7 +213,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade un mensaje de <code>información</code> a la pila de mensajes del
+     * AÃ±ade un mensaje de <code>informaciÃ³n</code> a la pila de mensajes del
      * FacesContext.
      *
      * @param msg El mensaje en general.
@@ -233,7 +233,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade un mensaje de info tipo: <code>FATAL</code> a la pila de mensajes
+     * AÃ±ade un mensaje de info tipo: <code>FATAL</code> a la pila de mensajes
      * del FacesContext.
      *
      * @param msg
@@ -244,7 +244,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade un mensaje de info tipo: <code>WARNING</code> a la pila de mensajes
+     * AÃ±ade un mensaje de info tipo: <code>WARNING</code> a la pila de mensajes
      * del FacesContext.
      *
      * @param msg
@@ -255,7 +255,7 @@ public class JsfUtil implements Serializable {
     }
 
     /**
-     * Añade un mensaje de info tipo: <code>SUCCESS</code> a la pila de mensajes
+     * AÃ±ade un mensaje de info tipo: <code>SUCCESS</code> a la pila de mensajes
      * del FacesContext.
      *
      * @param msg
@@ -531,11 +531,9 @@ public class JsfUtil implements Serializable {
     @SuppressWarnings("unchecked")
     public static <T> T getBean(Class<T> beanType) {
         String customName = null;
-        try {
-            customName = beanType.getAnnotation(ManagedBean.class).annotationType().getDeclaredMethod("name")
-                    .invoke(beanType.getAnnotation(ManagedBean.class)).toString();
-        } catch (Exception e) {
-
+        Named named = beanType.getAnnotation(Named.class);
+        if (named != null && named.value() != null && !named.value().isEmpty()) {
+            customName = named.value();
         }
         String standardBeanName = (beanType.getSimpleName().charAt(0) + "").toLowerCase()
                 + beanType.getSimpleName().substring(1);
@@ -576,13 +574,13 @@ public class JsfUtil implements Serializable {
             case 3:
                 return "Martes";
             case 4:
-                return "Miércoles";
+                return "MiÃ©rcoles";
             case 5:
                 return "Jueves";
             case 6:
                 return "Viernes";
             case 7:
-                return "Sábado";
+                return "SÃ¡bado";
             default:
                 return "";
 
@@ -639,7 +637,7 @@ public class JsfUtil implements Serializable {
     public static String getFechaParaActas(Date date) {
         Calendar fecha = Calendar.getInstance();
         fecha.setTime(date);
-        return "a los " + fecha.get(Calendar.DAY_OF_MONTH) + " días del mes de " + mesText(fecha.get(Calendar.MONTH) + 1) + " de "
+        return "a los " + fecha.get(Calendar.DAY_OF_MONTH) + " dÃ­as del mes de " + mesText(fecha.get(Calendar.MONTH) + 1) + " de "
                 + fecha.get(Calendar.YEAR);
     }
 
@@ -767,22 +765,22 @@ public class JsfUtil implements Serializable {
             } else {
                 resultado = false;
                 JsfUtil.addInfoMessage(
-                        "Debe tener al menos un dígito, una minúscula, una mayúscula y un mínimo 8 caracteres");
+                        "Debe tener al menos un dÃ­gito, una minÃºscula, una mayÃºscula y un mÃ­nimo 8 caracteres");
             }
         } else {
             resultado = false;
-            JsfUtil.addErrorMessage("Por favor ingresar mínimo 8 caracteres en el ingreso de la contraseña");
+            JsfUtil.addErrorMessage("Por favor ingresar mÃ­nimo 8 caracteres en el ingreso de la contraseÃ±a");
         }
         return resultado;
     }
 
     /**
-     * Devuelve direción ip del servidor
+     * Devuelve direciÃ³n ip del servidor
      */
     public static String obtieneIpServidor() {
         try {
             // No llamar getHostName(): dispara un reverse DNS lookup adicional
-            // que puede bloquear hasta 30s en redes mal configuradas y aquí no
+            // que puede bloquear hasta 30s en redes mal configuradas y aquÃ­ no
             // se usaba. getHostAddress() devuelve la IP sin resolver nombres.
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {

@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Periodos</ui:define>
@@ -70,17 +70,17 @@
                             </p:column>
                             <p:column exportable="false">
                                 <p:commandButton icon="pi pi-pencil" update=":frmPeriodos:outPnlPeriodo" oncomplete="PF('dlgPeriodo').show()"
-                                                 title="Editar período"
+                                                 title="Editar perÃ­odo"
                                                  styleClass="edit-button rounded-button ui-button-success" process="@this">
                                     <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
                                 </p:commandButton>
                                 <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
-                                                 title="Eliminar período"
+                                                 title="Eliminar perÃ­odo"
                                                  actionListener="#{periodoController.eliminarPeriodoSeleccionados}"
                                                  process="@this" update="@form">
                                     <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}" />
-                                    <p:confirm header="Confirmar eliminación"
-                                               message="¿Está seguro de eliminar este período?"
+                                    <p:confirm header="Confirmar eliminaciÃ³n"
+                                               message="Â¿EstÃ¡ seguro de eliminar este perÃ­odo?"
                                                icon="pi pi-exclamation-triangle"/>
                                 </p:commandButton>
                             </p:column>

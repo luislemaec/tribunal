@@ -15,17 +15,17 @@
  */
 package ec.com.antenasur.component;
 
-import javax.faces.component.UIComponent;
+import jakarta.faces.component.UIComponent;
 import org.primefaces.component.menu.AbstractMenu;
-import javax.faces.context.FacesContext;
-import javax.faces.component.UINamingContainer;
-import javax.faces.component.UIOutput;
-import javax.faces.component.UIViewRoot;
-import javax.faces.event.AbortProcessingException;
-import javax.faces.event.ComponentSystemEvent;
-import javax.faces.event.ComponentSystemEventListener;
-import javax.faces.event.ListenerFor;
-import javax.faces.event.PostAddToViewEvent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.component.UINamingContainer;
+import jakarta.faces.component.UIOutput;
+import jakarta.faces.component.UIViewRoot;
+import jakarta.faces.event.AbortProcessingException;
+import jakarta.faces.event.ComponentSystemEvent;
+import jakarta.faces.event.ComponentSystemEventListener;
+import jakarta.faces.event.ListenerFor;
+import jakarta.faces.event.PostAddToViewEvent;
 import org.primefaces.component.api.Widget;
 
 @ListenerFor(sourceClass = EcuadorMenu.class, systemEventClass = PostAddToViewEvent.class)
@@ -132,9 +132,9 @@ public class EcuadorMenu extends AbstractMenu implements Widget, ComponentSystem
             for (String res : resources) {
                 UIComponent component = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
                 if (res.endsWith("css")) {
-                    component.setRendererType("javax.faces.resource.Stylesheet");
+                    component.setRendererType("jakarta.faces.resource.Stylesheet");
                 } else if (res.endsWith("js")) {
-                    component.setRendererType("javax.faces.resource.Script");
+                    component.setRendererType("jakarta.faces.resource.Script");
                 }
 
                 component.getAttributes().put("library", "primefaces");

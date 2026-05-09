@@ -3,10 +3,10 @@ package ec.com.antenasur.controller;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.RowEditEvent;
@@ -88,7 +88,7 @@ public class CatalogoController implements Serializable {
             this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
             if (catalogoSeleccionado != null) {
                 catalogoSeleccionado = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
-                JsfUtil.addSuccessMessage("Catálogo actualizado!");
+                JsfUtil.addSuccessMessage("CatÃ¡logo actualizado!");
                 init();
             }
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class CatalogoController implements Serializable {
             boolean esEdicion = catalogoSeleccionado.getId() != null;
             CatalogoGeneralDTO persistido = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
+                JsfUtil.addSuccessMessage(esEdicion ? "CatÃ¡logo actualizado!" : "CatÃ¡logo creado!");
             }
             catalogoSeleccionado = null;
             init();
@@ -131,7 +131,7 @@ public class CatalogoController implements Serializable {
         try {
             if (catalogoSeleccionado != null && catalogoSeleccionado.getId() != null) {
                 catalogoService.eliminarPorId(catalogoSeleccionado.getId());
-                JsfUtil.addSuccessMessage("Catálogo eliminado!");
+                JsfUtil.addSuccessMessage("CatÃ¡logo eliminado!");
             }
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
             init();

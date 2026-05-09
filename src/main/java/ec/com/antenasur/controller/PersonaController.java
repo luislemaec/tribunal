@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.view.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.primefaces.PrimeFaces;
@@ -137,12 +137,12 @@ public class PersonaController implements Serializable {
     /**
      * Bandera derivada del usuario logueado: true si su rol es IglesiaAdmin
      * y tiene una iglesia asignada. Cuando es true, la vista debe ocultar
-     * los selectores de cantón/parroquia/iglesia (operará solo sobre su iglesia).
+     * los selectores de cantÃ³n/parroquia/iglesia (operarÃ¡ solo sobre su iglesia).
      */
     @Getter
     private boolean restringidoAIglesia;
 
-    /** Progreso de actualización: [total, actualizados, porcentaje]. */
+    /** Progreso de actualizaciÃ³n: [total, actualizados, porcentaje]. */
     private int[] progreso = {0, 0, 0};
 
     public int getTotalMiembros() { return progreso[0]; }
@@ -155,7 +155,7 @@ public class PersonaController implements Serializable {
     @Getter
     private CronogramaFaseDTO faseVigente;
 
-    /** Indica si la fase vigente permite editar el padrón. Bloquea botones. */
+    /** Indica si la fase vigente permite editar el padrÃ³n. Bloquea botones. */
     @Getter
     private boolean puedeEditarPadron;
 
@@ -167,11 +167,11 @@ public class PersonaController implements Serializable {
             parroquiaSeleccionado = cantonSeleccionado = new Geograp();
             iglesiaSeleccionado = new IglesiaDTO();
 
-            // Cronograma electoral: alimenta banner y permisos de edición.
+            // Cronograma electoral: alimenta banner y permisos de ediciÃ³n.
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
             puedeEditarPadron = cronogramaService.permiteEdicionPadron();
 
-            // Detección de rol IglesiaAdmin: si el usuario logueado tiene este
+            // DetecciÃ³n de rol IglesiaAdmin: si el usuario logueado tiene este
             // rol y una iglesia asignada, lo confinamos a esa iglesia y
             // precargamos sus miembros directamente.
             if (esUsuarioIglesiaAdminConIglesia()) {
@@ -185,7 +185,7 @@ public class PersonaController implements Serializable {
                 return;
             }
 
-            // Camino normal (admin global): permite filtrar por cantón/parroquia.
+            // Camino normal (admin global): permite filtrar por cantÃ³n/parroquia.
             cantones = geograpService.findByFatherId(7);
             listaIglesias = iglesiaService.listarDTOs();
         } catch (Exception e) {
@@ -317,14 +317,14 @@ public class PersonaController implements Serializable {
         try {
             boolean esActualizacion = iglesiaPersonaSeleccionado != null
                     && iglesiaPersonaSeleccionado.getId() != null;
-            // Si el contexto está restringido a una iglesia (IglesiaAdmin),
+            // Si el contexto estÃ¡ restringido a una iglesia (IglesiaAdmin),
             // forzamos el binding a esa iglesia para evitar registros cruzados.
             if (restringidoAIglesia && iglesiaPersonaSeleccionado != null
                     && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
                 iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
             }
             if (!cronogramaService.permiteEdicionPadron()) {
-                JsfUtil.addErrorMessage("La actualización del padrón está cerrada por el cronograma electoral.");
+                JsfUtil.addErrorMessage("La actualizaciÃ³n del padrÃ³n estÃ¡ cerrada por el cronograma electoral.");
                 return;
             }
             IglesiaPersonaDTO persistido = iglesiaPersonaService.guardarDesdeDTO(iglesiaPersonaSeleccionado);
@@ -332,8 +332,8 @@ public class PersonaController implements Serializable {
                 JsfUtil.addSuccessMessage(esActualizacion ? "Persona actualizada" : "Persona registrada y marcada como actualizada");
                 personaSeleccionado = null;
                 iglesiaPersonaSeleccionado = null;
-                // Refresca lista de miembros y recalcula progreso (la edición
-                // mueve f_actualiza vía @PreUpdate de Hibernate, lo cual hace
+                // Refresca lista de miembros y recalcula progreso (la ediciÃ³n
+                // mueve f_actualiza vÃ­a @PreUpdate de Hibernate, lo cual hace
                 // que la regla "delta > 2s" del DTO marque actualizada).
                 if (restringidoAIglesia && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
                     listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
@@ -351,9 +351,9 @@ public class PersonaController implements Serializable {
     }
 
     /**
-     * Genera y descarga el acta PDF de actualización de miembros de la iglesia
+     * Genera y descarga el acta PDF de actualizaciÃ³n de miembros de la iglesia
      * actualmente cargada en {@code iglesiaSeleccionado}. El acta marca
-     * "PARCIAL" cuando el porcentaje no es 100% para evidenciar que aún hay
+     * "PARCIAL" cuando el porcentaje no es 100% para evidenciar que aÃºn hay
      * miembros pendientes. Solo lista los miembros ya marcados como actualizados.
      */
     public void generarActaActualizacion() {
@@ -370,8 +370,8 @@ public class PersonaController implements Serializable {
             ec.com.antenasur.itext.ReportePFD.nuevoPDF(nombreReporte);
 
             String tituloPrefijo = isActualizacionCompleta() ? "" : "[PARCIAL " + getPorcentajeActualizacion() + "%] ";
-            String titulo = tituloPrefijo + "ACTA DE ACTUALIZACIÓN DE MIEMBROS";
-            String[] columnas = {"#", "CÉDULA", "NOMBRES", "FECHA ACTUALIZACIÓN"};
+            String titulo = tituloPrefijo + "ACTA DE ACTUALIZACIÃ“N DE MIEMBROS";
+            String[] columnas = {"#", "CÃ‰DULA", "NOMBRES", "FECHA ACTUALIZACIÃ“N"};
             float[] anchos = {30, 90, 200, 120};
 
             com.itextpdf.text.Font fuenteCab = ec.com.antenasur.util.Constantes.getFuenteCabeceraDefault(10);
@@ -380,7 +380,7 @@ public class PersonaController implements Serializable {
             // Encabezado adicional con datos de la iglesia
             ec.com.antenasur.itext.ReportePFD.addParagraph(
                     "Iglesia: " + iglesiaSeleccionado.getNombre()
-                            + "  |  Comunidad: " + (iglesiaSeleccionado.getComunidad() == null ? "—" : iglesiaSeleccionado.getComunidad())
+                            + "  |  Comunidad: " + (iglesiaSeleccionado.getComunidad() == null ? "â€”" : iglesiaSeleccionado.getComunidad())
                             + "  |  Total miembros: " + getTotalMiembros()
                             + "  |  Actualizados: " + getMiembrosActualizados()
                             + "  |  Pendientes: " + getMiembrosPendientes());
@@ -399,11 +399,11 @@ public class PersonaController implements Serializable {
             ec.com.antenasur.itext.ReportePFD.creaContenidoTabla(datos, columnas, fuenteCont);
 
             String userName = (loginBean.getUsuario() != null && loginBean.getUsuario().getUsername() != null)
-                    ? loginBean.getUsuario().getUsername() : "—";
+                    ? loginBean.getUsuario().getUsername() : "â€”";
             ec.com.antenasur.itext.ReportePFD.getFinalParagraph(userName);
             ec.com.antenasur.itext.ReportePFD.descargarPDF(nombreReporte);
         } catch (Exception e) {
-            log.error("Error al generar acta de actualización", e);
+            log.error("Error al generar acta de actualizaciÃ³n", e);
             JsfUtil.addErrorMessage("No se pudo generar el acta. Intente nuevamente.");
         }
     }

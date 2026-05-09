@@ -3,16 +3,16 @@ package ec.com.antenasur.model.tec;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
 import ec.com.antenasur.model.generic.EntidadBase;
@@ -24,7 +24,7 @@ import org.hibernate.annotations.Filter;
  * Cabecera del proceso electoral. Solo uno debe estar {@code activo=true}
  * a la vez. Las fases del cronograma se modelan en {@link CronogramaFase}
  * con FK a esta entidad. Tabla nueva para no chocar con
- * {@code tec.procesos} (bitácora de actividad).
+ * {@code tec.procesos} (bitÃ¡cora de actividad).
  */
 @Entity
 @Table(name = "proceso_electoral", schema = "tec")

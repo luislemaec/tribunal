@@ -1,4 +1,4 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui" template="/errors/error-template.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="jakarta.faces.facelets" xmlns:h="jakarta.faces.html" xmlns:p="http://primefaces.org/ui" template="/errors/error-template.xhtml">
     <ui:define name="content">
 
         <div class="top">
@@ -9,8 +9,8 @@
             <div class="seperator"></div>
         </div>
         <div class="bottom">
-            <span class="exception-panel-header">Ocurrió un error</span>
-            <span class="exception-panel-subheader">Algo salió mal.</span>            
+            <span class="exception-panel-header">OcurriÃ³ un error</span>
+            <span class="exception-panel-subheader">Algo saliÃ³ mal.</span>            
             <p:commandButton  actionListener="#{errorController.redirigeInicio()}"  value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
         </div><!-- comment -->        
 

@@ -15,8 +15,8 @@
  */
 package ec.com.antenasur.blockviewer;
 
-import javax.faces.component.FacesComponent;
-import javax.faces.component.UINamingContainer;
+import jakarta.faces.component.FacesComponent;
+import jakarta.faces.component.UINamingContainer;
 import java.io.Serializable;
 
 @FacesComponent(value = "BlockViewer")
@@ -24,7 +24,7 @@ public class BlockViewer extends UINamingContainer implements Serializable {
 
     @Override
     public String getFamily() {
-        return "javax.faces.NamingContainer";
+        return "jakarta.faces.NamingContainer";
     }
 
     private enum PropertyKeys {

@@ -8,9 +8,9 @@ package ec.com.antenasur.facade;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Menu;
 import ec.com.antenasur.model.RolUsuario;
@@ -105,9 +105,9 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
                     menuIds1.add(item.intValue());
                 }
 
-                // Si los roles del usuario no tienen menús asignados, evitamos
-                // ejecutar el segundo query: JPQL con "IN :lista" vacía genera
-                // "IN ()" en PostgreSQL → SQLGrammarException.
+                // Si los roles del usuario no tienen menÃƒÂºs asignados, evitamos
+                // ejecutar el segundo query: JPQL con "IN :lista" vacÃƒÂ­a genera
+                // "IN ()" en PostgreSQL Ã¢â€ â€™ SQLGrammarException.
                 if (menuIds1.isEmpty()) {
                     return menus;
                 }
@@ -141,7 +141,7 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
 
     public List<Menu> findByFather() {
         try {
-            String sql = "FROM Menu m WHERE m.padre.id is null AND m.estado=TRUE ORDER BY orden";
+            String sql = "SELECT m FROM Menu m WHERE m.padre.id is null AND m.estado=TRUE ORDER BY orden";
             TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
             List<Menu> resultList = query.getResultList();
             if (resultList != null && !resultList.isEmpty()) {
@@ -154,7 +154,7 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
 
     public List<Menu> listaCatalogoHijo(Integer padreId) {
         try {
-            String sql = "FROM Menu m WHERE m.padre.id=:padreId ORDER BY orden";
+            String sql = "SELECT m FROM Menu m WHERE m.padre.id=:padreId ORDER BY orden";
             TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
             query.setParameter("padreId", padreId);
             List<Menu> resultList = query.getResultList();
@@ -168,7 +168,7 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
 
     public List<Menu> getMenusFinales() {
          try {
-            String sql = "FROM Menu m WHERE m.nodoFinal=TRUE ORDER BY orden";
+            String sql = "SELECT m FROM Menu m WHERE m.nodoFinal=TRUE ORDER BY orden";
             TypedQuery<Menu> query = super.getEntityManager().createQuery(sql, Menu.class);
             
             List<Menu> resultList = query.getResultList();

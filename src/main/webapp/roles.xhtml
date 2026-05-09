@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
     <ui:define name="title">Roles</ui:define>
@@ -17,7 +17,7 @@
         <h:form id="frmRoles">
             <div class="grid">                
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÓN DE ROLES</h5>
+                    <h5>ADMINITRACIÃ“N DE ROLES</h5>
                     <p:toolbar >
                         <p:toolbarGroup>
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{rolController.nuevoRol}" 
@@ -57,7 +57,7 @@
                         <p:column headerText="Nombre" sortBy="#{rol.nombre}" filterBy="#{rol.nombre}" styleClass="sm:w-max md:w-4 lg:w-10rem" >
                             <h:outputText value="#{rol.nombre}" />
                         </p:column>        
-                        <p:column headerText="Descripción" sortBy="#{rol.descripcion}" filterBy="#{rol.descripcion}" styleClass="sm:w-max md:w-4 lg:w-10rem">
+                        <p:column headerText="DescripciÃ³n" sortBy="#{rol.descripcion}" filterBy="#{rol.descripcion}" styleClass="sm:w-max md:w-4 lg:w-10rem">
                             <h:outputText value="#{rol.descripcion}" />
                         </p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-2 lg:w-5rem">
@@ -70,8 +70,8 @@
                                              process="@this" update="@form"
                                              styleClass="ui-button-raised rounded-button ui-button-danger mx-1">
                                 <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}" />
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro de eliminar este rol?"
+                                <p:confirm header="Confirmar eliminaciÃ³n"
+                                           message="Â¿EstÃ¡ seguro de eliminar este rol?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
@@ -90,7 +90,7 @@
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="descripcion" value="Descripción" />
+                                <p:outputLabel for="descripcion" value="DescripciÃ³n" />
                                 <p:inputText id="descripcion" value="#{rolController.rolSeleccionado.descripcion}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
                             </div>
 

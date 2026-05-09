@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://java.sun.com/jsf/html"
-                xmlns:f="http://java.sun.com/jsf/core"
-                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
@@ -10,7 +10,7 @@
     <ui:define name="viewname">
         <li>Cronograma</li>
         <li>/</li>
-        <li><p:link outcome="/asignacionUsuarios">Asignación de Usuarios</p:link></li>
+        <li><p:link outcome="/asignacionUsuarios">AsignaciÃ³n de Usuarios</p:link></li>
     </ui:define>
 
     <ui:define name="content">
@@ -25,7 +25,7 @@
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">Asignación de Usuarios</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Asigne un administrador a cada iglesia. Cada iglesia puede tener un único IglesiaAdmin.</p>
+                        <p class="text-500 mt-1 mb-0 text-sm">Asigne un administrador a cada iglesia. Cada iglesia puede tener un Ãºnico IglesiaAdmin.</p>
                     </div>
                 </div>
             </div>
@@ -105,7 +105,7 @@
                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
                         <div class="flex align-items-center gap-2">
                             <i class="pi pi-chart-line text-primary"></i>
-                            <span class="font-semibold text-900">Progreso de asignación —
+                            <span class="font-semibold text-900">Progreso de asignaciÃ³n â€”
                                 <span class="text-primary">
                                     <h:outputText value="#{asignacionUsuariosController.faseVigente.titulo}"/>
                                 </span>
@@ -136,7 +136,7 @@
                                      <f:convertDateTime pattern="dd/MM/yyyy"/>
                                  </h:outputText>
                             <h:outputText rendered="#{asignacionUsuariosController.faseVigente.diasRestantes gt 0}"
-                                          value=" · #{asignacionUsuariosController.faseVigente.diasRestantes} días restantes"
+                                          value=" Â· #{asignacionUsuariosController.faseVigente.diasRestantes} dÃ­as restantes"
                                           styleClass="text-orange-500 font-medium"/>
                         </small>
                     </div>
@@ -182,9 +182,9 @@
                         </p:selectOneMenu>
                     </div>
 
-                    <!-- Cantón -->
+                    <!-- CantÃ³n -->
                     <div class="field col-12 md:col-2">
-                        <label for="canton" class="text-700 font-medium text-sm">Cantón</label>
+                        <label for="canton" class="text-700 font-medium text-sm">CantÃ³n</label>
                         <p:selectOneMenu id="canton" value="#{asignacionUsuariosController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
                                          placeholder="-- Todos los cantones --"
@@ -230,7 +230,7 @@
                             closable="true" styleClass="mb-3"/>
 
                 <!-- Banner bloqueo de fase: mensaje contextual diferenciado entre
-                     "no hay fase vigente" y "fase vigente es otra" — ver
+                     "no hay fase vigente" y "fase vigente es otra" â€” ver
                      AsignacionUsuariosController.getMensajeBloqueoFase(). -->
                 <p:outputPanel rendered="#{not asignacionUsuariosController.puedeAsignar}" styleClass="mb-3" layout="block">
                     <div class="flex align-items-center gap-2 border-round-lg p-3"
@@ -238,7 +238,7 @@
                         <i class="pi pi-lock text-orange-500 text-xl flex-shrink-0"/>
                         <div class="flex flex-column gap-1">
                             <span class="font-semibold text-900 text-sm">
-                                Asignación deshabilitada
+                                AsignaciÃ³n deshabilitada
                             </span>
                             <span class="text-700 text-sm">
                                 <h:outputText value="#{asignacionUsuariosController.mensajeBloqueoFase}"/>
@@ -247,7 +247,7 @@
                     </div>
                 </p:outputPanel>
 
-                <!-- Indicador positivo cuando la fase ASIGNACION_USUARIOS está vigente. -->
+                <!-- Indicador positivo cuando la fase ASIGNACION_USUARIOS estÃ¡ vigente. -->
                 <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar}" styleClass="mb-3" layout="block">
                     <div class="flex align-items-center gap-2 border-round-lg p-2"
                          style="background:#f0fdf4;border-left:4px solid #22c55e">
@@ -255,7 +255,7 @@
                         <span class="text-700 text-sm">
                             Fase activa:
                             <strong>#{asignacionUsuariosController.faseVigente.titulo}</strong>
-                            — la asignación de administradores está habilitada.
+                            â€” la asignaciÃ³n de administradores estÃ¡ habilitada.
                         </span>
                     </div>
                 </p:outputPanel>
@@ -278,21 +278,21 @@
                             <span class="text-lg text-900 font-bold">Iglesias</span>
                             <span class="p-input-icon-left">
                                 <i class="pi pi-search"></i>
-                                <p:inputText id="globalFilter" placeholder="Búsqueda global..."
+                                <p:inputText id="globalFilter" placeholder="BÃºsqueda global..."
                                              onkeyup="PF('wdTblAsignacion').filter()"
                                              styleClass="w-full md:w-18rem"/>
                             </span>
                         </div>
                     </f:facet>
 
-                    <p:column headerText="RUC / Código" sortBy="#{ig.documento}"
+                    <p:column headerText="RUC / CÃ³digo" sortBy="#{ig.documento}"
                               filterBy="#{ig.documento}" filterMatchMode="contains" style="width:9rem">
                         <p:tag rendered="#{not empty ig.documento and ig.documento.startsWith('00')}"
-                               value="Genérico" icon="pi pi-tag" severity="warning"/>
+                               value="GenÃ©rico" icon="pi pi-tag" severity="warning"/>
                         <h:outputText rendered="#{not empty ig.documento and not ig.documento.startsWith('00')}"
                                       value="#{ig.documento}" styleClass="text-sm text-900"
                                       style="font-family:monospace"/>
-                        <h:outputText rendered="#{empty ig.documento}" value="—" styleClass="text-400"/>
+                        <h:outputText rendered="#{empty ig.documento}" value="â€”" styleClass="text-400"/>
                     </p:column>
 
                     <p:column headerText="Iglesia" sortBy="#{ig.nombre}"
@@ -309,7 +309,7 @@
                         </div>
                     </p:column>
 
-                    <p:column headerText="Ubicación" sortBy="#{ig.provinciaNombre}"
+                    <p:column headerText="UbicaciÃ³n" sortBy="#{ig.provinciaNombre}"
                               filterBy="#{ig.provinciaNombre}" filterMatchMode="contains" style="width:13rem">
                         <div class="flex flex-column line-height-3">
                             <small class="text-500 text-xs">
@@ -329,7 +329,7 @@
                                     <i class="pi pi-user mr-1 text-green-500"/>
                                     #{ig.adminPersonaNombres} #{ig.adminPersonaApellidos}
                                 </span>
-                                <small class="text-500">#{ig.adminUsername} · #{ig.adminCorreo}</small>
+                                <small class="text-500">#{ig.adminUsername} Â· #{ig.adminCorreo}</small>
                             </div>
                         </p:outputPanel>
                         <p:tag rendered="#{not ig.tieneAdmin}"
@@ -366,7 +366,7 @@
             </div>
         </h:form>
 
-        <!-- DIÁLOGO DE ASIGNACIÓN -->
+        <!-- DIÃLOGO DE ASIGNACIÃ“N -->
         <h:form id="frmDlgAsignacion">
             <p:dialog widgetVar="dlgAsignacion"
                       header="#{asignacionUsuariosController.reasignacion ? 'Reasignar administrador' : 'Asignar administrador'}"
@@ -381,13 +381,13 @@
                             <span class="font-semibold text-900">#{asignacionUsuariosController.iglesiaSeleccionada.nombre}</span>
                         </div>
                         <small class="text-500">
-                            #{asignacionUsuariosController.iglesiaSeleccionada.provinciaNombre} ·
-                            #{asignacionUsuariosController.iglesiaSeleccionada.cantonNombre} ·
+                            #{asignacionUsuariosController.iglesiaSeleccionada.provinciaNombre} Â·
+                            #{asignacionUsuariosController.iglesiaSeleccionada.cantonNombre} Â·
                             #{asignacionUsuariosController.iglesiaSeleccionada.ubicacionNombre}
                         </small>
                     </div>
 
-                    <!-- Aviso de reasignación -->
+                    <!-- Aviso de reasignaciÃ³n -->
                     <p:outputPanel rendered="#{asignacionUsuariosController.reasignacion}" styleClass="mb-3" layout="block">
                         <div class="flex align-items-center gap-2 surface-100 border-round-lg p-2"
                              style="border-left:3px solid #f59e0b">
@@ -395,18 +395,18 @@
                             <span class="text-sm text-700">
                                 Esta iglesia ya tiene asignado a
                                 <strong>#{asignacionUsuariosController.iglesiaSeleccionada.adminPersonaNombres}</strong>.
-                                Al guardar, se desasignará al actual y el nuevo usuario tomará su lugar.
+                                Al guardar, se desasignarÃ¡ al actual y el nuevo usuario tomarÃ¡ su lugar.
                             </span>
                         </div>
                     </p:outputPanel>
 
-                    <!-- Mensajes locales del diálogo. showDetail="false" para mantener
+                    <!-- Mensajes locales del diÃ¡logo. showDetail="false" para mantener
                          el modal compacto y solo mostrar el summary. -->
                     <p:messages id="dlgMsgs" showDetail="false" showSummary="true"
                                 closable="true" styleClass="mb-2"/>
 
-                    <!-- Los inputs viven dentro de adminFields para que el AJAX de cédula
-                         sólo refresque ESTE panel (no @form). Si se actualizara el form
+                    <!-- Los inputs viven dentro de adminFields para que el AJAX de cÃ©dula
+                         sÃ³lo refresque ESTE panel (no @form). Si se actualizara el form
                          completo, PrimeFaces 11 destruye el widget del dialog (al no usar
                          appendTo="@(body)") y el modal se cierra. -->
                     <p:outputPanel id="adminFields">
@@ -414,7 +414,7 @@
 
                             <div class="field col-12 md:col-5">
                                 <label for="cedula" class="font-medium text-700 text-sm">
-                                    Cédula <span class="text-red-500">*</span>
+                                    CÃ©dula <span class="text-red-500">*</span>
                                 </label>
                                 <p:inputText id="cedula" value="#{asignacionUsuariosController.nuevoAdmin.personaDocumento}"
                                              maxlength="13" required="true" styleClass="w-full">
@@ -457,8 +457,8 @@
 
                     <small class="text-500 block mt-2">
                         <i class="pi pi-info-circle mr-1"/>
-                        Si la persona no está vinculada a la iglesia, se creará el vínculo automáticamente.
-                        La contraseña inicial será la cédula y se enviará por correo.
+                        Si la persona no estÃ¡ vinculada a la iglesia, se crearÃ¡ el vÃ­nculo automÃ¡ticamente.
+                        La contraseÃ±a inicial serÃ¡ la cÃ©dula y se enviarÃ¡ por correo.
                     </small>
 
                 </p:outputPanel>
@@ -482,7 +482,7 @@
         </h:form>
 
         <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="380">
-            <p:commandButton value="Sí" icon="pi pi-check" styleClass="ui-button-danger" type="button"
+            <p:commandButton value="SÃ­" icon="pi pi-check" styleClass="ui-button-danger" type="button"
                              onclick="PF('dlgConfirm').accept()"/>
             <p:commandButton value="Cancelar" icon="pi pi-times" styleClass="ui-button-secondary ml-2" type="button"
                              onclick="PF('dlgConfirm').reject()"/>

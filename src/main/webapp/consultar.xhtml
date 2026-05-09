@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
       xmlns:p="http://primefaces.org/ui"
       template="/WEB-INF/errors/error-template.xhtml"
-      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+      xmlns:c="jakarta.tags.core"
+      xmlns:ui="jakarta.faces.facelets">
     <h:head>
         <f:facet name="first">
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -31,7 +31,7 @@
             <div class="layout-main">
                 <div class="layout-content">
                     <div class="grid">                
-                        <h5>CONSULTA TU LUGAR DE VOTACIÓN</h5>
+                        <h5>CONSULTA TU LUGAR DE VOTACIÃ“N</h5>
                         <div class="col-12 ">
                             <h:form id="frmLugar">
                                 <div class="card">
@@ -39,7 +39,7 @@
                                         <div class="field col-12 md:col-6 lg:col-6">
 
                                             <p:inputText  value="#{lugarVotacion.nombreCedula}"  required="true" onkeyup="value = value.toUpperCase()" label="Cedula o nombres" 
-                                                          placeholder="Digite cédula o nombres completos" requiredMessage="Cédula o nombre es requerido"/>
+                                                          placeholder="Digite cÃ©dula o nombres completos" requiredMessage="CÃ©dula o nombre es requerido"/>
                                         </div>
                                         <div class="p-field col-12 md:col-6 lg:col-3 ">
                                             <p:commandButton value="BUSCAR"  icon="pi pi-search"  action="#{lugarVotacion.buscarLugar()}" 
@@ -60,7 +60,7 @@
                                             </div>
 
                                             <div class="p-field col-12 md:col-6 lg:col-1">
-                                                <p:outputLabel value="CÉDULA:"/>
+                                                <p:outputLabel value="CÃ‰DULA:"/>
                                             </div>
                                             <div class="field col-12 md:col-6 lg:col-2">
                                                 <b> #{lugar.cedula} </b>

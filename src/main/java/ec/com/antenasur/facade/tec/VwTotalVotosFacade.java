@@ -1,6 +1,6 @@
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -9,8 +9,8 @@ import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.Recinto;
 
 import java.util.List;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -19,7 +19,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
 
-    private static final String HQL = " FROM VwTotalVotos e";
+    private static final String HQL = " SELECT e FROM VwTotalVotos e";
     private static final String ORDENADO = " ORDER BY e.id";
 
     public VwTotalVotosFacade() {
@@ -59,7 +59,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> sumaGlobal() {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v"
+                    + "SELECT v FROM VwTotalVotos v"
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);
             List<Object[]> resultList = query.getResultList();
@@ -76,7 +76,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> votosPorRecinto(Recinto recintoSeleccionado) {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v "
+                    + "SELECT v FROM VwTotalVotos v "
                     + "WHERE v.recinto=:recinto "
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);
@@ -95,7 +95,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> votosPorParroquias(List<Geograp> parroquias) {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v "
+                    + "SELECT v FROM VwTotalVotos v "
                     + "WHERE v.mesa.ubicacion IN :parroquias "
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);
@@ -114,7 +114,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> votosPorMesa(Mesa mesa) {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v "
+                    + "SELECT v FROM VwTotalVotos v "
                     + "WHERE v.mesa=:mesa "
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);
@@ -132,7 +132,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> votosPorRecintos(List<Recinto> recintos) {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v "
+                    + "SELECT v FROM VwTotalVotos v "
                     + "WHERE v.recinto IN :recintos "
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);
@@ -150,7 +150,7 @@ public class VwTotalVotosFacade extends AbstractFacade<VwTotalVotos, Integer> {
     public List<Object[]> votosPorMesas(List<Mesa> mesas) {
         try {
             String sql = "SELECT v.categoria, SUM(v.totalVotos), v.orden "
-                    + "FROM VwTotalVotos v "
+                    + "SELECT v FROM VwTotalVotos v "
                     + "WHERE v.mesa IN :mesas "
                     + " GROUP BY v.categoria, v.orden ORDER BY v.orden";
             Query query = super.getEntityManager().createQuery(sql);

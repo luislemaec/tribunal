@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.faces.context.FacesContext;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.BaseColor;
@@ -43,7 +43,7 @@ import java.util.Date;
  */
 public class ReportePFD {
 
-    private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(ReportePFD.class);
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ReportePFD.class);
 
     private static ByteArrayOutputStream baos;
 

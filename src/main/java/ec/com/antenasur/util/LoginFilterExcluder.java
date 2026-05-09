@@ -25,7 +25,7 @@ public class LoginFilterExcluder {
          * *******************************
          */
         excludeUrls.add("/resources/");
-        excludeUrls.add("/javax.faces.resource/");
+        excludeUrls.add("/jakarta.faces.resource/");
         excludeUrls.add("/errors/");
         excludeUrls.add("/index.html");
         excludeUrls.add("/login.jsf");

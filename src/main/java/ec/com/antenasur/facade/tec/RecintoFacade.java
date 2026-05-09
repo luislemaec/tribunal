@@ -7,9 +7,9 @@ package ec.com.antenasur.facade.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Recinto;
@@ -22,7 +22,7 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class RecintoFacade extends AbstractFacade<Recinto, Integer> {
 
-    private static final String HQL = " FROM Recinto r";    
+    private static final String HQL = " SELECT r FROM Recinto r";    
     private static final String ORDENADO = " ORDER BY r.id";
 
     public RecintoFacade() {

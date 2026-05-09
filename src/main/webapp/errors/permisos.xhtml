@@ -1,6 +1,6 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml" 
-                xmlns:ui="http://java.sun.com/jsf/facelets" 
-                xmlns:h="http://java.sun.com/jsf/html" 
+                xmlns:ui="jakarta.faces.facelets" 
+                xmlns:h="jakarta.faces.html" 
                 xmlns:p="http://primefaces.org/ui" 
                 template="/errors/error-template.xhtml">
     <ui:define name="content">
@@ -12,7 +12,7 @@
         </div>
         <div class="bottom">
             <span class="exception-panel-header">Acceso Denegado</span>
-            <span class="exception-panel-subheader">Usted está intentando ingresar a una página que no tiene permisos.</span>            
+            <span class="exception-panel-subheader">Usted estÃ¡ intentando ingresar a una pÃ¡gina que no tiene permisos.</span>            
             <p:linkButton outcome="/dashboard.jsf" value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
         </div>
 

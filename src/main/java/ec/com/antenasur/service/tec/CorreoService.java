@@ -5,10 +5,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ec.com.antenasur.facade.tec.CorreoFacade;
 import ec.com.antenasur.itext.UtilHtml;
@@ -20,7 +21,7 @@ import ec.com.antenasur.util.SendEmail;
 @Stateless
 public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade> {
 
-    private static final Logger LOG = Logger.getLogger(CorreoService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CorreoService.class);
 
     @Inject
     private CorreoFacade correoFacade;
@@ -32,8 +33,8 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
 
     /**
      * Construye el HashMap base que las plantillas suelen necesitar:
-     * {@code fechaRegistro}, {@code horaRegistro}. Los callers añaden los
-     * parámetros específicos (nombre, clave, etc.) sobre el resultado.
+     * {@code fechaRegistro}, {@code horaRegistro}. Los callers aÃƒÂ±aden los
+     * parÃƒÂ¡metros especÃƒÂ­ficos (nombre, clave, etc.) sobre el resultado.
      */
     public HashMap<String, String> construirParametrosBase() {
         HashMap<String, String> parametros = new HashMap<>();
@@ -44,14 +45,14 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
     }
 
     /**
-     * Procesa la plantilla con los parámetros, envía el correo (con adjunto si
-     * se indica path) y persiste el registro de notificación. Los parámetros
+     * Procesa la plantilla con los parÃƒÂ¡metros, envÃƒÂ­a el correo (con adjunto si
+     * se indica path) y persiste el registro de notificaciÃƒÂ³n. Los parÃƒÂ¡metros
      * sensibles ({@code clave}) se eliminan antes de persistir.
      *
-     * @param destinatarios lista de emails destino (no null/vacía)
+     * @param destinatarios lista de emails destino (no null/vacÃƒÂ­a)
      * @param plantilla plantilla a usar; su {@code mensaje} es modificado in-place
      * @param parametros sustituciones para la plantilla
-     * @param usuarioId id del usuario asociado al envío
+     * @param usuarioId id del usuario asociado al envÃƒÂ­o
      * @param pathAdjunto path absoluto del adjunto, o null para sin adjunto
      * @return el {@code Correo} persistido, o null si no se pudo enviar
      */

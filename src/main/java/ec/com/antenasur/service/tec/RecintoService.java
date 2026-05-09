@@ -3,8 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.RecintoDTO;
 import ec.com.antenasur.facade.GeograpFacade;
@@ -62,7 +62,7 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
     /**
      * Persiste el recinto descrito por el DTO. Resuelve {@code ubicacionId}
      * contra {@link GeograpFacade}. Si el id es null crea, si no, hidrata la
-     * entidad existente con los campos del DTO (preservando auditoría).
+     * entidad existente con los campos del DTO (preservando auditorÃ­a).
      */
     public RecintoDTO guardarDesdeDTO(RecintoDTO dto) {
         if (dto == null) {

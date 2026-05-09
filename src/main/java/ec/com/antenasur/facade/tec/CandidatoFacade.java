@@ -5,14 +5,14 @@
  */
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Candidato;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import java.util.List;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.TypedQuery;
 
 /**
  *
@@ -21,7 +21,7 @@ import javax.persistence.TypedQuery;
 @Stateless
 public class CandidatoFacade extends AbstractFacade<Candidato, Integer> {
 
-    private static final String HQL = " FROM Candidato c";
+    private static final String HQL = " SELECT c FROM Candidato c";
     private static final String ORDENADO = " ORDER BY c.id";
 
     public CandidatoFacade() {

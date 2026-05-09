@@ -7,8 +7,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
 
 /**
  *
@@ -167,7 +167,7 @@ public class Constantes {
     /**
      * Rol del Tribunal Electoral. El cargo interno (Presidente, Secretario,
      * Vocal, Veedor) se distingue mediante {@code tb_tribunal} para evitar
-     * explosión de roles RBAC.
+     * explosiÃ³n de roles RBAC.
      */
     public static String getRolTribunal() {
         return "Tribunal";

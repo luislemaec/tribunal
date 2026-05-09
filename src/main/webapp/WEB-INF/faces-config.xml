@@ -1,18 +1,17 @@
-<?xml version="1.0"?>
-<faces-config version="2.2"
-              xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+<?xml version="1.0" encoding="UTF-8"?>
+<faces-config version="4.0"
+              xmlns="https://jakarta.ee/xml/ns/jakartaee"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="
-        http://xmlns.jcp.org/xml/ns/javaee
-        http://xmlns.jcp.org/xml/ns/javaee/web-facesconfig_2_2.xsd">
+              xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                                  https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_0.xsd">
 
     <name>primefaces_ecuador</name>
-    
+
     <component>
         <component-type>ec.com.antenasur.component.EcuadorMenu</component-type>
         <component-class>ec.com.antenasur.component.EcuadorMenu</component-class>
     </component>
-    
+
     <render-kit>
         <renderer>
             <component-family>ec.com.antenasur.component</component-family>
@@ -20,7 +19,7 @@
             <renderer-class>ec.com.antenasur.component.EcuadorMenuRenderer</renderer-class>
         </renderer>
     </render-kit>
-    
+
     <application>
         <action-listener>org.primefaces.application.DialogActionListener</action-listener>
         <navigation-handler>org.primefaces.application.DialogNavigationHandler</navigation-handler>
@@ -29,7 +28,7 @@
             <default-locale>es</default-locale>
             <supported-locale>es</supported-locale>
         </locale-config>
-		
+
         <resource-bundle>
             <base-name>ec.com.antenasur.resources.messages</base-name>
             <var>msg</var>

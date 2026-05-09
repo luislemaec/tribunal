@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="3.0" 
-         xmlns="http://JAVA.sun.com/xml/ns/javaee" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+<web-app version="6.0"
+         xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
     <display-name>TEC</display-name>
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
@@ -29,11 +29,11 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
     <context-param>
-        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+        <param-name>jakarta.faces.STATE_SAVING_METHOD</param-name>
         <param-value>server</param-value>
     </context-param>
     <context-param>
-        <param-name>javax.faces.PROJECT_STAGE</param-name>
+        <param-name>jakarta.faces.PROJECT_STAGE</param-name>
         <param-value>Production</param-value>
     </context-param>
     <context-param>
@@ -41,11 +41,11 @@
         <param-value>ecuador-#{guestPreferences.theme}</param-value>
     </context-param>
     <context-param>
-        <param-name>javax.faces.FACELETS_LIBRARIES</param-name>
+        <param-name>jakarta.faces.FACELETS_LIBRARIES</param-name>
         <param-value>/WEB-INF/tribunal.taglib.xml</param-value>
     </context-param>
     <context-param>
-        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+        <param-name>jakarta.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
         <param-value>true</param-value>
     </context-param>
     <context-param>
@@ -56,12 +56,7 @@
         <param-name>resteasy.servlet.mapping.prefix</param-name>
         <param-value>/RestServices</param-value>
     </context-param>
-    
-    <!-- Contexto para subir documentos <filter> <filter-name>PrimeFaces FileUpload 
-    Filter</filter-name> <filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class> 
-    </filter> <filter-mapping> <filter-name>PrimeFaces FileUpload Filter</filter-name> 
-    <servlet-name>Faces Servlet</servlet-name> </filter-mapping> Fin Contexto 
-    para subir documentos -->
+
     <!--INICIO Filtro de inicio de sesion-->
     <filter>
         <filter-name>LoginFilter</filter-name>
@@ -104,7 +99,7 @@
         <location>/errors/404.xhtml</location>
     </error-page>
     <error-page>
-        <exception-type>javax.faces.application.ViewExpiredException</exception-type>
+        <exception-type>jakarta.faces.application.ViewExpiredException</exception-type>
         <location>/errors/viewExpired.xhtml</location>
     </error-page>
     <error-page>

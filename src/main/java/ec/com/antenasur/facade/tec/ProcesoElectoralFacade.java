@@ -2,9 +2,9 @@ package ec.com.antenasur.facade.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
@@ -17,12 +17,12 @@ public class ProcesoElectoralFacade extends AbstractFacade<ProcesoElectoral, Int
     }
 
     /**
-     * Devuelve el proceso marcado como activo. Si hay más de uno por error
-     * de datos, retorna el más reciente. Null si no existe ninguno.
+     * Devuelve el proceso marcado como activo. Si hay mÃƒÂ¡s de uno por error
+     * de datos, retorna el mÃƒÂ¡s reciente. Null si no existe ninguno.
      */
     public ProcesoElectoral getActivo() {
         try {
-            String hql = "FROM ProcesoElectoral p WHERE p.activo = TRUE ORDER BY p.id DESC";
+            String hql = "SELECT p FROM ProcesoElectoral p WHERE p.activo = TRUE ORDER BY p.id DESC";
             TypedQuery<ProcesoElectoral> q = super.getEntityManager().createQuery(hql, ProcesoElectoral.class);
             q.setMaxResults(1);
             List<ProcesoElectoral> r = q.getResultList();

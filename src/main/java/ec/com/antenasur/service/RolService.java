@@ -3,8 +3,8 @@ package ec.com.antenasur.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.RolDTO;
 import ec.com.antenasur.facade.RolFacade;

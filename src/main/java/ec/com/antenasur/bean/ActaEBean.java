@@ -3,7 +3,7 @@ package ec.com.antenasur.bean;
 import ec.com.antenasur.model.Persona;
 import java.io.Serializable;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.MiembroJRV;
@@ -11,8 +11,8 @@ import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.service.tec.MiembroJRVService;
 import java.util.Set;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -5,7 +5,7 @@
  */
 package ec.com.antenasur.facade.tec;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Cargo;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -17,7 +17,7 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class CargoFacade extends AbstractFacade<Cargo, Integer> {
 
-    static final String HQL = " FROM Cargo c";
+    static final String HQL = " SELECT c FROM Cargo c";
     static final String ACTIVOS = "  c.estado =TRUE";
     static final String ORDENADO = "  ORDER BY c.id";
 

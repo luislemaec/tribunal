@@ -8,9 +8,9 @@ package ec.com.antenasur.facade;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Persona;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -29,7 +29,7 @@ public class PersonaFacade extends AbstractFacade<Persona, Integer> {
 
     public List<Persona> getByRuc() {
         try {
-            String sql = "FROM Persona WHERE estado =TRUE ORDER BY id";
+            String sql = "SELECT e FROM Persona e WHERE estado =TRUE ORDER BY id";
             TypedQuery<Persona> query = super.getEntityManager().createQuery(sql, Persona.class);
             List<Persona> result = (List<Persona>) query.getResultList();
             if (result.size() > 0) {
@@ -48,10 +48,10 @@ public class PersonaFacade extends AbstractFacade<Persona, Integer> {
      */
     /**
      * Busca una persona por documento. Si hay duplicados en la BD (caso real
-     * detectado en producción) retorna el primero por id ascendente, en lugar
-     * de lanzar {@link javax.persistence.NonUniqueResultException}. La
-     * deduplicación de personas duplicadas debe resolverse en BD; mientras
-     * tanto, el login y demás flujos no deben caerse.
+     * detectado en producciÃƒÂ³n) retorna el primero por id ascendente, en lugar
+     * de lanzar {@link jakarta.persistence.NonUniqueResultException}. La
+     * deduplicaciÃƒÂ³n de personas duplicadas debe resolverse en BD; mientras
+     * tanto, el login y demÃƒÂ¡s flujos no deben caerse.
      */
     public Persona finByPersonaDocument(String documento) {
         try {

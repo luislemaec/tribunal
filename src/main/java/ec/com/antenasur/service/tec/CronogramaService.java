@@ -3,8 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.enums.FaseElectoral;
@@ -15,15 +15,15 @@ import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.AbstractService;
 
 /**
- * Lógica del cronograma electoral. Centraliza:
+ * LÃ³gica del cronograma electoral. Centraliza:
  * <ul>
- *   <li>Cálculo de la fase vigente del proceso activo.</li>
- *   <li>Permisos de edición por fase (gobierna el padrón, listas, etc.).</li>
- *   <li>CRUD de fases para la pantalla de gestión.</li>
+ *   <li>CÃ¡lculo de la fase vigente del proceso activo.</li>
+ *   <li>Permisos de ediciÃ³n por fase (gobierna el padrÃ³n, listas, etc.).</li>
+ *   <li>CRUD de fases para la pantalla de gestiÃ³n.</li>
  * </ul>
  *
  * <p>Sin proceso activo o sin fase vigente, el sistema cae en
- * <b>solo lectura por defecto</b> — los servicios que dependen de fase
+ * <b>solo lectura por defecto</b> â€” los servicios que dependen de fase
  * deben rechazar escrituras.
  */
 @Stateless
@@ -42,7 +42,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
 
     /**
      * Devuelve la fase vigente del proceso electoral activo, o {@code null}
-     * si no hay proceso activo o si todas las fases están fuera de rango.
+     * si no hay proceso activo o si todas las fases estÃ¡n fuera de rango.
      */
     public CronogramaFaseDTO getFaseVigenteDelProcesoActivo() {
         ProcesoElectoral activo = procesoElectoralFacade.getActivo();
@@ -52,9 +52,9 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Indica si la fase vigente permite edición del padrón. Combina la
+     * Indica si la fase vigente permite ediciÃ³n del padrÃ³n. Combina la
      * columna {@code cref_permite_edicion} (override del admin) con el
-     * default semántico del enum {@link FaseElectoral}.
+     * default semÃ¡ntico del enum {@link FaseElectoral}.
      *
      * <p>Sin proceso activo o sin fase vigente devuelve {@code false}
      * (modo seguro: nada se edita fuera del cronograma).
@@ -69,11 +69,11 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Indica si el registro/edición de iglesias está habilitado.
-     * Se permite únicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
+     * Indica si el registro/ediciÃ³n de iglesias estÃ¡ habilitado.
+     * Se permite Ãºnicamente cuando la fase vigente es {@link FaseElectoral#INSCRIPCION_IGLESIAS}.
      *
      * <p>No usa {@code cref_permite_edicion} porque ese campo es exclusivo del
-     * control del padrón de miembros ({@link #permiteEdicionPadron()}).
+     * control del padrÃ³n de miembros ({@link #permiteEdicionPadron()}).
      */
     public boolean permiteRegistroIglesias() {
         CronogramaFaseDTO vigente = getFaseVigenteDelProcesoActivo();
@@ -82,8 +82,8 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Indica si la asignación/reasignación de usuarios IglesiaAdmin a iglesias
-     * está habilitada. Se permite únicamente cuando la fase vigente es
+     * Indica si la asignaciÃ³n/reasignaciÃ³n de usuarios IglesiaAdmin a iglesias
+     * estÃ¡ habilitada. Se permite Ãºnicamente cuando la fase vigente es
      * {@link FaseElectoral#ASIGNACION_USUARIOS}.
      */
     public boolean permiteAsignacionUsuarios() {
@@ -98,7 +98,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Resultado de la validación de una fase antes de guardar. Contiene
+     * Resultado de la validaciÃ³n de una fase antes de guardar. Contiene
      * errores fatales (bloquean) y advertencias (informan al usuario pero
      * no impiden guardar).
      */
@@ -115,14 +115,14 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     /**
      * Valida una fase candidata a guardar. Verifica:
      * <ul>
-     *   <li>Campos obligatorios (fase, fechas, título).</li>
+     *   <li>Campos obligatorios (fase, fechas, tÃ­tulo).</li>
      *   <li>Que fechaInicio sea anterior a fechaFin.</li>
      *   <li>Que el rango de la fase caiga dentro del rango del proceso.</li>
      *   <li>Que no haya OTRA fase con el mismo enum FaseElectoral en el
      *       mismo proceso (advertencia: dos veces ACTUALIZACION_PADRON
      *       suele ser un error humano).</li>
      *   <li>Que no haya OTRA fase del mismo proceso con rango solapado
-     *       (advertencia: superposición temporal puede ser intencional).</li>
+     *       (advertencia: superposiciÃ³n temporal puede ser intencional).</li>
      * </ul>
      */
     public ValidacionFase validar(CronogramaFaseDTO dto) {
@@ -133,10 +133,10 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         // 1. Campos obligatorios
         if (dto.getFase() == null) {
-            v.error("Debe seleccionar la fase del catálogo");
+            v.error("Debe seleccionar la fase del catÃ¡logo");
         }
         if (dto.getTitulo() == null || dto.getTitulo().trim().isEmpty()) {
-            v.error("El título es obligatorio");
+            v.error("El tÃ­tulo es obligatorio");
         }
         if (dto.getFechaInicio() == null) {
             v.error("La fecha de inicio es obligatoria");
@@ -158,7 +158,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         long durMs = dto.getFechaFin().getTime() - dto.getFechaInicio().getTime();
         if (durMs < 60000L) { // < 1 minuto
-            v.error("La duración de la fase debe ser mayor a un minuto");
+            v.error("La duraciÃ³n de la fase debe ser mayor a un minuto");
             return v;
         }
 
@@ -175,7 +175,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         if (proceso.getFechaFin() != null
                 && dto.getFechaFin().after(proceso.getFechaFin())) {
-            v.error("La fase termina después que el proceso electoral ("
+            v.error("La fase termina despuÃ©s que el proceso electoral ("
                     + formatear(proceso.getFechaFin()) + ")");
         }
 
@@ -183,7 +183,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         List<CronogramaFase> otras = cronogramaFaseFacade.listarPorProceso(dto.getProcesoId());
         if (otras != null) {
             for (CronogramaFase f : otras) {
-                // ignoramos la propia fase si es edición
+                // ignoramos la propia fase si es ediciÃ³n
                 if (dto.getId() != null && dto.getId().equals(f.getId())) continue;
 
                 // 4a. Misma fase enum repetida en el proceso
@@ -197,7 +197,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
                     v.advertencia("Rango solapado con la fase '"
                             + (f.getFase() == null ? "?" : f.getFase().name())
                             + "' (" + formatear(f.getFechaInicio())
-                            + " — " + formatear(f.getFechaFin()) + ")");
+                            + " â€” " + formatear(f.getFechaFin()) + ")");
                 }
             }
         }
@@ -211,7 +211,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     private static String formatear(java.util.Date d) {
-        if (d == null) return "—";
+        if (d == null) return "â€”";
         return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(d);
     }
 

@@ -5,20 +5,20 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.activation.DataHandler;
-import javax.activation.FileDataSource;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.util.ByteArrayDataSource;
+import jakarta.activation.DataHandler;
+import jakarta.activation.FileDataSource;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import javax.naming.InitialContext;
 
 public class SendEmail implements Serializable {
@@ -45,7 +45,7 @@ public class SendEmail implements Serializable {
             InitialContext ctx = new InitialContext();
             // Session session = (Session) ctx.lookup("jdniMail"); //Glassfish-payara SERVER
             Session session = (Session) ctx.lookup("java:jboss/mail/Rpm");
-            // Truststore del servidor SMTP no está en la JVM (entorno interno):
+            // Truststore del servidor SMTP no estÃ¡ en la JVM (entorno interno):
             // confiamos en cualquier certificado para evitar SSLHandshakeException
             // PKIX path building failed. Aceptable solo en redes corporativas.
             session.getProperties().setProperty("mail.smtp.ssl.trust", "*");
@@ -82,7 +82,7 @@ public class SendEmail implements Serializable {
             // Se envia el correo.
             Transport t = session.getTransport(session.getProperties().getProperty("mail.transport.protocol"));
 
-            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=Contraseña del correo
+            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=ContraseÃ±a del correo
             // registrado en Jboss
             message.saveChanges();
             t.sendMessage(message, message.getAllRecipients());
@@ -162,7 +162,7 @@ public class SendEmail implements Serializable {
             // Se envia el correo.
             Transport t = session.getTransport(session.getProperties().getProperty("mail.transport.protocol"));
 
-            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=Contraseña del correo
+            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=ContraseÃ±a del correo
             // registrado en Jboss
             message.saveChanges();
             t.sendMessage(message, message.getAllRecipients());

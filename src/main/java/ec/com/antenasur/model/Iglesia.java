@@ -3,26 +3,27 @@ package ec.com.antenasur.model;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.Version;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
 import ec.com.antenasur.model.generic.EntidadBase;
 import ec.com.antenasur.model.tec.Documentos;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
@@ -81,14 +82,15 @@ public class Iglesia extends EntidadAuditable implements Serializable {
     private Geograp ubicacion;
 
     /**
-     * Control de edición concurrente — Hibernate incrementa en cada UPDATE.
+     * Control de ediciÃ³n concurrente â€” Hibernate incrementa en cada UPDATE.
      * El default 0 garantiza que filas migradas o nuevas nunca queden en NULL,
-     * lo que rompería {@code Versioning.increment} con NullPointerException.
+     * lo que romperÃ­a {@code Versioning.increment} con NullPointerException.
      */
     @Setter
     @Getter
     @Version
-    @Column(name = "igl_version", nullable = false, columnDefinition = "BIGINT NOT NULL DEFAULT 0")
+    @Column(name = "igl_version", nullable = false)
+    @ColumnDefault("0")
     private Long version;
 
     @Setter

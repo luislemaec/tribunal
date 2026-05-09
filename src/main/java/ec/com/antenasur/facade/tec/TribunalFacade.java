@@ -7,9 +7,9 @@ package ec.com.antenasur.facade.tec;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.Tribunal;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -21,7 +21,7 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class TribunalFacade extends AbstractFacade<Tribunal, Integer> {
 
-    static final String HQL = " FROM Tribunal t";
+    static final String HQL = " SELECT t FROM Tribunal t";
     static final String ACTIVOS = "  t.estado =TRUE";
     static final String ORDENADO = "  ORDER BY t.id";
 

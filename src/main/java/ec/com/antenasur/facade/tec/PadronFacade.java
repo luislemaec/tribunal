@@ -9,13 +9,13 @@ import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.tec.Mesa;
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.Padron;
 import ec.com.antenasur.model.generic.AbstractFacade;
-import javax.persistence.Query;
+import jakarta.persistence.Query;
 
 /**
  *
@@ -24,7 +24,7 @@ import javax.persistence.Query;
 @Stateless
 public class PadronFacade extends AbstractFacade<Padron, Integer> {
 
-    private static final String HQL = " FROM Padron p";
+    private static final String HQL = " SELECT p FROM Padron p";
     private static final String ACTIVOS = " p.estado = TRUE";
     private static final String ORDENADO = " ORDER BY p.id";
 
@@ -196,8 +196,8 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
     /**
      * Variante de {@link #getPadronPorMesas(List)} que recibe ids de mesa
      * directamente, evitando el N+1 de resolver cada {@code Mesa} antes de
-     * la query principal. Devuelve lista vacía (no null) cuando no hay
-     * resultados — más predecible para el caller.
+     * la query principal. Devuelve lista vacÃƒÂ­a (no null) cuando no hay
+     * resultados Ã¢â‚¬â€ mÃƒÂ¡s predecible para el caller.
      */
     public List<Padron> getPadronPorMesaIds(List<Integer> mesaIds) {
         if (mesaIds == null || mesaIds.isEmpty()) {
