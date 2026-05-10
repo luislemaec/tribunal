@@ -37,7 +37,7 @@ public class CandidatoController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Candidato registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Candidato actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Candidato eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;
@@ -55,8 +55,8 @@ public class CandidatoController implements Serializable {
     private PeriodoService periodoService;
 
     // NOTA: Lista, Periodo, CatalogoGeneral siguen como entidades porque son
-    // catÃ¡logos cuyo dominio aÃºn no se ha migrado a DTO. Cuando se migren
-    // (iteraciones futuras), estos campos pasarÃ¡n a sus respectivos DTOs.
+    // catálogos cuyo dominio aún no se ha migrado a DTO. Cuando se migren
+    // (iteraciones futuras), estos campos pasarán a sus respectivos DTOs.
 
     @Setter
     @Getter

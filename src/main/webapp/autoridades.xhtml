@@ -4,18 +4,18 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Autoridades</ui:define>
+    <ui:define name="title">#{msg['form.autoridades.title']}</ui:define>
     <ui:define name="viewname">
-        <li>TRIBUNAL</li>
+        <li>#{msg['form.periodos.crumb.tribunal']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/autoridades">Autoridades</p:link>
+            <p:link outcome="/autoridades">#{msg['form.autoridades.title']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
         <h:form id="frmPeriodos">
-            <h4>ADMINISTRACIÃ“N DE AUTORIDADES DEL TRIBUNAL</h4>
+            <h4>#{msg['form.autoridades.header']}</h4>
             <div class="grid">
                 <div class="col-12 md:col-12 lg:col-12">
                     <p:dataTable id="tbtribunal" var="tribunal" value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
@@ -50,8 +50,8 @@
                                              process="@this" update="@form"
                                              disabled="#{tribunal.iglesiaPersona.persona eq null}">
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
-                                <p:confirm header="Confirmar eliminaciÃ³n"
-                                           message="Â¿EstÃ¡ seguro que desea eliminar esta autoridad?"
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro que desea eliminar esta autoridad?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
@@ -96,7 +96,7 @@
                                     <div class="field">
                                         <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
                                                      value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
-                                        <small class="ui-state-error">Ingrese numero de cÃ©dula a buscar</small>
+                                        <small class="ui-state-error">Ingrese numero de cédula a buscar</small>
                                     </div>                                       
                                     <p:commandButton icon="pi pi-search" actionListener="#{tribunalController.buscaPersona}" update="outPnlAsignaAutoridadBusca, outPnlAsignaAutoridad, msgs, outPnlFooter " process="outPnlAsignaAutoridadBusca @this" />
                                 </div>

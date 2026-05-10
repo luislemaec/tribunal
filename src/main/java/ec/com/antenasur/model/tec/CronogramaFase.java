@@ -28,9 +28,9 @@ import org.hibernate.annotations.Filter;
 
 /**
  * Fase del cronograma electoral asociada a un {@link ProcesoElectoral}.
- * Define la ventana temporal en que la fase estÃ¡ vigente y si permite
- * ediciÃ³n del padrÃ³n. El banner del sistema toma {@code titulo}, {@code mensaje}
- * y {@code severidad} para componer la notificaciÃ³n visible.
+ * Define la ventana temporal en que la fase está vigente y si permite
+ * edición del padrón. El banner del sistema toma {@code titulo}, {@code mensaje}
+ * y {@code severidad} para componer la notificación visible.
  */
 @Entity
 @Table(name = "cronograma_fase", schema = "tec")

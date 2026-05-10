@@ -82,9 +82,9 @@ public class Iglesia extends EntidadAuditable implements Serializable {
     private Geograp ubicacion;
 
     /**
-     * Control de ediciÃ³n concurrente â€” Hibernate incrementa en cada UPDATE.
+     * Control de edición concurrente — Hibernate incrementa en cada UPDATE.
      * El default 0 garantiza que filas migradas o nuevas nunca queden en NULL,
-     * lo que romperÃ­a {@code Versioning.increment} con NullPointerException.
+     * lo que rompería {@code Versioning.increment} con NullPointerException.
      */
     @Setter
     @Getter

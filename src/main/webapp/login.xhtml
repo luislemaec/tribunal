@@ -13,7 +13,7 @@
             <meta name="author" content="Luis Lema" />
         </f:facet>
         <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
-        <title>TEC</title>
+        <title>#{msg['app.sistema']} - #{msg['form.login.title']}</title>
         <h:outputScript name="js/layout.js" library="ecuador-layout" />
     </h:head>
 
@@ -30,17 +30,26 @@
                     <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"/>
                     <div class="col-12 md:col-12 lg:col-12">
                         <div class="input-wrapper">
-                            <p:inputText id="usuario" required="true" value="#{loginBean.userName}"  validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}" placeholder="Usuario" />
+                            <p:inputText id="usuario" required="true" value="#{loginBean.userName}"
+                                         validatorMessage="#{msg['msg.user.validator']}"
+                                         requiredMessage="#{msg['msg.user.required']}"
+                                         placeholder="#{msg['form.login.label.user']}"/>
                         </div>
                     </div>
                     <div class="col-12 md:col-12 lg:col-12 ui-fluid">
                         <div class="input-wrapper">                            
-                            <p:password id="password" required="true" value="#{loginBean.password}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}" 
-                                        redisplay="true" toggleMask="true"  styleClass=" w-full" placeholder="ContraseÃ±a"/>
+                            <p:password id="password" required="true" value="#{loginBean.password}"
+                                        validatorMessage="#{msg['msg.password.validator']}"
+                                        requiredMessage="#{msg['msg.password.required']}"
+                                        redisplay="true" toggleMask="true" styleClass=" w-full"
+                                        placeholder="#{msg['form.login.label.password']}"/>
                         </div>
                     </div>
                     <div class="col-12 md:col-12 lg:col-12 ">     
-                        <p:commandButton value="#{msg['btn.login']}"  action="#{loginController.login()}" styleClass="ui-button-info" process="@form" update="frmLogin" />
+                        <p:commandButton value="#{msg['form.login.btn.login']}"
+                                         action="#{loginController.login()}"
+                                         styleClass="ui-button-info"
+                                         process="@form" update="frmLogin"/>
                     </div>
 
                     <div class="separator"></div>

@@ -4,173 +4,252 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Mesas</ui:define>
+    <ui:define name="title">#{msg['form.mesas.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.mesas.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/mesas">Mesas</p:link>
+            <p:link outcome="/mesas">#{msg['form.mesas.title']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
         <h:form id="frmMesas">
-            <div class="grid">                
+            <div class="grid">
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÃ“N DE MESAS</h5>
-
+                    <h5>#{msg['form.mesas.header']}</h5>
                 </div>
                 <div class="col-12">
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-3">
-                                <p:outputLabel for="canton" value="CantÃ³n" />
-                                <p:selectOneMenu id="canton" value="#{mesaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="frmMesas"/>
-                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="frmMesas"/>
+                                <p:outputLabel for="canton" value="#{msg['form.mesas.label.canton']}"/>
+                                <p:selectOneMenu id="canton" value="#{mesaController.cantonSeleccionado.id}"
+                                                 filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.cantones}" var="canton"
+                                                   itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneParroquias()}"
+                                            process="@this" update="frmMesas"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 md:col-6 lg:col-3">
-                                <p:outputLabel for="parroquia" value="Parroquia" />
+                                <p:outputLabel for="parroquia" value="#{msg['form.mesas.label.parroquia']}"/>
                                 <p:selectOneMenu id="parroquia" value="#{mesaController.parroquiaSeleccionado.id}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorParroquia()}" process="@this" update="frmMesas msgs"/>                            
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"
+                                                   itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorParroquia()}"
+                                            process="@this" update="frmMesas msgs"/>
                                 </p:selectOneMenu>
                             </div>
 
                             <div class="field col-12 lg:col-6">
-                                <p:outputLabel for="recintos" value="Recintos" />
-                                <p:selectOneMenu id="recintos" value="#{mesaController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaRecintos}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
-                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorRecinto()}" process="@this" update="frmMesas msgs"/>
+                                <p:outputLabel for="recintos" value="#{msg['form.mesas.label.recintos']}"/>
+                                <p:selectOneMenu id="recintos" value="#{mesaController.recintoSeleccionado.id}"
+                                                 filter="true" filterMatchMode="contains"
+                                                 disabled="#{empty mesaController.listaRecintos}">
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"
+                                                   itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneMesasPorRecinto()}"
+                                            process="@this" update="frmMesas msgs"/>
                                 </p:selectOneMenu>
                             </div>
-
-                        </div>                       
-                    </div>                        
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12 md:col-12 lg:col-12">
 
-                    <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="mesa" value="#{mesaController.listaMesas}" reflow="true" 
-                                   rendered="#{not empty mesaController.listaMesas}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
-                      
-                        <p:column headerText="ID" sortBy="#{mesa.id}" filterBy="#{mesa.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{mesa.id}" /></p:column>
-                        <p:column headerText="RECINTO" sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"  ><h:outputText value="#{mesa.recinto.nombre}" /></p:column>
-                        <p:column headerText="NOMBRE" sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"  ><h:outputText value="#{mesa.nombre}" /></p:column>                        
-                        <p:column headerText="CANTÃ“N" sortBy="#{mesa.cantonNombre}" filterBy="#{mesa.cantonNombre}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{mesa.cantonNombre}" /></p:column>
-                        <p:column headerText="PARROQUIA" sortBy="#{mesa.ubicacionNombre}" filterBy="#{mesa.ubicacionNombre}" styleClass="sm:w-max md:w-2 lg:w-20rem"><h:outputText value="#{mesa.ubicacionNombre}" /></p:column>
-                        <p:column headerText="CONTEO" sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}" styleClass="sm:w-max md:w-1 lg:w-8rem" >
+                    <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="mesa"
+                                 value="#{mesaController.listaMesas}" reflow="true"
+                                 rendered="#{not empty mesaController.listaMesas}"
+                                 paginator="true" rows="10" rowSelectMode="add"
+                                 paginatorPosition="bottom" showGridlines="true"
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1">
+
+                        <p:column headerText="#{msg['form.mesas.table.header.id']}"
+                                  sortBy="#{mesa.id}" filterBy="#{mesa.id}"
+                                  styleClass="sm:w-max md:w-1 lg:w-5rem">
+                            <h:outputText value="#{mesa.id}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.recinto']}"
+                                  sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}">
+                            <h:outputText value="#{mesa.recinto.nombre}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.nombre']}"
+                                  sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}">
+                            <h:outputText value="#{mesa.nombre}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.canton']}"
+                                  sortBy="#{mesa.cantonNombre}" filterBy="#{mesa.cantonNombre}"
+                                  styleClass="sm:w-max md:w-2 lg:w-10rem">
+                            <h:outputText value="#{mesa.cantonNombre}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.parroquia']}"
+                                  sortBy="#{mesa.ubicacionNombre}" filterBy="#{mesa.ubicacionNombre}"
+                                  styleClass="sm:w-max md:w-2 lg:w-20rem">
+                            <h:outputText value="#{mesa.ubicacionNombre}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.conteo']}"
+                                  sortBy="#{mesa.estadoTarea}" filterBy="#{mesa.estadoTarea}"
+                                  styleClass="sm:w-max md:w-1 lg:w-8rem">
                             <p:tag value="#{mesa.estadoTarea}"
                                    severity="#{mesa.estadoTarea eq 'COMPLETADO' ? 'success' : (mesa.estadoTarea eq 'EN_PROCESO' ? 'warning' : 'info')}"
                                    icon="#{mesa.estadoTarea eq 'COMPLETADO' ? 'pi pi-check' : 'pi pi-clock'}"/>
                         </p:column>
-                        <p:column headerText="VOTOS" sortBy="#{mesa.totalVotos}"  styleClass="sm:w-max md:w-1 lg:w-6rem" >
+                        <p:column headerText="#{msg['form.mesas.table.header.votos']}"
+                                  sortBy="#{mesa.totalVotos}"
+                                  styleClass="sm:w-max md:w-1 lg:w-6rem">
                             <p:badge value="#{mesa.totalVotos}" severity="info"/>
                         </p:column>
-                        <p:column headerText="ERROR" sortBy="#{mesa.tieneErrorConteo}"  styleClass="sm:w-max md:w-1 lg:w-6rem" >
-                            <p:tag rendered="#{mesa.tieneErrorConteo}" value="SÃ­" severity="danger" icon="pi pi-times-circle"/>
-                            <p:tag rendered="#{not mesa.tieneErrorConteo}" value="OK" severity="success" icon="pi pi-check-circle"/>
+                        <p:column headerText="#{msg['form.mesas.table.header.error']}"
+                                  sortBy="#{mesa.tieneErrorConteo}"
+                                  styleClass="sm:w-max md:w-1 lg:w-6rem">
+                            <p:tag rendered="#{mesa.tieneErrorConteo}"
+                                   value="#{msg['form.mesas.tag.error.si']}" severity="danger" icon="pi pi-times-circle"/>
+                            <p:tag rendered="#{not mesa.tieneErrorConteo}"
+                                   value="#{msg['form.mesas.tag.error.no']}" severity="success" icon="pi pi-check-circle"/>
                         </p:column>
-                        <p:column headerText="OBSERVACION" sortBy="#{mesa.observacion}"  styleClass="sm:w-max md:w-1 lg:w-6rem" ><h:outputText value="#{mesa.observacion}" /></p:column>
+                        <p:column headerText="#{msg['form.mesas.table.header.observacion']}"
+                                  sortBy="#{mesa.observacion}"
+                                  styleClass="sm:w-max md:w-1 lg:w-6rem">
+                            <h:outputText value="#{mesa.observacion}"/>
+                        </p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
-                            <p:commandButton icon="pi pi-list" update="frmMesas:pndHistory " rendered="#{mesa.tieneDocumentos}" process="@this"  oncomplete="PF('pndHistory').show();" action="#{mesaController.cargaActasE()}" title="Ver historial de actas"
-                                               styleClass="ui-button-secondary rounded-button">                             
-                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" /> 
+                            <p:commandButton icon="pi pi-list"
+                                             update="frmMesas:pndHistory"
+                                             rendered="#{mesa.tieneDocumentos}"
+                                             process="@this" oncomplete="PF('pndHistory').show();"
+                                             action="#{mesaController.cargaActasE()}"
+                                             title="#{msg['form.mesas.btn.history.title']}"
+                                             styleClass="ui-button-secondary rounded-button">
+                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
                             </p:commandButton>
 
-                            <p:commandButton icon="pi pi-pencil" update=":frmMesas:outPnlMesas" oncomplete="PF('dlgMesa').show()"
-                                             title="Editar mesa"
-                                             styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{mesaController.cargaDatosMesaSeleccionado}">
-                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}" />                                                                                        
+                            <p:commandButton icon="pi pi-pencil"
+                                             update=":frmMesas:outPnlMesas"
+                                             oncomplete="PF('dlgMesa').show()"
+                                             title="#{msg['form.mesas.btn.edit.title']}"
+                                             styleClass="edit-button rounded-button ui-button-success"
+                                             process="@this"
+                                             action="#{mesaController.cargaDatosMesaSeleccionado}">
+                                <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
                             </p:commandButton>
-                            
                         </p:column>
                     </p:dataTable>
                 </div>
 
-                <p:dialog header="Detalles Mesa" showEffect="fade" modal="true" widgetVar="dlgMesa" responsive="true">
+                <p:dialog header="#{msg['form.mesas.dialog.title']}" showEffect="fade" modal="true"
+                          widgetVar="dlgMesa" responsive="true">
                     <p:outputPanel id="outPnlMesas" class="ui-fluid">
                         <p:outputPanel rendered="#{not empty mesaController.mesaSeleccionado}">
 
                             <div class="field">
-                                <p:outputLabel for="nombre" value="Nombres" />
-                                <p:inputText id="nombre" value="#{mesaController.mesaSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                                <p:outputLabel for="nombre" value="#{msg['form.mesas.label.nombre']}"/>
+                                <p:inputText id="nombre" value="#{mesaController.mesaSeleccionado.nombre}"
+                                             maxlength="100" required="true"
+                                             onkeyup="value = value.toUpperCase()"/>
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="cantonSel" value="CantÃ³n" />
-                                <p:selectOneMenu id="cantonSel" value="#{mesaController.cantonSeleccionado.id}"  filter="true" filterMatchMode="startsWith" required="true">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                                    <p:ajax event="change"  listener="#{mesaController.obtieneParroquias()}" process="@this" update="parroquiaSel"/>
-                                </p:selectOneMenu>                                        
+                                <p:outputLabel for="cantonSel" value="#{msg['form.mesas.label.canton']}"/>
+                                <p:selectOneMenu id="cantonSel" value="#{mesaController.cantonSeleccionado.id}"
+                                                 filter="true" filterMatchMode="startsWith" required="true">
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.cantones}" var="canton"
+                                                   itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                    <p:ajax event="change" listener="#{mesaController.obtieneParroquias()}"
+                                            process="@this" update="parroquiaSel"/>
+                                </p:selectOneMenu>
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="parroquiaSel" value="Parroquia" />                                  
-                                <p:selectOneMenu id="parroquiaSel" value="#{mesaController.mesaSeleccionado.ubicacionId}" required="true">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>                                                                    
-                                </p:selectOneMenu>                                       
+                                <p:outputLabel for="parroquiaSel" value="#{msg['form.mesas.label.parroquia']}"/>
+                                <p:selectOneMenu id="parroquiaSel"
+                                                 value="#{mesaController.mesaSeleccionado.ubicacionId}"
+                                                 required="true">
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.parroquias}" var="parroquia"
+                                                   itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                </p:selectOneMenu>
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="recinto" value="Recinto" />
-                                <p:selectOneMenu id="recinto" value="#{mesaController.mesaSeleccionado.recinto.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaRecintos}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>                                                
-                                </p:selectOneMenu>  
+                                <p:outputLabel for="recinto" value="#{msg['form.mesas.label.recinto']}"/>
+                                <p:selectOneMenu id="recinto" value="#{mesaController.mesaSeleccionado.recinto.id}"
+                                                 filter="true" filterMatchMode="contains"
+                                                 disabled="#{empty mesaController.listaRecintos}">
+                                    <f:selectItem itemLabel="#{msg['form.mesas.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{mesaController.listaRecintos}" var="recinto"
+                                                   itemLabel="#{recinto.nombre} - #{recinto.id}"
+                                                   itemValue="#{recinto.id}"/>
+                                </p:selectOneMenu>
                             </div>
-                            
-                             <div class="field">
-                                <p:outputLabel for="total" value="Total votos" />
-                                 <p:inputText id="total" value="#{mesaController.mesaSeleccionado.totalVotos}"  required="true" onkeyup="value = value.toUpperCase()"/> 
+
+                            <div class="field">
+                                <p:outputLabel for="total" value="#{msg['form.mesas.label.totalVotos']}"/>
+                                <p:inputText id="total" value="#{mesaController.mesaSeleccionado.totalVotos}"
+                                             required="true"/>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
 
                     <f:facet name="footer">
-                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{mesaController.guardarMesaSeleccionado}" update="outPnlMesas, msgs" process="outPnlMesas @this" />                                 
-                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgMesa').hide()" class="ui-button-secondary" />
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                                         actionListener="#{mesaController.guardarMesaSeleccionado}"
+                                         update="outPnlMesas, msgs" process="outPnlMesas @this"/>
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
+                                         onclick="PF('dlgMesa').hide()"
+                                         class="ui-button-secondary"/>
                     </f:facet>
                 </p:dialog>
+
                 <!-- DLG DOWNLOAD DOC -->
-                <p:dialog header="Descargar documentos histÃ³ricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
+                <p:dialog header="#{msg['form.mesas.dialog.history.title']}" id="pndHistory"
+                          widgetVar="pndHistory" closable="false" modal="true"
+                          showEffect="fade" hideEffect="explode" width="75%">
                     <p:dataTable var="doc" value="#{mesaController.documentos}"
-                                 widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
+                                 widgetVar="docTable" id="docTable"
+                                 emptyMessage="#{msg['msj.noData']}"
                                  reflow="true" rows="5" paginator="true" paginatorPosition="top"
                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                  currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} registros"
-                                 rowsPerPageTemplate="5,10,15" >
+                                 rowsPerPageTemplate="5,10,15">
 
                         <p:column width="7%">
-                            <p:commandButton ajax="false" immediate="true" process="@this" icon="pi pi-download"  title="Descargar documento"  >
-                                <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}" />
-                                <p:fileDownload value="#{documentoBean.file}"></p:fileDownload>
-                            </p:commandButton>               
+                            <p:commandButton ajax="false" immediate="true" process="@this" icon="pi pi-download"
+                                             title="#{msg['form.mesas.btn.docs.download.title']}">
+                                <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
+                                <p:fileDownload value="#{documentoBean.file}"/>
+                            </p:commandButton>
                         </p:column>
 
-                        <p:column headerText="Nombre" ><h:outputText value="#{doc.nombre}" /></p:column>
-
-                        <p:column headerText="CÃ³digo" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
-
-                        <p:column headerText="Estado" width="15%" >                            
-                            <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}" value="#{doc.estado?'Vigente':'Archivado'}"></p:tag>                                                                        
+                        <p:column headerText="#{msg['form.mesas.docs.col.nombre']}">
+                            <h:outputText value="#{doc.nombre}"/>
                         </p:column>
 
-                        <p:column headerText="Fecha de creaciÃ³n" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
+                        <p:column headerText="#{msg['form.mesas.docs.col.codigo']}" width="15%">
+                            <h:outputText value="#{doc.codigo}"/>
+                        </p:column>
+
+                        <p:column headerText="#{msg['form.mesas.docs.col.estado']}" width="15%">
+                            <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}"
+                                   value="#{doc.estado ? msg['form.mesas.tag.vigente'] : msg['form.mesas.tag.archivado']}"/>
+                        </p:column>
+
+                        <p:column headerText="#{msg['form.mesas.docs.col.fecha']}" width="15%">
+                            <h:outputText value="#{doc.fechaCrea}">
+                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                            </h:outputText>
+                        </p:column>
 
                     </p:dataTable>
-                    <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
+                    <p:commandButton id="btnCerrar1" process="@this" value="#{msg['btn.close']}"
+                                     icon="ui-icon-circle-close"
+                                     oncomplete="PF('pndHistory').hide();"/>
                 </p:dialog>
             </div>
         </h:form>
     </ui:define>
 </ui:composition>
-

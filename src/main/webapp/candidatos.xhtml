@@ -4,12 +4,12 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Candidatos</ui:define>
+    <ui:define name="title">#{msg['form.candidatos.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.candidatos.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/candidatos">Candidatos</p:link>
+            <p:link outcome="/candidatos">#{msg['form.candidatos.title']}</p:link>
         </li>
     </ui:define>
 
@@ -21,14 +21,20 @@
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-6">
                                 <div class="scalein animation-duration-500 animation-iteration-1 flex align-items-center justify-content-center
-                                     font-bold bg-cyan-500 text-white border-round m-1 px-1 py-5">Seleccione LISTA para agregar o quitar candidatos </div>
+                                     font-bold bg-cyan-500 text-white border-round m-1 px-1 py-5">
+                                    #{msg['form.candidatos.banner.select.lista']}
+                                </div>
                             </div>
                             <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="rol" value="ROL" />
-                                <p:selectOneMenu id="rol" value="#{candidatoController.listaSeleccionado.id}" filter="true" filterMatchMode="startsWith">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{candidatoController.listas}" var="lista"  itemLabel="#{lista.nombre}" itemValue="#{lista.id}"/>                                    
-                                    <p:ajax event="change"  listener="#{candidatoController.obtieneCandidatosPorListaSeleccionada()}" process="@this" update="frmCandidatos"/>                                    
+                                <p:outputLabel for="rol" value="#{msg['form.candidatos.label.lista']}"/>
+                                <p:selectOneMenu id="rol" value="#{candidatoController.listaSeleccionado.id}"
+                                                 filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="#{msg['form.candidatos.placeholder.select']}" itemValue=""/>
+                                    <f:selectItems value="#{candidatoController.listas}" var="lista"
+                                                   itemLabel="#{lista.nombre}" itemValue="#{lista.id}"/>
+                                    <p:ajax event="change"
+                                            listener="#{candidatoController.obtieneCandidatosPorListaSeleccionada()}"
+                                            process="@this" update="frmCandidatos"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>
@@ -36,91 +42,122 @@
                 </div>
 
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÃ“N DE CANDIDATOS</h5>
-                    <p:dataTable id="tblListas" widgetVar="wdTblCandidatos" var="candidato" value="#{candidatoController.candidatos}" reflow="true" 
+                    <h5>#{msg['form.candidatos.header']}</h5>
+                    <p:dataTable id="tblListas" widgetVar="wdTblCandidatos" var="candidato"
+                                 value="#{candidatoController.candidatos}" reflow="true"
                                  rendered="#{not empty candidatoController.candidatos}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
+                                 paginator="true" rows="10" rowSelectMode="add"
+                                 paginatorPosition="bottom" showGridlines="true"
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1">
 
-                        <p:column headerText="ID" styleClass="sm:w-max md:w-1 lg:w-3rem">
-                            <h:outputText value="#{candidato.id}" />
+                        <p:column headerText="#{msg['form.candidatos.table.header.id']}"
+                                  styleClass="sm:w-max md:w-1 lg:w-3rem">
+                            <h:outputText value="#{candidato.id}"/>
                         </p:column>
-                        <p:column headerText="CARGO" sortBy="#{candidato.cargoNombre}" filterBy="#{candidato.cargoNombre}" styleClass="sm:w-max md:w-4 lg:w-9rem">
+                        <p:column headerText="#{msg['form.candidatos.table.header.cargo']}"
+                                  sortBy="#{candidato.cargoNombre}" filterBy="#{candidato.cargoNombre}"
+                                  styleClass="sm:w-max md:w-4 lg:w-9rem">
                             <p:chip label="#{candidato.cargoNombre}" icon="pi pi-briefcase"/>
                         </p:column>
-                        <p:column headerText="PERIODO" sortBy="#{candidato.periodoNombre}" styleClass="sm:w-max md:w-1 lg:w-3rem">
+                        <p:column headerText="#{msg['form.candidatos.table.header.periodo']}"
+                                  sortBy="#{candidato.periodoNombre}"
+                                  styleClass="sm:w-max md:w-1 lg:w-3rem">
                             <p:tag value="#{candidato.periodoNombre}" severity="info"/>
-                        </p:column>  
-                        <p:column headerText="ASIGNAR" styleClass="sm:w-max md:w-4 lg:w-9rem" >
-                            <p:commandButton icon="pi pi-user-plus" update=":frmCandidatos" oncomplete="PF('dlgAsignaCandidato').show()"
-                                             styleClass="ui-button-raised rounded-button ui-button-success" process="@this" rendered="#{candidato.iglesiaPersona.persona eq null}">
-                                <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}"  />
-                            </p:commandButton>
-                            <h:outputText value="#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}" rendered="#{candidato.iglesiaPersona.persona ne null}" />                   
                         </p:column>
-                        <p:column headerText="NUMERO" sortBy="#{candidato.listaNumero}" styleClass="sm:w-max md:w-1 lg:w-3rem" >
+                        <p:column headerText="#{msg['form.candidatos.table.header.asignar']}"
+                                  styleClass="sm:w-max md:w-4 lg:w-9rem">
+                            <p:commandButton icon="pi pi-user-plus" update=":frmCandidatos"
+                                             oncomplete="PF('dlgAsignaCandidato').show()"
+                                             styleClass="ui-button-raised rounded-button ui-button-success"
+                                             process="@this"
+                                             rendered="#{candidato.iglesiaPersona.persona eq null}">
+                                <f:setPropertyActionListener value="#{candidato}"
+                                                             target="#{candidatoController.candidatoSeleccionado}"/>
+                            </p:commandButton>
+                            <h:outputText value="#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}"
+                                          rendered="#{candidato.iglesiaPersona.persona ne null}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.candidatos.table.header.numero']}"
+                                  sortBy="#{candidato.listaNumero}"
+                                  styleClass="sm:w-max md:w-1 lg:w-3rem">
                             <p:badge value="#{candidato.listaNumero}" severity="warning"/>
-                        </p:column>                        
+                        </p:column>
 
-                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">                    
+                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-3rem">
                             <p:commandButton class="ui-button-raised ui-button-danger rounded-button mx-1" icon="pi pi-trash"
-                                             title="Eliminar candidato"
+                                             title="#{msg['form.candidatos.btn.delete.title']}"
                                              actionListener="#{candidatoController.eliminarSeleccionado}"
                                              process="@this" update="@form">
-                                <f:setPropertyActionListener value="#{candidato}" target="#{candidatoController.candidatoSeleccionado}" />
-                                <p:confirm header="Confirmar eliminaciÃ³n"
-                                           message="Â¿EstÃ¡ seguro de eliminar este candidato?"
+                                <f:setPropertyActionListener value="#{candidato}"
+                                                             target="#{candidatoController.candidatoSeleccionado}"/>
+                                <p:confirm header="#{msg['form.candidatos.confirm.delete.header']}"
+                                           message="#{msg['form.candidatos.confirm.delete.message']}"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
                 </div>
-                <!-- DIALOG ASIGNA AUTORIDAD -->
-                <p:dialog  header="Asigna Candidato" showEffect="fade" modal="true" widgetVar="dlgAsignaCandidato" responsive="true">
-                    <p:outputPanel id="outPnlAsignaCandidatoBusca" class="ui-fluid" >
+
+                <!-- DIALOG ASIGNA CANDIDATO -->
+                <p:dialog header="#{msg['form.candidatos.dialog.title.assign']}" showEffect="fade" modal="true"
+                          widgetVar="dlgAsignaCandidato" responsive="true">
+                    <p:outputPanel id="outPnlAsignaCandidatoBusca" class="ui-fluid">
                         <p:outputPanel rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona eq null}">
                             <div class="formgroup-inline">
                                 <div class="field">
-                                    <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
-                                                 value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true"/>
-                                    <small class="ui-state-error">Ingrese nÃºmero de cÃ©dula a buscar</small>
-                                </div>                                       
-                                <p:commandButton icon="pi pi-search" actionListener="#{candidatoController.buscaPersona}" update="outPnlAsignaCandidatoBusca, outPnlAsignaCandidato, msgs, outPnlFooter " process="outPnlAsignaCandidatoBusca @this" />
+                                    <p:inputText id="cedulaBuscar" type="text"
+                                                 placeholder="#{msg['form.candidatos.search.placeholder']}"
+                                                 styleClass="mask-cedula"
+                                                 value="#{candidatoController.cedulaBuscar}"
+                                                 maxlength="10" required="true"/>
+                                    <small class="ui-state-error">#{msg['form.candidatos.search.hint']}</small>
+                                </div>
+                                <p:commandButton icon="pi pi-search"
+                                                 actionListener="#{candidatoController.buscaPersona}"
+                                                 update="outPnlAsignaCandidatoBusca, outPnlAsignaCandidato, msgs, outPnlFooter"
+                                                 process="outPnlAsignaCandidatoBusca @this"/>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
                     <p:outputPanel id="outPnlAsignaCandidato" class="ui-fluid">
                         <p:outputPanel rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}">
                             <div class="field">
-                                <p:outputLabel for="personaNombreBusca" value="Nombres" />                                   
-                                <p:inputText id="personaNombreBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.nombres}" required="true"/>
+                                <p:outputLabel for="personaNombreBusca" value="#{msg['form.candidatos.label.nombres']}"/>
+                                <p:inputText id="personaNombreBusca"
+                                             value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.nombres}"
+                                             required="true"/>
                             </div>
                             <div class="field">
-                                <p:outputLabel for="personaApellidoBusca" value="Apellidos" />                                   
-                                <p:inputText id="personaApellidoBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.apellidos}" required="true"/>
+                                <p:outputLabel for="personaApellidoBusca" value="#{msg['form.candidatos.label.apellidos']}"/>
+                                <p:inputText id="personaApellidoBusca"
+                                             value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.persona.apellidos}"
+                                             required="true"/>
                             </div>
                             <div class="field">
-                                <p:outputLabel for="iglesiaNombreBusca" value="Iglesia" />                                   
-                                <p:inputText id="iglesiaNombreBusca" value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.iglesia.nombre}" required="true"/>
+                                <p:outputLabel for="iglesiaNombreBusca" value="#{msg['form.candidatos.label.iglesia']}"/>
+                                <p:inputText id="iglesiaNombreBusca"
+                                             value="#{candidatoController.candidatoSeleccionado.iglesiaPersona.iglesia.nombre}"
+                                             required="true"/>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
 
-                    <f:facet name="footer" >
+                    <f:facet name="footer">
                         <p:outputPanel id="outPnlFooter" class="ui-fluid">
-                            <p:commandButton id="btnGuardaAsignado" value="Guardar" icon="pi pi-check" actionListener="#{candidatoController.guardarCandidato}" 
-                                             update="outPnlAsignaCandidato, msgs" process="outPnlAsignaCandidato @this" rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}" />
-                            <p:commandButton id="btnCancelaAsignado" value="Cancel" icon="pi pi-times" onclick="PF('dlgAsignaCandidato').hide()" class="ui-button-secondary" 
-                                             rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}" />    
+                            <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
+                                             actionListener="#{candidatoController.guardarCandidato}"
+                                             update="outPnlAsignaCandidato, msgs"
+                                             process="outPnlAsignaCandidato @this"
+                                             rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}"/>
+                            <p:commandButton id="btnCancelaAsignado" value="#{msg['btn.cancel']}" icon="pi pi-times"
+                                             onclick="PF('dlgAsignaCandidato').hide()"
+                                             class="ui-button-secondary"
+                                             rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}"/>
                         </p:outputPanel>
                     </f:facet>
                 </p:dialog>
-                <!-- FIN DIALOG ASIGNA AUTORIDAD -->
-
-
 
             </div>
         </h:form>
     </ui:define>
 </ui:composition>
-

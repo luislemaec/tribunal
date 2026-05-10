@@ -79,8 +79,8 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     /**
      * Crea un usuario nuevo con su persona asociada y el rol indicado, todo
-     * en una transacciÃ³n atÃ³mica EJB. Si cualquier paso falla, la transacciÃ³n
-     * se revierte completamente â€” no queda persona huÃ©rfana sin usuario, ni
+     * en una transacción atómica EJB. Si cualquier paso falla, la transacción
+     * se revierte completamente — no queda persona huérfana sin usuario, ni
      * usuario sin rol.
      *
      * @param usuario datos del usuario (sin id; su {@code personsa} se reemplaza
@@ -88,15 +88,15 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @param persona persona a crear y vincular al usuario
      * @param rol rol a asignar al usuario nuevo
      * @return el {@link RolUsuario} creado, con usuario y persona persistidos;
-     *         null si la entrada es invÃ¡lida
+     *         null si la entrada es inválida
      */
     public RolUsuario crearUsuarioConRol(Usuario usuario, Persona persona, Rol rol) {
         if (usuario == null || persona == null || rol == null) {
             return null;
         }
-        // Si la persona ya estÃ¡ persistida (tiene id) la reusamos: el caso
-        // tÃ­pico es cuando el formulario hidratÃ³ los datos a partir de una
-        // cÃ©dula existente en BD. Solo creamos cuando es realmente nueva.
+        // Si la persona ya está persistida (tiene id) la reusamos: el caso
+        // típico es cuando el formulario hidrató los datos a partir de una
+        // cédula existente en BD. Solo creamos cuando es realmente nueva.
         Persona personaPersistida = (persona.getId() != null)
                 ? persona
                 : personaFacade.create(persona);
@@ -105,8 +105,8 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         }
         usuario.setPersonsa(personaPersistida);
         usuario.setEstado(true);
-        // Si el usuario no trae clave seteada, la inicializamos con la cÃ©dula
-        // hasheada en SHA-1. El usuario podrÃ¡ cambiarla despuÃ©s.
+        // Si el usuario no trae clave seteada, la inicializamos con la cédula
+        // hasheada en SHA-1. El usuario podrá cambiarla después.
         if (usuario.getContrasenia() == null || usuario.getContrasenia().isEmpty()) {
             String cedula = personaPersistida.getDocumento();
             if (cedula != null && !cedula.isEmpty()) {
@@ -125,14 +125,14 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     /**
      * Actualiza el correo de un usuario y/o su rol asignado, solo si alguno
-     * cambiÃ³ respecto al estado persistido. Si correo y rol son iguales a los
+     * cambió respecto al estado persistido. Si correo y rol son iguales a los
      * actuales, no toca la BD y devuelve {@code false}.
      *
      * @param usuarioActualizado usuario con los nuevos valores (debe tener id)
-     * @param rolUsuarioActual relaciÃ³n rol-usuario vigente
+     * @param rolUsuarioActual relación rol-usuario vigente
      * @param nuevoRol rol seleccionado en el formulario
      * @return {@code true} si hubo persistencia, {@code false} si no hubo
-     *         cambios o la entrada es invÃ¡lida
+     *         cambios o la entrada es inválida
      */
     /**
      * Crea usuario+persona+rolUsuario a partir de un DTO. La persona se
@@ -149,7 +149,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             return null;
         }
         // Reusa la persona si ya existe en BD (el blurEvent del controller
-        // pre-carga personaId cuando la cÃ©dula coincide con un registro
+        // pre-carga personaId cuando la cédula coincide con un registro
         // existente en tb_persona). Si no, crea una persona nueva.
         Persona persona = null;
         boolean personaEsNueva = false;
@@ -165,7 +165,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         }
 
         Usuario nuevo = dto.toEntity();
-        // Resuelve iglesia desde el id del DTO (solo aplica si se eligiÃ³ rol IglesiaAdmin).
+        // Resuelve iglesia desde el id del DTO (solo aplica si se eligió rol IglesiaAdmin).
         Iglesia iglesia = null;
         if (dto.getIglesiaId() != null) {
             iglesia = iglesiaFacade.find(dto.getIglesiaId());
@@ -176,11 +176,11 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             return null;
         }
 
-        // Si la persona se creÃ³ en este flujo y se asignÃ³ una iglesia,
-        // registramos el vÃ­nculo en tb_iglesia_persona para que el usuario
+        // Si la persona se creó en este flujo y se asignó una iglesia,
+        // registramos el vínculo en tb_iglesia_persona para que el usuario
         // figure como miembro/admin de esa iglesia desde el inicio.
-        // Para personas EXISTENTES se confÃ­a en que el caller (controller)
-        // gestione el vÃ­nculo via IglesiaPersonaService.crearVinculoSiNoExiste,
+        // Para personas EXISTENTES se confía en que el caller (controller)
+        // gestione el vínculo via IglesiaPersonaService.crearVinculoSiNoExiste,
         // que es idempotente y aplica las reglas de negocio (bloqueo si la
         // persona ya pertenece a otra iglesia, etc.).
         if (personaEsNueva && iglesia != null) {
@@ -199,8 +199,8 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * {@link #actualizarUsuarioConRol(Usuario, RolUsuario, Rol)} pero recibe
      * un DTO. Si los datos no cambiaron, retorna el DTO actual sin tocar BD.
      *
-     * @return UsuarioDTO con los datos posteriores a la operaciÃ³n, o null si
-     *         el id es invÃ¡lido
+     * @return UsuarioDTO con los datos posteriores a la operación, o null si
+     *         el id es inválido
      */
     public UsuarioDTO actualizarUsuarioDesdeDTO(UsuarioDTO dto, RolUsuario rolUsuarioActual, Rol nuevoRol) {
         if (dto == null || dto.getId() == null) {
@@ -211,7 +211,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             return null;
         }
         actual.setCorreo(dto.getCorreo());
-        // Sincroniza iglesia: si el id viene null limpia el vÃ­nculo (cuando el
+        // Sincroniza iglesia: si el id viene null limpia el vínculo (cuando el
         // usuario deja de ser IglesiaAdmin); si trae id, resuelve y asigna.
         if (dto.getIglesiaId() != null) {
             actual.setIglesia(iglesiaFacade.find(dto.getIglesiaId()));
@@ -224,7 +224,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     /**
      * Devuelve el {@link UsuarioDTO} del IglesiaAdmin asignado a la iglesia
-     * indicada, o {@code null} si la iglesia aÃºn no tiene admin.
+     * indicada, o {@code null} si la iglesia aún no tiene admin.
      */
     public UsuarioDTO obtenerAdminDeIglesia(Integer iglesiaId) {
         if (iglesiaId == null) {
@@ -236,13 +236,13 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     /**
      * Quita el rol IglesiaAdmin al usuario que actualmente administra la
-     * iglesia indicada: limpia el vÃ­nculo {@code u.iglesia} y soft-deletea
-     * la(s) relaciÃ³n(es) {@link RolUsuario} con rol IglesiaAdmin. El usuario
-     * permanece activo para poder ser reasignado a otra iglesia o desempeÃ±ar
+     * iglesia indicada: limpia el vínculo {@code u.iglesia} y soft-deletea
+     * la(s) relación(es) {@link RolUsuario} con rol IglesiaAdmin. El usuario
+     * permanece activo para poder ser reasignado a otra iglesia o desempeñar
      * otros roles.
      *
      * @return DTO del admin previo (en su nuevo estado, sin iglesia), o
-     *         {@code null} si la iglesia no tenÃ­a admin.
+     *         {@code null} si la iglesia no tenía admin.
      */
     public UsuarioDTO removerAdminDeIglesia(Integer iglesiaId) {
         if (iglesiaId == null) {
@@ -280,7 +280,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     /**
      * Borra (soft-delete) un usuario por id. Devuelve el DTO en su estado
-     * post-borrado, o null si no existÃ­a.
+     * post-borrado, o null si no existía.
      */
     public UsuarioDTO eliminarPorId(Integer id) {
         if (id == null) {
@@ -341,9 +341,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     }
 
     /**
-     * Resuelve un usuario por nombre + prefijo de roles, cargando ademÃ¡s su
-     * persona asociada y los nombres de rol. No autentica contra credenciales â€”
-     * solo construye el contexto de identidad. La autenticaciÃ³n contra
+     * Resuelve un usuario por nombre + prefijo de roles, cargando además su
+     * persona asociada y los nombres de rol. No autentica contra credenciales —
+     * solo construye el contexto de identidad. La autenticación contra
      * credenciales sigue siendo responsabilidad del contenedor (request.login).
      *
      * @param userName nombre de usuario
@@ -352,30 +352,30 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return AuthDataDTO con usuario, persona y roles; nunca null
      */
     /**
-     * Aplica el cambio de contraseÃ±a: persiste el hash recibido, marca al
-     * usuario como permanente y limpia la contraseÃ±a temporal. La validaciÃ³n
+     * Aplica el cambio de contraseña: persiste el hash recibido, marca al
+     * usuario como permanente y limpia la contraseña temporal. La validación
      * de complejidad de la clave y el hashing son responsabilidad del caller
      * (la capa UI usa {@code JsfUtil.validarContrasenia} y
      * {@code JsfUtil.claveEncriptadaSHA1}). El service solo asegura que el
-     * usuario y el hash no son null/vacÃ­os.
+     * usuario y el hash no son null/vacíos.
      *
      * @return el {@code Usuario} persistido, o {@code null} si la entrada es
-     *         invÃ¡lida
+     *         inválida
      */
     /**
-     * Inicia el flujo de recuperaciÃ³n: busca al usuario por username + correo,
+     * Inicia el flujo de recuperación: busca al usuario por username + correo,
      * y si lo encuentra, establece la clave temporal en texto plano (campo
      * {@code contraseniaTemp}, para que el operador la copie en el primer
-     * login) y persiste el hash como contraseÃ±a efectiva. Marca al usuario
-     * como NO permanente â€” el siguiente login lo forzarÃ¡ a cambiar la clave.
+     * login) y persiste el hash como contraseña efectiva. Marca al usuario
+     * como NO permanente — el siguiente login lo forzará a cambiar la clave.
      *
      * @param username RUC o documento de identidad
      * @param correo email registrado del usuario
      * @param claveTemporalPlana clave generada en el caller (texto plano para
-     *        envÃ­o por correo)
+     *        envío por correo)
      * @param hashClaveTemporal hash SHA-1 de la clave temporal
      * @return usuario actualizado, o null si no existe usuario con esa
-     *         combinaciÃ³n o si los argumentos son invÃ¡lidos
+     *         combinación o si los argumentos son inválidos
      */
     public Usuario iniciarRecuperacionClave(String username, String correo,
             String claveTemporalPlana, String hashClaveTemporal) {
@@ -404,7 +404,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     }
 
     /**
-     * VersiÃ³n por id: hidrata la entidad desde la BD y aplica el cambio.
+     * Versión por id: hidrata la entidad desde la BD y aplica el cambio.
      * Retorna el {@link UsuarioDTO} actualizado, o null si no existe.
      */
     public UsuarioDTO cambiarContraseniaPorId(Integer usuarioId, String hashClaveNueva) {
@@ -436,8 +436,8 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             }
         }
 
-        // findByUsuarioName ahora trae u.personsa via JOIN FETCH, asÃ­ que la
-        // persona se mapea en una sola query (antes se hacÃ­an 2 round-trips).
+        // findByUsuarioName ahora trae u.personsa via JOIN FETCH, así que la
+        // persona se mapea en una sola query (antes se hacían 2 round-trips).
         Usuario usuario = usuarioFacade.findByUsuarioName(userName);
         data.setUsuario(UsuarioDTO.fromEntity(usuario));
         if (usuario != null && usuario.getPersonsa() != null) {

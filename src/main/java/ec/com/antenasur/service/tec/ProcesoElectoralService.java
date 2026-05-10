@@ -42,7 +42,7 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
 
     /**
      * Persiste el proceso desde DTO. Si {@code activo=true}, desmarca todos
-     * los demÃ¡s antes de persistir Ã©ste â€” solo uno puede estar activo a la vez.
+     * los demás antes de persistir éste — solo uno puede estar activo a la vez.
      */
     public ProcesoElectoralDTO guardarDesdeDTO(ProcesoElectoralDTO dto) {
         if (dto == null) return null;

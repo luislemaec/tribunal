@@ -197,7 +197,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
      * Variante de {@link #getPadronPorMesas(List)} que recibe ids de mesa
      * directamente, evitando el N+1 de resolver cada {@code Mesa} antes de
      * la query principal. Devuelve lista vacÃƒÂ­a (no null) cuando no hay
-     * resultados Ã¢â‚¬â€ mÃƒÂ¡s predecible para el caller.
+     * resultados Ã¢â‚¬” mÃƒ¡s predecible para el caller.
      */
     public List<Padron> getPadronPorMesaIds(List<Integer> mesaIds) {
         if (mesaIds == null || mesaIds.isEmpty()) {

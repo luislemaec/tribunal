@@ -113,8 +113,8 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 
     /**
      * Retorna true si ya existe otra iglesia con el mismo nombre, parroquia y comunidad.
-     * La comparaciÃ³n es case-insensitive y descarta espacios extremos.
-     * Al editar, excluye el propio registro vÃ­a {@code idExcluir}.
+     * La comparación es case-insensitive y descarta espacios extremos.
+     * Al editar, excluye el propio registro vía {@code idExcluir}.
      */
     public boolean existeDuplicado(String nombre, Integer ubicacionId, String comunidad, Integer idExcluir) {
         String nombreN = normalizar(nombre);
@@ -131,14 +131,14 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Persiste la iglesia descrita por el DTO aplicando normalizaciÃ³n de strings
+     * Persiste la iglesia descrita por el DTO aplicando normalización de strings
      * (trim + uppercase) antes de persistir.
      *
      * Reglas de negocio aplicadas:
      * - RUC real no puede repetirse en dos iglesias distintas.
-     * - CÃ³digo genÃ©rico existente se conserva en ediciones sin cambio de RUC.
-     * - En ediciÃ³n, la versiÃ³n del DTO debe coincidir con la de la BD para detectar
-     *   ediciones concurrentes (lanzarÃ¡ {@link NegocioException} si hay conflicto).
+     * - Código genérico existente se conserva en ediciones sin cambio de RUC.
+     * - En edición, la versión del DTO debe coincidir con la de la BD para detectar
+     *   ediciones concurrentes (lanzará {@link NegocioException} si hay conflicto).
      */
     public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
         if (dto == null) {
@@ -167,21 +167,21 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
             return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(creada.getId()));
         }
 
-        // â”€â”€ EDICIÃ“N â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // â”€â”€ EDICIÓN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Iglesia actual = iglesiaFacade.find(dto.getId());
         if (actual == null) {
-            log.warn("guardarDesdeDTO: iglesia id={} no encontrada para ediciÃ³n", dto.getId());
+            log.warn("guardarDesdeDTO: iglesia id={} no encontrada para edición", dto.getId());
             return null;
         }
 
-        // Control de ediciÃ³n concurrente: versiÃ³n del DTO debe coincidir con la BD
+        // Control de edición concurrente: versión del DTO debe coincidir con la BD
         if (dto.getVersion() != null && !dto.getVersion().equals(actual.getVersion())) {
             throw new NegocioException(
                 "El registro fue modificado por otro usuario mientras lo editaba. "
-                + "Cierre el diÃ¡logo, recargue los datos e intente nuevamente.");
+                + "Cierre el diálogo, recargue los datos e intente nuevamente.");
         }
 
-        // Preservar el cÃ³digo genÃ©rico existente â€” no re-generar en cada ediciÃ³n
+        // Preservar el código genérico existente — no re-generar en cada edición
         String documento;
         if (esDocumentoGenerico(dto.getDocumento())
                 && dto.getDocumento().equals(actual.getDocumento())) {
@@ -202,8 +202,8 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Valida que el RUC real no estÃ© ya asignado a otra iglesia.
-     * Los cÃ³digos genÃ©ricos no se validan aquÃ­: la secuencia PostgreSQL
+     * Valida que el RUC real no esté ya asignado a otra iglesia.
+     * Los códigos genéricos no se validan aquí: la secuencia PostgreSQL
      * ({@code seq_iglesia_codigo_generico}) garantiza que cada llamada a
      * {@code nextval()} retorne un valor distinto y nunca reusado.
      */
@@ -212,7 +212,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         Iglesia existente = iglesiaFacade.getIglesiaPorDocumento(documento);
         if (existente != null && !existente.getId().equals(idExcluir)) {
             throw new NegocioException(
-                "El RUC " + documento + " ya estÃ¡ registrado en la iglesia \"" + existente.getNombre() + "\".");
+                "El RUC " + documento + " ya está registrado en la iglesia \"" + existente.getNombre() + "\".");
         }
     }
 
@@ -222,7 +222,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Calcula el progreso de registro/actualizaciÃ³n de iglesias dentro del
+     * Calcula el progreso de registro/actualización de iglesias dentro del
      * rango de fechas de la fase activa.
      *
      * @return array [total, procesadas, porcentaje]
@@ -261,11 +261,11 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return mapearLista(iglesiaFacade.obtieneIglesiasPorAsignarPorIds(idsExcluir, idsParroquias));
     }
 
-    // ----- API para AsignaciÃ³n de Usuarios -----
+    // ----- API para Asignación de Usuarios -----
 
     /**
      * Lista todas las iglesias activas combinadas con su Usuario IglesiaAdmin
-     * (si lo tienen) para la pantalla de asignaciÃ³n. Hace una sola consulta
+     * (si lo tienen) para la pantalla de asignación. Hace una sola consulta
      * para iglesias y otra para todos los admins, evitando N+1.
      */
     public List<IglesiaAsignacionDTO> listarParaAsignacionUsuarios() {
@@ -282,7 +282,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return resultado;
     }
 
-    /** Variante filtrada por parroquias para el filtro geogrÃ¡fico. */
+    /** Variante filtrada por parroquias para el filtro geográfico. */
     public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquias(List<Geograp> parroquias) {
         if (parroquias == null || parroquias.isEmpty()) {
             return Collections.emptyList();
@@ -319,7 +319,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Calcula el progreso de la fase de asignaciÃ³n de usuarios.
+     * Calcula el progreso de la fase de asignación de usuarios.
      *
      * @return array {@code [total, conAdmin, porcentaje]}.
      */
@@ -349,7 +349,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 
     // ----- helpers privados -----
 
-    /** Trim + uppercase; retorna null si el string resultante estÃ¡ vacÃ­o. */
+    /** Trim + uppercase; retorna null si el string resultante está vacío. */
     private static String normalizar(String s) {
         if (s == null) return null;
         String r = s.trim().toUpperCase();
@@ -357,8 +357,8 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
-     * Si el documento es genÃ©rico (preview asignado en el toggle), re-genera uno
-     * nuevo dentro de la transacciÃ³n activa para garantizar unicidad concurrente.
+     * Si el documento es genérico (preview asignado en el toggle), re-genera uno
+     * nuevo dentro de la transacción activa para garantizar unicidad concurrente.
      */
     private String resolverDocumento(String documento) {
         if (esDocumentoGenerico(documento)) {

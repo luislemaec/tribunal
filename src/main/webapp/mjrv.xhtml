@@ -6,12 +6,12 @@
                 template="/WEB-INF/template.xhtml"
 
                 xmlns:c="jakarta.tags.core">
-    <ui:define name="title">MJRV</ui:define>
+    <ui:define name="title">#{msg['form.mjrv.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/mjrv">MJRV</p:link>
+            <p:link outcome="/mjrv">#{msg['form.mjrv.title']}</p:link>
         </li>
     </ui:define>
 
@@ -19,14 +19,14 @@
         <h:form id="frmMJRV">
             <div class="grid">                
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÃ“N DE MJRV</h5>
+                    <h5>ADMINITRACIÓN DE MJRV</h5>
                     <p:toolbar >
                         <p:toolbarGroup >
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{jrvController.nuevo}" update="outPnlMesas" oncomplete="PF('dlgMesa').show()"
                                              styleClass="ui-button-success" style="margin-right: .5rem" />
                             <p:commandButton id="btnEliminaRegistros" value="#{jrvController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{jrvController.eliminarSeleccionados}"
                                              styleClass="ui-button-danger" disabled="#{!jrvController.existeSeleccionados()}" update="@this">
-                                <p:confirm header="Confirmation" message="Â¿EstÃ¡ Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
+                                <p:confirm header="Confirmation" message="¿Está Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
                             </p:commandButton> 
                         </p:toolbarGroup>
                         <p:toolbarGroup align="right" >                            
@@ -41,7 +41,7 @@
                         <div class="ui-fluid formgrid grid">
                             <ui:remove>
                                 <div class="field col-12 md:col-6 lg:col-3">
-                                    <p:outputLabel for="canton" value="CantÃ³n" />
+                                    <p:outputLabel for="canton" value="Cantón" />
                                     <p:selectOneMenu id="canton" value="#{jrvController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                         <f:selectItem itemLabel="Select" itemValue="" />
                                         <f:selectItems value="#{jrvController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -113,7 +113,7 @@
                 </p:dialog>
                 <ui:remove>
                     <!-- DLG DOWNLOAD DOC -->
-                    <p:dialog header="Descargar documentos histÃ³ricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
+                    <p:dialog header="Descargar documentos históricos" id="pndHistory"  widgetVar="pndHistory" closable="false" modal="true" showEffect="fade" hideEffect="explode" width="75%" >
                         <p:dataTable var="doc" value="#{jrvController.documentos}"
                                      widgetVar="docTable" id="docTable" emptyMessage="#{msg['msj.noData']}"
                                      reflow="true" rows="5" paginator="true" paginatorPosition="top"
@@ -130,19 +130,19 @@
 
                             <p:column headerText="Nombre" ><h:outputText value="#{doc.nombre}" /></p:column>
 
-                            <p:column headerText="CÃ³digo" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
+                            <p:column headerText="Código" width="15%" ><h:outputText value="#{doc.codigo}"/> </p:column>
 
                             <p:column headerText="Estado" width="15%" >                            
                                 <p:tag styleClass="p-mr-2" severity="#{doc.estado?'success':'warning'}" value="#{doc.estado?'Vigente':'Archivado'}"></p:tag>                                                                        
                             </p:column>
 
-                            <p:column headerText="Fecha de creaciÃ³n" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
+                            <p:column headerText="Fecha de creación" width="15%" ><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy" /> </h:outputText> </p:column>
 
                         </p:dataTable>
                         <p:commandButton id="btnCerrar1" process="@this" value="Cerrar" icon="ui-icon-circle-close"  oncomplete="PF('pndHistory').hide();" />               
                     </p:dialog>
                     <!-- comment -->
-                    <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Â¿Esta seguro de eliminar?" header="Confirm" severity="warn">
+                    <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Esta seguro de eliminar?" header="Confirm" severity="warn">
                         <p:commandButton value="Si" icon="pi pi-check" actionListener="#{jrvController.eliminarMesaSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
                         <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
                     </p:confirmDialog>

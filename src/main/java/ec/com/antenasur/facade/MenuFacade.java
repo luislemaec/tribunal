@@ -105,9 +105,9 @@ public class MenuFacade extends AbstractFacade<Menu, Integer> {
                     menuIds1.add(item.intValue());
                 }
 
-                // Si los roles del usuario no tienen menÃƒÂºs asignados, evitamos
+                // Si los roles del usuario no tienen menÃƒºs asignados, evitamos
                 // ejecutar el segundo query: JPQL con "IN :lista" vacÃƒÂ­a genera
-                // "IN ()" en PostgreSQL Ã¢â€ â€™ SQLGrammarException.
+                // "IN ()" en PostgreSQL Ã¢â€ ’ SQLGrammarException.
                 if (menuIds1.isEmpty()) {
                     return menus;
                 }

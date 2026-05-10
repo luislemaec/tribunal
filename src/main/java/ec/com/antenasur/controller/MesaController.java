@@ -42,7 +42,7 @@ public class MesaController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;
@@ -253,9 +253,9 @@ public class MesaController implements Serializable {
     }
 
     /**
-     * Convierte DTOs a entidades stub (solo con id) para pasarlos al mÃ©todo
+     * Convierte DTOs a entidades stub (solo con id) para pasarlos al método
      * {@code listarDTOsPorRecintos} del service, que necesita entidades como
-     * parÃ¡metro de query JPQL ({@code WHERE recinto IN :recintos}).
+     * parámetro de query JPQL ({@code WHERE recinto IN :recintos}).
      */
     private List<ec.com.antenasur.model.tec.Recinto> toRecintoEntities(List<RecintoDTO> dtos) {
         List<ec.com.antenasur.model.tec.Recinto> entidades = new ArrayList<>();

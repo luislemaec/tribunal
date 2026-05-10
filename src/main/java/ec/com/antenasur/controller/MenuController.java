@@ -88,7 +88,7 @@ public class MenuController implements Serializable {
             this.menuSeleccionado = (MenuDTO) event.getObject().getData();
             if (menuSeleccionado != null) {
                 menuSeleccionado = menuService.guardarDesdeDTO(menuSeleccionado);
-                JsfUtil.addSuccessMessage("CatÃ¡logo actualizado!");
+                JsfUtil.addSuccessMessage("Catálogo actualizado!");
                 init();
             }
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class MenuController implements Serializable {
             boolean esEdicion = menuSeleccionado.getId() != null;
             MenuDTO persistido = menuService.guardarDesdeDTO(menuSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "CatÃ¡logo actualizado!" : "CatÃ¡logo creado!");
+                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
             }
             menuSeleccionado = null;
             init();
@@ -131,7 +131,7 @@ public class MenuController implements Serializable {
         try {
             if (menuSeleccionado != null && menuSeleccionado.getId() != null) {
                 menuService.eliminarPorId(menuSeleccionado.getId());
-                JsfUtil.addSuccessMessage("CatÃ¡logo eliminado!");
+                JsfUtil.addSuccessMessage("Catálogo eliminado!");
             }
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
             init();

@@ -4,12 +4,12 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Personas</ui:define>
+    <ui:define name="title">#{msg['form.personas.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/personas">Personas</p:link>
+            <p:link outcome="/personas">#{msg['form.personas.title']}</p:link>
         </li>
     </ui:define>
 
@@ -210,7 +210,7 @@
                                   style="background:#f3f4f6; border-left:4px solid #6b7280;">
                         <i class="pi pi-lock" style="margin-right:.5rem"/>
                         <b>Sin cronograma activo:</b>
-                        no hay un proceso electoral en curso. La pantalla estÃ¡ en modo solo lectura.
+                        no hay un proceso electoral en curso. La pantalla está en modo solo lectura.
                     </h:panelGroup>
                 </div>
 
@@ -221,7 +221,7 @@
                             <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{personaController.nuevaPersona}" update="outPnlPersonas" oncomplete="PF('dlgPersona').show()"
                                              styleClass="ui-button-success" style="margin-right: .5rem"
                                              disabled="#{not personaController.puedeEditarPadron}"
-                                             title="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'EdiciÃ³n bloqueada por cronograma'}"/>
+                                             title="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
                             <p:commandButton id="btnEliminaRegistros" value="#{personaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
                                              styleClass="ui-button-danger"
                                              disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
@@ -232,7 +232,7 @@
                         <p:toolbarGroup align="right" >                            
                             <p:fileUpload mode="simple" skinSimple="true" label="Importar" listener="#{personaController.handleFileUpload}" dragDropSupport="false"  
                                           invalidFileMessage="#{msg['msg.invalid.file']}" invalidSizeMessage="#{msg['msg.invalid.max.size.file']}" auto="true" oncomplete="PF('statusDialog').hide()"
-                                          update="frmPersonas, msgs" sizeLimit="2000000" fileLimit="1" allowTypes="/(\.|\/)(xlsx|xls|)$/"  multiple="false" cancelLabel="Cancelar" 
+                                          update="frmPersonas, msgs" maxFileSize="2000000" fileLimit="1" allowTypes="/(\.|\/)(xlsx|xls|)$/"  multiple="false" cancelLabel="Cancelar"
                                           chooseIcon="pi pi-download" rendered="#{personaController.file eq null}"  
                                           styleClass="ui-button-raised ui-button-info"/>
                             <p:commandButton value="Exportar" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty personaController.listaIglesiaPersona}">
@@ -254,14 +254,14 @@
                                       style="background:#eff6ff; border-left:4px solid #2563eb;">
                             <i class="pi pi-info-circle" style="color:#2563eb; margin-right:.5rem"/>
                             <b>Iglesia asignada:</b>
-                            EstÃ¡ gestionando los miembros de
+                            Está gestionando los miembros de
                             <b>'#{personaController.iglesiaSeleccionado.nombre}'</b>.
-                            Solo verÃ¡ y modificarÃ¡ miembros de esta iglesia.
+                            Solo verá y modificará miembros de esta iglesia.
                         </h:panelGroup>
 
-                        <!-- Barra de progreso de actualizaciÃ³n + KPIs.
+                        <!-- Barra de progreso de actualización + KPIs.
                              Visible cuando hay una iglesia cargada (admin global
-                             que filtrÃ³ o IglesiaAdmin con su iglesia). -->
+                             que filtró o IglesiaAdmin con su iglesia). -->
                         <h:panelGroup layout="block"
                                       rendered="#{personaController.iglesiaSeleccionado.id ne null}"
                                       styleClass="p-3 mb-3 border-round shadow-1"
@@ -282,7 +282,7 @@
                                 <div class="col-12 md:col-3 text-right">
                                     <p:commandButton value="Generar acta" icon="pi pi-file-pdf"
                                                      ajax="false"
-                                                     title="Descargar acta PDF de actualizaciÃ³n"
+                                                     title="Descargar acta PDF de actualización"
                                                      actionListener="#{personaController.generarActaActualizacion}"
                                                      styleClass="ui-button-help"
                                                      disabled="#{personaController.totalMiembros eq 0}"/>
@@ -295,10 +295,10 @@
                             </div>
                         </h:panelGroup>
 
-                        <!-- Filtros de cantÃ³n/parroquia/iglesia: solo admin global -->
+                        <!-- Filtros de cantón/parroquia/iglesia: solo admin global -->
                         <div class="ui-fluid formgrid grid" rendered="#{not personaController.restringidoAIglesia}">
                             <div class="field col-12 md:col-6 lg:col-3">
-                                <p:outputLabel for="canton" value="CantÃ³n" />
+                                <p:outputLabel for="canton" value="Cantón" />
                                 <p:selectOneMenu id="canton" value="#{personaController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{personaController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -417,7 +417,7 @@
                         </p:column>
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
                             <p:commandButton icon="pi pi-pencil" update=":frmPersonas:outPnlPersonas" oncomplete="PF('dlgPersona').show()"
-                                             title="#{personaController.puedeEditarPadron ? 'Editar y marcar como actualizada' : 'EdiciÃ³n bloqueada por cronograma'}"
+                                             title="#{personaController.puedeEditarPadron ? 'Editar y marcar como actualizada' : 'Edición bloqueada por cronograma'}"
                                              disabled="#{not personaController.puedeEditarPadron}"
                                              styleClass="edit-button rounded-button ui-button-success" process="@this">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
@@ -425,11 +425,11 @@
                             <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
                                              actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
                                              disabled="#{not personaController.puedeEditarPadron}"
-                                             title="#{personaController.puedeEditarPadron ? 'Eliminar miembro' : 'EdiciÃ³n bloqueada por cronograma'}"
+                                             title="#{personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma'}"
                                              process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{iglPers}" target="#{personaController.iglesiaPersonaSeleccionado}" />
-                                <p:confirm header="Confirmar eliminaciÃ³n"
-                                           message="Â¿EstÃ¡ seguro de eliminar este registro?"
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este registro?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>

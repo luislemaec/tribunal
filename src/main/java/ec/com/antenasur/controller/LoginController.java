@@ -74,7 +74,7 @@ public class LoginController implements Serializable {
     @Setter
     private PersonaDTO people;
 
-    /** Entidad de auditorÃ­a â€” uso interno persistente, no se expone a la vista. */
+    /** Entidad de auditoría — uso interno persistente, no se expone a la vista. */
     @Setter
     private AccessAuditory accessAuditory = new AccessAuditory();
 
@@ -223,7 +223,7 @@ public class LoginController implements Serializable {
         JsfUtil.cargarObjetoSession("listaPermisos", menuService.extraerPaginasPermitidas(menus));
 
         if (menus == null) {
-            JsfUtil.addErrorMessage("Error al generar el menÃº con los roles de Usuario");
+            JsfUtil.addErrorMessage("Error al generar el menú con los roles de Usuario");
             loginBean.logout();
             return;
         }

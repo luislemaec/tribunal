@@ -13,7 +13,7 @@
             <meta name="author" content="Luis Lema" />
         </f:facet>
         <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
-        <title>Recuperar contraseÃ±a</title>
+        <title>#{msg['app.sistema']} - #{msg['form.olvidoClave.title']}</title>
         <h:outputScript name="js/layout.js" library="ecuador-layout" />
         <h:outputScript name="js/prism.js" library="ecuador-layout"/>
     </h:head>
@@ -26,24 +26,38 @@
         </div>
         <div class="grid" >
             <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
-                <p:panel header="#{msg['label.recovery.password.header']}"  >
+                <p:panel header="#{msg['form.olvidoClave.header']}">
                     <h:form id="frmRecoveryPassword">
-                        <div class="col-12"  >
-                            <p:growl id="growl" life="4000" />
+                        <div class="col-12">
+                            <p:growl id="growl" life="4000"/>
                             <div class="grid ui-fluid">
                                 <div class="col-12">
-                                    <p:outputLabel for="user" value="#{msg['label.user']}"/>
-                                    <p:inputText id="user" required="true" value="#{olvidoClaveController.username}" placeholder="usuario" maxlength="13" validatorMessage="#{msg['msg.user.validator']}" requiredMessage="#{msg['msg.user.required']}" styleClass="my-2"/>
+                                    <p:outputLabel for="user" value="#{msg['form.olvidoClave.label.user']}"/>
+                                    <p:inputText id="user" required="true"
+                                                 value="#{olvidoClaveController.username}"
+                                                 placeholder="#{msg['form.olvidoClave.placeholder.user']}"
+                                                 maxlength="13"
+                                                 validatorMessage="#{msg['msg.user.validator']}"
+                                                 requiredMessage="#{msg['msg.user.required']}"
+                                                 styleClass="my-2"/>
 
-                                    <p:outputLabel for="mail" value="#{msg['label.email']}" />
-                                    <p:inputText id="mail" required="true" value="#{olvidoClaveController.correo}" placeholder="info@mail.com" validatorMessage="#{msg['msg.mail.validator']}" requiredMessage="#{msg['msg.mail.required']}" styleClass="my-2"/>
-                                </div>						
-                            </div> 
-                            
-                            <div align='center'> 
-                                <p:commandButton value="Recuperar clave" update="growl" action="#{olvidoClaveController.recuperarClave()}" styleClass="mx-1" ajax="false" />
-                                <p:separator />
-                                <h:outputLink value="#{request.contextPath}/index.html" >Regresar</h:outputLink>
+                                    <p:outputLabel for="mail" value="#{msg['form.olvidoClave.label.email']}"/>
+                                    <p:inputText id="mail" required="true"
+                                                 value="#{olvidoClaveController.correo}"
+                                                 placeholder="#{msg['form.olvidoClave.placeholder.email']}"
+                                                 validatorMessage="#{msg['msg.mail.validator']}"
+                                                 requiredMessage="#{msg['msg.mail.required']}"
+                                                 styleClass="my-2"/>
+                                </div>
+                            </div>
+
+                            <div align='center'>
+                                <p:commandButton value="#{msg['form.olvidoClave.btn.send']}"
+                                                 update="growl"
+                                                 action="#{olvidoClaveController.recuperarClave()}"
+                                                 styleClass="mx-1" ajax="false"/>
+                                <p:separator/>
+                                <h:outputLink value="#{request.contextPath}/index.html">#{msg['form.olvidoClave.btn.back']}</h:outputLink>
                             </div>
                         </div>
                     </h:form>

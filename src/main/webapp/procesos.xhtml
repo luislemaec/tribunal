@@ -4,12 +4,12 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Procesos</ui:define>
+    <ui:define name="title">#{msg['form.procesos.title']}</ui:define>
     <ui:define name="viewname">
-        <li>SEGURIDAD</li>
+        <li>#{msg['form.usuarios.crumb.security']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/procesos">Procesos</p:link>
+            <p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link>
         </li>
     </ui:define>
 
@@ -36,7 +36,7 @@
                             <p:column headerText="Actividad" sortBy="#{proceso.actividad}" filterBy="#{proceso.actividad}"  ><h:outputText value="#{proceso.actividad}" /></p:column>
                             <p:column headerText="Usuario crea" sortBy="#{proceso.usuarioCrea}" filterBy="#{proceso.usuarioCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{proceso.usuarioCrea}" /></p:column>        
 							<p:column headerText="IP" sortBy="#{proceso.ip}" filterBy="#{proceso.ip}" styleClass="sm:w-max md:w-2 lg:w-10rem" ><h:outputText value="#{proceso.ip}" /></p:column>
-                            <p:column headerText="Fecha creaciÃ³n" sortBy="#{proceso.fechaCrea}" filterBy="#{proceso.fechaCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem">
+                            <p:column headerText="Fecha creación" sortBy="#{proceso.fechaCrea}" filterBy="#{proceso.fechaCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem">
                                 <h:outputText value="#{proceso.fechaCrea}" >
                                     <f:convertDateTime pattern="dd-MM-yyyy" />
                                 </h:outputText></p:column>

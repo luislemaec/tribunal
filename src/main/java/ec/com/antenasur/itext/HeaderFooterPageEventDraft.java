@@ -16,9 +16,9 @@ import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 
 /**
- * Clase agrega cabecera y pie de pÃ¡gina a documentos generados con iText
+ * Clase agrega cabecera y pie de página a documentos generados con iText
  *
- * @author Luis Lema <lemaedu@gmail.com> / Consejo de ComunicacaciÃ³n
+ * @author Luis Lema <lemaedu@gmail.com> / Consejo de Comunicacación
  * @version 1.0.0 / 30-11-2021
  *
  */

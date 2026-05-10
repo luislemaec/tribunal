@@ -110,8 +110,8 @@ public class PadronController implements Serializable {
     @Getter
     private List<String> iglesiasOrigen, iglesiasDestino;
 
-    // NOTA: Periodo sigue como entidad â€” su DTO se crearÃ¡ en la iteraciÃ³n de
-    // catÃ¡logos.
+    // NOTA: Periodo sigue como entidad — su DTO se creará en la iteración de
+    // catálogos.
     @Setter
     @Getter
     private Periodo periodoActivo;
@@ -138,8 +138,8 @@ public class PadronController implements Serializable {
         this.cantones = geograpBean.getByFatherId(7);
         this.listaRecintos = recintoService.listarDTOs();
         this.listaMesas = mesaService.listarDTOs();
-        // El padrÃ³n se carga vÃ­a filtros (cantÃ³n/parroquia/recinto/mesa).
-        // Cargarlo aquÃ­ con TODAS las mesas dispara una query con JOIN FETCH
+        // El padrón se carga vía filtros (cantón/parroquia/recinto/mesa).
+        // Cargarlo aquí con TODAS las mesas dispara una query con JOIN FETCH
         // sobre millones de filas y excede el timeout JTA de 5 min.
         this.listaPadron = new ArrayList<>();
     }

@@ -48,13 +48,13 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
 
     /**
      * Devuelve el acta de escrutinios de la mesa: si ya existen registros, los
-     * retorna; si no, construye una lista de Escrutinio "vacÃ­os" â€” uno por
-     * categorÃ­a de voto â€” listos para que el operador ingrese los totales.
+     * retorna; si no, construye una lista de Escrutinio "vacíos" — uno por
+     * categoría de voto — listos para que el operador ingrese los totales.
      *
-     * @param mesa mesa cuya acta se estÃ¡ abriendo (no null)
-     * @param periodo perÃ­odo al que pertenecen los nuevos registros
-     * @param categorias categorÃ­as de voto a usar para los placeholders
-     * @return lista nunca null; vacÃ­a si {@code mesa} o {@code categorias} son null
+     * @param mesa mesa cuya acta se está abriendo (no null)
+     * @param periodo período al que pertenecen los nuevos registros
+     * @param categorias categorías de voto a usar para los placeholders
+     * @return lista nunca null; vacía si {@code mesa} o {@code categorias} son null
      */
     public List<Escrutinio> prepararActaPorMesa(Mesa mesa, Periodo periodo, List<CategoriaVoto> categorias) {
         if (mesa == null) {
@@ -78,9 +78,9 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     }
 
     /**
-     * Guarda el acta completa de una mesa en una sola transacciÃ³n:
+     * Guarda el acta completa de una mesa en una sola transacción:
      * persiste/actualiza cada Escrutinio, suma los votos para obtener el total
-     * de papeletas usadas y actualiza la Mesa con su estado y observaciÃ³n de
+     * de papeletas usadas y actualiza la Mesa con su estado y observación de
      * cuadre. Si {@code totalVotos} de la mesa â‰  {@code totalPapeletasUso},
      * marca {@code tieneErrorConteo=true} y describe la diferencia. La mesa
      * queda en {@link EstadoTarea#COMPLETADO}.
@@ -88,7 +88,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
      * @param mesa mesa a cerrar (no null)
      * @param actaItems escrutinios a persistir (cada uno debe tener totalVotos)
      * @return la mesa persistida con sus campos calculados; null si los args
-     *         son invÃ¡lidos
+     *         son inválidos
      */
     public Mesa guardarActaCompleta(Mesa mesa, List<Escrutinio> actaItems) {
         if (mesa == null || actaItems == null || actaItems.isEmpty()) {
@@ -141,8 +141,8 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     }
 
     /**
-     * VersiÃ³n DTO de {@link #prepararActaPorMesa(Mesa, Periodo, List)}: dado
-     * un id de mesa, id de periodo e ids de categorÃ­as, devuelve la lista de
+     * Versión DTO de {@link #prepararActaPorMesa(Mesa, Periodo, List)}: dado
+     * un id de mesa, id de periodo e ids de categorías, devuelve la lista de
      * Escrutinio (existentes o placeholders).
      */
     public List<EscrutinioDTO> prepararActaPorMesaDTO(Integer mesaId, Integer periodoId, List<Integer> categoriaIds) {
@@ -165,9 +165,9 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     }
 
     /**
-     * VersiÃ³n DTO de {@link #guardarActaCompleta(Mesa, List)}: recibe el id
+     * Versión DTO de {@link #guardarActaCompleta(Mesa, List)}: recibe el id
      * de la mesa y los DTOs de los items del acta. Reconstruye los
-     * {@link Escrutinio} hidratando relaciones, ejecuta el cierre atÃ³mico, y
+     * {@link Escrutinio} hidratando relaciones, ejecuta el cierre atómico, y
      * retorna el {@link MesaDTO} actualizado o null si la mesa no existe.
      *
      * <p>Usado desde el controller del acta sin tocar entidades.

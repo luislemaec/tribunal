@@ -139,7 +139,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
             if (listaProceso != null) {
                 JsfUtil.addInfoMessage(listaProceso.size() + " Procesos encontrados");
             } else {
-                JsfUtil.addWarningMessage("No se obtubieron resultado de bÃƒÂºsqueda");
+                JsfUtil.addWarningMessage("No se obtubieron resultado de bÃƒºsqueda");
             }
         }
     }

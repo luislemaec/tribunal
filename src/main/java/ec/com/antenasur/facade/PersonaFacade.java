@@ -51,7 +51,7 @@ public class PersonaFacade extends AbstractFacade<Persona, Integer> {
      * detectado en producciÃƒÂ³n) retorna el primero por id ascendente, en lugar
      * de lanzar {@link jakarta.persistence.NonUniqueResultException}. La
      * deduplicaciÃƒÂ³n de personas duplicadas debe resolverse en BD; mientras
-     * tanto, el login y demÃƒÂ¡s flujos no deben caerse.
+     * tanto, el login y demÃƒ¡s flujos no deben caerse.
      */
     public Persona finByPersonaDocument(String documento) {
         try {

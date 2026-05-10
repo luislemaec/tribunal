@@ -16,15 +16,15 @@ import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.AbstractService;
 
 /**
- * LÃ³gica del cronograma electoral. Centraliza:
+ * Lógica del cronograma electoral. Centraliza:
  * <ul>
- *   <li>CÃ¡lculo de la fase vigente del proceso activo.</li>
- *   <li>Permisos de ediciÃ³n por fase (gobierna el padrÃ³n, listas, etc.).</li>
- *   <li>CRUD de fases para la pantalla de gestiÃ³n.</li>
+ *   <li>Cálculo de la fase vigente del proceso activo.</li>
+ *   <li>Permisos de edición por fase (gobierna el padrón, listas, etc.).</li>
+ *   <li>CRUD de fases para la pantalla de gestión.</li>
  * </ul>
  *
  * <p>Sin proceso activo o sin fase vigente, el sistema cae en
- * <b>solo lectura por defecto</b> â€” los servicios que dependen de fase
+ * <b>solo lectura por defecto</b> — los servicios que dependen de fase
  * deben rechazar escrituras.
  */
 @Stateless
@@ -50,6 +50,89 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         if (activo == null) return null;
         return CronogramaFaseDTO.fromEntity(
                 cronogramaFaseFacade.getVigentePorProceso(activo.getId()));
+    }
+
+    /**
+     * Devuelve TODAS las fases vigentes (rango actual) del proceso electoral
+     * activo. Devuelve lista vacía si no hay proceso activo o si ninguna
+     * fase está dentro de rango. Helper interno usado por los métodos
+     * {@code permiteX()} para chequear capabilities por fase.
+     *
+     * <p>Se mantiene como helper privado para no exponer entidades JPA fuera
+     * del service (los callers son métodos del propio service).
+     */
+    private List<CronogramaFase> getFasesVigentesInternas() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) {
+            return Collections.emptyList();
+        }
+        List<CronogramaFase> vigentes = cronogramaFaseFacade.getVigentesPorProceso(activo.getId());
+        return vigentes == null ? Collections.<CronogramaFase>emptyList() : vigentes;
+    }
+
+    /**
+     * Devuelve la fase {@link FaseElectoral#ACTUALIZACION_MIEMBROS} configurada
+     * en el proceso electoral activo, sin filtro de fecha (puede no estar
+     * vigente). Es la "fase de referencia" del módulo Personas para mostrar
+     * fechas y limitar ediciones por orden temporal.
+     *
+     * @return DTO de la fase, o {@code null} si no hay proceso activo o no
+     *         existe esa fase configurada.
+     */
+    public CronogramaFaseDTO getFaseActualizacionMiembros() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) {
+            return null;
+        }
+        CronogramaFase f = cronogramaFaseFacade.getFasePorTipo(
+                activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS);
+        return CronogramaFaseDTO.fromEntity(f);
+    }
+
+    /**
+     * Devuelve la fase inmediatamente anterior por {@code orden} a la fase
+     * {@link FaseElectoral#ACTUALIZACION_MIEMBROS} dentro del proceso activo.
+     * Útil para mostrar el contexto temporal en la pantalla de Personas.
+     *
+     * @return DTO de la fase anterior, o {@code null} si no hay proceso
+     *         activo, no existe ACTUALIZACION_MIEMBROS, o no hay fase previa.
+     */
+    public CronogramaFaseDTO getFaseAnteriorAActualizacion() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) {
+            return null;
+        }
+        CronogramaFase ref = cronogramaFaseFacade.getFasePorTipo(
+                activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS);
+        if (ref == null || ref.getOrden() == null) {
+            return null;
+        }
+        CronogramaFase anterior = cronogramaFaseFacade.getFaseAnterior(
+                activo.getId(), ref.getOrden());
+        return CronogramaFaseDTO.fromEntity(anterior);
+    }
+
+    /**
+     * Devuelve la fase inmediatamente siguiente por {@code orden} a la fase
+     * {@link FaseElectoral#ACTUALIZACION_MIEMBROS} dentro del proceso activo.
+     * Útil para mostrar el contexto temporal en la pantalla de Personas.
+     *
+     * @return DTO de la fase siguiente, o {@code null} si no hay proceso
+     *         activo, no existe ACTUALIZACION_MIEMBROS, o no hay fase posterior.
+     */
+    public CronogramaFaseDTO getFaseSiguienteAActualizacion() {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) {
+            return null;
+        }
+        CronogramaFase ref = cronogramaFaseFacade.getFasePorTipo(
+                activo.getId(), FaseElectoral.ACTUALIZACION_MIEMBROS);
+        if (ref == null || ref.getOrden() == null) {
+            return null;
+        }
+        CronogramaFase siguiente = cronogramaFaseFacade.getFaseSiguiente(
+                activo.getId(), ref.getOrden());
+        return CronogramaFaseDTO.fromEntity(siguiente);
     }
 
     /**
@@ -110,7 +193,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     /**
-     * Resultado de la validaciÃ³n de una fase antes de guardar. Contiene
+     * Resultado de la validación de una fase antes de guardar. Contiene
      * errores fatales (bloquean) y advertencias (informan al usuario pero
      * no impiden guardar).
      */
@@ -127,14 +210,14 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     /**
      * Valida una fase candidata a guardar. Verifica:
      * <ul>
-     *   <li>Campos obligatorios (fase, fechas, tÃ­tulo).</li>
+     *   <li>Campos obligatorios (fase, fechas, título).</li>
      *   <li>Que fechaInicio sea anterior a fechaFin.</li>
      *   <li>Que el rango de la fase caiga dentro del rango del proceso.</li>
      *   <li>Que no haya OTRA fase con el mismo enum FaseElectoral en el
      *       mismo proceso (advertencia: dos veces ACTUALIZACION_PADRON
      *       suele ser un error humano).</li>
      *   <li>Que no haya OTRA fase del mismo proceso con rango solapado
-     *       (advertencia: superposiciÃ³n temporal puede ser intencional).</li>
+     *       (advertencia: superposición temporal puede ser intencional).</li>
      * </ul>
      */
     public ValidacionFase validar(CronogramaFaseDTO dto) {
@@ -145,10 +228,10 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         // 1. Campos obligatorios
         if (dto.getFase() == null) {
-            v.error("Debe seleccionar la fase del catÃ¡logo");
+            v.error("Debe seleccionar la fase del catálogo");
         }
         if (dto.getTitulo() == null || dto.getTitulo().trim().isEmpty()) {
-            v.error("El tÃ­tulo es obligatorio");
+            v.error("El título es obligatorio");
         }
         if (dto.getFechaInicio() == null) {
             v.error("La fecha de inicio es obligatoria");
@@ -170,7 +253,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         long durMs = dto.getFechaFin().getTime() - dto.getFechaInicio().getTime();
         if (durMs < 60000L) { // < 1 minuto
-            v.error("La duraciÃ³n de la fase debe ser mayor a un minuto");
+            v.error("La duración de la fase debe ser mayor a un minuto");
             return v;
         }
 
@@ -187,7 +270,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         if (proceso.getFechaFin() != null
                 && dto.getFechaFin().after(proceso.getFechaFin())) {
-            v.error("La fase termina despuÃ©s que el proceso electoral ("
+            v.error("La fase termina después que el proceso electoral ("
                     + formatear(proceso.getFechaFin()) + ")");
         }
 
@@ -195,7 +278,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         List<CronogramaFase> otras = cronogramaFaseFacade.listarPorProceso(dto.getProcesoId());
         if (otras != null) {
             for (CronogramaFase f : otras) {
-                // ignoramos la propia fase si es ediciÃ³n
+                // ignoramos la propia fase si es edición
                 if (dto.getId() != null && dto.getId().equals(f.getId())) continue;
 
                 // 4a. Misma fase enum repetida en el proceso
@@ -209,7 +292,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
                     v.advertencia("Rango solapado con la fase '"
                             + (f.getFase() == null ? "?" : f.getFase().name())
                             + "' (" + formatear(f.getFechaInicio())
-                            + " â€” " + formatear(f.getFechaFin()) + ")");
+                            + " — " + formatear(f.getFechaFin()) + ")");
                 }
             }
         }
@@ -223,7 +306,7 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
     }
 
     private static String formatear(java.util.Date d) {
-        if (d == null) return "â€”";
+        if (d == null) return "—";
         return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(d);
     }
 

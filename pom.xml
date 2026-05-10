@@ -6,7 +6,7 @@
 
     <groupId>ec.com.antenasur.tec</groupId>
     <artifactId>tribunal</artifactId>
-    <version>1.1.0</version>
+    <version>1.0.1</version>
     <packaging>war</packaging>
     <name>tribunal</name>
     <description>Tribunal Electoral System - Jakarta EE 10 / WildFly 39 / Java 17</description>
@@ -22,6 +22,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Maven 3.9+: garantiza que los .properties NO se "filtren" en
+             ISO-8859-1 al copiarse al WAR. -->
+        <propertiesEncoding>UTF-8</propertiesEncoding>
 
         <!-- Java 17 -->
         <maven.compiler.source>17</maven.compiler.source>

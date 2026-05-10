@@ -83,7 +83,7 @@ public class MesaBean implements Serializable {
     public int totalVotantes() {
         try {
             // Una sola query agregada en BD en lugar de cargar todas las mesas
-            // y sumar en Java (patrÃ³n anterior que en el dashboard generaba
+            // y sumar en Java (patrón anterior que en el dashboard generaba
             // lentitud de varios segundos al disparar findAll + N+1).
             return (int) mesaService.sumTotalVotos();
         } catch (Exception e) {

@@ -124,7 +124,7 @@ public class ActaEController implements Serializable {
     private MesaDTO mesaSeleccionado;
 
     // NOTA: Lista, CatalogoGeneral, CategoriaVoto, Periodo, PlantillaCorreo
-    // siguen como entidades; sus DTOs se crean en la iteraciÃ³n de catÃ¡logos.
+    // siguen como entidades; sus DTOs se crean en la iteración de catálogos.
     @Setter
     @Getter
     private Lista listaSeleccionado;
@@ -319,8 +319,8 @@ public class ActaEController implements Serializable {
     }
 
     /**
-     * Construye el HashMap de parÃ¡metros del acta. Resuelve la cadena
-     * provincia/cantÃ³n/parroquia por id contra GeograpBean en lugar de
+     * Construye el HashMap de parámetros del acta. Resuelve la cadena
+     * provincia/cantón/parroquia por id contra GeograpBean en lugar de
      * navegar relaciones lazy de la entidad Mesa.
      */
     private HashMap<String, String> getDatosActaE() {

@@ -31,7 +31,7 @@ public class ListaController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Lista registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Lista actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Lista eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;

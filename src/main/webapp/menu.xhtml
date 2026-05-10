@@ -109,7 +109,7 @@
                                 <p:inputText id="orden" value="#{menuController.menuSeleccionado.orden}"  required="true"/>
                             </div>
                             <div class="field">
-                                <p:outputLabel for="descripcion" value="DescripciÃ³n" />
+                                <p:outputLabel for="descripcion" value="Descripción" />
                                 <p:inputText id="descripcion" value="#{menuController.menuSeleccionado.descripcion}"  maxlength="150" required="true" onkeyup="value = value.toUpperCase()"/>
                             </div>
                             <div class="field">
@@ -130,7 +130,7 @@
                     <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times" />
                 </p:confirmDialog>
 
-                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="Â¿EstÃ¡ seguro que desea eliminar?" header="Confirm" severity="warn">
+                <p:confirmDialog widgetVar="dlgEliminaRegistro" showEffect="fade" width="300" message="¿Está seguro que desea eliminar?" header="Confirm" severity="warn">
                     <p:commandButton value="Si" icon="pi pi-check" actionListener="#{menuController.eliminarMenuSeleccionado}" process="@this" oncomplete="PF('dlgEliminaRegistro').hide()"/>
                     <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times" onclick="PF('dlgEliminaRegistro').hide()" />
                 </p:confirmDialog>

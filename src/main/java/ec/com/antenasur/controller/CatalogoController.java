@@ -88,7 +88,7 @@ public class CatalogoController implements Serializable {
             this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
             if (catalogoSeleccionado != null) {
                 catalogoSeleccionado = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
-                JsfUtil.addSuccessMessage("CatÃ¡logo actualizado!");
+                JsfUtil.addSuccessMessage("Catálogo actualizado!");
                 init();
             }
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class CatalogoController implements Serializable {
             boolean esEdicion = catalogoSeleccionado.getId() != null;
             CatalogoGeneralDTO persistido = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "CatÃ¡logo actualizado!" : "CatÃ¡logo creado!");
+                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
             }
             catalogoSeleccionado = null;
             init();
@@ -131,7 +131,7 @@ public class CatalogoController implements Serializable {
         try {
             if (catalogoSeleccionado != null && catalogoSeleccionado.getId() != null) {
                 catalogoService.eliminarPorId(catalogoSeleccionado.getId());
-                JsfUtil.addSuccessMessage("CatÃ¡logo eliminado!");
+                JsfUtil.addSuccessMessage("Catálogo eliminado!");
             }
             PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
             init();

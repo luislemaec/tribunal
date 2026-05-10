@@ -5,17 +5,17 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml"
                 xmlns:c="jakarta.tags.core">
-    <ui:define name="title">Escrutinio</ui:define>
+    <ui:define name="title">#{msg['form.escrutinios.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/actaE">Escrutinio</p:link>
+            <p:link outcome="/escrutinios">#{msg['form.escrutinios.title']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
-        <!-- BlockUI: bloquea el formulario durante recÃ¡lculos de totales -->
+        <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
         <p:blockUI block="frmActaE" trigger="frmActaE">
             <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#f59e0b"/>
             <h5 style="margin:.5rem 0 0; color:#fff">Calculando escrutinio...</h5>
@@ -32,7 +32,7 @@
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="canton" value="CantÃ³n" />
+                                <p:outputLabel for="canton" value="Cantón" />
                                 <p:selectOneMenu id="canton" value="#{totalVotosController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -131,7 +131,7 @@
                                      styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" style="font-size: 20px;" >
 
                             <p:column headerText="CATEGORÃA"><p:chip label="#{voto[0]}" icon="pi pi-tag"/></p:column>
-                            <p:column headerText="NÃšMERO DE VOTOS"><p:badge value="#{voto[1]}" severity="info"/></p:column>
+                            <p:column headerText="NÚMERO DE VOTOS"><p:badge value="#{voto[1]}" severity="info"/></p:column>
                         </p:dataTable>
                     </div>
                 </div>

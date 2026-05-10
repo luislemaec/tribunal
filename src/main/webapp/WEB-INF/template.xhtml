@@ -14,12 +14,67 @@
             <meta name="apple-mobile-web-app-capable" content="yes" />
         </f:facet>
         <title><ui:insert name="title">PrimeFaces Ecuador</ui:insert></title>
+
+        <!-- ============================================================
+             Polyfills jQuery (necesarios con PrimeFaces 15 / jQuery 3.7+).
+
+             Se inyectan INLINE en el <head> para que se apliquen aún si
+             el browser tiene cacheada la versión vieja de layout.js.
+
+             jQuery no está disponible al ejecutarse este <script> (lo
+             carga PrimeFaces más tarde como recurso), por lo que usamos
+             un patrón de polling corto que espera a que jQuery exista
+             y aplica los polyfills ANTES de que se ejecute layout.js
+             (que también es un recurso diferido).
+
+             - $.isFunction: removido en jQuery 3.5+. Usado por el plugin
+               jquery.cookie embebido dentro de layout.js.
+             - $.parseJSON: removido en jQuery 3.0+. Reemplazado por
+               JSON.parse nativo.
+             ============================================================ -->
+        <script type="text/javascript">
+            (function () {
+                var applied = false;
+                function applyJqueryPolyfills() {
+                    if (applied) return true;
+                    if (typeof window.jQuery === 'undefined') return false;
+                    if (typeof window.jQuery.isFunction !== 'function') {
+                        window.jQuery.isFunction = function (obj) {
+                            return typeof obj === 'function';
+                        };
+                    }
+                    if (typeof window.jQuery.parseJSON !== 'function') {
+                        window.jQuery.parseJSON = function (data) {
+                            return JSON.parse(data);
+                        };
+                    }
+                    applied = true;
+                    return true;
+                }
+                // Intento inmediato (por si jQuery ya está cargado).
+                if (!applyJqueryPolyfills()) {
+                    // Polling ligero hasta que jQuery exista. Máx ~3s.
+                    var tries = 0;
+                    var interval = setInterval(function () {
+                        tries++;
+                        if (applyJqueryPolyfills() || tries > 300) {
+                            clearInterval(interval);
+                        }
+                    }, 10);
+                }
+                // Defensa adicional: aplicar también en DOMContentLoaded.
+                if (document.addEventListener) {
+                    document.addEventListener('DOMContentLoaded', applyJqueryPolyfills);
+                }
+            })();
+        </script>
+
         <h:outputScript name="js/layout.js" library="ecuador-layout" />
 
         <!-- ===================== Globals (assets locales) =================
              Todos los assets se sirven localmente desde resources/demo,
              sin dependencia de CDNs externos. Los archivos se cargan a
-             travÃ©s del ResourceHandler de JSF (h:outputStylesheet/Script)
+             través del ResourceHandler de JSF (h:outputStylesheet/Script)
              para que el cacheo y versionado lo gestione el servidor.
 
              Para mensajes/notificaciones se usa <p:growl> de PrimeFaces 11

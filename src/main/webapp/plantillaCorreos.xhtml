@@ -7,12 +7,12 @@
                 template="/WEB-INF/template.xhtml"
                 xmlns:c="jakarta.tags.core">
 
-    <ui:define name="title">Plantilla Correos</ui:define>
+    <ui:define name="title">#{msg['form.plantillaCorreos.title']}</ui:define>
 
     <ui:define name="viewname">
-        <li>SEGURIDAD</li>
+        <li>#{msg['form.usuarios.crumb.security']}</li>
         <li>/</li>
-        <li><p:link outcome="/plantillaCorreos">Plantilla Correos</p:link></li>
+        <li><p:link outcome="/plantillaCorreos">#{msg['form.plantillaCorreos.title']}</p:link></li>
     </ui:define>
 
     <ui:define name="content">

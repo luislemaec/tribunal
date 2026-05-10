@@ -4,12 +4,12 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">PERFIL</ui:define>
+    <ui:define name="title">#{msg['form.perfil.title']}</ui:define>
     <ui:define name="viewname">
-        <li>SEGURIDAD</li>
+        <li>#{msg['form.usuarios.crumb.security']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/iglesias">Perfil</p:link>
+            <p:link outcome="/perfil">#{msg['form.perfil.title']}</p:link>
         </li>
     </ui:define>
 

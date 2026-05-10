@@ -52,8 +52,8 @@ public class MenuService extends AbstractService<Menu, Integer, MenuFacade> {
     }
 
     /**
-     * Devuelve las pÃ¡ginas (Ãºltimo segmento de la URL) permitidas para los
-     * menÃºs dados, mÃ¡s las pÃ¡ginas siempre disponibles ({@code inicio.jsf} y
+     * Devuelve las páginas (último segmento de la URL) permitidas para los
+     * menús dados, más las páginas siempre disponibles ({@code inicio.jsf} y
      * {@code cambioClave.jsf}).
      */
     public List<String> extraerPaginasPermitidas(List<MenuVO> menusUsuario) {
@@ -106,7 +106,7 @@ public class MenuService extends AbstractService<Menu, Integer, MenuFacade> {
     }
 
     /**
-     * VersiÃ³n DTO de {@link #getMenusByrols(List, String)}: reconstruye stubs
+     * Versión DTO de {@link #getMenusByrols(List, String)}: reconstruye stubs
      * de RolUsuario+Rol+Usuario con solo ids (suficiente para la query que
      * usa MenuFacade) y delega.
      */

@@ -34,7 +34,7 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
     /**
      * Construye el HashMap base que las plantillas suelen necesitar:
      * {@code fechaRegistro}, {@code horaRegistro}. Los callers aÃƒÂ±aden los
-     * parÃƒÂ¡metros especÃƒÂ­ficos (nombre, clave, etc.) sobre el resultado.
+     * parÃƒ¡metros especÃƒÂ­ficos (nombre, clave, etc.) sobre el resultado.
      */
     public HashMap<String, String> construirParametrosBase() {
         HashMap<String, String> parametros = new HashMap<>();
@@ -45,8 +45,8 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
     }
 
     /**
-     * Procesa la plantilla con los parÃƒÂ¡metros, envÃƒÂ­a el correo (con adjunto si
-     * se indica path) y persiste el registro de notificaciÃƒÂ³n. Los parÃƒÂ¡metros
+     * Procesa la plantilla con los parÃƒ¡metros, envÃƒÂ­a el correo (con adjunto si
+     * se indica path) y persiste el registro de notificaciÃƒÂ³n. Los parÃƒ¡metros
      * sensibles ({@code clave}) se eliminan antes de persistir.
      *
      * @param destinatarios lista de emails destino (no null/vacÃƒÂ­a)

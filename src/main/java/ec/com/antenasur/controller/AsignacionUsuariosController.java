@@ -43,14 +43,14 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Backing bean de la pantalla {@code asignacionUsuarios.xhtml}: lista todas
  * las iglesias y permite asignar (o reasignar) un Usuario IglesiaAdmin a cada
- * una. La operaciÃ³n estÃ¡ restringida a la fase
+ * una. La operación está restringida a la fase
  * {@link ec.com.antenasur.enums.FaseElectoral#ASIGNACION_USUARIOS} del
  * cronograma electoral.
  *
- * <p>Diferente de {@link UsuarioControlador} (CRUD genÃ©rico de usuarios) â€” esta
+ * <p>Diferente de {@link UsuarioControlador} (CRUD genérico de usuarios) — esta
  * pantalla mira el problema desde la iglesia: KPIs de avance, filtro por
- * estado de asignaciÃ³n, validaciÃ³n de fase y vinculaciÃ³n automÃ¡tica vÃ­a
- * {@code IglesiaPersona} cuando la persona aÃºn no es miembro de la iglesia.
+ * estado de asignación, validación de fase y vinculación automática vía
+ * {@code IglesiaPersona} cuando la persona aún no es miembro de la iglesia.
  */
 @Named
 @ViewScoped
@@ -101,7 +101,7 @@ public class AsignacionUsuariosController implements Serializable {
     @Getter @Setter
     private String estadoFiltro = ESTADO_SIN_ADMIN;
 
-    // â”€â”€ Filtros geogrÃ¡ficos (mismo patrÃ³n que IglesiaController) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Filtros geográficos (mismo patrón que IglesiaController) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Getter @Setter
     private List<Geograp> provincias;
 
@@ -117,7 +117,7 @@ public class AsignacionUsuariosController implements Serializable {
     @Getter @Setter
     private Geograp cantonSeleccionado, parroquiaSeleccionado;
 
-    // â”€â”€ Estado del diÃ¡logo de asignaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Estado del diálogo de asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Getter @Setter
     private IglesiaAsignacionDTO iglesiaSeleccionada;
 
@@ -148,7 +148,7 @@ public class AsignacionUsuariosController implements Serializable {
             cantonSeleccionado = new Geograp();
             parroquiaSeleccionado = new Geograp();
 
-            // Provincias dinÃ¡micas â€” mismo patrÃ³n que IglesiaController
+            // Provincias dinámicas — mismo patrón que IglesiaController
             Geograp provRef = geograpService.find(7);
             if (provRef != null && provRef.getGeograp() != null) {
                 provincias = geograpService.findByFatherId(provRef.getGeograp().getId());
@@ -265,21 +265,21 @@ public class AsignacionUsuariosController implements Serializable {
         return getTotalIglesias() - getTotalConAdmin();
     }
 
-    // â”€â”€ MensajerÃ­a de fase / permisos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Mensajería de fase / permisos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** Nombre amigable de la fase del cronograma requerida para esta pantalla. */
     public String getFaseRequerida() {
-        return "AsignaciÃ³n de Usuarios";
+        return "Asignación de Usuarios";
     }
 
     /**
      * Mensaje contextual del estado del cronograma. Devuelve {@code null}
-     * cuando la asignaciÃ³n estÃ¡ habilitada (la UI no debe mostrar nada).
-     * Diferencia tres escenarios para que el usuario sepa exactamente por quÃ©
-     * no puede operar y a quiÃ©n pedir acciÃ³n:
+     * cuando la asignación está habilitada (la UI no debe mostrar nada).
+     * Diferencia tres escenarios para que el usuario sepa exactamente por qué
+     * no puede operar y a quién pedir acción:
      * <ul>
-     *   <li>Sin fase vigente â€” el cronograma no tiene fase activa en este momento.</li>
-     *   <li>Fase vigente distinta â€” indica cuÃ¡l es la fase actual y cuÃ¡l se requiere.</li>
+     *   <li>Sin fase vigente — el cronograma no tiene fase activa en este momento.</li>
+     *   <li>Fase vigente distinta — indica cuál es la fase actual y cuál se requiere.</li>
      * </ul>
      */
     public String getMensajeBloqueoFase() {
@@ -288,19 +288,19 @@ public class AsignacionUsuariosController implements Serializable {
         }
         if (faseVigente == null) {
             return "No hay una fase vigente del cronograma electoral. "
-                 + "La asignaciÃ³n de administradores solo estÃ¡ disponible durante la fase \""
+                 + "La asignación de administradores solo está disponible durante la fase \""
                  + getFaseRequerida() + "\". Solicite al administrador del sistema la "
                  + "apertura de la fase correspondiente.";
         }
         return "La fase vigente del cronograma es \"" + faseVigente.getTitulo() + "\". "
-             + "La asignaciÃ³n de administradores solo estÃ¡ habilitada durante la fase \""
+             + "La asignación de administradores solo está habilitada durante la fase \""
              + getFaseRequerida() + "\".";
     }
 
     /**
-     * Mensaje breve para tooltip de botones cuando la asignaciÃ³n estÃ¡
-     * deshabilitada por fase. Devuelve {@code null} cuando estÃ¡ habilitada
-     * (los botones tienen su propio tÃ­tulo de acciÃ³n).
+     * Mensaje breve para tooltip de botones cuando la asignación está
+     * deshabilitada por fase. Devuelve {@code null} cuando está habilitada
+     * (los botones tienen su propio título de acción).
      */
     public String getTooltipAccionDeshabilitada() {
         if (puedeAsignar) {
@@ -314,18 +314,18 @@ public class AsignacionUsuariosController implements Serializable {
              + "\". Fase vigente: \"" + faseVigente.getTitulo() + "\".";
     }
 
-    /** Refresca el estado de fase desde la BD; Ãºtil antes de validar al guardar. */
+    /** Refresca el estado de fase desde la BD; útil antes de validar al guardar. */
     private void refrescarEstadoFase() {
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeAsignar = cronogramaService.permiteAsignacionUsuarios();
     }
 
-    // â”€â”€ DiÃ¡logo de asignaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Diálogo de asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Abre el diÃ¡logo en modo "asignar" para una iglesia sin admin. Re-valida
-     * la fase al inicio: si entre el load de la pÃ¡gina y este clic la fase
-     * cambiÃ³, mostramos el mensaje preciso y NO abrimos el diÃ¡logo.
+     * Abre el diálogo en modo "asignar" para una iglesia sin admin. Re-valida
+     * la fase al inicio: si entre el load de la página y este clic la fase
+     * cambió, mostramos el mensaje preciso y NO abrimos el diálogo.
      */
     public void prepararAsignacion(IglesiaAsignacionDTO iglesia) {
         if (iglesia == null) return;
@@ -344,7 +344,7 @@ public class AsignacionUsuariosController implements Serializable {
         this.personaExistente = false;
     }
 
-    /** Abre el diÃ¡logo en modo "reasignar" sobre una iglesia que ya tiene admin. */
+    /** Abre el diálogo en modo "reasignar" sobre una iglesia que ya tiene admin. */
     public void prepararReasignacion(IglesiaAsignacionDTO iglesia) {
         prepararAsignacion(iglesia);
     }
@@ -354,7 +354,7 @@ public class AsignacionUsuariosController implements Serializable {
     }
 
     /**
-     * Listener del campo "cÃ©dula": busca primero en {@code tb_persona} y si no
+     * Listener del campo "cédula": busca primero en {@code tb_persona} y si no
      * existe consulta el WS REST del Registro Civil. Hidrata
      * {@code nuevoAdmin} con los datos encontrados.
      */
@@ -369,8 +369,8 @@ public class AsignacionUsuariosController implements Serializable {
         Persona p = personaService.finByPersonaDocument(cedula);
         if (p != null) {
             // Regla de negocio: una persona pertenece a UNA sola iglesia.
-            // Si ya estÃ¡ vinculada a otra distinta de la seleccionada, se
-            // bloquea la asignaciÃ³n con mensaje claro y se limpian los
+            // Si ya está vinculada a otra distinta de la seleccionada, se
+            // bloquea la asignación con mensaje claro y se limpian los
             // campos para evitar que el usuario lo guarde por inadvertencia.
             Iglesia otraIglesia = obtenerIglesiaDeOtraPersona(p);
             if (otraIglesia != null) {
@@ -378,7 +378,7 @@ public class AsignacionUsuariosController implements Serializable {
                 JsfUtil.addErrorMessage(
                         "La persona " + p.getNombres()
                         + (p.getApellidos() != null ? " " + p.getApellidos() : "")
-                        + " (cÃ©dula " + cedula + ") ya pertenece a la iglesia \""
+                        + " (cédula " + cedula + ") ya pertenece a la iglesia \""
                         + otraIglesia.getNombre() + "\". "
                         + "No puede ser asignada como administradora de \""
                         + iglesiaSeleccionada.getNombre() + "\". "
@@ -398,18 +398,18 @@ public class AsignacionUsuariosController implements Serializable {
             nuevoAdmin.setPermanente(true);
             personaExistente = true;
             personaRegistroCivil = null;
-            // Mensaje contextual segÃºn si ya pertenece a la iglesia seleccionada
-            // o si estÃ¡ libre (sin iglesia previa).
-            // IMPORTANTE: lookup por DOCUMENTO (no por id) â€” tb_persona puede
-            // tener filas duplicadas con la misma cÃ©dula, y el vÃ­nculo en
+            // Mensaje contextual según si ya pertenece a la iglesia seleccionada
+            // o si está libre (sin iglesia previa).
+            // IMPORTANTE: lookup por DOCUMENTO (no por id) — tb_persona puede
+            // tener filas duplicadas con la misma cédula, y el vínculo en
             // tb_iglesia_persona puede apuntar a una distinta de la que devuelve
             // finByPersonaDocument (que ordena por id ASC).
             Iglesia iglesiaActual = iglesiaPersonaService.obtenerIglesiaDePersonaPorDocumento(cedula);
             if (iglesiaActual != null) {
-                JsfUtil.addInfoMessage("Persona encontrada â€” ya es miembro de \""
+                JsfUtil.addInfoMessage("Persona encontrada — ya es miembro de \""
                         + iglesiaActual.getNombre() + "\".");
             } else {
-                JsfUtil.addInfoMessage("Persona encontrada â€” sin iglesia asignada. Se vincularÃ¡ a \""
+                JsfUtil.addInfoMessage("Persona encontrada — sin iglesia asignada. Se vinculará a \""
                         + iglesiaSeleccionada.getNombre() + "\" al guardar.");
             }
             return;
@@ -423,21 +423,21 @@ public class AsignacionUsuariosController implements Serializable {
             nuevoAdmin.setCorreo(personaRegistroCivil.getCedula() + "@consejodecomunicacion.gob.ec");
             nuevoAdmin.setPermanente(true);
             personaExistente = false;
-            JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil. Se crearÃ¡ el registro y la vinculaciÃ³n a la iglesia al guardar.");
+            JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil. Se creará el registro y la vinculación a la iglesia al guardar.");
         } else {
             personaRegistroCivil = null;
-            JsfUtil.addWarningMessage("No se encontrÃ³ la persona en el sistema ni en el Registro Civil");
+            JsfUtil.addWarningMessage("No se encontró la persona en el sistema ni en el Registro Civil");
         }
     }
 
     /**
      * Devuelve la {@link Iglesia} a la que la persona ya pertenece, SOLO si
-     * es distinta de la iglesia seleccionada en el diÃ¡logo. Devuelve null en
-     * los casos OK: persona sin iglesia previa, o persona que ya estÃ¡ en la
-     * misma iglesia que se estÃ¡ asignando.
+     * es distinta de la iglesia seleccionada en el diálogo. Devuelve null en
+     * los casos OK: persona sin iglesia previa, o persona que ya está en la
+     * misma iglesia que se está asignando.
      *
      * <p>Resuelve por DOCUMENTO (no por id) para tolerar duplicados en
-     * {@code tb_persona}: si hay dos filas con la misma cÃ©dula, el vÃ­nculo
+     * {@code tb_persona}: si hay dos filas con la misma cédula, el vínculo
      * en {@code tb_iglesia_persona} puede apuntar a un id distinto del que
      * devuelve {@link ec.com.antenasur.service.PersonaService#finByPersonaDocument}.
      */
@@ -454,9 +454,9 @@ public class AsignacionUsuariosController implements Serializable {
     }
 
     /**
-     * Limpia los datos del admin candidato cuando la bÃºsqueda detecta un
-     * conflicto (persona ya pertenece a otra iglesia). Mantiene la cÃ©dula
-     * para que el usuario vea quÃ© tipeÃ³ en el contexto del mensaje de error.
+     * Limpia los datos del admin candidato cuando la búsqueda detecta un
+     * conflicto (persona ya pertenece a otra iglesia). Mantiene la cédula
+     * para que el usuario vea qué tipeó en el contexto del mensaje de error.
      */
     private void limpiarDatosNuevoAdmin() {
         if (nuevoAdmin != null) {
@@ -483,7 +483,7 @@ public class AsignacionUsuariosController implements Serializable {
             }
             return false;
         } catch (Exception e) {
-            log.warn("WS Registro Civil no disponible o respuesta invÃ¡lida para cÃ©dula {}", cedula, e);
+            log.warn("WS Registro Civil no disponible o respuesta inválida para cédula {}", cedula, e);
             personaRegistroCivil = null;
             return false;
         } finally {
@@ -492,28 +492,28 @@ public class AsignacionUsuariosController implements Serializable {
     }
 
     /**
-     * Persiste la asignaciÃ³n. Reglas:
+     * Persiste la asignación. Reglas:
      * <ol>
      *   <li>Verifica fase ASIGNACION_USUARIOS.</li>
      *   <li>Si hay admin previo en la iglesia, lo desasigna.</li>
-     *   <li>Garantiza que la persona estÃ© vinculada vÃ­a {@code IglesiaPersona}
+     *   <li>Garantiza que la persona esté vinculada vía {@code IglesiaPersona}
      *       (la crea si no estaba).</li>
      *   <li>Crea el {@link ec.com.antenasur.model.Usuario} con rol IglesiaAdmin
      *       enlazado a la iglesia.</li>
-     *   <li>EnvÃ­a correo de bienvenida con la clave temporal.</li>
+     *   <li>Envía correo de bienvenida con la clave temporal.</li>
      * </ol>
      */
     public void asignarAdmin() {
         try {
             // Refresca el estado de fase para que el mensaje refleje la realidad
-            // actual aunque el usuario haya tenido la pÃ¡gina abierta mucho tiempo.
+            // actual aunque el usuario haya tenido la página abierta mucho tiempo.
             refrescarEstadoFase();
             if (!puedeAsignar) {
                 rechazar(getMensajeBloqueoFase());
                 return;
             }
             if (iglesiaSeleccionada == null || iglesiaSeleccionada.getId() == null) {
-                rechazar("No se identificÃ³ la iglesia destino.");
+                rechazar("No se identificó la iglesia destino.");
                 return;
             }
             if (nuevoAdmin == null
@@ -521,18 +521,18 @@ public class AsignacionUsuariosController implements Serializable {
                     || nuevoAdmin.getPersonaNombres() == null || nuevoAdmin.getPersonaNombres().trim().isEmpty()
                     || nuevoAdmin.getUsername() == null || nuevoAdmin.getUsername().trim().isEmpty()
                     || nuevoAdmin.getCorreo() == null || nuevoAdmin.getCorreo().trim().isEmpty()) {
-                rechazar("Complete la cÃ©dula, nombres, usuario y correo del nuevo administrador.");
+                rechazar("Complete la cédula, nombres, usuario y correo del nuevo administrador.");
                 return;
             }
 
             Rol rolIglesiaAdmin = resolverRolIglesiaAdmin();
             if (rolIglesiaAdmin == null) {
-                rechazar("No se encontrÃ³ el rol IglesiaAdmin en el catÃ¡logo. Contacte al administrador.");
+                rechazar("No se encontró el rol IglesiaAdmin en el catálogo. Contacte al administrador.");
                 return;
             }
 
-            // Defensa en profundidad: si entre el lookup de cÃ©dula y este save
-            // la persona quedÃ³ vinculada a otra iglesia (caso raro pero posible
+            // Defensa en profundidad: si entre el lookup de cédula y este save
+            // la persona quedó vinculada a otra iglesia (caso raro pero posible
             // bajo concurrencia), rechazamos antes de crear nada en BD.
             Persona personaEnBD = personaService.finByPersonaDocument(
                     nuevoAdmin.getPersonaDocumento().trim());
@@ -565,10 +565,10 @@ public class AsignacionUsuariosController implements Serializable {
             }
             nuevoAdmin = creado;
 
-            // 3) Garantizar el vÃ­nculo IglesiaPersona â€” robusto contra duplicados
+            // 3) Garantizar el vínculo IglesiaPersona — robusto contra duplicados
             // de tb_persona. Primero verificamos por DOCUMENTO si ya existe un
-            // vÃ­nculo a esta iglesia (puede estar registrado contra otro id de
-            // persona si la cÃ©dula estÃ¡ duplicada en BD). Solo si no existe se
+            // vínculo a esta iglesia (puede estar registrado contra otro id de
+            // persona si la cédula está duplicada en BD). Solo si no existe se
             // intenta crear uno nuevo.
             Iglesia iglesiaPrevia = iglesiaPersonaService.obtenerIglesiaDePersonaPorDocumento(
                     nuevoAdmin.getPersonaDocumento());
@@ -582,7 +582,7 @@ public class AsignacionUsuariosController implements Serializable {
                 vinculoCreado = rv != null && rv.fueCreado();
             }
 
-            // 4) AuditorÃ­a y correo (best-effort, no rompen el flujo)
+            // 4) Auditoría y correo (best-effort, no rompen el flujo)
             try {
                 String accion = esReasignacion ? "REASIGNA" : "ASIGNA";
                 procesoBean.registraActividad(accion + " ADMIN IGLESIA " + iglesiaSeleccionada.getNombre()
@@ -606,7 +606,7 @@ public class AsignacionUsuariosController implements Serializable {
                         + creado.getPersonaNombres());
             }
             if (vinculoCreado) {
-                JsfUtil.addInfoMessage("La persona fue vinculada automÃ¡ticamente a la iglesia "
+                JsfUtil.addInfoMessage("La persona fue vinculada automáticamente a la iglesia "
                         + iglesiaSeleccionada.getNombre() + ".");
             }
 
@@ -617,7 +617,7 @@ public class AsignacionUsuariosController implements Serializable {
         } catch (Exception e) {
             log.error("Error al asignar admin a iglesia id={}",
                     iglesiaSeleccionada != null ? iglesiaSeleccionada.getId() : null, e);
-            rechazar("OcurriÃ³ un error inesperado al asignar el administrador.");
+            rechazar("Ocurrió un error inesperado al asignar el administrador.");
         }
     }
 
@@ -644,12 +644,12 @@ public class AsignacionUsuariosController implements Serializable {
                 + " en el Sistema Electoral.</p>"
                 + "<p>Datos de acceso:</p>"
                 + "<p><strong>Usuario:</strong> " + usuario.getUsername() + "</p>"
-                + "<p><strong>ContraseÃ±a:</strong> " + usuario.getPersonaDocumento() + "</p>"
+                + "<p><strong>Contraseña:</strong> " + usuario.getPersonaDocumento() + "</p>"
                 + Constantes.FIRMA_CORREO;
         List<String> destinos = new ArrayList<>();
         destinos.add(usuario.getCorreo());
         try {
-			SendEmail.correoAdjunto(destinos, "AsignaciÃ³n como administrador de iglesia", html, Constantes.getPathLogo());
+			SendEmail.correoAdjunto(destinos, "Asignación como administrador de iglesia", html, Constantes.getPathLogo());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

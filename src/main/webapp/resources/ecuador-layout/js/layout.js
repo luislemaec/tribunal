@@ -1,6 +1,26 @@
-/** 
+/**
  * PrimeFaces Ecuador Layout
  */
+
+/* ===================================================================
+ * Polyfill: jQuery.isFunction
+ *
+ * jQuery 3.3 deprecó y jQuery 3.5+/4.x ELIMINÓ `$.isFunction`.
+ * PrimeFaces 15 viene con jQuery moderno donde ya no existe.
+ * El plugin jquery.cookie v1.4.1 embebido más abajo en este mismo
+ * archivo lo usa internamente (líneas 599 y 606), causando el error
+ * "TypeError: $.isFunction is not a function" al guardar el estado
+ * del menú expandido en cookie.
+ *
+ * Restauramos la función para no modificar el plugin embebido de
+ * terceros. La definición es la oficial original de jQuery.
+ * =================================================================== */
+if (typeof jQuery !== 'undefined' && typeof jQuery.isFunction !== 'function') {
+    jQuery.isFunction = function (obj) {
+        return typeof obj === 'function';
+    };
+}
+
 PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
     
     init: function(cfg) {
@@ -335,15 +355,31 @@ PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
         var menucookie = $.cookie('ecuador_expandeditems');
         if (menucookie) {
             this.expandedMenuitems = menucookie.split(',');
+            var menuitem; // se reutiliza para restoreScrollState
             for (var i = 0; i < this.expandedMenuitems.length; i++) {
                 var id = this.expandedMenuitems[i];
                 if (id) {
-                    var menuitem = $("#" + this.expandedMenuitems[i].replace(/:/g, "\\:"));
-                    menuitem.addClass('active-menuitem');
-
-                    var submenu = menuitem.children('ul');
-                    if(submenu.length) {
-                        submenu.show();
+                    // PrimeFaces 15 / Mojarra 4 generan IDs que pueden contener
+                    // muchos caracteres especiales para CSS (':' '-' '|' UUIDs).
+                    // El escape antiguo solo cubría ':' por lo que cualquier ID
+                    // con otros caracteres causaba "Syntax error, unrecognized
+                    // expression". Usamos $.escapeSelector (jQuery 3.0+) que
+                    // escapa correctamente todos los caracteres especiales.
+                    var safeSelector = (typeof $.escapeSelector === 'function')
+                            ? "#" + $.escapeSelector(id)
+                            : "#" + id.replace(/([^\w-])/g, "\\$1"); // fallback
+                    try {
+                        menuitem = $(safeSelector);
+                        menuitem.addClass('active-menuitem');
+                        var submenu = menuitem.children('ul');
+                        if (submenu.length) {
+                            submenu.show();
+                        }
+                    } catch (e) {
+                        // Defensivo: si el selector aún falla, no rompe el resto del init.
+                        if (window.console) {
+                            console.warn('Ecuador menu: no se pudo restaurar item', id, e);
+                        }
                     }
                 }
             }
@@ -737,7 +773,8 @@ if(window['PrimeFaces'] && window['PrimeFaces'].widget.Schedule && isLtPF8Versio
                         PrimeFaces.ajax.Response.handle(responseXML, status, xhr, {
                                 widget: $this,
                                 handle: function(content) {
-                                    callback($.parseJSON(content).events);
+                                    // $.parseJSON removido en jQuery 3.0+. Usar JSON.parse nativo.
+                                    callback(JSON.parse(content).events);
                                 }
                             });
 

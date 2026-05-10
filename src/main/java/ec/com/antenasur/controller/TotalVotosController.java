@@ -48,7 +48,7 @@ public class TotalVotosController implements Serializable {
     private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
     private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
     private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "Â¿Esta seguro de eliminar?";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
 
     @Inject
     private LoginBean loginBean;

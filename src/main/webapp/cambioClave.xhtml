@@ -13,7 +13,7 @@
             <meta name="author" content="Luis Lema" />
         </f:facet>
         <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
-        <title>Cambio clave </title>
+        <title>#{msg['app.sistema']} - #{msg['form.cambioClave.title']}</title>
         <h:outputScript name="js/layout.js" library="ecuador-layout" />
         <h:outputScript name="js/prism.js" library="ecuador-layout"/>
     </h:head>
@@ -29,22 +29,41 @@
             <div class="grid " >
                 <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
                     <div class="card">
-                        <h5><b>Cambio de clave</b></h5>
-                        <p:staticMessage severity="info" summary="INFORMACIÃ“N" detail="Estimado usuario, ingrese una clave fÃ¡cil de recordar para usted y difÃ­cil de adivinar para el resto" style="width: 100%"/>
+                        <h5><b>#{msg['form.cambioClave.header']}</b></h5>
+                        <p:staticMessage severity="info"
+                                         summary="#{msg['form.cambioClave.msg.info.title']}"
+                                         detail="#{msg['form.cambioClave.msg.info.detail']}"
+                                         style="width: 100%"/>
 
                         <div class="col-12 ui-fluid">
-                            <p:password styleClass=" w-full mt-2" id="claveAnterior" required="true" value="#{cambioClaveController.claveTemporal}"  validatorMessage="#{msg['msg.passwordOld.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true"  placeholder="#{msg['msg.placeH.claveTemporat']}" />
+                            <p:password styleClass=" w-full mt-2" id="claveAnterior" required="true"
+                                        value="#{cambioClaveController.claveTemporal}"
+                                        validatorMessage="#{msg['msg.passwordOld.validator']}"
+                                        requiredMessage="#{msg['msg.password.required']}"
+                                        redisplay="true" toggleMask="true"
+                                        placeholder="#{msg['msg.placeH.claveTemporat']}"/>
 
-                            <p:password styleClass=" w-full my-3" id="password" required="true" value="#{cambioClaveController.clave1}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  toggleMask="true"  placeholder="contraseÃ±a"/>
-                            
-                            <p:password styleClass=" w-full" id="password2" required="true" value="#{cambioClaveController.clave2}"  validatorMessage="#{msg['msg.password.validator']}" requiredMessage="#{msg['msg.password.required']}"  redisplay="true" toggleMask="true" placeholder="repita la contraseÃ±a"/>
+                            <p:password styleClass=" w-full my-3" id="password" required="true"
+                                        value="#{cambioClaveController.clave1}"
+                                        validatorMessage="#{msg['msg.password.validator']}"
+                                        requiredMessage="#{msg['msg.password.required']}"
+                                        toggleMask="true"
+                                        placeholder="#{msg['form.cambioClave.placeholder.password.new']}"/>
 
+                            <p:password styleClass=" w-full" id="password2" required="true"
+                                        value="#{cambioClaveController.clave2}"
+                                        validatorMessage="#{msg['msg.password.validator']}"
+                                        requiredMessage="#{msg['msg.password.required']}"
+                                        redisplay="true" toggleMask="true"
+                                        placeholder="#{msg['form.cambioClave.placeholder.password.confirm']}"/>
                         </div>
 
-                        <div align='center'> 
-                            <p:commandButton value="#{msg['btn.changue']}"  action="#{cambioClaveController.cambiarClave()}"  ajax="false" styleClass="ui-button-info" />
-                            <p:divider />
-                            <h:outputLink value="#{request.contextPath}/index.html" >Regresar</h:outputLink>
+                        <div align='center'>
+                            <p:commandButton value="#{msg['form.cambioClave.btn.save']}"
+                                             action="#{cambioClaveController.cambiarClave()}"
+                                             ajax="false" styleClass="ui-button-info"/>
+                            <p:divider/>
+                            <h:outputLink value="#{request.contextPath}/index.html">#{msg['form.cambioClave.btn.back']}</h:outputLink>
                         </div>
                     </div>
 

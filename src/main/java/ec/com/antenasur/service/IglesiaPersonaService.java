@@ -54,7 +54,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     /**
      * Devuelve la {@link Iglesia} a la que pertenece la persona indicada
-     * (vÃ­nculo activo mÃ¡s reciente), o {@code null} si la persona no estÃ¡
+     * (vínculo activo más reciente), o {@code null} si la persona no está
      * en ninguna iglesia.
      */
     public Iglesia obtenerIglesiaDePersona(Integer personaId) {
@@ -66,7 +66,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
      * Variante por DOCUMENTO de persona: robusta contra duplicados en
      * {@code tb_persona}. Cuando dos filas tienen el mismo documento pero
      * distintos ids, {@link #obtenerIglesiaDePersona(Integer)} puede fallar
-     * (porque depende del id) â€” esta versiÃ³n joinea por documento y evita
+     * (porque depende del id) — esta versión joinea por documento y evita
      * el falso "sin iglesia asignada".
      */
     public Iglesia obtenerIglesiaDePersonaPorDocumento(String documento) {
@@ -77,11 +77,11 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     /**
      * Persiste el binding iglesia-persona junto con la persona contenida.
      * Si la persona ya existe (id != null) hace edit; si no, hace create. Lo
-     * mismo aplica al propio {@link IglesiaPersona}. OperaciÃ³n atÃ³mica por
-     * transacciÃ³n EJB.
+     * mismo aplica al propio {@link IglesiaPersona}. Operación atómica por
+     * transacción EJB.
      *
      * @return el IglesiaPersona persistido (con su Persona ligada y sus IDs
-     *         actualizados), o null si la entrada es invÃ¡lida
+     *         actualizados), o null si la entrada es inválida
      */
     public IglesiaPersona guardarConPersona(IglesiaPersona iglesiaPersona) {
         if (iglesiaPersona == null || iglesiaPersona.getPersona() == null
@@ -130,18 +130,18 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
      * Persiste el binding iglesia-persona a partir del DTO compuesto.
      * Resuelve la {@link Iglesia} y {@link Persona} contra BD usando los ids
      * del DTO; si la persona no tiene id, la crea con los datos del DTO.
-     * OperaciÃ³n atÃ³mica por transacciÃ³n EJB.
+     * Operación atómica por transacción EJB.
      */
     public IglesiaPersonaDTO guardarDesdeDTO(IglesiaPersonaDTO dto) {
         if (dto == null || dto.getIglesia() == null || dto.getPersona() == null) {
             return null;
         }
-        // ValidaciÃ³n dura por cronograma electoral: rechazamos saves si la
-        // fase vigente no permite ediciÃ³n del padrÃ³n. UI tambiÃ©n lo bloquea
+        // Validación dura por cronograma electoral: rechazamos saves si la
+        // fase vigente no permite edición del padrón. UI también lo bloquea
         // pero esta capa protege contra requests fuera de flujo.
         if (!cronogramaService.permiteEdicionPadron()) {
             throw new IllegalStateException(
-                    "La actualizaciÃ³n del padrÃ³n estÃ¡ cerrada por el cronograma electoral.");
+                    "La actualización del padrón está cerrada por el cronograma electoral.");
         }
         Iglesia iglesia = (dto.getIglesia().getId() != null)
                 ? iglesiaFacade.find(dto.getIglesia().getId()) : null;
@@ -188,11 +188,11 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             nueva.setHabilitadoPadron(dto.getHabilitadoPadron() != null
                     ? dto.getHabilitadoPadron() : Boolean.TRUE);
             ip = iglesiaPersonaFacade.create(nueva);
-            // Marca como "actualizada" desde su creaciÃ³n: forzamos
+            // Marca como "actualizada" desde su creación: forzamos
             // fechaActualiza = fechaCrea + 3s para que la regla del DTO
             // (delta > 2s) los considere ya actualizados al venir de un alta
-            // hecha por el IglesiaAdmin. Cualquier edit posterior la moverÃ¡
-            // a now() y seguirÃ¡ siendo > fechaCrea.
+            // hecha por el IglesiaAdmin. Cualquier edit posterior la moverá
+            // a now() y seguirá siendo > fechaCrea.
             if (ip != null && ip.getFechaCrea() != null) {
                 ip.setFechaActualiza(new java.util.Date(ip.getFechaCrea().getTime() + 3000L));
                 ip = iglesiaPersonaFacade.edit(ip);
@@ -202,13 +202,13 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     }
 
     /**
-     * Crea el vÃ­nculo {@link IglesiaPersona} entre la persona y la iglesia
-     * indicadas si aÃºn no existe. Idempotente: si ya hay un vÃ­nculo activo,
+     * Crea el vínculo {@link IglesiaPersona} entre la persona y la iglesia
+     * indicadas si aún no existe. Idempotente: si ya hay un vínculo activo,
      * lo retorna sin tocar BD.
      *
-     * @return par (vinculo, fueCreado) â€” {@code fueCreado=true} cuando se
-     *         persistiÃ³ un nuevo vÃ­nculo, {@code false} cuando ya existÃ­a.
-     *         Devuelve {@code null} si los argumentos son invÃ¡lidos o la
+     * @return par (vinculo, fueCreado) — {@code fueCreado=true} cuando se
+     *         persistió un nuevo vínculo, {@code false} cuando ya existía.
+     *         Devuelve {@code null} si los argumentos son inválidos o la
      *         iglesia/persona no existen.
      */
     public ResultadoVinculo crearVinculoSiNoExiste(Integer iglesiaId, Integer personaId) {
@@ -243,7 +243,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     }
 
     /**
-     * Calcula el progreso de actualizaciÃ³n de los miembros de una iglesia.
+     * Calcula el progreso de actualización de los miembros de una iglesia.
      * El array devuelto es: [total, actualizados, porcentaje].
      */
     public int[] calcularProgresoActualizacion(Integer iglesiaId) {
@@ -271,7 +271,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     /**
      * Devuelve los DTOs de miembros de una iglesia que ya fueron marcados
-     * como actualizados (para incluir en el acta de actualizaciÃ³n).
+     * como actualizados (para incluir en el acta de actualización).
      */
     public List<IglesiaPersonaDTO> listarDTOsActualizadosPorIglesia(Integer iglesiaId) {
         List<IglesiaPersonaDTO> todos = listarDTOsPorIglesia(iglesiaId);

@@ -26,7 +26,7 @@ import lombok.Setter;
  * <p>Como es una vista (no una tabla), no admite constraints. Los
  * {@code @JoinColumn} llevan {@code ConstraintMode.NO_CONSTRAINT} para que
  * Hibernate (con {@code hbm2ddl.auto=update}) no intente generar FKs que
- * fallarÃ­an contra la vista. La entidad es {@code @Immutable} â€” solo lectura.
+ * fallarían contra la vista. La entidad es {@code @Immutable} — solo lectura.
  */
 @Entity
 @Immutable

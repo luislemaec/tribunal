@@ -92,7 +92,7 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
      * N consultas {@link #getTieneDocumentosPorEntidadYTipoDoc} (1 query por
      * entidad) por una sola query agregada.
      *
-     * <p>Antes: 1000 iglesias Ã¢â€ â€™ 1001 queries SQL solo para marcar el flag.
+     * <p>Antes: 1000 iglesias Ã¢â€ ’ 1001 queries SQL solo para marcar el flag.
      * Ahora: 2 queries (findAll + esta).
      */
     public Set<Integer> getEntidadesIdsConDocumentos(Integer tipoDocId) {

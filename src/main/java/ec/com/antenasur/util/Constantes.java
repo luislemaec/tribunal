@@ -167,7 +167,7 @@ public class Constantes {
     /**
      * Rol del Tribunal Electoral. El cargo interno (Presidente, Secretario,
      * Vocal, Veedor) se distingue mediante {@code tb_tribunal} para evitar
-     * explosiÃ³n de roles RBAC.
+     * explosión de roles RBAC.
      */
     public static String getRolTribunal() {
         return "Tribunal";

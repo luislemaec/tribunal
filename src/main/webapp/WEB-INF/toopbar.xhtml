@@ -29,14 +29,14 @@
             <li>
                 <h:link outcome="/perfil">
                     <i class="pi pi-fw pi-user"/>
-                    <span class="topbar-item-name">Perfil</span>
+                    <span class="topbar-item-name">#{msg['topbar.profile']}</span>
                     <span class="topbar-submenuitem-badge">4</span>
                 </h:link>
             </li>
             <li>
                 <a href="#">
                     <i class="pi pi-fw pi-cog"/>
-                    <span class="topbar-item-name">ConfiguraciÃ³n</span>
+                    <span class="topbar-item-name">#{msg['topbar.config']}</span>
                     <span class="topbar-submenuitem-badge">2</span>
                 </a>
                 <ul>
@@ -136,7 +136,7 @@
                     <p:commandLink
                         actionListener="#{loginBean.logout()}" process="@this">
                         <i class="pi pi-fw pi-sign-out"></i>
-                        <span class="topbar-item-name">Logout</span> 
+                        <span class="topbar-item-name">#{msg['topbar.logout']}</span>
                     </p:commandLink>                    
                 </h:form>
             </li>

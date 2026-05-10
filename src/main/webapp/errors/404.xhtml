@@ -9,9 +9,9 @@
             <div class="seperator"></div>
         </div>
         <div class="bottom">
-            <span class="exception-panel-header">Error 404!</span>
-            <span class="exception-panel-subheader">PÃ¡gina no encontrada..</span>
-           <p:linkButton outcome="/dashboard.jsf" value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
+            <span class="exception-panel-header">#{msg['error.404.title']}</span>
+            <span class="exception-panel-subheader">#{msg['error.404.message']}</span>
+           <p:linkButton outcome="/dashboard.jsf" value="#{msg['error.btn.home']}" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
         </div><!-- comment -->
 
     </ui:define>

@@ -76,9 +76,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * Devuelve la lista de iglesias Ãºnicas presentes en los padrones dados.
-     * Ãštil para construir la columna "iglesias asignadas" en pantallas de
-     * gestiÃ³n del padrÃ³n.
+     * Devuelve la lista de iglesias únicas presentes en los padrones dados.
+     * Útil para construir la columna "iglesias asignadas" en pantallas de
+     * gestión del padrón.
      */
     public List<Iglesia> obtenerIglesiasUnicasEnPadron(List<Padron> padrones) {
         List<Iglesia> resultado = new ArrayList<>();
@@ -98,12 +98,12 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * Asigna todas las personas vinculadas a una iglesia al padrÃ³n de una mesa
-     * para el perÃ­odo dado, evitando duplicados (no inserta si ya hay un
-     * padrÃ³n para esa IglesiaPersona+Periodo). AtÃ³mico: si falla a media
-     * iteraciÃ³n, hace rollback de la transacciÃ³n EJB.
+     * Asigna todas las personas vinculadas a una iglesia al padrón de una mesa
+     * para el período dado, evitando duplicados (no inserta si ya hay un
+     * padrón para esa IglesiaPersona+Periodo). Atómico: si falla a media
+     * iteración, hace rollback de la transacción EJB.
      *
-     * @return los padrones nuevos creados (vacÃ­o si todas las personas ya
+     * @return los padrones nuevos creados (vacío si todas las personas ya
      *         estaban asignadas)
      */
     public List<Padron> asignarIglesiaAMesa(Iglesia iglesia, Mesa mesa, Periodo periodo) {
@@ -125,11 +125,11 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * Importa una fila de padrÃ³n electoral desde una fuente externa (ej.
+     * Importa una fila de padrón electoral desde una fuente externa (ej.
      * Excel): asegura la existencia de la iglesia (busca por nombre/comunidad/
-     * ubicaciÃ³n, o la crea), persiste la persona, crea la relaciÃ³n
-     * iglesia-persona y el registro de padrÃ³n vinculado a la mesa. AtÃ³mico
-     * por transacciÃ³n EJB: una fila se persiste completa o no se persiste.
+     * ubicación, o la crea), persiste la persona, crea la relación
+     * iglesia-persona y el registro de padrón vinculado a la mesa. Atómico
+     * por transacción EJB: una fila se persiste completa o no se persiste.
      *
      * @return el {@link Padron} persistido, o null si la entrada es insuficiente
      */
@@ -155,8 +155,8 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * VersiÃ³n por ids de {@link #asignarIglesiaAMesa(Iglesia, Mesa, Periodo)}.
-     * Resuelve las entidades a partir de ids y delega al mÃ©todo principal.
+     * Versión por ids de {@link #asignarIglesiaAMesa(Iglesia, Mesa, Periodo)}.
+     * Resuelve las entidades a partir de ids y delega al método principal.
      */
     public int asignarIglesiaAMesaPorIds(Integer iglesiaId, Integer mesaId, Integer periodoId) {
         if (iglesiaId == null || mesaId == null || periodoId == null) {
@@ -194,8 +194,8 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * VersiÃ³n basada en ids de mesa: resuelve internamente los Mesa stubs y
-     * delega. Ãštil para controllers que no manejan entidades.
+     * Versión basada en ids de mesa: resuelve internamente los Mesa stubs y
+     * delega. Útil para controllers que no manejan entidades.
      */
     public List<PadronDTO> listarDTOsPorMesaIds(List<Integer> mesaIds) {
         if (mesaIds == null || mesaIds.isEmpty()) {
@@ -209,9 +209,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * VersiÃ³n DTO de {@link #obtenerIglesiasUnicasEnPadron(List)}: dada una
-     * lista de PadronDTO, extrae los IglesiaDTO Ãºnicos (preservando orden de
-     * apariciÃ³n).
+     * Versión DTO de {@link #obtenerIglesiasUnicasEnPadron(List)}: dada una
+     * lista de PadronDTO, extrae los IglesiaDTO únicos (preservando orden de
+     * aparición).
      */
     public List<ec.com.antenasur.dto.IglesiaDTO> obtenerIglesiasUnicasEnPadronDTO(List<PadronDTO> padrones) {
         List<ec.com.antenasur.dto.IglesiaDTO> resultado = new ArrayList<>();
@@ -230,9 +230,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     }
 
     /**
-     * Persiste un padrÃ³n a partir del DTO. Resuelve mesa, periodo e
+     * Persiste un padrón a partir del DTO. Resuelve mesa, periodo e
      * iglesiaPersona por sus ids embebidos. Si el id es null crea, si no
-     * hidrata el padrÃ³n existente con los nuevos valores.
+     * hidrata el padrón existente con los nuevos valores.
      */
     public PadronDTO guardarDesdeDTO(PadronDTO dto) {
         if (dto == null) {

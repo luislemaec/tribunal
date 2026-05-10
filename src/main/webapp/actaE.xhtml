@@ -4,12 +4,12 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Acta de escrutinio</ui:define>
+    <ui:define name="title">#{msg['form.actaE.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/actaE">Acta de escrutinio</p:link>
+            <p:link outcome="/actaE">#{msg['form.actaE.title']}</p:link>
         </li>
     </ui:define>
 
@@ -20,7 +20,7 @@
                     <div class="card">
                         <div class="ui-fluid formgrid grid">
                             <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="canton" value="CantÃ³n" />
+                                <p:outputLabel for="canton" value="Cantón" />
                                 <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
                                     <f:selectItem itemLabel="Select" itemValue="" />
                                     <f:selectItems value="#{actaEController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
@@ -78,8 +78,8 @@
                                              actionListener="#{actaEController.eliminarSeleccionado}"
                                              process="@this" update="@form">
                                 <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}" />
-                                <p:confirm header="Confirmar eliminaciÃ³n"
-                                           message="Â¿EstÃ¡ seguro de eliminar este registro?"
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este registro?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>

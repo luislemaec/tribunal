@@ -93,7 +93,7 @@ public class CambioClaveController implements Serializable {
 
             enviarCorreoCambioClave();
             JsfUtil.addSuccessMessage("Cambio de clave exitoso");
-            procesoBean.registraActividad("CAMBIA CONTRASEÃƒâ€˜A");
+            procesoBean.registraActividad("CAMBIA CONTRASEÃƒ‘A");
             loginBean.passwordChangued();
             JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
         } catch (Exception e) {

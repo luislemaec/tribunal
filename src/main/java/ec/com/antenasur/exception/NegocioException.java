@@ -3,11 +3,11 @@ package ec.com.antenasur.exception;
 import jakarta.ejb.ApplicationException;
 
 /**
- * ExcepciÃ³n para violaciones de reglas de negocio (documento duplicado,
- * conflicto de ediciÃ³n concurrente, etc.).
+ * Excepción para violaciones de reglas de negocio (documento duplicado,
+ * conflicto de edición concurrente, etc.).
  *
  * {@code @ApplicationException(rollback=false)} garantiza que EJB no envuelve
- * la excepciÃ³n en EJBException y no hace rollback de la transacciÃ³n: el mensaje
+ * la excepción en EJBException y no hace rollback de la transacción: el mensaje
  * llega al controlador tal cual para mostrarlo al usuario.
  */
 @ApplicationException(rollback = false)

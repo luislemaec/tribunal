@@ -53,7 +53,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_OLVIDO_CONTRASENA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
             return null;
         }
     }
@@ -63,7 +63,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_CAMBIO_CONTRASENIA);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
             return null;
         }
     }
@@ -73,7 +73,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(CORREO_RECUPERAR_CLAVE);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
             return null;
         }
     }
@@ -83,7 +83,7 @@ public class PlantillaCorreoBean implements Serializable {
             this.plantillaCorreo = plantillaCorreoService.buscarPorAsunto(asunto);
             return eliminarLlaves(this.plantillaCorreo);
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
             return null;
         }
     }
@@ -93,7 +93,7 @@ public class PlantillaCorreoBean implements Serializable {
             plantillaCorreo.setMensaje(plantillaCorreo.getMensaje().replaceAll("\\{|\\}", ""));
             return plantillaCorreo;
         } catch (Exception e) {
-            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒâ€˜A", e);
+            LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
             return null;
         }
     }

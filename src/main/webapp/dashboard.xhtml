@@ -5,10 +5,10 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">Dashboard</ui:define>
+    <ui:define name="title">#{msg['form.dashboard.title']}</ui:define>
 
     <ui:define name="viewname">
-        <li><p:link outcome="/dashboard">Dashboard</p:link></li>
+        <li><p:link outcome="/dashboard">#{msg['form.dashboard.title']}</p:link></li>
     </ui:define>
 
     <ui:define name="content">
@@ -24,49 +24,44 @@
                                 <i class="pi pi-home text-white" style="font-size:1.5rem"/>
                             </div>
                             <div>
-                                <h2 class="m-0 text-900 font-bold text-2xl">Sistema Electoral</h2>
-                                <p class="text-500 mt-1 mb-0 text-sm">Resumen general del proceso electoral.</p>
+                                <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.dashboard.header']}</h2>
+                                <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.dashboard.subheader']}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Accesos rÃ¡pidos: SpeedDial flotante (ligero, sin queries). -->
+            <!-- Accesos rápidos: SpeedDial flotante (ligero, sin queries). -->
             <h:form id="frmSpeedDial">
                 <p:speedDial type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="Iglesias"
-                                styleClass="ui-button-success"/>
-                    <p:menuitem outcome="/recintos" icon="pi pi-map-marker" title="Recintos"
-                                styleClass="ui-button-info"/>
-                    <p:menuitem outcome="/mesas" icon="pi pi-list" title="Mesas"
-                                styleClass="ui-button-warning"/>
-                    <p:menuitem outcome="/escrutinios" icon="pi pi-file-edit" title="Escrutinios"
-                                styleClass="ui-button-help"/>
+                    <p:menuitem outcome="/iglesias"    icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-success"/>
+                    <p:menuitem outcome="/recintos"    icon="pi pi-map-marker"  title="#{msg['form.dashboard.shortcut.recintos']}"     styleClass="ui-button-info"/>
+                    <p:menuitem outcome="/mesas"       icon="pi pi-list"        title="#{msg['form.dashboard.shortcut.mesas']}"        styleClass="ui-button-warning"/>
+                    <p:menuitem outcome="/escrutinios" icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-help"/>
                 </p:speedDial>
             </h:form>
 
             <p:divider align="left" type="solid">
                 <span class="p-tag" style="background:#fff7ed; color:#92400e">
-                    <i class="pi pi-chart-bar" style="margin-right:.4rem"/>Resumen general
+                    <i class="pi pi-chart-bar" style="margin-right:.4rem"/>#{msg['form.dashboard.summary']}
                 </span>
             </p:divider>
 
-            <!-- KPIs â€” todos provienen de DashboardController (queries livianas COUNT/SUM). -->
+            <!-- KPIs — DashboardController (queries livianas COUNT/SUM). -->
             <div class="grid">
 
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #3b82f6">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #3b82f6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
                                 <i class="pi pi-map-marker text-white"/>
                             </div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Recintos</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.recintos']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalRecintos}</span>
                             </div>
                         </div>
@@ -74,15 +69,14 @@
                 </div>
 
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #f59e0b">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #f59e0b">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f59e0b,#fbbf24);flex-shrink:0">
                                 <i class="pi pi-list text-white"/>
                             </div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Mesas</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.mesas']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalMesas}</span>
                             </div>
                         </div>
@@ -90,15 +84,14 @@
                 </div>
 
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #22c55e">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #22c55e">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
                                 <i class="pi pi-users text-white"/>
                             </div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Personas</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.personas']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalPersonas}</span>
                             </div>
                         </div>
@@ -106,15 +99,14 @@
                 </div>
 
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #8b5cf6">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #8b5cf6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
                                 <i class="pi pi-building text-white"/>
                             </div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Iglesias</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.iglesias']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalIglesias}</span>
                             </div>
                         </div>

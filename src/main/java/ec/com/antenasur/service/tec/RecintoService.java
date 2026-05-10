@@ -62,7 +62,7 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
     /**
      * Persiste el recinto descrito por el DTO. Resuelve {@code ubicacionId}
      * contra {@link GeograpFacade}. Si el id es null crea, si no, hidrata la
-     * entidad existente con los campos del DTO (preservando auditorÃ­a).
+     * entidad existente con los campos del DTO (preservando auditoría).
      */
     public RecintoDTO guardarDesdeDTO(RecintoDTO dto) {
         if (dto == null) {

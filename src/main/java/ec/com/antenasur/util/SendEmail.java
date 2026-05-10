@@ -45,7 +45,7 @@ public class SendEmail implements Serializable {
             InitialContext ctx = new InitialContext();
             // Session session = (Session) ctx.lookup("jdniMail"); //Glassfish-payara SERVER
             Session session = (Session) ctx.lookup("java:jboss/mail/Rpm");
-            // Truststore del servidor SMTP no estÃ¡ en la JVM (entorno interno):
+            // Truststore del servidor SMTP no está en la JVM (entorno interno):
             // confiamos en cualquier certificado para evitar SSLHandshakeException
             // PKIX path building failed. Aceptable solo en redes corporativas.
             session.getProperties().setProperty("mail.smtp.ssl.trust", "*");
@@ -82,7 +82,7 @@ public class SendEmail implements Serializable {
             // Se envia el correo.
             Transport t = session.getTransport(session.getProperties().getProperty("mail.transport.protocol"));
 
-            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=ContraseÃ±a del correo
+            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=Contraseña del correo
             // registrado en Jboss
             message.saveChanges();
             t.sendMessage(message, message.getAllRecipients());
@@ -162,7 +162,7 @@ public class SendEmail implements Serializable {
             // Se envia el correo.
             Transport t = session.getTransport(session.getProperties().getProperty("mail.transport.protocol"));
 
-            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=ContraseÃ±a del correo
+            t.connect(session.getProperties().getProperty("mail.from"), PASSWORD_MAIL);// <=Contraseña del correo
             // registrado en Jboss
             message.saveChanges();
             t.sendMessage(message, message.getAllRecipients());

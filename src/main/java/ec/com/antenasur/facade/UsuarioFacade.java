@@ -84,11 +84,11 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             }
             log.warn("findByUsuarioName('{}'): JOIN FETCH ejecutado sin error pero sin resultados", username);
         } catch (Exception e) {
-            log.error("findByUsuarioName('{}'): JOIN FETCH lanzÃ³ excepciÃ³n, probarÃ© fallback sin fetch", username, e);
+            log.error("findByUsuarioName('{}'): JOIN FETCH lanzó excepción, probaré fallback sin fetch", username, e);
         }
 
-        // Intento 2 (fallback): query simple sin JOIN FETCH. Persona se cargarÃ¡
-        // lazy si se accede despuÃ©s. Defensivo ante cambios de Hibernate 6.
+        // Intento 2 (fallback): query simple sin JOIN FETCH. Persona se cargará
+        // lazy si se accede después. Defensivo ante cambios de Hibernate 6.
         try {
             String sqlSimple = SQL + " where u.username = :username and u.estado=true";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sqlSimple, Usuario.class);
@@ -96,12 +96,12 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             List<Usuario> resultList = query.getResultList();
 
             if (resultList != null && !resultList.isEmpty()) {
-                log.info("findByUsuarioName('{}'): resuelto vÃ­a fallback simple", username);
+                log.info("findByUsuarioName('{}'): resuelto vía fallback simple", username);
                 return resultList.get(0);
             }
-            log.warn("findByUsuarioName('{}'): fallback simple tampoco encontrÃ³ resultado", username);
+            log.warn("findByUsuarioName('{}'): fallback simple tampoco encontró resultado", username);
         } catch (Exception e2) {
-            log.error("findByUsuarioName('{}'): fallback simple tambiÃ©n fallÃ³", username, e2);
+            log.error("findByUsuarioName('{}'): fallback simple también falló", username, e2);
         }
         return null;
     }
@@ -176,7 +176,7 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     /**
      * Devuelve el {@link Usuario} IglesiaAdmin asignado a la iglesia indicada,
-     * o {@code null} si la iglesia aÃƒÂºn no tiene admin. Identifica al admin por
+     * o {@code null} si la iglesia aÃƒºn no tiene admin. Identifica al admin por
      * el vÃƒÂ­nculo directo {@code u.iglesia} (solo IglesiaAdmin queda con iglesia
      * asignada por convenciÃƒÂ³n del flujo de creaciÃƒÂ³n).
      */
@@ -201,7 +201,7 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     /**
      * Devuelve todos los usuarios IglesiaAdmin activos del sistema (uno por
-     * iglesia asignada). Pensado para construir un mapa iglesiaId Ã¢â€ â€™ admin sin
+     * iglesia asignada). Pensado para construir un mapa iglesiaId Ã¢â€ ’ admin sin
      * disparar N+1 al listar iglesias en la pantalla de asignaciÃƒÂ³n.
      */
     public List<Usuario> findAllIglesiaAdmins() {

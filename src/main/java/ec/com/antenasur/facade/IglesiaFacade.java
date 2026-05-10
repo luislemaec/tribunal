@@ -136,7 +136,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
      *
      * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atÃƒÂ³mica por diseÃƒÂ±o:
      * elimina race conditions sin advisory locks y garantiza que un valor nunca se reuse,
-     * incluso si se elimina la ÃƒÂºltima iglesia con cÃƒÂ³digo genÃƒÂ©rico.
+     * incluso si se elimina la Ãƒºltima iglesia con cÃƒÂ³digo genÃƒÂ©rico.
      *
      * La secuencia se crea de forma idempotente en la primera invocaciÃƒÂ³n, alineada al
      * mayor cÃƒÂ³digo existente en {@code tb_iglesia} para no colisionar con datos previos.
@@ -152,7 +152,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
     /**
      * Crea la secuencia si no existe, alineada a {@code MAX(igl_documento) + 1} de
      * los cÃƒÂ³digos genÃƒÂ©ricos previos (cualquier documento de 13 dÃƒÂ­gitos numÃƒÂ©ricos
-     * que empiece con "00" Ã¢â‚¬â€ los RUC reales ecuatorianos nunca empiezan con 00,
+     * que empiece con "00" Ã¢â‚¬” los RUC reales ecuatorianos nunca empiezan con 00,
      * provincias 01-24).
      *
      * Idempotente: tras la primera ejecuciÃƒÂ³n, el bloque DO no hace nada.

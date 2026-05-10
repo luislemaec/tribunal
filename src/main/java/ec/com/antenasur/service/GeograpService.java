@@ -11,9 +11,9 @@ import ec.com.antenasur.facade.GeograpFacade;
 import ec.com.antenasur.model.Geograp;
 
 /**
- * {@link Geograp} no hereda de {@code EntidadBase} (entidad geogrÃ¡fica
- * estÃ¡tica, sin soft-delete), por lo que este service no extiende
- * {@link AbstractService}. Expone explÃ­citamente las operaciones que los
+ * {@link Geograp} no hereda de {@code EntidadBase} (entidad geográfica
+ * estática, sin soft-delete), por lo que este service no extiende
+ * {@link AbstractService}. Expone explícitamente las operaciones que los
  * consumidores usan.
  */
 @Stateless
@@ -62,14 +62,14 @@ public class GeograpService {
         return geograpFacade.findByFatherGeograp(geograp);
     }
 
-    /** Retorna el Geograp padre (cantÃ³n) de la parroquia con el id dado. */
+    /** Retorna el Geograp padre (cantón) de la parroquia con el id dado. */
     public Geograp findParentOf(Integer childId) {
         return geograpFacade.findParentOf(childId);
     }
 
     /**
-     * Devuelve la uniÃ³n de todas las parroquias hijas de los cantones dados.
-     * Ãštil para reportes a nivel provincial donde se necesita iterar sobre
+     * Devuelve la unión de todas las parroquias hijas de los cantones dados.
+     * Útil para reportes a nivel provincial donde se necesita iterar sobre
      * todas las parroquias agregadas.
      */
     public GeograpDTO obtenerDTOPorId(Integer id) {

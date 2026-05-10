@@ -60,12 +60,12 @@ public class IglesiaController implements Serializable {
     @Getter
     private IglesiaDTO iglesiaSeleccionado;
 
-    // â”€â”€ Provincias (cargadas al inicio, compartidas entre filtro y diÃ¡logo) â”€â”€
+    // â”€â”€ Provincias (cargadas al inicio, compartidas entre filtro y diálogo) â”€â”€
     @Setter
     @Getter
     private List<Geograp> provincias;
 
-    // â”€â”€ Estado exclusivo del filtro geogrÃ¡fico (toolbar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Estado exclusivo del filtro geográfico (toolbar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Setter
     @Getter
     private Integer provinciaFiltroId;
@@ -82,7 +82,7 @@ public class IglesiaController implements Serializable {
     @Getter
     private Geograp parroquiaSeleccionado, cantonSeleccionado;
 
-    // â”€â”€ Estado exclusivo del diÃ¡logo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Estado exclusivo del diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Setter
     @Getter
     private Integer provinciaDialogoId;
@@ -92,15 +92,15 @@ public class IglesiaController implements Serializable {
     private List<Geograp> cantonesDialogo;
 
     /**
-     * ID del cantÃ³n seleccionado dentro del diÃ¡logo. Se usa Integer puro (no
-     * Geograp) para evitar ambigÃ¼edades del IntegerConverter de JSF al
+     * ID del cantón seleccionado dentro del diálogo. Se usa Integer puro (no
+     * Geograp) para evitar ambigüedades del IntegerConverter de JSF al
      * renderizar el hidden select de p:selectOneMenu con filter="true".
      */
     @Setter
     @Getter
     private Integer cantonDialogoId;
 
-    /** Parroquias cargadas dentro del diÃ¡logo â€” independientes de las del filtro. */
+    /** Parroquias cargadas dentro del diálogo — independientes de las del filtro. */
     @Setter
     @Getter
     private List<Geograp> parroquiasDialogo;
@@ -128,16 +128,16 @@ public class IglesiaController implements Serializable {
     @Getter
     private int[] progresoRegistro = {0, 0, 0};
 
-    /** Controla si la iglesia en ediciÃ³n tiene RUC propio. Default true. */
+    /** Controla si la iglesia en edición tiene RUC propio. Default true. */
     @Setter
     @Getter
     private boolean tieneRuc = true;
 
     /**
-     * Los botones "SÃ­, tiene RUC" / "No tiene RUC" solo se habilitan cuando
-     * el campo igl_documento aÃºn estÃ¡ vacÃ­o: iglesia nueva o iglesia existente
-     * que todavÃ­a no tiene documento asignado.
-     * Una vez asignado (RUC real o cÃ³digo genÃ©rico) el tipo queda bloqueado.
+     * Los botones "Sí, tiene RUC" / "No tiene RUC" solo se habilitan cuando
+     * el campo igl_documento aún está vacío: iglesia nueva o iglesia existente
+     * que todavía no tiene documento asignado.
+     * Una vez asignado (RUC real o código genérico) el tipo queda bloqueado.
      */
     public boolean isRucToggleHabilitado() {
         if (iglesiaSeleccionado == null) return false;
@@ -152,8 +152,8 @@ public class IglesiaController implements Serializable {
             cantonDialogoId = null;
             provinciaDialogoId = null;
 
-            // Carga provincias dinÃ¡micamente usando el nodo 7 (provincia conocida)
-            // como referencia para encontrar el padre (zona/paÃ­s) de todas las provincias.
+            // Carga provincias dinámicamente usando el nodo 7 (provincia conocida)
+            // como referencia para encontrar el padre (zona/país) de todas las provincias.
             Geograp provRef = geograpService.find(7);
             if (provRef != null && provRef.getGeograp() != null) {
                 provincias = geograpService.findByFatherId(provRef.getGeograp().getId());
@@ -175,11 +175,11 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    // â”€â”€ Filtro geogrÃ¡fico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Filtro geográfico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Filtro: cuando cambia la provincia carga los cantones correspondientes,
-     * limpia cantÃ³n/parroquia y filtra la tabla por la provincia seleccionada.
+     * limpia cantón/parroquia y filtra la tabla por la provincia seleccionada.
      */
     public void obtieneCantonesFiltro() {
         cantonesFiltro = null;
@@ -200,7 +200,7 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    /** Filtro: cuando cambia el cantÃ³n carga parroquias y filtra la tabla. */
+    /** Filtro: cuando cambia el cantón carga parroquias y filtra la tabla. */
     public void obtieneParroquias() {
         if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
@@ -224,11 +224,11 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    // â”€â”€ DiÃ¡logo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * DiÃ¡logo: cuando cambia la provincia carga los cantones del diÃ¡logo,
-     * limpia la selecciÃ³n de cantÃ³n y parroquia sin tocar el estado del filtro.
+     * Diálogo: cuando cambia la provincia carga los cantones del diálogo,
+     * limpia la selección de cantón y parroquia sin tocar el estado del filtro.
      */
     public void obtieneCantonesDialogo() {
         cantonDialogoId = null;
@@ -243,8 +243,8 @@ public class IglesiaController implements Serializable {
     }
 
     /**
-     * DiÃ¡logo: cuando cambia el cantÃ³n carga las parroquias del diÃ¡logo.
-     * No toca el estado del filtro geogrÃ¡fico ni listaIglesias.
+     * Diálogo: cuando cambia el cantón carga las parroquias del diálogo.
+     * No toca el estado del filtro geográfico ni listaIglesias.
      */
     public void obtieneParroquiasEnDialogo() {
         if (cantonDialogoId != null) {
@@ -258,12 +258,12 @@ public class IglesiaController implements Serializable {
     }
 
     /**
-     * Carga provincia, cantÃ³n y parroquias del diÃ¡logo a partir de la parroquia
+     * Carga provincia, cantón y parroquias del diálogo a partir de la parroquia
      * de la iglesia. Sin tocar el estado del filtro.
      *
-     * Estrategia 1 â€” datos del DTO (mÃ¡s confiable, viene del JOIN FETCH eager).
-     * Estrategia 2 â€” SQL nativo sobre gelo_parent_id (robusto ante @Filter).
-     * Estrategia 3 â€” navegaciÃ³n por entidad (fallback final).
+     * Estrategia 1 — datos del DTO (más confiable, viene del JOIN FETCH eager).
+     * Estrategia 2 — SQL nativo sobre gelo_parent_id (robusto ante @Filter).
+     * Estrategia 3 — navegación por entidad (fallback final).
      */
     private void cargarParroquiasParaDialogo(Integer parroquiaId) {
         cantonDialogoId = null;
@@ -297,7 +297,7 @@ public class IglesiaController implements Serializable {
             return;
         }
 
-        // Estrategia 3: navegaciÃ³n directa por entidad
+        // Estrategia 3: navegación directa por entidad
         Geograp parroquia = geograpService.find(parroquiaId);
         if (parroquia != null && parroquia.getGeograp() != null) {
             cantonDialogoId = parroquia.getGeograp().getId();
@@ -322,15 +322,15 @@ public class IglesiaController implements Serializable {
     }
 
     /**
-     * EdiciÃ³n desde la columna Acciones.
-     * Importante: este mÃ©todo se invoca vÃ­a atributo {@code action} (no
-     * {@code actionListener}) para que se ejecute DESPUÃ‰S del
+     * Edición desde la columna Acciones.
+     * Importante: este método se invoca vía atributo {@code action} (no
+     * {@code actionListener}) para que se ejecute DESPUÉS del
      * {@code <f:setPropertyActionListener>} hijo, garantizando que
-     * {@code iglesiaSeleccionado} ya estÃ© asignado antes de leer sus campos.
+     * {@code iglesiaSeleccionado} ya esté asignado antes de leer sus campos.
      */
     public void editarIglesiaFila() {
         if (iglesiaSeleccionado == null) {
-            log.warn("editarIglesiaFila: iglesiaSeleccionado es null â€” verifique que el botÃ³n use 'action' y no 'actionListener'");
+            log.warn("editarIglesiaFila: iglesiaSeleccionado es null — verifique que el botón use 'action' y no 'actionListener'");
             return;
         }
         esNuevoRegistro = false;
@@ -338,7 +338,7 @@ public class IglesiaController implements Serializable {
         cargarParroquiasParaDialogo(iglesiaSeleccionado.getUbicacionId());
     }
 
-    /** BotÃ³n "SÃ­, tiene RUC" â€” habilita el campo y limpia el cÃ³digo genÃ©rico si existÃ­a. */
+    /** Botón "Sí, tiene RUC" — habilita el campo y limpia el código genérico si existía. */
     public void seleccionarConRuc() {
         tieneRuc = true;
         if (iglesiaSeleccionado != null && esDocumentoGenerico(iglesiaSeleccionado.getDocumento())) {
@@ -346,7 +346,7 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    /** BotÃ³n "No tiene RUC" â€” deshabilita el campo y asigna el siguiente cÃ³digo genÃ©rico (preview). */
+    /** Botón "No tiene RUC" — deshabilita el campo y asigna el siguiente código genérico (preview). */
     public void seleccionarSinRuc() {
         tieneRuc = false;
         if (iglesiaSeleccionado != null) {
@@ -355,19 +355,19 @@ public class IglesiaController implements Serializable {
     }
 
     /**
-     * Identifica cÃ³digos genÃ©ricos. Real Ecuadorian RUCs jamÃ¡s empiezan con "00"
-     * (cÃ³digos de provincia 01-24), por lo que el prefijo de 2 ceros es un
+     * Identifica códigos genéricos. Real Ecuadorian RUCs jamás empiezan con "00"
+     * (códigos de provincia 01-24), por lo que el prefijo de 2 ceros es un
      * discriminador estable independiente del valor de la secuencia.
      */
     private boolean esDocumentoGenerico(String documento) {
         return documento != null && documento.startsWith("00");
     }
 
-    /** EliminaciÃ³n desde la columna Acciones â€” iglesiaSeleccionado ya viene seteado via f:setPropertyActionListener. */
+    /** Eliminación desde la columna Acciones — iglesiaSeleccionado ya viene seteado via f:setPropertyActionListener. */
     public void eliminarIglesiaFila() {
         if (iglesiaSeleccionado == null) return;
         if (!cronogramaService.permiteRegistroIglesias()) {
-            JsfUtil.addErrorMessage("El registro de iglesias no estÃ¡ habilitado en la fase electoral vigente.");
+            JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             iglesiaSeleccionado = null;
             return;
         }
@@ -397,7 +397,7 @@ public class IglesiaController implements Serializable {
 
     public void eliminarIglesiaSeleccionadas() {
         if (!cronogramaService.permiteRegistroIglesias()) {
-            JsfUtil.addErrorMessage("El registro de iglesias no estÃ¡ habilitado en la fase electoral vigente.");
+            JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             return;
         }
         if (listaIglesiasSeleccionadas != null) {
@@ -408,7 +408,7 @@ public class IglesiaController implements Serializable {
                         eliminadas++;
                     }
                 } catch (Exception e) {
-                    log.error("Error al eliminar iglesia id={} en eliminaciÃ³n masiva", item.getId(), e);
+                    log.error("Error al eliminar iglesia id={} en eliminación masiva", item.getId(), e);
                 }
             }
             JsfUtil.addInfoMessage(eliminadas + " iglesia(s) eliminada(s)");
@@ -430,14 +430,14 @@ public class IglesiaController implements Serializable {
             cargarParroquiasParaDialogo(encontrada.getUbicacionId());
             esNuevoRegistro = false;
             tieneRuc = !esDocumentoGenerico(encontrada.getDocumento());
-            JsfUtil.addInfoMessage("Iglesia con RUC ya estÃ¡ registrada. Datos cargados para actualizaciÃ³n.");
+            JsfUtil.addInfoMessage("Iglesia con RUC ya está registrada. Datos cargados para actualización.");
         }
     }
 
     public void actualizarIglesia() {
         try {
             if (!cronogramaService.permiteRegistroIglesias()) {
-                rechazarConMensaje("El registro de iglesias no estÃ¡ habilitado en la fase electoral vigente.");
+                rechazarConMensaje("El registro de iglesias no está habilitado en la fase electoral vigente.");
                 return;
             }
             if (iglesiaSeleccionado == null) {
@@ -453,7 +453,7 @@ public class IglesiaController implements Serializable {
                 return;
             }
             if (cantonDialogoId == null) {
-                rechazarConMensaje("Seleccione el cantÃ³n.");
+                rechazarConMensaje("Seleccione el cantón.");
                 return;
             }
             if (iglesiaSeleccionado.getUbicacionId() == null) {
@@ -481,20 +481,20 @@ public class IglesiaController implements Serializable {
                 refrescarLista();
                 PrimeFaces.current().ajax().update("frmIglesias", "frmStats", "frmProgreso", "msgs");
             } else {
-                rechazarConMensaje("No se pudo guardar la iglesia. Verifique que la parroquia seleccionada sea vÃ¡lida.");
+                rechazarConMensaje("No se pudo guardar la iglesia. Verifique que la parroquia seleccionada sea válida.");
             }
         } catch (NegocioException e) {
             rechazarConMensaje(e.getMessage());
         } catch (Exception e) {
             log.error("Error al guardar iglesia", e);
-            rechazarConMensaje("OcurriÃ³ un error inesperado al guardar. Intente nuevamente.");
+            rechazarConMensaje("Ocurrió un error inesperado al guardar. Intente nuevamente.");
         }
     }
 
     /**
-     * Agrega el mensaje de error Y le indica a PrimeFaces que la acciÃ³n fallÃ³
-     * (args.validationFailed = true en el oncomplete del botÃ³n Guardar),
-     * evitando que el diÃ¡logo se cierre cuando hay errores de negocio.
+     * Agrega el mensaje de error Y le indica a PrimeFaces que la acción falló
+     * (args.validationFailed = true en el oncomplete del botón Guardar),
+     * evitando que el diálogo se cierre cuando hay errores de negocio.
      */
     private void rechazarConMensaje(String mensaje) {
         JsfUtil.addErrorMessage(mensaje);
@@ -567,8 +567,8 @@ public class IglesiaController implements Serializable {
             ReporteXLSX.creaEspacioInformativo(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
 
             String[] columnas = {
-                "NÂ°", "RUC / CÃ“DIGO", "NOMBRE", "COMUNIDAD / BARRIO",
-                "PROVINCIA", "CANTÃ“N", "PARROQUIA", "TOTAL MIEMBROS", "DOCUMENTOS"
+                "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
+                "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS", "DOCUMENTOS"
             };
             int[] anchos = { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500, 3500 };
             ReporteXLSX.creaCabeceraTabla(columnas, anchos);
@@ -584,7 +584,7 @@ public class IglesiaController implements Serializable {
                 datos[i][5] = ig.getCantonNombre() != null ? ig.getCantonNombre() : "";
                 datos[i][6] = ig.getUbicacionNombre() != null ? ig.getUbicacionNombre() : "";
                 datos[i][7] = ig.getTotalMiembros() != null ? String.valueOf(ig.getTotalMiembros()) : "";
-                datos[i][8] = Boolean.TRUE.equals(ig.getTieneDocumentos()) ? "SÃ­" : "No";
+                datos[i][8] = Boolean.TRUE.equals(ig.getTieneDocumentos()) ? "Sí" : "No";
             }
 
             ReporteXLSX.creaContenidoTabla(datos, columnas);

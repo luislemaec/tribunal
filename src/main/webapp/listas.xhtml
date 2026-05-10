@@ -4,32 +4,46 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
-    <ui:define name="title">Listas</ui:define>
+    <ui:define name="title">#{msg['form.listas.title']}</ui:define>
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['form.listas.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/listas">Listas</p:link>
+            <p:link outcome="/listas">#{msg['form.listas.title']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
         <h:form id="frmListas">
-            <div class="grid">                
+            <div class="grid">
                 <div class="col-12 md:col-12 lg:col-12">
-                    <h5>ADMINITRACIÃ“N DE LISTAS</h5>
-                    <p:toolbar >
-                        <p:toolbarGroup >
-                            <p:commandButton value="Nuevo" icon="pi pi-plus" actionListener="#{listaController.nuevo}" update="outPnlListas" oncomplete="PF('dlgListas').show()"
-                                             styleClass="ui-button-success" style="margin-right: .5rem" />
-                            <p:commandButton id="btnEliminaRegistros" value="#{listaController.mensajeBotonEliminar}" icon="pi pi-trash" actionListener="#{listaController.eliminarSeleccionados}"
-                                             styleClass="ui-button-danger" disabled="#{!listaController.existeSeleccionados()}" update="@this">
-                                <p:confirm header="Confirmation" message="Â¿EstÃ¡ Seguro que desea eliminar?" icon="pi pi-exclamation-triangle" />
-                            </p:commandButton> 
+                    <h5>#{msg['form.listas.header']}</h5>
+                    <p:toolbar>
+                        <p:toolbarGroup>
+                            <p:commandButton value="#{msg['form.listas.btn.new']}" icon="pi pi-plus"
+                                             actionListener="#{listaController.nuevo}"
+                                             update="outPnlListas" oncomplete="PF('dlgListas').show()"
+                                             styleClass="ui-button-success" style="margin-right: .5rem"/>
+                            <p:commandButton id="btnEliminaRegistros"
+                                             value="#{listaController.mensajeBotonEliminar}"
+                                             icon="pi pi-trash"
+                                             actionListener="#{listaController.eliminarSeleccionados}"
+                                             styleClass="ui-button-danger"
+                                             disabled="#{!listaController.existeSeleccionados()}"
+                                             update="@this">
+                                <p:confirm header="#{msg['form.listas.confirm.delete.header']}"
+                                           message="#{msg['form.listas.confirm.delete.multiple']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
                         </p:toolbarGroup>
-                        <p:toolbarGroup align="right" >
-                            <p:fileUpload mode="simple" skinSimple="true" label="Import" chooseIcon="pi pi-download" disabled="#{listaController.listaSeleccionado.id eq null}"/>
-                            <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" disabled="#{empty listaController.listas}">
+                        <p:toolbarGroup align="right">
+                            <p:fileUpload mode="simple" skinSimple="true"
+                                          label="#{msg['form.listas.btn.import']}"
+                                          chooseIcon="pi pi-download"
+                                          disabled="#{listaController.listaSeleccionado.id eq null}"/>
+                            <p:commandButton value="#{msg['form.listas.btn.export']}" icon="pi pi-upload"
+                                             styleClass="ui-button-help" ajax="false"
+                                             disabled="#{empty listaController.listas}">
                                 <p:dataExporter type="pdf" target="tblListas" fileName="Listas"/>
                             </p:commandButton>
                         </p:toolbarGroup>
@@ -38,67 +52,97 @@
 
                 <div class="col-12 md:col-12 lg:col-12">
 
-                    <p:dataTable id="tblListas" widgetVar="wdTablaListas" var="lista" value="#{listaController.listas}" reflow="true" 
-                                 selection="#{listaController.listasSeleccionadas}" rowKey="#{lista.id}" rendered="#{not empty listaController.listas}"
-                                 paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom" showGridlines="true" 
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" >
-                        <p:ajax event="rowSelect" update=":frmListas:btnEliminaRegistros" />
-                        <p:ajax event="rowUnselect" update=":frmListas:btnEliminaRegistros" />
-                        <p:ajax event="rowSelectCheckbox" update=":frmListas:btnEliminaRegistros" />
-                        <p:ajax event="rowUnselectCheckbox" update=":frmListas:btnEliminaRegistros" />
-                        <p:ajax event="toggleSelect" update=":frmListas:btnEliminaRegistros" />
+                    <p:dataTable id="tblListas" widgetVar="wdTablaListas" var="lista"
+                                 value="#{listaController.listas}" reflow="true"
+                                 selection="#{listaController.listasSeleccionadas}" rowKey="#{lista.id}"
+                                 rendered="#{not empty listaController.listas}"
+                                 paginator="true" rows="10" rowSelectMode="add"
+                                 paginatorPosition="bottom" showGridlines="true"
+                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1">
+                        <p:ajax event="rowSelect"          update=":frmListas:btnEliminaRegistros"/>
+                        <p:ajax event="rowUnselect"        update=":frmListas:btnEliminaRegistros"/>
+                        <p:ajax event="rowSelectCheckbox"  update=":frmListas:btnEliminaRegistros"/>
+                        <p:ajax event="rowUnselectCheckbox" update=":frmListas:btnEliminaRegistros"/>
+                        <p:ajax event="toggleSelect"       update=":frmListas:btnEliminaRegistros"/>
 
-                        <p:column selectionMode="multiple" exportable="false"></p:column>
-                        <p:column headerText="ID" sortBy="#{lista.id}" filterBy="#{lista.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{lista.id}" /></p:column>
-                        <p:column headerText="NOMBRE" sortBy="#{lista.nombre}" filterBy="#{lista.nombre}"  ><h:outputText value="#{lista.nombre}" /></p:column>
-                        <p:column headerText="SLOGAN" sortBy="#{lista.slogan}" filterBy="#{lista.slogan}"  ><h:outputText value="#{lista.slogan}" /></p:column>                        
-                        <p:column headerText="NUMERO" sortBy="#{lista.numero}" filterBy="#{lista.numero}" styleClass="sm:w-max md:w-1 lg:w-5rem">
+                        <p:column selectionMode="multiple" exportable="false"/>
+                        <p:column headerText="#{msg['form.listas.table.header.id']}"
+                                  sortBy="#{lista.id}" filterBy="#{lista.id}"
+                                  styleClass="sm:w-max md:w-1 lg:w-5rem">
+                            <h:outputText value="#{lista.id}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.listas.table.header.nombre']}"
+                                  sortBy="#{lista.nombre}" filterBy="#{lista.nombre}">
+                            <h:outputText value="#{lista.nombre}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.listas.table.header.slogan']}"
+                                  sortBy="#{lista.slogan}" filterBy="#{lista.slogan}">
+                            <h:outputText value="#{lista.slogan}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.listas.table.header.numero']}"
+                                  sortBy="#{lista.numero}" filterBy="#{lista.numero}"
+                                  styleClass="sm:w-max md:w-1 lg:w-5rem">
                             <p:badge value="#{lista.numero}" severity="warning"/>
-                        </p:column>                        
+                        </p:column>
 
                         <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-6rem">
-                            <p:commandButton icon="pi pi-pencil" update=":frmListas:outPnlListas" oncomplete="PF('dlgListas').show()"
-                                             title="Editar lista"
-                                             styleClass="edit-button rounded-button ui-button-success" process="@this" action="#{listaController.cargaDatosMesaSeleccionado}">
-                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />                                                                                        
+                            <p:commandButton icon="pi pi-pencil"
+                                             update=":frmListas:outPnlListas"
+                                             oncomplete="PF('dlgListas').show()"
+                                             title="#{msg['form.listas.btn.edit.title']}"
+                                             styleClass="edit-button rounded-button ui-button-success"
+                                             process="@this"
+                                             action="#{listaController.cargaDatosMesaSeleccionado}">
+                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}"/>
                             </p:commandButton>
                             <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-trash"
-                                             title="Eliminar lista"
+                                             title="#{msg['form.listas.btn.delete.title']}"
                                              actionListener="#{listaController.eliminarSeleccionado}"
                                              process="@this" update="@form">
-                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}" />
-                                <p:confirm header="Confirmar eliminaciÃ³n"
-                                           message="Â¿EstÃ¡ seguro de eliminar esta lista?"
+                                <f:setPropertyActionListener value="#{listas}" target="#{listaController.listaSeleccionado}"/>
+                                <p:confirm header="#{msg['form.listas.confirm.delete.header']}"
+                                           message="#{msg['form.listas.confirm.delete.message']}"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
                 </div>
 
-                <p:dialog header="Detalles Lista" showEffect="fade" modal="true" widgetVar="dlgListas" responsive="true">
+                <p:dialog header="#{msg['form.listas.dialog.title']}" showEffect="fade" modal="true"
+                          widgetVar="dlgListas" responsive="true">
                     <p:outputPanel id="outPnlListas" class="ui-fluid">
                         <p:outputPanel rendered="#{not empty listaController.listaSeleccionado}">
 
                             <div class="field">
-                                <p:outputLabel for="txtNombre" value="Nombre" />
-                                <p:inputText id="txtNombre" value="#{listaController.listaSeleccionado.nombre}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                                <p:outputLabel for="txtNombre" value="#{msg['form.listas.label.nombre']}"/>
+                                <p:inputText id="txtNombre" value="#{listaController.listaSeleccionado.nombre}"
+                                             maxlength="100" required="true"
+                                             onkeyup="value = value.toUpperCase()"/>
                             </div>
 
                             <div class="field">
-                                <p:outputLabel for="txtSlogan" value="Slogan" />
-                                <p:inputText id="txtSlogan" value="#{listaController.listaSeleccionado.slogan}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                                <p:outputLabel for="txtSlogan" value="#{msg['form.listas.label.slogan']}"/>
+                                <p:inputText id="txtSlogan" value="#{listaController.listaSeleccionado.slogan}"
+                                             maxlength="100" required="true"
+                                             onkeyup="value = value.toUpperCase()"/>
                             </div>
                             <div class="field">
-                                <p:outputLabel for="txtNumero" value="Numero" />
-                                <p:inputText id="txtNumero" value="#{listaController.listaSeleccionado.numero}"  maxlength="100" required="true" onkeyup="value = value.toUpperCase()"/>
+                                <p:outputLabel for="txtNumero" value="#{msg['form.listas.label.numero']}"/>
+                                <p:inputText id="txtNumero" value="#{listaController.listaSeleccionado.numero}"
+                                             maxlength="100" required="true"/>
                             </div>
 
                         </p:outputPanel>
                     </p:outputPanel>
 
                     <f:facet name="footer">
-                        <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{listaController.guardarSeleccionado}" update="outPnlListas, msgs" process="outPnlListas @this" />                                 
-                        <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgListas').hide()" class="ui-button-secondary" />
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                                         actionListener="#{listaController.guardarSeleccionado}"
+                                         update="outPnlListas, msgs"
+                                         process="outPnlListas @this"/>
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
+                                         onclick="PF('dlgListas').hide()"
+                                         class="ui-button-secondary"/>
                     </f:facet>
                 </p:dialog>
 
@@ -106,4 +150,3 @@
         </h:form>
     </ui:define>
 </ui:composition>
-

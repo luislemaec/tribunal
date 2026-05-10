@@ -17,8 +17,8 @@ public class ProcesoElectoralFacade extends AbstractFacade<ProcesoElectoral, Int
     }
 
     /**
-     * Devuelve el proceso marcado como activo. Si hay mÃƒÂ¡s de uno por error
-     * de datos, retorna el mÃƒÂ¡s reciente. Null si no existe ninguno.
+     * Devuelve el proceso marcado como activo. Si hay mÃƒ¡s de uno por error
+     * de datos, retorna el mÃƒ¡s reciente. Null si no existe ninguno.
      */
     public ProcesoElectoral getActivo() {
         try {

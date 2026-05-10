@@ -29,9 +29,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
     }
 
     /**
-     * Devuelve el vÃƒÂ­nculo iglesia-persona vigente mÃƒÂ¡s reciente para una
+     * Devuelve el vÃƒÂ­nculo iglesia-persona vigente mÃƒ¡s reciente para una
      * persona dada. "Vigente" = estado activo. Si la persona pertenece a
-     * varias iglesias histÃƒÂ³ricamente, retorna la ÃƒÂºltima registrada.
+     * varias iglesias histÃƒÂ³ricamente, retorna la Ãƒºltima registrada.
      */
     public IglesiaPersona getVigentePorPersonaId(Integer personaId) {
         if (personaId == null) {
@@ -123,7 +123,7 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
     }
 
     /**
-     * Devuelve el vÃƒÂ­nculo activo mÃƒÂ¡s reciente para la persona identificada
+     * Devuelve el vÃƒÂ­nculo activo mÃƒ¡s reciente para la persona identificada
      * por su DOCUMENTO (cÃƒÂ©dula), independiente del id interno de la persona.
      *
      * <p>Pensado para entornos donde existen filas duplicadas en
@@ -131,7 +131,7 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
      * El mÃƒÂ©todo {@link #getVigentePorPersonaId(Integer)} requiere conocer el
      * id exacto, pero {@code finByPersonaDocument} devuelve la persona con
      * id ASC y el vÃƒÂ­nculo en {@code tb_iglesia_persona} podrÃƒÂ­a apuntar al
-     * id duplicado mayor Ã¢â‚¬â€ generando "sin iglesia" falso. Esta variante
+     * id duplicado mayor Ã¢â‚¬” generando "sin iglesia" falso. Esta variante
      * resuelve por documento y evita ese problema.
      */
     public IglesiaPersona getVigentePorDocumentoPersona(String documento) {

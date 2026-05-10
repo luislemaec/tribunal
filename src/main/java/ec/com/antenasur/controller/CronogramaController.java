@@ -21,7 +21,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Pantalla de gestiÃ³n del cronograma electoral. Permite al Admin/Tribunal:
+ * Pantalla de gestión del cronograma electoral. Permite al Admin/Tribunal:
  * <ul>
  *   <li>Crear / editar / activar procesos electorales.</li>
  *   <li>Definir las fases del cronograma del proceso seleccionado con
@@ -59,7 +59,7 @@ public class CronogramaController implements Serializable {
     @Getter
     private SeveridadCronograma[] severidadesDisponibles = SeveridadCronograma.values();
 
-    /** TamaÃ±o del catÃ¡logo de fases (EL no permite array.length). */
+    /** Tamaño del catálogo de fases (EL no permite array.length). */
     public int getTotalFasesCatalogo() {
         return fasesDisponibles == null ? 0 : fasesDisponibles.length;
     }
@@ -123,7 +123,7 @@ public class CronogramaController implements Serializable {
     /**
      * Recarga la fase desde BD (en lugar de reusar la referencia del
      * datatable). Evita problemas de PrimeFaces donde el tabView dentro
-     * del diÃ¡logo no re-renderiza correctamente cuando reusa la misma
+     * del diálogo no re-renderiza correctamente cuando reusa la misma
      * instancia DTO ya enlazada a otros componentes.
      */
     public void editarFase(CronogramaFaseDTO f) {
@@ -141,8 +141,8 @@ public class CronogramaController implements Serializable {
                 JsfUtil.addErrorMessage("No hay fase para guardar");
                 return;
             }
-            // Solo seteamos procesoId desde el controller en CREACIÃ“N. En
-            // EDICIÃ“N respetamos el procesoId original del DTO recargado para
+            // Solo seteamos procesoId desde el controller en CREACIÓN. En
+            // EDICIÓN respetamos el procesoId original del DTO recargado para
             // no mover una fase entre procesos por error.
             if (faseSeleccionada.getId() == null) {
                 if (procesoSeleccionado == null || procesoSeleccionado.getId() == null) {
@@ -151,14 +151,14 @@ public class CronogramaController implements Serializable {
                 }
                 faseSeleccionada.setProcesoId(procesoSeleccionado.getId());
             }
-            // ValidaciÃ³n delegada al service: errores fatales bloquean,
+            // Validación delegada al service: errores fatales bloquean,
             // advertencias se muestran como warning sin impedir el guardado.
             CronogramaService.ValidacionFase val = cronogramaService.validar(faseSeleccionada);
             if (!val.esValida()) {
                 for (String e : val.getErrores()) {
                     JsfUtil.addErrorMessage(e);
                 }
-                // Flag para que el oncomplete del botÃ³n mantenga el diÃ¡logo
+                // Flag para que el oncomplete del botón mantenga el diálogo
                 // abierto (los errores de negocio NO disparan args.validationFailed).
                 org.primefaces.PrimeFaces.current().ajax().addCallbackParam("faseError", true);
                 return;

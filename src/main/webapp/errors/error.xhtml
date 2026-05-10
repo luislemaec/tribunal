@@ -12,10 +12,10 @@
             <div class="seperator"></div>
         </div>
         <div class="bottom">
-            <span class="exception-panel-header">OcurriÃ³ un error</span>
-            <span class="exception-panel-subheader">Algo saliÃ³ mal.</span>  
+            <span class="exception-panel-header">#{msg['error.500.title']}</span>
+            <span class="exception-panel-subheader">#{msg['error.500.message']}</span>
             <h:form>
-            	<p:commandButton  actionListener="#{errorController.redirigeInicio()}" value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
+                <p:commandButton actionListener="#{errorController.redirigeInicio()}" value="#{msg['error.btn.home']}" icon="pi pi-home" styleClass="ui-button-raised ui-button-info"/>
             </h:form>
         </div><!-- comment -->        
 

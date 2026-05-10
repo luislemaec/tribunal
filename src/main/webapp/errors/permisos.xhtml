@@ -11,9 +11,9 @@
             <div class="seperator"></div>
         </div>
         <div class="bottom">
-            <span class="exception-panel-header">Acceso Denegado</span>
-            <span class="exception-panel-subheader">Usted estÃ¡ intentando ingresar a una pÃ¡gina que no tiene permisos.</span>            
-            <p:linkButton outcome="/dashboard.jsf" value="Ir a Inicio" icon="pi pi-home" styleClass="ui-button-raised ui-button-info" />
+            <span class="exception-panel-header">#{msg['error.permisos.title']}</span>
+            <span class="exception-panel-subheader">#{msg['error.permisos.message']}</span>
+            <p:linkButton outcome="/dashboard.jsf" value="#{msg['error.btn.home']}" icon="pi pi-home" styleClass="ui-button-raised ui-button-info"/>
         </div>
 
     </ui:define>

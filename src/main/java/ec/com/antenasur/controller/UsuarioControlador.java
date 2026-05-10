@@ -126,8 +126,8 @@ public class UsuarioControlador implements Serializable {
     /**
      * Listener del dropdown de rol: resuelve la entity completa a partir del
      * id seleccionado para que {@link #isRolRequiereIglesia()} pueda consultar
-     * el nombre. Sin esto, value="#{...rolSeleccionado.id}" solo asignarÃ­a
-     * el id y el nombre quedarÃ­a vacÃ­o.
+     * el nombre. Sin esto, value="#{...rolSeleccionado.id}" solo asignaría
+     * el id y el nombre quedaría vacío.
      */
     public void cargarRolSeleccionado() {
         if (rolSeleccionado != null && rolSeleccionado.getId() != null) {
@@ -164,7 +164,7 @@ public class UsuarioControlador implements Serializable {
             return;
         }
         if (!isRolRequiereIglesia() && usuarioSeleccionado != null) {
-            // Otros roles no llevan iglesia: limpiamos por si quedÃ³ del cambio.
+            // Otros roles no llevan iglesia: limpiamos por si quedó del cambio.
             usuarioSeleccionado.setIglesiaId(null);
         }
         if (esUsuarioNuevo) {
@@ -172,8 +172,8 @@ public class UsuarioControlador implements Serializable {
             if (creado != null) {
                 this.usuarioSeleccionado = creado;
                 JsfUtil.addSuccessMessage("Usuario registrado correctamente");
-                // AuditorÃ­a y envÃ­o de correo se aÃ­slan: si fallan, el usuario
-                // YA estÃ¡ persistido â€” nunca se debe revertir el registro por
+                // Auditoría y envío de correo se aíslan: si fallan, el usuario
+                // YA está persistido — nunca se debe revertir el registro por
                 // problemas de logging o mailing.
                 try {
                     procesoBean.registraActividad("CREA USUARIO: " + creado.getUsername()
@@ -187,8 +187,8 @@ public class UsuarioControlador implements Serializable {
                     mailEx.printStackTrace();
                     JsfUtil.addWarningMessage("Usuario creado correctamente; el correo de bienvenida no pudo enviarse.");
                 }
-                // Refresca listas para que el usuario reciÃ©n creado aparezca
-                // en la tabla sin necesidad de recargar la pÃ¡gina.
+                // Refresca listas para que el usuario recién creado aparezca
+                // en la tabla sin necesidad de recargar la página.
                 init();
                 esUsuarioNuevo = false;
             }
@@ -224,7 +224,7 @@ public class UsuarioControlador implements Serializable {
 
         // 1) Buscar primero en la BD interna (tb_persona). Si existe, hidratamos
         //    el formulario con sus datos y la iglesia a la que pertenece (si la
-        //    tiene en tb_iglesia_persona). El username queda igual a la cÃ©dula.
+        //    tiene en tb_iglesia_persona). El username queda igual a la cédula.
         Persona personaExistente = personaService.finByPersonaDocument(cedula);
         if (personaExistente != null) {
             usuarioSeleccionado.setPersonaId(personaExistente.getId());
@@ -241,12 +241,12 @@ public class UsuarioControlador implements Serializable {
                 usuarioSeleccionado.setCorreo(personaExistente.getDocumento() + "@consejodecomunicacion.gob.ec");
             }
             usuarioSeleccionado.setPermanente(true);
-            // Iglesia asociada vÃ­a tb_iglesia_persona (vÃ­nculo activo mÃ¡s reciente)
+            // Iglesia asociada vía tb_iglesia_persona (vínculo activo más reciente)
             Iglesia iglesia = iglesiaPersonaService.obtenerIglesiaDePersona(personaExistente.getId());
             if (iglesia != null) {
                 usuarioSeleccionado.setIglesiaId(iglesia.getId());
                 usuarioSeleccionado.setIglesiaNombre(iglesia.getNombre());
-                JsfUtil.addInfoMessage("Persona encontrada â€” iglesia: " + iglesia.getNombre());
+                JsfUtil.addInfoMessage("Persona encontrada — iglesia: " + iglesia.getNombre());
             } else {
                 JsfUtil.addInfoMessage("Persona encontrada (sin iglesia asignada)");
             }
@@ -271,7 +271,7 @@ public class UsuarioControlador implements Serializable {
     }
 
     /**
-     * Prepara el formulario de ediciÃ³n con los datos del rolUsuario
+     * Prepara el formulario de edición con los datos del rolUsuario
      * seleccionado. Resuelve la entidad {@code Rol} a partir del id del DTO
      * para mantener compatibilidad con el service que requiere entity.
      */
@@ -313,7 +313,7 @@ public class UsuarioControlador implements Serializable {
                 operationStus = true;
             }
             if (respuestaRegistroCivil.getStatus() == 404) {
-                JsfUtil.addInfoMessage("Problemas de interconecciÃ³n, contactese con el administrador");
+                JsfUtil.addInfoMessage("Problemas de interconección, contactese con el administrador");
             }
         } catch (Exception e) {
             personaRegistroCivil = null;
@@ -324,9 +324,9 @@ public class UsuarioControlador implements Serializable {
     }
 
     /**
-     * Best-effort: nunca debe propagar excepciones al caller. Si el envÃ­o del
-     * correo falla por cualquier razÃ³n (SMTP caÃ­do, certificado invÃ¡lido,
-     * destinatario invÃ¡lido, NPE, etc.), el usuario ya quedÃ³ registrado en BD
+     * Best-effort: nunca debe propagar excepciones al caller. Si el envío del
+     * correo falla por cualquier razón (SMTP caído, certificado inválido,
+     * destinatario inválido, NPE, etc.), el usuario ya quedó registrado en BD
      * y el flujo debe continuar sin error.
      */
     public void enviarCorreoCreacionUser() {
@@ -336,7 +336,7 @@ public class UsuarioControlador implements Serializable {
             }
             String destino = usuarioSeleccionado.getCorreo();
             if (destino == null || destino.trim().isEmpty()) {
-                JsfUtil.addWarningMessage("El usuario fue creado, pero no tiene correo: no se enviÃ³ notificaciÃ³n.");
+                JsfUtil.addWarningMessage("El usuario fue creado, pero no tiene correo: no se envió notificación.");
                 try {
                     procesoBean.registraActividad("CREA USUARIO SIN CORREO: " + usuarioSeleccionado.getUsername());
                 } catch (Exception ignored) { /* nunca interrumpir */ }
@@ -351,7 +351,7 @@ public class UsuarioControlador implements Serializable {
             List<String> emailsDestino = new ArrayList<>();
             emailsDestino.add(destino);
             try {
-                SendEmail.correoAdjunto(emailsDestino, "CreaciÃ³n de usuarios", textHtml, Constantes.getPathLogo());
+                SendEmail.correoAdjunto(emailsDestino, "Creación de usuarios", textHtml, Constantes.getPathLogo());
                 try {
                     procesoBean.registraActividad("ENVIA CORREO REGISTRO USUARIO: " + usuarioSeleccionado.getUsername());
                 } catch (Exception ignored) { /* nunca interrumpir */ }
@@ -361,7 +361,7 @@ public class UsuarioControlador implements Serializable {
             }
         } catch (Throwable t) {
             // Captura final defensiva: un fallo de mailing JAMÃS debe romper
-            // el flujo de creaciÃ³n del usuario.
+            // el flujo de creación del usuario.
             t.printStackTrace();
         }
     }

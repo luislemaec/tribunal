@@ -42,7 +42,7 @@ public class LugarVotacionBean implements Serializable {
                 procesoBean.registraActividad("BUSCA LUGAR VOTACION " + nombreCedula);
                 JsfUtil.addSuccessMessage(lugares.size() + " LUGAR ENCONTRADO");
             } else {
-                JsfUtil.addWarningMessage("NO SE ENCONTRO LUGAR DE VOTACIÃ“N");
+                JsfUtil.addWarningMessage("NO SE ENCONTRO LUGAR DE VOTACIÓN");
             }
             nombreCedula = "";
         } catch (Exception e) {

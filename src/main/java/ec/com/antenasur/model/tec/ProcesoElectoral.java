@@ -24,7 +24,7 @@ import org.hibernate.annotations.Filter;
  * Cabecera del proceso electoral. Solo uno debe estar {@code activo=true}
  * a la vez. Las fases del cronograma se modelan en {@link CronogramaFase}
  * con FK a esta entidad. Tabla nueva para no chocar con
- * {@code tec.procesos} (bitÃ¡cora de actividad).
+ * {@code tec.procesos} (bitácora de actividad).
  */
 @Entity
 @Table(name = "proceso_electoral", schema = "tec")
