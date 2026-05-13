@@ -4,7 +4,9 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
+
     <ui:define name="title">#{msg['form.autoridades.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.periodos.crumb.tribunal']}</li>
         <li>/</li>
@@ -14,130 +16,252 @@
     </ui:define>
 
     <ui:define name="content">
+
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f59e0b,#d97706);flex-shrink:0">
+                        <i class="pi pi-star text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.autoridades.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.autoridades.header']}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <h:form id="frmPeriodos">
-            <h4>#{msg['form.autoridades.header']}</h4>
-            <div class="grid">
-                <div class="col-12 md:col-12 lg:col-12">
-                    <p:dataTable id="tbtribunal" var="tribunal" value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
-                                 showGridlines="true" rendered="#{not empty personaController.listaIglesiaPersona}" styleClass="shadow-1" >
-                        <p:column headerText="Id" sortBy="#{tribunal.id}" rendered="#{loginBean.roles.contains('SITEC-Administrador')}" styleClass="sm:w-max md:w-1 lg:w-10rem">
-                            <h:outputText value="#{tribunal.id}" />
-                        </p:column>
 
-                        <p:column headerText="Cargo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
-                            <h:outputText value="#{tribunal.cargoNombre}" />
-                        </p:column>
+            <div class="surface-card shadow-1 border-round-lg p-3">
 
-                        <p:column headerText="Periodo" styleClass="sm:w-max md:w-1 lg:w-15rem" >
-                            <h:outputText value="#{tribunal.periodoNombre}" />
-                        </p:column>
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
 
-                        <p:column headerText="Nombres">
-                            <p:commandButton icon="pi pi-user-plus" update=":frmPeriodos:outPnlAsignaAutoridad" oncomplete="PF('dlgAsignaAutoridad').show()"
-                                             styleClass="edit-button rounded-button ui-button-info" process="@this" rendered="#{tribunal.iglesiaPersona.persona eq null}">
-                                <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
-                            </p:commandButton>
-                            <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}" rendered="#{tribunal.iglesiaPersona.persona ne null}" />
+                <!-- DATATABLE TRIBUNAL -->
+                <p:dataTable id="tbtribunal" var="tribunal"
+                             value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
+                             emptyMessage="No hay autoridades registradas."
+                             showGridlines="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm">
 
-                        </p:column>
-                        <p:column exportable="false" styleClass="sm:w-max md:w-1 lg:w-10rem">
-                            <p:commandButton icon="pi pi-user-edit" update=":frmPeriodos:outPnlAutoridad" oncomplete="PF('dlgAutoridad').show()"
-                                             styleClass="edit-button rounded-button ui-button-info" process="@this" disabled="#{tribunal.iglesiaPersona.persona eq null}">
-                                <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
-                            </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button mx-1" icon="pi pi-user-minus"
-                                             actionListener="#{tribunalController.eliminarPeriodoSeleccionados}"
-                                             process="@this" update="@form"
-                                             disabled="#{tribunal.iglesiaPersona.persona eq null}">
-                                <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"  />
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro que desea eliminar esta autoridad?"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                        </p:column>
-                    </p:dataTable>
+                    <p:column headerText="Id"
+                              sortBy="#{tribunal.id}"
+                              rendered="#{loginBean.roles.contains('SITEC-Administrador')}"
+                              style="width:6rem">
+                        <span class="text-sm text-500">#{tribunal.id}</span>
+                    </p:column>
 
-                    <!-- DIALOG EDITA AUTORIDAD -->
-                    <p:dialog header="Detalles Autoridad" showEffect="fade" modal="true" widgetVar="dlgAutoridad" responsive="true">
-                        <p:outputPanel id="outPnlAutoridad" class="ui-fluid">
-                            <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
+                    <p:column headerText="Cargo" sortBy="#{tribunal.cargoNombre}" style="min-width:10rem">
+                        <span class="text-sm font-medium text-900">#{tribunal.cargoNombre}</span>
+                    </p:column>
 
-                                <div class="field">
-                                    <p:outputLabel for="cargo" value="Cargo" />
-                                    <p:inputText id="cargo" value="#{tribunalController.tribunalSeleccionado.cargoNombre}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" disabled="true"/>
+                    <p:column headerText="Periodo" sortBy="#{tribunal.periodoNombre}" style="min-width:9rem">
+                        <p:tag value="#{tribunal.periodoNombre}" severity="info"/>
+                    </p:column>
+
+                    <p:column headerText="Nombres" style="min-width:14rem">
+                        <p:commandButton icon="pi pi-user-plus"
+                                         styleClass="ui-button-rounded ui-button-info"
+                                         update=":frmPeriodos:outPnlAsignaAutoridad"
+                                         oncomplete="PF('dlgAsignaAutoridad').show()"
+                                         process="@this"
+                                         rendered="#{tribunal.iglesiaPersona.persona eq null}">
+                            <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
+                        </p:commandButton>
+                        <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}"
+                                      rendered="#{tribunal.iglesiaPersona.persona ne null}"
+                                      styleClass="text-sm font-medium text-900"/>
+                    </p:column>
+
+                    <p:column headerText="Acciones" exportable="false"
+                              styleClass="text-center" style="width:8rem">
+                        <p:commandButton icon="pi pi-user-edit"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         title="Editar autoridad"
+                                         update=":frmPeriodos:outPnlAutoridad"
+                                         oncomplete="PF('dlgAutoridad').show()"
+                                         process="@this"
+                                         disabled="#{tribunal.iglesiaPersona.persona eq null}">
+                            <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
+                        </p:commandButton>
+                        <p:commandButton icon="pi pi-user-minus"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         title="Quitar autoridad"
+                                         actionListener="#{tribunalController.eliminarPeriodoSeleccionados}"
+                                         process="@this" update="tbtribunal msgs"
+                                         disabled="#{tribunal.iglesiaPersona.persona eq null}">
+                            <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
+                            <p:confirm header="Confirmar eliminación"
+                                       message="¿Está seguro que desea eliminar esta autoridad?"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Confirm dialog global -->
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+                                 responsive="true" width="400" style="max-width:96vw">
+                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                                     styleClass="ui-button-danger" type="button"
+                                     onclick="PF('dlgConfirm').accept()"/>
+                    <p:commandButton value="Cancelar" icon="pi pi-times"
+                                     styleClass="ui-button-secondary ml-2" type="button"
+                                     onclick="PF('dlgConfirm').reject()"/>
+                </p:confirmDialog>
+
+            </div><!-- /surface-card -->
+
+            <!-- ======================================================
+                 DIALOGO: EDITAR AUTORIDAD
+                 ====================================================== -->
+            <p:dialog header="Detalles de la autoridad"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgAutoridad"
+                      responsive="true" width="480"
+                      style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+
+                <p:outputPanel id="outPnlAutoridad" class="ui-fluid">
+                    <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
+
+                        <div class="formgrid grid">
+
+                            <div class="field col-12 md:col-6">
+                                <label for="cargo" class="font-medium text-700 text-sm">Cargo</label>
+                                <p:inputText id="cargo"
+                                             value="#{tribunalController.tribunalSeleccionado.cargoNombre}"
+                                             required="true" styleClass="w-full" disabled="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="periodo" class="font-medium text-700 text-sm">Periodo</label>
+                                <p:inputText id="periodo"
+                                             value="#{tribunalController.tribunalSeleccionado.periodoNombre}"
+                                             required="true" styleClass="w-full" disabled="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+
+                            <div class="field col-12">
+                                <label for="personaNombre" class="font-medium text-700 text-sm">
+                                    Nombres <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="personaNombre" styleClass="w-full"
+                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}"
+                                             required="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+
+                        </div>
+
+                    </p:outputPanel>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="Cancelar" icon="pi pi-times"
+                                         onclick="PF('dlgAutoridad').hide()"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         type="button"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{tribunalController.guardarAutoridad}"
+                                         update="outPnlAutoridad tbtribunal msgs"
+                                         process="outPnlAutoridad @this"
+                                         oncomplete="if (!args.validationFailed) PF('dlgAutoridad').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+
+            <!-- ======================================================
+                 DIALOGO: ASIGNAR AUTORIDAD
+                 ====================================================== -->
+            <p:dialog header="Asignar autoridad"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgAsignaAutoridad"
+                      responsive="true" width="520"
+                      style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+
+                <!-- Búsqueda por cédula -->
+                <p:outputPanel id="outPnlAsignaAutoridadBusca" class="ui-fluid">
+                    <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona eq null}">
+                        <div class="formgrid grid">
+                            <div class="field col-12">
+                                <label for="cedulaBuscar" class="font-medium text-700 text-sm">
+                                    Número de cédula
+                                </label>
+                                <div class="flex gap-2">
+                                    <p:inputText id="cedulaBuscar" type="text"
+                                                 placeholder="0600000000" styleClass="mask-cedula flex-1"
+                                                 value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
+                                    <p:commandButton icon="pi pi-search"
+                                                     styleClass="ui-button-info"
+                                                     actionListener="#{tribunalController.buscaPersona}"
+                                                     update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad msgs outPnlFooter"
+                                                     process="outPnlAsignaAutoridadBusca @this"/>
                                 </div>
+                                <small class="text-500">Ingrese el número de cédula a buscar.</small>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
 
-                                <div class="field">
-                                    <p:outputLabel for="periodo" value="Periodo" />                                   
-                                    <p:inputText id="periodo" value="#{tribunalController.tribunalSeleccionado.periodoNombre}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" disabled="true"/>
+                <!-- Datos de la persona encontrada -->
+                <p:outputPanel id="outPnlAsignaAutoridad" class="ui-fluid">
+                    <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}">
+                        <div class="formgrid grid">
+                            <div class="field col-12 md:col-6">
+                                <label for="personaNombreBusca" class="font-medium text-700 text-sm">Nombres</label>
+                                <p:inputText id="personaNombreBusca" styleClass="w-full"
+                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}"
+                                             required="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+                            <div class="field col-12 md:col-6">
+                                <label for="personaApellidoBusca" class="font-medium text-700 text-sm">Apellidos</label>
+                                <p:inputText id="personaApellidoBusca" styleClass="w-full"
+                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.apellidos}"
+                                             required="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+                            <div class="field col-12">
+                                <label for="iglesiaNombreBusca" class="font-medium text-700 text-sm">Iglesia</label>
+                                <p:inputText id="iglesiaNombreBusca" styleClass="w-full"
+                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.iglesia.nombre}"
+                                             required="true"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
 
-                                </div>
-                                <div class="field">
-                                    <p:outputLabel for="personaNombre" value="Nombres" />                                   
-                                    <p:inputText id="personaNombre" value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" />
-                                </div>
-                            </p:outputPanel>
-                        </p:outputPanel>
+                <f:facet name="footer">
+                    <p:outputPanel id="outPnlFooter" class="ui-fluid">
+                        <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                            <p:commandButton value="Cancelar" icon="pi pi-times"
+                                             onclick="PF('dlgAsignaAutoridad').hide()"
+                                             styleClass="ui-button-outlined ui-button-secondary"
+                                             type="button"
+                                             rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>
+                            <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
+                                             styleClass="ui-button-success"
+                                             actionListener="#{tribunalController.guardarAutoridad}"
+                                             update="outPnlAsignaAutoridad tbtribunal msgs"
+                                             process="outPnlAsignaAutoridad @this"
+                                             oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').hide()"
+                                             rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>
+                        </div>
+                    </p:outputPanel>
+                </f:facet>
 
-                        <f:facet name="footer">
-                            <p:commandButton value="Guardar" icon="pi pi-check" actionListener="#{tribunalController.guardarAutoridad}" update="outPnlAutoridad, msgs" process="outPnlAutoridad @this" />                                 
-                            <p:commandButton value="Cancel" icon="pi pi-times" onclick="PF('dlgAutoridad').hide()" class="ui-button-secondary" />
-                        </f:facet>
-                    </p:dialog>
+            </p:dialog>
 
-                    <!-- DIALOG ASIGNA AUTORIDAD -->
-                    <p:dialog  header="Asigna Autoridad" showEffect="fade" modal="true" widgetVar="dlgAsignaAutoridad" responsive="true">
-                        <p:outputPanel id="outPnlAsignaAutoridadBusca" class="ui-fluid" >
-                            <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona eq null}">
-                                <div class="formgroup-inline">
-                                    <div class="field">
-                                        <p:inputText id="cedulaBuscar" type="text" placeholder="0600000000" styleClass="mask-cedula"
-                                                     value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
-                                        <small class="ui-state-error">Ingrese numero de cédula a buscar</small>
-                                    </div>                                       
-                                    <p:commandButton icon="pi pi-search" actionListener="#{tribunalController.buscaPersona}" update="outPnlAsignaAutoridadBusca, outPnlAsignaAutoridad, msgs, outPnlFooter " process="outPnlAsignaAutoridadBusca @this" />
-                                </div>
-                            </p:outputPanel>
-                        </p:outputPanel>
-                        <p:outputPanel id="outPnlAsignaAutoridad" class="ui-fluid">
-                            <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}">
-
-                                <div class="field">
-                                    <p:outputLabel for="personaNombreBusca" value="Nombres" />                                   
-                                    <p:inputText id="personaNombreBusca" value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" />
-                                </div>
-                                <div class="field">
-                                    <p:outputLabel for="personaApellidoBusca" value="Nombres" />                                   
-                                    <p:inputText id="personaApellidoBusca" value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.apellidos}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" />
-                                </div>
-                                <div class="field">
-                                    <p:outputLabel for="iglesiaNombreBusca" value="Iglesia" />                                   
-                                    <p:inputText id="iglesiaNombreBusca" value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.iglesia.nombre}" required="true"
-                                                 onkeyup="value = value.toUpperCase()" />
-                                </div>
-                            </p:outputPanel>
-                        </p:outputPanel>
-
-                        <f:facet name="footer" >
-                            <p:outputPanel id="outPnlFooter" class="ui-fluid">
-                                <p:commandButton id="btnGuardaAsignado" value="Guardar" icon="pi pi-check" actionListener="#{tribunalController.guardarAutoridad}" 
-                                                 update="outPnlAsignaAutoridad, msgs" process="outPnlAsignaAutoridad @this" rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}" />
-                                <p:commandButton id="btnCancelaAsignado" value="Cancel" icon="pi pi-times" onclick="PF('dlgAsignaAutoridad').hide()" class="ui-button-secondary" 
-                                                 rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}" />    
-                            </p:outputPanel>
-                        </f:facet>
-                    </p:dialog>
-                    <!-- FIN DIALOG ASIGNA AUTORIDAD -->
-
-
-                </div>                    
-            </div><!-- end grid -->
         </h:form>
+
     </ui:define>
 </ui:composition>
-

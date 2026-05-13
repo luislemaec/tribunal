@@ -4,7 +4,9 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
+
     <ui:define name="title">#{msg['form.procesos.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.usuarios.crumb.security']}</li>
         <li>/</li>
@@ -14,40 +16,79 @@
     </ui:define>
 
     <ui:define name="content">
-        <h:form id="frmProcesos">
-            <div class="grid ">
-                <div class="col-12">
-                    <div class="card ">                        
-                        <p:toolbar styleClass="mb-2">
-                            <p:toolbarGroup>                                                              
-                            </p:toolbarGroup>
-                            <p:toolbarGroup align="right">                                
-                                <p:commandButton value="Export" icon="pi pi-upload" styleClass="ui-button-help" ajax="false" action="#{procesoController.exportaPDF()}" disabled="#{empty procesoController.listaProceso}">                                    
-                                </p:commandButton>
-                            </p:toolbarGroup>
-                        </p:toolbar>
 
-                        <p:dataTable id="tblProcesos" widgetVar="wdTblProcesos" var="proceso" value="#{procesoController.listaProceso}" reflow="true"
-                                     rendered="#{not empty procesoController.listaProceso}" rowSelectMode="add"
-                                     paginator="true" rows="10" paginatorPosition="bottom" showGridlines="true" 
-                                     styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines" >                       
-
-                            <p:column headerText="id" sortBy="#{proceso.id}" filterBy="#{proceso.id}" styleClass="sm:w-max md:w-1 lg:w-5rem"><h:outputText value="#{proceso.id}" /></p:column>
-                            <p:column headerText="Actividad" sortBy="#{proceso.actividad}" filterBy="#{proceso.actividad}"  ><h:outputText value="#{proceso.actividad}" /></p:column>
-                            <p:column headerText="Usuario crea" sortBy="#{proceso.usuarioCrea}" filterBy="#{proceso.usuarioCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem"><h:outputText value="#{proceso.usuarioCrea}" /></p:column>        
-							<p:column headerText="IP" sortBy="#{proceso.ip}" filterBy="#{proceso.ip}" styleClass="sm:w-max md:w-2 lg:w-10rem" ><h:outputText value="#{proceso.ip}" /></p:column>
-                            <p:column headerText="Fecha creación" sortBy="#{proceso.fechaCrea}" filterBy="#{proceso.fechaCrea}" styleClass="sm:w-max md:w-2 lg:w-10rem">
-                                <h:outputText value="#{proceso.fechaCrea}" >
-                                    <f:convertDateTime pattern="dd-MM-yyyy" />
-                                </h:outputText></p:column>
-
-                        </p:dataTable>
-
-
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#64748b,#475569);flex-shrink:0">
+                        <i class="pi pi-history text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.procesos.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">Registro de actividades y auditoría del sistema</p>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <h:form id="frmProcesos">
+
+            <div class="surface-card shadow-1 border-round-lg p-3">
+
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+
+                <!-- TOOLBAR -->
+                <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
+                    <p:commandButton value="Exportar PDF" icon="pi pi-upload"
+                                     styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                     action="#{procesoController.exportaPDF()}"
+                                     disabled="#{empty procesoController.listaProceso}"/>
+                </div>
+
+                <!-- DATATABLE -->
+                <p:dataTable id="tblProcesos" widgetVar="wdTblProcesos" var="proceso"
+                             value="#{procesoController.listaProceso}" reflow="true"
+                             rowSelectMode="add"
+                             paginator="true" rows="10"
+                             rowsPerPageTemplate="10,25,50"
+                             paginatorPosition="bottom"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
+                             emptyMessage="No hay actividades registradas."
+                             showGridlines="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm">
+
+                    <p:column headerText="ID" sortBy="#{proceso.id}" filterBy="#{proceso.id}"
+                              style="width:6rem">
+                        <span class="text-sm text-500">#{proceso.id}</span>
+                    </p:column>
+                    <p:column headerText="Actividad" sortBy="#{proceso.actividad}"
+                              filterBy="#{proceso.actividad}" filterMatchMode="contains">
+                        <span class="text-sm text-900">#{proceso.actividad}</span>
+                    </p:column>
+                    <p:column headerText="Usuario" sortBy="#{proceso.usuarioCrea}"
+                              filterBy="#{proceso.usuarioCrea}" filterMatchMode="contains"
+                              style="width:12rem">
+                        <span class="text-sm font-mono text-700">#{proceso.usuarioCrea}</span>
+                    </p:column>
+                    <p:column headerText="IP" sortBy="#{proceso.ip}"
+                              filterBy="#{proceso.ip}" filterMatchMode="contains"
+                              style="width:10rem">
+                        <span class="text-sm font-mono text-500">#{proceso.ip}</span>
+                    </p:column>
+                    <p:column headerText="Fecha" sortBy="#{proceso.fechaCrea}" style="width:10rem">
+                        <h:outputText value="#{proceso.fechaCrea}">
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+
+                </p:dataTable>
+
+            </div><!-- /surface-card -->
+
         </h:form>
+
     </ui:define>
 </ui:composition>
-

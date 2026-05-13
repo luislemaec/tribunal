@@ -4,7 +4,9 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
+
     <ui:define name="title">#{msg['form.catalogos.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.catalogos.crumb.admin']}</li>
         <li>/</li>
@@ -14,116 +16,186 @@
     </ui:define>
 
     <ui:define name="content">
-        <h:form id="frmCatalogos">
-            <div class="layout-dashboard">
-                <div class="grid">
-                    <div class="col-12 md:col-12 lg:col-12">
-                        <div class="card">
-                            <h4>#{msg['form.catalogos.header']}</h4>
-                            <p:treeTable value="#{catalogoController.root}" var="catalogo"
-                                         showGridlines="true" editable="true" id="trTblCatalogo">
-                                <p:ajax event="rowEdit"       listener="#{catalogoController.onRowEdit}"   update="msgs"/>
-                                <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}" update="msgs"/>
 
-                                <p:column headerText="#{msg['form.catalogos.table.header.id']}"
-                                          sortBy="#{catalogo.id}" style="width: 7%;" responsivePriority="1">
-                                    <p:cellEditor>
-                                        <f:facet name="output"><h:outputText value="#{catalogo.id}"/></f:facet>
-                                        <f:facet name="input"><p:inputText value="#{catalogo.id}" style="width:100%" disabled="true"/></f:facet>
-                                    </p:cellEditor>
-                                </p:column>
-
-                                <p:column headerText="#{msg['form.catalogos.table.header.nombre']}"
-                                          sortBy="#{catalogo.nombre}" styleClass="w-auto" responsivePriority="1">
-                                    <p:cellEditor>
-                                        <f:facet name="output"><h:outputText value="#{catalogo.nombre}"/></f:facet>
-                                        <f:facet name="input"><p:inputText value="#{catalogo.nombre}" style="width:100%" onkeyup="value = value.toUpperCase()"/></f:facet>
-                                    </p:cellEditor>
-                                </p:column>
-
-                                <p:column headerText="#{msg['form.catalogos.table.header.orden']}"
-                                          sortBy="#{catalogo.orden}" style="width: 5%;" responsivePriority="3">
-                                    <p:cellEditor>
-                                        <f:facet name="output"><p:badge value="#{catalogo.orden}" severity="info"/></f:facet>
-                                        <f:facet name="input"><p:inputText value="#{catalogo.orden}" style="width:100%"/></f:facet>
-                                    </p:cellEditor>
-                                </p:column>
-
-                                <p:column headerText="#{msg['form.catalogos.table.header.descripcion']}"
-                                          styleClass="w-auto" responsivePriority="4">
-                                    <p:cellEditor>
-                                        <f:facet name="output"><h:outputText value="#{catalogo.descripcion}"/></f:facet>
-                                        <f:facet name="input"><p:inputText value="#{catalogo.descripcion}" style="width:100%" onkeyup="value = value.toUpperCase()"/></f:facet>
-                                    </p:cellEditor>
-                                </p:column>
-
-                                <p:column style="width: 5%;" responsivePriority="5">
-                                    <f:facet name="header">
-                                        <p:commandButton value="#{msg['form.catalogos.btn.new']}" icon="pi pi-plus"
-                                                         actionListener="#{catalogoController.nuevoCatalogo}"
-                                                         update="frmCatalogos:outPnlCatalogo"
-                                                         oncomplete="PF('dlgCatalogo').show()"
-                                                         styleClass="ui-button-success" style="margin-right: .5rem"/>
-                                    </f:facet>
-                                    <p:rowEditor/>
-                                    <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
-                                                     title="#{msg['form.catalogos.btn.delete.title']}"
-                                                     actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
-                                                     process="@this" update="@form">
-                                        <f:setPropertyActionListener value="#{catalogo}"
-                                                                     target="#{catalogoController.catalogoSeleccionado}"/>
-                                        <p:confirm header="#{msg['form.catalogos.confirm.delete.header']}"
-                                                   message="#{msg['form.catalogos.confirm.delete.message']}"
-                                                   icon="pi pi-exclamation-triangle"/>
-                                    </p:commandButton>
-                                </p:column>
-                            </p:treeTable>
-                        </div>
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#06b6d4,#0ea5e9);flex-shrink:0">
+                        <i class="pi pi-list text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.catalogos.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.catalogos.header']}</p>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <p:dialog header="#{msg['form.catalogos.dialog.title']}" showEffect="fade" modal="true"
-                          widgetVar="dlgCatalogo" responsive="true">
-                    <p:outputPanel id="outPnlCatalogo" class="ui-fluid">
-                        <p:outputPanel rendered="#{catalogoController.catalogoSeleccionado ne null}">
+        <h:form id="frmCatalogos">
 
-                            <div class="field">
-                                <p:outputLabel for="nombre" value="#{msg['form.catalogos.label.nombre']}"/>
-                                <p:inputText id="nombre" value="#{catalogoController.catalogoSeleccionado.nombre}"
-                                             maxlength="100" required="true"
-                                             onkeyup="value = value.toUpperCase()"/>
+            <div class="surface-card shadow-1 border-round-lg p-3">
+
+                <!-- Mensajes -->
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+
+                <!-- TOOLBAR -->
+                <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
+                    <p:commandButton value="#{msg['form.catalogos.btn.new']}" icon="pi pi-plus"
+                                     styleClass="ui-button-success"
+                                     actionListener="#{catalogoController.nuevoCatalogo}"
+                                     update="frmCatalogos:outPnlCatalogo"
+                                     oncomplete="PF('dlgCatalogo').show()">
+                        <p:resetInput target="frmCatalogos:outPnlCatalogo"/>
+                    </p:commandButton>
+                </div>
+
+                <!-- TREE TABLE con inline edit -->
+                <p:treeTable value="#{catalogoController.root}" var="catalogo"
+                             showGridlines="true" editable="true" id="trTblCatalogo"
+                             styleClass="ui-datatable-striped ui-datatable-sm">
+                    <p:ajax event="rowEdit"       listener="#{catalogoController.onRowEdit}"   update="msgs"/>
+                    <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}" update="msgs"/>
+
+                    <p:column headerText="#{msg['form.catalogos.table.header.id']}"
+                              sortBy="#{catalogo.id}" style="width:7%" responsivePriority="1">
+                        <p:cellEditor>
+                            <f:facet name="output"><span class="text-sm text-500">#{catalogo.id}</span></f:facet>
+                            <f:facet name="input"><p:inputText value="#{catalogo.id}" style="width:100%" disabled="true"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.catalogos.table.header.nombre']}"
+                              sortBy="#{catalogo.nombre}" styleClass="w-auto" responsivePriority="1">
+                        <p:cellEditor>
+                            <f:facet name="output"><span class="text-sm font-medium text-900">#{catalogo.nombre}</span></f:facet>
+                            <f:facet name="input"><p:inputText value="#{catalogo.nombre}" style="width:100%" onkeyup="this.value = this.value.toUpperCase()"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.catalogos.table.header.orden']}"
+                              sortBy="#{catalogo.orden}" style="width:6%" responsivePriority="3">
+                        <p:cellEditor>
+                            <f:facet name="output"><p:badge value="#{catalogo.orden}" severity="info"/></f:facet>
+                            <f:facet name="input"><p:inputText value="#{catalogo.orden}" style="width:100%"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.catalogos.table.header.descripcion']}"
+                              styleClass="w-auto" responsivePriority="4">
+                        <p:cellEditor>
+                            <f:facet name="output"><span class="text-sm text-700">#{catalogo.descripcion}</span></f:facet>
+                            <f:facet name="input"><p:inputText value="#{catalogo.descripcion}" style="width:100%" onkeyup="this.value = this.value.toUpperCase()"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+
+                    <p:column style="width:7%" responsivePriority="5" styleClass="text-center">
+                        <p:rowEditor/>
+                        <p:commandButton icon="pi pi-trash"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         title="#{msg['form.catalogos.btn.delete.title']}"
+                                         actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
+                                         process="@this" update="@form msgs">
+                            <f:setPropertyActionListener value="#{catalogo}"
+                                                         target="#{catalogoController.catalogoSeleccionado}"/>
+                            <p:confirm header="#{msg['form.catalogos.confirm.delete.header']}"
+                                       message="#{msg['form.catalogos.confirm.delete.message']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:treeTable>
+
+                <!-- Confirm dialog global -->
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+                                 responsive="true" width="400" style="max-width:96vw">
+                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                                     styleClass="ui-button-danger" type="button"
+                                     onclick="PF('dlgConfirm').accept()"/>
+                    <p:commandButton value="Cancelar" icon="pi pi-times"
+                                     styleClass="ui-button-secondary ml-2" type="button"
+                                     onclick="PF('dlgConfirm').reject()"/>
+                </p:confirmDialog>
+
+            </div><!-- /surface-card -->
+
+            <!-- ======================================================
+                 DIALOGO: NUEVO CATALOGO
+                 ====================================================== -->
+            <p:dialog header="#{msg['form.catalogos.dialog.title']}"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgCatalogo"
+                      responsive="true" width="480"
+                      style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+
+                <p:outputPanel id="outPnlCatalogo" class="ui-fluid">
+                    <p:outputPanel rendered="#{catalogoController.catalogoSeleccionado ne null}">
+
+                        <div class="formgrid grid">
+
+                            <div class="field col-12">
+                                <label for="nombre" class="font-medium text-700 text-sm">
+                                    #{msg['form.catalogos.label.nombre']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="nombre"
+                                             value="#{catalogoController.catalogoSeleccionado.nombre}"
+                                             maxlength="100" required="true" styleClass="w-full"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
-                            <div class="field">
-                                <p:outputLabel for="orden" value="#{msg['form.catalogos.label.orden']}"/>
-                                <p:inputText id="orden" value="#{catalogoController.catalogoSeleccionado.orden}"
-                                             required="true"/>
+                            <div class="field col-12 md:col-6">
+                                <label for="orden" class="font-medium text-700 text-sm">
+                                    #{msg['form.catalogos.label.orden']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="orden"
+                                             value="#{catalogoController.catalogoSeleccionado.orden}"
+                                             required="true" styleClass="w-full"/>
                             </div>
-                            <div class="field">
-                                <p:outputLabel for="descripcion" value="#{msg['form.catalogos.label.descripcion']}"/>
-                                <p:inputText id="descripcion" value="#{catalogoController.catalogoSeleccionado.descripcion}"
-                                             maxlength="150" required="true"
-                                             onkeyup="value = value.toUpperCase()"/>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="padre" class="font-medium text-700 text-sm">
+                                    #{msg['form.catalogos.label.padre']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="padre"
+                                             value="#{catalogoController.catalogoSeleccionado.padre.id}"
+                                             required="true" styleClass="w-full"/>
                             </div>
-                            <div class="field">
-                                <p:outputLabel for="padre" value="#{msg['form.catalogos.label.padre']}"/>
-                                <p:inputText id="padre" value="#{catalogoController.catalogoSeleccionado.padre.id}"
-                                             required="true"/>
+
+                            <div class="field col-12">
+                                <label for="descripcion" class="font-medium text-700 text-sm">
+                                    #{msg['form.catalogos.label.descripcion']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="descripcion"
+                                             value="#{catalogoController.catalogoSeleccionado.descripcion}"
+                                             maxlength="150" required="true" styleClass="w-full"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
-                        </p:outputPanel>
+
+                        </div>
+
                     </p:outputPanel>
+                </p:outputPanel>
 
-                    <f:facet name="footer">
-                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         actionListener="#{catalogoController.guardarCatalogo}"
-                                         update="outPnlCatalogo, msgs"
-                                         process="outPnlCatalogo @this"/>
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgCatalogo').hide()"
-                                         class="ui-button-secondary"/>
-                    </f:facet>
-                </p:dialog>
-            </div>
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         type="button"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{catalogoController.guardarCatalogo}"
+                                         update="outPnlCatalogo trTblCatalogo msgs"
+                                         process="outPnlCatalogo @this"
+                                         oncomplete="if (!args.validationFailed) PF('dlgCatalogo').hide()"/>
+                    </div>
+                </f:facet>
+
+            </p:dialog>
+
         </h:form>
+
     </ui:define>
 </ui:composition>

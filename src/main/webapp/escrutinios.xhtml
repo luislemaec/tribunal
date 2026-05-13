@@ -5,7 +5,9 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml"
                 xmlns:c="jakarta.tags.core">
+
     <ui:define name="title">#{msg['form.escrutinios.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
@@ -15,129 +17,163 @@
     </ui:define>
 
     <ui:define name="content">
+
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#22c55e,#16a34a);flex-shrink:0">
+                        <i class="pi pi-chart-pie text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.escrutinios.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">Resumen de escrutinio por cantón, parroquia, recinto y mesa de votación</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
         <p:blockUI block="frmActaE" trigger="frmActaE">
             <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#f59e0b"/>
-            <h5 style="margin:.5rem 0 0; color:#fff">Calculando escrutinio...</h5>
+            <div style="margin:.5rem 0 0;color:#fff">Calculando escrutinio...</div>
         </p:blockUI>
 
         <h:form id="frmActaE">
-            <div class="grid">
-                <div class="col-12">
-                    <p:divider align="left" type="solid">
-                        <span class="p-tag" style="background:#dcfce7; color:#166534">
-                            <i class="pi pi-chart-pie" style="margin-right:.4rem"/>Resumen de escrutinio
-                        </span>
-                    </p:divider>
-                    <div class="card">
-                        <div class="ui-fluid formgrid grid">
-                            <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="canton" value="Cantón" />
-                                <p:selectOneMenu id="canton" value="#{totalVotosController.cantonSeleccionado.id}" filter="true" filterMatchMode="startsWith">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{recintoController.cantones}" var="canton"  itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                                    <p:ajax event="change"  listener="#{totalVotosController.cargaParroquiasPorCanton()}" process="@this" update="frmActaE, msgs"/>
-                                </p:selectOneMenu>
-                            </div>
-                            <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="parroquia" value="Parroquia" />
-                                <p:selectOneMenu id="parroquia" value="#{totalVotosController.parroquiaSeleccionado.id}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"  itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                                    <p:ajax event="change"  listener="#{totalVotosController.cargaRecintosPorParroquia()}" process="@this" update="frmActaE msgs"/>
-                                </p:selectOneMenu>
-                            </div>
 
-                            <div class="field col-12 lg:col-6">
-                                <p:outputLabel for="recintos" value="Recintos" />
-                                <p:selectOneMenu id="recintos" value="#{totalVotosController.recintoSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty recintoController.listaRecintos}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{totalVotosController.recintos}" var="recinto"  itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
-                                    <p:ajax event="change"  listener="#{totalVotosController.cargaMesasPorRecintos()}" process="@this" update="frmActaE msgs"/>
-                                </p:selectOneMenu>
-                            </div>
-                            <div class="field col-12 lg:col-6">
-                                <p:outputLabel for="mesas" value="Mesas" />
-                                <p:selectOneMenu id="mesas" value="#{totalVotosController.mesaSeleccionado.id}" filter="true" filterMatchMode="contains" disabled="#{empty mesaController.listaMesas}">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{totalVotosController.mesas}" var="mesa"  itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
-                                    <p:ajax event="change" listener="#{totalVotosController.cargaVotosPorMesas()}" process="@this" update="frmActaE"/>
-                                </p:selectOneMenu>
-                            </div>
-                        </div>                       
-                    </div>                        
+            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+
+            <!-- FILTROS GEOGRAFICOS -->
+            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                <div class="flex align-items-center gap-2 mb-3">
+                    <i class="pi pi-filter text-500"></i>
+                    <span class="font-semibold text-700">Filtros geográficos</span>
                 </div>
+                <div class="formgrid grid">
+                    <div class="field col-12 md:col-6 lg:col-3">
+                        <label for="canton" class="font-medium text-700 text-sm">Cantón</label>
+                        <p:selectOneMenu id="canton" value="#{totalVotosController.cantonSeleccionado.id}"
+                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
+                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
+                            <f:selectItems value="#{recintoController.cantones}" var="canton"
+                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                            <p:ajax event="change" listener="#{totalVotosController.cargaParroquiasPorCanton()}"
+                                    process="@this" update="frmActaE msgs"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-6 lg:col-3">
+                        <label for="parroquia" class="font-medium text-700 text-sm">Parroquia</label>
+                        <p:selectOneMenu id="parroquia" value="#{totalVotosController.parroquiaSeleccionado.id}" styleClass="w-full">
+                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
+                            <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"
+                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                            <p:ajax event="change" listener="#{totalVotosController.cargaRecintosPorParroquia()}"
+                                    process="@this" update="frmActaE msgs"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-6 lg:col-3">
+                        <label for="recintos" class="font-medium text-700 text-sm">Recinto</label>
+                        <p:selectOneMenu id="recintos" value="#{totalVotosController.recintoSeleccionado.id}"
+                                         filter="true" filterMatchMode="contains" styleClass="w-full"
+                                         disabled="#{empty recintoController.listaRecintos}">
+                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
+                            <f:selectItems value="#{totalVotosController.recintos}" var="recinto"
+                                           itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
+                            <p:ajax event="change" listener="#{totalVotosController.cargaMesasPorRecintos()}"
+                                    process="@this" update="frmActaE msgs"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-6 lg:col-3">
+                        <label for="mesas" class="font-medium text-700 text-sm">Mesa</label>
+                        <p:selectOneMenu id="mesas" value="#{totalVotosController.mesaSeleccionado.id}"
+                                         filter="true" filterMatchMode="contains" styleClass="w-full"
+                                         disabled="#{empty mesaController.listaMesas}">
+                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
+                            <f:selectItems value="#{totalVotosController.mesas}" var="mesa"
+                                           itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
+                            <p:ajax event="change" listener="#{totalVotosController.cargaVotosPorMesas()}"
+                                    process="@this" update="frmActaE"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+            </div>
 
+            <!-- KPIs -->
+            <div class="grid mb-3">
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="card">
-                        <div class="flex justify-content-between align-items-center">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #0ea5e9">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#0ea5e9,#38bdf8);flex-shrink:0">
+                                <i class="pi pi-map-marker text-white"/>
+                            </div>
                             <div>
-                                <span class="block text-500 font-medium text-sm">RECINTOS</span>
+                                <span class="block text-500 text-xs font-medium uppercase">Recintos</span>
                                 <span class="block text-900 font-bold text-2xl">#{totalVotosController.recintos.size()}</span>
                             </div>
-                            <p:tag value="#{totalVotosController.recintos.size()}" severity="info" icon="pi pi-map-marker"/>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="card">
-                        <div class="flex justify-content-between align-items-center">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #f59e0b">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f59e0b,#fbbf24);flex-shrink:0">
+                                <i class="pi pi-list text-white"/>
+                            </div>
                             <div>
-                                <span class="block text-500 font-medium text-sm">MESAS</span>
+                                <span class="block text-500 text-xs font-medium uppercase">Mesas</span>
                                 <span class="block text-900 font-bold text-2xl">#{totalVotosController.mesas.size()}</span>
                             </div>
-                            <p:tag value="#{totalVotosController.mesas.size()}" severity="warning" icon="pi pi-list"/>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-12 md:col-12 lg:col-3">
-                    <div class="card">
-                        <div class="flex justify-content-between align-items-center">
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #22c55e">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex justify-content-center align-items-center border-round-lg"
+                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
+                                <i class="pi pi-users text-white"/>
+                            </div>
                             <div>
-                                <span class="block text-500 font-medium text-sm">VOTANTES</span>
+                                <span class="block text-500 text-xs font-medium uppercase">Votantes</span>
                                 <span class="block text-900 font-bold text-2xl">#{totalVotosController.totalVotantes}</span>
                             </div>
-                            <p:tag value="#{totalVotosController.totalVotantes}" severity="success" icon="pi pi-users"/>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-12 md:col-12 lg:col-3">
-                    <div class="card">
-                        <span class="block text-500 font-medium text-sm">Mesas escrutadas</span>
-                        <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}"
-                                       labelTemplate="{value}%" displayOnly="true"
-                                       title="Porcentaje de mesas con escrutinio completado"/>
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #8b5cf6">
+                        <div>
+                            <span class="block text-500 text-xs font-medium uppercase mb-2">Mesas escrutadas</span>
+                            <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}"
+                                           labelTemplate="{value}%" displayOnly="true"
+                                           title="Porcentaje de mesas con escrutinio completado"/>
+                        </div>
                     </div>
                 </div>
-
-                <div class="col-12 md:col-6 lg:col-6 ">
-                    <div class="card">
-                        <!-- TODO [MIGRACION-PF15]: <p:barChart> fue removido en PrimeFaces 14+.
-                             Refactorizar usando <p:chart type="bar" model="#{...}"/> con
-                             org.primefaces.model.charts.ChartModel + JSON Chart.js crudo,
-                             o integrar Chart.js directamente vía JavaScript. -->
-                        <h:outputText value="Gráfico de barras temporalmente deshabilitado (migración PrimeFaces 15)" styleClass="text-color-secondary"/>
-                    </div>
-                </div>
-
-
-                <div class="col-12 md:col-6 lg:col-6 ">
-                    <div class="card">
-
-                        <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="voto" value="#{totalVotosController.votos}" reflow="true" 
-                                     rendered="#{not empty totalVotosController.votos}"  showGridlines="true" 
-                                     styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines shadow-1" style="font-size: 20px;" >
-
-                            <p:column headerText="CATEGORÃA"><p:chip label="#{voto[0]}" icon="pi pi-tag"/></p:column>
-                            <p:column headerText="NÚMERO DE VOTOS"><p:badge value="#{voto[1]}" severity="info"/></p:column>
-                        </p:dataTable>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- TABLA DE VOTOS -->
+            <div class="surface-card shadow-1 border-round-lg p-3">
+                <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="voto"
+                             value="#{totalVotosController.votos}" reflow="true"
+                             emptyMessage="Seleccione los filtros para ver el escrutinio."
+                             showGridlines="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm"
+                             style="font-size:1.1rem">
+
+                    <p:column headerText="Categoria">
+                        <p:chip label="#{voto[0]}" icon="pi pi-tag"/>
+                    </p:column>
+                    <p:column headerText="Numero de votos" styleClass="text-center" style="width:12rem">
+                        <p:badge value="#{voto[1]}" severity="info"/>
+                    </p:column>
+                </p:dataTable>
+            </div>
+
         </h:form>
+
     </ui:define>
 </ui:composition>
-

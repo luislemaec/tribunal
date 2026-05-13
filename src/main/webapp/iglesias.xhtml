@@ -42,7 +42,7 @@
                 <!-- Total iglesias -->
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #3b82f6">
+                         style="border-left:4px solid #3b82f6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
@@ -61,7 +61,7 @@
                 <!-- Con documentos -->
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #22c55e">
+                         style="border-left:4px solid #22c55e">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
@@ -78,7 +78,7 @@
                 <!-- Sin documentos -->
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #f97316">
+                         style="border-left:4px solid #f97316">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f97316,#fb923c);flex-shrink:0">
@@ -95,7 +95,7 @@
                 <!-- Provincias -->
                 <div class="col-12 md:col-6 lg:col-3">
                     <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-bottom:3px solid #8b5cf6">
+                         style="border-left:4px solid #8b5cf6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
@@ -166,7 +166,7 @@
         </h:form>
 
         <!-- ======================================================
-             FILTROS GEOGRÃFICOS (colapsable)
+             FILTROS GEOGRÁFICOS (colapsable)
              ====================================================== -->
         <h:form id="frmFiltros">
             <p:panel toggleable="true" collapsed="false"
@@ -431,7 +431,8 @@
 
                 </p:dataTable>
 
-                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="380">
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+                                 responsive="true" width="380" style="max-width:96vw">
                     <p:commandButton value="#{msg['form.iglesias.confirm.btn.yes']}" icon="pi pi-check"
                                      styleClass="ui-button-danger" type="button"
                                      onclick="PF('dlgConfirm').accept()"/>
@@ -444,15 +445,16 @@
         </h:form>
 
         <!-- ======================================================
-             DIÃLOGO: NUEVO / EDITAR IGLESIA
+             DIÁLOGO: NUEVO / EDITAR IGLESIA
              IMPORTANTE: NO usar appendTo="@(body)" — mueve el DOM
-             fuera del <form> y los inputs no se serializan en AJAX.
+             fuera del form y los inputs no se serializan en AJAX.
              ====================================================== -->
         <h:form id="frmDlgIglesia">
             <p:dialog widgetVar="dlgIglesia"
                       header="#{iglesiaController.iglesiaSeleccionado.id eq null ? msg['form.iglesias.dialog.title.new'] : msg['form.iglesias.dialog.title.edit']}"
                       modal="true" responsive="true" closable="true" closeOnEscape="true"
-                      width="840">
+                      width="840" style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh">
 
                 <!-- Sección: Identificación -->
                 <div class="flex align-items-center gap-2 mb-2">
@@ -540,9 +542,6 @@
                                      styleClass="w-full"/>
                     </div>
 
-                    <!-- Total miembros (col-4) -->
-
-
                 </div>
 
                 <p:divider styleClass="my-2"/>
@@ -606,7 +605,7 @@
                 </div>
 
                 <f:facet name="footer">
-                    <div class="flex justify-content-end gap-2 mt-1">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full mt-1">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          styleClass="ui-button-outlined ui-button-secondary"
                                          actionListener="#{iglesiaController.cancelarIglesia}"
@@ -623,11 +622,12 @@
         </h:form>
 
         <!-- ======================================================
-             DIÃLOGO: DETALLE (SOLO LECTURA)
+             DIÁLOGO: DETALLE (SOLO LECTURA)
              ====================================================== -->
         <h:form id="frmDetalle">
             <p:dialog widgetVar="dlgDetalle" header="#{msg['form.iglesias.dialog.title.detail']}"
                       modal="true" closable="true" responsive="true" width="600"
+                      style="max-width:96vw" contentStyle="overflow-y:auto;max-height:80vh"
                       dynamic="true" appendTo="@(body)">
                 <p:outputPanel rendered="#{iglesiaController.iglesiaSeleccionado ne null}">
 
@@ -683,21 +683,25 @@
 
                 </p:outputPanel>
                 <f:facet name="footer">
-                    <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times"
-                                     styleClass="ui-button-outlined ui-button-secondary"
-                                     onclick="PF('dlgDetalle').hide()" type="button"/>
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgDetalle').hide()" type="button"/>
+                    </div>
                 </f:facet>
             </p:dialog>
         </h:form>
 
         <!-- ======================================================
-             DIÃLOGO: DOCUMENTOS HISTÓRICOS
+             DIÁLOGO: DOCUMENTOS HISTÓRICOS
              ====================================================== -->
         <h:form id="frmDocs">
             <p:dialog header="#{msg['form.iglesias.dialog.docs.title']} — #{iglesiaController.iglesiaSeleccionado.nombre}"
                       id="pndHistory" widgetVar="pndHistory"
                       closable="true" modal="true" responsive="true"
-                      dynamic="true" width="900" appendTo="@(body)">
+                      width="900" style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      dynamic="true" appendTo="@(body)">
 
                 <p:dataTable var="doc" value="#{iglesiaController.documentos}"
                              widgetVar="docTable" id="docTable"
@@ -742,9 +746,11 @@
                 </p:dataTable>
 
                 <f:facet name="footer">
-                    <p:commandButton value="Cerrar" icon="pi pi-times" type="button"
-                                     styleClass="ui-button-outlined ui-button-secondary"
-                                     onclick="PF('pndHistory').hide()"/>
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="Cerrar" icon="pi pi-times" type="button"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         onclick="PF('pndHistory').hide()"/>
+                    </div>
                 </f:facet>
             </p:dialog>
         </h:form>

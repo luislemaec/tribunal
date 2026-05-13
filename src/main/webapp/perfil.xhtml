@@ -4,7 +4,9 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
+
     <ui:define name="title">#{msg['form.perfil.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.usuarios.crumb.security']}</li>
         <li>/</li>
@@ -14,15 +16,34 @@
     </ui:define>
 
     <ui:define name="content">
-        <h:form id="frmIglesias"  >
-            <div class="grid ">
-                <div class="col-12">
-                    <div class="card ">
-                        
-                    </div> 
-                </div> 
-            </div> 
+
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
+                        <i class="pi pi-user text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.perfil.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">Información y configuración de su cuenta de usuario</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h:form id="frmPerfil">
+            <div class="surface-card shadow-1 border-round-lg p-4">
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+                <div class="flex justify-content-center align-items-center" style="min-height:10rem">
+                    <span class="text-500 text-lg">
+                        <i class="pi pi-info-circle mr-2"></i>
+                        Módulo de perfil en construcción.
+                    </span>
+                </div>
+            </div>
         </h:form>
+
     </ui:define>
 </ui:composition>
-

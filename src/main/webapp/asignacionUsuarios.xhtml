@@ -15,7 +15,9 @@
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
+        <!-- ======================================================
+             ENCABEZADO
+             ====================================================== -->
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
@@ -31,12 +33,16 @@
             </div>
         </div>
 
-        <!-- KPIs -->
+        <!-- ======================================================
+             TARJETAS DE RESUMEN (KPI)
+             ====================================================== -->
         <h:form id="frmStats">
             <div class="grid mb-2">
 
+                <!-- Total iglesias -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #3b82f6">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-left:4px solid #3b82f6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
@@ -50,8 +56,10 @@
                     </div>
                 </div>
 
+                <!-- Con admin -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #22c55e">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-left:4px solid #22c55e">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
@@ -65,8 +73,10 @@
                     </div>
                 </div>
 
+                <!-- Sin admin -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #f97316">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-left:4px solid #f97316">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f97316,#fb923c);flex-shrink:0">
@@ -80,8 +90,10 @@
                     </div>
                 </div>
 
+                <!-- Avance -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-bottom:3px solid #8b5cf6">
+                    <div class="surface-card shadow-1 border-round-lg p-3"
+                         style="border-left:4px solid #8b5cf6">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
                                  style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
@@ -98,10 +110,13 @@
             </div>
         </h:form>
 
-        <!-- BARRA DE PROGRESO DE FASE -->
+        <!-- ======================================================
+             BARRA DE PROGRESO — FASE ACTIVA
+             ====================================================== -->
         <h:form id="frmProgreso">
             <p:outputPanel rendered="#{asignacionUsuariosController.faseVigente ne null}" styleClass="mb-2" layout="block">
-                <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #0ea5e9">
+                <div class="surface-card shadow-1 border-round-lg p-3"
+                     style="border-left:4px solid #0ea5e9">
                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
                         <div class="flex align-items-center gap-2">
                             <i class="pi pi-chart-line text-primary"></i>
@@ -136,7 +151,7 @@
                                      <f:convertDateTime pattern="dd/MM/yyyy"/>
                                  </h:outputText>
                             <h:outputText rendered="#{asignacionUsuariosController.faseVigente.diasRestantes gt 0}"
-                                          value=" Â· #{asignacionUsuariosController.faseVigente.diasRestantes} días restantes"
+                                          value=" · #{asignacionUsuariosController.faseVigente.diasRestantes} días restantes"
                                           styleClass="text-orange-500 font-medium"/>
                         </small>
                     </div>
@@ -144,7 +159,9 @@
             </p:outputPanel>
         </h:form>
 
-        <!-- FILTROS -->
+        <!-- ======================================================
+             FILTROS GEOGRÁFICOS
+             ====================================================== -->
         <h:form id="frmFiltros">
             <p:panel toggleable="true" collapsed="false" styleClass="mb-2 shadow-1 border-round-lg">
                 <f:facet name="header">
@@ -155,15 +172,17 @@
                 </f:facet>
                 <div class="formgrid grid pt-1">
 
-                    <!-- Filtro de estado -->
+                    <!-- Estado de asignación -->
                     <div class="field col-12 md:col-3">
                         <label for="estadoFiltro" class="text-700 font-medium text-sm">Estado</label>
-                        <p:selectOneMenu id="estadoFiltro" value="#{asignacionUsuariosController.estadoFiltro}"
+                        <p:selectOneMenu id="estadoFiltro"
+                                         value="#{asignacionUsuariosController.estadoFiltro}"
                                          styleClass="w-full">
                             <f:selectItem itemLabel="Sin admin (pendientes)" itemValue="SIN_ADMIN"/>
-                            <f:selectItem itemLabel="Con admin (asignadas)" itemValue="CON_ADMIN"/>
-                            <f:selectItem itemLabel="Todas" itemValue="TODAS"/>
-                            <p:ajax event="change" listener="#{asignacionUsuariosController.cambiarFiltroEstado()}"
+                            <f:selectItem itemLabel="Con admin (asignadas)"  itemValue="CON_ADMIN"/>
+                            <f:selectItem itemLabel="Todas"                  itemValue="TODAS"/>
+                            <p:ajax event="change"
+                                    listener="#{asignacionUsuariosController.cambiarFiltroEstado()}"
                                     process="@this" update=":frmAsignacion:tblAsignacion"/>
                         </p:selectOneMenu>
                     </div>
@@ -171,75 +190,84 @@
                     <!-- Provincia -->
                     <div class="field col-12 md:col-3">
                         <label for="provinciaSel" class="text-700 font-medium text-sm">Provincia</label>
-                        <p:selectOneMenu id="provinciaSel" value="#{asignacionUsuariosController.provinciaFiltroId}"
+                        <p:selectOneMenu id="provinciaSel"
+                                         value="#{asignacionUsuariosController.provinciaFiltroId}"
                                          filter="true" filterMatchMode="contains"
                                          placeholder="-- Todas las provincias --"
                                          styleClass="w-full">
                             <f:selectItems value="#{asignacionUsuariosController.provincias}" var="prov"
                                            itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
-                            <p:ajax event="change" listener="#{asignacionUsuariosController.obtieneCantonesFiltro()}"
-                                    process="@this" update=":frmFiltros:canton :frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
+                            <p:ajax event="change"
+                                    listener="#{asignacionUsuariosController.obtieneCantonesFiltro()}"
+                                    process="@this"
+                                    update=":frmFiltros:canton :frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
 
                     <!-- Cantón -->
                     <div class="field col-12 md:col-2">
                         <label for="canton" class="text-700 font-medium text-sm">Cantón</label>
-                        <p:selectOneMenu id="canton" value="#{asignacionUsuariosController.cantonSeleccionado.id}"
+                        <p:selectOneMenu id="canton"
+                                         value="#{asignacionUsuariosController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
                                          placeholder="-- Todos los cantones --"
                                          styleClass="w-full">
                             <f:selectItems value="#{asignacionUsuariosController.cantonesFiltro}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{asignacionUsuariosController.obtieneParroquias()}"
-                                    process="@this" update=":frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
+                            <p:ajax event="change"
+                                    listener="#{asignacionUsuariosController.obtieneParroquias()}"
+                                    process="@this"
+                                    update=":frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
 
                     <!-- Parroquia -->
                     <div class="field col-12 md:col-2">
                         <label for="parroquia" class="text-700 font-medium text-sm">Parroquia</label>
-                        <p:selectOneMenu id="parroquia" value="#{asignacionUsuariosController.parroquiaSeleccionado.id}"
+                        <p:selectOneMenu id="parroquia"
+                                         value="#{asignacionUsuariosController.parroquiaSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
                                          placeholder="-- Todas las parroquias --"
                                          styleClass="w-full">
                             <f:selectItems value="#{asignacionUsuariosController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{asignacionUsuariosController.obtieneIglesiasPorParroquia()}"
-                                    process="@this" update=":frmAsignacion:tblAsignacion :frmStats"/>
+                            <p:ajax event="change"
+                                    listener="#{asignacionUsuariosController.obtieneIglesiasPorParroquia()}"
+                                    process="@this"
+                                    update=":frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
 
+                    <!-- Limpiar -->
                     <div class="field col-12 md:col-2 flex align-items-end">
                         <p:commandButton value="Limpiar" icon="pi pi-times-circle"
                                          styleClass="ui-button-outlined w-full"
                                          actionListener="#{asignacionUsuariosController.limpiarFiltros}"
                                          process="@this" update=":frmFiltros :frmAsignacion :frmStats"/>
                     </div>
+
                 </div>
             </p:panel>
         </h:form>
 
-        <!-- TABLA -->
+        <!-- ======================================================
+             TABLA PRINCIPAL
+             ====================================================== -->
         <h:form id="frmAsignacion">
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <!-- Mensajes locales de la pantalla. showDetail="false" para mostrar
-                     solo el summary y evitar texto duplicado/largo. -->
+                <!-- Mensajes locales -->
                 <p:messages id="msgs" showDetail="false" showSummary="true"
                             closable="true" styleClass="mb-3"/>
 
-                <!-- Banner bloqueo de fase: mensaje contextual diferenciado entre
-                     "no hay fase vigente" y "fase vigente es otra" — ver
-                     AsignacionUsuariosController.getMensajeBloqueoFase(). -->
-                <p:outputPanel rendered="#{not asignacionUsuariosController.puedeAsignar}" styleClass="mb-3" layout="block">
+                <!-- Banner bloqueo de fase -->
+                <p:outputPanel rendered="#{not asignacionUsuariosController.puedeAsignar}"
+                               styleClass="mb-3" layout="block">
                     <div class="flex align-items-center gap-2 border-round-lg p-3"
                          style="background:#fff7ed;border-left:4px solid #f97316">
                         <i class="pi pi-lock text-orange-500 text-xl flex-shrink-0"/>
                         <div class="flex flex-column gap-1">
-                            <span class="font-semibold text-900 text-sm">
-                                Asignación deshabilitada
-                            </span>
+                            <span class="font-semibold text-900 text-sm">Asignación deshabilitada</span>
                             <span class="text-700 text-sm">
                                 <h:outputText value="#{asignacionUsuariosController.mensajeBloqueoFase}"/>
                             </span>
@@ -247,8 +275,9 @@
                     </div>
                 </p:outputPanel>
 
-                <!-- Indicador positivo cuando la fase ASIGNACION_USUARIOS está vigente. -->
-                <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar}" styleClass="mb-3" layout="block">
+                <!-- Banner fase activa -->
+                <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar}"
+                               styleClass="mb-3" layout="block">
                     <div class="flex align-items-center gap-2 border-round-lg p-2"
                          style="background:#f0fdf4;border-left:4px solid #22c55e">
                         <i class="pi pi-unlock text-green-500 flex-shrink-0"/>
@@ -285,8 +314,10 @@
                         </div>
                     </f:facet>
 
+                    <!-- RUC / Código -->
                     <p:column headerText="RUC / Código" sortBy="#{ig.documento}"
-                              filterBy="#{ig.documento}" filterMatchMode="contains" style="width:9rem">
+                              filterBy="#{ig.documento}" filterMatchMode="contains"
+                              style="width:9rem">
                         <p:tag rendered="#{not empty ig.documento and ig.documento.startsWith('00')}"
                                value="Genérico" icon="pi pi-tag" severity="warning"/>
                         <h:outputText rendered="#{not empty ig.documento and not ig.documento.startsWith('00')}"
@@ -295,6 +326,7 @@
                         <h:outputText rendered="#{empty ig.documento}" value="—" styleClass="text-400"/>
                     </p:column>
 
+                    <!-- Iglesia (avatar + nombre + comunidad) -->
                     <p:column headerText="Iglesia" sortBy="#{ig.nombre}"
                               filterBy="#{ig.nombre}" filterMatchMode="contains">
                         <div class="flex align-items-center gap-2">
@@ -309,8 +341,10 @@
                         </div>
                     </p:column>
 
+                    <!-- Ubicación (apilada) -->
                     <p:column headerText="Ubicación" sortBy="#{ig.provinciaNombre}"
-                              filterBy="#{ig.provinciaNombre}" filterMatchMode="contains" style="width:13rem">
+                              filterBy="#{ig.provinciaNombre}" filterMatchMode="contains"
+                              style="width:13rem">
                         <div class="flex flex-column line-height-3">
                             <small class="text-500 text-xs">
                                 <i class="pi pi-map-marker mr-1"/>
@@ -321,22 +355,27 @@
                         </div>
                     </p:column>
 
+                    <!-- Administrador asignado -->
                     <p:column headerText="Administrador" style="width:18rem"
-                              sortBy="#{ig.adminPersonaNombres}" filterBy="#{ig.adminPersonaNombres}" filterMatchMode="contains">
+                              sortBy="#{ig.adminPersonaNombres}"
+                              filterBy="#{ig.adminPersonaNombres}" filterMatchMode="contains">
                         <p:outputPanel rendered="#{ig.tieneAdmin}">
                             <div class="flex flex-column line-height-3">
                                 <span class="font-semibold text-900 text-sm">
                                     <i class="pi pi-user mr-1 text-green-500"/>
                                     #{ig.adminPersonaNombres} #{ig.adminPersonaApellidos}
                                 </span>
-                                <small class="text-500">#{ig.adminUsername} Â· #{ig.adminCorreo}</small>
+                                <small class="text-500">#{ig.adminUsername} · #{ig.adminCorreo}</small>
                             </div>
                         </p:outputPanel>
                         <p:tag rendered="#{not ig.tieneAdmin}"
                                value="Sin asignar" icon="pi pi-exclamation-triangle" severity="warning"/>
                     </p:column>
 
+                    <!-- Acciones -->
                     <p:column headerText="Acciones" styleClass="text-center" style="width:9rem">
+
+                        <!-- Asignar (si no tiene admin) -->
                         <p:commandButton icon="pi pi-user-plus"
                                          rendered="#{not ig.tieneAdmin}"
                                          disabled="#{not asignacionUsuariosController.puedeAsignar}"
@@ -349,6 +388,7 @@
                             <p:resetInput target=":frmDlgAsignacion"/>
                         </p:commandButton>
 
+                        <!-- Reasignar (si ya tiene admin) -->
                         <p:commandButton icon="pi pi-refresh"
                                          rendered="#{ig.tieneAdmin}"
                                          disabled="#{not asignacionUsuariosController.puedeAsignar}"
@@ -360,17 +400,24 @@
                                          process="@this">
                             <p:resetInput target=":frmDlgAsignacion"/>
                         </p:commandButton>
+
                     </p:column>
 
                 </p:dataTable>
             </div>
         </h:form>
 
-        <!-- DIÃLOGO DE ASIGNACIÓN -->
+        <!-- ======================================================
+             DIÁLOGO: ASIGNAR / REASIGNAR ADMINISTRADOR
+             IMPORTANTE: NO usar appendTo="@(body)" — el form
+             debe envolver el dialog para serializar los inputs.
+             ====================================================== -->
         <h:form id="frmDlgAsignacion">
             <p:dialog widgetVar="dlgAsignacion"
                       header="#{asignacionUsuariosController.reasignacion ? 'Reasignar administrador' : 'Asignar administrador'}"
-                      modal="true" responsive="true" closable="true" closeOnEscape="true" width="700">
+                      modal="true" responsive="true" closable="true" closeOnEscape="true"
+                      width="700" style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh">
 
                 <p:outputPanel rendered="#{asignacionUsuariosController.iglesiaSeleccionada ne null}">
 
@@ -378,20 +425,23 @@
                     <div class="surface-100 border-round-lg p-3 mb-3">
                         <div class="flex align-items-center gap-2 mb-1">
                             <i class="pi pi-building text-primary"/>
-                            <span class="font-semibold text-900">#{asignacionUsuariosController.iglesiaSeleccionada.nombre}</span>
+                            <span class="font-semibold text-900">
+                                #{asignacionUsuariosController.iglesiaSeleccionada.nombre}
+                            </span>
                         </div>
                         <small class="text-500">
-                            #{asignacionUsuariosController.iglesiaSeleccionada.provinciaNombre} Â·
-                            #{asignacionUsuariosController.iglesiaSeleccionada.cantonNombre} Â·
+                            #{asignacionUsuariosController.iglesiaSeleccionada.provinciaNombre} ·
+                            #{asignacionUsuariosController.iglesiaSeleccionada.cantonNombre} ·
                             #{asignacionUsuariosController.iglesiaSeleccionada.ubicacionNombre}
                         </small>
                     </div>
 
                     <!-- Aviso de reasignación -->
-                    <p:outputPanel rendered="#{asignacionUsuariosController.reasignacion}" styleClass="mb-3" layout="block">
+                    <p:outputPanel rendered="#{asignacionUsuariosController.reasignacion}"
+                                   styleClass="mb-3" layout="block">
                         <div class="flex align-items-center gap-2 surface-100 border-round-lg p-2"
                              style="border-left:3px solid #f59e0b">
-                            <i class="pi pi-info-circle text-orange-500"/>
+                            <i class="pi pi-info-circle text-orange-500 flex-shrink-0"/>
                             <span class="text-sm text-700">
                                 Esta iglesia ya tiene asignado a
                                 <strong>#{asignacionUsuariosController.iglesiaSeleccionada.adminPersonaNombres}</strong>.
@@ -400,23 +450,22 @@
                         </div>
                     </p:outputPanel>
 
-                    <!-- Mensajes locales del diálogo. showDetail="false" para mantener
-                         el modal compacto y solo mostrar el summary. -->
+                    <!-- Mensajes locales del diálogo -->
                     <p:messages id="dlgMsgs" showDetail="false" showSummary="true"
                                 closable="true" styleClass="mb-2"/>
 
                     <!-- Los inputs viven dentro de adminFields para que el AJAX de cédula
-                         sólo refresque ESTE panel (no @form). Si se actualizara el form
-                         completo, PrimeFaces 11 destruye el widget del dialog (al no usar
-                         appendTo="@(body)") y el modal se cierra. -->
+                         solo refresque ESTE panel y no destruya el widget del dialog. -->
                     <p:outputPanel id="adminFields">
                         <div class="formgrid grid">
 
+                            <!-- Cédula -->
                             <div class="field col-12 md:col-5">
                                 <label for="cedula" class="font-medium text-700 text-sm">
                                     Cédula <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="cedula" value="#{asignacionUsuariosController.nuevoAdmin.personaDocumento}"
+                                <p:inputText id="cedula"
+                                             value="#{asignacionUsuariosController.nuevoAdmin.personaDocumento}"
                                              maxlength="13" required="true" styleClass="w-full">
                                     <p:keyFilter mask="num"/>
                                     <p:ajax event="change"
@@ -427,28 +476,34 @@
                                 <small class="text-500">Tab para buscar persona en BD o Registro Civil.</small>
                             </div>
 
+                            <!-- Nombres y apellidos -->
                             <div class="field col-12 md:col-7">
                                 <label for="nombres" class="font-medium text-700 text-sm">
                                     Nombres y apellidos <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="nombres" value="#{asignacionUsuariosController.nuevoAdmin.personaNombres}"
+                                <p:inputText id="nombres"
+                                             value="#{asignacionUsuariosController.nuevoAdmin.personaNombres}"
                                              disabled="#{not empty asignacionUsuariosController.nuevoAdmin.personaNombres}"
                                              required="true" styleClass="w-full"/>
                             </div>
 
+                            <!-- Usuario -->
                             <div class="field col-12 md:col-6">
                                 <label for="username" class="font-medium text-700 text-sm">
                                     Usuario <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="username" value="#{asignacionUsuariosController.nuevoAdmin.username}"
+                                <p:inputText id="username"
+                                             value="#{asignacionUsuariosController.nuevoAdmin.username}"
                                              required="true" styleClass="w-full"/>
                             </div>
 
+                            <!-- Correo -->
                             <div class="field col-12 md:col-6">
                                 <label for="correo" class="font-medium text-700 text-sm">
                                     Correo <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="correo" value="#{asignacionUsuariosController.nuevoAdmin.correo}"
+                                <p:inputText id="correo"
+                                             value="#{asignacionUsuariosController.nuevoAdmin.correo}"
                                              required="true" styleClass="w-full"/>
                             </div>
 
@@ -464,7 +519,7 @@
                 </p:outputPanel>
 
                 <f:facet name="footer">
-                    <div class="flex justify-content-end gap-2 mt-1">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full mt-1">
                         <p:commandButton value="Cancelar" icon="pi pi-times"
                                          styleClass="ui-button-outlined ui-button-secondary"
                                          actionListener="#{asignacionUsuariosController.cancelarAsignacion}"
@@ -478,13 +533,18 @@
                                          update="adminFields dlgMsgs :frmAsignacion :frmStats :frmProgreso"/>
                     </div>
                 </f:facet>
+
             </p:dialog>
         </h:form>
 
-        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="380">
-            <p:commandButton value="Sí" icon="pi pi-check" styleClass="ui-button-danger" type="button"
+        <!-- Confirm dialog global -->
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+                         responsive="true" width="380" style="max-width:96vw">
+            <p:commandButton value="Sí" icon="pi pi-check"
+                             styleClass="ui-button-danger" type="button"
                              onclick="PF('dlgConfirm').accept()"/>
-            <p:commandButton value="Cancelar" icon="pi pi-times" styleClass="ui-button-secondary ml-2" type="button"
+            <p:commandButton value="Cancelar" icon="pi pi-times"
+                             styleClass="ui-button-secondary ml-2" type="button"
                              onclick="PF('dlgConfirm').reject()"/>
         </p:confirmDialog>
 

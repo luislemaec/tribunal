@@ -4,7 +4,9 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
+
     <ui:define name="title">#{msg['form.roles.title']}</ui:define>
+
     <ui:define name="viewname">
         <li>#{msg['form.roles.crumb.security']}</li>
         <li>/</li>
@@ -14,101 +16,160 @@
     </ui:define>
 
     <ui:define name="content">
+
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f59e0b,#f97316);flex-shrink:0">
+                        <i class="pi pi-key text-white" style="font-size:1.5rem"></i>
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.roles.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">Gestión de roles y perfiles de acceso al sistema</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <h:form id="frmRoles">
-            <div class="grid">
-                <div class="col-12 md:col-12 lg:col-12">
-                    <h5>#{msg['form.roles.header']}</h5>
-                    <p:toolbar>
-                        <p:toolbarGroup>
-                            <p:commandButton value="#{msg['form.roles.btn.new']}" icon="pi pi-plus"
-                                             actionListener="#{rolController.nuevoRol}"
-                                             update="outPnlRoles" oncomplete="PF('dlgRol').show()"
-                                             styleClass="ui-button-raised ui-button-success"
-                                             style="margin-right: .5rem"/>
-                            <p:commandButton id="btnEliminaRegistros"
-                                             value="#{rolController.mensajeBotonEliminar}"
-                                             icon="pi pi-trash"
-                                             actionListener="#{rolController.eliminarRolesSeleccionados}"
-                                             styleClass="ui-button-raised ui-button-danger"
-                                             disabled="#{!rolController.existeRolesSeleccionados()}"
-                                             update="@this">
-                                <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
-                                           message="#{msg['form.roles.confirm.delete.multiple']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                        </p:toolbarGroup>
-                        <p:toolbarGroup align="right">
-                            <p:commandButton value="#{msg['form.roles.btn.export']}" icon="pi pi-upload"
-                                             styleClass="ui-button-raised ui-button-help" ajax="false"
-                                             disabled="#{empty rolController.roles}">
-                                <p:dataExporter type="pdf" target="tblRoles" fileName="Roles"/>
-                            </p:commandButton>
-                        </p:toolbarGroup>
-                    </p:toolbar>
+
+            <div class="surface-card shadow-1 border-round-lg p-3">
+
+                <!-- Mensajes -->
+                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+
+                <!-- TOOLBAR -->
+                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div class="flex align-items-center gap-2 flex-wrap">
+                        <p:commandButton value="#{msg['form.roles.btn.new']}" icon="pi pi-plus"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{rolController.nuevoRol}"
+                                         update="outPnlRoles" oncomplete="PF('dlgRol').show()">
+                            <p:resetInput target="outPnlRoles"/>
+                        </p:commandButton>
+                        <p:commandButton id="btnEliminaRegistros"
+                                         value="#{rolController.mensajeBotonEliminar}"
+                                         icon="pi pi-trash"
+                                         styleClass="ui-button-danger"
+                                         actionListener="#{rolController.eliminarRolesSeleccionados}"
+                                         disabled="#{!rolController.existeRolesSeleccionados()}"
+                                         update="@this tblRoles msgs">
+                            <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
+                                       message="#{msg['form.roles.confirm.delete.multiple']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </div>
+                    <p:commandButton value="#{msg['form.roles.btn.export']}" icon="pi pi-upload"
+                                     styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                     disabled="#{empty rolController.roles}">
+                        <p:dataExporter type="pdf" target="tblRoles" fileName="Roles"/>
+                    </p:commandButton>
                 </div>
 
-                <div class="col-12 md:col-12 lg:col-12">
+                <!-- DATATABLE -->
+                <p:dataTable id="tblRoles" widgetVar="wdTablaRoles" var="rol"
+                             value="#{rolController.roles}" reflow="true"
+                             selection="#{rolController.rolesSeleccionados}" rowKey="#{rol.id}"
+                             paginator="true" rows="10" rowSelectMode="add"
+                             rowsPerPageTemplate="10,25,50"
+                             paginatorPosition="bottom"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} roles"
+                             emptyMessage="No hay roles registrados. Use el botón 'Nuevo' para crear uno."
+                             showGridlines="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm">
+                    <p:ajax event="rowSelect"           update=":frmRoles:btnEliminaRegistros"/>
+                    <p:ajax event="rowUnselect"         update=":frmRoles:btnEliminaRegistros"/>
+                    <p:ajax event="rowSelectCheckbox"   update=":frmRoles:btnEliminaRegistros"/>
+                    <p:ajax event="rowUnselectCheckbox" update=":frmRoles:btnEliminaRegistros"/>
+                    <p:ajax event="toggleSelect"        update=":frmRoles:btnEliminaRegistros"/>
 
-                    <p:dataTable id="tblRoles" widgetVar="wdTablaRoles" var="rol"
-                                 value="#{rolController.roles}" reflow="true"
-                                 selection="#{rolController.rolesSeleccionados}" rowKey="#{rol.id}"
-                                 rendered="#{not empty rolController.roles}"
-                                 paginator="true" rows="10" rowSelectMode="add"
-                                 paginatorPosition="bottom" showGridlines="true"
-                                 styleClass="ui-datatable-striped ui-datatable-sm ui-datatable-gridlines">
-                        <p:ajax event="rowSelect"          update=":frmRoles:btnEliminaRegistros"/>
-                        <p:ajax event="rowUnselect"        update=":frmRoles:btnEliminaRegistros"/>
-                        <p:ajax event="rowSelectCheckbox"  update=":frmRoles:btnEliminaRegistros"/>
-                        <p:ajax event="rowUnselectCheckbox" update=":frmRoles:btnEliminaRegistros"/>
-                        <p:ajax event="toggleSelect"       update=":frmRoles:btnEliminaRegistros"/>
+                    <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
 
-                        <p:column selectionMode="multiple" exportable="false"/>
-                        <p:column headerText="#{msg['form.roles.table.header.id']}"
-                                  sortBy="#{rol.id}" filterBy="#{rol.id}"
-                                  styleClass="sm:w-max md:w-2 lg:w-5rem">
-                            <h:outputText value="#{rol.id}"/>
-                        </p:column>
-                        <p:column headerText="#{msg['form.roles.table.header.nombre']}"
-                                  sortBy="#{rol.nombre}" filterBy="#{rol.nombre}"
-                                  styleClass="sm:w-max md:w-4 lg:w-10rem">
-                            <h:outputText value="#{rol.nombre}"/>
-                        </p:column>
-                        <p:column headerText="#{msg['form.roles.table.header.descripcion']}"
-                                  sortBy="#{rol.descripcion}" filterBy="#{rol.descripcion}"
-                                  styleClass="sm:w-max md:w-4 lg:w-10rem">
-                            <h:outputText value="#{rol.descripcion}"/>
-                        </p:column>
-                        <p:column exportable="false" styleClass="sm:w-max md:w-2 lg:w-5rem">
-                            <p:commandButton icon="pi pi-pencil"
-                                             update=":frmRoles:outPnlRoles"
-                                             oncomplete="PF('dlgRol').show()"
-                                             styleClass="ui-button-raised rounded-button ui-button-info"
-                                             process="@this">
-                                <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
-                            </p:commandButton>
-                            <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
-                                             actionListener="#{rolController.eliminarRolesSeleccionados}"
-                                             process="@this" update="@form"
-                                             styleClass="ui-button-raised rounded-button ui-button-danger mx-1">
-                                <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
-                                <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
-                                           message="#{msg['form.roles.confirm.delete.message']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                        </p:column>
-                    </p:dataTable>
-                </div>
+                    <p:column headerText="#{msg['form.roles.table.header.id']}"
+                              sortBy="#{rol.id}" filterBy="#{rol.id}"
+                              style="width:6rem">
+                        <span class="text-sm text-500 font-mono">#{rol.id}</span>
+                    </p:column>
 
-                <p:dialog header="#{msg['form.roles.dialog.title']}" showEffect="fade" modal="true"
-                          widgetVar="dlgRol" responsive="true">
-                    <p:outputPanel id="outPnlRoles" class="ui-fluid">
-                        <p:outputPanel rendered="#{not empty rolController.rolSeleccionado}">
+                    <p:column headerText="#{msg['form.roles.table.header.nombre']}"
+                              sortBy="#{rol.nombre}" filterBy="#{rol.nombre}"
+                              filterMatchMode="contains">
+                        <p:tag value="#{rol.nombre}"
+                               severity="#{rol.nombre.contains('Administrador') ? 'danger'
+                                         : rol.nombre.contains('Tribunal')      ? 'warning'
+                                         : rol.nombre.contains('IglesiaAdmin')  ? 'info'
+                                         : 'secondary'}"/>
+                    </p:column>
 
-                            <div class="field">
-                                <p:outputLabel for="nombre" value="#{msg['form.roles.label.nombre']}"/>
-                                <p:inputText id="nombre" value="#{rolController.rolSeleccionado.nombre}"
+                    <p:column headerText="#{msg['form.roles.table.header.descripcion']}"
+                              sortBy="#{rol.descripcion}" filterBy="#{rol.descripcion}"
+                              filterMatchMode="contains">
+                        <span class="text-sm text-800">#{rol.descripcion}</span>
+                    </p:column>
+
+                    <p:column headerText="Acciones" exportable="false"
+                              styleClass="text-center" style="width:7rem">
+                        <p:commandButton icon="pi pi-pencil"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         title="Editar rol"
+                                         update=":frmRoles:outPnlRoles"
+                                         oncomplete="PF('dlgRol').show()"
+                                         process="@this">
+                            <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
+                        </p:commandButton>
+                        <p:commandButton icon="pi pi-trash"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         title="#{msg['form.roles.confirm.delete.header']}"
+                                         actionListener="#{rolController.eliminarRolesSeleccionados}"
+                                         process="@this" update="tblRoles msgs">
+                            <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
+                            <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
+                                       message="#{msg['form.roles.confirm.delete.message']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Confirm dialog global -->
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+                                 responsive="true" width="400" style="max-width:96vw">
+                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                                     styleClass="ui-button-danger" type="button"
+                                     onclick="PF('dlgConfirm').accept()"/>
+                    <p:commandButton value="Cancelar" icon="pi pi-times"
+                                     styleClass="ui-button-secondary ml-2" type="button"
+                                     onclick="PF('dlgConfirm').reject()"/>
+                </p:confirmDialog>
+
+            </div><!-- /surface-card -->
+
+            <!-- ======================================================
+                 DIALOGO: NUEVO / EDITAR ROL
+                 ====================================================== -->
+            <p:dialog header="#{msg['form.roles.dialog.title']}"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgRol"
+                      responsive="true" width="480"
+                      style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+
+                <p:outputPanel id="outPnlRoles" class="ui-fluid">
+                    <p:outputPanel rendered="#{not empty rolController.rolSeleccionado}">
+
+                        <div class="formgrid grid">
+
+                            <div class="field col-12">
+                                <label for="nombre" class="font-medium text-700 text-sm">
+                                    #{msg['form.roles.label.nombre']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="nombre"
+                                             value="#{rolController.rolSeleccionado.nombre}"
                                              disabled="#{not empty rolController.rolSeleccionado.id}"
-                                             required="true">
+                                             required="true" styleClass="w-full">
                                     <p:ajax event="change"
                                             update="frmRoles:outPnlRoles msgs"
                                             listener="#{rolController.buscaRolPorNombre}"
@@ -116,26 +177,39 @@
                                 </p:inputText>
                             </div>
 
-                            <div class="field">
-                                <p:outputLabel for="descripcion" value="#{msg['form.roles.label.descripcion']}"/>
-                                <p:inputText id="descripcion" value="#{rolController.rolSeleccionado.descripcion}"
-                                             maxlength="100" required="true"
-                                             onkeyup="value = value.toUpperCase()"/>
+                            <div class="field col-12">
+                                <label for="descripcion" class="font-medium text-700 text-sm">
+                                    #{msg['form.roles.label.descripcion']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="descripcion"
+                                             value="#{rolController.rolSeleccionado.descripcion}"
+                                             maxlength="100" required="true" styleClass="w-full"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
-                        </p:outputPanel>
-                    </p:outputPanel>
+                        </div>
 
-                    <f:facet name="footer">
-                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         actionListener="#{rolController.actualizarRegistro}"
-                                         update="outPnlRoles, msgs" process="outPnlRoles @this"/>
+                    </p:outputPanel>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgRol').hide()"
-                                         class="ui-button-secondary"/>
-                    </f:facet>
-                </p:dialog>
-            </div>
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         type="button"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{rolController.actualizarRegistro}"
+                                         update="outPnlRoles tblRoles msgs"
+                                         process="outPnlRoles @this"
+                                         oncomplete="if (!args.validationFailed) PF('dlgRol').hide()"/>
+                    </div>
+                </f:facet>
+
+            </p:dialog>
+
         </h:form>
+
     </ui:define>
 </ui:composition>

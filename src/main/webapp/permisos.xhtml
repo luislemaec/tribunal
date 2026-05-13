@@ -15,50 +15,81 @@
     </ui:define>
 
     <ui:define name="content">
-        <h:form id="frmPermisos">
-            <div class="grid">
-                <div class="col-12 md:col-12 lg:col-12">
-                    <div class="card">
-                        <div class="ui-fluid formgrid grid">
-                            <div class="field col-12 md:col-6 lg:col-6">
-                                <div class="scalein animation-duration-500 animation-iteration-1 flex align-items-center justify-content-center
-                                     font-bold bg-cyan-500 text-white border-round m-1 px-1 py-5">Seleccione ROL, marque o desmarque para asignar o quitar permisos respectivamente </div>
-                            </div>
-                            <div class="field col-12 md:col-6 lg:col-6">
-                                <p:outputLabel for="rol" value="ROL" />
-                                <p:selectOneMenu id="rol" value="#{permisosController.rolSeleccionado.id}" filter="true" filterMatchMode="startsWith">
-                                    <f:selectItem itemLabel="Select" itemValue="" />
-                                    <f:selectItems value="#{permisosController.roles}" var="rol"  itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>                                    
-                                    <p:ajax event="change"  listener="#{permisosController.obtieneMenuPorRol()}" process="@this" update="frmPermisos"/>                                    
-                                </p:selectOneMenu>
-                            </div>
-                        </div>
+
+        <!-- ENCABEZADO -->
+        <div class="grid mb-2">
+            <div class="col-12">
+                <div class="flex align-items-center gap-3">
+                    <div class="flex justify-content-center align-items-center border-round-lg"
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
+                        <i class="pi pi-lock text-white" style="font-size:1.5rem"></i>
                     </div>
-
-                </div>
-                <div class="col-12" style="display: #{permisosController.rolSeleccionado.id > 0?'true':'none'}">
-                    <div class="card">
-                        <h4>PERMISOS</h4>
-                        <p:treeTable value="#{permisosController.root}" var="menuRol" 
-                                     showGridlines="true" id="trTblMenu" rendered="#{permisosController.root ne null}">
-                            <p:column headerText="NOMBRE" sortBy="#{menuRol.menu.nombre}" styleClass="w-auto" responsivePriority="1">                                                                
-                                <h:outputText value="#{menuRol.menu.nombre}"/>                                                                
-                            </p:column>
-                            <p:column headerText="ICONO" styleClass="w-auto" responsivePriority="4">                                
-                                <i class="#{menuRol.menu.icono}" style="font-size: 1.5rem"></i>                                    
-                            </p:column>
-
-                            <p:column headerText="#{permisosController.rolSeleccionado.nombre}">
-                                <p:selectBooleanCheckbox value="#{menuRol.estado}">
-                                    <p:ajax event="change" update="msgs trTblMenu" process="@this" listener="#{permisosController.guardarMenuRol(menuRol)}"/>                                        
-                                </p:selectBooleanCheckbox>                                     
-                            </p:column>
-
-                        </p:treeTable>                        
+                    <div>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.permisos.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">Asignación de permisos de menú por rol del sistema</p>
                     </div>
                 </div>
             </div>
-        </h:form>
-    </ui:define>
+        </div>
 
+        <h:form id="frmPermisos">
+
+            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+
+            <!-- SELECTOR DE ROL -->
+            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                <div class="flex align-items-center gap-2 mb-3">
+                    <i class="pi pi-key text-500"></i>
+                    <span class="font-semibold text-700">Seleccione el rol para gestionar sus permisos</span>
+                </div>
+                <div class="formgrid grid">
+                    <div class="field col-12 md:col-6">
+                        <label for="rol" class="font-medium text-700 text-sm">ROL</label>
+                        <p:selectOneMenu id="rol" value="#{permisosController.rolSeleccionado.id}"
+                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
+                            <f:selectItem itemLabel="— Seleccione un rol —" itemValue=""/>
+                            <f:selectItems value="#{permisosController.roles}" var="rol"
+                                           itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>
+                            <p:ajax event="change" listener="#{permisosController.obtieneMenuPorRol()}"
+                                    process="@this" update="frmPermisos"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLA DE PERMISOS (solo si hay un rol seleccionado) -->
+            <ui:fragment rendered="#{permisosController.rolSeleccionado.id gt 0}">
+                <div class="surface-card shadow-1 border-round-lg p-3">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-sitemap text-500"></i>
+                        <span class="font-semibold text-700">
+                            Permisos para el rol:
+                            <span class="text-primary font-bold">#{permisosController.rolSeleccionado.nombre}</span>
+                        </span>
+                    </div>
+                    <p:treeTable value="#{permisosController.root}" var="menuRol"
+                                 showGridlines="true" id="trTblMenu"
+                                 rendered="#{permisosController.root ne null}"
+                                 styleClass="ui-datatable-striped ui-datatable-sm">
+                        <p:column headerText="Nombre" sortBy="#{menuRol.menu.nombre}"
+                                  styleClass="w-auto" responsivePriority="1">
+                            <span class="text-sm font-medium text-900">#{menuRol.menu.nombre}</span>
+                        </p:column>
+                        <p:column headerText="Icono" styleClass="text-center" style="width:5rem" responsivePriority="4">
+                            <i class="#{menuRol.menu.icono}" style="font-size:1.25rem"></i>
+                        </p:column>
+                        <p:column headerText="#{permisosController.rolSeleccionado.nombre}"
+                                  styleClass="text-center" style="width:10rem">
+                            <p:selectBooleanCheckbox value="#{menuRol.estado}">
+                                <p:ajax event="change" update="msgs trTblMenu" process="@this"
+                                        listener="#{permisosController.guardarMenuRol(menuRol)}"/>
+                            </p:selectBooleanCheckbox>
+                        </p:column>
+                    </p:treeTable>
+                </div>
+            </ui:fragment>
+
+        </h:form>
+
+    </ui:define>
 </ui:composition>
