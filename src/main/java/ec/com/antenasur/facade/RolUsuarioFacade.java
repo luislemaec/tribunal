@@ -36,7 +36,11 @@ public class RolUsuarioFacade extends AbstractFacade<RolUsuario, Integer> {
      */
     public List<RolUsuario> findByUserNameAndRoleName2(String userName, String roleName) {
         try {
-            String hql = "select ru from RolUsuario ru where ru.usuario.estado=true and ru.usuario.username = :userName and ru.estado = true  AND (ru.rol.nombre='Superadmin' OR ru.rol.nombre like :role)";
+            String hql = "select ru from RolUsuario ru "
+            		+ "where ru.usuario.estado=true "
+            		+ "and ru.usuario.username = :userName "
+            		+ "and ru.estado = true  "
+            		+ "AND (ru.rol.nombre='Superadmin' OR ru.rol.nombre like :role)";
             TypedQuery<RolUsuario> query = super.getEntityManager().createQuery(hql, RolUsuario.class);
             query.setParameter("userName", userName);
             query.setParameter("role", roleName);

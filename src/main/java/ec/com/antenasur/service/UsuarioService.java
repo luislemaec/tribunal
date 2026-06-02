@@ -7,7 +7,6 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.AuthDataDTO;
-import ec.com.antenasur.dto.PersonaDTO;
 import ec.com.antenasur.dto.RolUsuarioDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.facade.IglesiaFacade;
@@ -39,6 +38,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
+
+    @Inject
+    private PasswordService passwordService;
 
     @Override
     protected UsuarioFacade getFacade() {
@@ -106,11 +108,11 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         usuario.setPersonsa(personaPersistida);
         usuario.setEstado(true);
         // Si el usuario no trae clave seteada, la inicializamos con la cédula
-        // hasheada en SHA-1. El usuario podrá cambiarla después.
+        // hasheada en BCrypt. El usuario podrá cambiarla después.
         if (usuario.getContrasenia() == null || usuario.getContrasenia().isEmpty()) {
             String cedula = personaPersistida.getDocumento();
             if (cedula != null && !cedula.isEmpty()) {
-                usuario.setContrasenia(ec.com.antenasur.util.JsfUtil.claveEncriptadaSHA1(cedula));
+                usuario.setContrasenia(passwordService.hashBcrypt(cedula));
             }
         }
         Usuario usuarioPersistido = usuarioFacade.create(usuario);
@@ -349,15 +351,14 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @param userName nombre de usuario
      * @param prefijoRoles prefijo para filtrar roles del aplicativo (ej.
      * "SITEC_"); si es null, devuelve un AuthDataDTO sin roles
-     * @return AuthDataDTO con usuario, persona y roles; nunca null
+     * @return AuthDataDTO con usuario y roles; nunca null
      */
     /**
      * Aplica el cambio de contraseña: persiste el hash recibido, marca al
      * usuario como permanente y limpia la contraseña temporal. La validación
      * de complejidad de la clave y el hashing son responsabilidad del caller
-     * (la capa UI usa {@code JsfUtil.validarContrasenia} y
-     * {@code JsfUtil.claveEncriptadaSHA1}). El service solo asegura que el
-     * usuario y el hash no son null/vacíos.
+     * (la capa UI usa {@code JsfUtil.validarContrasenia}). El service solo
+     * asegura que el usuario y el hash no son null/vacíos.
      *
      * @return el {@code Usuario} persistido, o {@code null} si la entrada es
      *         inválida
@@ -373,7 +374,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @param correo email registrado del usuario
      * @param claveTemporalPlana clave generada en el caller (texto plano para
      *        envío por correo)
-     * @param hashClaveTemporal hash SHA-1 de la clave temporal
+     * @param hashClaveTemporal hash BCrypt de la clave temporal
      * @return usuario actualizado, o null si no existe usuario con esa
      *         combinación o si los argumentos son inválidos
      */
@@ -414,7 +415,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         return UsuarioDTO.fromEntity(cambiarContrasenia(u, hashClaveNueva));
     }
 
-    public AuthDataDTO resolverDatosAutenticacion(String userName, String prefijoRoles) {
+    public AuthDataDTO cargarContextoUsuarioAutenticado(String userName, String prefijoRoles) {
         AuthDataDTO data = new AuthDataDTO();
         if (userName == null || userName.isEmpty()) {
             return data;
@@ -440,9 +441,6 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         // persona se mapea en una sola query (antes se hacían 2 round-trips).
         Usuario usuario = usuarioFacade.findByUsuarioName(userName);
         data.setUsuario(UsuarioDTO.fromEntity(usuario));
-        if (usuario != null && usuario.getPersonsa() != null) {
-            data.setPersona(PersonaDTO.fromEntity(usuario.getPersonsa()));
-        }
         return data;
     }
 }

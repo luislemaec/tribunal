@@ -19,6 +19,7 @@ import ec.com.antenasur.bean.PlantillaCorreoBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
+import ec.com.antenasur.service.PasswordService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CorreoService;
 import ec.com.antenasur.util.Constantes;
@@ -44,6 +45,9 @@ public class OlvidoClaveController implements Serializable {
 
     @Inject
     private CorreoService correoService;
+
+    @Inject
+    private PasswordService passwordService;
 
     @Setter
     @Getter
@@ -73,7 +77,7 @@ public class OlvidoClaveController implements Serializable {
                 return;
             }
             claveTemporal = JsfUtil.generatePassword();
-            String hash = JsfUtil.claveEncriptadaSHA1(claveTemporal);
+            String hash = passwordService.hashBcrypt(claveTemporal);
             usuario = usuarioService.iniciarRecuperacionClave(username, correo, claveTemporal, hash);
 
             if (usuario == null) {

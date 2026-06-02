@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import org.primefaces.model.menu.MenuModel;
 
-import ec.com.antenasur.dto.PersonaDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.AccessAuditory;
 import ec.com.antenasur.service.AccessService;
@@ -54,10 +53,6 @@ public class LoginBean implements Serializable {
 
     @Setter
     private UsuarioDTO usuario;
-
-    @Setter
-    @Getter
-    private PersonaDTO persona;
 
     private Map<String, Object> content;
 

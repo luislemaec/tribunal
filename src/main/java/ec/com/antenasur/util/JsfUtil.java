@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -645,32 +643,6 @@ public class JsfUtil implements Serializable {
         Date date = new Date();
         Timestamp ts = new Timestamp(date.getTime());
         return ts;
-    }
-
-    /**
-     * Devuelve una cadena encriptada en sha1
-     *
-     * @param password
-     * @return
-     */
-    public static String claveEncriptadaSHA1(String password) {
-        try {
-            byte[] buffer = password.getBytes();
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(buffer);
-            byte[] digest = md.digest();
-            String valorHash = "";
-            for (byte aux : digest) {
-                int b = aux & 0xff;
-                if (Integer.toHexString(b).length() == 1) {
-                    valorHash += "0";
-                }
-                valorHash += Integer.toHexString(b);
-            }
-            return valorHash;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**

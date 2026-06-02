@@ -20,6 +20,7 @@ import ec.com.antenasur.bean.PlantillaCorreoBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
+import ec.com.antenasur.service.PasswordService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CorreoService;
 import ec.com.antenasur.util.Constantes;
@@ -48,6 +49,9 @@ public class CambioClaveController implements Serializable {
 
     @Inject
     private CorreoService correoService;
+
+    @Inject
+    private PasswordService passwordService;
 
     @Setter
     @Getter
@@ -88,7 +92,7 @@ public class CambioClaveController implements Serializable {
                 return;
             }
 
-            String hash = JsfUtil.claveEncriptadaSHA1(clave2);
+            String hash = passwordService.hashBcrypt(clave2);
             usuario = usuarioService.cambiarContraseniaPorId(usuario.getId(), hash);
 
             enviarCorreoCambioClave();
