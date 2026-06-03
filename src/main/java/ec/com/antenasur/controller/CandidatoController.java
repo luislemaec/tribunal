@@ -15,11 +15,11 @@ import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.CandidatoDTO;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.tec.CandidatoService;
 import ec.com.antenasur.service.tec.CatalogoGeneralService;
 import ec.com.antenasur.service.tec.ListaService;
-import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,7 +52,7 @@ public class CandidatoController implements Serializable {
     private CatalogoGeneralService catalogoService;
 
     @Inject
-    private PeriodoService periodoService;
+    private ProcesoElectoralService procesoElectoralService;
 
     // NOTA: Lista, Periodo, CatalogoGeneral siguen como entidades porque son
     // catálogos cuyo dominio aún no se ha migrado a DTO. Cuando se migren
@@ -76,7 +76,7 @@ public class CandidatoController implements Serializable {
 
     @Setter
     @Getter
-    private Periodo periodoVigente;
+    private ProcesoElectoral procesoActivo;
 
     @Setter
     @Getter
@@ -91,7 +91,7 @@ public class CandidatoController implements Serializable {
         try {
             this.listaSeleccionado = new Lista();
             this.listas = new ArrayList<>();
-            this.periodoVigente = periodoService.getPeriodoVigente();
+            this.procesoActivo = procesoElectoralService.getActivo();
             this.listas = listaService.findAll();
             this.cargosCandidatos = catalogoService.listaCatalogoHijo(8);
         } catch (Exception e) {
@@ -108,8 +108,8 @@ public class CandidatoController implements Serializable {
         for (CatalogoGeneral cargo : cargosCandidatos) {
             cargoIds.add(cargo.getId());
         }
-        Integer periodoId = (periodoVigente != null) ? periodoVigente.getId() : null;
-        this.candidatos = candidatoService.listarDTOsPorLista(listaSeleccionado.getId(), periodoId, cargoIds);
+        Integer procesoId = (procesoActivo != null) ? procesoActivo.getId() : null;
+        this.candidatos = candidatoService.listarDTOsPorLista(listaSeleccionado.getId(), procesoId, cargoIds);
     }
 
     public void buscaPersona() {

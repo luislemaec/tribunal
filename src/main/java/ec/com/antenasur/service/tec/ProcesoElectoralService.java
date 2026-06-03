@@ -67,4 +67,15 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
         actual.setActivo(dto.getActivo());
         return ProcesoElectoralDTO.fromEntity(procesoElectoralFacade.edit(actual));
     }
+
+    public ProcesoElectoralDTO eliminarPorId(Integer id) {
+        if (id == null) {
+            return null;
+        }
+        ProcesoElectoral p = procesoElectoralFacade.find(id);
+        if (p == null) {
+            return null;
+        }
+        return ProcesoElectoralDTO.fromEntity(procesoElectoralFacade.delete(p));
+    }
 }

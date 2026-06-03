@@ -102,11 +102,21 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
     }
 
     public List<Iglesia> obtieneIglesiasPorAsignarPorIds(List<Integer> listaIdIglesias, List<Integer> listaIdParroquias) {
+        if (listaIdParroquias == null || listaIdParroquias.isEmpty()) {
+            return Collections.emptyList();
+        }
         try {
             String sql = HQL_CON_CANTON
-                    + " WHERE ig.id NOT IN :idsIglesias AND ub.id IN :idsParroquias AND ig.estado=TRUE ORDER BY ig.id";
+                    + " WHERE ub.id IN :idsParroquias AND ig.estado=TRUE";
+            boolean excluirAsignadas = listaIdIglesias != null && !listaIdIglesias.isEmpty();
+            if (excluirAsignadas) {
+                sql += " AND ig.id NOT IN :idsIglesias";
+            }
+            sql += " ORDER BY ig.id";
             TypedQuery<Iglesia> query = super.getEntityManager().createQuery(sql, Iglesia.class);
-            query.setParameter("idsIglesias", listaIdIglesias);
+            if (excluirAsignadas) {
+                query.setParameter("idsIglesias", listaIdIglesias);
+            }
             query.setParameter("idsParroquias", listaIdParroquias);
             return query.getResultList();
         } catch (Exception e) {

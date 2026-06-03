@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import ec.com.antenasur.dto.TribunalDTO;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
-import ec.com.antenasur.facade.tec.PeriodoFacade;
+import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.facade.tec.TribunalFacade;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.tec.Tribunal;
 import ec.com.antenasur.service.AbstractService;
 
@@ -25,7 +25,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
     private TribunalFacade tribunalFacade;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private ProcesoElectoralFacade procesoElectoralFacade;
 
     @Inject
     private CatalogoGeneralFacade catalogoFacade;
@@ -57,21 +57,22 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
 
     public TribunalDTO guardarDesdeDTO(TribunalDTO dto) {
         if (dto == null) return null;
-        Periodo periodo = (dto.getPeriodoId() != null) ? periodoFacade.find(dto.getPeriodoId()) : null;
+        Integer procesoId = dto.getProcesoId() != null ? dto.getProcesoId() : dto.getPeriodoId();
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
         CatalogoGeneral cargo = (dto.getCargoId() != null) ? catalogoFacade.find(dto.getCargoId()) : null;
         IglesiaPersona ip = (dto.getIglesiaPersona() != null && dto.getIglesiaPersona().getId() != null)
                 ? iglesiaPersonaFacade.find(dto.getIglesiaPersona().getId()) : null;
 
         if (dto.getId() == null) {
             Tribunal nuevo = new Tribunal();
-            nuevo.setPeriodo(periodo);
+            nuevo.setProceso(proceso);
             nuevo.setCargo(cargo);
             nuevo.setIglesiaPersona(ip);
             return TribunalDTO.fromEntity(tribunalFacade.create(nuevo));
         }
         Tribunal actual = tribunalFacade.find(dto.getId());
         if (actual == null) return null;
-        actual.setPeriodo(periodo);
+        actual.setProceso(proceso);
         actual.setCargo(cargo);
         actual.setIglesiaPersona(ip);
         return TribunalDTO.fromEntity(tribunalFacade.edit(actual));
@@ -92,10 +93,10 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
      * Devuelve la lista de autoridades vigentes; si faltan cargos, agrega
      * placeholders (TribunalDTO sin id) por cada cargo que no esté asignado.
      */
-    public List<TribunalDTO> listarAutoridadesConPlaceholders(Integer periodoId, Integer cargoPadreId) {
+    public List<TribunalDTO> listarAutoridadesConPlaceholders(Integer procesoId, Integer cargoPadreId) {
         List<TribunalDTO> resultado = new ArrayList<>();
-        List<Tribunal> activos = tribunalFacade.getRegistrosActivos();
-        Periodo periodo = (periodoId != null) ? periodoFacade.find(periodoId) : null;
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
+        List<Tribunal> activos = tribunalFacade.getRegistrosActivosPorProceso(proceso);
 
         if (activos == null || activos.isEmpty()) {
             List<CatalogoGeneral> cargos = catalogoFacade.listaCatalogoHijo(cargoPadreId);
@@ -103,7 +104,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
                 for (CatalogoGeneral cargo : cargos) {
                     Tribunal placeholder = new Tribunal();
                     placeholder.setCargo(cargo);
-                    placeholder.setPeriodo(periodo);
+                    placeholder.setProceso(proceso);
                     resultado.add(TribunalDTO.fromEntity(placeholder));
                 }
             }
@@ -120,7 +121,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
             for (CatalogoGeneral cargo : cargosFaltantes) {
                 Tribunal placeholder = new Tribunal();
                 placeholder.setCargo(cargo);
-                placeholder.setPeriodo(periodo);
+                placeholder.setProceso(proceso);
                 resultado.add(TribunalDTO.fromEntity(placeholder));
             }
         }

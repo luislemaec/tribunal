@@ -8,6 +8,7 @@ import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -78,7 +79,7 @@ public class CatalogoGeneral extends EntidadAuditable implements Serializable {
     @Setter
     @Getter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "catalogo_padre_id")
+    @JoinColumn(name = "catalogo_padre_id", foreignKey = @ForeignKey(name = "fk_catalogo_general_padre"))
     private CatalogoGeneral padre;
 
     // bi-directional many-to-one association to GeneralCatalogue

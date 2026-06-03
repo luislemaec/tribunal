@@ -11,11 +11,11 @@ import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.facade.tec.CategoriaVotoFacade;
 import ec.com.antenasur.facade.tec.EscrutinioFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
-import ec.com.antenasur.facade.tec.PeriodoFacade;
+import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.model.tec.CategoriaVoto;
 import ec.com.antenasur.model.tec.Escrutinio;
 import ec.com.antenasur.model.tec.Mesa;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
@@ -28,7 +28,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     private MesaFacade mesaFacade;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private ProcesoElectoralFacade procesoElectoralFacade;
 
     @Inject
     private CategoriaVotoFacade categoriaVotoFacade;
@@ -56,11 +56,11 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
      * @param categorias categorías de voto a usar para los placeholders
      * @return lista nunca null; vacía si {@code mesa} o {@code categorias} son null
      */
-    public List<Escrutinio> prepararActaPorMesa(Mesa mesa, Periodo periodo, List<CategoriaVoto> categorias) {
+    public List<Escrutinio> prepararActaPorMesa(Mesa mesa, ProcesoElectoral proceso, List<CategoriaVoto> categorias) {
         if (mesa == null) {
             return new ArrayList<>();
         }
-        List<Escrutinio> existentes = escrutinioFacade.buscaPorMesa(mesa);
+        List<Escrutinio> existentes = escrutinioFacade.buscaPorMesaYProceso(mesa, proceso);
         if (existentes != null && !existentes.isEmpty()) {
             return existentes;
         }
@@ -69,7 +69,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             for (CategoriaVoto categoria : categorias) {
                 Escrutinio nuevo = new Escrutinio();
                 nuevo.setMesa(mesa);
-                nuevo.setPeriodo(periodo);
+                nuevo.setProceso(proceso);
                 nuevo.setCategoria(categoria);
                 placeholders.add(nuevo);
             }
@@ -145,13 +145,13 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
      * un id de mesa, id de periodo e ids de categorías, devuelve la lista de
      * Escrutinio (existentes o placeholders).
      */
-    public List<EscrutinioDTO> prepararActaPorMesaDTO(Integer mesaId, Integer periodoId, List<Integer> categoriaIds) {
+    public List<EscrutinioDTO> prepararActaPorMesaDTO(Integer mesaId, Integer procesoId, List<Integer> categoriaIds) {
         List<EscrutinioDTO> resultado = new ArrayList<>();
         if (mesaId == null) {
             return resultado;
         }
         Mesa mesa = mesaFacade.find(mesaId);
-        Periodo periodo = (periodoId != null) ? periodoFacade.find(periodoId) : null;
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
         List<CategoriaVoto> categorias = new ArrayList<>();
         if (categoriaIds != null) {
             for (Integer cid : categoriaIds) {
@@ -161,7 +161,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                 }
             }
         }
-        return mapearLista(prepararActaPorMesa(mesa, periodo, categorias));
+        return mapearLista(prepararActaPorMesa(mesa, proceso, categorias));
     }
 
     /**
@@ -192,7 +192,8 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             } else {
                 e = new Escrutinio();
                 e.setMesa(mesa);
-                e.setPeriodo((dto.getPeriodoId() != null) ? periodoFacade.find(dto.getPeriodoId()) : null);
+                Integer procesoId = dto.getProcesoId() != null ? dto.getProcesoId() : dto.getPeriodoId();
+                e.setProceso((procesoId != null) ? procesoElectoralFacade.find(procesoId) : null);
                 e.setCategoria((dto.getCategoriaId() != null) ? categoriaVotoFacade.find(dto.getCategoriaId()) : null);
                 e.setTotalVotos(dto.getTotalVotos());
             }

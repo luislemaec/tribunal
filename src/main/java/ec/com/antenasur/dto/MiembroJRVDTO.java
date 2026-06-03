@@ -21,6 +21,8 @@ public class MiembroJRVDTO implements Serializable {
     private Integer id;
     private IglesiaPersonaDTO iglesiaPersona;
     private MesaDTO mesa;
+    private Integer procesoId;
+    private String procesoNombre;
     private Integer periodoId;
     private String periodoNombre;
     private Integer cargoId;
@@ -34,7 +36,12 @@ public class MiembroJRVDTO implements Serializable {
         dto.setId(m.getId());
         dto.setIglesiaPersona(IglesiaPersonaDTO.fromEntity(m.getIglesiaPersona()));
         dto.setMesa(MesaDTO.fromEntity(m.getMesa()));
-        if (m.getPeriodo() != null) {
+        if (m.getProceso() != null) {
+            dto.setProcesoId(m.getProceso().getId());
+            dto.setProcesoNombre(m.getProceso().getNombre());
+            dto.setPeriodoId(m.getProceso().getId());
+            dto.setPeriodoNombre(m.getProceso().getNombre());
+        } else if (m.getPeriodo() != null) {
             dto.setPeriodoId(m.getPeriodo().getId());
             dto.setPeriodoNombre(m.getPeriodo().getNombre());
         }

@@ -8,6 +8,7 @@ import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -65,7 +66,7 @@ public class Documentos extends EntidadAuditable implements Serializable {
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "tipdoc_id")
+    @JoinColumn(name = "tipdoc_id", foreignKey = @ForeignKey(name = "fk_documentos_tipo_documento"))
     private TipoDocumento tipoDocumento;
 
     // bi-directional many-to-one association to Usuario

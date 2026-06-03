@@ -10,15 +10,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.UniqueConstraint;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
 import ec.com.antenasur.model.generic.EntidadBase;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Filter;
+import org.hibernate.envers.Audited;
 
 /**
  * Cabecera del proceso electoral. Solo uno debe estar {@code activo=true}
@@ -27,7 +30,14 @@ import org.hibernate.annotations.Filter;
  * {@code tec.procesos} (bitácora de actividad).
  */
 @Entity
-@Table(name = "proceso_electoral", schema = "tec")
+@Table(name = "proceso_electoral", schema = "tec",
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uk_proceso_electoral_nombre", columnNames = {"proce_nombre"})
+        },
+        indexes = {
+            @Index(name = "idx_proceso_electoral_activo", columnList = "proce_activo"),
+            @Index(name = "idx_proceso_electoral_fechas", columnList = "proce_fecha_inicio, proce_fecha_fin")
+        })
 @AttributeOverrides({
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
     @AttributeOverride(name = "fechaCrea", column = @Column(name = "f_crea")),
@@ -35,6 +45,7 @@ import org.hibernate.annotations.Filter;
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
+@Audited
 public class ProcesoElectoral extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -65,7 +76,7 @@ public class ProcesoElectoral extends EntidadAuditable implements Serializable {
 
     /** Solo UN proceso activo a la vez (responsabilidad del service). */
     @Setter @Getter
-    @Column(name = "proce_activo")
+    @Column(name = "proce_activo", nullable = false)
     private Boolean activo;
 
     public ProcesoElectoral() {

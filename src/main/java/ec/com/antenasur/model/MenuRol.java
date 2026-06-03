@@ -6,6 +6,7 @@ import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -53,14 +54,14 @@ public class MenuRol extends EntidadAuditable implements Serializable {
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "menu_id")
+    @JoinColumn(name = "menu_id", foreignKey = @ForeignKey(name = "fk_menu_rol_menu"))
     private Menu menu;
 
     // bi-directional many-to-one association to Rol
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "rol_id")
+    @JoinColumn(name = "rol_id", foreignKey = @ForeignKey(name = "fk_menu_rol_rol"))
     private Rol rol;
 
     public MenuRol() {

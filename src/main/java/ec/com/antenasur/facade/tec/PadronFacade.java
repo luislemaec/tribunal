@@ -42,6 +42,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
                     + " LEFT JOIN FETCH ip.iglesia i"
                     + " LEFT JOIN FETCH ip.persona prsn"
                     + " LEFT JOIN FETCH p.periodo prd"
+                    + " LEFT JOIN FETCH p.proceso pro"
                     + " WHERE " + ACTIVOS + ORDENADO;
             TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
             List<Padron> result = query.getResultList();
@@ -69,6 +70,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
                     + " LEFT JOIN FETCH ip.iglesia i"
                     + " LEFT JOIN FETCH ip.persona prsn"
                     + " LEFT JOIN FETCH p.periodo prd"
+                    + " LEFT JOIN FETCH p.proceso pro"
                     + " WHERE m.nombre=:nombreMesa AND " + ACTIVOS;
             TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
             query.setParameter("nombreMesa", nombreMesa);
@@ -97,6 +99,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
                     + " LEFT JOIN FETCH ip.iglesia i"
                     + " LEFT JOIN FETCH ip.persona prsn"
                     + " LEFT JOIN FETCH p.periodo prd"
+                    + " LEFT JOIN FETCH p.proceso pro"
                     + " WHERE r.nombre=:nombreRecinto AND " + ACTIVOS;
             TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
             query.setParameter("nombreRecinto", nombreRecinto);
@@ -120,6 +123,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
                     + " LEFT JOIN FETCH ip.iglesia i"
                     + " LEFT JOIN FETCH ip.persona prsn"
                     + " LEFT JOIN FETCH p.periodo prd"
+                    + " LEFT JOIN FETCH p.proceso pro"
                     + " WHERE r.id IN :ids AND " + ACTIVOS + ORDENADO;
             TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
             query.setParameter("ids", listaIdParroquias);
@@ -143,6 +147,25 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
             TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
             query.setParameter("idIglesiaPersona", idIglesiaPersona);
             query.setParameter("idPeriodo", idPeriodo);
+            List<Padron> result = query.getResultList();
+            if (result.size() > 0) {
+                return result.get(0);
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
+    public Padron buscaPorPersonaProcesoIglesia(Integer idIglesiaPersona, Integer idProceso) {
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH p.iglesiaPersona ip"
+                    + " LEFT JOIN FETCH p.proceso pro"
+                    + " WHERE ip.id = :idIglesiaPersona AND pro.id = :idProceso AND " + ACTIVOS + ORDENADO;
+            TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
+            query.setParameter("idIglesiaPersona", idIglesiaPersona);
+            query.setParameter("idProceso", idProceso);
             List<Padron> result = query.getResultList();
             if (result.size() > 0) {
                 return result.get(0);

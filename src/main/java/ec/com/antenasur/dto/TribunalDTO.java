@@ -20,6 +20,8 @@ public class TribunalDTO implements Serializable {
 
     private Integer id;
     private IglesiaPersonaDTO iglesiaPersona;
+    private Integer procesoId;
+    private String procesoNombre;
     private Integer periodoId;
     private String periodoNombre;
     private Integer cargoId;
@@ -32,7 +34,12 @@ public class TribunalDTO implements Serializable {
         TribunalDTO dto = new TribunalDTO();
         dto.setId(t.getId());
         dto.setIglesiaPersona(IglesiaPersonaDTO.fromEntity(t.getIglesiaPersona()));
-        if (t.getPeriodo() != null) {
+        if (t.getProceso() != null) {
+            dto.setProcesoId(t.getProceso().getId());
+            dto.setProcesoNombre(t.getProceso().getNombre());
+            dto.setPeriodoId(t.getProceso().getId());
+            dto.setPeriodoNombre(t.getProceso().getNombre());
+        } else if (t.getPeriodo() != null) {
             dto.setPeriodoId(t.getPeriodo().getId());
             dto.setPeriodoNombre(t.getPeriodo().getNombre());
         }

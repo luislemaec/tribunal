@@ -21,12 +21,12 @@ import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.PadronDTO;
 import ec.com.antenasur.dto.RecintoDTO;
 import ec.com.antenasur.model.Geograp;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.service.tec.MesaService;
 import ec.com.antenasur.service.tec.PadronService;
-import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.service.tec.RecintoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -61,7 +61,7 @@ public class PadronController implements Serializable {
     private MesaService mesaService;
 
     @Inject
-    private PeriodoService periodoService;
+    private ProcesoElectoralService procesoElectoralService;
 
     @Inject
     private IglesiaPersonaService iglesiaPersonaService;
@@ -114,7 +114,7 @@ public class PadronController implements Serializable {
     // catálogos.
     @Setter
     @Getter
-    private Periodo periodoActivo;
+    private ProcesoElectoral procesoActivo;
 
     @PostConstruct
     private void init() {
@@ -134,7 +134,7 @@ public class PadronController implements Serializable {
     }
 
     private void cargaDatosIniciales() {
-        this.periodoActivo = periodoService.getPeridoActivo();
+        this.procesoActivo = procesoElectoralService.getActivo();
         this.cantones = geograpBean.getByFatherId(7);
         this.listaRecintos = recintoService.listarDTOs();
         this.listaMesas = mesaService.listarDTOs();
@@ -249,21 +249,24 @@ public class PadronController implements Serializable {
     }
 
     private void generaPickList() {
-        if (listaIglesiasPorAsignar != null && !listaIglesiasPorAsignar.isEmpty()
-                && listaIglesiasAsignadas != null && !listaIglesiasAsignadas.isEmpty()) {
-            this.listaNombresIglesias = new DualListModel<>(this.listaIglesiasPorAsignar, this.listaIglesiasAsignadas);
-        } else {
-            JsfUtil.addWarningMessage("No existe recintos ");
+        List<IglesiaDTO> origen = listaIglesiasPorAsignar != null
+                ? new ArrayList<>(listaIglesiasPorAsignar) : new ArrayList<>();
+        List<IglesiaDTO> destino = listaIglesiasAsignadas != null
+                ? new ArrayList<>(listaIglesiasAsignadas) : new ArrayList<>();
+
+        this.listaNombresIglesias = new DualListModel<>(origen, destino);
+        if (origen.isEmpty() && destino.isEmpty()) {
+            JsfUtil.addWarningMessage("No existen iglesias disponibles para asignar al padrón en la ubicación seleccionada.");
         }
-        PrimeFaces.current().ajax().update("frmIglesias", "msgs");
+        PrimeFaces.current().ajax().update("frmPadron", "msgs");
     }
 
     public void onTransfer(TransferEvent event) {
         Integer mesaId = (mesaSeleccionado != null) ? mesaSeleccionado.getId() : null;
-        Integer periodoId = (periodoActivo != null) ? periodoActivo.getId() : null;
+        Integer procesoId = (procesoActivo != null) ? procesoActivo.getId() : null;
         for (Object item : event.getItems()) {
             IglesiaDTO ig = (IglesiaDTO) item;
-            padronService.asignarIglesiaAMesaPorIds(ig.getId(), mesaId, periodoId);
+            padronService.asignarIglesiaAMesaPorIds(ig.getId(), mesaId, procesoId);
         }
         this.listaPadron = padronService.listarDTOsTodosOrdenados();
         JsfUtil.addSuccessMessage("Asigmado");

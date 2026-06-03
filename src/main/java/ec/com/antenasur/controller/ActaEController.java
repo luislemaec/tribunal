@@ -34,7 +34,7 @@ import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.CategoriaVoto;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Lista;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.report.ReportTemplateController;
@@ -42,7 +42,7 @@ import ec.com.antenasur.service.tec.CategoriaVotoService;
 import ec.com.antenasur.service.tec.EscrutinioService;
 import ec.com.antenasur.service.tec.ListaService;
 import ec.com.antenasur.service.tec.MesaService;
-import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.service.tec.PlantillaCorreoService;
 import ec.com.antenasur.service.tec.RecintoService;
 import ec.com.antenasur.util.Constantes;
@@ -75,7 +75,7 @@ public class ActaEController implements Serializable {
     private PlantillaCorreoService plantillaCorreoService;
 
     @Inject
-    private PeriodoService periodoService;
+    private ProcesoElectoralService procesoElectoralService;
 
     @Inject
     private GeograpBean geograpBean;
@@ -147,7 +147,7 @@ public class ActaEController implements Serializable {
 
     @Setter
     @Getter
-    private Periodo periodoVigente;
+    private ProcesoElectoral procesoActivo;
 
     @Setter
     @Getter
@@ -172,7 +172,7 @@ public class ActaEController implements Serializable {
     }
 
     private void cargaDatosIniciales() {
-        this.periodoVigente = periodoService.getPeridoActivo();
+        this.procesoActivo = procesoElectoralService.getActivo();
         this.cantones = geograpBean.getByFatherId(7);
         this.listaRecintos = recintoService.listarDTOs();
         this.listaMesas = mesaService.listarDTOs();
@@ -243,7 +243,7 @@ public class ActaEController implements Serializable {
             return;
         }
         mesaSeleccionado = mesaService.obtenerDTOPorId(mesaSeleccionado.getId());
-        Integer periodoId = (periodoVigente != null) ? periodoVigente.getId() : null;
+        Integer procesoId = (procesoActivo != null) ? procesoActivo.getId() : null;
         List<Integer> categoriaIds = new ArrayList<>();
         if (categoriasVotos != null) {
             for (CategoriaVoto c : categoriasVotos) {
@@ -251,7 +251,7 @@ public class ActaEController implements Serializable {
             }
         }
         this.listaCamposActaE = escrutinioService.prepararActaPorMesaDTO(
-                mesaSeleccionado.getId(), periodoId, categoriaIds);
+                mesaSeleccionado.getId(), procesoId, categoriaIds);
         if (mesaSeleccionado.getEstadoTarea() != null && mesaSeleccionado.getEstadoTarea().equals(EstadoTarea.COMPLETADO)) {
             JsfUtil.addInfoMessage("Mesa cerrado");
         }

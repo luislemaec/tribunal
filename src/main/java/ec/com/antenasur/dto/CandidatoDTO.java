@@ -26,6 +26,8 @@ public class CandidatoDTO implements Serializable {
     private Integer listaId;
     private String listaNombre;
     private String listaNumero;
+    private Integer procesoId;
+    private String procesoNombre;
     private Integer periodoId;
     private String periodoNombre;
     private Integer cargoId;
@@ -43,7 +45,12 @@ public class CandidatoDTO implements Serializable {
             dto.setListaNombre(c.getLista().getNombre());
             dto.setListaNumero(c.getLista().getNumero());
         }
-        if (c.getPeriodo() != null) {
+        if (c.getProceso() != null) {
+            dto.setProcesoId(c.getProceso().getId());
+            dto.setProcesoNombre(c.getProceso().getNombre());
+            dto.setPeriodoId(c.getProceso().getId());
+            dto.setPeriodoNombre(c.getProceso().getNombre());
+        } else if (c.getPeriodo() != null) {
             dto.setPeriodoId(c.getPeriodo().getId());
             dto.setPeriodoNombre(c.getPeriodo().getNombre());
         }

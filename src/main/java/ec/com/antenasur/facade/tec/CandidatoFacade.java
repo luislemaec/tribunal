@@ -10,6 +10,7 @@ import jakarta.ejb.Stateless;
 import ec.com.antenasur.model.tec.Candidato;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import java.util.List;
 import jakarta.persistence.TypedQuery;
@@ -29,11 +30,21 @@ public class CandidatoFacade extends AbstractFacade<Candidato, Integer> {
     }
 
     public Candidato getPorCargoYLista(CatalogoGeneral cargo, Lista listaSeleccionado) {
+        return getPorCargoListaYProceso(cargo, listaSeleccionado, null);
+    }
+
+    public Candidato getPorCargoListaYProceso(CatalogoGeneral cargo, Lista listaSeleccionado, ProcesoElectoral proceso) {
         try {
             String sql = HQL + " WHERE c.cargo=:cargo AND c.lista =:lista ";
+            if (proceso != null) {
+                sql += " AND c.proceso = :proceso";
+            }
             TypedQuery<Candidato> query = super.getEntityManager().createQuery(sql, Candidato.class);
             query.setParameter("cargo", cargo);
             query.setParameter("lista", listaSeleccionado);
+            if (proceso != null) {
+                query.setParameter("proceso", proceso);
+            }
             List<Candidato> resultList = query.getResultList();
 
             if (resultList != null && !resultList.isEmpty()) {

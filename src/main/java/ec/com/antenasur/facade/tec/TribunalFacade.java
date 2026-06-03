@@ -13,6 +13,7 @@ import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.Tribunal;
 import ec.com.antenasur.model.generic.AbstractFacade;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 
 /**
  *
@@ -30,10 +31,21 @@ public class TribunalFacade extends AbstractFacade<Tribunal, Integer> {
     }
 
     public List<Tribunal> getRegistrosActivos() {
+        return getRegistrosActivosPorProceso(null);
+    }
+
+    public List<Tribunal> getRegistrosActivosPorProceso(ProcesoElectoral proceso) {
         try {
             String sql = HQL + " INNER JOIN FETCH t.cargo c"
-                    + " WHERE " + ACTIVOS + ORDENADO;
+                    + " WHERE " + ACTIVOS;
+            if (proceso != null) {
+                sql += " AND t.proceso = :proceso";
+            }
+            sql += ORDENADO;
             TypedQuery<Tribunal> query = super.getEntityManager().createQuery(sql, Tribunal.class);
+            if (proceso != null) {
+                query.setParameter("proceso", proceso);
+            }
             List<Tribunal> result = query.getResultList();
             if (result.size() > 0) {
                 return result;

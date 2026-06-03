@@ -12,10 +12,10 @@ import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.CatalogoGeneralDTO;
-import ec.com.antenasur.dto.PeriodoDTO;
+import ec.com.antenasur.dto.ProcesoElectoralDTO;
 import ec.com.antenasur.dto.TribunalDTO;
 import ec.com.antenasur.service.tec.CatalogoGeneralService;
-import ec.com.antenasur.service.tec.PeriodoService;
+import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.service.tec.TribunalService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -34,7 +34,7 @@ public class TribunalController implements Serializable {
     private LoginBean loginBean;
 
     @Inject
-    private PeriodoService periodoService;
+    private ProcesoElectoralService procesoElectoralService;
 
     @Inject
     private TribunalService tribunalService;
@@ -44,7 +44,7 @@ public class TribunalController implements Serializable {
 
     @Setter
     @Getter
-    private PeriodoDTO periodoSeleccionado;
+    private ProcesoElectoralDTO periodoSeleccionado;
 
     @Setter
     @Getter
@@ -52,7 +52,7 @@ public class TribunalController implements Serializable {
 
     @Setter
     @Getter
-    private List<PeriodoDTO> listaPeriodos, listaPeriodosSeleccionados;
+    private List<ProcesoElectoralDTO> listaPeriodos, listaPeriodosSeleccionados;
 
     @Setter
     @Getter
@@ -69,7 +69,7 @@ public class TribunalController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            listaPeriodos = periodoService.listarDTOs();
+            listaPeriodos = procesoElectoralService.listarDTOs();
             if (listaPeriodos != null && !listaPeriodos.isEmpty()) {
                 periodoSeleccionado = listaPeriodos.get(0);
             }
@@ -86,7 +86,7 @@ public class TribunalController implements Serializable {
     }
 
     public void inicializaPersonaSeleccionado() {
-        periodoSeleccionado = new PeriodoDTO();
+        periodoSeleccionado = new ProcesoElectoralDTO();
     }
 
     public void nuevo() {
@@ -108,8 +108,8 @@ public class TribunalController implements Serializable {
     public void eliminarPeriodoSeleccionados() {
         int eliminados = 0;
         if (listaPeriodosSeleccionados != null) {
-            for (PeriodoDTO item : listaPeriodosSeleccionados) {
-                if (item.getId() != null && periodoService.eliminarPorId(item.getId()) != null) {
+            for (ProcesoElectoralDTO item : listaPeriodosSeleccionados) {
+                if (item.getId() != null && procesoElectoralService.eliminarPorId(item.getId()) != null) {
                     eliminados++;
                 }
             }

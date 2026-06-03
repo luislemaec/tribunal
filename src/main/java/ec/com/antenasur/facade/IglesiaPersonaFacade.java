@@ -89,6 +89,27 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         }
     }
 
+    public List<IglesiaPersona> getPersonasHabilitadasPadronPorIglesia(int iglesiaId) {
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH ip.iglesia i"
+                    + " LEFT JOIN FETCH ip.persona p"
+                    + " WHERE i.id = :iglesiaId"
+                    + "   AND ip.estado = TRUE"
+                    + "   AND p.estado = TRUE"
+                    + "   AND (ip.habilitadoPadron = TRUE OR ip.habilitadoPadron IS NULL)"
+                    + " ORDER BY ip.id";
+            TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
+            query.setParameter("iglesiaId", iglesiaId);
+            List<IglesiaPersona> result = query.getResultList();
+            return result != null ? result : java.util.Collections.<IglesiaPersona>emptyList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
+
+
     /**
      * Trae IglesiaPersona activos por parroquia(s) hidratando en una sola
      * query las relaciones que la vista/DTO consultan despuÃƒÂ©s

@@ -6,6 +6,7 @@ import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -51,14 +52,14 @@ public class RolUsuario extends EntidadAuditable implements Serializable {
 
     // bi-directional many-to-one association to Rol
     @ManyToOne
-    @JoinColumn(name = "rol_id")
+    @JoinColumn(name = "rol_id", foreignKey = @ForeignKey(name = "fk_rol_usuario_rol"))
     @Setter
     @Getter
     private Rol rol;
 
     // bi-directional many-to-one association to Usuario
     @ManyToOne
-    @JoinColumn(name = "usu_id")
+    @JoinColumn(name = "usu_id", foreignKey = @ForeignKey(name = "fk_rol_usuario_usuario"))
     @Setter
     @Getter
     private Usuario usuario;

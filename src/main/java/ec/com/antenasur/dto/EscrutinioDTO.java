@@ -21,6 +21,8 @@ public class EscrutinioDTO implements Serializable {
 
     private Integer id;
     private MesaDTO mesa;
+    private Integer procesoId;
+    private String procesoNombre;
     private Integer periodoId;
     private String periodoNombre;
     private Integer categoriaId;
@@ -35,7 +37,12 @@ public class EscrutinioDTO implements Serializable {
         dto.setId(e.getId());
         dto.setMesa(MesaDTO.fromEntity(e.getMesa()));
         dto.setTotalVotos(e.getTotalVotos());
-        if (e.getPeriodo() != null) {
+        if (e.getProceso() != null) {
+            dto.setProcesoId(e.getProceso().getId());
+            dto.setProcesoNombre(e.getProceso().getNombre());
+            dto.setPeriodoId(e.getProceso().getId());
+            dto.setPeriodoNombre(e.getProceso().getNombre());
+        } else if (e.getPeriodo() != null) {
             dto.setPeriodoId(e.getPeriodo().getId());
             dto.setPeriodoNombre(e.getPeriodo().getNombre());
         }

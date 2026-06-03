@@ -12,13 +12,13 @@ import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.PersonaFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
 import ec.com.antenasur.facade.tec.PadronFacade;
-import ec.com.antenasur.facade.tec.PeriodoFacade;
+import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Persona;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.Padron;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
@@ -40,7 +40,7 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     private MesaFacade mesaFacade;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private ProcesoElectoralFacade procesoElectoralFacade;
 
     @Override
     protected PadronFacade getFacade() {
@@ -106,19 +106,19 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
      * @return los padrones nuevos creados (vacío si todas las personas ya
      *         estaban asignadas)
      */
-    public List<Padron> asignarIglesiaAMesa(Iglesia iglesia, Mesa mesa, Periodo periodo) {
+    public List<Padron> asignarIglesiaAMesa(Iglesia iglesia, Mesa mesa, ProcesoElectoral proceso) {
         List<Padron> creados = new ArrayList<>();
-        if (iglesia == null || mesa == null || periodo == null) {
+        if (iglesia == null || mesa == null || proceso == null) {
             return creados;
         }
-        List<IglesiaPersona> personas = iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesia.getId());
+        List<IglesiaPersona> personas = iglesiaPersonaFacade.getPersonasHabilitadasPadronPorIglesia(iglesia.getId());
         if (personas == null) {
             return creados;
         }
         for (IglesiaPersona ip : personas) {
-            Padron existente = padronFacade.buscaPorPesonaPeriodoIglesia(ip.getId(), periodo.getId());
+            Padron existente = padronFacade.buscaPorPersonaProcesoIglesia(ip.getId(), proceso.getId());
             if (existente == null) {
-                creados.add(padronFacade.create(new Padron(mesa, periodo, ip)));
+                creados.add(padronFacade.create(new Padron(mesa, proceso, ip)));
             }
         }
         return creados;
@@ -158,17 +158,17 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
      * Versión por ids de {@link #asignarIglesiaAMesa(Iglesia, Mesa, Periodo)}.
      * Resuelve las entidades a partir de ids y delega al método principal.
      */
-    public int asignarIglesiaAMesaPorIds(Integer iglesiaId, Integer mesaId, Integer periodoId) {
-        if (iglesiaId == null || mesaId == null || periodoId == null) {
+    public int asignarIglesiaAMesaPorIds(Integer iglesiaId, Integer mesaId, Integer procesoId) {
+        if (iglesiaId == null || mesaId == null || procesoId == null) {
             return 0;
         }
         Iglesia iglesia = iglesiaFacade.find(iglesiaId);
         Mesa mesa = mesaFacade.find(mesaId);
-        Periodo periodo = periodoFacade.find(periodoId);
-        if (iglesia == null || mesa == null || periodo == null) {
+        ProcesoElectoral proceso = procesoElectoralFacade.find(procesoId);
+        if (iglesia == null || mesa == null || proceso == null) {
             return 0;
         }
-        List<Padron> creados = asignarIglesiaAMesa(iglesia, mesa, periodo);
+        List<Padron> creados = asignarIglesiaAMesa(iglesia, mesa, proceso);
         return creados.size();
     }
 
@@ -240,12 +240,13 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         }
         Mesa mesa = (dto.getMesa() != null && dto.getMesa().getId() != null)
                 ? mesaFacade.find(dto.getMesa().getId()) : null;
-        Periodo periodo = (dto.getPeriodoId() != null) ? periodoFacade.find(dto.getPeriodoId()) : null;
+        Integer procesoId = dto.getProcesoId() != null ? dto.getProcesoId() : dto.getPeriodoId();
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
         IglesiaPersona ip = (dto.getIglesiaPersona() != null && dto.getIglesiaPersona().getId() != null)
                 ? iglesiaPersonaFacade.find(dto.getIglesiaPersona().getId()) : null;
 
         if (dto.getId() == null) {
-            Padron nuevo = new Padron(mesa, periodo, ip);
+            Padron nuevo = new Padron(mesa, proceso, ip);
             nuevo.setSufrago(dto.getSufrago() != null ? dto.getSufrago() : false);
             return PadronDTO.fromEntity(padronFacade.create(nuevo));
         }
@@ -254,7 +255,7 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
             return null;
         }
         actual.setMesa(mesa);
-        actual.setPeriodo(periodo);
+        actual.setProceso(proceso);
         actual.setIglesiaPersona(ip);
         actual.setSufrago(dto.getSufrago());
         return PadronDTO.fromEntity(padronFacade.edit(actual));

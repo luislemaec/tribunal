@@ -11,12 +11,12 @@ import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.tec.CandidatoFacade;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
 import ec.com.antenasur.facade.tec.ListaFacade;
-import ec.com.antenasur.facade.tec.PeriodoFacade;
+import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.tec.Candidato;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
-import ec.com.antenasur.model.tec.Periodo;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
@@ -29,7 +29,7 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     private ListaFacade listaFacade;
 
     @Inject
-    private PeriodoFacade periodoFacade;
+    private ProcesoElectoralFacade procesoElectoralFacade;
 
     @Inject
     private CatalogoGeneralFacade catalogoFacade;
@@ -57,17 +57,21 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
      * @return lista del mismo tamaño que {@code cargos}; vacía si la lista o
      *         alguno de los argumentos es null/incompleto
      */
-    public List<Candidato> obtenerCandidatosPorLista(Lista lista, Periodo periodo, List<CatalogoGeneral> cargos) {
+    public List<Candidato> obtenerCandidatosPorLista(Lista lista, ProcesoElectoral proceso, List<CatalogoGeneral> cargos) {
         List<Candidato> resultado = new ArrayList<>();
         if (lista == null || lista.getId() == null || cargos == null) {
             return resultado;
         }
         for (CatalogoGeneral cargo : cargos) {
-            Candidato encontrado = candidatoFacade.getPorCargoYLista(cargo, lista);
+            Candidato encontrado = candidatoFacade.getPorCargoListaYProceso(cargo, lista, proceso);
             if (encontrado != null) {
                 resultado.add(encontrado);
             } else {
-                resultado.add(new Candidato(null, null, lista, periodo, cargo));
+                Candidato placeholder = new Candidato();
+                placeholder.setLista(lista);
+                placeholder.setProceso(proceso);
+                placeholder.setCargo(cargo);
+                resultado.add(placeholder);
             }
         }
         return resultado;
@@ -92,13 +96,13 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
      * asignado retorna placeholders (DTO sin id, con cargo/lista/periodo
      * referenciados por id+nombre).
      */
-    public List<CandidatoDTO> listarDTOsPorLista(Integer listaId, Integer periodoId, List<Integer> cargoIds) {
+    public List<CandidatoDTO> listarDTOsPorLista(Integer listaId, Integer procesoId, List<Integer> cargoIds) {
         List<CandidatoDTO> resultado = new ArrayList<>();
         if (listaId == null || cargoIds == null || cargoIds.isEmpty()) {
             return resultado;
         }
         Lista lista = listaFacade.find(listaId);
-        Periodo periodo = (periodoId != null) ? periodoFacade.find(periodoId) : null;
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
         if (lista == null) {
             return resultado;
         }
@@ -107,11 +111,14 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
             if (cargo == null) {
                 continue;
             }
-            Candidato encontrado = candidatoFacade.getPorCargoYLista(cargo, lista);
+            Candidato encontrado = candidatoFacade.getPorCargoListaYProceso(cargo, lista, proceso);
             if (encontrado != null) {
                 resultado.add(CandidatoDTO.fromEntity(encontrado));
             } else {
-                Candidato placeholder = new Candidato(null, null, lista, periodo, cargo);
+                Candidato placeholder = new Candidato();
+                placeholder.setLista(lista);
+                placeholder.setProceso(proceso);
+                placeholder.setCargo(cargo);
                 resultado.add(CandidatoDTO.fromEntity(placeholder));
             }
         }
@@ -129,13 +136,18 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
             return null;
         }
         Lista lista = (dto.getListaId() != null) ? listaFacade.find(dto.getListaId()) : null;
-        Periodo periodo = (dto.getPeriodoId() != null) ? periodoFacade.find(dto.getPeriodoId()) : null;
+        Integer procesoId = dto.getProcesoId() != null ? dto.getProcesoId() : dto.getPeriodoId();
+        ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
         CatalogoGeneral cargo = (dto.getCargoId() != null) ? catalogoFacade.find(dto.getCargoId()) : null;
         IglesiaPersona iglesiaPersona = (dto.getIglesiaPersona() != null && dto.getIglesiaPersona().getId() != null)
                 ? iglesiaPersonaFacade.find(dto.getIglesiaPersona().getId()) : null;
 
         if (dto.getId() == null) {
-            Candidato nuevo = new Candidato(null, iglesiaPersona, lista, periodo, cargo);
+            Candidato nuevo = new Candidato();
+            nuevo.setIglesiaPersona(iglesiaPersona);
+            nuevo.setLista(lista);
+            nuevo.setProceso(proceso);
+            nuevo.setCargo(cargo);
             return CandidatoDTO.fromEntity(candidatoFacade.create(nuevo));
         }
         Candidato actual = candidatoFacade.find(dto.getId());
@@ -143,7 +155,7 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
             return null;
         }
         actual.setLista(lista);
-        actual.setPeriodo(periodo);
+        actual.setProceso(proceso);
         actual.setCargo(cargo);
         actual.setIglesiaPersona(iglesiaPersona);
         return CandidatoDTO.fromEntity(candidatoFacade.edit(actual));

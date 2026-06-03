@@ -115,3 +115,367 @@ SELECT r.rol_id, m.menu_id, TRUE, NOW(), 'admin'
         SELECT 1 FROM tb_menu_rol mr
          WHERE mr.rol_id = r.rol_id AND mr.menu_id = m.menu_id
    );
+
+-- ============================================================================
+-- 8) MIGRACION: ProcesoElectoral como eje funcional del sistema
+-- ----------------------------------------------------------------------------
+-- Objetivo:
+--   - Mantener los datos historicos de tec.periodos (incluido 2022).
+--   - Crear un proceso electoral equivalente por cada periodo existente.
+--   - Agregar proce_id a tablas electorales que actualmente dependen de periodo_id.
+--   - Poblar proce_id desde periodo_id sin eliminar columnas legacy.
+--
+-- Nota:
+--   No retirar periodo_id todavia. Esa limpieza debe hacerse solo cuando toda
+--   la aplicacion y reportes hayan sido validados usando proce_id.
+-- ============================================================================
+
+-- 8.a) Asegurar tabla de procesos electorales.
+CREATE TABLE IF NOT EXISTS tec.proceso_electoral (
+    proce_id SERIAL PRIMARY KEY,
+    proce_nombre VARCHAR(150) NOT NULL,
+    proce_descripcion VARCHAR(500),
+    proce_fecha_inicio TIMESTAMP,
+    proce_fecha_fin TIMESTAMP,
+    proce_activo BOOLEAN DEFAULT FALSE,
+    estado BOOLEAN DEFAULT TRUE,
+    f_crea TIMESTAMP DEFAULT NOW(),
+    f_actualiza TIMESTAMP,
+    u_crea VARCHAR(100),
+    u_actualiza VARCHAR(100)
+);
+
+-- 8.b) Migrar periodos existentes a procesos electorales equivalentes.
+INSERT INTO tec.proceso_electoral (
+    proce_nombre,
+    proce_descripcion,
+    proce_fecha_inicio,
+    proce_fecha_fin,
+    proce_activo,
+    estado,
+    f_crea,
+    u_crea
+)
+SELECT p.periodo_nombre,
+       p.periodo_descripcion,
+       p.f_inicio,
+       p.f_fin,
+       FALSE,
+       COALESCE(p.estado, TRUE),
+       NOW(),
+       'migracion-periodo'
+  FROM tec.periodos p
+ WHERE NOT EXISTS (
+        SELECT 1
+          FROM tec.proceso_electoral pe
+         WHERE pe.proce_nombre = p.periodo_nombre
+           AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+               = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+           AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+               = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+   );
+
+-- 8.c) Si no hay proceso activo, activar el mas reciente migrado.
+UPDATE tec.proceso_electoral pe
+   SET proce_activo = TRUE
+ WHERE pe.proce_id = (
+       SELECT pe2.proce_id
+         FROM tec.proceso_electoral pe2
+        WHERE COALESCE(pe2.estado, TRUE) = TRUE
+        ORDER BY pe2.proce_fecha_inicio DESC NULLS LAST, pe2.proce_id DESC
+        LIMIT 1
+ )
+   AND NOT EXISTS (
+       SELECT 1 FROM tec.proceso_electoral activo
+        WHERE activo.proce_activo = TRUE AND COALESCE(activo.estado, TRUE) = TRUE
+   );
+
+-- 8.d) Agregar proce_id a tablas electorales.
+ALTER TABLE tec.padron ADD COLUMN IF NOT EXISTS proce_id INTEGER;
+ALTER TABLE tec.candidatos ADD COLUMN IF NOT EXISTS proce_id INTEGER;
+ALTER TABLE tec.escrutinio ADD COLUMN IF NOT EXISTS proce_id INTEGER;
+ALTER TABLE tec.miembros_jrv ADD COLUMN IF NOT EXISTS proce_id INTEGER;
+ALTER TABLE tec.tribunal ADD COLUMN IF NOT EXISTS proce_id INTEGER;
+
+-- 8.e) Poblar proce_id desde periodo_id buscando el proceso equivalente.
+--      En la BD actual, tec.candidatos, tec.miembros_jrv y tec.tribunal
+--      estaban vacias antes de esta migracion; sus UPDATE quedan como
+--      seguridad/idempotencia para otros ambientes o restauraciones historicas.
+UPDATE tec.padron t
+   SET proce_id = pe.proce_id
+  FROM tec.periodos p
+  JOIN tec.proceso_electoral pe
+    ON pe.proce_nombre = p.periodo_nombre
+   AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+   AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+ WHERE t.periodo_id = p.periodo_id
+   AND t.proce_id IS NULL;
+
+UPDATE tec.candidatos t
+   SET proce_id = pe.proce_id
+  FROM tec.periodos p
+  JOIN tec.proceso_electoral pe
+    ON pe.proce_nombre = p.periodo_nombre
+   AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+   AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+ WHERE t.periodo_id = p.periodo_id
+   AND t.proce_id IS NULL;
+
+UPDATE tec.escrutinio t
+   SET proce_id = pe.proce_id
+  FROM tec.periodos p
+  JOIN tec.proceso_electoral pe
+    ON pe.proce_nombre = p.periodo_nombre
+   AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+   AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+ WHERE t.periodo_id = p.periodo_id
+   AND t.proce_id IS NULL;
+
+UPDATE tec.miembros_jrv t
+   SET proce_id = pe.proce_id
+  FROM tec.periodos p
+  JOIN tec.proceso_electoral pe
+    ON pe.proce_nombre = p.periodo_nombre
+   AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+   AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+ WHERE t.periodo_id = p.periodo_id
+   AND t.proce_id IS NULL;
+
+UPDATE tec.tribunal t
+   SET proce_id = pe.proce_id
+  FROM tec.periodos p
+  JOIN tec.proceso_electoral pe
+    ON pe.proce_nombre = p.periodo_nombre
+   AND COALESCE(pe.proce_fecha_inicio, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_inicio, TIMESTAMP '1900-01-01')
+   AND COALESCE(pe.proce_fecha_fin, TIMESTAMP '1900-01-01')
+       = COALESCE(p.f_fin, TIMESTAMP '1900-01-01')
+ WHERE t.periodo_id = p.periodo_id
+   AND t.proce_id IS NULL;
+
+-- 8.f) FKs e indices para la nueva relacion funcional.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_padron_proceso_electoral') THEN
+    ALTER TABLE tec.padron
+      ADD CONSTRAINT fk_padron_proceso_electoral
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_candidatos_proceso_electoral') THEN
+    ALTER TABLE tec.candidatos
+      ADD CONSTRAINT fk_candidatos_proceso_electoral
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_escrutinio_proceso_electoral') THEN
+    ALTER TABLE tec.escrutinio
+      ADD CONSTRAINT fk_escrutinio_proceso_electoral
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_miembros_jrv_proceso_electoral') THEN
+    ALTER TABLE tec.miembros_jrv
+      ADD CONSTRAINT fk_miembros_jrv_proceso_electoral
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_tribunal_proceso_electoral') THEN
+    ALTER TABLE tec.tribunal
+      ADD CONSTRAINT fk_tribunal_proceso_electoral
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_padron_proce_id ON tec.padron(proce_id);
+CREATE INDEX IF NOT EXISTS idx_candidatos_proce_id ON tec.candidatos(proce_id);
+CREATE INDEX IF NOT EXISTS idx_escrutinio_proce_id ON tec.escrutinio(proce_id);
+CREATE INDEX IF NOT EXISTS idx_miembros_jrv_proce_id ON tec.miembros_jrv(proce_id);
+CREATE INDEX IF NOT EXISTS idx_tribunal_proce_id ON tec.tribunal(proce_id);
+
+-- ============================================================================
+-- 9) BUENAS PRACTICAS JPA/BD: nucleo del proceso electoral
+-- ----------------------------------------------------------------------------
+-- Alinea la BD con las anotaciones agregadas en las entidades del nucleo:
+--   - ProcesoElectoral
+--   - CronogramaFase
+--   - Padron
+--   - Candidato
+--   - Escrutinio
+--   - MiembroJRV
+--   - Tribunal
+--
+-- Los constraints UNIQUE se crean solo si no hay duplicados existentes.
+-- Si se omite alguno por datos repetidos, revisar el SELECT diagnostico
+-- correspondiente antes de volver a ejecutar.
+-- ============================================================================
+
+-- 9.a) Defaults y campos obligatorios simples.
+UPDATE tec.proceso_electoral SET proce_activo = FALSE WHERE proce_activo IS NULL;
+ALTER TABLE tec.proceso_electoral ALTER COLUMN proce_activo SET DEFAULT FALSE;
+ALTER TABLE tec.proceso_electoral ALTER COLUMN proce_activo SET NOT NULL;
+
+UPDATE tec.padron SET sufrago = FALSE WHERE sufrago IS NULL;
+ALTER TABLE tec.padron ALTER COLUMN sufrago SET DEFAULT FALSE;
+ALTER TABLE tec.padron ALTER COLUMN sufrago SET NOT NULL;
+
+UPDATE tec.escrutinio SET total_votos = 0 WHERE total_votos IS NULL;
+ALTER TABLE tec.escrutinio ALTER COLUMN total_votos SET DEFAULT 0;
+ALTER TABLE tec.escrutinio ALTER COLUMN total_votos SET NOT NULL;
+
+-- 9.b) Indices funcionales del nucleo.
+CREATE INDEX IF NOT EXISTS idx_proceso_electoral_activo ON tec.proceso_electoral(proce_activo);
+CREATE INDEX IF NOT EXISTS idx_proceso_electoral_fechas ON tec.proceso_electoral(proce_fecha_inicio, proce_fecha_fin);
+
+CREATE INDEX IF NOT EXISTS idx_cronograma_fase_proce_id ON tec.cronograma_fase(proce_id);
+CREATE INDEX IF NOT EXISTS idx_cronograma_fase_fechas ON tec.cronograma_fase(cref_fecha_inicio, cref_fecha_fin);
+
+CREATE INDEX IF NOT EXISTS idx_padron_mesa_id ON tec.padron(mesa_id);
+CREATE INDEX IF NOT EXISTS idx_padron_igpe_id ON tec.padron(igpe_id);
+CREATE INDEX IF NOT EXISTS idx_padron_proceso_mesa ON tec.padron(proce_id, mesa_id);
+
+CREATE INDEX IF NOT EXISTS idx_candidatos_lista_id ON tec.candidatos(lista_id);
+CREATE INDEX IF NOT EXISTS idx_candidatos_cargo_id ON tec.candidatos(cargo_id);
+CREATE INDEX IF NOT EXISTS idx_candidatos_igpe_id ON tec.candidatos(igpe_id);
+
+CREATE INDEX IF NOT EXISTS idx_escrutinio_mesa_id ON tec.escrutinio(mesa_id);
+CREATE INDEX IF NOT EXISTS idx_escrutinio_categoria_id ON tec.escrutinio(cat_voto_id);
+
+CREATE INDEX IF NOT EXISTS idx_miembros_jrv_mesa_id ON tec.miembros_jrv(mesa_id);
+CREATE INDEX IF NOT EXISTS idx_miembros_jrv_igpe_id ON tec.miembros_jrv(igpe_id);
+
+CREATE INDEX IF NOT EXISTS idx_tribunal_cargo_id ON tec.tribunal(cargo_id);
+CREATE INDEX IF NOT EXISTS idx_tribunal_igpe_id ON tec.tribunal(igpe_id);
+
+-- 9.c) Unicidad de reglas de negocio.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_proceso_electoral_nombre')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.proceso_electoral
+           WHERE proce_nombre IS NOT NULL
+           GROUP BY proce_nombre
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.proceso_electoral
+      ADD CONSTRAINT uk_proceso_electoral_nombre UNIQUE (proce_nombre);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_cronograma_fase_proceso_fase')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.cronograma_fase
+           WHERE proce_id IS NOT NULL AND cref_fase IS NOT NULL
+           GROUP BY proce_id, cref_fase
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.cronograma_fase
+      ADD CONSTRAINT uk_cronograma_fase_proceso_fase UNIQUE (proce_id, cref_fase);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_padron_proceso_iglesia_persona')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.padron
+           WHERE proce_id IS NOT NULL AND igpe_id IS NOT NULL
+           GROUP BY proce_id, igpe_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.padron
+      ADD CONSTRAINT uk_padron_proceso_iglesia_persona UNIQUE (proce_id, igpe_id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_candidatos_proceso_lista_cargo_persona')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.candidatos
+           WHERE proce_id IS NOT NULL AND lista_id IS NOT NULL AND cargo_id IS NOT NULL AND igpe_id IS NOT NULL
+           GROUP BY proce_id, lista_id, cargo_id, igpe_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.candidatos
+      ADD CONSTRAINT uk_candidatos_proceso_lista_cargo_persona UNIQUE (proce_id, lista_id, cargo_id, igpe_id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_escrutinio_proceso_mesa_categoria')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.escrutinio
+           WHERE proce_id IS NOT NULL AND mesa_id IS NOT NULL AND cat_voto_id IS NOT NULL
+           GROUP BY proce_id, mesa_id, cat_voto_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.escrutinio
+      ADD CONSTRAINT uk_escrutinio_proceso_mesa_categoria UNIQUE (proce_id, mesa_id, cat_voto_id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_miembros_jrv_proceso_mesa_cargo')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.miembros_jrv
+           WHERE proce_id IS NOT NULL AND mesa_id IS NOT NULL AND cargo_id IS NOT NULL
+           GROUP BY proce_id, mesa_id, cargo_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.miembros_jrv
+      ADD CONSTRAINT uk_miembros_jrv_proceso_mesa_cargo UNIQUE (proce_id, mesa_id, cargo_id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_tribunal_proceso_cargo')
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.tribunal
+           WHERE proce_id IS NOT NULL AND cargo_id IS NOT NULL
+           GROUP BY proce_id, cargo_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    ALTER TABLE tec.tribunal
+      ADD CONSTRAINT uk_tribunal_proceso_cargo UNIQUE (proce_id, cargo_id);
+  END IF;
+END $$;
+
+-- 9.d) Diagnostico de duplicados si algun UNIQUE no se creo.
+SELECT proce_nombre, COUNT(*) AS repeticiones
+  FROM tec.proceso_electoral
+ WHERE proce_nombre IS NOT NULL
+ GROUP BY proce_nombre
+HAVING COUNT(*) > 1;
+
+SELECT proce_id, igpe_id, COUNT(*) AS repeticiones
+  FROM tec.padron
+ WHERE proce_id IS NOT NULL AND igpe_id IS NOT NULL
+ GROUP BY proce_id, igpe_id
+HAVING COUNT(*) > 1;
+
+SELECT proce_id, mesa_id, cat_voto_id, COUNT(*) AS repeticiones
+  FROM tec.escrutinio
+ WHERE proce_id IS NOT NULL AND mesa_id IS NOT NULL AND cat_voto_id IS NOT NULL
+ GROUP BY proce_id, mesa_id, cat_voto_id
+HAVING COUNT(*) > 1;

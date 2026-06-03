@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Vista de la entidad {@link Padron} para la capa UI. Embebe los DTOs de
- * {@code IglesiaPersona} y {@code Mesa}, aplana {@code periodo} en
- * {@code periodoId} + {@code periodoNombre}.
+ * {@code IglesiaPersona} y {@code Mesa}, aplana el proceso electoral. Los
+ * campos periodoId/periodoNombre se conservan como alias temporal para vistas
+ * heredadas.
  */
 @Data
 @NoArgsConstructor
@@ -22,6 +23,8 @@ public class PadronDTO implements Serializable {
     private Integer id;
     private IglesiaPersonaDTO iglesiaPersona;
     private MesaDTO mesa;
+    private Integer procesoId;
+    private String procesoNombre;
     private Integer periodoId;
     private String periodoNombre;
     private Boolean sufrago;
@@ -35,7 +38,12 @@ public class PadronDTO implements Serializable {
         dto.setIglesiaPersona(IglesiaPersonaDTO.fromEntity(p.getIglesiaPersona()));
         dto.setMesa(MesaDTO.fromEntity(p.getMesa()));
         dto.setSufrago(p.getSufrago());
-        if (p.getPeriodo() != null) {
+        if (p.getProceso() != null) {
+            dto.setProcesoId(p.getProceso().getId());
+            dto.setProcesoNombre(p.getProceso().getNombre());
+            dto.setPeriodoId(p.getProceso().getId());
+            dto.setPeriodoNombre(p.getProceso().getNombre());
+        } else if (p.getPeriodo() != null) {
             dto.setPeriodoId(p.getPeriodo().getId());
             dto.setPeriodoNombre(p.getPeriodo().getNombre());
         }

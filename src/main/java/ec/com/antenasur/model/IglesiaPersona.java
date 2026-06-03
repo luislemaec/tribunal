@@ -6,6 +6,7 @@ import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -56,14 +57,14 @@ public class IglesiaPersona extends EntidadAuditable implements Serializable {
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "igl_id")
+    @JoinColumn(name = "igl_id", foreignKey = @ForeignKey(name = "fk_iglesia_persona_iglesia"))
     private Iglesia iglesia;
 
     // bi-directional many-to-one association to Rol
     @Setter
     @Getter
     @ManyToOne
-    @JoinColumn(name = "pers_id")
+    @JoinColumn(name = "pers_id", foreignKey = @ForeignKey(name = "fk_iglesia_persona_persona"))
     private Persona persona;
 
     @Setter

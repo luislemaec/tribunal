@@ -62,21 +62,24 @@ public class VwTotalVotos implements Serializable {
     @Getter
     @ManyToOne
     @JoinColumn(name = "rec_id", insertable = false, updatable = false,
-            foreignKey = @ForeignKey(value = ConstraintMode.NO_CONSTRAINT))
+            foreignKey = @ForeignKey(name = "fk_vw_total_votos_recinto",
+                    value = ConstraintMode.NO_CONSTRAINT))
     private Recinto recinto;
 
     @Setter
     @Getter
     @ManyToOne
     @JoinColumn(name = "mesa_id", insertable = false, updatable = false,
-            foreignKey = @ForeignKey(value = ConstraintMode.NO_CONSTRAINT))
+            foreignKey = @ForeignKey(name = "fk_vw_total_votos_mesa",
+                    value = ConstraintMode.NO_CONSTRAINT))
     private Mesa mesa;
 
     @Setter
     @Getter
     @ManyToOne
     @JoinColumn(name = "gelo_id", insertable = false, updatable = false,
-            foreignKey = @ForeignKey(value = ConstraintMode.NO_CONSTRAINT))
+            foreignKey = @ForeignKey(name = "fk_vw_total_votos_ubicacion",
+                    value = ConstraintMode.NO_CONSTRAINT))
     private Geograp geograp;
 
     @Setter
