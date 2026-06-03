@@ -442,13 +442,12 @@
                                       rendered="#{personaController.file eq null}"
                                       styleClass="ui-button-raised ui-button-info"/>
 
-                        <!-- Exportar PDF -->
-                        <p:commandButton value="Exportar" icon="pi pi-file-pdf"
-                                         styleClass="ui-button-outlined ui-button-warning"
+                        <!-- Exportar listado en Excel -->
+                        <p:commandButton value="Exportar" icon="pi pi-file-excel"
+                                         styleClass="ui-button-outlined ui-button-success"
                                          ajax="false"
-                                         disabled="#{empty personaController.listaIglesiaPersona}">
-                            <p:dataExporter type="pdf" target="tblPersonas" fileName="Personas"/>
-                        </p:commandButton>
+                                         actionListener="#{personaController.exportarExcel}"
+                                         disabled="#{empty personaController.listaIglesiaPersona}"/>
 
                         <!-- Descargar archivo generado -->
                         <p:commandButton value="Descargar" icon="pi pi-download"

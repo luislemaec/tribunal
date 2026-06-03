@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
@@ -29,6 +30,9 @@ import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
+import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.UsuarioDTO;
 
 /**
  *
@@ -121,8 +125,12 @@ public class JsfUtil implements Serializable {
      * @return object
      */
     public static Object devolverObjetoSession(final String nombre) {
-        HttpServletRequest request = getRequest();
-        return request.getSession().getAttribute(nombre);
+        return getSessionMap().get(nombre);
+    }
+
+    public static <T> T devolverObjetoSession(final String nombre, final Class<T> tipo) {
+        Object object = devolverObjetoSession(nombre);
+        return tipo.isInstance(object) ? tipo.cast(object) : null;
     }
 
     /**
@@ -132,17 +140,18 @@ public class JsfUtil implements Serializable {
      * @return object
      */
     public static Object devolverEliminarObjetoSession(final String nombre) {
-        HttpServletRequest request = getRequest();
-        Object object = request.getSession().getAttribute(nombre);
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getExternalContext().getSessionMap().remove(nombre);
-        return object;
+        return getSessionMap().remove(nombre);
+    }
+
+    public static <T> T devolverEliminarObjetoSession(final String nombre, final Class<T> tipo) {
+        Object object = devolverEliminarObjetoSession(nombre);
+        return tipo.isInstance(object) ? tipo.cast(object) : null;
     }
 
     public static void eliminarObjetoSession(final String... nombre) {
-        FacesContext context = FacesContext.getCurrentInstance();
+        Map<String, Object> sessionMap = getSessionMap();
         for (String s : nombre) {
-            context.getExternalContext().getSessionMap().remove(s);
+            sessionMap.remove(s);
         }
     }
 
@@ -153,8 +162,11 @@ public class JsfUtil implements Serializable {
      * @param object
      */
     public static void cargarObjetoSession(final String nombre, final Object object) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getExternalContext().getSessionMap().put(nombre, object);
+        getSessionMap().put(nombre, object);
+    }
+
+    private static Map<String, Object> getSessionMap() {
+        return FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
     }
 
     /* M E N S A J E S */
@@ -546,23 +558,91 @@ public class JsfUtil implements Serializable {
     }
 
     /**
+     * Obtiene el bean de login de la sesion JSF actual.
      *
-     * <b> Obtiene el usuario autenticado, si no no ha iniciado session retorna
-     * null. </b>
+     * @return LoginBean o null si no existe una sesion JSF activa.
+     */
+    public static LoginBean getLoginBean() {
+        try {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            if (facesContext == null || facesContext.getExternalContext() == null) {
+                return null;
+            }
+
+            Object bean = facesContext.getExternalContext().getSessionMap().get("loginBean");
+            if (bean instanceof LoginBean) {
+                return (LoginBean) bean;
+            }
+            return facesContext.getApplication().evaluateExpressionGet(facesContext, "#{loginBean}", LoginBean.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene el UsuarioDTO autenticado cargado en LoginBean.
      *
-     * @author Carlos Pupo
-     * @version Revision: 1.0
-     * <p>
-     * [Autor: Carlos Pupo, Fecha: 30/01/2015]
-     * </p>
-     * @return
+     * @return UsuarioDTO o null si no hay usuario autenticado en sesion.
      */
-    /*
-	 * public static User getLoggedUser() { LoginBean instance =
-	 * getBean(LoginBean.class); if (instance.getUser().getUserId()!=null) {
-	 * //instance.getUser().setPassword(instance.getPassword()); return
-	 * instance.getUser(); } return null; }
+    public static UsuarioDTO getUsuarioAutenticado() {
+        LoginBean loginBean = getLoginBean();
+        if (loginBean == null) {
+            return null;
+        }
+
+        UsuarioDTO usuario = loginBean.getUsuario();
+        if (usuario == null || (usuario.getId() == null && !tieneTexto(usuario.getUsername()))) {
+            return null;
+        }
+        return usuario;
+    }
+
+    /**
+     * Obtiene el nombre del usuario autenticado. Primero usa LoginBean, luego el
+     * principal HTTP validado por Elytron/WildFly.
+     *
+     * @return username autenticado o null si no se puede resolver.
      */
+    public static String getNombreUsuarioAutenticado() {
+        UsuarioDTO usuario = getUsuarioAutenticado();
+        if (usuario != null && tieneTexto(usuario.getUsername())) {
+            return usuario.getUsername();
+        }
+
+        LoginBean loginBean = getLoginBean();
+        if (loginBean != null && tieneTexto(loginBean.getUserName())) {
+            return loginBean.getUserName();
+        }
+
+        HttpServletRequest request = getRequestActual();
+        if (request != null && request.getUserPrincipal() != null
+                && tieneTexto(request.getUserPrincipal().getName())) {
+            return request.getUserPrincipal().getName();
+        }
+        return request != null && tieneTexto(request.getRemoteUser()) ? request.getRemoteUser() : null;
+    }
+
+    public static boolean isUsuarioAutenticado() {
+        return tieneTexto(getNombreUsuarioAutenticado());
+    }
+
+    private static HttpServletRequest getRequestActual() {
+        try {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            if (facesContext == null || facesContext.getExternalContext() == null
+                    || !(facesContext.getExternalContext().getRequest() instanceof HttpServletRequest)) {
+                return null;
+            }
+            return (HttpServletRequest) facesContext.getExternalContext().getRequest();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static boolean tieneTexto(String valor) {
+        return valor != null && !valor.trim().isEmpty();
+    }
+
     private static String devuelveDiaSemana(int dia) {
         switch (dia) {
             case 1:

@@ -1,6 +1,5 @@
 package ec.com.antenasur.itext;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,9 +8,10 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.imageio.ImageIO;
+
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
-import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -28,16 +28,16 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.util.Units;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import ec.com.antenasur.util.Constantes;
-
-import jakarta.ejb.SessionContext;
-import ec.com.antenasur.model.generic.BeanLocator;
+import ec.com.antenasur.util.JsfUtil;
 
 public class ReporteXLSX {
 
@@ -53,28 +53,24 @@ public class ReporteXLSX {
 
     private static FileInputStream stream;
 
+    private static final int HEADER_LOGO_MAX_WIDTH_PX = 300;
+
+    private static final int HEADER_LOGO_MAX_HEIGHT_PX = 108;
+
     public static String getNombreUsuarioAutenticado() {
-        String userName = null;
-        try {
-            SessionContext context = BeanLocator.getSessionContext();
-            userName = context.getCallerPrincipal().getName();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (userName == null || userName.isEmpty()) {
-            userName = "<desconocido>";
-        }
-        return userName;
+        String userName = JsfUtil.getNombreUsuarioAutenticado();
+        return tieneTexto(userName) ? userName : "<desconocido>";
+    }
+
+    private static boolean tieneTexto(String valor) {
+        return valor != null && !valor.trim().isEmpty();
     }
 
     private static void inicializa() {
         try {
             externalContext = FacesContext.getCurrentInstance().getExternalContext();
-            ServletContext servletContext = (ServletContext) externalContext.getContext();
-            String webRoot = servletContext.getRealPath("/");
-
-            /*Agrega Banner cabecera al documento*/
-            PATH_LOGO = webRoot + "/resources/images/agreement/logo_certificate_417x150.png";
+            /* Agrega logo institucional a la cabecera del documento. */
+            PATH_LOGO = Constantes.getPathLogo();
             LIBRO = new XSSFWorkbook();
         } catch (Exception e) {
             LOG.error("ERROR AL INICIALIZAR VALORES" + e);
@@ -91,21 +87,32 @@ public class ReporteXLSX {
 
         } catch (FileNotFoundException ex) {
             LOG.error("ERROR AL CREAR NUEVO EXCEL" + ex);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException ex) {
+                    LOG.error("ERROR AL CERRAR LOGO DEL EXCEL" + ex);
+                }
+            }
         }
     }
 
     public static void creaCabeceraTabla(String[] listColumnNames, int[] columnWidth) {
         try {
             XSSFFont fuenteTituloTabla = LIBRO.createFont();
-            fuenteTituloTabla.setColor(IndexedColors.AUTOMATIC.index);
+            fuenteTituloTabla.setColor(IndexedColors.WHITE.index);
             fuenteTituloTabla.setBold(true);
 
             XSSFCellStyle celdaTituloTabla = LIBRO.createCellStyle();
             celdaTituloTabla.setAlignment(HorizontalAlignment.CENTER);
             celdaTituloTabla.setWrapText(true);
             celdaTituloTabla.setFont(fuenteTituloTabla);
+            celdaTituloTabla.setFillForegroundColor(IndexedColors.DARK_BLUE.index);
+            celdaTituloTabla.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
 
             Row encabezado = HOJA.createRow(5);
+            encabezado.setHeightInPoints(24);
             for (int i = 0; i < listColumnNames.length; i++) {
                 HOJA.setColumnWidth(i, columnWidth[i]);
                 Cell celda = encabezado.createCell(i);
@@ -190,9 +197,15 @@ public class ReporteXLSX {
 
     public static void setimagen(XSSFWorkbook workbook, Sheet sheet, String name, InputStream file) {
         try {
+            XSSFSheet xssfSheet = (XSSFSheet) sheet;
+            xssfSheet.setDisplayGridlines(false);
+            xssfSheet.setColumnWidth(0, 5000);
+            xssfSheet.setColumnWidth(1, 5000);
+            xssfSheet.setColumnWidth(2, 4200);
+
             // TITULO DEL PROYECTO
             XSSFFont whiteFont = workbook.createFont();
-            whiteFont.setColor(IndexedColors.AUTOMATIC.index);
+            whiteFont.setColor(IndexedColors.DARK_BLUE.index);
             whiteFont.setFontHeightInPoints((short) 16.00);
             whiteFont.setBold(true);
 
@@ -201,19 +214,20 @@ public class ReporteXLSX {
             cellheader.setWrapText(true);
             cellheader.setFont(whiteFont);
 
+            Row row0 = sheet.createRow((short) 0);
+            row0.setHeightInPoints(34);
             Row row = sheet.createRow((short) 1);// Fila que salta
-            row.setHeightInPoints((float) 30);
+            row.setHeightInPoints((float) 34);
             Cell cell = row.createCell((short) 3);// Columna que inicia el titulo
-            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$2:$E$2"));// Celadas combinadas
-            cell.setCellValue(new XSSFRichTextString(Constantes.SISTEMA));
+            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$2:$H$2"));// Celdas combinadas
+            cell.setCellValue(new XSSFRichTextString(Constantes.INSTITUCION));
             cell.setCellStyle(cellheader);
 
             // NOMBRE DEL REPORTE
             XSSFFont whiteFont1 = workbook.createFont();
-            whiteFont1.setColor(IndexedColors.AUTOMATIC.index);
+            whiteFont1.setColor(IndexedColors.GREY_50_PERCENT.index);
             whiteFont1.setFontHeightInPoints((short) 14.00);
             whiteFont1.setBold(true);
-            whiteFont1.setItalic(true);
 
             XSSFCellStyle cellheader1 = workbook.createCellStyle();
             cellheader1.setAlignment(HorizontalAlignment.CENTER);
@@ -221,14 +235,22 @@ public class ReporteXLSX {
             cellheader1.setFont(whiteFont1);
 
             Row row1 = sheet.createRow((short) 2);
-            row1.setHeightInPoints((float) 20);
+            row1.setHeightInPoints((float) 28);
             Cell cell1 = row1.createCell((short) 3);
-            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$3:$E$3"));
+            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$3:$H$3"));
             cell1.setCellValue(new XSSFRichTextString(name));
             cell1.setCellStyle(cellheader1);
 
             // Get the contents of an InputStream as a byte[].
             byte[] bytes = IOUtils.toByteArray(file);
+            java.awt.image.BufferedImage logo = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            int logoWidth = logo != null ? logo.getWidth() : HEADER_LOGO_MAX_WIDTH_PX;
+            int logoHeight = logo != null ? logo.getHeight() : HEADER_LOGO_MAX_HEIGHT_PX;
+            double scale = Math.min(
+                    (double) HEADER_LOGO_MAX_WIDTH_PX / logoWidth,
+                    (double) HEADER_LOGO_MAX_HEIGHT_PX / logoHeight);
+            scale = Math.min(scale, 1.0d);
+
             // Adds a picture to the workbook
             int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
             // close the input stream
@@ -239,20 +261,19 @@ public class ReporteXLSX {
             // Create an anchor that is attached to the worksheet
             ClientAnchor anchor = helper.createClientAnchor();
             // set top-left corner for the image
-            anchor.setDx1(0);
-            anchor.setDy1(0);
-            anchor.setDx2(140);// 1023
-            anchor.setDy2(50);
+            anchor.setDx1(Units.pixelToEMU(8));
+            anchor.setDy1(Units.pixelToEMU(6));
 
             anchor.setCol1(0);// Columna donde inicia el logo
             anchor.setRow1(0);
-            anchor.setCol2(1);
-            anchor.setRow2(1);
+            anchor.setCol2(3);
+            anchor.setRow2(4);
+            if (anchor instanceof XSSFClientAnchor) {
+                ((XSSFClientAnchor) anchor).setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
+            }
             // Creates a picture
             Picture pict = drawing.createPicture(anchor, pictureIdx);
-            // Reset the image to the original size
-            // pict.resize();
-            pict.resize(3, 5);// Columna y fila hasta donde llega la Imagen
+            pict.resize(scale);
             sheet.createFreezePane(0, 6, 0, 6);// 0, 7, 0, 7
         } catch (Exception ex) {
             LOG.error("ERROR AL ASIGNAR IMAGEN AL ARCHIVO EXCEL" + ex);

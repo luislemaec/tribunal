@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,6 +28,7 @@ import ec.com.antenasur.dto.FilaPadronImportadaDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Mesa;
@@ -456,6 +458,49 @@ public class PersonaController implements Serializable {
 
     private static String safe(String s) {
         return s == null ? "" : s;
+    }
+
+    public void exportarExcel() {
+        try {
+            List<IglesiaPersonaDTO> lista = listaIglesiaPersona != null ? listaIglesiaPersona : new ArrayList<>();
+            String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+            String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
+
+            ReporteXLSX.nuevoExcel("Listado de Miembros");
+            ReporteXLSX.creaEspacioInformativo(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
+
+            String[] columnas = {
+                "N°", "CEDULA", "NOMBRES", "SEXO", "IGLESIA",
+                "PADRON", "REVISION", "FECHA ACTUALIZACION"
+            };
+            int[] anchos = { 1800, 4500, 9500, 2500, 9000, 4500, 4500, 6000 };
+            ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+
+            String[][] datos = new String[lista.size()][columnas.length];
+            SimpleDateFormat fmtFechaHora = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            for (int i = 0; i < lista.size(); i++) {
+                IglesiaPersonaDTO ip = lista.get(i);
+                PersonaDTO persona = ip.getPersona();
+                IglesiaDTO iglesia = ip.getIglesia();
+
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = persona != null ? safe(persona.getDocumento()) : "";
+                datos[i][2] = persona != null
+                        ? (safe(persona.getApellidos()) + " " + safe(persona.getNombres())).trim() : "";
+                datos[i][3] = persona != null ? safe(persona.getSexo()) : "";
+                datos[i][4] = iglesia != null ? safe(iglesia.getNombre()) : safe(iglesiaSeleccionado.getNombre());
+                datos[i][5] = Boolean.TRUE.equals(ip.getHabilitadoPadron()) ? "Habilitado" : "No habilitado";
+                datos[i][6] = Boolean.TRUE.equals(ip.getActualizada()) ? "Revisado" : "Pendiente";
+                datos[i][7] = ip.getFechaActualiza() != null ? fmtFechaHora.format(ip.getFechaActualiza()) : "";
+            }
+
+            ReporteXLSX.creaContenidoTabla(datos, columnas);
+            ReporteXLSX.setFinalParagraph(lista.size());
+            ReporteXLSX.descargarExcel("Personas");
+        } catch (Exception e) {
+            log.error("Error al exportar listado de personas a Excel", e);
+            JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");
+        }
     }
 
     public void handleFileUpload(FileUploadEvent event) {
