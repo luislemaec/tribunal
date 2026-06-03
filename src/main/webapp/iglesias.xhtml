@@ -514,7 +514,7 @@
                         <p:inputText id="rucGenerico"
                                      rendered="#{not iglesiaController.tieneRuc}"
                                      value="#{iglesiaController.iglesiaSeleccionado.documento}"
-                                     disabled="true" styleClass="w-full"/>
+                                     readonly="true" styleClass="w-full"/>
                         <small class="text-500">
                             <h:outputText rendered="#{iglesiaController.tieneRuc}"
                                           value="#{msg['form.iglesias.label.ruc.hint']}"/>

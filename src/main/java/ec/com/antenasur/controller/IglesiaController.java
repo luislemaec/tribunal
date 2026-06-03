@@ -346,11 +346,17 @@ public class IglesiaController implements Serializable {
         }
     }
 
-    /** Botón "No tiene RUC" — deshabilita el campo y asigna el siguiente código genérico (preview). */
+    /** Boton "No tiene RUC": asigna el codigo generico una sola vez al DTO en edicion. */
     public void seleccionarSinRuc() {
         tieneRuc = false;
-        if (iglesiaSeleccionado != null) {
-            iglesiaSeleccionado.setDocumento(iglesiaService.generarDocumentoGenerico());
+        if (iglesiaSeleccionado == null) {
+            return;
+        }
+        String documentoActual = iglesiaSeleccionado.getDocumento();
+        if (documentoActual == null || documentoActual.trim().isEmpty()) {
+            String documentoGenerico = iglesiaService.generarDocumentoGenerico();
+            iglesiaSeleccionado.setDocumento(documentoGenerico);
+            log.info("Documento generico asignado a iglesia en edicion: {}", documentoGenerico);
         }
     }
 
@@ -463,6 +469,11 @@ public class IglesiaController implements Serializable {
             if (tieneRuc && (iglesiaSeleccionado.getDocumento() == null
                     || iglesiaSeleccionado.getDocumento().trim().isEmpty())) {
                 rechazarConMensaje("El RUC es obligatorio cuando la iglesia tiene RUC.");
+                return;
+            }
+            if (!tieneRuc && (iglesiaSeleccionado.getDocumento() == null
+                    || iglesiaSeleccionado.getDocumento().trim().isEmpty())) {
+                rechazarConMensaje("Genere el RUC interno con el boton No tiene RUC antes de guardar.");
                 return;
             }
             if (iglesiaService.existeDuplicado(

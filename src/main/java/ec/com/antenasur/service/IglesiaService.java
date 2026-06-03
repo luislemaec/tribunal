@@ -181,14 +181,8 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
                 + "Cierre el diálogo, recargue los datos e intente nuevamente.");
         }
 
-        // Preservar el código genérico existente — no re-generar en cada edición
-        String documento;
-        if (esDocumentoGenerico(dto.getDocumento())
-                && dto.getDocumento().equals(actual.getDocumento())) {
-            documento = actual.getDocumento();
-        } else {
-            documento = resolverDocumento(dto.getDocumento());
-        }
+        // Preservar el documento recibido desde la UI; no consumir secuencia al guardar.
+        String documento = resolverDocumento(dto.getDocumento());
 
         validarRucUnico(documento, dto.getId());
 
@@ -356,14 +350,8 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return r.isEmpty() ? null : r;
     }
 
-    /**
-     * Si el documento es genérico (preview asignado en el toggle), re-genera uno
-     * nuevo dentro de la transacción activa para garantizar unicidad concurrente.
-     */
+    /** Normaliza el documento recibido; no consume secuencia durante el guardado. */
     private String resolverDocumento(String documento) {
-        if (esDocumentoGenerico(documento)) {
-            return iglesiaFacade.generarDocumentoGenerico();
-        }
         return documento != null ? documento.trim() : null;
     }
 

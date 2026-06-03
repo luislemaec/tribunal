@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ec.com.antenasur.tec</groupId>
-    <artifactId>tribunal</artifactId>
+    <artifactId>tec</artifactId>
     <version>1.0.1</version>
     <packaging>war</packaging>
-    <name>tribunal</name>
+    <name>tec</name>
     <description>Tribunal Electoral System - Jakarta EE 10 / WildFly 39 / Java 17</description>
 
     <url>http://wildfly.org</url>

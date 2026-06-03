@@ -237,3 +237,6 @@ WHERE p.proce_nombre = 'Elecciones 2026'
       SELECT 1 FROM tec.cronograma_fase cf
        WHERE cf.proce_id = p.proce_id AND cf.cref_fase = 'PADRON_DEFINITIVO'
   );
+  
+  
+  ALTER SEQUENCE public.seq_iglesia_codigo_generico RESTART WITH 6;
