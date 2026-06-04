@@ -43,7 +43,7 @@ public class JsfUtil implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    static final String GROWL_MESSAGES = "growlMessages";
+    public static final String GROWL_MESSAGES = ":frmGlobal:msgs";
 
     private static final String temporalTemp = System.getProperty("java.io.tmpdir") + File.separator;
 
@@ -236,11 +236,7 @@ public class JsfUtil implements Serializable {
 
     public static void addInfoMessage(String msg, Boolean addInGrowl) {
         FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, null);
-        if (addInGrowl) {
-            FacesContext.getCurrentInstance().addMessage(GROWL_MESSAGES, facesMsg);
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null, facesMsg);
-        }
+        FacesContext.getCurrentInstance().addMessage(null, facesMsg);
     }
 
     /**

@@ -168,7 +168,7 @@
         <!-- ======================================================
              FILTROS GEOGRÁFICOS (colapsable)
              ====================================================== -->
-        <h:form id="frmFiltros">
+        <h:form id="frmFiltros" rendered="#{not iglesiaController.restringidoAIglesia}">
             <p:panel toggleable="true" collapsed="false"
                      styleClass="mb-2 shadow-1 border-round-lg">
                 <f:facet name="header">
@@ -236,6 +236,18 @@
                 <!-- Mensajes -->
                 <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
 
+                <ui:fragment rendered="#{iglesiaController.restringidoAIglesia}">
+                    <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3"
+                         style="background:#eff6ff; border-left:4px solid #2563eb">
+                        <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
+                        <span class="text-700 text-sm">
+                            <b>#{msg['form.iglesias.banner.iglesia.admin.titulo']}</b>
+                            #{msg['form.iglesias.banner.iglesia.admin.detalle']}
+                            <b>'#{iglesiaController.nombreIglesiaAsignada}'</b>.
+                        </span>
+                    </div>
+                </ui:fragment>
+
                 <!-- Banner de bloqueo de fase -->
                 <p:outputPanel rendered="#{not iglesiaController.puedeRegistrarIglesia}" styleClass="mb-3" layout="block">
                     <div class="flex align-items-center gap-2 surface-100 border-round-lg p-3">
@@ -255,6 +267,7 @@
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.iglesias.btn.new']}" icon="pi pi-plus"
                                          styleClass="ui-button-success"
+                                         rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          actionListener="#{iglesiaController.nuevaIglesia}"
                                          oncomplete="PF('dlgIglesia').show()"
@@ -266,6 +279,7 @@
                                          value="#{iglesiaController.getMensajeBotonEliminar()}"
                                          icon="pi pi-trash"
                                          styleClass="ui-button-danger"
+                                         rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{!iglesiaController.existeIglesiasSeleccionadas()}"
                                          actionListener="#{iglesiaController.eliminarIglesiaSeleccionadas}"
                                          process="@this" update=":frmIglesias :frmStats">
@@ -327,6 +341,7 @@
                     <p:ajax event="toggleSelect" update=":frmIglesias:btnEliminarLista"/>
 
                     <p:column selectionMode="multiple" exportable="false"
+                              rendered="#{not iglesiaController.restringidoAIglesia}"
                               styleClass="text-center" style="width:3rem"/>
 
                     <!-- RUC con badge genérico -->
@@ -407,6 +422,7 @@
                         <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
+                                         rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          action="#{iglesiaController.eliminarIglesiaFila}"
                                          process="@this" update=":frmIglesias :frmProgreso :frmStats">

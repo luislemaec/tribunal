@@ -71,6 +71,10 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         return padronFacade.obtieneIglesiasEnPadronCompletasPorUbicacion(idParroquias);
     }
 
+    public List<Integer> obtieneIglesiasEnPadronPorUbicacionYProceso(List<Integer> idParroquias, Integer procesoId) {
+        return padronFacade.obtieneIglesiasEnPadronPorUbicacionYProceso(idParroquias, procesoId);
+    }
+
     public List<Padron> getPadronPorMesas(List<Mesa> listaMesas) {
         return padronFacade.getPadronPorMesas(listaMesas);
     }
@@ -109,6 +113,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
     public List<Padron> asignarIglesiaAMesa(Iglesia iglesia, Mesa mesa, ProcesoElectoral proceso) {
         List<Padron> creados = new ArrayList<>();
         if (iglesia == null || mesa == null || proceso == null) {
+            return creados;
+        }
+        if (padronFacade.existeIglesiaEnPadronProceso(iglesia.getId(), proceso.getId())) {
             return creados;
         }
         List<IglesiaPersona> personas = iglesiaPersonaFacade.getPersonasHabilitadasPadronPorIglesia(iglesia.getId());

@@ -5,29 +5,28 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.recintos.title']}</ui:define>
+    <ui:define name="title">#{msg['recintos.titulo']}</ui:define>
 
     <ui:define name="viewname">
-        <li>#{msg['form.recintos.crumb.admin']}</li>
+        <li>#{msg['recintos.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/recintos">#{msg['form.recintos.title']}</p:link>
+            <p:link outcome="/recintos">#{msg['recintos.titulo']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0ea5e9,#38bdf8);flex-shrink:0">
+                         style="width:3.5rem;height:3.5rem;background:#0f766e;flex-shrink:0">
                         <i class="pi pi-map-marker text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.recintos.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.recintos.header']}</p>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['recintos.titulo']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['recintos.subtitulo']}</p>
                     </div>
                 </div>
             </div>
@@ -35,169 +34,274 @@
 
         <h:form id="frmRecintos">
 
-            <!-- FILTROS GEOGRAFICOS -->
+            <p:outputPanel id="resumenRecintos">
+                <div class="grid mb-3">
+                    <div class="col-12 md:col-6 xl:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <div class="flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-500 text-sm">#{msg['recintos.resumen.total.recintos']}</div>
+                                    <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintos}</div>
+                                </div>
+                                <i class="pi pi-building text-teal-600" style="font-size:1.5rem"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-6 xl:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <div class="flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-500 text-sm">#{msg['recintos.resumen.recintos.activos']}</div>
+                                    <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintosActivos}</div>
+                                </div>
+                                <i class="pi pi-check-circle text-green-600" style="font-size:1.5rem"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-6 xl:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <div class="flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-500 text-sm">#{msg['recintos.resumen.total.mesas']}</div>
+                                    <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRegistradas}</div>
+                                </div>
+                                <i class="pi pi-table text-cyan-700" style="font-size:1.5rem"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-6 xl:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <div class="flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-500 text-sm">#{msg['recintos.resumen.mesas.seleccionado']}</div>
+                                    <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRecintoSeleccionado}</div>
+                                </div>
+                                <i class="pi pi-sitemap text-orange-600" style="font-size:1.5rem"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </p:outputPanel>
+
             <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                 <div class="flex align-items-center gap-2 mb-3">
                     <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">Filtros geográficos</span>
+                    <span class="font-semibold text-700">#{msg['recintos.seccion.filtros']}</span>
                 </div>
                 <div class="formgrid grid">
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="canton" class="font-medium text-700 text-sm">#{msg['form.recintos.label.canton']}</label>
+                    <div class="field col-12 md:col-6 lg:col-4">
+                        <label for="canton" class="font-medium text-700 text-sm">#{msg['recintos.label.canton']}</label>
                         <p:selectOneMenu id="canton" value="#{recintoController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="startsWith" styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.recintos.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['recintos.placeholder.todos']}" itemValue="0"/>
                             <f:selectItems value="#{recintoController.cantones}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{recintoController.obtieneParroquias()}"
-                                    process="@this" update="frmRecintos"/>
+                            <p:ajax event="change" listener="#{recintoController.cambiarCanton()}"
+                                    process="@this" update="@form"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="parroquia" class="font-medium text-700 text-sm">#{msg['form.recintos.label.parroquia']}</label>
-                        <p:selectOneMenu id="parroquia" value="#{recintoController.parroquiaSeleccionado.id}" styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.recintos.placeholder.select']}" itemValue=""/>
+                    <div class="field col-12 md:col-6 lg:col-4">
+                        <label for="parroquia" class="font-medium text-700 text-sm">#{msg['recintos.label.parroquia']}</label>
+                        <p:selectOneMenu id="parroquia" value="#{recintoController.parroquiaSeleccionado.id}"
+                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['recintos.placeholder.todos']}" itemValue="0"/>
                             <f:selectItems value="#{recintoController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{recintoController.obtieneRecintosPorParroquia()}"
-                                    process="@this" update="frmRecintos msgs"/>
+                            <p:ajax event="change" listener="#{recintoController.cambiarParroquia()}"
+                                    process="@this" update="@form"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
             </div>
 
-            <div class="surface-card shadow-1 border-round-lg p-3">
+            <div class="grid">
+                <div class="col-12 xl:col-7">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
+                            <div>
+                                <div class="flex align-items-center gap-2">
+                                    <i class="pi pi-building text-500"></i>
+                                    <span class="font-semibold text-800">#{msg['recintos.seccion.listado']}</span>
+                                </div>
+                                <p class="text-500 mt-1 mb-0 text-sm">#{msg['recintos.ayuda.listado']}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 justify-content-start md:justify-content-end">
+                                <p:commandButton value="#{msg['recintos.boton.nuevo']}" icon="pi pi-plus"
+                                                 styleClass="ui-button-primary"
+                                                 actionListener="#{recintoController.nuevaRecinto}"
+                                                 process="@this" update="outPnlRecintos"
+                                                 oncomplete="PF('dlgRecinto').show()">
+                                    <p:resetInput target="outPnlRecintos"/>
+                                </p:commandButton>
+                            </div>
+                        </div>
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
+                        <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto"
+                                     value="#{recintoController.listaRecintos}" reflow="true"
+                                     paginator="true" rows="10" rowSelectMode="add"
+                                     rowsPerPageTemplate="10,25,50"
+                                     paginatorPosition="bottom"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="#{msg['recintos.paginador.reporte']}"
+                                     emptyMessage="#{msg['recintos.empty.listado']}"
+                                     showGridlines="true"
+                                     styleClass="ui-datatable-striped ui-datatable-sm">
 
-                <!-- TOOLBAR -->
-                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <div class="flex align-items-center gap-2 flex-wrap">
-                        <p:commandButton value="#{msg['form.recintos.btn.new']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
-                                         actionListener="#{recintoController.nuevaRecinto}"
-                                         update="outPnlRecintos" oncomplete="PF('dlgRecinto').show()">
-                            <p:resetInput target="outPnlRecintos"/>
-                        </p:commandButton>
-                        <p:commandButton id="btnEliminaRegistros"
-                                         value="#{recintoController.mensajeBotonEliminar}"
-                                         icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
-                                         actionListener="#{recintoController.eliminarRecintosSeleccionados}"
-                                         disabled="#{!recintoController.existeRecintosSeleccionados()}"
-                                         update="@this tblRecintos msgs">
-                            <p:confirm header="#{msg['form.recintos.confirm.delete.header']}"
-                                       message="#{msg['form.recintos.confirm.delete.multiple']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-                    </div>
-                    <div class="flex align-items-center gap-2 flex-wrap">
-                        <p:fileUpload mode="simple" skinSimple="true"
-                                      label="#{msg['form.recintos.btn.import']}"
-                                      chooseIcon="pi pi-download"
-                                      disabled="#{recintoController.recintoSeleccionado.id eq null}"/>
-                        <p:commandButton value="#{msg['form.recintos.btn.export']}" icon="pi pi-upload"
-                                         styleClass="ui-button-outlined ui-button-help" ajax="false"
-                                         disabled="#{empty recintoController.listaRecintos}">
-                            <p:dataExporter type="pdf" target="tblRecintos" fileName="Recintos"/>
-                        </p:commandButton>
+                       
+
+                            <p:column headerText="#{msg['recintos.tabla.codigo']}"
+                                      sortBy="#{recinto.id}" filterBy="#{recinto.id}"
+                                      style="width:5rem">
+                                <span class="text-sm text-500">#{recinto.id}</span>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.nombre']}"
+                                      sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}"
+                                      filterMatchMode="contains" style="min-width:12rem">
+                                <span class="text-sm font-medium text-900">#{recinto.nombre}</span>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.canton']}"
+                                      sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}"
+                                      filterMatchMode="contains" style="min-width:9rem">
+                                <span class="text-sm text-700">#{recinto.cantonNombre}</span>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.parroquia']}"
+                                      sortBy="#{recinto.ubicacionNombre}" filterBy="#{recinto.ubicacionNombre}"
+                                      filterMatchMode="contains" style="min-width:10rem">
+                                <span class="text-sm text-700">#{recinto.ubicacionNombre}</span>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.mesas']}"
+                                      styleClass="text-center" style="width:6rem">
+                                <p:badge value="#{mesaController.getTotalMesasPorRecinto(recinto.id)}" severity="info"/>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.estado']}"
+                                      styleClass="text-center" style="width:7rem">
+                                <p:tag value="#{msg['recintos.estado.activo']}" severity="success" icon="pi pi-check-circle"/>
+                            </p:column>
+                            <p:column headerText="#{msg['recintos.tabla.acciones']}" exportable="false"
+                                      styleClass="text-center" style="width:9rem">
+                                <div class="flex justify-content-center gap-1">
+                                    <p:commandButton icon="pi pi-check"
+                                                     styleClass="ui-button-rounded ui-button-text ui-button-info"
+                                                     title="#{msg['recintos.tooltip.seleccionar']}"
+                                                     action="#{mesaController.seleccionarRecinto(recinto)}"
+                                                     process="@this" update=":frmRecintos:resumenRecintos :frmRecintos:pnlMesasRecinto">
+                                        <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
+                                    </p:commandButton>
+                                    <p:commandButton icon="pi pi-pencil"
+                                                     styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                     title="#{msg['recintos.tooltip.editar']}"
+                                                     update=":frmRecintos:outPnlRecintos"
+                                                     oncomplete="PF('dlgRecinto').show()"
+                                                     process="@this"
+                                                     action="#{recintoController.cagraDatosRecintoSeleccionado}">
+                                        <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
+                                        <p:resetInput target=":frmRecintos:outPnlRecintos"/>
+                                    </p:commandButton>
+                                    <p:commandButton icon="pi pi-trash"
+                                                     styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                     title="#{msg['recintos.tooltip.eliminar']}"
+                                                     actionListener="#{recintoController.eliminarRecintoSeleccionado}"
+                                                     process="@this" update="@form">
+                                        <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
+                                        <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
+                                                   message="#{msg['recintos.confirmacion.eliminar']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                </div>
+                            </p:column>
+                        </p:dataTable>
                     </div>
                 </div>
 
-                <!-- DATATABLE -->
-                <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto"
-                             value="#{recintoController.listaRecintos}" reflow="true"
-                             selection="#{recintoController.listaRecintosSeleccionados}" rowKey="#{recinto.id}"
-                             paginator="true" rows="10" rowSelectMode="add"
-                             rowsPerPageTemplate="10,25,50"
-                             paginatorPosition="bottom"
-                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} recintos"
-                             emptyMessage="Seleccione cantón y parroquia para ver los recintos."
-                             showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:ajax event="rowSelect"           update=":frmRecintos:btnEliminaRegistros"/>
-                    <p:ajax event="rowUnselect"         update=":frmRecintos:btnEliminaRegistros"/>
-                    <p:ajax event="rowSelectCheckbox"   update=":frmRecintos:btnEliminaRegistros"/>
-                    <p:ajax event="rowUnselectCheckbox" update=":frmRecintos:btnEliminaRegistros"/>
-                    <p:ajax event="toggleSelect"        update=":frmRecintos:btnEliminaRegistros"/>
+                <div class="col-12 xl:col-5">
+                    <p:outputPanel id="pnlMesasRecinto">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
+                                <div>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="pi pi-table text-500"></i>
+                                        <span class="font-semibold text-800">#{msg['recintos.mesas.seccion.listado']}</span>
+                                    </div>
+                                    <p class="text-500 mt-1 mb-0 text-sm">
+                                        <h:outputText rendered="#{empty mesaController.recintoSeleccionado.id}"
+                                                      value="#{msg['recintos.mesas.ayuda.sin.seleccion']}"/>
+                                        <h:outputText rendered="#{not empty mesaController.recintoSeleccionado.id}"
+                                                      value="#{msg['recintos.mesas.ayuda.con.seleccion']} #{mesaController.recintoSeleccionado.nombre}"/>
+                                    </p>
+                                </div>
+                                <p:commandButton id="btnNuevaMesa"
+                                                 value="#{msg['recintos.mesas.boton.nuevo']}" icon="pi pi-plus"
+                                                 actionListener="#{mesaController.nuevaMesaParaRecinto}"
+                                                 process="@this" update="outPnlMesa"
+                                                 disabled="#{empty mesaController.recintoSeleccionado.id}"
+                                                 oncomplete="if (!args.validationFailed) PF('dlgMesa').show()"/>
+                            </div>
 
-                    <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
+                            <p:dataTable id="tblMesasRecinto" widgetVar="wdTablaMesasRecinto" var="mesa"
+                                         value="#{empty mesaController.recintoSeleccionado.id ? null : mesaController.listaMesas}" reflow="true"
+                                         paginator="true" rows="8"
+                                         rowsPerPageTemplate="8,16,32"
+                                         paginatorPosition="bottom"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         currentPageReportTemplate="#{msg['recintos.mesas.paginador.reporte']}"
+                                         emptyMessage="#{msg['recintos.mesas.empty.listado']}"
+                                         showGridlines="true"
+                                         styleClass="ui-datatable-striped ui-datatable-sm">
 
-                    <p:column headerText="#{msg['form.recintos.table.header.id']}"
-                              sortBy="#{recinto.id}" filterBy="#{recinto.id}"
-                              style="width:6rem">
-                        <span class="text-sm text-500">#{recinto.id}</span>
-                    </p:column>
-                    <p:column headerText="#{msg['form.recintos.table.header.nombre']}"
-                              sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}"
-                              filterMatchMode="contains">
-                        <span class="text-sm font-medium text-900">#{recinto.nombre}</span>
-                    </p:column>
-                    <p:column headerText="#{msg['form.recintos.table.header.canton']}"
-                              sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}"
-                              filterMatchMode="contains" style="min-width:9rem">
-                        <span class="text-sm text-700">#{recinto.cantonNombre}</span>
-                    </p:column>
-                    <p:column headerText="#{msg['form.recintos.table.header.parroquia']}"
-                              sortBy="#{recinto.ubicacionNombre}" filterBy="#{recinto.ubicacionNombre}"
-                              filterMatchMode="contains" style="min-width:11rem">
-                        <span class="text-sm text-700">#{recinto.ubicacionNombre}</span>
-                    </p:column>
-                    <p:column headerText="#{msg['form.recintos.table.header.estado']}"
-                              sortBy="#{recinto.estadoTarea}" filterBy="#{recinto.estadoTarea}"
-                              filterMatchMode="contains" styleClass="text-center" style="width:10rem">
-                        <p:tag value="#{recinto.estadoTarea}"
-                               severity="#{recinto.estadoTarea eq 'COMPLETADO' ? 'success'
-                                         : recinto.estadoTarea eq 'INICIADA'   ? 'warning'
-                                         : recinto.estadoTarea eq 'ABORTADO'   ? 'danger'
-                                         : 'info'}"
-                               icon="#{recinto.estadoTarea eq 'COMPLETADO' ? 'pi pi-check'
-                                     : recinto.estadoTarea eq 'ABORTADO'   ? 'pi pi-times'
-                                     : 'pi pi-clock'}"/>
-                    </p:column>
-                    <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:7rem">
-                        <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="#{msg['form.recintos.btn.edit.title']}"
-                                         update=":frmRecintos:outPnlRecintos"
-                                         oncomplete="PF('dlgRecinto').show()"
-                                         process="@this"
-                                         action="#{recintoController.cagraDatosRecintoSeleccionado}">
-                            <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
-                            <p:resetInput target=":frmRecintos:outPnlRecintos"/>
-                        </p:commandButton>
-                        <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="#{msg['form.recintos.btn.delete.title']}"
-                                         actionListener="#{recintoController.eliminarRecintoSeleccionado}"
-                                         process="@this" update="tblRecintos msgs">
-                            <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
-                            <p:confirm header="#{msg['form.recintos.confirm.delete.header']}"
-                                       message="#{msg['form.recintos.confirm.delete.message']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-                    </p:column>
-                </p:dataTable>
+                                <p:column headerText="#{msg['recintos.mesas.tabla.codigo']}"
+                                          sortBy="#{mesa.id}" style="width:5rem">
+                                    <span class="text-sm text-500">#{mesa.id}</span>
+                                </p:column>
+                                <p:column headerText="#{msg['recintos.mesas.tabla.nombre']}"
+                                          sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"
+                                          filterMatchMode="contains" style="min-width:10rem">
+                                    <span class="text-sm font-medium text-900">#{mesa.nombre}</span>
+                                </p:column>
+                                <p:column headerText="#{msg['recintos.mesas.tabla.responsable']}"
+                                          sortBy="#{mesa.responsable}" filterBy="#{mesa.responsable}"
+                                          filterMatchMode="contains" style="min-width:10rem">
+                                    <h:outputText rendered="#{not empty mesa.responsable}" value="#{mesa.responsable}"
+                                                  styleClass="text-sm text-700"/>
+                                    <h:outputText rendered="#{empty mesa.responsable}" value="#{msg['recintos.mesas.sin.responsable']}"
+                                                  styleClass="text-sm text-500"/>
+                                </p:column>
+                                <p:column headerText="#{msg['recintos.mesas.tabla.estado']}"
+                                          styleClass="text-center" style="width:7rem">
+                                    <p:tag value="#{msg['recintos.estado.activo']}" severity="success" icon="pi pi-check-circle"/>
+                                </p:column>
+                                <p:column headerText="#{msg['recintos.mesas.tabla.acciones']}" exportable="false"
+                                          styleClass="text-center" style="width:6rem">
+                                    <div class="flex justify-content-center gap-1">
+                                        <p:commandButton icon="pi pi-pencil"
+                                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                         title="#{msg['recintos.mesas.tooltip.editar']}"
+                                                         update=":frmRecintos:outPnlMesa"
+                                                         oncomplete="PF('dlgMesa').show()"
+                                                         process="@this">
+                                            <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
+                                            <p:resetInput target=":frmRecintos:outPnlMesa"/>
+                                        </p:commandButton>
+                                        <p:commandButton icon="pi pi-trash"
+                                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                         title="#{msg['recintos.mesas.tooltip.eliminar']}"
+                                                         actionListener="#{mesaController.eliminarMesaSeleccionado}"
+                                                         process="@this" update=":frmRecintos:resumenRecintos :frmRecintos:pnlMesasRecinto">
+                                            <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
+                                            <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
+                                                       message="#{msg['recintos.mesas.confirmacion.eliminar']}"
+                                                       icon="pi pi-exclamation-triangle"/>
+                                        </p:commandButton>
+                                    </div>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </p:outputPanel>
+                </div>
+            </div>
 
-                <!-- Confirm dialog global -->
-                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                                 responsive="true" width="400" style="max-width:96vw">
-                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
-                                     styleClass="ui-button-danger" type="button"
-                                     onclick="PF('dlgConfirm').accept()"/>
-                    <p:commandButton value="Cancelar" icon="pi pi-times"
-                                     styleClass="ui-button-secondary ml-2" type="button"
-                                     onclick="PF('dlgConfirm').reject()"/>
-                </p:confirmDialog>
-
-            </div><!-- /surface-card -->
-
-            <!-- ======================================================
-                 DIALOGO: NUEVO / EDITAR RECINTO
-                 ====================================================== -->
-            <p:dialog header="#{msg['form.recintos.dialog.title']}"
+            <p:dialog header="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.dialog.titulo.nuevo'] : msg['recintos.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgRecinto"
                       responsive="true" width="520"
@@ -207,28 +311,29 @@
 
                 <p:outputPanel id="outPnlRecintos" class="ui-fluid">
                     <p:outputPanel rendered="#{not empty recintoController.recintoSeleccionado}">
-
                         <div class="formgrid grid">
-
                             <div class="field col-12">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['form.recintos.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.nombre']} <span class="text-red-500">*</span>
                                 </label>
                                 <p:inputText id="nombre"
                                              value="#{recintoController.recintoSeleccionado.nombre}"
                                              maxlength="100" required="true" styleClass="w-full"
+                                             requiredMessage="#{msg['recintos.validacion.nombre.requerido']}"
+                                             placeholder="#{msg['recintos.placeholder.nombre']}"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
                             <div class="field col-12">
                                 <label for="cantonSel" class="font-medium text-700 text-sm">
-                                    #{msg['form.recintos.label.canton']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.canton']} <span class="text-red-500">*</span>
                                 </label>
                                 <p:selectOneMenu id="cantonSel"
                                                  value="#{recintoController.cantonSeleccionado.id}"
                                                  filter="true" filterMatchMode="startsWith"
-                                                 required="true" styleClass="w-full">
-                                    <f:selectItem itemLabel="#{msg['form.recintos.placeholder.select']}" itemValue=""/>
+                                                 required="true" styleClass="w-full"
+                                                 requiredMessage="#{msg['recintos.validacion.canton.requerido']}">
+                                    <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
                                     <f:selectItems value="#{recintoController.cantones}" var="canton"
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                     <p:ajax event="change" listener="#{recintoController.obtieneParroquias()}"
@@ -238,37 +343,107 @@
 
                             <div class="field col-12">
                                 <label for="parroquiaSel" class="font-medium text-700 text-sm">
-                                    #{msg['form.recintos.label.parroquia']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.parroquia']} <span class="text-red-500">*</span>
                                 </label>
                                 <p:selectOneMenu id="parroquiaSel"
                                                  value="#{recintoController.recintoSeleccionado.ubicacionId}"
-                                                 required="true" styleClass="w-full">
-                                    <f:selectItem itemLabel="#{msg['form.recintos.placeholder.select']}" itemValue=""/>
+                                                 required="true" styleClass="w-full"
+                                                 requiredMessage="#{msg['recintos.validacion.parroquia.requerido']}">
+                                    <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
                                     <f:selectItems value="#{recintoController.parroquias}" var="parroquia"
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                 </p:selectOneMenu>
                             </div>
-
                         </div>
-
                     </p:outputPanel>
                 </p:outputPanel>
 
                 <f:facet name="footer">
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
-                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
+                        <p:commandButton value="#{msg['recintos.boton.cancelar']}" icon="pi pi-times"
                                          onclick="PF('dlgRecinto').hide()"
+                                         style="width:auto;flex:0 0 auto"
                                          styleClass="ui-button-outlined ui-button-secondary"
                                          type="button"/>
-                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
+                        <p:commandButton value="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.boton.guardar'] : msg['recintos.boton.actualizar']}"
+                                         icon="pi pi-check"
+                                         style="width:auto;flex:0 0 auto"
                                          styleClass="ui-button-success"
                                          actionListener="#{recintoController.guardarRecintoSeleccionado}"
-                                         update="outPnlRecintos tblRecintos msgs"
+                                         update="outPnlRecintos tblRecintos resumenRecintos"
                                          process="outPnlRecintos @this"
-                                         oncomplete="if (!args.validationFailed) PF('dlgRecinto').hide()"/>
+                                         oncomplete="if (!args.validationFailed) PF('dlgRecinto').hide()">
+                            <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
+                                       message="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.confirmacion.guardar'] : msg['recintos.confirmacion.actualizar']}"
+                                       icon="pi pi-question-circle"/>
+                        </p:commandButton>
                     </div>
                 </f:facet>
+            </p:dialog>
 
+            <p:dialog header="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.dialog.titulo.nuevo'] : msg['recintos.mesas.dialog.titulo.editar']}"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgMesa"
+                      responsive="true" width="520"
+                      style="max-width:96vw"
+                      contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+
+                <p:outputPanel id="outPnlMesa" class="ui-fluid">
+                    <p:outputPanel rendered="#{not empty mesaController.mesaSeleccionado}">
+                        <div class="formgrid grid">
+                            <div class="field col-12">
+                                <label class="font-medium text-700 text-sm">#{msg['recintos.mesas.label.recinto']}</label>
+                                <div class="surface-100 border-round p-2 text-700 text-sm">
+                                    #{mesaController.mesaSeleccionado.recinto.nombre}
+                                </div>
+                            </div>
+                            <div class="field col-12">
+                                <label for="nombreMesa" class="font-medium text-700 text-sm">
+                                    #{msg['recintos.mesas.label.nombre']} <span class="text-red-500">*</span>
+                                </label>
+                                <p:inputText id="nombreMesa"
+                                             value="#{mesaController.mesaSeleccionado.nombre}"
+                                             maxlength="100" required="true" styleClass="w-full"
+                                             requiredMessage="#{msg['recintos.mesas.validacion.nombre.requerido']}"
+                                             placeholder="#{msg['recintos.mesas.placeholder.nombre']}"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+                            <div class="field col-12">
+                                <label for="responsableMesa" class="font-medium text-700 text-sm">
+                                    #{msg['recintos.mesas.label.responsable']}
+                                </label>
+                                <p:inputText id="responsableMesa"
+                                             value="#{mesaController.mesaSeleccionado.responsable}"
+                                             maxlength="100" styleClass="w-full"
+                                             placeholder="#{msg['recintos.mesas.placeholder.responsable']}"
+                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="#{msg['recintos.boton.cancelar']}" icon="pi pi-times"
+                                         onclick="PF('dlgMesa').hide()"
+                                         style="width:auto;flex:0 0 auto"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         type="button"/>
+                        <p:commandButton value="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.boton.guardar'] : msg['recintos.mesas.boton.actualizar']}"
+                                         icon="pi pi-check"
+                                         style="width:auto;flex:0 0 auto"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{mesaController.guardarMesaSeleccionado}"
+                                         update="outPnlMesa pnlMesasRecinto resumenRecintos tblRecintos"
+                                         process="outPnlMesa @this"
+                                         oncomplete="if (!args.validationFailed) PF('dlgMesa').hide()">
+                            <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
+                                       message="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.confirmacion.guardar'] : msg['recintos.mesas.confirmacion.actualizar']}"
+                                       icon="pi pi-question-circle"/>
+                        </p:commandButton>
+                    </div>
+                </f:facet>
             </p:dialog>
 
         </h:form>

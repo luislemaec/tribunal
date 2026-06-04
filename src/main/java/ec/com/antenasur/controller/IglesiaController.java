@@ -2,6 +2,7 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -133,6 +134,9 @@ public class IglesiaController implements Serializable {
     @Getter
     private boolean tieneRuc = true;
 
+    @Getter
+    private boolean restringidoAIglesia;
+
     /**
      * Los botones "Sí, tiene RUC" / "No tiene RUC" solo se habilitan cuando
      * el campo igl_documento aún está vacío: iglesia nueva o iglesia existente
@@ -162,7 +166,12 @@ public class IglesiaController implements Serializable {
                 provincias = Collections.emptyList();
             }
 
-            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+            restringidoAIglesia = esUsuarioIglesiaAdmin();
+            if (restringidoAIglesia) {
+                cargarIglesiaAsignada();
+            } else {
+                listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+            }
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
             puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
@@ -182,6 +191,10 @@ public class IglesiaController implements Serializable {
      * limpia cantón/parroquia y filtra la tabla por la provincia seleccionada.
      */
     public void obtieneCantonesFiltro() {
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+            return;
+        }
         cantonesFiltro = null;
         cantonSeleccionado = new Geograp();
         parroquias = null;
@@ -202,6 +215,10 @@ public class IglesiaController implements Serializable {
 
     /** Filtro: cuando cambia el cantón carga parroquias y filtra la tabla. */
     public void obtieneParroquias() {
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+            return;
+        }
         if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
             parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
@@ -217,6 +234,10 @@ public class IglesiaController implements Serializable {
     }
 
     public void obtieneIglesiasPorParroquia() {
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+            return;
+        }
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
             listaIglesias = iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
@@ -312,6 +333,10 @@ public class IglesiaController implements Serializable {
     // â”€â”€ Acciones de la tabla â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void nuevaIglesia() {
+        if (restringidoAIglesia) {
+            rechazarConMensaje("El usuario IglesiaAdmin solo puede gestionar la iglesia asignada.");
+            return;
+        }
         iglesiaSeleccionado = new IglesiaDTO();
         provinciaDialogoId = null;
         cantonesDialogo = null;
@@ -331,6 +356,10 @@ public class IglesiaController implements Serializable {
     public void editarIglesiaFila() {
         if (iglesiaSeleccionado == null) {
             log.warn("editarIglesiaFila: iglesiaSeleccionado es null — verifique que el botón use 'action' y no 'actionListener'");
+            return;
+        }
+        if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
+            rechazarConMensaje("No tiene permisos para gestionar esta iglesia.");
             return;
         }
         esNuevoRegistro = false;
@@ -372,6 +401,11 @@ public class IglesiaController implements Serializable {
     /** Eliminación desde la columna Acciones — iglesiaSeleccionado ya viene seteado via f:setPropertyActionListener. */
     public void eliminarIglesiaFila() {
         if (iglesiaSeleccionado == null) return;
+        if (restringidoAIglesia) {
+            JsfUtil.addErrorMessage("El usuario IglesiaAdmin no puede eliminar iglesias.");
+            iglesiaSeleccionado = null;
+            return;
+        }
         if (!cronogramaService.permiteRegistroIglesias()) {
             JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             iglesiaSeleccionado = null;
@@ -402,6 +436,10 @@ public class IglesiaController implements Serializable {
     }
 
     public void eliminarIglesiaSeleccionadas() {
+        if (restringidoAIglesia) {
+            JsfUtil.addErrorMessage("El usuario IglesiaAdmin no puede eliminar iglesias.");
+            return;
+        }
         if (!cronogramaService.permiteRegistroIglesias()) {
             JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             return;
@@ -432,6 +470,10 @@ public class IglesiaController implements Serializable {
         }
         IglesiaDTO encontrada = iglesiaService.buscarDTOPorDocumento(iglesiaSeleccionado.getDocumento());
         if (encontrada != null) {
+            if (!esIglesiaPermitida(encontrada.getId())) {
+                rechazarConMensaje("No tiene permisos para gestionar esta iglesia.");
+                return;
+            }
             iglesiaSeleccionado = encontrada;
             cargarParroquiasParaDialogo(encontrada.getUbicacionId());
             esNuevoRegistro = false;
@@ -448,6 +490,10 @@ public class IglesiaController implements Serializable {
             }
             if (iglesiaSeleccionado == null) {
                 rechazarConMensaje("Complete los datos requeridos.");
+                return;
+            }
+            if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
+                rechazarConMensaje("No tiene permisos para guardar esta iglesia.");
                 return;
             }
             if (iglesiaSeleccionado.getNombre() == null || iglesiaSeleccionado.getNombre().trim().isEmpty()) {
@@ -524,11 +570,19 @@ public class IglesiaController implements Serializable {
         cantonDialogoId = null;
         parroquiasDialogo = null;
         refrescarLista();
-        PrimeFaces.current().ajax().update("frmIglesias", "frmFiltros", "msgs");
+        if (restringidoAIglesia) {
+            PrimeFaces.current().ajax().update("frmIglesias", "msgs");
+        } else {
+            PrimeFaces.current().ajax().update("frmIglesias", "frmFiltros", "msgs");
+        }
     }
 
     private void refrescarLista() {
-        listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+        } else {
+            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+        }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
         if (faseVigente != null) {
@@ -560,6 +614,10 @@ public class IglesiaController implements Serializable {
     public void cargaArchivosListaMiembros() {
         try {
             if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+                if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
+                    JsfUtil.addErrorMessage("No tiene permisos para consultar documentos de esta iglesia.");
+                    return;
+                }
                 documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(iglesiaSeleccionado.getId(), Constantes.LISTA_MIEMBROS);
             }
         } catch (Exception e) {
@@ -605,5 +663,54 @@ public class IglesiaController implements Serializable {
             log.error("Error al exportar Excel de iglesias", e);
             JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");
         }
+    }
+
+    private boolean esUsuarioIglesiaAdmin() {
+        if (loginBean == null || loginBean.getRoles() == null) {
+            return false;
+        }
+        String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
+        String rolIglesia = (prefijo == null ? "" : prefijo) + Constantes.getRolIglesiaAdmin();
+        for (String rol : loginBean.getRoles()) {
+            if (rolIglesia.equals(rol)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void cargarIglesiaAsignada() {
+        listaIglesiasSeleccionadas = null;
+        listaIglesiasFiltrada = null;
+        listaIglesias = new ArrayList<>();
+        Integer iglesiaId = getIglesiaAsignadaId();
+        if (iglesiaId == null) {
+            JsfUtil.addWarningMessage("El usuario IglesiaAdmin no tiene una iglesia asignada.");
+            return;
+        }
+        IglesiaDTO iglesia = iglesiaService.obtenerDTOConFlagDocumentos(iglesiaId, Constantes.LISTA_MIEMBROS);
+        if (iglesia != null) {
+            listaIglesias.add(iglesia);
+        }
+    }
+
+    private boolean esIglesiaPermitida(Integer iglesiaId) {
+        if (!restringidoAIglesia) {
+            return true;
+        }
+        Integer iglesiaAsignadaId = getIglesiaAsignadaId();
+        return iglesiaAsignadaId != null && iglesiaAsignadaId.equals(iglesiaId);
+    }
+
+    private Integer getIglesiaAsignadaId() {
+        return loginBean != null && loginBean.getUsuario() != null ? loginBean.getUsuario().getIglesiaId() : null;
+    }
+
+    public String getNombreIglesiaAsignada() {
+        if (loginBean != null && loginBean.getUsuario() != null
+                && loginBean.getUsuario().getIglesiaNombre() != null) {
+            return loginBean.getUsuario().getIglesiaNombre();
+        }
+        return listaIglesias != null && !listaIglesias.isEmpty() ? listaIglesias.get(0).getNombre() : "";
     }
 }

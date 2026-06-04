@@ -196,6 +196,53 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         return null;
     }
 
+    public List<Integer> obtieneIglesiasEnPadronPorUbicacionYProceso(List<Integer> idParroquias, Integer procesoId) {
+        if (idParroquias == null || idParroquias.isEmpty() || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        try {
+            String sql = "SELECT DISTINCT i.id FROM Padron p"
+                    + " JOIN p.iglesiaPersona ip"
+                    + " JOIN ip.iglesia i"
+                    + " JOIN i.ubicacion ub"
+                    + " JOIN p.proceso pro"
+                    + " WHERE ub.id IN :idParroquias"
+                    + " AND pro.id = :procesoId"
+                    + " AND " + ACTIVOS
+                    + " ORDER BY i.id";
+            TypedQuery<Integer> query = super.getEntityManager().createQuery(sql, Integer.class);
+            query.setParameter("idParroquias", idParroquias);
+            query.setParameter("procesoId", procesoId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public boolean existeIglesiaEnPadronProceso(Integer iglesiaId, Integer procesoId) {
+        if (iglesiaId == null || procesoId == null) {
+            return false;
+        }
+        try {
+            String sql = "SELECT COUNT(p.id) FROM Padron p"
+                    + " JOIN p.iglesiaPersona ip"
+                    + " JOIN ip.iglesia i"
+                    + " JOIN p.proceso pro"
+                    + " WHERE i.id = :iglesiaId"
+                    + " AND pro.id = :procesoId"
+                    + " AND " + ACTIVOS;
+            TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+            query.setParameter("iglesiaId", iglesiaId);
+            query.setParameter("procesoId", procesoId);
+            Long total = query.getSingleResult();
+            return total != null && total > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public List<Padron> getPadronPorMesas(List<Mesa> listaMesas) {
         try {
             String sql = HQL

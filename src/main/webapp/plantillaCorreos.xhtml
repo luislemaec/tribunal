@@ -4,104 +4,212 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:pe="http://primefaces.org/ui/extensions"
-                template="/WEB-INF/template.xhtml"
-                xmlns:c="jakarta.tags.core">
+                template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.plantillaCorreos.title']}</ui:define>
+    <ui:define name="title">#{msg['plantillaCorreos.titulo']}</ui:define>
 
     <ui:define name="viewname">
-        <li>#{msg['form.usuarios.crumb.security']}</li>
+        <li>#{msg['plantillaCorreos.crumb.configuracion']}</li>
         <li>/</li>
-        <li><p:link outcome="/plantillaCorreos">#{msg['form.plantillaCorreos.title']}</p:link></li>
+        <li><p:link outcome="/plantillaCorreos">#{msg['plantillaCorreos.titulo']}</p:link></li>
     </ui:define>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
-        <div class="grid mb-2">
+        <div class="grid mb-3">
             <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f97316,#ea580c);flex-shrink:0">
-                        <i class="pi pi-envelope text-white" style="font-size:1.5rem"></i>
+                <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="flex align-items-center gap-3">
+                        <div class="flex justify-content-center align-items-center border-round-lg"
+                             style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0f766e,#2563eb);flex-shrink:0">
+                            <i class="pi pi-envelope text-white" style="font-size:1.5rem"></i>
+                        </div>
+                        <div>
+                            <h2 class="m-0 text-900 font-bold text-2xl">#{msg['plantillaCorreos.titulo']}</h2>
+                            <p class="text-500 mt-1 mb-0 text-sm">#{msg['plantillaCorreos.subtitulo']}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.plantillaCorreos.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Edición de plantillas de correo electrónico del sistema</p>
-                    </div>
+                    <p:tag value="#{empty plantillaCorreoController.plantillasCorreos ? 0 : plantillaCorreoController.plantillasCorreos.size()} #{msg['plantillaCorreos.tag.total']}"
+                           icon="pi pi-list" severity="info"/>
                 </div>
             </div>
         </div>
 
+        <p:blockUI block="frmPlantillaCorreo" trigger="frmPlantillaCorreo">
+            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#2563eb"/>
+            <div style="margin:.5rem 0 0;color:#fff">#{msg['plantillaCorreos.processing']}</div>
+        </p:blockUI>
+
         <h:form id="frmPlantillaCorreo">
 
-            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
-            <!-- SELECTOR DE PLANTILLA -->
             <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">Seleccione la plantilla de correo a editar</span>
+                <div class="flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-search text-500"></i>
+                        <span class="font-semibold text-700">#{msg['plantillaCorreos.seccion.busqueda']}</span>
+                    </div>
+                    <p:commandButton value="#{msg['plantillaCorreos.boton.nuevo']}" icon="pi pi-plus"
+                                     styleClass="ui-button-outlined"
+                                     actionListener="#{plantillaCorreoController.cancelarEdicion}"
+                                     process="@this" update=":frmPlantillaCorreo:pnlPlantilla :frmPlantillaCorreo:plantilla"/>
                 </div>
+
                 <div class="formgrid grid">
-                    <div class="field col-12 md:col-8">
-                        <label for="plantilla" class="font-medium text-700 text-sm">Plantilla de correo</label>
+                    <div class="field col-12 md:col-8 lg:col-6">
+                        <label for="plantilla" class="font-medium text-700 text-sm">#{msg['plantillaCorreos.label.selector']}</label>
                         <p:selectOneMenu id="plantilla"
                                          value="#{plantillaCorreoController.plantillaCorreoSeleccionado.id}"
-                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
-                            <f:selectItem itemLabel="— Seleccione una plantilla —" itemValue=""/>
+                                         filter="true" filterMatchMode="contains" styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['plantillaCorreos.placeholder.selector']}" itemValue=""/>
                             <f:selectItems value="#{plantillaCorreoController.plantillasCorreos}" var="plantilla"
                                            itemLabel="#{plantilla.asunto}" itemValue="#{plantilla.id}"/>
                             <p:ajax event="change"
-                                    listener="#{plantillaCorreoController.cargarPlantillaCorreoSeleccionado()}"
-                                    process="@this" update="frmPlantillaCorreo"/>
+                                    listener="#{plantillaCorreoController.cargarPlantillaCorreoSeleccionado}"
+                                    process="@this" update=":frmPlantillaCorreo:pnlPlantilla"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
             </div>
 
-            <!-- FORMULARIO DE EDICION (solo cuando hay plantilla seleccionada) -->
-            <ui:fragment rendered="#{plantillaCorreoController.plantillaCorreoSeleccionado.id ne null}">
-                <div class="surface-card shadow-1 border-round-lg p-3">
-                    <p:outputPanel id="pnlPlantilla" class="ui-fluid">
-
-                        <div class="formgrid grid">
-
-                            <div class="field col-12">
-                                <label for="asunto" class="font-medium text-700 text-sm">
-                                    Asunto <span class="text-red-500">*</span>
-                                </label>
-                                <p:inputText id="asunto" styleClass="w-full"
-                                             value="#{plantillaCorreoController.plantillaCorreoSeleccionado.asunto}"
-                                             required="true"
-                                             onkeyup="this.value = this.value.toUpperCase()"/>
+            <div class="grid">
+                <div class="col-12 xl:col-5">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                            <div>
+                                <div class="font-semibold text-700">#{msg['plantillaCorreos.seccion.listado']}</div>
+                                <div class="text-sm text-500 mt-1">#{msg['plantillaCorreos.ayuda.listado']}</div>
                             </div>
-
-                            <div class="field col-12">
-                                <label for="editor" class="font-medium text-700 text-sm">Mensaje</label>
-                                <p:textEditor id="editor" widgetVar="editor" height="300"
-                                              style="width:100%"
-                                              value="#{plantillaCorreoController.plantillaCorreoSeleccionado.mensaje}"/>
-                            </div>
-
+                            <p:commandButton value="#{plantillaCorreoController.mensajeBotonEliminar}"
+                                             icon="pi pi-trash"
+                                             styleClass="ui-button-outlined ui-button-danger"
+                                             actionListener="#{plantillaCorreoController.eliminarRolesSeleccionados}"
+                                             process="tblPlantillaCorreo @this"
+                                             update="@form"
+                                             disabled="#{not plantillaCorreoController.existeRolesSeleccionados()}">
+                                <p:confirm header="#{msg['plantillaCorreos.confirmacion.titulo']}"
+                                           message="#{msg['plantillaCorreos.confirmacion.eliminar']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
                         </div>
 
-                        <div class="flex justify-content-end flex-wrap gap-2 mt-3">
-                            <p:commandButton value="Cancelar" icon="pi pi-times"
-                                             styleClass="ui-button-outlined ui-button-secondary"
-                                             type="button"
-                                             onclick="document.getElementById('frmPlantillaCorreo:plantilla').value = ''; PF('editor').setHTML('')"/>
-                            <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                             styleClass="ui-button-success"
-                                             actionListener="#{plantillaCorreoController.actualizarRegistro}"
-                                             update="pnlPlantilla msgs"
-                                             process="pnlPlantilla @this"
-                                             oncomplete="if (!args.validationFailed) PrimeFaces.info('Plantilla actualizada correctamente')"/>
-                        </div>
+                        <p:dataTable id="tblPlantillaCorreo" widgetVar="wdPlantillasCorreo"
+                                     value="#{plantillaCorreoController.plantillasCorreos}" var="plantilla"
+                                     selection="#{plantillaCorreoController.plantillasCorreoSeleccionados}"
+                                     rowKey="#{plantilla.id}"
+                                     paginator="true" rows="8" rowsPerPageTemplate="8,15,25"
+                                     paginatorPosition="bottom"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="#{msg['plantillaCorreos.paginador.reporte']}"
+                                     emptyMessage="#{msg['plantillaCorreos.empty.listado']}"
+                                     reflow="true" showGridlines="true"
+                                     styleClass="ui-datatable-striped ui-datatable-sm">
 
-                    </p:outputPanel>
+                            <p:ajax event="rowSelectCheckbox" update="@form"/>
+                            <p:ajax event="rowUnselectCheckbox" update="@form"/>
+                            <p:ajax event="toggleSelect" update="@form"/>
+
+                            <p:column selectionMode="multiple" style="width:3rem;text-align:center"/>
+
+                            <p:column headerText="#{msg['plantillaCorreos.tabla.codigo']}"
+                                      sortBy="#{plantilla.id}" style="width:5rem">
+                                <span class="text-sm text-500">#{plantilla.id}</span>
+                            </p:column>
+
+                            <p:column headerText="#{msg['plantillaCorreos.tabla.asunto']}"
+                                      sortBy="#{plantilla.asunto}" filterBy="#{plantilla.asunto}"
+                                      filterMatchMode="contains">
+                                <div class="font-medium text-900 text-sm">#{plantilla.asunto}</div>
+                                <div class="text-500 text-xs mt-1">#{empty plantilla.descripcion ? msg['plantillaCorreos.sin.descripcion'] : plantilla.descripcion}</div>
+                            </p:column>
+
+                            <p:column headerText="#{msg['plantillaCorreos.tabla.acciones']}"
+                                      style="width:5rem;text-align:center" exportable="false">
+                                <p:commandButton icon="pi pi-pencil"
+                                                 title="#{msg['plantillaCorreos.tooltip.editar']}"
+                                                 styleClass="ui-button-text ui-button-sm"
+                                                 process="@this" update=":frmPlantillaCorreo:pnlPlantilla :frmPlantillaCorreo:plantilla">
+                                    <f:setPropertyActionListener target="#{plantillaCorreoController.plantillaCorreoSeleccionado}"
+                                                                 value="#{plantilla}"/>
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
                 </div>
-            </ui:fragment>
+
+                <div class="col-12 xl:col-7">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <p:outputPanel id="pnlPlantilla" styleClass="ui-fluid">
+                            <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <div>
+                                    <div class="font-semibold text-700">#{msg['plantillaCorreos.seccion.formulario']}</div>
+                                    <div class="text-sm text-500 mt-1">
+                                        #{plantillaCorreoController.plantillaCorreoSeleccionado.id eq null ? msg['plantillaCorreos.modo.nuevo'] : msg['plantillaCorreos.modo.edicion']}
+                                    </div>
+                                </div>
+                                <p:tag rendered="#{plantillaCorreoController.plantillaCorreoSeleccionado.id ne null}"
+                                       value="#{msg['plantillaCorreos.tag.editando']} #{plantillaCorreoController.plantillaCorreoSeleccionado.id}"
+                                       icon="pi pi-pencil" severity="warning"/>
+                            </div>
+
+                            <div class="formgrid grid">
+                                <div class="field col-12">
+                                    <label for="asunto" class="font-medium text-700 text-sm">
+                                        #{msg['plantillaCorreos.label.asunto']} <span class="text-red-500">*</span>
+                                    </label>
+                                    <p:inputText id="asunto" styleClass="w-full"
+                                                 value="#{plantillaCorreoController.plantillaCorreoSeleccionado.asunto}"
+                                                 required="true"
+                                                 requiredMessage="#{msg['plantillaCorreos.validacion.asunto.requerido']}"
+                                                 placeholder="#{msg['plantillaCorreos.placeholder.asunto']}"
+                                                 onkeyup="this.value = this.value.toUpperCase()"/>
+                                </div>
+
+                                <div class="field col-12">
+                                    <label for="descripcion" class="font-medium text-700 text-sm">
+                                        #{msg['plantillaCorreos.label.descripcion']}
+                                    </label>
+                                    <p:inputTextarea id="descripcion" rows="3" autoResize="true"
+                                                     maxlength="500" counter="contadorDescripcion"
+                                                     counterTemplate="#{msg['plantillaCorreos.contador.descripcion']}"
+                                                     value="#{plantillaCorreoController.plantillaCorreoSeleccionado.descripcion}"
+                                                     placeholder="#{msg['plantillaCorreos.placeholder.descripcion']}"/>
+                                    <h:outputText id="contadorDescripcion" styleClass="block text-xs text-500 mt-1"/>
+                                </div>
+
+                                <div class="field col-12">
+                                    <label for="editor" class="font-medium text-700 text-sm">
+                                        #{msg['plantillaCorreos.label.mensaje']} <span class="text-red-500">*</span>
+                                    </label>
+                                    <pe:sunEditor id="editor" widgetVar="editor" height="320px" width="100%"
+                                                  secure="false" required="true" mode="classic" locale="es"
+                                                  requiredMessage="#{msg['plantillaCorreos.validacion.mensaje.requerido']}"
+                                                  value="#{plantillaCorreoController.plantillaCorreoSeleccionado.mensaje}"/>
+                                    <small class="block text-500 mt-2">#{msg['plantillaCorreos.ayuda.editor']}</small>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-content-end flex-wrap gap-2 mt-3">
+                                <p:commandButton value="#{msg['plantillaCorreos.boton.cancelar']}" icon="pi pi-times"
+                                                 styleClass="ui-button-outlined ui-button-secondary"
+                                                 style="width:auto;flex:0 0 auto"
+                                                 actionListener="#{plantillaCorreoController.cancelarEdicion}"
+                                                 process="@this" update=":frmPlantillaCorreo:pnlPlantilla :frmPlantillaCorreo:plantilla"/>
+                                <p:commandButton value="#{plantillaCorreoController.plantillaCorreoSeleccionado.id eq null ? msg['plantillaCorreos.boton.guardar'] : msg['plantillaCorreos.boton.actualizar']}"
+                                                 icon="pi pi-save"
+                                                 styleClass="ui-button-success"
+                                                 style="width:auto;flex:0 0 auto"
+                                                 actionListener="#{plantillaCorreoController.actualizarRegistro}"
+                                                 update="@form"
+                                                 process="pnlPlantilla @this">
+                                    <p:confirm header="#{msg['plantillaCorreos.confirmacion.titulo']}"
+                                               message="#{plantillaCorreoController.plantillaCorreoSeleccionado.id eq null ? msg['plantillaCorreos.confirmacion.guardar'] : msg['plantillaCorreos.confirmacion.actualizar']}"
+                                               icon="pi pi-question-circle"/>
+                                </p:commandButton>
+                            </div>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </div>
 
         </h:form>
 

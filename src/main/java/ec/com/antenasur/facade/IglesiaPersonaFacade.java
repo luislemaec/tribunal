@@ -7,7 +7,9 @@ package ec.com.antenasur.facade;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.IglesiaPersona;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.NoResultException;
@@ -107,6 +109,36 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
             e.printStackTrace();
             return java.util.Collections.emptyList();
         }
+    }
+
+    public Map<Integer, Integer> contarPersonasHabilitadasPadronPorIglesias(List<Integer> iglesiaIds) {
+        Map<Integer, Integer> resultado = new HashMap<>();
+        if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+            return resultado;
+        }
+        try {
+            String sql = "SELECT i.id, COUNT(ip.id)"
+                    + " FROM IglesiaPersona ip"
+                    + " JOIN ip.iglesia i"
+                    + " JOIN ip.persona p"
+                    + " WHERE i.id IN :iglesiaIds"
+                    + "   AND ip.estado = TRUE"
+                    + "   AND p.estado = TRUE"
+                    + "   AND ip.habilitadoPadron = TRUE"
+                    + " GROUP BY i.id";
+            List<Object[]> filas = super.getEntityManager()
+                    .createQuery(sql, Object[].class)
+                    .setParameter("iglesiaIds", iglesiaIds)
+                    .getResultList();
+            for (Object[] fila : filas) {
+                Integer iglesiaId = (Integer) fila[0];
+                Number total = (Number) fila[1];
+                resultado.put(iglesiaId, total != null ? total.intValue() : 0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return resultado;
     }
 
 

@@ -27,8 +27,8 @@ public class PlantillaCorreoController implements Serializable {
 
     private static final String FORMULARIO = "frmPlantillaCorreo";
     private static final String TABLA = "tblPlantillaCorreo";
-    private static final String MENSAJE_REGISTRA_OK = "PlantillaCorreo registrado";
-    private static final String MENSAJE_ACTUALIZA_OK = "PlantillaCorreo actualizado";
+    private static final String MENSAJE_REGISTRA_OK = "plantillaCorreos.mensaje.registrado";
+    private static final String MENSAJE_ACTUALIZA_OK = "plantillaCorreos.mensaje.actualizado";
 
     @Inject
     private LoginBean loginBean;
@@ -72,9 +72,11 @@ public class PlantillaCorreoController implements Serializable {
     public String getMensajeBotonEliminar() {
         if (existeRolesSeleccionados()) {
             int size = this.plantillasCorreoSeleccionados.size();
-            return size > 1 ? size + " Plantillas seleccionadas" : "1 plantilla seleccionada";
+            return size > 1
+                    ? JsfUtil.getMessage("plantillaCorreos.boton.eliminar.seleccionadas", size)
+                    : JsfUtil.getMessage("plantillaCorreos.boton.eliminar.una");
         }
-        return "Eliminar";
+        return JsfUtil.getMessage("plantillaCorreos.boton.eliminar");
     }
 
     public void eliminarRolesSeleccionados() {
@@ -87,9 +89,9 @@ public class PlantillaCorreoController implements Serializable {
             }
         }
         plantillasCorreos = plantillaCorreoService.listarDTOs();
-        JsfUtil.addInfoMessage(eliminados + " Plantillas eliminadas");
+        JsfUtil.addInfoMessageFromBundle("plantillaCorreos.mensaje.eliminadas", eliminados);
         this.plantillasCorreoSeleccionados = null;
-        PrimeFaces.current().ajax().update(FORMULARIO, "msgs");
+        PrimeFaces.current().ajax().update(FORMULARIO, JsfUtil.GROWL_MESSAGES);
     }
 
     public void cargarPlantillaCorreoSeleccionado() {
@@ -103,9 +105,13 @@ public class PlantillaCorreoController implements Serializable {
             PlantillaCorreoDTO buscada = plantillaCorreoService.buscarDTOPorAsunto(plantillaCorreoSeleccionado.getAsunto());
             if (buscada != null) {
                 plantillaCorreoSeleccionado = buscada;
-                JsfUtil.addInfoMessage("PlantillaCorreo " + buscada.getAsunto() + " ya se encuentra registrado ");
+                JsfUtil.addInfoMessageFromBundle("plantillaCorreos.mensaje.duplicado", buscada.getAsunto());
             }
         }
+    }
+
+    public void cancelarEdicion() {
+        plantillaCorreoSeleccionado = new PlantillaCorreoDTO();
     }
 
     public void actualizarRegistro() {
@@ -116,13 +122,17 @@ public class PlantillaCorreoController implements Serializable {
             boolean esEdicion = plantillaCorreoSeleccionado.getId() != null;
             PlantillaCorreoDTO persistida = plantillaCorreoService.guardarDesdeDTO(plantillaCorreoSeleccionado);
             if (persistida != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
-                PrimeFaces.current().ajax().update("msgs", FORMULARIO);
+                JsfUtil.addSuccessMessageFromBundle(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
+                plantillasCorreos = plantillaCorreoService.listarDTOs();
+                plantillaCorreoSeleccionado = persistida;
+                PrimeFaces.current().ajax().update(FORMULARIO, JsfUtil.GROWL_MESSAGES);
             }
         } catch (Exception e) {
             log.error("ERROR EN GUARDAR PLANTILLA", e);
+            JsfUtil.addErrorMessageFromBundle("plantillaCorreos.mensaje.error");
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
         }
-        PrimeFaces.current().executeScript("PF('dlgRol').hide()");
+        PrimeFaces.current().executeScript("if (PF('dlgRol')) { PF('dlgRol').hide(); }");
         PrimeFaces.current().ajax().update(FORMULARIO, FORMULARIO + ":" + TABLA);
     }
 }

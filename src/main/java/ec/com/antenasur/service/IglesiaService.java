@@ -87,6 +87,15 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return IglesiaDTO.fromEntity(iglesiaFacade.find(id));
     }
 
+    public IglesiaDTO obtenerDTOConFlagDocumentos(Integer id, Integer tipoDocumentoId) {
+        IglesiaDTO dto = obtenerDTOPorId(id);
+        if (dto == null || id == null || tipoDocumentoId == null) {
+            return dto;
+        }
+        dto.setTieneDocumentos(documentoFacade.getEntidadesIdsConDocumentos(tipoDocumentoId).contains(id));
+        return dto;
+    }
+
     public List<IglesiaDTO> listarDTOs() {
         return mapearLista(iglesiaFacade.findAll());
     }

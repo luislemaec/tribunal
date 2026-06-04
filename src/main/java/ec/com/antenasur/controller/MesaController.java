@@ -2,9 +2,12 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -16,7 +19,6 @@ import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.RecintoDTO;
-import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Mesa;
@@ -39,10 +41,10 @@ public class MesaController implements Serializable {
 
     private static final String FORMULARIO = "frmMesas";
     private static final String TABLA = "tblMesas";
-    private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
-    private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
-    private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
+    private static final String MENSAJE_REGISTRA_OK = "mesas.mensaje.guardar.exito";
+    private static final String MENSAJE_ACTUALIZA_OK = "mesas.mensaje.actualizar.exito";
+    private static final String MENSAJE_ELIMINA_OK = "mesas.mensaje.eliminar.exito";
+    public static final String MENSAJE_CONFORMACION_ELIMINAR = "mesas.confirmacion.eliminar";
 
     @Inject
     private LoginBean loginBean;
@@ -95,6 +97,9 @@ public class MesaController implements Serializable {
     @Getter
     private float porcentajeMesasEscrutado;
 
+    @Getter
+    private Map<Integer, Long> totalMesasPorRecinto = new HashMap<>();
+
     @PostConstruct
     private void init() {
         try {
@@ -105,25 +110,53 @@ public class MesaController implements Serializable {
             this.recintoSeleccionado = new RecintoDTO();
             this.listaMesasSeleccionados = new ArrayList<>();
             this.cantones = geograpBean.getByFatherId(7);
-            this.listaMesas = mesaService.listarDTOsConFlagDocumentos(Constantes.ACTA_ESCRUTINIO);
-            this.mesasEscrutadas = mesaService.listarDTOsEscrutadas(EstadoTarea.COMPLETADO);
-            this.porcentajeMesasEscrutado = mesaService.calcularPorcentajeEscrutado();
+            this.listaMesas = mesaService.listarDTOs();
             this.listaRecintos = recintoService.listarDTOs();
+            actualizarTotalesPorRecinto();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
     }
 
     public void inicializaMesaSeleccionado() {
-        if (listaMesas != null) {
-            listaMesas.clear();
-        }
         this.mesaSeleccionado = new MesaDTO();
         this.mesaSeleccionado.setRecinto(new RecintoDTO());
     }
 
     public void nuevaMesa() {
         inicializaMesaSeleccionado();
+    }
+
+    public void nuevaMesaParaRecinto() {
+        if (recintoSeleccionado == null || recintoSeleccionado.getId() == null) {
+            JsfUtil.addWarningMessageFromBundle("recintos.mesas.mensaje.seleccionar.recinto");
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+            return;
+        }
+        this.mesaSeleccionado = new MesaDTO();
+        this.mesaSeleccionado.setRecinto(recintoSeleccionado);
+        this.mesaSeleccionado.setUbicacionId(recintoSeleccionado.getUbicacionId());
+        this.cantonSeleccionado = new Geograp();
+        this.cantonSeleccionado.setId(recintoSeleccionado.getCantonId());
+        this.parroquiaSeleccionado = new Geograp();
+        this.parroquiaSeleccionado.setId(recintoSeleccionado.getUbicacionId());
+    }
+
+    public void seleccionarRecinto(RecintoDTO recinto) {
+        this.recintoSeleccionado = recinto;
+        recargarListaMesasActual();
+        if (listaMesas == null || listaMesas.isEmpty()) {
+            JsfUtil.addInfoMessageFromBundle("recintos.mesas.mensaje.sin.registros");
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+        }
+    }
+
+    public void liberarRecintoSeleccionado() {
+        this.recintoSeleccionado = new RecintoDTO();
+        this.mesaSeleccionado = null;
+        this.listaMesas = new ArrayList<>();
+        this.listaMesasSeleccionados = new ArrayList<>();
     }
 
     public boolean existeMesasSeleccionados() {
@@ -133,17 +166,21 @@ public class MesaController implements Serializable {
     public String getMensajeBotonEliminar() {
         if (existeMesasSeleccionados()) {
             int size = this.listaMesasSeleccionados.size();
-            return size > 1 ? size + " Mesas seleccionadas" : "1 mesa seleccionada";
+            return size > 1
+                    ? JsfUtil.getMessage("mesas.boton.eliminar.seleccionadas", size)
+                    : JsfUtil.getMessage("mesas.boton.eliminar.una");
         }
-        return "Eliminar";
+        return JsfUtil.getMessage("mesas.boton.eliminar");
     }
 
     public void eliminarMesaSeleccionado() {
         if (mesaSeleccionado != null && mesaSeleccionado.getId() != null) {
             mesaService.eliminarPorId(mesaSeleccionado.getId());
         }
-        JsfUtil.addInfoMessage(MENSAJE_ELIMINA_OK);
-        PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA, "msgs");
+        recargarListaMesasActual();
+        actualizarTotalesPorRecinto();
+        JsfUtil.addInfoMessageFromBundle(MENSAJE_ELIMINA_OK);
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void obtieneParroquias() {
@@ -165,13 +202,13 @@ public class MesaController implements Serializable {
         if (parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpBean.getById(parroquiaSeleccionado.getId());
             List<Geograp> parroquiasTmp = new ArrayList<>();
-            parroquiasTmp.add(cantonSeleccionado);
+            parroquiasTmp.add(parroquiaSeleccionado);
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquiasTmp);
             listaMesas = mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintos));
             if (listaMesas == null || listaMesas.isEmpty()) {
-                JsfUtil.addWarningMessage("No existe registro de mesas en " + parroquiaSeleccionado.getName());
+                JsfUtil.addWarningMessageFromBundle("mesas.mensaje.sin.registros.filtro", parroquiaSeleccionado.getName());
             } else {
-                JsfUtil.addInfoMessage(listaMesas.size() + " mesas registradas");
+                JsfUtil.addInfoMessageFromBundle("mesas.mensaje.registros.encontrados", listaMesas.size());
             }
         } else {
             mesaSeleccionado = new MesaDTO();
@@ -187,16 +224,25 @@ public class MesaController implements Serializable {
             boolean esEdicion = mesaSeleccionado.getId() != null;
             MesaDTO persistido = mesaService.guardarDesdeDTO(mesaSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
+                JsfUtil.addSuccessMessageFromBundle(esEdicion ? MENSAJE_ACTUALIZA_OK : MENSAJE_REGISTRA_OK);
                 mesaSeleccionado = null;
-                listaMesas = mesaService.listarDTOs();
-                PrimeFaces.current().ajax().update("msgs", FORMULARIO);
+                recargarListaMesasActual();
+                actualizarTotalesPorRecinto();
+                PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+            } else {
+                JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
+                FacesContext.getCurrentInstance().validationFailed();
+                PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+                return;
             }
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR MESA", e);
+            JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
         }
         PrimeFaces.current().executeScript("PF('dlgMesa').hide()");
-        PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA);
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void eliminarMesasSeleccionados() {
@@ -208,8 +254,11 @@ public class MesaController implements Serializable {
                 }
             }
         }
-        JsfUtil.addInfoMessage(eliminados + " " + MENSAJE_ELIMINA_OK);
-        PrimeFaces.current().ajax().update(FORMULARIO + ":" + TABLA, "msgs");
+        listaMesasSeleccionados = new ArrayList<>();
+        recargarListaMesasActual();
+        actualizarTotalesPorRecinto();
+        JsfUtil.addInfoMessageFromBundle("mesas.mensaje.eliminadas", eliminados);
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void cargaDatosMesaSeleccionado() {
@@ -233,13 +282,36 @@ public class MesaController implements Serializable {
             listaRecintosTmp.add(recintoSeleccionado);
             listaMesas = mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintosTmp));
             if (listaMesas == null || listaMesas.isEmpty()) {
-                JsfUtil.addWarningMessage("No existe registro de mesas en " + recintoSeleccionado.getNombre());
+                JsfUtil.addWarningMessageFromBundle("mesas.mensaje.sin.registros.filtro", recintoSeleccionado.getNombre());
             } else {
-                JsfUtil.addInfoMessage(listaMesas.size() + " mesas registradas");
+                JsfUtil.addInfoMessageFromBundle("mesas.mensaje.registros.encontrados", listaMesas.size());
             }
         } else {
             listaMesas.clear();
         }
+    }
+
+    public int getTotalMesasRegistradas() {
+        return totalMesasPorRecinto.values().stream()
+                .mapToInt(Long::intValue)
+                .sum();
+    }
+
+    public int getTotalMesasRecintoSeleccionado() {
+        if (recintoSeleccionado == null || recintoSeleccionado.getId() == null) {
+            return 0;
+        }
+        if (listaMesas == null) {
+            return 0;
+        }
+        return listaMesas.size();
+    }
+
+    public long getTotalMesasPorRecinto(Integer recintoId) {
+        if (recintoId == null) {
+            return 0L;
+        }
+        return totalMesasPorRecinto.getOrDefault(recintoId, 0L);
     }
 
     public void cargaActasE() {
@@ -253,9 +325,9 @@ public class MesaController implements Serializable {
     }
 
     /**
-     * Convierte DTOs a entidades stub (solo con id) para pasarlos al método
+     * Convierte DTOs a entidades stub (solo con id) para pasarlos al metodo
      * {@code listarDTOsPorRecintos} del service, que necesita entidades como
-     * parámetro de query JPQL ({@code WHERE recinto IN :recintos}).
+     * parametro de query JPQL ({@code WHERE recinto IN :recintos}).
      */
     private List<ec.com.antenasur.model.tec.Recinto> toRecintoEntities(List<RecintoDTO> dtos) {
         List<ec.com.antenasur.model.tec.Recinto> entidades = new ArrayList<>();
@@ -268,5 +340,28 @@ public class MesaController implements Serializable {
             entidades.add(r);
         }
         return entidades;
+    }
+
+    private void recargarListaMesasActual() {
+        if (recintoSeleccionado != null && recintoSeleccionado.getId() != null) {
+            List<RecintoDTO> listaRecintosTmp = new ArrayList<>();
+            listaRecintosTmp.add(recintoSeleccionado);
+            listaMesas = mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintosTmp));
+            return;
+        }
+        listaMesas = mesaService.listarDTOs();
+    }
+
+    private void actualizarTotalesPorRecinto() {
+        totalMesasPorRecinto = new HashMap<>();
+        List<MesaDTO> mesas = mesaService.listarDTOs();
+        if (mesas == null) {
+            return;
+        }
+        for (MesaDTO mesa : mesas) {
+            if (mesa.getRecinto() != null && mesa.getRecinto().getId() != null) {
+                totalMesasPorRecinto.merge(mesa.getRecinto().getId(), 1L, Long::sum);
+            }
+        }
     }
 }

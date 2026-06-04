@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -13,8 +14,10 @@ import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.RecintoDTO;
 import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.service.tec.MesaService;
 import ec.com.antenasur.service.tec.RecintoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -27,12 +30,19 @@ import lombok.extern.slf4j.Slf4j;
 public class RecintoController implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Integer OPCION_TODOS = 0;
 
     @Inject
     private LoginBean loginBean;
 
     @Inject
     private RecintoService recintoService;
+
+    @Inject
+    private MesaService mesaService;
+
+    @Inject
+    private MesaController mesaController;
 
     @Inject
     private GeograpBean geograpBean;
@@ -59,7 +69,8 @@ public class RecintoController implements Serializable {
             cantonSeleccionado = parroquiaSeleccionado = new Geograp();
             this.listaRecintosSeleccionados = new ArrayList<>();
             this.cantones = geograpBean.getByFatherId(7);
-            this.listaRecintos = recintoService.listarDTOs();
+            this.parroquias = new ArrayList<>();
+            this.listaRecintos = new ArrayList<>();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
@@ -76,6 +87,17 @@ public class RecintoController implements Serializable {
         inicializaRecintoSeleccionado();
     }
 
+    public void cambiarCanton() {
+        liberarContextoRecintoMesa();
+        parroquiaSeleccionado = new Geograp();
+        obtieneParroquias();
+    }
+
+    public void cambiarParroquia() {
+        liberarContextoRecintoMesa();
+        obtieneRecintosPorParroquia();
+    }
+
     public boolean existeRecintosSeleccionados() {
         return this.listaRecintosSeleccionados != null && !this.listaRecintosSeleccionados.isEmpty();
     }
@@ -83,25 +105,43 @@ public class RecintoController implements Serializable {
     public String getMensajeBotonEliminar() {
         if (existeRecintosSeleccionados()) {
             int size = this.listaRecintosSeleccionados.size();
-            return size > 1 ? size + " Recintos seleccionadas" : "1 recinto seleccionada";
+            return size > 1
+                    ? JsfUtil.getMessage("recintos.boton.eliminar.seleccionados", size)
+                    : JsfUtil.getMessage("recintos.boton.eliminar.uno");
         }
-        return "Eliminar";
+        return JsfUtil.getMessage("recintos.boton.eliminar");
     }
 
     public void eliminarRecintoSeleccionado() {
         if (recintoSeleccionado != null && recintoSeleccionado.getId() != null) {
+            if (tieneMesasAsociadas(recintoSeleccionado)) {
+                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.eliminar.con.mesas");
+                PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+                return;
+            }
             recintoService.eliminarPorId(recintoSeleccionado.getId());
         }
-        JsfUtil.addInfoMessage(" Registro eliminado");
+        JsfUtil.addInfoMessageFromBundle("recintos.mensaje.eliminar.exito");
         recargarListaRecintosActual();
-        PrimeFaces.current().ajax().update("frmRecintos:tblRecintos", "frmRecintos:msgs");
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void obtieneParroquias() {
+        if (cantonSeleccionado.getId() != null && OPCION_TODOS.equals(cantonSeleccionado.getId())) {
+            parroquias = obtenerTodasParroquias();
+            listaRecintos = recintoService.listarDTOs();
+            JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
+            return;
+        }
         if (cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpBean.getById(cantonSeleccionado.getId());
             parroquias = geograpBean.getByFatherId(cantonSeleccionado.getId());
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquias);
+            if (listaRecintos == null || listaRecintos.isEmpty()) {
+                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros.filtro", cantonSeleccionado.getName());
+            } else {
+                JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
+            }
         } else {
             if (parroquias != null) {
                 parroquias.clear();
@@ -112,15 +152,27 @@ public class RecintoController implements Serializable {
     }
 
     public void obtieneRecintosPorParroquia() {
+        if (parroquiaSeleccionado.getId() != null && OPCION_TODOS.equals(parroquiaSeleccionado.getId())) {
+            List<Geograp> parroquiasFiltro = obtenerParroquiasFiltroActual();
+            listaRecintos = parroquiasFiltro.isEmpty()
+                    ? recintoService.listarDTOs()
+                    : recintoService.listarDTOsPorParroquias(parroquiasFiltro);
+            if (listaRecintos == null || listaRecintos.isEmpty()) {
+                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros");
+            } else {
+                JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
+            }
+            return;
+        }
         if (parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpBean.getById(parroquiaSeleccionado.getId());
             List<Geograp> parroquiasTmp = new ArrayList<>();
             parroquiasTmp.add(parroquiaSeleccionado);
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquiasTmp);
             if (listaRecintos == null || listaRecintos.isEmpty()) {
-                JsfUtil.addWarningMessage("No existe registro de Recintos en " + parroquiaSeleccionado.getName());
+                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros.filtro", parroquiaSeleccionado.getName());
             } else {
-                JsfUtil.addInfoMessage(listaRecintos.size() + " Recintos registrados");
+                JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
             }
         } else {
             recintoSeleccionado = new RecintoDTO();
@@ -136,34 +188,49 @@ public class RecintoController implements Serializable {
             boolean esEdicion = recintoSeleccionado.getId() != null;
             RecintoDTO persistido = recintoService.guardarDesdeDTO(recintoSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "Recinto actualizado" : "Recinto agregado");
+                JsfUtil.addSuccessMessageFromBundle(esEdicion
+                        ? "recintos.mensaje.actualizar.exito"
+                        : "recintos.mensaje.guardar.exito");
                 recintoSeleccionado = null;
                 recargarListaRecintosActual();
             } else {
-                JsfUtil.addErrorMessage("Debe seleccionar la parroquia del recinto");
+                JsfUtil.addErrorMessageFromBundle("recintos.mensaje.parroquia.requerida");
+                FacesContext.getCurrentInstance().validationFailed();
+                PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
                 return;
             }
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR RECINTO", e);
-            JsfUtil.addErrorMessage("No se pudo guardar el recinto");
+            JsfUtil.addErrorMessageFromBundle("recintos.mensaje.error");
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
             return;
         }
         PrimeFaces.current().executeScript("PF('dlgRecinto').hide()");
-        PrimeFaces.current().ajax().update("frmRecintos:msgs", "frmRecintos:tblRecintos");
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void eliminarRecintosSeleccionados() {
         int eliminados = 0;
+        int omitidos = 0;
         if (listaRecintosSeleccionados != null) {
             for (RecintoDTO item : listaRecintosSeleccionados) {
+                if (tieneMesasAsociadas(item)) {
+                    omitidos++;
+                    continue;
+                }
                 if (item.getId() != null && recintoService.eliminarPorId(item.getId()) != null) {
                     eliminados++;
                 }
             }
         }
-        JsfUtil.addInfoMessage(eliminados + " Registros eliminados");
+        listaRecintosSeleccionados = new ArrayList<>();
+        JsfUtil.addInfoMessageFromBundle("recintos.mensaje.eliminados", eliminados);
+        if (omitidos > 0) {
+            JsfUtil.addWarningMessageFromBundle("recintos.mensaje.eliminar.con.mesas.multiple", omitidos);
+        }
         recargarListaRecintosActual();
-        PrimeFaces.current().ajax().update("frmRecintos:tblRecintos", "msgs");
+        PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
     public void cagraDatosRecintoSeleccionado() {
@@ -181,7 +248,21 @@ public class RecintoController implements Serializable {
         }
     }
 
+    private void liberarContextoRecintoMesa() {
+        this.recintoSeleccionado = null;
+        this.listaRecintosSeleccionados = new ArrayList<>();
+        mesaController.liberarRecintoSeleccionado();
+    }
+
     private void recargarListaRecintosActual() {
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null
+                && OPCION_TODOS.equals(parroquiaSeleccionado.getId())) {
+            List<Geograp> parroquiasFiltro = obtenerParroquiasFiltroActual();
+            listaRecintos = parroquiasFiltro.isEmpty()
+                    ? recintoService.listarDTOs()
+                    : recintoService.listarDTOsPorParroquias(parroquiasFiltro);
+            return;
+        }
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
             Geograp parroquia = geograpBean.getById(parroquiaSeleccionado.getId());
             if (parroquia != null) {
@@ -195,6 +276,66 @@ public class RecintoController implements Serializable {
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquias);
             return;
         }
-        listaRecintos = recintoService.listarDTOs();
+        if (cantonSeleccionado != null && cantonSeleccionado.getId() != null
+                && OPCION_TODOS.equals(cantonSeleccionado.getId())) {
+            listaRecintos = recintoService.listarDTOs();
+            return;
+        }
+        listaRecintos = new ArrayList<>();
+    }
+
+    public int getTotalRecintos() {
+        return listaRecintos != null ? listaRecintos.size() : 0;
+    }
+
+    public int getTotalRecintosActivos() {
+        return getTotalRecintos();
+    }
+
+    private boolean tieneMesasAsociadas(RecintoDTO recinto) {
+        if (recinto == null || recinto.getId() == null) {
+            return false;
+        }
+        List<RecintoDTO> recintos = new ArrayList<>();
+        recintos.add(recinto);
+        List<MesaDTO> mesas = mesaService.listarDTOsPorRecintos(toRecintoEntities(recintos));
+        return mesas != null && !mesas.isEmpty();
+    }
+
+    private List<ec.com.antenasur.model.tec.Recinto> toRecintoEntities(List<RecintoDTO> dtos) {
+        List<ec.com.antenasur.model.tec.Recinto> entidades = new ArrayList<>();
+        if (dtos == null) {
+            return entidades;
+        }
+        for (RecintoDTO dto : dtos) {
+            ec.com.antenasur.model.tec.Recinto r = new ec.com.antenasur.model.tec.Recinto();
+            r.setId(dto.getId());
+            entidades.add(r);
+        }
+        return entidades;
+    }
+
+    private List<Geograp> obtenerParroquiasFiltroActual() {
+        if (cantonSeleccionado != null && cantonSeleccionado.getId() != null
+                && !OPCION_TODOS.equals(cantonSeleccionado.getId())) {
+            return geograpBean.getByFatherId(cantonSeleccionado.getId());
+        }
+        return obtenerTodasParroquias();
+    }
+
+    private List<Geograp> obtenerTodasParroquias() {
+        List<Geograp> resultado = new ArrayList<>();
+        if (cantones == null) {
+            return resultado;
+        }
+        for (Geograp canton : cantones) {
+            if (canton != null && canton.getId() != null) {
+                List<Geograp> parroquiasCanton = geograpBean.getByFatherId(canton.getId());
+                if (parroquiasCanton != null) {
+                    resultado.addAll(parroquiasCanton);
+                }
+            }
+        }
+        return resultado;
     }
 }

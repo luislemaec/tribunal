@@ -10,10 +10,6 @@
          automáticamente sin necesitar update="msgs" en cada commandButton.
          widgetVar="msgs" permite invocarlo desde JS vía Tribunal.toast.*
          (ver tribunal-globals.js â†’ showToast â†’ renderMessage). -->
-    <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
-             showDetail="true" showSummary="true" sticky="false"
-             life="5000" autoUpdate="true"/>
-
     <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
          consistente con el tema, sin necesidad de declararlo página por página.
          Excluye el editor PrimeFaces (que usa title internamente). -->
@@ -36,6 +32,12 @@
     </h:panelGroup>
 
     <h:form id="frmGlobal">
+        <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
+                 showDetail="false" showSummary="true" sticky="false"
+                 life="5000">
+            <p:autoUpdate/>
+        </p:growl>
+
         <!-- ConfirmDialog global: cualquier botón con
              <p:confirm header="..." message="..."/> usa este. -->
         <p:confirmDialog global="true" widgetVar="cfm" showEffect="fade" hideEffect="fade"

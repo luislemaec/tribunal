@@ -2,6 +2,7 @@ package ec.com.antenasur.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -42,6 +43,10 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     public List<IglesiaPersona> getPersonasIglesiasPorIglesia(int iglesiaId) {
         return iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesiaId);
+    }
+
+    public Map<Integer, Integer> contarPersonasHabilitadasPadronPorIglesias(List<Integer> iglesiaIds) {
+        return iglesiaPersonaFacade.contarPersonasHabilitadasPadronPorIglesias(iglesiaIds);
     }
 
     public List<IglesiaPersona> getIglesiasPersonasPorParroquias(List<Geograp> parroquias) {
