@@ -70,6 +70,9 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
         }
         Geograp ubicacion = (dto.getUbicacionId() != null)
                 ? geograpFacade.find(dto.getUbicacionId()) : null;
+        if (ubicacion == null) {
+            return null;
+        }
 
         if (dto.getId() == null) {
             Recinto nuevo = dto.toEntity();

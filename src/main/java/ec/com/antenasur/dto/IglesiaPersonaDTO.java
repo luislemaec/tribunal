@@ -57,8 +57,8 @@ public class IglesiaPersonaDTO implements Serializable {
         dto.setFechaCrea(ip.getFechaCrea());
         dto.setFechaActualiza(ip.getFechaActualiza());
         dto.setActualizada(esActualizada(ip.getFechaCrea(), ip.getFechaActualiza()));
-        // null (registros previos a la migración DDL) → true por retrocompatibilidad
-        dto.setHabilitadoPadron(ip.getHabilitadoPadron() == null ? Boolean.TRUE : ip.getHabilitadoPadron());
+        // Regla estricta: solo true habilita para el padron.
+        dto.setHabilitadoPadron(Boolean.TRUE.equals(ip.getHabilitadoPadron()));
         return dto;
     }
 

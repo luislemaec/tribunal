@@ -261,6 +261,36 @@ UPDATE tec.tribunal t
  WHERE t.periodo_id = p.periodo_id
    AND t.proce_id IS NULL;
 
+-- 8.e.1) Padron existente con proce_id = 2.
+--        En la BD actual ya existen registros de tec.padron asociados al
+--        proceso electoral 2. La migracion debe conservar esa asignacion y
+--        validar que el proceso exista antes de crear la FK.
+SELECT COUNT(*) AS registros_padron_proceso_2
+  FROM tec.padron
+ WHERE proce_id = 2;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM tec.padron WHERE proce_id = 2)
+     AND NOT EXISTS (SELECT 1 FROM tec.proceso_electoral WHERE proce_id = 2) THEN
+    RAISE EXCEPTION
+      'Existen registros en tec.padron con proce_id=2, pero no existe tec.proceso_electoral.proce_id=2';
+  END IF;
+END $$;
+
+-- Fallback controlado: si luego del cruce por periodo_id quedan registros del
+-- padron sin proceso y el proceso 2 existe, se asignan al proceso 2 porque es
+-- el proceso ya utilizado por el padron actual.
+UPDATE tec.padron
+   SET proce_id = 2
+ WHERE proce_id IS NULL
+   AND EXISTS (SELECT 1 FROM tec.proceso_electoral WHERE proce_id = 2);
+
+-- Diagnostico final: debe retornar 0 antes de marcar proce_id como obligatorio.
+SELECT COUNT(*) AS registros_padron_sin_proceso
+  FROM tec.padron
+ WHERE proce_id IS NULL;
+
 -- 8.f) FKs e indices para la nueva relacion funcional.
 DO $$
 BEGIN
@@ -479,3 +509,68 @@ SELECT proce_id, mesa_id, cat_voto_id, COUNT(*) AS repeticiones
  WHERE proce_id IS NOT NULL AND mesa_id IS NOT NULL AND cat_voto_id IS NOT NULL
  GROUP BY proce_id, mesa_id, cat_voto_id
 HAVING COUNT(*) > 1;
+
+-- ============================================================================
+-- 10) SANEAMIENTO: padron solo con miembros habilitados
+-- ----------------------------------------------------------------------------
+-- Regla de negocio:
+--   public.tb_iglesia_persona.igpe_habilitado_padron debe ser TRUE para que
+--   una persona sea agregada o permanezca activa en tec.padron.
+--
+-- FALSE y NULL se consideran NO habilitados.
+-- ============================================================================
+
+-- 10.a) Diagnostico: registros activos del padron con miembros no habilitados.
+SELECT p.padron_id,
+       p.proce_id,
+       p.mesa_id,
+       p.igpe_id,
+       ip.igpe_habilitado_padron
+  FROM tec.padron p
+  JOIN public.tb_iglesia_persona ip ON ip.igpe_id = p.igpe_id
+ WHERE COALESCE(p.estado, TRUE) = TRUE
+   AND COALESCE(ip.igpe_habilitado_padron, FALSE) = FALSE
+ ORDER BY p.padron_id;
+
+-- 10.b) Desactivar del padron activo a miembros no habilitados.
+UPDATE tec.padron p
+   SET estado = FALSE,
+       f_actualiza = NOW(),
+       u_actualiza = 'migracion-habilitado-padron'
+  FROM public.tb_iglesia_persona ip
+ WHERE ip.igpe_id = p.igpe_id
+   AND COALESCE(p.estado, TRUE) = TRUE
+   AND COALESCE(ip.igpe_habilitado_padron, FALSE) = FALSE;
+
+-- 10.c) Verificacion: debe retornar 0.
+SELECT COUNT(*) AS padron_activo_con_miembros_no_habilitados
+  FROM tec.padron p
+  JOIN public.tb_iglesia_persona ip ON ip.igpe_id = p.igpe_id
+ WHERE COALESCE(p.estado, TRUE) = TRUE
+   AND COALESCE(ip.igpe_habilitado_padron, FALSE) = FALSE;
+
+-- ============================================================================
+-- 11) RECINTOS: ubicacion geografica obligatoria
+-- ----------------------------------------------------------------------------
+-- tec.recintos.gelo_id almacena la parroquia (public.tb_geograp.gelo_id),
+-- igual que public.tb_iglesia.gelo_id y tec.mesas.gelo_id.
+-- ============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_recintos_gelo_id ON tec.recintos(gelo_id);
+
+-- Diagnostico: debe retornar 0 antes de marcar la columna como NOT NULL.
+SELECT rec_id, rec_nombre
+  FROM tec.recintos
+ WHERE gelo_id IS NULL
+ ORDER BY rec_id;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM tec.recintos WHERE gelo_id IS NULL) THEN
+    ALTER TABLE tec.recintos ALTER COLUMN gelo_id SET NOT NULL;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM tec.recintos WHERE rec_nombre IS NULL OR TRIM(rec_nombre) = '') THEN
+    ALTER TABLE tec.recintos ALTER COLUMN rec_nombre SET NOT NULL;
+  END IF;
+END $$;

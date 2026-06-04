@@ -1,5 +1,6 @@
 package ec.com.antenasur.converter;
 
+import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.model.Iglesia;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
@@ -23,7 +24,7 @@ public class IglesiaConverter implements Converter {
             Object dualList = ((PickList) component).getValue();
             DualListModel<?> dl = (DualListModel<?>) dualList;
             for (Object o : dl.getSource()) {
-                String id = "" + ((Iglesia) o).getId();
+                String id = obtenerId(o);
                 if (value.equals(id)) {
                     ret = o;
                     break;
@@ -31,7 +32,7 @@ public class IglesiaConverter implements Converter {
             }
             if (ret == null) {
                 for (Object o : dl.getTarget()) {
-                    String id = "" + ((Iglesia) o).getId();
+                    String id = obtenerId(o);
                     if (value.equals(id)) {
                         ret = o;
                         break;
@@ -47,8 +48,20 @@ public class IglesiaConverter implements Converter {
         String str = "";
         if (value instanceof Iglesia) {
             str = "" + ((Iglesia) value).getId();
+        } else if (value instanceof IglesiaDTO) {
+            str = "" + ((IglesiaDTO) value).getId();
         }
         return str;
+    }
+
+    private String obtenerId(Object value) {
+        if (value instanceof Iglesia) {
+            return "" + ((Iglesia) value).getId();
+        }
+        if (value instanceof IglesiaDTO) {
+            return "" + ((IglesiaDTO) value).getId();
+        }
+        return "";
     }
 
 }

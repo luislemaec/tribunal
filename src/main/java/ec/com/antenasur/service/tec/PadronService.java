@@ -116,6 +116,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
             return creados;
         }
         for (IglesiaPersona ip : personas) {
+            if (!Boolean.TRUE.equals(ip.getHabilitadoPadron())) {
+                continue;
+            }
             Padron existente = padronFacade.buscaPorPersonaProcesoIglesia(ip.getId(), proceso.getId());
             if (existente == null) {
                 creados.add(padronFacade.create(new Padron(mesa, proceso, ip)));
@@ -170,6 +173,25 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         }
         List<Padron> creados = asignarIglesiaAMesa(iglesia, mesa, proceso);
         return creados.size();
+    }
+
+    public int quitarIglesiaDeMesaPorIds(Integer iglesiaId, Integer mesaId, Integer procesoId) {
+        if (iglesiaId == null || mesaId == null || procesoId == null) {
+            return 0;
+        }
+        List<Padron> padrones = padronFacade.getPadronesPorIglesiaMesaProceso(iglesiaId, mesaId, procesoId);
+        if (padrones == null || padrones.isEmpty()) {
+            return 0;
+        }
+        int eliminados = 0;
+        for (Padron padron : padrones) {
+            if (Boolean.TRUE.equals(padron.getSufrago())) {
+                continue;
+            }
+            padronFacade.remove(padron);
+            eliminados++;
+        }
+        return eliminados;
     }
 
     // ----- API basada en DTO -----

@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -204,7 +205,7 @@ public class JsfUtil implements Serializable {
      * @param msg El mensaje en general.
      */
     public static void addErrorMessage(String msg) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, msg, msg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, msg, null);
         FacesContext.getCurrentInstance().addMessage(null, facesMsg);
     }
 
@@ -217,7 +218,7 @@ public class JsfUtil implements Serializable {
 
         for (String message : messages) {
 
-            FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, message, message);
+            FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, message, null);
             FacesContext.getCurrentInstance().addMessage(null, facesMsg);
         }
     }
@@ -229,12 +230,12 @@ public class JsfUtil implements Serializable {
      * @param msg El mensaje en general.
      */
     public static void addInfoMessage(String msg) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, msg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, null);
         FacesContext.getCurrentInstance().addMessage(null, facesMsg);
     }
 
     public static void addInfoMessage(String msg, Boolean addInGrowl) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, msg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, null);
         if (addInGrowl) {
             FacesContext.getCurrentInstance().addMessage(GROWL_MESSAGES, facesMsg);
         } else {
@@ -249,7 +250,7 @@ public class JsfUtil implements Serializable {
      * @param msg
      */
     public static void addFatalMessage(String msg) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_FATAL, msg, msg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_FATAL, msg, null);
         FacesContext.getCurrentInstance().addMessage(null, facesMsg);
     }
 
@@ -260,7 +261,7 @@ public class JsfUtil implements Serializable {
      * @param msg
      */
     public static void addWarningMessage(String msg) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_WARN, msg, msg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_WARN, msg, null);
         FacesContext.getCurrentInstance().addMessage(null, facesMsg);
     }
 
@@ -271,8 +272,29 @@ public class JsfUtil implements Serializable {
      * @param msg
      */
     public static void addSuccessMessage(String msg) {
-        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, msg);
-        FacesContext.getCurrentInstance().addMessage("successInfo", facesMsg);
+        FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, null);
+        FacesContext.getCurrentInstance().addMessage(null, facesMsg);
+    }
+
+    public static String getMessage(String key, Object... params) {
+        String message = getProperty(key, true);
+        return params == null || params.length == 0 ? message : MessageFormat.format(message, params);
+    }
+
+    public static void addErrorMessageFromBundle(String key, Object... params) {
+        addErrorMessage(getMessage(key, params));
+    }
+
+    public static void addInfoMessageFromBundle(String key, Object... params) {
+        addInfoMessage(getMessage(key, params));
+    }
+
+    public static void addWarningMessageFromBundle(String key, Object... params) {
+        addWarningMessage(getMessage(key, params));
+    }
+
+    public static void addSuccessMessageFromBundle(String key, Object... params) {
+        addSuccessMessage(getMessage(key, params));
     }
 
     /**

@@ -97,7 +97,7 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
                     + " WHERE i.id = :iglesiaId"
                     + "   AND ip.estado = TRUE"
                     + "   AND p.estado = TRUE"
-                    + "   AND (ip.habilitadoPadron = TRUE OR ip.habilitadoPadron IS NULL)"
+                    + "   AND ip.habilitadoPadron = TRUE"
                     + " ORDER BY ip.id";
             TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
             query.setParameter("iglesiaId", iglesiaId);

@@ -241,4 +241,30 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         }
     }
 
+    public List<Padron> getPadronesPorIglesiaMesaProceso(Integer iglesiaId, Integer mesaId, Integer procesoId) {
+        if (iglesiaId == null || mesaId == null || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH p.mesa m"
+                    + " LEFT JOIN FETCH p.iglesiaPersona ip"
+                    + " LEFT JOIN FETCH ip.iglesia i"
+                    + " LEFT JOIN FETCH p.proceso pro"
+                    + " WHERE i.id = :iglesiaId"
+                    + " AND m.id = :mesaId"
+                    + " AND pro.id = :procesoId"
+                    + " AND " + ACTIVOS
+                    + ORDENADO;
+            TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
+            query.setParameter("iglesiaId", iglesiaId);
+            query.setParameter("mesaId", mesaId);
+            query.setParameter("procesoId", procesoId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
+
 }

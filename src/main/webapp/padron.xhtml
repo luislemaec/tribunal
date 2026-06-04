@@ -5,13 +5,13 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.padron.title']}</ui:define>
+    <ui:define name="title">#{msg['padron.title']}</ui:define>
 
     <ui:define name="viewname">
-        <li>#{msg['form.padron.crumb.admin']}</li>
+        <li>#{msg['padron.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/padron">#{msg['form.padron.title']}</p:link>
+            <p:link outcome="/padron">#{msg['padron.title']}</p:link>
         </li>
     </ui:define>
 
@@ -26,115 +26,173 @@
                         <i class="pi pi-users text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.padron.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Padrón electoral por cantón, parroquia, recinto y mesa de votación</p>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['padron.title']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['padron.subtitulo']}</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <p:outputPanel id="resumenPadronSuperior" layout="block" styleClass="grid mb-3">
+            <div class="col-12 md:col-4">
+                <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                    <div class="flex align-items-center justify-content-between">
+                        <span class="text-500 text-sm">#{msg['padron.contador.registros']}</span>
+                        <i class="pi pi-list text-500"></i>
+                    </div>
+                    <div class="text-900 font-bold text-3xl mt-2">#{empty padronController.listaPadron ? 0 : padronController.listaPadron.size()}</div>
+                </div>
+            </div>
+            <div class="col-12 md:col-4">
+                <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                    <div class="flex align-items-center justify-content-between">
+                        <span class="text-500 text-sm">#{msg['padron.contador.iglesias.asignadas']}</span>
+                        <i class="pi pi-check-circle text-green-600"></i>
+                    </div>
+                    <div class="text-900 font-bold text-3xl mt-2">#{empty padronController.listaIglesiasAsignadas ? 0 : padronController.listaIglesiasAsignadas.size()}</div>
+                </div>
+            </div>
+            <div class="col-12 md:col-4">
+                <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                    <div class="flex align-items-center justify-content-between">
+                        <span class="text-500 text-sm">#{msg['padron.contador.iglesias.disponibles']}</span>
+                        <i class="pi pi-building text-500"></i>
+                    </div>
+                    <div class="text-900 font-bold text-3xl mt-2">#{empty padronController.listaIglesiasPorAsignar ? 0 : padronController.listaIglesiasPorAsignar.size()}</div>
+                </div>
+            </div>
+        </p:outputPanel>
+
         <p:blockUI block="frmPadron" trigger="frmPadron">
             <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#f59e0b"/>
-            <div style="margin:.5rem 0 0;color:#fff">#{msg['form.padron.processing']}</div>
+            <div style="margin:.5rem 0 0;color:#fff">#{msg['padron.processing']}</div>
         </p:blockUI>
 
         <h:form id="frmPadron">
-
-            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
 
             <!-- FILTROS GEOGRAFICOS -->
             <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                 <div class="flex align-items-center gap-2 mb-3">
                     <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">Filtros geográficos</span>
+                    <span class="font-semibold text-700">#{msg['padron.filtros.titulo']}</span>
                 </div>
                 <div class="formgrid grid">
                     <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="canton" class="font-medium text-700 text-sm">#{msg['form.padron.label.canton']}</label>
+                        <label for="canton" class="font-medium text-700 text-sm">#{msg['padron.label.canton']}</label>
                         <p:selectOneMenu id="canton" value="#{padronController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="startsWith" styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.padron.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.cantones}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorCanton()}"
-                                    process="@this" update="frmPadron msgs"/>
+                                    process="@this" update=":resumenPadronSuperior parroquia recintos mesas pnlIglesias tblPadron"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="parroquia" class="font-medium text-700 text-sm">#{msg['form.padron.label.parroquia']}</label>
+                        <label for="parroquia" class="font-medium text-700 text-sm">#{msg['padron.label.parroquia']}</label>
                         <p:selectOneMenu id="parroquia" value="#{padronController.parroquiaSeleccionado.id}" styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.padron.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorParroquia()}"
-                                    process="@this" update="frmPadron msgs"/>
+                                    process="@this" update=":resumenPadronSuperior recintos mesas pnlIglesias tblPadron"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="recintos" class="font-medium text-700 text-sm">#{msg['form.padron.label.recinto']}</label>
+                        <label for="recintos" class="font-medium text-700 text-sm">#{msg['padron.label.recinto']}</label>
                         <p:selectOneMenu id="recintos" value="#{padronController.recintoSeleccionado.id}"
                                          filter="true" filterMatchMode="contains" styleClass="w-full"
                                          disabled="#{empty padronController.listaRecintos}">
-                            <f:selectItem itemLabel="#{msg['form.padron.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.listaRecintos}" var="recinto"
                                            itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
                             <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorRecinto()}"
-                                    process="@this" update="frmPadron msgs"/>
+                                    process="@this" update=":resumenPadronSuperior mesas pnlIglesias tblPadron"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="mesas" class="font-medium text-700 text-sm">#{msg['form.padron.label.mesa']}</label>
+                        <label for="mesas" class="font-medium text-700 text-sm">#{msg['padron.label.mesa']}</label>
                         <p:selectOneMenu id="mesas" value="#{padronController.mesaSeleccionado.id}"
                                          filter="true" filterMatchMode="contains" styleClass="w-full"
                                          disabled="#{empty padronController.listaRecintos}">
-                            <f:selectItem itemLabel="#{msg['form.padron.placeholder.select']}" itemValue=""/>
+                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.listaMesas}" var="mesa"
                                            itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
                             <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorMesa()}"
-                                    process="@this" update="frmPadron"/>
+                                    process="@this" update=":resumenPadronSuperior pnlIglesias tblPadron"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
             </div>
 
             <!-- PICKLIST DE IGLESIAS (solo cuando corresponde) -->
+            <p:outputPanel id="pnlIglesias" layout="block">
             <ui:fragment rendered="#{padronController.listaNombresIglesias ne null}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                    <div class="flex align-items-center gap-2 mb-3">
-                        <i class="pi pi-building text-500"></i>
-                        <span class="font-semibold text-700">#{msg['form.padron.picklist.title']}</span>
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-id-card text-500"></i>
+                            <span class="font-semibold text-700">#{msg['padron.seccion.generar']}</span>
+                        </div>
+                        <p:tag value="#{padronController.mesaSeleccionado.id eq null ? msg['padron.estado.seleccione.mesa'] : msg['padron.estado.listo']}"
+                               severity="#{padronController.mesaSeleccionado.id eq null ? 'warning' : 'success'}"
+                               icon="#{padronController.mesaSeleccionado.id eq null ? 'pi pi-exclamation-triangle' : 'pi pi-check'}"/>
                     </div>
+                    <p:staticMessage rendered="#{padronController.mesaSeleccionado.id eq null}"
+                                     severity="warn"
+                                     summary="#{msg['padron.info.generar.resumen']}"
+                                     detail="#{msg['padron.info.generar.detalle']}"
+                                     styleClass="mb-3"/>
+                    <p:staticMessage rendered="#{padronController.mesaSeleccionado.id ne null and empty padronController.listaIglesiasPorAsignar}"
+                                     severity="info"
+                                     summary="#{msg['padron.info.sin.iglesias.resumen']}"
+                                     detail="#{msg['padron.info.sin.iglesias.detalle']}"
+                                     styleClass="mb-3"/>
                     <p:pickList id="pckLIglesias" value="#{padronController.listaNombresIglesias}"
                                 var="iglesia" itemLabel="#{iglesia.nombre}" itemValue="#{iglesia}"
                                 converter="IglesiaConverter"
                                 showSourceControls="true" showTargetControls="true"
                                 showCheckbox="true" responsive="true"
-                                addLabel="#{msg['form.padron.picklist.add']}"
-                                addAllLabel="#{msg['form.padron.picklist.add.all']}"
-                                removeLabel="#{msg['form.padron.picklist.remove']}"
-                                removeAllLabel="#{msg['form.padron.picklist.remove.all']}"
+                                addLabel="#{msg['padron.picklist.add']}"
+                                addAllLabel="#{msg['padron.picklist.add.all']}"
+                                removeLabel="#{msg['padron.picklist.remove']}"
+                                removeAllLabel="#{msg['padron.picklist.remove.all']}"
                                 showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains"
                                 disabled="#{padronController.mesaSeleccionado.id eq null}"
                                 rendered="#{padronController.listaNombresIglesias ne null}">
-                        <f:facet name="sourceCaption">#{msg['form.padron.picklist.source']}</f:facet>
-                        <f:facet name="targetCaption">#{msg['form.padron.picklist.target']}</f:facet>
-                        <p:ajax event="transfer" listener="#{padronController.onTransfer}" update="msgs"/>
-                        <p:ajax event="select"   listener="#{padronController.onSelect}"   update="msgs"/>
+                        <f:facet name="sourceCaption">#{msg['padron.picklist.source']}</f:facet>
+                        <f:facet name="targetCaption">#{msg['padron.picklist.target']}</f:facet>
+                        <p:ajax event="transfer" listener="#{padronController.onTransfer}"
+                                process="@this" update=":resumenPadronSuperior pnlIglesias tblPadron"
+                                onstart="return confirm('#{msg['padron.confirmacion.generar']}');"/>
+                        <p:ajax event="select"   listener="#{padronController.onSelect}"/>
                     </p:pickList>
                 </div>
             </ui:fragment>
+            </p:outputPanel>
 
             <!-- TABLA PADRON + EXPORT -->
             <div class="surface-card shadow-1 border-round-lg p-3">
 
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <span class="text-lg text-900 font-bold">#{msg['form.padron.header']}</span>
-                    <p:commandButton value="#{msg['form.padron.btn.export.pdf']}" icon="pi pi-file-pdf"
-                                     title="#{msg['form.padron.btn.export.pdf.title']}"
-                                     styleClass="ui-button-outlined ui-button-help" ajax="false"
-                                     disabled="#{empty padronController.listaPadron}">
-                        <p:dataExporter type="pdf" target="tblPadron" fileName="Padron"/>
-                    </p:commandButton>
+                    <div>
+                        <span class="text-lg text-900 font-bold">#{msg['padron.header']}</span>
+                        <div class="text-sm text-500 mt-1">
+                            <h:outputFormat value="#{msg['padron.listado.registros']}">
+                                <f:param value="#{empty padronController.listaPadron ? 0 : padronController.listaPadron.size()}"/>
+                            </h:outputFormat>
+                        </div>
+                    </div>
+                    <div class="flex align-items-center gap-2 flex-wrap">
+                        <p:inputText id="globalFilter" placeholder="#{msg['padron.buscador.placeholder']}"
+                                     onkeyup="PF('wdTablaPadron').filter()" styleClass="w-12rem"/>
+                        <p:commandButton value="#{msg['padron.boton.exportar.pdf']}" icon="pi pi-file-pdf"
+                                         title="#{msg['padron.boton.exportar.pdf.tooltip']}"
+                                         styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                         disabled="#{empty padronController.listaPadron}">
+                            <p:dataExporter type="pdf" target="tblPadron" fileName="Padron"/>
+                        </p:commandButton>
+                    </div>
                 </div>
 
                 <p:dataTable id="tblPadron" widgetVar="wdTablaPadron" var="padron"
@@ -145,47 +203,64 @@
                              rowsPerPageTemplate="10,25,50"
                              paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
-                             emptyMessage="Seleccione los filtros para ver el padrón electoral."
+                             currentPageReportTemplate="#{msg['padron.paginador.reporte']}"
+                             emptyMessage="#{msg['padron.empty.listado']}"
                              showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
-                    <p:column headerText="#{msg['form.padron.table.header.id']}"
+                    <p:column headerText="#{msg['padron.tabla.id']}"
                               sortBy="#{padron.id}" style="width:6rem">
                         <span class="text-sm text-500">#{padron.id}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.mesa']}"
+                    <p:column headerText="#{msg['padron.tabla.proceso']}"
+                              sortBy="#{padron.procesoNombre}" filterBy="#{padron.procesoNombre}"
+                              filterMatchMode="contains" style="min-width:10rem">
+                        <span class="text-sm text-700">#{padron.procesoNombre}</span>
+                    </p:column>
+                    <p:column headerText="#{msg['padron.tabla.mesa']}"
                               sortBy="#{padron.mesa.nombre}" filterBy="#{padron.mesa.nombre}"
                               filterMatchMode="contains">
                         <span class="text-sm text-800">#{padron.mesa.nombre}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.recinto']}"
+                    <p:column headerText="#{msg['padron.tabla.recinto']}"
                               sortBy="#{padron.mesa.recinto.nombre}" filterBy="#{padron.mesa.recinto.nombre}"
                               filterMatchMode="contains">
                         <span class="text-sm text-800">#{padron.mesa.recinto.nombre}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.persona']}"
+                    <p:column headerText="#{msg['padron.tabla.nombres']}"
                               sortBy="#{padron.iglesiaPersona.persona.nombres}"
                               filterBy="#{padron.iglesiaPersona.persona.nombres}"
                               filterMatchMode="contains">
                         <span class="text-sm font-medium text-900">#{padron.iglesiaPersona.persona.nombres}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.canton']}"
+                    <p:column headerText="#{msg['padron.tabla.identificacion']}"
+                              sortBy="#{padron.iglesiaPersona.persona.documento}"
+                              filterBy="#{padron.iglesiaPersona.persona.documento}"
+                              filterMatchMode="contains" style="min-width:9rem">
+                        <span class="text-sm text-700">#{padron.iglesiaPersona.persona.documento}</span>
+                    </p:column>
+                    <p:column headerText="#{msg['padron.tabla.iglesia']}"
+                              sortBy="#{padron.iglesiaPersona.iglesia.nombre}"
+                              filterBy="#{padron.iglesiaPersona.iglesia.nombre}"
+                              filterMatchMode="contains" style="min-width:12rem">
+                        <span class="text-sm text-800">#{padron.iglesiaPersona.iglesia.nombre}</span>
+                    </p:column>
+                    <p:column headerText="#{msg['padron.tabla.canton']}"
                               sortBy="#{padron.mesa.cantonNombre}" filterBy="#{padron.mesa.cantonNombre}"
                               filterMatchMode="contains">
                         <span class="text-sm text-700">#{padron.mesa.cantonNombre}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.parroquia']}"
+                    <p:column headerText="#{msg['padron.tabla.parroquia']}"
                               sortBy="#{padron.mesa.ubicacionNombre}" filterBy="#{padron.mesa.ubicacionNombre}"
                               filterMatchMode="contains">
                         <span class="text-sm text-700">#{padron.mesa.ubicacionNombre}</span>
                     </p:column>
-                    <p:column headerText="#{msg['form.padron.table.header.estado']}"
+                    <p:column headerText="#{msg['padron.tabla.estado']}"
                               sortBy="#{padron.sufrago}" styleClass="text-center" style="width:8rem">
                         <p:tag rendered="#{padron.sufrago}"
-                               value="#{msg['form.padron.tag.activo']}" severity="success" icon="pi pi-check"/>
+                               value="#{msg['padron.tag.activo']}" severity="success" icon="pi pi-check"/>
                         <p:tag rendered="#{not padron.sufrago}"
-                               value="#{msg['form.padron.tag.inactivo']}" severity="danger" icon="pi pi-times"/>
+                               value="#{msg['padron.tag.inactivo']}" severity="danger" icon="pi pi-times"/>
                     </p:column>
 
                 </p:dataTable>
