@@ -254,6 +254,56 @@
                 </div>
             </p:outputPanel>
 
+            <p:outputPanel id="pnlDocumentosActa" layout="block"
+                           rendered="#{actaEController.mesaSeleccionadaValida}">
+                <div class="surface-card shadow-1 border-round-lg p-3 mt-3">
+                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div class="font-semibold text-800">
+                            <i class="pi pi-folder-open text-500 mr-2"></i>#{msg['actaE.seccion.documentos']}
+                        </div>
+                        <p:tag value="#{empty actaEController.documentosActa ? 0 : actaEController.documentosActa.size()}"
+                               severity="#{empty actaEController.documentosActa ? 'secondary' : 'success'}"
+                               icon="pi pi-file-pdf"/>
+                    </div>
+
+                    <div class="border-round-lg p-3 mb-3" style="background:#f8fafc;border:1px solid #e2e8f0">
+                        <span class="block text-500 text-sm">#{msg['actaE.documentos.directorio']}</span>
+                        <span class="block text-900 text-sm" style="font-family:monospace;word-break:break-all">
+                            #{actaEController.directorioActasEscrutinio}
+                        </span>
+                    </div>
+
+                    <p:dataTable id="tblDocumentosActa" var="doc" value="#{actaEController.documentosActa}"
+                                 reflow="true" rows="5" paginator="true" paginatorPosition="bottom"
+                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm"
+                                 emptyMessage="#{msg['actaE.documentos.empty']}">
+                        <p:column headerText="#{msg['actaE.documentos.accion']}" exportable="false" style="width:5rem"
+                                  styleClass="text-center">
+                            <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             title="#{msg['actaE.documentos.descargar']}">
+                                <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
+                                <p:fileDownload value="#{documentoBean.file}"/>
+                            </p:commandButton>
+                        </p:column>
+                        <p:column headerText="#{msg['actaE.documentos.nombre']}">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-file-pdf text-red-500 text-lg flex-shrink-0"/>
+                                <span class="text-900 text-sm">#{doc.nombre}</span>
+                            </div>
+                        </p:column>
+                        <p:column headerText="#{msg['actaE.documentos.ruta']}">
+                            <span class="text-sm" style="font-family:monospace;word-break:break-all">#{doc.path}</span>
+                        </p:column>
+                        <p:column headerText="#{msg['actaE.documentos.fecha']}" style="width:11rem">
+                            <h:outputText value="#{doc.fechaCrea}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </p:outputPanel>
+
         </h:form>
 
     </ui:define>

@@ -155,6 +155,10 @@ public class ActaEController implements Serializable {
 
     @Setter
     @Getter
+    private List<Documentos> documentosActa;
+
+    @Setter
+    @Getter
     private EscrutinioCabeceraDTO escrutinioCabecera;
 
     @Setter
@@ -191,6 +195,7 @@ public class ActaEController implements Serializable {
 
     private void inicializaVariables() {
         this.listaCamposActaE = new ArrayList<>();
+        this.documentosActa = new ArrayList<>();
         this.cantonSeleccionado = new Geograp();
         this.parroquiaSeleccionado = new Geograp();
         this.recintoSeleccionado = new RecintoDTO();
@@ -345,6 +350,7 @@ public class ActaEController implements Serializable {
         if (isMesaCerrada()) {
             JsfUtil.addInfoMessageFromBundle("actaE.mensaje.mesa.cerrada");
         }
+        cargarDocumentosActa();
     }
 
     public void guardaDatosMesaSeleccionada() {
@@ -425,6 +431,7 @@ public class ActaEController implements Serializable {
             }
             escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
                     mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
+            cargarDocumentosActa();
             JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.cierre.ok");
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -453,6 +460,7 @@ public class ActaEController implements Serializable {
             String observacion = escrutinioCabecera != null && escrutinioCabecera.getObservacionCierre() != null
                     ? escrutinioCabecera.getObservacionCierre() : "";
             exportaPDF(documentoActaE, observacion);
+            cargarDocumentosActa();
             JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.pdf.regenerado");
         } catch (Exception e) {
             log.error("ERROR AL REGENERAR ACTA DE MESA CERRADA", e);
@@ -532,6 +540,10 @@ public class ActaEController implements Serializable {
             log.error("ERROR EN INICIALIZAR VARIABLES", e);
             return null;
         }
+    }
+
+    public String getDirectorioActasEscrutinio() {
+        return Constantes.getDirectorioActasEscrutinio();
     }
 
     public int getTotalVotosRegistrados() {
@@ -688,8 +700,21 @@ public class ActaEController implements Serializable {
                 mesaSeleccionado.getId(), procesoId);
     }
 
+    private void cargarDocumentosActa() {
+        documentosActa = new ArrayList<>();
+        if (!mesaSeleccionadaValida()) {
+            return;
+        }
+        List<Documentos> documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(
+                mesaSeleccionado.getId(), Constantes.ACTA_ESCRUTINIO);
+        if (documentos != null) {
+            documentosActa = documentos;
+        }
+    }
+
     private void limpiarActa() {
         listaCamposActaE = new ArrayList<>();
+        documentosActa = new ArrayList<>();
         mesaSeleccionado = new MesaDTO();
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;
@@ -742,16 +767,18 @@ public class ActaEController implements Serializable {
         ReportePFD.agregaHTML(txtResponsableActaE, pathCss, fontProvider);
         ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
         String archivoGenerado = ReportePFD.guardarDocumentosActasEObligatorio(documentoActaE.getNombreReporte());
+        documentoNuevo.setPath(archivoGenerado);
         this.guardarDocumentoBD(documentoNuevo);
         procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
         return archivoGenerado;
     }
 
-    private void guardarDocumentoBD(Documentos documentoNuevo) {
-        try {
-            documentoBean.guardarDocumento(documentoNuevo);
-        } catch (Exception e) {
+    private Documentos guardarDocumentoBD(Documentos documentoNuevo) {
+        Documentos documentoPersistido = documentoBean.guardarDocumentoPersistido(documentoNuevo);
+        if (documentoPersistido == null || documentoPersistido.getId() == null) {
+            throw new IllegalStateException("No se pudo registrar el documento generado.");
         }
+        return documentoPersistido;
     }
 
     private static List<MesaDTO> filtrarMesasPorRecintoId(List<MesaDTO> mesas, Integer recintoId) {

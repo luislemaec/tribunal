@@ -81,11 +81,17 @@ public class DocumentoBean implements Serializable {
 
     public void guardarDocumento(Documentos documento) {
         try {
-            if (documento != null) {
-                documento = documentoService.create(documento);
-            }
+            guardarDocumentoPersistido(documento);
         } catch (Exception e) {
+            log.error("ERROR GUARDAR DOCUMENTO", e);
         }
+    }
+
+    public Documentos guardarDocumentoPersistido(Documentos documento) {
+        if (documento == null) {
+            return null;
+        }
+        return documentoService.create(documento);
     }
 
     public void descargaDocumento() throws IOException {
@@ -114,11 +120,10 @@ public class DocumentoBean implements Serializable {
      */
     public void descargarArchivoDirectorio() throws IOException {
         if (documento.getNombre() != null) {
-            try {
-                InputStream inp = new FileInputStream(documento.getPath());
+            try (InputStream inp = new FileInputStream(documento.getPath())) {
                 byte[] imageInByte = IOUtils.toByteArray(inp);
                 file = DefaultStreamedContent.builder()
-                        .contentType("application/octet-stream")
+                        .contentType(documento.getMime() != null ? documento.getMime() : "application/octet-stream")
                         .name(documento.getNombre() + documento.getExtension())
                         .stream(() -> new ByteArrayInputStream(imageInByte))
                         .build();
