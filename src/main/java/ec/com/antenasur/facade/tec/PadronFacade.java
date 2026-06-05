@@ -288,6 +288,53 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         }
     }
 
+    public List<Padron> getPadronPorMesaIdsYProceso(List<Integer> mesaIds, Integer procesoId) {
+        if (mesaIds == null || mesaIds.isEmpty() || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH p.mesa m"
+                    + " LEFT JOIN FETCH p.iglesiaPersona ip"
+                    + " LEFT JOIN FETCH ip.iglesia i"
+                    + " LEFT JOIN FETCH ip.persona prsn"
+                    + " LEFT JOIN FETCH p.proceso pro"
+                    + " WHERE m.id IN :mesaIds"
+                    + " AND pro.id = :procesoId"
+                    + " AND " + ACTIVOS
+                    + ORDENADO;
+            TypedQuery<Padron> query = super.getEntityManager().createQuery(sql, Padron.class);
+            query.setParameter("mesaIds", mesaIds);
+            query.setParameter("procesoId", procesoId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public long contarPadronPorMesaYProceso(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return 0L;
+        }
+        try {
+            String sql = "SELECT COUNT(p.id) FROM Padron p"
+                    + " JOIN p.mesa m"
+                    + " JOIN p.proceso pro"
+                    + " WHERE m.id = :mesaId"
+                    + " AND pro.id = :procesoId"
+                    + " AND " + ACTIVOS;
+            TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+            query.setParameter("mesaId", mesaId);
+            query.setParameter("procesoId", procesoId);
+            Long total = query.getSingleResult();
+            return total != null ? total : 0L;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0L;
+        }
+    }
+
     public List<Padron> getPadronesPorIglesiaMesaProceso(Integer iglesiaId, Integer mesaId, Integer procesoId) {
         if (iglesiaId == null || mesaId == null || procesoId == null) {
             return java.util.Collections.emptyList();

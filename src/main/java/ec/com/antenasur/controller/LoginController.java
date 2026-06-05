@@ -226,7 +226,8 @@ public class LoginController implements Serializable {
         if (tienePassTemp || !estadoOk) {
             return "/dashboard.jsf";
         }
-        if (loginBean.getRoles().contains(prefijoRoles + Constantes.getRolTecnico())) {
+        if (loginBean.getRoles().contains(prefijoRoles + Constantes.getRolTecnico())
+                || loginBean.getRoles().contains(prefijoRoles + Constantes.getRolPresidenteMesa())) {
             return "/actaE.jsf";
         }
         return "/dashboard.jsf";

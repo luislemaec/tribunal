@@ -53,6 +53,8 @@ public class ReporteXLSX {
 
     private static FileInputStream stream;
 
+    private static int FILA_CABECERA_TABLA = 5;
+
     private static final int HEADER_LOGO_MAX_WIDTH_PX = 300;
 
     private static final int HEADER_LOGO_MAX_HEIGHT_PX = 108;
@@ -72,6 +74,7 @@ public class ReporteXLSX {
             /* Agrega logo institucional a la cabecera del documento. */
             PATH_LOGO = Constantes.getPathLogo();
             LIBRO = new XSSFWorkbook();
+            FILA_CABECERA_TABLA = 5;
         } catch (Exception e) {
             LOG.error("ERROR AL INICIALIZAR VALORES" + e);
         }
@@ -83,7 +86,7 @@ public class ReporteXLSX {
         // Aqui Inserta Imagen
         try {
             stream = new FileInputStream(PATH_LOGO);
-            setimagen(LIBRO, HOJA, nombreReporte, stream);
+            crearEncabezadoInstitucional(LIBRO, HOJA, nombreReporte, stream);
 
         } catch (FileNotFoundException ex) {
             LOG.error("ERROR AL CREAR NUEVO EXCEL" + ex);
@@ -111,7 +114,7 @@ public class ReporteXLSX {
             celdaTituloTabla.setFillForegroundColor(IndexedColors.DARK_BLUE.index);
             celdaTituloTabla.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
 
-            Row encabezado = HOJA.createRow(5);
+            Row encabezado = HOJA.createRow(FILA_CABECERA_TABLA);
             encabezado.setHeightInPoints(24);
             for (int i = 0; i < listColumnNames.length; i++) {
                 HOJA.setColumnWidth(i, columnWidth[i]);
@@ -126,23 +129,54 @@ public class ReporteXLSX {
 
     public static void creaEspacioInformativo(String fecha, String hora, String responsable) {
         try {
-            Row rfecha = HOJA.createRow(3);
-            Cell cfecha = rfecha.createCell(3);
-            cfecha.setCellValue("FECHA Y HORA:");
+            Row rfecha = HOJA.createRow(3);//FILA DONDE INICIA EL ESPACIO INFORMATIVO
 
-            Cell cfecha_v = rfecha.createCell(4);
+            Cell cfecha = rfecha.createCell(1); //COLUMNA DONDE INICIA EL ESPACIO INFORMATIVO
+            cfecha.setCellValue("FECHA Y HORA:"); //ETIQUETA DEL ESPACIO INFORMATIVO
+
+            Cell cfecha_v = rfecha.createCell(2);
             cfecha_v.setCellValue(fecha + " " + hora);
+    
+            Cell cResponsable = rfecha.createCell(3);//COLUMNA DONDE INICIA EL ESPACIO INFORMATIVO
+            cResponsable.setCellValue("RESPONSABLE:");//ETIQUETA DEL ESPACIO INFORMATIVO
 
-            Row rResponsable = HOJA.createRow(4);
-            Cell cResponsable = rResponsable.createCell(3);
-            cResponsable.setCellValue("RESPONSABLE:");
+            Cell cResponsable_v = rfecha.createCell(4);//COLUMNA DONDE INICIA EL ESPACIO INFORMATIVO
+            cResponsable_v.setCellValue(responsable);//VALOR DEL ESPACIO INFORMATIVO
 
-            Cell cResponsable_v = rResponsable.createCell(4);
-            cResponsable_v.setCellValue(responsable);
         } catch (Exception e) {
             LOG.error("ERROR AL CREAR ESPACIO INFORMATIVO" + e);
         }
 
+    }
+
+    public static void creaEspacioInformativoPadron(String fecha, String hora, String responsable,
+            String proceso, String provincia, String canton, String parroquia, String recinto, String mesa) {
+        try {
+            //creaEspacioInformativo(fecha, hora, responsable);
+            //(3, "FECHA Y HORA:", fecha + " " + hora, "RESPONSABLE:", responsable);
+            crearFilaInformativa(3, "PROCESO:", proceso, "RECINTO:", recinto);
+            crearFilaInformativa(4, "PROVINCIA:", provincia, "CANTON:", canton);
+            crearFilaInformativa(5, "PARROQUIA:", parroquia, "MESA:", mesa);
+            FILA_CABECERA_TABLA = 7;
+        } catch (Exception e) {
+            LOG.error("ERROR AL CREAR ESPACIO INFORMATIVO DEL PADRON" + e);
+        }
+    }
+
+    private static void crearFilaInformativa(int fila, String etiquetaA, String valorA, String etiquetaB, String valorB) {
+        Row row = HOJA.createRow(fila);
+
+        Cell labelA = row.createCell(1);
+        labelA.setCellValue(etiquetaA);
+
+        Cell valueA = row.createCell(2);
+        valueA.setCellValue(valorA != null ? valorA : "");
+
+        Cell labelB = row.createCell(3);
+        labelB.setCellValue(etiquetaB != null ? etiquetaB : "");
+
+        Cell valueB = row.createCell(4);
+        valueB.setCellValue(valorB != null ? valorB : "");
     }
 
     public static void setFinalParagraph(int tamanioLista) {
@@ -150,7 +184,7 @@ public class ReporteXLSX {
             String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
             String pieDePagina = " Documento generado por: " + getNombreUsuarioAutenticado() + " Fecha: " + date.substring(0, 10) + " Hora: "
                     + date.substring(11, 19);
-            Row pie = HOJA.createRow(tamanioLista + 7);
+            Row pie = HOJA.createRow(tamanioLista + FILA_CABECERA_TABLA + 2);
             Cell celda = pie.createCell(3);
             celda.setCellValue(pieDePagina);
         } catch (Exception e) {
@@ -162,7 +196,7 @@ public class ReporteXLSX {
         try {
             int posRow = 1;
             for (String[] medio : listaDatos) {
-                Row fila = HOJA.createRow(posRow + 5);
+                Row fila = HOJA.createRow(posRow + FILA_CABECERA_TABLA);
                 for (int i = 0; i < medio.length; i++) {
                     Cell celda = fila.createCell(i);
                     celda.setCellValue(medio[i]);
@@ -195,90 +229,97 @@ public class ReporteXLSX {
         }
     }
 
-    public static void setimagen(XSSFWorkbook workbook, Sheet sheet, String name, InputStream file) {
+    public static void crearEncabezadoInstitucional(XSSFWorkbook workbook, Sheet sheet, String nombreReporte, InputStream file) {
         try {
             XSSFSheet xssfSheet = (XSSFSheet) sheet;
-            xssfSheet.setDisplayGridlines(false);
-            xssfSheet.setColumnWidth(0, 5000);
-            xssfSheet.setColumnWidth(1, 5000);
-            xssfSheet.setColumnWidth(2, 4200);
-
-            // TITULO DEL PROYECTO
-            XSSFFont whiteFont = workbook.createFont();
-            whiteFont.setColor(IndexedColors.DARK_BLUE.index);
-            whiteFont.setFontHeightInPoints((short) 16.00);
-            whiteFont.setBold(true);
-
-            XSSFCellStyle cellheader = workbook.createCellStyle();
-            cellheader.setAlignment(HorizontalAlignment.CENTER);
-            cellheader.setWrapText(true);
-            cellheader.setFont(whiteFont);
-
-            Row row0 = sheet.createRow((short) 0);
-            row0.setHeightInPoints(34);
-            Row row = sheet.createRow((short) 1);// Fila que salta
-            row.setHeightInPoints((float) 34);
-            Cell cell = row.createCell((short) 3);// Columna que inicia el titulo
-            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$2:$H$2"));// Celdas combinadas
-            cell.setCellValue(new XSSFRichTextString(Constantes.INSTITUCION));
-            cell.setCellStyle(cellheader);
-
-            // NOMBRE DEL REPORTE
-            XSSFFont whiteFont1 = workbook.createFont();
-            whiteFont1.setColor(IndexedColors.GREY_50_PERCENT.index);
-            whiteFont1.setFontHeightInPoints((short) 14.00);
-            whiteFont1.setBold(true);
-
-            XSSFCellStyle cellheader1 = workbook.createCellStyle();
-            cellheader1.setAlignment(HorizontalAlignment.CENTER);
-            cellheader1.setWrapText(true);
-            cellheader1.setFont(whiteFont1);
-
-            Row row1 = sheet.createRow((short) 2);
-            row1.setHeightInPoints((float) 28);
-            Cell cell1 = row1.createCell((short) 3);
-            sheet.addMergedRegion(CellRangeAddress.valueOf("$D$3:$H$3"));
-            cell1.setCellValue(new XSSFRichTextString(name));
-            cell1.setCellStyle(cellheader1);
-
-            // Get the contents of an InputStream as a byte[].
-            byte[] bytes = IOUtils.toByteArray(file);
-            java.awt.image.BufferedImage logo = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
-            int logoWidth = logo != null ? logo.getWidth() : HEADER_LOGO_MAX_WIDTH_PX;
-            int logoHeight = logo != null ? logo.getHeight() : HEADER_LOGO_MAX_HEIGHT_PX;
-            double scale = Math.min(
-                    (double) HEADER_LOGO_MAX_WIDTH_PX / logoWidth,
-                    (double) HEADER_LOGO_MAX_HEIGHT_PX / logoHeight);
-            scale = Math.min(scale, 1.0d);
-
-            // Adds a picture to the workbook
-            int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
-            // close the input stream
-            // Returns an object that handles instantiating concrete classes
-            CreationHelper helper = workbook.getCreationHelper();
-            // Creates the top-level drawing patriarch.
-            Drawing drawing = sheet.createDrawingPatriarch();
-            // Create an anchor that is attached to the worksheet
-            ClientAnchor anchor = helper.createClientAnchor();
-            // set top-left corner for the image
-            anchor.setDx1(Units.pixelToEMU(8));
-            anchor.setDy1(Units.pixelToEMU(6));
-
-            anchor.setCol1(0);// Columna donde inicia el logo
-            anchor.setRow1(0);
-            anchor.setCol2(3);
-            anchor.setRow2(4);
-            if (anchor instanceof XSSFClientAnchor) {
-                ((XSSFClientAnchor) anchor).setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
-            }
-            // Creates a picture
-            Picture pict = drawing.createPicture(anchor, pictureIdx);
-            pict.resize(scale);
-            sheet.createFreezePane(0, 6, 0, 6);// 0, 7, 0, 7
+            configurarHojaReporte(xssfSheet);
+            crearTituloInstitucional(workbook, sheet);
+            crearTituloReporte(workbook, sheet, nombreReporte);
+            insertarLogo(workbook, sheet, file);
+            configurarPanelFijo(sheet);
         } catch (Exception ex) {
-            LOG.error("ERROR AL ASIGNAR IMAGEN AL ARCHIVO EXCEL" + ex);
+            LOG.error("ERROR AL CREAR ENCABEZADO INSTITUCIONAL DEL EXCEL" + ex);
         }
 
+    }
+
+    private static void configurarHojaReporte(XSSFSheet sheet) {
+        sheet.setDisplayGridlines(false);
+        sheet.setColumnWidth(0, 5000);
+        sheet.setColumnWidth(1, 5000);
+        sheet.setColumnWidth(2, 4200);
+    }
+
+    private static void crearTituloInstitucional(XSSFWorkbook workbook, Sheet sheet) {
+        XSSFCellStyle estilo = crearEstiloTitulo(workbook, IndexedColors.DARK_BLUE, 16);
+        
+        Row row = sheet.createRow(0);
+        row.setHeightInPoints(34);
+        Cell cell = row.createCell(2);
+        sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$F$1"));
+        cell.setCellValue(new XSSFRichTextString(Constantes.INSTITUCION));
+        cell.setCellStyle(estilo);
+    }
+
+    private static void crearTituloReporte(XSSFWorkbook workbook, Sheet sheet, String nombreReporte) {
+        XSSFCellStyle estilo = crearEstiloTitulo(workbook, IndexedColors.GREY_50_PERCENT, 14);
+        Row row = sheet.createRow(1);
+        row.setHeightInPoints(28);
+        Cell cell = row.createCell(2);
+        sheet.addMergedRegion(CellRangeAddress.valueOf("$C$2:$F$2"));
+        cell.setCellValue(new XSSFRichTextString(nombreReporte));
+        cell.setCellStyle(estilo);
+    }
+
+    private static XSSFCellStyle crearEstiloTitulo(XSSFWorkbook workbook, IndexedColors color, int tamanioFuente) {
+        XSSFFont font = workbook.createFont();
+        font.setColor(color.index);
+        font.setFontHeightInPoints((short) tamanioFuente);
+        font.setBold(true);
+
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setWrapText(true);
+        style.setFont(font);
+        return style;
+    }
+
+    private static void insertarLogo(XSSFWorkbook workbook, Sheet sheet, InputStream file) throws IOException {
+        byte[] bytes = IOUtils.toByteArray(file);
+        double escala = calcularEscalaLogo(bytes);
+        int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
+        Drawing drawing = sheet.createDrawingPatriarch();
+        Picture pict = drawing.createPicture(crearAnclaLogo(workbook), pictureIdx);
+        pict.resize(escala);
+    }
+
+    private static double calcularEscalaLogo(byte[] bytes) throws IOException {
+        java.awt.image.BufferedImage logo = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+        int logoWidth = logo != null ? logo.getWidth() : HEADER_LOGO_MAX_WIDTH_PX;
+        int logoHeight = logo != null ? logo.getHeight() : HEADER_LOGO_MAX_HEIGHT_PX;
+        double escala = Math.min(
+                (double) HEADER_LOGO_MAX_WIDTH_PX / logoWidth,
+                (double) HEADER_LOGO_MAX_HEIGHT_PX / logoHeight);
+        return Math.min(escala, 1.0d);
+    }
+
+    private static ClientAnchor crearAnclaLogo(XSSFWorkbook workbook) {
+        CreationHelper helper = workbook.getCreationHelper();
+        ClientAnchor anchor = helper.createClientAnchor();
+        anchor.setDx1(Units.pixelToEMU(8));
+        anchor.setDy1(Units.pixelToEMU(6));
+        anchor.setCol1(0);
+        anchor.setRow1(0);
+        anchor.setCol2(3);
+        anchor.setRow2(4);
+        if (anchor instanceof XSSFClientAnchor) {
+            ((XSSFClientAnchor) anchor).setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
+        }
+        return anchor;
+    }
+
+    private static void configurarPanelFijo(Sheet sheet) {
+        sheet.createFreezePane(0, FILA_CABECERA_TABLA + 1, 0, FILA_CABECERA_TABLA + 1);
     }
 
 }

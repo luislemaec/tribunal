@@ -38,7 +38,8 @@ import org.hibernate.envers.Audited;
         indexes = {
             @Index(name = "idx_miembros_jrv_proce_id", columnList = "proce_id"),
             @Index(name = "idx_miembros_jrv_mesa_id", columnList = "mesa_id"),
-            @Index(name = "idx_miembros_jrv_igpe_id", columnList = "igpe_id")
+            @Index(name = "idx_miembros_jrv_igpe_id", columnList = "igpe_id"),
+            @Index(name = "idx_miembros_jrv_proceso_igpe", columnList = "proce_id, igpe_id")
         })
 
 @AttributeOverrides({

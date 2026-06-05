@@ -233,6 +233,18 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         return mapearLista(padronFacade.getPadronPorMesaIds(mesaIds));
     }
 
+    public List<PadronDTO> listarDTOsPorMesaIdsYProceso(List<Integer> mesaIds, Integer procesoId) {
+        if (mesaIds == null || mesaIds.isEmpty() || procesoId == null) {
+            return new ArrayList<>();
+        }
+        return mapearLista(padronFacade.getPadronPorMesaIdsYProceso(mesaIds, procesoId));
+    }
+
+    public int contarSufragantesPorMesaYProceso(Integer mesaId, Integer procesoId) {
+        long total = padronFacade.contarPadronPorMesaYProceso(mesaId, procesoId);
+        return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+    }
+
     public List<PadronDTO> listarDTOsTodosOrdenados() {
         return mapearLista(padronFacade.getAllOrderbyId());
     }

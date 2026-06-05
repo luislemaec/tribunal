@@ -14,6 +14,7 @@ Guia rapida para agentes que trabajen en este proyecto.
 - Seguridad: FORM login con Elytron/WildFly mediante `request.login(...)`
 - Security domain del deployment: `TribunalSecurityDomain`
 - Password hashing: BCrypt (`at.favre.lib:bcrypt`) con costo 12, compatible con Elytron/modular crypt
+- Configuracion de documentos: propiedad JVM `-Drpm.files.path=/var/app/tec/documentos` en `standalone.conf`
 
 ## Estructura Raiz
 
@@ -75,6 +76,27 @@ src/main/java/ec/com/antenasur/
 - `bean/`: estado conversacional o de sesion, especialmente `LoginBean`.
 - `util/`: utilidades transversales; evitar agregar aqui reglas de negocio nuevas.
 
+## Nucleo Electoral
+
+El sistema esta migrado funcionalmente para usar `ProcesoElectoral` como eje del modulo electoral. Evitar volver a introducir logica basada solo en `Periodo` cuando se trate de padron, JRV, actas o escrutinios.
+
+Entidades/tablas centrales:
+
+- `ProcesoElectoral` / `tec.proceso_electoral`: proceso activo y contexto electoral.
+- `Padron` / `tec.padron`: relaciona `igpe_id`, `mesa_id` y `proce_id`; la unicidad funcional es persona-iglesia por proceso.
+- `MiembroJRV` / `tec.miembros_jrv`: designacion de miembros de Junta Receptora del Voto por `igpe_id`, `mesa_id`, `proce_id` y `cargo_id`.
+- `EscrutinioCabecera` / `tec.escrutinio_cabecera`: estado normalizado de apertura, conteo y cierre de mesa por `mesa_id` y `proce_id`.
+- `Escrutinio` / detalle de votos: totales por categoria de voto, mesa y proceso.
+
+Reglas importantes:
+
+- Consultas de padron por mesa deben filtrar tambien por `proce_id`; no usar solo `mesa_id`, porque existen datos historicos de procesos anteriores.
+- La asignacion al padron solo debe considerar `IglesiaPersona.habilitadoPadron = true`.
+- Una iglesia asignada a una mesa dentro de un proceso no debe aparecer como disponible para otra mesa del mismo proceso.
+- JRV debe validar que la persona designada pertenezca al padron de la mesa y del proceso seleccionado.
+- La mesa del Presidente de Mesa en `actaE.xhtml` se resuelve primero desde `miembros_jrv` por `personaId + proce_id + cargo PRESIDENTE`; `mesa.responsable` queda como compatibilidad.
+- Completar una JRV crea o reutiliza el usuario del presidente y asigna el rol `SITEC-Presidente-mesa`.
+
 ## Seguridad y Login
 
 Archivos relevantes:
@@ -109,6 +131,7 @@ Notas de seguridad:
 - Mantener `LoginBean.roles` porque varias vistas usan `loginBean.roles.contains(...)`.
 - Si se agrega cambio/recuperacion de clave, usar `PasswordService.hashBcrypt(...)`.
 - Si se cambia Elytron, verificar `standalone.xml`, `TribunalSecurityDomain`, `TribunalRealm` y `modular-crypt-mapper`.
+- El rol `SITEC-Presidente-mesa` redirige a `actaE.jsf` y debe quedar limitado a la mesa asignada en JRV para el proceso activo.
 
 ## Webapp JSF
 
@@ -187,6 +210,69 @@ Notas:
 - `hibernate.hbm2ddl.auto` esta en `update`; para produccion preferir `validate` o `none` y aplicar cambios con scripts/versionado.
 - `hibernate.jpa.compliance.query=false` conserva compatibilidad con queries heredadas de Hibernate 5, especialmente aliases en `JOIN FETCH`.
 - `migraciones.sql` contiene scripts manuales de BD; tratarlo como archivo sensible.
+- Todos los textos visibles al usuario deben centralizarse en `messages_es.properties`.
+- En `messages_es.properties`, usar caracteres especiales escapados en ASCII/Unicode (`\u00e1`, `\u00e9`, `\u00ed`, `\u00f3`, `\u00fa`, `\u00f1`, `\u00bf`, etc.).
+- Las claves de configuracion antes tomadas de `rpm-catalogos.properties` se centralizan en `messages_es.properties` y/o propiedades JVM:
+  - `rpm.files.path`
+  - `rpm.server.pruebas`
+  - `rpm.server.produccion`
+  - `tec.actas.escrutinio.dir`
+  - `rpm.actas.escrutinio.dir`
+- `rpm-catalogos.properties` no debe tratarse como dependencia obligatoria de runtime.
+
+## Documentos y Reportes
+
+La ubicacion base de documentos se resuelve en `Constantes`:
+
+1. Propiedad JVM `rpm.files.path`.
+2. Clave `rpm.files.path` en `messages_es.properties`.
+3. `jboss.server.data.dir/documentos`.
+4. `java.io.tmpdir/tec/documentos`.
+
+Con `-Drpm.files.path=/var/app/tec/documentos`:
+
+- Actas de escrutinio PDF: `/var/app/tec/documentos/actas-escrutinio`.
+- Listas/Excel de miembros: `/var/app/tec/documentos/listas-miembros`.
+
+Notas:
+
+- No usar rutas duras como `/opt/ACTASE` o `C:\ARCHIVOS\ACTASE`.
+- Al guardar archivos, crear el directorio padre si no existe.
+- `Documentos.doc_path` debe guardar la ruta real donde se escribio el archivo.
+- Para PDF/XLSX revisar `itext/`, controladores involucrados y `DocumentoBean`/`DocumentoService`.
+- Los logos en reportes deben conservar proporcion y no distorsionarse.
+- `ReportePFD.guardarDocumentosActasEObligatorio(...)` debe fallar si no existe contenido PDF o no se puede escribir el archivo.
+- En `actaE.xhtml`, el cierre de mesa debe generar/guardar el PDF antes de marcar el escrutinio como `CERRADO`.
+
+## Pantallas Electorales Clave
+
+`padron.xhtml`:
+
+- Carga recintos bajo demanda; no cargar todo por defecto.
+- Al cambiar canton/parroquia/recinto/mesa, liberar selecciones dependientes.
+- El listado del padron debe respetar el proceso activo.
+- El total de sufragantes de mesa sale de `tec.padron` filtrado por `mesa_id + proce_id + estado`.
+
+`mjrv.xhtml`:
+
+- Registra integrantes de JRV en `tec.miembros_jrv`.
+- No permitir eliminar/modificar una junta completada salvo flujo autorizado.
+- Mensajes deben salir por el growl global.
+- La designacion de Presidente de Mesa habilita el usuario con rol `SITEC-Presidente-mesa`.
+
+`actaE.xhtml`:
+
+- Restringe al Presidente de Mesa a su mesa asignada por JRV.
+- El valor "Sufragantes asignados" se calcula desde el padron del proceso activo, no desde `Mesa.totalVotos`.
+- Flujo esperado: apertura -> conteo/borrador -> generar PDF -> cerrar mesa.
+- Si una mesa ya esta cerrada, puede regenerarse el acta PDF sin modificar el conteo.
+- La tarjeta de cierre debe mostrar "Mesa cerrada" cuando el estado sea `CERRADO`, no "Validacion pendiente".
+
+`reportePadron.xhtml`:
+
+- Exporta Excel usando las utilidades existentes de `ReporteXLSX`.
+- El reporte de padron por mesa tiene encabezado independiente con proceso, provincia, canton, parroquia, recinto y mesa.
+- No repetir en columnas los datos que ya estan en la cabecera del reporte por mesa.
 
 ## Pruebas
 
@@ -249,6 +335,12 @@ mvn -DskipTests compile
 - Al agregar una pantalla JSF, revisar permisos/menu y rutas permitidas, no solo el `.xhtml`.
 - Si se cambian reportes, revisar tanto `itext/` como controladores `report/` y recursos usados por el PDF/XLSX.
 - Evitar cambios amplios en temas PrimeFaces generados (`primefaces-ecuador-*`) salvo que el objetivo sea theming.
+- En entidades JPA, preferir nombres explicitos de foreign keys con `@ForeignKey(name = "...")`.
+- Para nuevas relaciones `@ManyToOne`, revisar `nullable`, `fetch`, indices y nombres de constraints.
+- Para JSF/PrimeFaces, respetar `id`, `process`, `update`, `action`, `actionListener`, `rendered`, `disabled` y validaciones existentes.
+- Usar el componente global de mensajes (`WEB-INF/globals.xhtml`) y evitar duplicar growls locales salvo necesidad justificada.
+- Al cambiar seleccion multiple en PrimeFaces, actualizar explicitamente botones/resumenes afectados mediante AJAX.
+- En interfaces institucionales, mantener diseno sobrio, claro y consistente; no saturar formularios ni tablas.
 
 ## Archivos Sensibles
 
@@ -261,5 +353,13 @@ mvn -DskipTests compile
 - `src/main/java/ec/com/antenasur/service/PasswordService.java`: hashing/verificacion BCrypt.
 - `src/main/java/ec/com/antenasur/util/LoginFilter.java`: control transversal de acceso.
 - `src/main/java/ec/com/antenasur/service/UsuarioService.java`: carga de contexto autenticado.
+- `src/main/java/ec/com/antenasur/util/Constantes.java`: rutas centralizadas, roles y propiedades de configuracion.
+- `src/main/java/ec/com/antenasur/controller/PadronController.java`: asignacion de iglesias/personas al padron por proceso.
+- `src/main/java/ec/com/antenasur/controller/JrvController.java`: designacion de JRV y habilitacion de Presidente de Mesa.
+- `src/main/java/ec/com/antenasur/controller/ActaEController.java`: apertura, conteo, cierre y generacion de acta PDF.
+- `src/main/java/ec/com/antenasur/service/tec/EscrutinioService.java`: reglas de estado de escrutinio.
+- `src/main/java/ec/com/antenasur/itext/ReportePFD.java`: generacion y guardado obligatorio de PDF.
+- `src/main/java/ec/com/antenasur/itext/ReporteXLSX.java`: reportes Excel institucionales.
+- `src/main/resources/ec/com/antenasur/resources/messages_es.properties`: textos visibles y configuracion centralizada.
 - `migraciones.sql`: scripts manuales de BD.
 - `db_tribunal.backup`: respaldo de BD; no modificar ni reemplazar sin indicacion explicita.

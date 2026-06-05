@@ -234,12 +234,23 @@ public class ReportePFD {
 
     public static void guardarDocumentosActasE(String nombreDocumento) {
         try {
-            Path path = Paths.get("/opt/ACTASE/" + nombreDocumento + ".pdf");
-            Files.write(path, baos.toByteArray());
+            guardarDocumentosActasEObligatorio(nombreDocumento);
         } catch (IOException e) {
             LOG.error("ERROR AL GUARDAR ARCHIVOS" + nombreDocumento, e);
         }
 
+    }
+
+    public static String guardarDocumentosActasEObligatorio(String nombreDocumento) throws IOException {
+        if (baos == null || baos.size() == 0) {
+            throw new IOException("No existe contenido PDF generado para guardar.");
+        }
+        Path path = Paths.get(Constantes.getPathActaEscrutinio(nombreDocumento));
+        if (path.getParent() != null) {
+            Files.createDirectories(path.getParent());
+        }
+        Files.write(path, baos.toByteArray());
+        return path.toString();
     }
 
     public static void getFinalParagraph(String nombreUsuario) {

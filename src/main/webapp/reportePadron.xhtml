@@ -82,8 +82,8 @@
                             <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.cantones}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorCanton()}"
-                                    process="@this" update="resumenReportePadron parroquia recintos mesas tblReportePadron"/>
+                            <p:ajax event="change" listener="#{padronController.obtieneReportePadronPorCanton()}"
+                                    process="@this" update="resumenReportePadron parroquia recintos mesas tblReportePadron btnExportarExcel"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
@@ -93,8 +93,8 @@
                             <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorParroquia()}"
-                                    process="@this" update="resumenReportePadron recintos mesas tblReportePadron"/>
+                            <p:ajax event="change" listener="#{padronController.obtieneReportePadronPorParroquia()}"
+                                    process="@this" update="resumenReportePadron recintos mesas tblReportePadron btnExportarExcel"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
@@ -105,8 +105,8 @@
                             <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.listaRecintos}" var="recinto"
                                            itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
-                            <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorRecinto()}"
-                                    process="@this" update="resumenReportePadron mesas tblReportePadron"/>
+                            <p:ajax event="change" listener="#{padronController.obtieneReportePadronPorRecinto()}"
+                                    process="@this" update="resumenReportePadron mesas tblReportePadron btnExportarExcel"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
@@ -117,8 +117,8 @@
                             <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{padronController.listaMesas}" var="mesa"
                                            itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
-                            <p:ajax event="change" listener="#{padronController.obtieneListaDatosPorMesa()}"
-                                    process="@this" update="resumenReportePadron tblReportePadron"/>
+                            <p:ajax event="change" listener="#{padronController.obtieneReportePadronPorMesa()}"
+                                    process="@this" update="resumenReportePadron tblReportePadron btnExportarExcel"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
@@ -140,12 +140,13 @@
                                   styleClass="ui-button-outlined ui-button-secondary"/>
                         <p:inputText id="globalFilter" placeholder="#{msg['padron.buscador.placeholder']}"
                                      onkeyup="PF('wdTablaReportePadron').filter()" styleClass="w-12rem"/>
-                        <p:commandButton value="#{msg['padron.boton.exportar.pdf']}" icon="pi pi-file-pdf"
-                                         title="#{msg['padron.boton.exportar.pdf.tooltip']}"
-                                         styleClass="ui-button-outlined ui-button-help" ajax="false"
-                                         disabled="#{empty padronController.listaPadron}">
-                            <p:dataExporter type="pdf" target="tblReportePadron" fileName="ReportePadron"/>
-                        </p:commandButton>
+                        <p:commandButton id="btnExportarExcel"
+                                         value="#{msg['reportePadron.boton.exportar.excel']}" icon="pi pi-file-excel"
+                                         title="#{msg['reportePadron.boton.exportar.excel.tooltip']}"
+                                         styleClass="ui-button-outlined ui-button-success"
+                                         actionListener="#{padronController.exportarExcelReportePadron}"
+                                         ajax="false"
+                                         disabled="#{padronController.mesaSeleccionado.id eq null}"/>
                     </div>
                 </div>
 

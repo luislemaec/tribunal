@@ -9,7 +9,6 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import org.primefaces.PrimeFaces;
 import org.primefaces.model.CheckboxTreeNode;
 import org.primefaces.model.TreeNode;
 
@@ -135,8 +134,10 @@ public class PermisosController implements Serializable {
             if (menuRol != null && rolSeleccionado != null) {
                 MenuRolDTO persistido = menuRolService.guardarDesdeDTO(menuRol);
                 if (persistido != null) {
+                    menuRol.setId(persistido.getId());
+                    menuRol.setEstado(persistido.getEstado());
                     menuRolSeleccionado = persistido;
-                    if (menuRol.getId() != null && menuRol.getId() > 0) {
+                    if (persistido.getId() != null && persistido.getId() > 0) {
                         JsfUtil.addInfoMessage("PERMISOS ACTUALIZADOS");
                     } else {
                         JsfUtil.addSuccessMessage(persistido.getMenu().getNombre()
@@ -144,8 +145,6 @@ public class PermisosController implements Serializable {
                     }
                 }
             }
-            init();
-            PrimeFaces.current().ajax().update("frmPermisos:trTblCatalogo");
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR ASIGNACION DE PERMISOS", e);
         }

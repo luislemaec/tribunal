@@ -1,7 +1,10 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,7 @@ import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.PadronDTO;
 import ec.com.antenasur.dto.RecintoDTO;
+import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.IglesiaPersonaService;
@@ -243,7 +247,7 @@ public class PadronController implements Serializable {
         }
         List<Integer> mesaIds = new ArrayList<>();
         mesaIds.add(mesaSeleccionado.getId());
-        listaPadron = padronService.listarDTOsPorMesaIds(mesaIds);
+        listaPadron = listarPadronPorMesasProcesoActivo(mesaIds);
         listaIglesiasAsignadas = padronService.obtenerIglesiasUnicasEnPadronDTO(listaPadron);
 
         List<Integer> parroquiaIds = new ArrayList<>();
@@ -273,7 +277,7 @@ public class PadronController implements Serializable {
             JsfUtil.addInfoMessageFromBundle("padron.mensaje.sin.mesas");
             return;
         }
-        this.listaPadron = padronService.listarDTOsPorMesaIds(extraerIds(listaMesas));
+        this.listaPadron = listarPadronPorMesasProcesoActivo(extraerIds(listaMesas));
         if (listaPadron == null) {
             JsfUtil.addInfoMessageFromBundle("padron.mensaje.sin.padron");
             return;
@@ -284,6 +288,77 @@ public class PadronController implements Serializable {
         this.listaIglesiasPorAsignar = iglesiaService.listarDTOsPorAsignarPorIds(listaIdIglesias, listaIdParroquias);
         cargarTotalesMiembrosHabilitados();
         generaPickList();
+    }
+
+    public void obtieneReportePadronPorCanton() {
+        liberarSeleccionGeograficaDesdeCanton();
+        if (cantonSeleccionado == null || cantonSeleccionado.getId() == null) {
+            return;
+        }
+        if (OPCION_TODOS.equals(cantonSeleccionado.getId())) {
+            this.parroquias = obtenerParroquiasDeCantones(cantones);
+            cargarCombosReportePadron(parroquias);
+            return;
+        }
+        this.cantonSeleccionado = geograpBean.getById(this.cantonSeleccionado.getId());
+        this.parroquias = geograpBean.getByFatherId(this.cantonSeleccionado.getId());
+        cargarCombosReportePadron(parroquias);
+    }
+
+    public void obtieneReportePadronPorParroquia() {
+        liberarSeleccionGeograficaDesdeParroquia();
+        if (parroquiaSeleccionado == null || parroquiaSeleccionado.getId() == null) {
+            return;
+        }
+        if (OPCION_TODOS.equals(parroquiaSeleccionado.getId())) {
+            cargarCombosReportePadron(parroquias);
+            return;
+        }
+        this.parroquiaSeleccionado = geograpBean.getById(this.parroquiaSeleccionado.getId());
+        List<Geograp> parroquiasTmp = new ArrayList<>();
+        parroquiasTmp.add(parroquiaSeleccionado);
+        cargarCombosReportePadron(parroquiasTmp);
+    }
+
+    public void obtieneReportePadronPorRecinto() {
+        limpiarDatosAsignacionMesa();
+        this.mesaSeleccionado = new MesaDTO();
+        this.listaMesas = new ArrayList<>();
+        if (recintoSeleccionado == null || recintoSeleccionado.getId() == null) {
+            return;
+        }
+        recintoSeleccionado = recintoService.obtenerDTOPorId(recintoSeleccionado.getId());
+        if (recintoSeleccionado == null || recintoSeleccionado.getId() == null) {
+            return;
+        }
+        List<Integer> recintoIds = new ArrayList<>();
+        recintoIds.add(recintoSeleccionado.getId());
+        this.listaMesas = filtrarMesasPorRecintoIds(mesaService.listarDTOs(), recintoIds);
+    }
+
+    public void obtieneReportePadronPorMesa() {
+        obtieneListaDatosPorMesa();
+    }
+
+    private void cargarCombosReportePadron(List<Geograp> parroquiasTmp) {
+        limpiarDatosAsignacionMesa();
+        if (parroquiasTmp == null || parroquiasTmp.isEmpty()) {
+            this.listaRecintos = new ArrayList<>();
+            this.listaMesas = new ArrayList<>();
+            return;
+        }
+        this.listaRecintos = recintoService.listarDTOsPorParroquias(parroquiasTmp);
+        if (listaRecintos == null || listaRecintos.isEmpty()) {
+            this.listaRecintos = new ArrayList<>();
+            this.listaMesas = new ArrayList<>();
+            JsfUtil.addInfoMessageFromBundle("padron.mensaje.sin.recintos");
+            return;
+        }
+        this.listaMesas = filtrarMesasPorRecintoIds(mesaService.listarDTOs(), extraerIds(listaRecintos));
+        if (listaMesas == null || listaMesas.isEmpty()) {
+            this.listaMesas = new ArrayList<>();
+            JsfUtil.addInfoMessageFromBundle("padron.mensaje.sin.mesas");
+        }
     }
 
     private void generaPickList() {
@@ -511,7 +586,7 @@ public class PadronController implements Serializable {
             return;
         }
 
-        listaPadron = padronService.listarDTOsPorMesaIds(extraerIds(listaMesas));
+        listaPadron = listarPadronPorMesasProcesoActivo(extraerIds(listaMesas));
         listaIglesiasAsignadas = padronService.obtenerIglesiasUnicasEnPadronDTO(listaPadron);
 
         List<Integer> idsParroquias = obtenerIdsParroquiasActuales();
@@ -540,6 +615,121 @@ public class PadronController implements Serializable {
             }
         }
         totalMiembrosHabilitadosPorIglesia = iglesiaPersonaService.contarPersonasHabilitadasPadronPorIglesias(ids);
+    }
+
+    private List<PadronDTO> listarPadronPorMesasProcesoActivo(List<Integer> mesaIds) {
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        if (procesoId == null) {
+            return new ArrayList<>();
+        }
+        return padronService.listarDTOsPorMesaIdsYProceso(mesaIds, procesoId);
+    }
+
+    public void exportarExcelReportePadron() {
+        try {
+            if (mesaSeleccionado == null || mesaSeleccionado.getId() == null) {
+                JsfUtil.addWarningMessageFromBundle("padron.mensaje.mesa.requerida");
+                return;
+            }
+            List<PadronDTO> lista = listaPadron != null ? listaPadron : Collections.emptyList();
+            String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+            String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
+
+            ReporteXLSX.nuevoExcel("Reporte del Padron Electoral");
+            ReporteXLSX.creaEspacioInformativoPadron(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado(),
+                    getProcesoReportePadron(), getProvinciaReportePadron(), getCantonReportePadron(), getParroquiaReportePadron(),
+                    getRecintoReportePadron(), getMesaReportePadron());
+
+            String[] columnas = {
+                "NRO.", "IDENTIFICACION", "NOMBRES", "IGLESIA", "COMUNIDAD / BARRIO", "ESTADO"
+            };
+            int[] anchos = { 1800, 5000, 9000, 10000, 8000, 4000 };
+            ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+
+            String[][] datos = new String[lista.size()][columnas.length];
+            for (int i = 0; i < lista.size(); i++) {
+                PadronDTO padron = lista.get(i);
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = texto(padron != null && padron.getIglesiaPersona() != null
+                        && padron.getIglesiaPersona().getPersona() != null
+                        ? padron.getIglesiaPersona().getPersona().getDocumento() : null);
+                datos[i][2] = texto(padron != null && padron.getIglesiaPersona() != null
+                        && padron.getIglesiaPersona().getPersona() != null
+                        ? padron.getIglesiaPersona().getPersona().getNombres() : null);
+                datos[i][3] = texto(padron != null && padron.getIglesiaPersona() != null
+                        && padron.getIglesiaPersona().getIglesia() != null
+                        ? padron.getIglesiaPersona().getIglesia().getNombre() : null);
+                datos[i][4] = texto(padron != null && padron.getIglesiaPersona() != null
+                        && padron.getIglesiaPersona().getIglesia() != null
+                        ? padron.getIglesiaPersona().getIglesia().getComunidad() : null);
+                datos[i][5] = Boolean.TRUE.equals(padron != null ? padron.getSufrago() : null) ? "Sufrago" : "Pendiente";
+            }
+
+            ReporteXLSX.creaContenidoTabla(datos, columnas);
+            ReporteXLSX.setFinalParagraph(lista.size());
+            ReporteXLSX.descargarExcel("reporte_padron_electoral");
+        } catch (Exception e) {
+            log.error("Error al exportar Excel del reporte de padron", e);
+            JsfUtil.addErrorMessageFromBundle("reportePadron.mensaje.exportar.excel.error");
+        }
+    }
+
+    private static String texto(String valor) {
+        return valor != null ? valor : "";
+    }
+
+    private String getProcesoReportePadron() {
+        if (procesoActivo != null && procesoActivo.getNombre() != null) {
+            return procesoActivo.getNombre();
+        }
+        if (listaPadron != null && !listaPadron.isEmpty()) {
+            return texto(listaPadron.get(0).getProcesoNombre());
+        }
+        return "";
+    }
+
+    private String getProvinciaReportePadron() {
+        Integer cantonId = mesaSeleccionado != null && mesaSeleccionado.getCantonId() != null
+                ? mesaSeleccionado.getCantonId()
+                : (recintoSeleccionado != null && recintoSeleccionado.getCantonId() != null
+                        ? recintoSeleccionado.getCantonId()
+                        : (cantonSeleccionado != null ? cantonSeleccionado.getId() : null));
+        if (cantonId == null || OPCION_TODOS.equals(cantonId)) {
+            return "";
+        }
+        Geograp canton = geograpBean.getById(cantonId);
+        return canton != null && canton.getGeograp() != null ? texto(canton.getGeograp().getName()) : "";
+    }
+
+    private String getCantonReportePadron() {
+        if (mesaSeleccionado != null && mesaSeleccionado.getCantonNombre() != null) {
+            return mesaSeleccionado.getCantonNombre();
+        }
+        if (recintoSeleccionado != null && recintoSeleccionado.getCantonNombre() != null) {
+            return recintoSeleccionado.getCantonNombre();
+        }
+        return cantonSeleccionado != null ? texto(cantonSeleccionado.getName()) : "";
+    }
+
+    private String getParroquiaReportePadron() {
+        if (mesaSeleccionado != null && mesaSeleccionado.getUbicacionNombre() != null) {
+            return mesaSeleccionado.getUbicacionNombre();
+        }
+        if (recintoSeleccionado != null && recintoSeleccionado.getUbicacionNombre() != null) {
+            return recintoSeleccionado.getUbicacionNombre();
+        }
+        return parroquiaSeleccionado != null ? texto(parroquiaSeleccionado.getName()) : "";
+    }
+
+    private String getRecintoReportePadron() {
+        if (mesaSeleccionado != null && mesaSeleccionado.getRecinto() != null) {
+            return texto(mesaSeleccionado.getRecinto().getNombre());
+        }
+        return recintoSeleccionado != null ? texto(recintoSeleccionado.getNombre()) : "";
+    }
+
+    private String getMesaReportePadron() {
+        return mesaSeleccionado != null ? texto(mesaSeleccionado.getNombre()) : "";
     }
 
     private List<Integer> obtenerIdsParroquiasActuales() {

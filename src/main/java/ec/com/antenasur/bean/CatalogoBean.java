@@ -23,8 +23,6 @@ import lombok.Setter;
 public class CatalogoBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final String PATH_ACTAS_ESCRUTINIO = "C:\\ARCHIVOS\\ACTASE\\";
-
     private static final String AUTORIDADES_MESA = "CARGO AUTORIDADES MESA";
     private static final String AUTORIDADES_TRIBUNAL = "CARGOS AUTORIDADES TRIBUNAL";
     private static final String AUTORIDADES_CONPOCIIECH = "CARGO AUTORIDADES CONPOCIIECH";

@@ -10,6 +10,7 @@ import ec.com.antenasur.model.tec.MiembroJRV;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.service.tec.MiembroJRVService;
+import java.util.Collections;
 import java.util.Set;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -80,22 +81,24 @@ public class ActaEBean implements Serializable {
 
     private void cargaAutoridadesMesa() {
         try {
+            if (miembrosJRV == null) {
+                miembrosJRV = Collections.emptySet();
+            }
             for (MiembroJRV mjrv : miembrosJRV) {
-                switch (mjrv.getCargo().getId()) {
-                    case 1: {
-                        presidente = mjrv.getIglesiaPersona().getPersona();
-                        break;
-                    }
-                    case 2: {
-                        secretario = mjrv.getIglesiaPersona().getPersona();
-                        break;
-                    }
-                    case 3: {
-                        tesoreo = mjrv.getIglesiaPersona().getPersona();
-                    }
-                    case 4: {
-                        vocal = mjrv.getIglesiaPersona().getPersona();
-                    }
+                if (mjrv == null || mjrv.getCargo() == null || mjrv.getCargo().getNombre() == null
+                        || mjrv.getIglesiaPersona() == null || mjrv.getIglesiaPersona().getPersona() == null) {
+                    continue;
+                }
+                String cargo = mjrv.getCargo().getNombre().trim().toUpperCase();
+                Persona persona = mjrv.getIglesiaPersona().getPersona();
+                if (cargo.contains("PRESIDENTE")) {
+                    presidente = persona;
+                } else if (cargo.contains("SECRETARIO")) {
+                    secretario = persona;
+                } else if (cargo.contains("TESORERO")) {
+                    tesoreo = persona;
+                } else if (cargo.contains("VOCAL")) {
+                    vocal = persona;
                 }
             }
         } catch (Exception e) {

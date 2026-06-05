@@ -45,6 +45,12 @@ WHERE NOT EXISTS (
     SELECT 1 FROM public.tb_rol WHERE rol_nombre = 'SITEC-Tribunal'
 );
 
+INSERT INTO public.tb_rol (estado, f_crea, u_crea, rol_description, rol_nombre)
+SELECT TRUE, NOW(), 'Admin', 'Presidente de mesa electoral', 'SITEC-Presidente-mesa'
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.tb_rol WHERE rol_nombre = 'SITEC-Presidente-mesa'
+);
+
 -- ============================================================================
 -- MENÚ: Cronograma
 -- IMPORTANTE: verificar que menu_padre_id = 11 corresponde al menú padre

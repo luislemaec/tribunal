@@ -56,8 +56,6 @@ public class PersonaController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String PATH_LISTA_MIEMBROS = "C:\\ARCHIVOS\\ACTASE\\";
-
     @Inject
     private LoginBean loginBean;
 
@@ -533,13 +531,16 @@ public class PersonaController implements Serializable {
             int tamanioNombre = file.getFileName().length();
             String extencion = file.getFileName().substring(tamanioNombre - 5, tamanioNombre);
             String nombreArchivo = iglesiaSeleccionado.getNombre() + "-" + JsfUtil.getFechaStringYYYYMMddHHmm(new Date());
-            String pathCompleto = PATH_LISTA_MIEMBROS + nombreArchivo + extencion;
+            String pathCompleto = Constantes.getPathListaMiembros(nombreArchivo, extencion);
 
             Documentos documentoNuevo = new Documentos(nombreArchivo, pathCompleto, new TipoDocumento(2),
-                    iglesiaSeleccionado.getId(), extencion, "application/" + extencion, nombreArchivo);
+                    iglesiaSeleccionado.getId(), extencion, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
             documentoBean.guardarDocumento(documentoNuevo);
 
             Path path = Paths.get(pathCompleto);
+            if (path.getParent() != null) {
+                Files.createDirectories(path.getParent());
+            }
             Files.write(path, file.getContent());
             JsfUtil.addSuccessMessage(nombreArchivo + " Almacenado");
         } catch (IOException e) {

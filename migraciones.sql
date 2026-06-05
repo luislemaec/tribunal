@@ -381,6 +381,7 @@ CREATE INDEX IF NOT EXISTS idx_escrutinio_categoria_id ON tec.escrutinio(cat_vot
 
 CREATE INDEX IF NOT EXISTS idx_miembros_jrv_mesa_id ON tec.miembros_jrv(mesa_id);
 CREATE INDEX IF NOT EXISTS idx_miembros_jrv_igpe_id ON tec.miembros_jrv(igpe_id);
+CREATE INDEX IF NOT EXISTS idx_miembros_jrv_proceso_igpe ON tec.miembros_jrv(proce_id, igpe_id);
 
 CREATE INDEX IF NOT EXISTS idx_tribunal_cargo_id ON tec.tribunal(cargo_id);
 CREATE INDEX IF NOT EXISTS idx_tribunal_igpe_id ON tec.tribunal(igpe_id);
@@ -473,6 +474,31 @@ BEGIN
      ) THEN
     ALTER TABLE tec.miembros_jrv
       ADD CONSTRAINT uk_miembros_jrv_proceso_mesa_cargo UNIQUE (proce_id, mesa_id, cargo_id);
+  END IF;
+END $$;
+
+-- Regla activa adicional: una persona solo puede pertenecer a una JRV por proceso.
+-- Al ser eliminacion logica, la restriccion debe ser parcial sobre estado activo.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+      SELECT 1 FROM pg_indexes
+       WHERE schemaname = 'tec'
+         AND tablename = 'miembros_jrv'
+         AND indexname = 'uk_miembros_jrv_activo_proceso_igpe'
+  )
+     AND NOT EXISTS (
+          SELECT 1
+            FROM tec.miembros_jrv
+           WHERE proce_id IS NOT NULL
+             AND igpe_id IS NOT NULL
+             AND COALESCE(estado, TRUE) = TRUE
+           GROUP BY proce_id, igpe_id
+          HAVING COUNT(*) > 1
+     ) THEN
+    CREATE UNIQUE INDEX uk_miembros_jrv_activo_proceso_igpe
+      ON tec.miembros_jrv(proce_id, igpe_id)
+      WHERE COALESCE(estado, TRUE) = TRUE;
   END IF;
 END $$;
 
@@ -574,3 +600,126 @@ BEGIN
     ALTER TABLE tec.recintos ALTER COLUMN rec_nombre SET NOT NULL;
   END IF;
 END $$;
+
+-- ============================================================================
+-- 12) ROLES: Presidente de Mesa
+-- ----------------------------------------------------------------------------
+-- Requerido por el flujo de Miembros JRV. Al completar una junta, el sistema
+-- crea o reutiliza el usuario del Presidente y le asigna este rol.
+-- ============================================================================
+
+INSERT INTO public.tb_rol (estado, f_crea, u_crea, rol_description, rol_nombre)
+SELECT TRUE, NOW(), 'migracion-mjrv', 'Presidente de mesa electoral', 'SITEC-Presidente-mesa'
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.tb_rol WHERE rol_nombre = 'SITEC-Presidente-mesa'
+);
+
+-- ============================================================================
+-- 13) ESCRUTINIOS: cabecera normalizada por mesa/proceso
+-- ----------------------------------------------------------------------------
+-- Se separa la responsabilidad del escrutinio de tec.mesas. La tabla
+-- tec.escrutinio conserva el detalle por categoria; esta cabecera concentra
+-- estado, fechas, responsable, totales y observaciones del proceso de conteo.
+-- No se eliminan columnas legacy de tec.mesas en esta migracion.
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS tec.escrutinio_cabecera (
+    esca_id SERIAL PRIMARY KEY,
+    mesa_id INTEGER NOT NULL,
+    proce_id INTEGER NOT NULL,
+    esca_estado VARCHAR(40) NOT NULL DEFAULT 'PENDIENTE',
+    esca_presidente VARCHAR(100),
+    esca_fecha_apertura TIMESTAMP,
+    esca_fecha_inicio_conteo TIMESTAMP,
+    esca_fecha_cierre TIMESTAMP,
+    esca_total_sufragantes INTEGER NOT NULL DEFAULT 0,
+    esca_total_votos_registrados INTEGER NOT NULL DEFAULT 0,
+    esca_total_votos_validos INTEGER NOT NULL DEFAULT 0,
+    esca_total_votos_blancos INTEGER NOT NULL DEFAULT 0,
+    esca_total_votos_nulos INTEGER NOT NULL DEFAULT 0,
+    esca_obs_apertura VARCHAR(1000),
+    esca_obs_conteo VARCHAR(1000),
+    esca_obs_cierre VARCHAR(1000),
+    estado BOOLEAN DEFAULT TRUE,
+    f_crea TIMESTAMP DEFAULT NOW(),
+    f_actualiza TIMESTAMP,
+    u_crea VARCHAR(100),
+    u_actualiza VARCHAR(100)
+);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_escrutinio_cabecera_mesa') THEN
+    ALTER TABLE tec.escrutinio_cabecera
+      ADD CONSTRAINT fk_escrutinio_cabecera_mesa
+      FOREIGN KEY (mesa_id) REFERENCES tec.mesas(mesa_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_escrutinio_cabecera_proceso') THEN
+    ALTER TABLE tec.escrutinio_cabecera
+      ADD CONSTRAINT fk_escrutinio_cabecera_proceso
+      FOREIGN KEY (proce_id) REFERENCES tec.proceso_electoral(proce_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_escrutinio_cabecera_proceso_mesa') THEN
+    ALTER TABLE tec.escrutinio_cabecera
+      ADD CONSTRAINT uk_escrutinio_cabecera_proceso_mesa UNIQUE (proce_id, mesa_id);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_escrutinio_cabecera_proce_id ON tec.escrutinio_cabecera(proce_id);
+CREATE INDEX IF NOT EXISTS idx_escrutinio_cabecera_mesa_id ON tec.escrutinio_cabecera(mesa_id);
+CREATE INDEX IF NOT EXISTS idx_escrutinio_cabecera_estado ON tec.escrutinio_cabecera(esca_estado);
+
+-- Backfill desde detalles existentes y columnas legacy de mesa.
+INSERT INTO tec.escrutinio_cabecera (
+    mesa_id,
+    proce_id,
+    esca_estado,
+    esca_presidente,
+    esca_fecha_apertura,
+    esca_fecha_inicio_conteo,
+    esca_fecha_cierre,
+    esca_total_sufragantes,
+    esca_total_votos_registrados,
+    esca_total_votos_validos,
+    esca_total_votos_blancos,
+    esca_total_votos_nulos,
+    esca_obs_conteo,
+    esca_obs_cierre,
+    estado,
+    f_crea,
+    u_crea
+)
+SELECT e.mesa_id,
+       e.proce_id,
+       CASE
+         WHEN m.estado_tarea = 'COMPLETADO' THEN 'CERRADO'
+         WHEN COALESCE(SUM(e.total_votos), 0) > 0 THEN 'CONTEO_REGISTRADO'
+         ELSE 'PENDIENTE'
+       END,
+       m.u_responsable,
+       NULL,
+       CASE WHEN COALESCE(SUM(e.total_votos), 0) > 0 THEN NOW() ELSE NULL END,
+       CASE WHEN m.estado_tarea = 'COMPLETADO' THEN COALESCE(m.f_actualiza, NOW()) ELSE NULL END,
+       COALESCE(m.totalvotos, 0),
+       COALESCE(SUM(e.total_votos), 0),
+       COALESCE(SUM(CASE
+           WHEN UPPER(COALESCE(cv.nombre, '')) LIKE '%BLANCO%' THEN 0
+           WHEN UPPER(COALESCE(cv.nombre, '')) LIKE '%NULO%' THEN 0
+           ELSE e.total_votos
+       END), 0),
+       COALESCE(SUM(CASE WHEN UPPER(COALESCE(cv.nombre, '')) LIKE '%BLANCO%' THEN e.total_votos ELSE 0 END), 0),
+       COALESCE(SUM(CASE WHEN UPPER(COALESCE(cv.nombre, '')) LIKE '%NULO%' THEN e.total_votos ELSE 0 END), 0),
+       m.observacion,
+       CASE WHEN m.estado_tarea = 'COMPLETADO' THEN m.observacion ELSE NULL END,
+       TRUE,
+       NOW(),
+       'migracion-escrutinio-cabecera'
+  FROM tec.escrutinio e
+  JOIN tec.mesas m ON m.mesa_id = e.mesa_id
+  LEFT JOIN tec.categoria_voto cv ON cv.cat_voto_id = e.cat_voto_id
+ WHERE e.proce_id IS NOT NULL
+ GROUP BY e.mesa_id, e.proce_id, m.estado_tarea, m.u_responsable, m.f_actualiza,
+          m.totalvotos, m.observacion
+ON CONFLICT (proce_id, mesa_id) DO NOTHING;

@@ -4,8 +4,8 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
 import java.io.File;
-import java.io.FileInputStream;
-import java.util.Properties;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
@@ -16,8 +16,10 @@ import jakarta.faces.context.FacesContext;
  */
 public class Constantes {
 
+    private static final String BUNDLE_MESSAGES = "ec.com.antenasur.resources.messages_es";
+
     /*NOTIFICACIONES*/
-    public static final String INSTITUCION = "Tribunal electoral de CONPOCIIECH";
+    public static final String INSTITUCION = "CONPOCIIECH";
     public static final String SISTEMA = "SISTEMA TEC";
 
     /*ESTADO DE PROCESO*/
@@ -100,24 +102,62 @@ public class Constantes {
      * @param value
      * @return
      */
-    private static String loadFromExternalProperties(String value) {
-        try {
-            String realAdd = System.getProperty("jboss.home.dir") + "/standalone/configuration/rpm-catalogos.properties";
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(realAdd));
-            return properties.get(value).toString();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    private static String loadFromMessages(String value) {
+        String systemValue = System.getProperty(value);
+        if (systemValue != null && !systemValue.isBlank()) {
+            return systemValue;
         }
-        return null;
+        try {
+            String bundleValue = ResourceBundle.getBundle(BUNDLE_MESSAGES).getString(value);
+            return bundleValue != null && !bundleValue.isBlank() ? bundleValue.trim() : null;
+        } catch (MissingResourceException e) {
+            return null;
+        }
     }
 
     public static String getPruebasServer() {
-        return loadFromExternalProperties("rpm.server.pruebas");
+        return loadFromMessages("rpm.server.pruebas");
     }
 
     public static String getProduccionServer() {
-        return loadFromExternalProperties("rpm.server.produccion");
+        return loadFromMessages("rpm.server.produccion");
+    }
+
+    public static String getDirectorioDocumentos() {
+        String directorio = loadFromMessages("rpm.files.path");
+        if (directorio == null || directorio.isBlank()) {
+            String jbossDataDir = System.getProperty("jboss.server.data.dir");
+            directorio = (jbossDataDir != null && !jbossDataDir.isBlank())
+                    ? jbossDataDir + File.separator + "documentos"
+                    : System.getProperty("java.io.tmpdir") + File.separator + "tec" + File.separator + "documentos";
+        }
+        return directorio;
+    }
+
+    public static String getDirectorioDocumentos(String subdirectorio) {
+        if (subdirectorio == null || subdirectorio.isBlank()) {
+            return getDirectorioDocumentos();
+        }
+        return getDirectorioDocumentos() + File.separator + subdirectorio;
+    }
+
+    public static String getDirectorioActasEscrutinio() {
+        String directorio = loadFromMessages("tec.actas.escrutinio.dir");
+        if (directorio == null || directorio.isBlank()) {
+            directorio = loadFromMessages("rpm.actas.escrutinio.dir");
+        }
+        if (directorio == null || directorio.isBlank()) {
+            directorio = getDirectorioDocumentos("actas-escrutinio");
+        }
+        return directorio;
+    }
+
+    public static String getPathActaEscrutinio(String nombreDocumento) {
+        return getDirectorioActasEscrutinio() + File.separator + nombreDocumento + ".pdf";
+    }
+
+    public static String getPathListaMiembros(String nombreDocumento, String extension) {
+        return getDirectorioDocumentos("listas-miembros") + File.separator + nombreDocumento + extension;
     }
 
     public static String getRolSuperadministrador() {

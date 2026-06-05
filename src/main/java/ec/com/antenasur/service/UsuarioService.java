@@ -20,6 +20,7 @@ import ec.com.antenasur.model.Persona;
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
+import ec.com.antenasur.exception.NegocioException;
 
 @Stateless
 public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFacade> {
@@ -193,6 +194,36 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             iglesiaPersonaFacade.create(vinculo);
         }
         return UsuarioDTO.fromEntity(creado.getUsuario());
+    }
+
+    public Usuario asegurarUsuarioConRol(Persona persona, Rol rol) {
+        if (persona == null || persona.getDocumento() == null || persona.getDocumento().isBlank() || rol == null) {
+            throw new NegocioException("No se pudo crear el usuario porque faltan datos de la persona o del rol.");
+        }
+        Usuario usuario = usuarioFacade.findByUsuarioName(persona.getDocumento());
+        if (usuario == null) {
+            usuario = new Usuario();
+            usuario.setUsername(persona.getDocumento());
+            usuario.setPersonsa(persona);
+            usuario.setEstado(true);
+            usuario.setPermanente(false);
+            usuario.setContraseniaTemp(persona.getDocumento());
+            usuario.setContrasenia(passwordService.hashBcrypt(persona.getDocumento()));
+            usuario = usuarioFacade.create(usuario);
+        } else if (usuario.getPersonsa() == null) {
+            usuario.setPersonsa(persona);
+            usuario = usuarioFacade.edit(usuario);
+        }
+
+        List<RolUsuario> rolesActuales = rolUsuarioFacade.findByUserNameAndRoleName(
+                usuario.getUsername(), rol.getNombre());
+        if (rolesActuales == null || rolesActuales.isEmpty()) {
+            RolUsuario rolUsuario = new RolUsuario();
+            rolUsuario.setUsuario(usuario);
+            rolUsuario.setRol(rol);
+            rolUsuarioFacade.create(rolUsuario);
+        }
+        return usuario;
     }
 
     /**

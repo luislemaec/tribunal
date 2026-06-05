@@ -38,7 +38,8 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             document.add(logo);
 
             String ipServidor = JsfUtil.obtieneIpServidor();
-            if (!ipServidor.equals(Constantes.getProduccionServer())) {
+            String servidorProduccion = Constantes.getProduccionServer();
+            if (servidorProduccion == null || !servidorProduccion.equals(ipServidor)) {
                 /*Agrega borrador*/
                 String pathBorrador = webRoot + "/resources/img/BORRRADOR.png";
                 Image borrador = Image.getInstance(pathBorrador);

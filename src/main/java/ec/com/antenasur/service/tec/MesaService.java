@@ -72,6 +72,21 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         return mesaFacade.getMesaPorUsuario(usuario);
     }
 
+    public MesaDTO asignarResponsable(Integer mesaId, String responsable) {
+        if (mesaId == null || responsable == null || responsable.isBlank()) {
+            return null;
+        }
+        Mesa mesa = mesaFacade.find(mesaId);
+        if (mesa == null) {
+            return null;
+        }
+        if (!responsable.equals(mesa.getResponsable())) {
+            mesa.setResponsable(responsable);
+            mesa = mesaFacade.edit(mesa);
+        }
+        return MesaDTO.fromEntity(mesa);
+    }
+
     public Mesa buscaPorNombreMesa(String nombreMesa) {
         return mesaFacade.buscaPorNombreMesa(nombreMesa);
     }
@@ -134,7 +149,12 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         actual.setNombre(dto.getNombre());
         actual.setRecinto(recinto);
         actual.setUbicacion(ubicacion);
+        actual.setEstadoTarea(dto.getEstadoTarea());
         actual.setTotalVotos(dto.getTotalVotos());
+        actual.setTotalPapetelasUso(dto.getTotalPapetelasUso());
+        actual.setTotalAusentismo(dto.getTotalAusentismo());
+        actual.setTieneErrorConteo(dto.getTieneErrorConteo());
+        actual.setObservacion(dto.getObservacion());
         actual.setResponsable(dto.getResponsable());
         return MesaDTO.fromEntity(mesaFacade.edit(actual));
     }

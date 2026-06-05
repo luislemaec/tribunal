@@ -10,24 +10,21 @@
     <ui:define name="viewname">
         <li>#{msg['form.iglesias.crumb.admin']}</li>
         <li>/</li>
-        <li>
-            <p:link outcome="/actaE">#{msg['form.actaE.title']}</p:link>
-        </li>
+        <li><p:link outcome="/actaE">#{msg['form.actaE.title']}</p:link></li>
     </ui:define>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f59e0b,#d97706);flex-shrink:0">
+                         style="width:3.5rem;height:3.5rem;background:#b45309;flex-shrink:0">
                         <i class="pi pi-file-edit text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.actaE.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Registro de votos por mesa y recinto electoral</p>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['actaE.subtitulo']}</p>
                     </div>
                 </div>
             </div>
@@ -35,138 +32,227 @@
 
         <h:form id="frmActaE">
 
-            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
-            <!-- FILTROS GEOGRAFICOS -->
-            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">Selección de mesa</span>
+            <p:outputPanel rendered="#{actaEController.sinMesaAsignada}" layout="block" styleClass="mb-3">
+                <div class="border-round-lg p-3" style="background:#fff7ed;border-left:4px solid #f97316">
+                    <i class="pi pi-exclamation-triangle mr-2" style="color:#f97316"/>
+                    <span class="text-700">#{msg['actaE.mensaje.sin.mesa.asignada']}</span>
                 </div>
-                <div class="formgrid grid">
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="canton" class="font-medium text-700 text-sm">Cantón</label>
-                        <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}"
-                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{actaEController.cantones}" var="canton"
-                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{actaEController.cargaParroquiasPorCanton()}"
-                                    process="@this" update="frmActaE msgs"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="parroquia" class="font-medium text-700 text-sm">Parroquia</label>
-                        <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}" styleClass="w-full">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{actaEController.parroquias}" var="parroquia"
-                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{actaEController.cargaRecintosPorParroquias()}"
-                                    process="@this" update="frmActaE msgs"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="recintos" class="font-medium text-700 text-sm">Recinto</label>
-                        <p:selectOneMenu id="recintos" value="#{actaEController.recintoSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full"
-                                         disabled="#{empty actaEController.listaRecintos}">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{actaEController.listaRecintos}" var="recinto"
-                                           itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
-                            <p:ajax event="change" listener="#{actaEController.cargaMesasPorRecintos()}"
-                                    process="@this" update="frmActaE msgs"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="mesas" class="font-medium text-700 text-sm">Mesa</label>
-                        <p:selectOneMenu id="mesas" value="#{actaEController.mesaSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full"
-                                         disabled="#{empty actaEController.listaRecintos}">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{actaEController.listaMesas}" var="mesa"
-                                           itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
-                            <p:ajax event="change" listener="#{actaEController.cargaDatosMesaSeleccionada()}"
-                                    process="@this" update="frmActaE"/>
-                        </p:selectOneMenu>
-                    </div>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{actaEController.accesoRestringidoPresidenteMesa and not actaEController.sinMesaAsignada}"
+                           layout="block" styleClass="mb-3">
+                <div class="border-round-lg p-3" style="background:#eff6ff;border-left:4px solid #2563eb">
+                    <i class="pi pi-info-circle mr-2" style="color:#2563eb"/>
+                    <span class="text-700">#{msg['actaE.info.mesa.restringida']}</span>
                 </div>
-            </div>
+            </p:outputPanel>
 
-            <!-- TABLA DE VOTOS (solo si hay datos) -->
-            <ui:fragment rendered="#{not empty actaEController.listaCamposActaE and not empty actaEController.mesaSeleccionado}">
-                <div class="surface-card shadow-1 border-round-lg p-3">
-
+            <p:outputPanel rendered="#{not actaEController.accesoRestringidoPresidenteMesa}" layout="block">
+                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                     <div class="flex align-items-center gap-2 mb-3">
-                        <i class="pi pi-file-edit text-500"></i>
-                        <span class="font-semibold text-700">
-                            Registro de votos —
-                            <span class="text-primary">Recinto: #{actaEController.listaCamposActaE.get(0).mesa.recinto.nombre}</span> /
-                            <span class="text-primary">Mesa: #{actaEController.listaCamposActaE.get(0).mesa.nombre}</span>
-                        </span>
+                        <i class="pi pi-filter text-500"></i>
+                        <span class="font-semibold text-700">#{msg['actaE.seccion.seleccion']}</span>
                     </div>
+                    <div class="formgrid grid">
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="canton" class="font-medium text-700 text-sm">#{msg['form.actaE.label.canton']}</label>
+                            <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}"
+                                             filter="true" filterMatchMode="startsWith" styleClass="w-full">
+                                <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
+                                <f:selectItems value="#{actaEController.cantones}" var="canton"
+                                               itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                <p:ajax event="change" listener="#{actaEController.cargaParroquiasPorCanton}"
+                                        process="@this" update=":frmActaE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="parroquia" class="font-medium text-700 text-sm">#{msg['form.actaE.label.parroquia']}</label>
+                            <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}"
+                                             styleClass="w-full">
+                                <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
+                                <f:selectItems value="#{actaEController.parroquias}" var="parroquia"
+                                               itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                <p:ajax event="change" listener="#{actaEController.cargaRecintosPorParroquias}"
+                                        process="@this" update=":frmActaE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="recintos" class="font-medium text-700 text-sm">#{msg['form.actaE.label.recinto']}</label>
+                            <p:selectOneMenu id="recintos" value="#{actaEController.recintoSeleccionado.id}"
+                                             filter="true" filterMatchMode="contains" styleClass="w-full"
+                                             disabled="#{empty actaEController.listaRecintos}">
+                                <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
+                                <f:selectItems value="#{actaEController.listaRecintos}" var="recinto"
+                                               itemLabel="#{recinto.nombre}" itemValue="#{recinto.id}"/>
+                                <p:ajax event="change" listener="#{actaEController.cargaMesasPorRecintos}"
+                                        process="@this" update=":frmActaE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="mesas" class="font-medium text-700 text-sm">#{msg['form.actaE.label.mesa']}</label>
+                            <p:selectOneMenu id="mesas" value="#{actaEController.mesaSeleccionado.id}"
+                                             filter="true" filterMatchMode="contains" styleClass="w-full"
+                                             disabled="#{empty actaEController.listaMesas}">
+                                <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
+                                <f:selectItems value="#{actaEController.listaMesas}" var="mesa"
+                                               itemLabel="#{mesa.nombre}" itemValue="#{mesa.id}"/>
+                                <p:ajax event="change" listener="#{actaEController.cargaDatosMesaSeleccionada}"
+                                        process="@this" update=":frmActaE"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                </div>
+            </p:outputPanel>
 
-                    <p:dataTable id="tblActaE" widgetVar="wdTblCandidatos" var="actaE"
-                                 value="#{actaEController.listaCamposActaE}" reflow="true"
-                                 rowSelectMode="add" showGridlines="true"
-                                 styleClass="ui-datatable-striped ui-datatable-sm"
-                                 emptyMessage="No hay categorías de votos configuradas.">
+            <p:outputPanel id="pnlResumen" layout="block" styleClass="grid mb-3"
+                           rendered="#{actaEController.mesaSeleccionadaValida}">
+                <div class="col-12 md:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="text-500 text-sm">#{msg['actaE.resumen.proceso']}</div>
+                        <div class="font-semibold text-900 mt-1">#{actaEController.procesoActivoNombre}</div>
+                    </div>
+                </div>
+                <div class="col-12 md:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="text-500 text-sm">#{msg['actaE.resumen.mesa']}</div>
+                        <div class="font-semibold text-900 mt-1">#{actaEController.mesaSeleccionado.nombre}</div>
+                        <small class="block text-500">#{actaEController.mesaSeleccionado.recinto.nombre}</small>
+                    </div>
+                </div>
+                <div class="col-12 md:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</div>
+                        <div class="text-900 font-bold text-2xl mt-1">#{actaEController.totalSufragantesAsignados}</div>
+                    </div>
+                </div>
+                <div class="col-12 md:col-3">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="text-500 text-sm">#{msg['actaE.resumen.estado']}</div>
+                        <p:tag value="#{actaEController.estadoMesaTexto}"
+                               severity="#{actaEController.estadoMesaSeverity}"
+                               icon="pi pi-flag" styleClass="mt-1"/>
+                    </div>
+                </div>
+            </p:outputPanel>
 
-                        <p:column headerText="Categoría" sortBy="#{actaE.categoriaNombre}"
-                                  style="min-width:12rem">
-                            <p:chip label="#{actaE.categoriaNombre}" icon="pi pi-tag"/>
-                        </p:column>
-
-                        <p:column headerText="Total de votos" style="width:14rem">
-                            <p:inputNumber value="#{actaE.totalVotos}" label="Total"
-                                           minValue="0" maxValue="#{actaE.mesa.totalVotos}"
-                                           decimalPlaces="0" placeholder="0"
-                                           required="true"
-                                           disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null
-                                                       and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
-                                                       and loginBean.roles.contains('SITEC-Tecnico')}"/>
-                        </p:column>
-
-                        <p:column headerText="Acciones" exportable="false"
-                                  styleClass="text-center" style="width:6rem">
-                            <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                             actionListener="#{actaEController.eliminarSeleccionado}"
-                                             process="@this" update="tblActaE msgs">
-                                <f:setPropertyActionListener value="#{actaE}" target="#{actaEController.actaESeleccionado}"/>
-                                <p:confirm header="Confirmar eliminación"
-                                           message="¿Está seguro de eliminar este registro?"
+            <p:outputPanel id="pnlApertura" layout="block" rendered="#{actaEController.mesaSeleccionadaValida}">
+                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div class="font-semibold text-800">
+                            <i class="pi pi-play-circle text-500 mr-2"></i>#{msg['actaE.seccion.apertura']}
+                        </div>
+                        <p:tag value="#{actaEController.mesaAbierta or actaEController.mesaCerrada ? msg['actaE.apertura.registrada'] : msg['actaE.apertura.pendiente']}"
+                               severity="#{actaEController.mesaAbierta or actaEController.mesaCerrada ? 'success' : 'warning'}"/>
+                    </div>
+                    <div class="formgrid grid">
+                        <div class="field col-12 md:col-9">
+                            <label for="obsApertura" class="font-medium text-700 text-sm">#{msg['actaE.label.novedad.apertura']}</label>
+                            <p:inputTextarea id="obsApertura" value="#{actaEController.observacionApertura}"
+                                             rows="2" autoResize="false" maxlength="500"
+                                             disabled="#{not actaEController.puedeRegistrarApertura}"
+                                             styleClass="w-full"/>
+                        </div>
+                        <div class="field col-12 md:col-3 flex align-items-end">
+                            <p:commandButton value="#{msg['actaE.boton.apertura']}" icon="pi pi-play"
+                                             styleClass="ui-button-primary w-full"
+                                             disabled="#{not actaEController.puedeRegistrarApertura}"
+                                             actionListener="#{actaEController.registrarApertura}"
+                                             process="pnlApertura @this" update=":frmActaE">
+                                <p:confirm header="#{msg['actaE.confirmacion.apertura.titulo']}"
+                                           message="#{msg['actaE.confirmacion.apertura']}"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
-                        </p:column>
+                        </div>
+                    </div>
+                </div>
+            </p:outputPanel>
 
-                    </p:dataTable>
-
-                    <!-- Confirm dialog global -->
-                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                                     responsive="true" width="400" style="max-width:96vw">
-                        <p:commandButton value="Sí, eliminar" icon="pi pi-check"
-                                         styleClass="ui-button-danger" type="button"
-                                         onclick="PF('dlgConfirm').accept()"/>
-                        <p:commandButton value="Cancelar" icon="pi pi-times"
-                                         styleClass="ui-button-secondary ml-2" type="button"
-                                         onclick="PF('dlgConfirm').reject()"/>
-                    </p:confirmDialog>
-
-                    <!-- Botón guardar -->
-                    <div class="flex justify-content-center mt-3">
-                        <p:commandButton value="#{msg['btn.guardar']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
-                                         process=":frmActaE:tblActaE @this"
-                                         action="#{actaEController.guardaDatosMesaSeleccionada()}"
-                                         update="tblActaE msgs"
-                                         oncomplete="if (!args.validationFailed) PrimeFaces.info('Datos guardados correctamente')"
-                                         disabled="#{actaEController.mesaSeleccionado.estadoTarea ne null
-                                                     and actaEController.mesaSeleccionado.estadoTarea eq 'COMPLETADO'
-                                                     and loginBean.roles.contains('SITEC-Tecnico')}"/>
+            <p:outputPanel id="pnlConteo" layout="block"
+                           rendered="#{actaEController.mesaSeleccionadaValida and not empty actaEController.listaCamposActaE}">
+                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div class="font-semibold text-800">
+                            <i class="pi pi-calculator text-500 mr-2"></i>#{msg['actaE.seccion.conteo']}
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <p:tag value="#{msg['actaE.total.registrado']}: #{actaEController.totalVotosRegistrados}" severity="info"/>
+                            <p:tag value="#{msg['actaE.diferencia']}: #{actaEController.diferenciaConteo}"
+                                   severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
+                        </div>
                     </div>
 
-                </div><!-- /surface-card -->
-            </ui:fragment>
+                    <p:dataTable id="tblActaE" var="actaE"
+                                 value="#{actaEController.listaCamposActaE}" reflow="true"
+                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm"
+                                 emptyMessage="#{msg['actaE.empty.categorias']}">
+                        <p:column headerText="#{msg['actaE.tabla.categoria']}" style="min-width:12rem">
+                            <p:chip label="#{actaE.categoriaNombre}" icon="pi pi-tag"/>
+                        </p:column>
+                        <p:column headerText="#{msg['actaE.tabla.votos']}" style="width:14rem">
+                            <p:inputNumber value="#{actaE.totalVotos}" label="#{msg['form.actaE.label.votos']}"
+                                           minValue="0" maxValue="#{actaEController.totalSufragantesAsignados}"
+                                           decimalPlaces="0" placeholder="0" required="true"
+                                           disabled="#{not actaEController.puedeEditarConteo}">
+                                <p:ajax event="valueChange" process="@this" update=":frmActaE:pnlConteo :frmActaE:pnlCierre"/>
+                            </p:inputNumber>
+                        </p:column>
+                    </p:dataTable>
+
+                    <div class="flex justify-content-end flex-wrap gap-2 mt-3">
+                        <p:commandButton value="#{msg['actaE.boton.borrador']}" icon="pi pi-save"
+                                         styleClass="ui-button-secondary"
+                                         disabled="#{not actaEController.puedeEditarConteo}"
+                                         process="tblActaE @this"
+                                         actionListener="#{actaEController.guardarBorradorConteo}"
+                                         update=":frmActaE"/>
+                    </div>
+                </div>
+            </p:outputPanel>
+
+            <p:outputPanel id="pnlCierre" layout="block"
+                           rendered="#{actaEController.mesaSeleccionadaValida}">
+                <div class="surface-card shadow-1 border-round-lg p-3">
+                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div class="font-semibold text-800">
+                            <i class="pi pi-lock text-500 mr-2"></i>#{msg['actaE.seccion.cierre']}
+                        </div>
+                        <p:tag value="#{actaEController.estadoValidacionCierreTexto}"
+                               severity="#{actaEController.estadoValidacionCierreSeverity}"/>
+                    </div>
+                    <div class="grid">
+                        <div class="col-12 md:col-4">
+                            <span class="block text-500 text-sm">#{msg['actaE.total.registrado']}</span>
+                            <span class="font-bold text-900 text-xl">#{actaEController.totalVotosRegistrados}</span>
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <span class="block text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</span>
+                            <span class="font-bold text-900 text-xl">#{actaEController.totalSufragantesAsignados}</span>
+                        </div>
+                        <div class="col-12 md:col-4">
+                            <span class="block text-500 text-sm">#{msg['actaE.diferencia']}</span>
+                            <span class="font-bold text-900 text-xl">#{actaEController.diferenciaConteo}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-content-end flex-wrap gap-2 mt-3">
+                        <p:commandButton value="#{msg['actaE.boton.cerrar']}" icon="pi pi-check-circle"
+                                         styleClass="ui-button-success"
+                                         disabled="#{not actaEController.puedeCerrarMesa}"
+                                         process=":frmActaE:tblActaE @this"
+                                         actionListener="#{actaEController.cerrarMesa}"
+                                         update=":frmActaE">
+                            <p:confirm header="#{msg['actaE.confirmacion.cierre.titulo']}"
+                                       message="#{msg['actaE.confirmacion.cierre']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                        <p:commandButton value="#{msg['actaE.boton.generar.acta']}" icon="pi pi-file-pdf"
+                                         styleClass="ui-button-secondary"
+                                         rendered="#{actaEController.mesaCerrada}"
+                                         process="@this"
+                                         actionListener="#{actaEController.generarActaMesaCerrada}"
+                                         update=":frmActaE"/>
+                    </div>
+                </div>
+            </p:outputPanel>
 
         </h:form>
 

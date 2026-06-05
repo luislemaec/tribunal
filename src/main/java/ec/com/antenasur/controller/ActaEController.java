@@ -11,8 +11,6 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import org.primefaces.PrimeFaces;
-
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
@@ -23,10 +21,13 @@ import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.CandidatoDTO;
+import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
 import ec.com.antenasur.dto.MesaDTO;
+import ec.com.antenasur.dto.MiembroJRVDTO;
 import ec.com.antenasur.dto.RecintoDTO;
-import ec.com.antenasur.enums.EstadoTarea;
+import ec.com.antenasur.enums.EstadoEscrutinio;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.UtilHtml;
 import ec.com.antenasur.model.Geograp;
@@ -42,6 +43,8 @@ import ec.com.antenasur.service.tec.CategoriaVotoService;
 import ec.com.antenasur.service.tec.EscrutinioService;
 import ec.com.antenasur.service.tec.ListaService;
 import ec.com.antenasur.service.tec.MesaService;
+import ec.com.antenasur.service.tec.MiembroJRVService;
+import ec.com.antenasur.service.tec.PadronService;
 import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.service.tec.PlantillaCorreoService;
 import ec.com.antenasur.service.tec.RecintoService;
@@ -58,7 +61,6 @@ public class ActaEController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String PATH_ACTAS_ESCRUTINIO = "/opt/ACTASE/";
     private static final Integer TAMANIO_LETRA = 0;
     private static final String FORMULARIO = "frmActaE";
 
@@ -87,6 +89,9 @@ public class ActaEController implements Serializable {
     private MesaService mesaService;
 
     @Inject
+    private MiembroJRVService miembroJRVService;
+
+    @Inject
     private CategoriaVotoService categoriaVotoService;
 
     @Inject
@@ -94,6 +99,9 @@ public class ActaEController implements Serializable {
 
     @Inject
     private DocumentoBean documentoBean;
+
+    @Inject
+    private PadronService padronService;
 
     @Getter
     @Setter
@@ -147,6 +155,10 @@ public class ActaEController implements Serializable {
 
     @Setter
     @Getter
+    private EscrutinioCabeceraDTO escrutinioCabecera;
+
+    @Setter
+    @Getter
     private ProcesoElectoral procesoActivo;
 
     @Setter
@@ -156,6 +168,20 @@ public class ActaEController implements Serializable {
     @Setter
     @Getter
     private String cedulaBuscar;
+
+    @Setter
+    @Getter
+    private String observacionApertura;
+
+    @Setter
+    @Getter
+    private Integer totalSufragantesAsignados;
+
+    @Getter
+    private boolean accesoRestringidoPresidenteMesa;
+
+    @Getter
+    private boolean sinMesaAsignada;
 
     @PostConstruct
     private void init() {
@@ -169,6 +195,9 @@ public class ActaEController implements Serializable {
         this.parroquiaSeleccionado = new Geograp();
         this.recintoSeleccionado = new RecintoDTO();
         this.mesaSeleccionado = new MesaDTO();
+        this.totalSufragantesAsignados = 0;
+        this.observacionApertura = "";
+        this.escrutinioCabecera = new EscrutinioCabeceraDTO();
     }
 
     private void cargaDatosIniciales() {
@@ -179,20 +208,70 @@ public class ActaEController implements Serializable {
         this.listas = listaService.findAll();
         this.categoriasVotos = categoriaVotoService.getCategoriasOrdenados();
 
+        accesoRestringidoPresidenteMesa = esPresidenteMesa();
         MesaDTO mesaUsuario = obtenerMesaPorUsuario();
+        if (accesoRestringidoPresidenteMesa && mesaUsuario == null) {
+            sinMesaAsignada = true;
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.sin.mesa.asignada");
+            return;
+        }
         if (mesaUsuario != null) {
             mesaSeleccionado = mesaUsuario;
+            recintoSeleccionado = mesaUsuario.getRecinto();
+            listaMesas = new ArrayList<>();
+            listaMesas.add(mesaUsuario);
+            listaRecintos = new ArrayList<>();
+            if (mesaUsuario.getRecinto() != null) {
+                listaRecintos.add(mesaUsuario.getRecinto());
+            }
             cargaDatosMesaSeleccionada();
         }
-        PrimeFaces.current().ajax().update("frmIglesias", "msgs");
     }
 
     private MesaDTO obtenerMesaPorUsuario() {
+        MesaDTO mesaPorJunta = obtenerMesaPorDesignacionJRV();
+        if (mesaPorJunta != null) {
+            return mesaPorJunta;
+        }
         try {
             ec.com.antenasur.model.tec.Mesa m = mesaService.getMesaPorUsuario(loginBean.getUserName());
             return MesaDTO.fromEntity(m);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private MesaDTO obtenerMesaPorDesignacionJRV() {
+        try {
+            Integer personaId = loginBean != null && loginBean.getUsuario() != null
+                    ? loginBean.getUsuario().getPersonaId() : null;
+            Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+            if (personaId == null || procesoId == null) {
+                return null;
+            }
+            MiembroJRVDTO designacion = miembroJRVService.obtenerDesignacionPorPersonaProceso(personaId, procesoId);
+            if (designacion == null || designacion.getMesa() == null
+                    || !esCargoPresidenteMesa(designacion.getCargoNombre())) {
+                return null;
+            }
+            sincronizarResponsableMesa(designacion.getMesa());
+            return designacion.getMesa();
+        } catch (Exception e) {
+            log.warn("NO SE PUDO RESOLVER MESA POR DESIGNACION JRV", e);
+            return null;
+        }
+    }
+
+    private void sincronizarResponsableMesa(MesaDTO mesa) {
+        if (mesa == null || mesa.getId() == null || loginBean == null
+                || loginBean.getUserName() == null || loginBean.getUserName().isBlank()) {
+            return;
+        }
+        if (!loginBean.getUserName().equals(mesa.getResponsable())) {
+            MesaDTO mesaActualizada = mesaService.asignarResponsable(mesa.getId(), loginBean.getUserName());
+            if (mesaActualizada != null) {
+                mesa.setResponsable(mesaActualizada.getResponsable());
+            }
         }
     }
 
@@ -242,7 +321,13 @@ public class ActaEController implements Serializable {
         if (mesaSeleccionado == null || mesaSeleccionado.getId() == null) {
             return;
         }
+        if (!puedeGestionarMesa(mesaSeleccionado.getId())) {
+            limpiarActa();
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.mesa.no.autorizada");
+            return;
+        }
         mesaSeleccionado = mesaService.obtenerDTOPorId(mesaSeleccionado.getId());
+        cargarTotalSufragantes();
         Integer procesoId = (procesoActivo != null) ? procesoActivo.getId() : null;
         List<Integer> categoriaIds = new ArrayList<>();
         if (categoriasVotos != null) {
@@ -252,36 +337,126 @@ public class ActaEController implements Serializable {
         }
         this.listaCamposActaE = escrutinioService.prepararActaPorMesaDTO(
                 mesaSeleccionado.getId(), procesoId, categoriaIds);
-        if (mesaSeleccionado.getEstadoTarea() != null && mesaSeleccionado.getEstadoTarea().equals(EstadoTarea.COMPLETADO)) {
-            JsfUtil.addInfoMessage("Mesa cerrado");
+        escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
+                mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
+        if (escrutinioCabecera != null && escrutinioCabecera.getObservacionApertura() != null) {
+            observacionApertura = escrutinioCabecera.getObservacionApertura();
         }
-        PrimeFaces.current().ajax().update("msgs", FORMULARIO + ":btnRegistrar");
+        if (isMesaCerrada()) {
+            JsfUtil.addInfoMessageFromBundle("actaE.mensaje.mesa.cerrada");
+        }
     }
 
     public void guardaDatosMesaSeleccionada() {
+        cerrarMesa();
+    }
+
+    public void registrarApertura() {
+        try {
+            if (!mesaSeleccionadaValida()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.seleccione.mesa");
+                return;
+            }
+            if (!puedeGestionarMesa(mesaSeleccionado.getId())) {
+                JsfUtil.addErrorMessageFromBundle("actaE.mensaje.mesa.no.autorizada");
+                return;
+            }
+            Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+            escrutinioCabecera = escrutinioService.abrirEscrutinioDTO(mesaSeleccionado.getId(), procesoId,
+                    loginBean.getUserName(), observacionApertura, totalSufragantesAsignados);
+            procesoBean.okActivityRegister("APERTURA MESA " + mesaSeleccionado.getNombre(), mesaSeleccionado.getId().toString());
+            JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.apertura.ok");
+            cargaDatosMesaSeleccionada();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL REGISTRAR APERTURA DE MESA", e);
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.error");
+        }
+    }
+
+    public void guardarBorradorConteo() {
+        if (!validarOperacionConteo(false)) {
+            return;
+        }
+        try {
+            Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+            escrutinioCabecera = escrutinioService.guardarBorradorConteoDTO(
+                    mesaSeleccionado.getId(), procesoId, listaCamposActaE, totalSufragantesAsignados);
+            procesoBean.okActivityRegister("GUARDA BORRADOR ACTA MESA " + mesaSeleccionado.getNombre(),
+                    mesaSeleccionado.getId().toString());
+            if (escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
+                    && !escrutinioCabecera.getObservacionConteo().isBlank()) {
+                JsfUtil.addWarningMessage("Conteo guardado con observacion: " + escrutinioCabecera.getObservacionConteo());
+            } else {
+                JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.borrador.ok");
+            }
+            cargaDatosMesaSeleccionada();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL GUARDAR BORRADOR DE ACTA", e);
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.error");
+        }
+    }
+
+    public void cerrarMesa() {
         if (this.listaCamposActaE == null || this.listaCamposActaE.isEmpty()
                 || mesaSeleccionado == null || mesaSeleccionado.getId() == null) {
             return;
         }
+        if (!validarOperacionConteo(true)) {
+            return;
+        }
         try {
+            Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+            escrutinioCabecera = escrutinioService.guardarBorradorConteoDTO(
+                    mesaSeleccionado.getId(), procesoId, listaCamposActaE, totalSufragantesAsignados);
+            ReportTemplateController documentoActaE = inicializaReporte();
+            getListaStringDatos(documentoActaE);
+            String observacion = escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
+                    ? escrutinioCabecera.getObservacionConteo() : "";
+            exportaPDF(documentoActaE, observacion);
+
             MesaDTO mesaCerrada = escrutinioService.guardarActaCompletaDTO(
                     mesaSeleccionado.getId(), listaCamposActaE);
             if (mesaCerrada != null) {
                 mesaSeleccionado = mesaCerrada;
             }
-            ReportTemplateController documentoActaE = inicializaReporte();
-            getListaStringDatos(documentoActaE);
-            exportaPDF(documentoActaE, mesaSeleccionado.getObservacion() != null ? mesaSeleccionado.getObservacion() : "");
-            if (Boolean.TRUE.equals(mesaSeleccionado.getTieneErrorConteo())) {
-                JsfUtil.addWarningMessage("MESA CERRADO CON ERRORES " + mesaSeleccionado.getObservacion());
-            } else {
-                JsfUtil.addSuccessMessage("MESA CERRADO CORRECTO");
-            }
-            PrimeFaces.current().ajax().update("msgs", FORMULARIO);
+            escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
+                    mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
+            JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.cierre.ok");
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
             log.error("ERROR AL CERRAR MESA", e);
-            mesaSeleccionado.setEstadoTarea(EstadoTarea.ABORTADO);
-            mesaService.guardarDesdeDTO(mesaSeleccionado);
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.pdf.error");
+        }
+    }
+
+    public void generarActaMesaCerrada() {
+        try {
+            if (!mesaSeleccionadaValida()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.seleccione.mesa");
+                return;
+            }
+            if (!isMesaCerrada()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.mesa.no.cerrada");
+                return;
+            }
+            if (listaCamposActaE == null || listaCamposActaE.isEmpty()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.sin.categorias");
+                return;
+            }
+            ReportTemplateController documentoActaE = inicializaReporte();
+            getListaStringDatos(documentoActaE);
+            String observacion = escrutinioCabecera != null && escrutinioCabecera.getObservacionCierre() != null
+                    ? escrutinioCabecera.getObservacionCierre() : "";
+            exportaPDF(documentoActaE, observacion);
+            JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.pdf.regenerado");
+        } catch (Exception e) {
+            log.error("ERROR AL REGENERAR ACTA DE MESA CERRADA", e);
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.pdf.error.regenerar");
         }
     }
 
@@ -359,6 +534,167 @@ public class ActaEController implements Serializable {
         }
     }
 
+    public int getTotalVotosRegistrados() {
+        return escrutinioService.calcularTotalVotos(listaCamposActaE);
+    }
+
+    public int getDiferenciaConteo() {
+        return (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0) - getTotalVotosRegistrados();
+    }
+
+    public boolean isMesaSeleccionadaValida() {
+        return mesaSeleccionadaValida();
+    }
+
+    public boolean isMesaAbierta() {
+        return mesaSeleccionadaValida() && escrutinioCabecera != null
+                && (EstadoEscrutinio.ABIERTO.equals(escrutinioCabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.EN_CONTEO.equals(escrutinioCabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.CONTEO_REGISTRADO.equals(escrutinioCabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.OBSERVADO.equals(escrutinioCabecera.getEstadoEscrutinio()));
+    }
+
+    public boolean isMesaCerrada() {
+        return mesaSeleccionadaValida() && escrutinioCabecera != null
+                && EstadoEscrutinio.CERRADO.equals(escrutinioCabecera.getEstadoEscrutinio());
+    }
+
+    public boolean isPuedeRegistrarApertura() {
+        return mesaSeleccionadaValida()
+                && !sinMesaAsignada
+                && !isMesaAbierta()
+                && !isMesaCerrada();
+    }
+
+    public boolean isPuedeEditarConteo() {
+        return mesaSeleccionadaValida() && isMesaAbierta() && !isMesaCerrada();
+    }
+
+    public boolean isPuedeCerrarMesa() {
+        return isPuedeEditarConteo() && getTotalVotosRegistrados() == (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0);
+    }
+
+    public String getEstadoValidacionCierreTexto() {
+        if (isMesaCerrada()) {
+            return JsfUtil.getProperty("actaE.validacion.cerrada", true);
+        }
+        return isPuedeCerrarMesa()
+                ? JsfUtil.getProperty("actaE.validacion.lista", true)
+                : JsfUtil.getProperty("actaE.validacion.pendiente", true);
+    }
+
+    public String getEstadoValidacionCierreSeverity() {
+        if (isMesaCerrada()) {
+            return "success";
+        }
+        return isPuedeCerrarMesa() ? "success" : "warning";
+    }
+
+    public String getEstadoMesaTexto() {
+        if (isMesaCerrada()) {
+            return JsfUtil.getProperty("actaE.estado.cerrada", true);
+        }
+        if (isMesaAbierta()) {
+            if (escrutinioCabecera != null && EstadoEscrutinio.OBSERVADO.equals(escrutinioCabecera.getEstadoEscrutinio())) {
+                return JsfUtil.getProperty("actaE.estado.observada", true);
+            }
+            return getTotalVotosRegistrados() > 0
+                    ? JsfUtil.getProperty("actaE.estado.en.conteo", true)
+                    : JsfUtil.getProperty("actaE.estado.abierta", true);
+        }
+        return JsfUtil.getProperty("actaE.estado.pendiente", true);
+    }
+
+    public String getEstadoMesaSeverity() {
+        if (isMesaCerrada()) {
+            return "success";
+        }
+        if (isMesaAbierta()) {
+            return "warning";
+        }
+        return "secondary";
+    }
+
+    public String getProcesoActivoNombre() {
+        return procesoActivo != null ? procesoActivo.getNombre() : "";
+    }
+
+    private boolean validarOperacionConteo(boolean cierreFinal) {
+        if (!mesaSeleccionadaValida()) {
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.seleccione.mesa");
+            return false;
+        }
+        if (!puedeGestionarMesa(mesaSeleccionado.getId())) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.mesa.no.autorizada");
+            return false;
+        }
+        if (!isMesaAbierta()) {
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.apertura.requerida");
+            return false;
+        }
+        if (listaCamposActaE == null || listaCamposActaE.isEmpty()) {
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.sin.categorias");
+            return false;
+        }
+        for (EscrutinioDTO item : listaCamposActaE) {
+            if (item.getTotalVotos() != null && item.getTotalVotos() < 0) {
+                JsfUtil.addErrorMessageFromBundle("actaE.mensaje.votos.negativos");
+                return false;
+            }
+        }
+        if (getTotalVotosRegistrados() > (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0)) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.total.excede");
+            return false;
+        }
+        if (cierreFinal && getDiferenciaConteo() != 0) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.total.no.cuadra");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean puedeGestionarMesa(Integer mesaId) {
+        if (!accesoRestringidoPresidenteMesa) {
+            return true;
+        }
+        MesaDTO mesaUsuario = obtenerMesaPorUsuario();
+        return mesaUsuario != null && mesaUsuario.getId() != null && mesaUsuario.getId().equals(mesaId);
+    }
+
+    private boolean esPresidenteMesa() {
+        return loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Presidente-mesa");
+    }
+
+    private boolean esCargoPresidenteMesa(String cargoNombre) {
+        return cargoNombre != null && cargoNombre.trim().toUpperCase().contains("PRESIDENTE");
+    }
+
+    private boolean mesaSeleccionadaValida() {
+        return mesaSeleccionado != null && mesaSeleccionado.getId() != null;
+    }
+
+    private void cargarTotalSufragantes() {
+        if (!mesaSeleccionadaValida()) {
+            totalSufragantesAsignados = 0;
+            return;
+        }
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        if (procesoId == null) {
+            totalSufragantesAsignados = 0;
+            return;
+        }
+        totalSufragantesAsignados = padronService.contarSufragantesPorMesaYProceso(
+                mesaSeleccionado.getId(), procesoId);
+    }
+
+    private void limpiarActa() {
+        listaCamposActaE = new ArrayList<>();
+        mesaSeleccionado = new MesaDTO();
+        escrutinioCabecera = new EscrutinioCabeceraDTO();
+        totalSufragantesAsignados = 0;
+    }
+
     private String getPlantillaDocumento(String nombrePlantilla) {
         try {
             HashMap<String, String> parametros = getDatosActaE();
@@ -371,43 +707,44 @@ public class ActaEController implements Serializable {
         }
     }
 
-    public void exportaPDF(ReportTemplateController documentoActaE, String observacion) {
-        try {
-            String txtContenidoActaE = getPlantillaDocumento("BIENVENIDO");
-            String txtResponsableActaE = getPlantillaDocumento("RESPONSABLES ACTA ESCRUTINIOS");
-
-            String extencion = ".pdf";
-            String pathCompleto = PATH_ACTAS_ESCRUTINIO + documentoActaE.getNombreReporte() + extencion;
-
-            Documentos documentoNuevo = new Documentos(documentoActaE.getNombreReporte(), pathCompleto, new TipoDocumento(Constantes.ACTA_ESCRUTINIO),
-                    mesaSeleccionado.getId(), extencion, "application/" + extencion, documentoActaE.getNombreReporte());
-
-            String pathCss = Constantes.getHojaEstilo();
-            float tamanioLetra = 10;
-            Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(tamanioLetra);
-            Font fuenteContenido = Constantes.getFuenteContenidoDefault(tamanioLetra);
-
-            String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Regular.ttf");
-            FontFactory.register(pathMontsR, "montsR");
-            FontFactory.getFont("montsR", tamanioLetra, Font.NORMAL, BaseColor.BLACK);
-
-            FontProvider fontProvider = FontFactory.getFontImp();
-            ReportePFD.nuevoPDF(documentoActaE.getNombreReporte());
-            ReportePFD.agregaHTML(txtContenidoActaE, pathCss, fontProvider);
-            ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(), documentoActaE.getNombreReporte(), documentoActaE.getNombresColumnas(), fuenteCabecerta);
-            ReportePFD.creaContenidoTabla(documentoActaE.getListaDatos(), documentoActaE.getNombresColumnas(), fuenteContenido);
-            ReportePFD.agregaParrafoEnBlanco();
-            if (!observacion.isEmpty()) {
-                ReportePFD.agregaParrafoObservacion(observacion);
-            }
-            ReportePFD.agregaHTML(txtResponsableActaE, pathCss, fontProvider);
-            ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
-            this.guardarDocumentoBD(documentoNuevo);
-            ReportePFD.guardarDocumentosActasE(documentoActaE.getNombreReporte());
-            procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
-        } catch (Exception e) {
-            log.error("ERROR AL EXPORTAR EXCEL DATOS REPORTE" + documentoActaE.getNombreReporte(), e);
+    public String exportaPDF(ReportTemplateController documentoActaE, String observacion) throws Exception {
+        String txtContenidoActaE = getPlantillaDocumento("BIENVENIDO");
+        String txtResponsableActaE = getPlantillaDocumento("RESPONSABLES ACTA ESCRUTINIOS");
+        if (txtContenidoActaE == null || txtContenidoActaE.isBlank()
+                || txtResponsableActaE == null || txtResponsableActaE.isBlank()) {
+            throw new IllegalStateException("No se pudo resolver la plantilla del acta de escrutinio.");
         }
+
+        String extencion = ".pdf";
+        String pathCompleto = Constantes.getPathActaEscrutinio(documentoActaE.getNombreReporte());
+
+        Documentos documentoNuevo = new Documentos(documentoActaE.getNombreReporte(), pathCompleto, new TipoDocumento(Constantes.ACTA_ESCRUTINIO),
+                mesaSeleccionado.getId(), extencion, "application/pdf", documentoActaE.getNombreReporte());
+
+        String pathCss = Constantes.getHojaEstilo();
+        float tamanioLetra = 10;
+        Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(tamanioLetra);
+        Font fuenteContenido = Constantes.getFuenteContenidoDefault(tamanioLetra);
+
+        String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Regular.ttf");
+        FontFactory.register(pathMontsR, "montsR");
+        FontFactory.getFont("montsR", tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+
+        FontProvider fontProvider = FontFactory.getFontImp();
+        ReportePFD.nuevoPDF(documentoActaE.getNombreReporte());
+        ReportePFD.agregaHTML(txtContenidoActaE, pathCss, fontProvider);
+        ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(), documentoActaE.getNombreReporte(), documentoActaE.getNombresColumnas(), fuenteCabecerta);
+        ReportePFD.creaContenidoTabla(documentoActaE.getListaDatos(), documentoActaE.getNombresColumnas(), fuenteContenido);
+        ReportePFD.agregaParrafoEnBlanco();
+        if (observacion != null && !observacion.isBlank()) {
+            ReportePFD.agregaParrafoObservacion(observacion);
+        }
+        ReportePFD.agregaHTML(txtResponsableActaE, pathCss, fontProvider);
+        ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
+        String archivoGenerado = ReportePFD.guardarDocumentosActasEObligatorio(documentoActaE.getNombreReporte());
+        this.guardarDocumentoBD(documentoNuevo);
+        procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
+        return archivoGenerado;
     }
 
     private void guardarDocumentoBD(Documentos documentoNuevo) {
