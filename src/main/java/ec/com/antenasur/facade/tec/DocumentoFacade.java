@@ -52,7 +52,10 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         try {
             String sql = HQL
                     + " LEFT JOIN FETCH d.tipoDocumento  tp"
-                    + " WHERE d.entidadId=:entidadId AND tp.id=:tipoDocId" + ORDENADO;
+                    + " WHERE d.entidadId=:entidadId"
+                    + " AND tp.id=:tipoDocId"
+                    + " AND d.estado = TRUE"
+                    + " ORDER BY d.id DESC";
             TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
             query.setParameter("entidadId", entidadId);
             query.setParameter("tipoDocId", tipoDocId);

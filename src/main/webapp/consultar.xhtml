@@ -21,7 +21,7 @@
         <h:outputScript name="js/prism.js" library="ecuador-layout"/>
     </h:head>
     <h:body styleClass="#{guestPreferences.inputStyleClass}">
-        <p:growl id="msgs" showDetail="true" showSummary="false"></p:growl>
+        <p:growl id="growlConsulta" showDetail="true" showSummary="false"></p:growl>
         <div class="layout-wrapper #{guestPreferences.menuMode} layout-menu-#{guestPreferences.menuColor} #{guestPreferences.orientationRTL ? 'layout-rtl' : null}">            
             <div class="layout-topbar">
                 <h:link outcome="/dashboard" styleClass="logo-container">
@@ -43,7 +43,7 @@
                                         </div>
                                         <div class="p-field col-12 md:col-6 lg:col-3 ">
                                             <p:commandButton value="BUSCAR"  icon="pi pi-search"  action="#{lugarVotacion.buscarLugar()}" 
-                                                             ajax="false" styleClass="ui-button-info" update="@form, msgs" />
+                                                             ajax="false" styleClass="ui-button-info" update="@form growlConsulta" />
                                         </div>
                                     </div>                       
                                 </div>                        

@@ -43,7 +43,7 @@ public class JsfUtil implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String GROWL_MESSAGES = ":frmGlobal:msgs";
+    public static final String GROWL_MESSAGES = ":frmGlobal:growlGlobal";
 
     private static final String temporalTemp = System.getProperty("java.io.tmpdir") + File.separator;
 

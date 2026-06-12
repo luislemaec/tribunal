@@ -23,6 +23,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.BarcodeQRCode;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
@@ -32,6 +33,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,6 +47,13 @@ import java.util.Date;
 public class ReportePFD {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ReportePFD.class);
+    private static final BaseColor COLOR_INSTITUCIONAL = new BaseColor(24, 82, 133);
+    private static final BaseColor COLOR_CABECERA_TABLA = new BaseColor(232, 240, 248);
+    private static final BaseColor COLOR_BORDE_TABLA = new BaseColor(210, 220, 230);
+    private static final float MARGEN_IZQUIERDO = 36f;
+    private static final float MARGEN_DERECHO = 36f;
+    private static final float MARGEN_SUPERIOR = 118f;
+    private static final float MARGEN_INFERIOR = 48f;
 
     private static ByteArrayOutputStream baos;
 
@@ -61,6 +71,8 @@ public class ReportePFD {
 
     private static Font fuente;
 
+    private static String codigoDocumentoActual;
+
     private static void inicializa() {
         try {
             worker = XMLWorkerHelper.getInstance();
@@ -74,7 +86,8 @@ public class ReportePFD {
     public static void nuevoPDF(String nombreReporte) {
         try {
             inicializa();
-            document = new Document(PageSize.A4);
+            codigoDocumentoActual = nombreReporte;
+            document = new Document(PageSize.A4, MARGEN_IZQUIERDO, MARGEN_DERECHO, MARGEN_SUPERIOR, MARGEN_INFERIOR);
             baos = new ByteArrayOutputStream();
 
             writer = PdfWriter.getInstance(document, baos);
@@ -90,7 +103,8 @@ public class ReportePFD {
     public static void nuevoPDFHorizontal(String nombreReporte) {
         try {
             inicializa();
-            document = new Document(PageSize.A4.rotate());
+            codigoDocumentoActual = nombreReporte;
+            document = new Document(PageSize.A4.rotate(), MARGEN_IZQUIERDO, MARGEN_DERECHO, 92f, MARGEN_INFERIOR);
             baos = new ByteArrayOutputStream();
 
             writer = PdfWriter.getInstance(document, baos);
@@ -107,30 +121,42 @@ public class ReportePFD {
             String[] listColumNames, Font fuente) {
         try {
             table = new PdfPTable(numColumns);
-            //table.setLockedWidth(true);
             table.setWidthPercentage(100);
+            table.setSpacingBefore(8f);
+            table.setSpacingAfter(10f);
             addTableToDocument(numColumns, columWidth, tableTitle, listColumNames, fuente);
 
         } catch (Exception e) {
+            LOG.error("ERROR AL CREAR CABECERA DE TABLA PDF", e);
         }
     }
 
     public static void addTableHeader(int numColumns, String tableTitle, Font fuente) {
 
-        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, fuente));
+        Font fuenteTituloTabla = FontFactory.getFont("arial", 9, Font.BOLD, BaseColor.WHITE);
+        PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, fuenteTituloTabla));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cell.setBackgroundColor(new BaseColor(187, 222, 251));
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPaddingTop(7f);
+        cell.setPaddingBottom(7f);
+        cell.setPaddingLeft(6f);
+        cell.setPaddingRight(6f);
+        cell.setBackgroundColor(COLOR_INSTITUCIONAL);
+        cell.setBorderColor(COLOR_INSTITUCIONAL);
         cell.setColspan(numColumns);
         table.addCell(cell);
     }
 
     public static void setMetadataDocument(Document document, String nombreReporte) {
         try {
-            document.addAuthor("Luis Lema");
-            document.addCreator("Antena Sur");
+            document.addAuthor(Constantes.INSTITUCION);
+            document.addCreator(Constantes.SISTEMA);
             document.addTitle(nombreReporte);
+            document.addSubject("Documento electoral generado por el Sistema TEC");
+            document.addKeywords("SITEC, Tribunal Electoral, CONPOCIIECH, " + nombreReporte);
+            document.addCreationDate();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("ERROR AL ASIGNAR METADATOS PDF", e);
         }
 
     }
@@ -141,10 +167,20 @@ public class ReportePFD {
             table.setTotalWidth(columWidth);
             addTableHeader(numColumns, tableTitle, fuente);
 
+            Font fuenteEncabezado = FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL);
             for (String columName : listColumNames) {
-                table.addCell(new PdfPCell(
-                        new Paragraph(columName, fuente)));
+                PdfPCell header = new PdfPCell(new Paragraph(columName, fuenteEncabezado));
+                header.setBackgroundColor(COLOR_CABECERA_TABLA);
+                header.setBorderColor(COLOR_BORDE_TABLA);
+                header.setPaddingTop(6f);
+                header.setPaddingBottom(6f);
+                header.setPaddingLeft(5f);
+                header.setPaddingRight(5f);
+                header.setHorizontalAlignment(Element.ALIGN_CENTER);
+                header.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                table.addCell(header);
             }
+            table.setHeaderRows(2);
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -154,14 +190,22 @@ public class ReportePFD {
         try {
             for (String[] medio : listaDatos) {
                 for (int i = 0; i < medio.length; i++) {
-                    table.addCell(new PdfPCell(new Paragraph(medio[i], fuente)));
+                    PdfPCell celda = new PdfPCell(new Paragraph(medio[i], fuente));
+                    celda.setPadding(5f);
+                    celda.setBorderColor(COLOR_BORDE_TABLA);
+                    celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    celda.setHorizontalAlignment(esNumero(medio[i]) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
+                    table.addCell(celda);
                 }
             }
             document.add(table);
         } catch (Exception e) {
-            e.printStackTrace();
             LOG.error("ERROR AL CREAR CONTENIDO DE TABLA" + e);
         }
+    }
+
+    private static boolean esNumero(String valor) {
+        return valor != null && valor.trim().matches("-?\\d+(\\.\\d+)?");
     }
 
     public static void addImagen(String rutaImagen, float fitWidth, float fitHeight, int alignment, Document document)
@@ -179,11 +223,30 @@ public class ReportePFD {
 
     public static void addParagraph(String string) {
         try {
-            document.add(new Paragraph(string));
+            Paragraph paragraph = new Paragraph(string, FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK));
+            paragraph.setSpacingAfter(6f);
+            paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
+            document.add(paragraph);
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    public static void agregaTituloSeccion(String titulo) {
+        try {
+            Paragraph paragraph = new Paragraph(titulo,
+                    FontFactory.getFont("arial", 11, Font.BOLD, COLOR_INSTITUCIONAL));
+            paragraph.setSpacingBefore(10f);
+            paragraph.setSpacingAfter(6f);
+            document.add(paragraph);
+        } catch (DocumentException ex) {
+            Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public static String getCodigoDocumentoActual() {
+        return codigoDocumentoActual != null ? codigoDocumentoActual : "";
     }
 
     public static void descargarPDF(ByteArrayOutputStream baos, String nombreReporte) {
@@ -249,8 +312,64 @@ public class ReportePFD {
         if (path.getParent() != null) {
             Files.createDirectories(path.getParent());
         }
-        Files.write(path, baos.toByteArray());
+        if (Files.exists(path)) {
+            throw new IOException("El acta PDF ya existe en la ruta destino: " + path);
+        }
+        Files.write(path, baos.toByteArray(), StandardOpenOption.CREATE_NEW);
         return path.toString();
+    }
+
+    public static String calcularHashSha256Actual() throws IOException {
+        if (baos == null || baos.size() == 0) {
+            throw new IOException("No existe contenido PDF generado para calcular hash.");
+        }
+        return calcularSha256(baos.toByteArray());
+    }
+
+    public static String calcularSha256(byte[] contenido) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(contenido);
+            StringBuilder resultado = new StringBuilder();
+            for (byte b : hash) {
+                resultado.append(String.format("%02x", b));
+            }
+            return resultado.toString();
+        } catch (Exception e) {
+            throw new IOException("No se pudo calcular el hash SHA-256 del documento.", e);
+        }
+    }
+
+    public static String calcularSha256(Path path) throws IOException {
+        return calcularSha256(Files.readAllBytes(path));
+    }
+
+    public static void agregaCodigoVerificacion(String codigoActa, String contenidoQr) {
+        try {
+            PdfPTable tabla = new PdfPTable(2);
+            tabla.setWidthPercentage(100);
+            tabla.setWidths(new float[]{75, 25});
+
+            Paragraph texto = new Paragraph("Codigo de verificacion: " + codigoActa + "\n"
+                    + "Este documento puede verificarse con el codigo institucional impreso en el acta.",
+                    FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK));
+            PdfPCell celdaTexto = new PdfPCell(texto);
+            celdaTexto.setBorder(PdfPCell.NO_BORDER);
+            celdaTexto.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            tabla.addCell(celdaTexto);
+
+            BarcodeQRCode qr = new BarcodeQRCode(contenidoQr, 90, 90, null);
+            Image qrImage = qr.getImage();
+            qrImage.scaleToFit(70, 70);
+            PdfPCell celdaQr = new PdfPCell(qrImage, false);
+            celdaQr.setBorder(PdfPCell.NO_BORDER);
+            celdaQr.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tabla.addCell(celdaQr);
+
+            document.add(tabla);
+        } catch (Exception e) {
+            LOG.error("ERROR AL AGREGAR CODIGO QR AL PDF", e);
+        }
     }
 
     public static void getFinalParagraph(String nombreUsuario) {
@@ -266,6 +385,16 @@ public class ReportePFD {
             document.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void cerrarDocumento() {
+        try {
+            if (document != null && document.isOpen()) {
+                document.close();
+            }
+        } catch (Exception e) {
+            LOG.error("ERROR AL CERRAR DOCUMENTO PDF", e);
         }
     }
 

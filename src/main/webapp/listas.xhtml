@@ -37,8 +37,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
@@ -54,7 +52,7 @@
                                          styleClass="ui-button-danger"
                                          actionListener="#{listaController.eliminarSeleccionados}"
                                          disabled="#{!listaController.existeSeleccionados()}"
-                                         update="@this tblListas msgs">
+                                         update="@this tblListas">
                             <p:confirm header="#{msg['form.listas.confirm.delete.header']}"
                                        message="#{msg['form.listas.confirm.delete.multiple']}"
                                        icon="pi pi-exclamation-triangle"/>
@@ -129,7 +127,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.listas.btn.delete.title']}"
                                          actionListener="#{listaController.eliminarSeleccionado}"
-                                         process="@this" update="tblListas msgs">
+                                         process="@this" update="tblListas">
                             <!-- BUG FIX: was #{listas} (list ref), corrected to #{lista} (row var) -->
                             <f:setPropertyActionListener value="#{lista}" target="#{listaController.listaSeleccionado}"/>
                             <p:confirm header="#{msg['form.listas.confirm.delete.header']}"
@@ -211,7 +209,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{listaController.guardarSeleccionado}"
-                                         update="outPnlListas tblListas msgs"
+                                         update="outPnlListas tblListas"
                                          process="outPnlListas @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgListas').hide()"/>
                     </div>

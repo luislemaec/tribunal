@@ -4,7 +4,7 @@
  *
  * Integra:
  *   - NProgress: barra superior durante ajax JSF/PrimeFaces
- *   - PrimeFaces <p:growl widgetVar="msgs"> (definido en globals.xhtml)
+ *   - PrimeFaces <p:growl widgetVar="growlGlobal"> (definido en globals.xhtml)
  *     accesible vía Tribunal.toast.* y Tribunal.notify(...)
  *   - SweetAlert2: helper global Tribunal.confirm(...) / Tribunal.alert(...)
  *   - Inputmask: máscaras automáticas para .mask-cedula, .mask-ruc,
@@ -23,7 +23,7 @@
     var Tribunal = global.Tribunal || {};
 
     // ------------------------------------------------------------------
-    // Notificaciones flotantes — PrimeFaces <p:growl widgetVar="msgs">
+    // Notificaciones flotantes — PrimeFaces <p:growl widgetVar="growlGlobal">
     //
     // El componente está definido en /WEB-INF/globals.xhtml con autoUpdate,
     // de modo que aplica a todas las páginas del sistema.
@@ -37,13 +37,13 @@
     //   El growl con autoUpdate los muestra sin tocar UI.
     // ------------------------------------------------------------------
     /**
-     * Muestra un mensaje en el <p:growl widgetVar="msgs"> global.
+     * Muestra un mensaje en el <p:growl widgetVar="growlGlobal"> global.
      * En PrimeFaces 11 el growl expone renderMessage(msg) como API JS.
      * El objeto debe tener {severity, summary, detail}.
      */
     function showToast(severity, summary, detail) {
         if (!global.PF) { return; }
-        var widget = PF('msgs');
+        var widget = PF('growlGlobal');
         if (!widget) { return; }
         try {
             widget.renderMessage({

@@ -1,0 +1,153 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Resultados electorales</title>
+    <link rel="shortcut icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/resultados.css">
+    <script src="assets/js/chart.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <div class="brand">
+                <img src="assets/img/logo.png" alt="Tribunal Electoral">
+                <div>
+                    <div class="brand-title">Tribunal Electoral</div>
+                    <div class="brand-subtitle">Portal publico de resultados</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container hero-grid">
+            <div>
+                <span class="tag">Informacion oficial</span>
+                <h1>Resultados electorales</h1>
+                <p>Consulta publica del avance de escrutinios y votos registrados en actas cerradas del proceso electoral activo.</p>
+            </div>
+            <div class="process-card">
+                <div class="label">Proceso electoral</div>
+                <div id="processName" class="process-name">Cargando...</div>
+                <div id="statusPill" class="status-pill warning">Inicializando</div>
+                <div class="label" style="margin-top:16px">Ultima actualizacion</div>
+                <div id="updatedAt" style="margin-top:6px">--</div>
+                <div class="refresh-meta">
+                    <span id="loaderDot" class="loader-dot"></span>
+                    <span id="refreshMeta">Esperando datos</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <div id="runtimeWarning" class="runtime-warning">
+            Esta pagina debe abrirse desde el servidor de aplicaciones, por ejemplo: /tec/public/resultados.html
+        </div>
+
+        <section class="metrics">
+            <div class="metric-card">
+                <div class="label">Mesas del proceso</div>
+                <div id="totalMesas" class="value">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Mesas escrutadas</div>
+                <div id="mesasCerradas" class="value">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Mesas pendientes</div>
+                <div id="mesasPendientes" class="value">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Votos de listas</div>
+                <div id="totalVotos" class="value">0</div>
+            </div>
+        </section>
+
+        <nav class="tabs" aria-label="Secciones de resultados">
+            <button class="tab active" type="button" data-tab="summaryPanel">Resultados por listas</button>
+            <button class="tab" type="button" data-tab="tablesPanel">Mesas escrutadas</button>
+        </nav>
+
+        <section id="summaryPanel" class="panel">
+            <div class="toolbar">
+                <div style="flex:1">
+                    <h2 class="section-title">Resumen de resultados</h2>
+                    <p class="section-subtitle">Resultados consolidados por listas, considerando unicamente mesas cerradas.</p>
+                </div>
+                <div>
+                    <div class="label">Avance de escrutinio</div>
+                    <div id="avanceTexto" style="font-size:28px;font-weight:800;color:#0f4c81;text-align:right">0%</div>
+                </div>
+            </div>
+            <div class="progress"><div id="avanceBar"></div></div>
+            <div id="summaryContent" class="result-grid">
+                <div class="chart-shell">
+                    <canvas id="resultsChart" width="900" height="420" aria-label="Grafico de votos por lista"></canvas>
+                </div>
+                <div id="resultsList"></div>
+            </div>
+            <div id="emptyResults" class="empty hidden">Aun no existen resultados de listas publicados para el proceso activo.</div>
+        </section>
+
+        <section id="tablesPanel" class="panel hidden">
+            <div class="toolbar">
+                <div style="flex:1">
+                    <h2 class="section-title">Mesas escrutadas</h2>
+                    <p class="section-subtitle">Detalle territorial de mesas con acta cerrada.</p>
+                </div>
+                <button id="refreshButton" class="button" type="button">Actualizar resultados</button>
+            </div>
+
+            <div class="filters">
+                <div>
+                    <label class="label" for="cantonFilter">Canton</label>
+                    <select id="cantonFilter"></select>
+                </div>
+                <div>
+                    <label class="label" for="parroquiaFilter">Parroquia</label>
+                    <select id="parroquiaFilter"></select>
+                </div>
+                <div>
+                    <label class="label" for="recintoFilter">Recinto</label>
+                    <select id="recintoFilter"></select>
+                </div>
+            </div>
+
+            <div class="table-actions">
+                <input id="tableSearch" class="search-input" type="search" placeholder="Buscar por canton, parroquia, recinto o mesa">
+                <div class="label"><span id="tableCount">0</span> registros</div>
+                <button id="clearFiltersButton" class="button" type="button">Limpiar filtros</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Canton</th>
+                            <th>Parroquia</th>
+                            <th>Recinto</th>
+                            <th>Mesa</th>
+                            <th>Sufragantes</th>
+                            <th>Votos registrados</th>
+                            <th>Fecha de cierre</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablesBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyTables" class="empty hidden">Aun no existen mesas cerradas para publicar.</div>
+            <div class="pagination">
+                <button id="prevPageButton" class="button" type="button">Anterior</button>
+                <span id="pageInfo" class="label">Pagina 1 de 1</span>
+                <button id="nextPageButton" class="button" type="button">Siguiente</button>
+            </div>
+        </section>
+    </main>
+    <script src="assets/js/resultados.js"></script>
+</body>
+</html>
+

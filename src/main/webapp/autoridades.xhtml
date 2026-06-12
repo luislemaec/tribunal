@@ -37,8 +37,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- DATATABLE TRIBUNAL -->
                 <p:dataTable id="tbtribunal" var="tribunal"
                              value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
@@ -90,7 +88,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="Quitar autoridad"
                                          actionListener="#{tribunalController.eliminarPeriodoSeleccionados}"
-                                         process="@this" update="tbtribunal msgs"
+                                         process="@this" update="tbtribunal"
                                          disabled="#{tribunal.iglesiaPersona.persona eq null}">
                             <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
                             <p:confirm header="Confirmar eliminación"
@@ -169,7 +167,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{tribunalController.guardarAutoridad}"
-                                         update="outPnlAutoridad tbtribunal msgs"
+                                         update="outPnlAutoridad tbtribunal"
                                          process="outPnlAutoridad @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgAutoridad').hide()"/>
                     </div>
@@ -202,7 +200,7 @@
                                     <p:commandButton icon="pi pi-search"
                                                      styleClass="ui-button-info"
                                                      actionListener="#{tribunalController.buscaPersona}"
-                                                     update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad msgs outPnlFooter"
+                                                     update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad outPnlFooter"
                                                      process="outPnlAsignaAutoridadBusca @this"/>
                                 </div>
                                 <small class="text-500">Ingrese el número de cédula a buscar.</small>
@@ -251,7 +249,7 @@
                             <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
                                              styleClass="ui-button-success"
                                              actionListener="#{tribunalController.guardarAutoridad}"
-                                             update="outPnlAsignaAutoridad tbtribunal msgs"
+                                             update="outPnlAsignaAutoridad tbtribunal"
                                              process="outPnlAsignaAutoridad @this"
                                              oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').hide()"
                                              rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>

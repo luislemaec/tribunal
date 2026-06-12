@@ -46,8 +46,6 @@
             <div class="surface-card shadow-1 border-round-lg p-3">
 
                 <!-- Mensajes del sistema -->
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <span class="text-lg text-900 font-bold">Usuarios registrados</span>
@@ -168,7 +166,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.usuarios.confirm.delete.header']}"
                                          actionListener="#{usuarioControlador.eliminarUsuario}"
-                                         process="@this" update="tblUsuarios msgs">
+                                         process="@this" update="tblUsuarios">
                             <f:setPropertyActionListener value="#{rolUs.usuario}"
                                                          target="#{usuarioControlador.usuarioSeleccionado}"/>
                             <p:confirm header="#{msg['form.usuarios.confirm.delete.header']}"
@@ -222,7 +220,7 @@
                                                          or (not empty usuarioControlador.usuarioSeleccionado.personaDocumento)}">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
-                                            update="cedula nombres rolUs correo iglesiaPanel msgs"
+                                            update="cedula nombres rolUs correo iglesiaPanel"
                                             listener="#{usuarioControlador.blurEvent}"
                                             process="@this"/>
                                     <f:validateLength minimum="10"/>
@@ -318,7 +316,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{usuarioControlador.actualizarUsuario()}"
-                                         update="outPnlUsuario tblUsuarios msgs"
+                                         update="outPnlUsuario tblUsuarios"
                                          process="outPnlUsuario @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgUsuario').hide()"/>
                     </div>

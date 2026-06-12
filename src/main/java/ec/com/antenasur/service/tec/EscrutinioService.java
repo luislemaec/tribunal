@@ -9,6 +9,8 @@ import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
+import ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO;
+import ec.com.antenasur.dto.ResultadoMesaPublicaDTO;
 import ec.com.antenasur.enums.EstadoEscrutinio;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.tec.CategoriaVotoFacade;
@@ -21,6 +23,8 @@ import ec.com.antenasur.model.tec.Escrutinio;
 import ec.com.antenasur.model.tec.EscrutinioCabecera;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
+import ec.com.antenasur.model.tec.Recinto;
+import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
@@ -104,8 +108,13 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         if (EstadoEscrutinio.PENDIENTE.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("Debe registrar la apertura de la mesa antes de cerrar el acta.");
         }
-        if (EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
+        if (EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.ANULADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("El escrutinio ya se encuentra cerrado.");
+        }
+        if (!EstadoEscrutinio.CONTEO_REGISTRADO.equals(cabecera.getEstadoEscrutinio())
+                && !EstadoEscrutinio.REABIERTO.equals(cabecera.getEstadoEscrutinio())) {
+            throw new NegocioException("Debe registrar el conteo completo antes de cerrar la mesa.");
         }
         int totalPapeletasUso = 0;
         for (Escrutinio item : actaItems) {
@@ -165,7 +174,8 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         if (EstadoEscrutinio.PENDIENTE.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("Debe registrar la apertura de la mesa antes de guardar el conteo.");
         }
-        if (EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
+        if (EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.ANULADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("El escrutinio ya se encuentra cerrado. No se puede modificar el conteo.");
         }
         for (Escrutinio item : actaItems) {
@@ -177,9 +187,33 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             }
         }
         cabecera.setFechaInicioConteo(cabecera.getFechaInicioConteo() != null ? cabecera.getFechaInicioConteo() : new Date());
-        cabecera.setEstadoEscrutinio(EstadoEscrutinio.CONTEO_REGISTRADO);
         actualizarTotalesCabecera(cabecera, actaItems, totalSufragantes != null ? totalSufragantes : cabecera.getTotalSufragantes());
+        int totalRegistrado = cabecera.getTotalVotosRegistrados() != null ? cabecera.getTotalVotosRegistrados() : 0;
+        int totalMesa = cabecera.getTotalSufragantes() != null ? cabecera.getTotalSufragantes() : 0;
+        cabecera.setEstadoEscrutinio(totalRegistrado == totalMesa
+                ? EstadoEscrutinio.CONTEO_REGISTRADO : EstadoEscrutinio.EN_CONTEO);
         return escrutinioCabeceraFacade.edit(cabecera);
+    }
+
+    public EscrutinioCabeceraDTO cambiarEstadoCabeceraDTO(Integer mesaId, Integer procesoId,
+            EstadoEscrutinio estadoNuevo, String motivo) {
+        if (mesaId == null || procesoId == null || estadoNuevo == null) {
+            throw new NegocioException("No se pudo resolver la mesa, proceso o estado requerido.");
+        }
+        EscrutinioCabecera cabecera = escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId);
+        if (cabecera == null) {
+            throw new NegocioException("No existe una cabecera de escrutinio para la mesa seleccionada.");
+        }
+        validarCambioEstado(cabecera, estadoNuevo, motivo);
+        cabecera.setEstadoEscrutinio(estadoNuevo);
+        if (EstadoEscrutinio.REABIERTO.equals(estadoNuevo)) {
+            cabecera.setFechaCierre(null);
+        }
+        if (EstadoEscrutinio.ANULADO.equals(estadoNuevo)) {
+            cabecera.setFechaCierre(new Date());
+        }
+        cabecera.setObservacionCierre(motivo);
+        return EscrutinioCabeceraDTO.fromEntity(escrutinioCabeceraFacade.edit(cabecera));
     }
 
     // ----- API basada en DTO -----
@@ -321,6 +355,52 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return EscrutinioCabeceraDTO.fromEntity(cabecera);
     }
 
+    public EscrutinioCabeceraDTO buscarCabeceraDTO(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return null;
+        }
+        return EscrutinioCabeceraDTO.fromEntity(
+                escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId));
+    }
+
+    public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
+        List<ResultadoCategoriaPublicaDTO> resultados = escrutinioFacade.obtenerResultadosPublicosPorCategoria(procesoId);
+        resultados.removeIf(resultado -> !esCategoriaLista(resultado));
+        long totalGeneral = 0L;
+        for (ResultadoCategoriaPublicaDTO resultado : resultados) {
+            totalGeneral += resultado.getTotalVotos() != null ? resultado.getTotalVotos() : 0L;
+        }
+        for (ResultadoCategoriaPublicaDTO resultado : resultados) {
+            resultado.calcularPorcentaje(totalGeneral);
+        }
+        return resultados;
+    }
+
+    private boolean esCategoriaLista(ResultadoCategoriaPublicaDTO resultado) {
+        if (resultado == null || resultado.getCategoria() == null) {
+            return false;
+        }
+        String categoria = resultado.getCategoria().trim().toUpperCase(java.util.Locale.ROOT);
+        return categoria.startsWith("LISTA")
+                && !categoria.contains("BLANCO")
+                && !categoria.contains("NULO")
+                && !categoria.contains("PAPELETA")
+                && !categoria.contains("PAPELTA")
+                && !categoria.contains("RESTANTE");
+    }
+
+    public List<ResultadoMesaPublicaDTO> listarMesasCerradasPublicas(Integer procesoId) {
+        List<ResultadoMesaPublicaDTO> resultado = new ArrayList<>();
+        for (EscrutinioCabecera cabecera : escrutinioCabeceraFacade.listarCerradasPorProceso(procesoId)) {
+            resultado.add(toResultadoMesaPublicaDTO(cabecera));
+        }
+        return resultado;
+    }
+
+    public long contarMesasCerradasPorProceso(Integer procesoId) {
+        return escrutinioCabeceraFacade.contarCerradasPorProceso(procesoId);
+    }
+
     public int calcularTotalVotos(List<EscrutinioDTO> items) {
         int total = 0;
         if (items == null) {
@@ -410,8 +490,38 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         int diferencia = cabecera.getTotalSufragantes() - total;
         cabecera.setObservacionConteo(diferencia == 0 ? "" : Math.abs(diferencia)
                 + (diferencia > 0 ? " VOTOS FALTANTES" : " VOTOS EXCEDENTES"));
-        if (diferencia != 0 && !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
-            cabecera.setEstadoEscrutinio(EstadoEscrutinio.OBSERVADO);
+    }
+
+    private void validarCambioEstado(EscrutinioCabecera cabecera, EstadoEscrutinio estadoNuevo, String motivo) {
+        EstadoEscrutinio estadoActual = cabecera.getEstadoEscrutinio();
+        if (EstadoEscrutinio.OBSERVADO.equals(estadoNuevo)) {
+            if (EstadoEscrutinio.CERRADO.equals(estadoActual) || EstadoEscrutinio.ANULADO.equals(estadoActual)) {
+                throw new NegocioException("No se puede observar un escrutinio cerrado o anulado.");
+            }
+            return;
+        }
+        if (EstadoEscrutinio.ANULADO.equals(estadoNuevo)) {
+            validarMotivo(motivo);
+            if (EstadoEscrutinio.CERRADO.equals(estadoActual)) {
+                throw new NegocioException("No se puede anular un escrutinio cerrado sin una reapertura autorizada.");
+            }
+            return;
+        }
+        if (EstadoEscrutinio.REABIERTO.equals(estadoNuevo)) {
+            validarMotivo(motivo);
+            if (!EstadoEscrutinio.CERRADO.equals(estadoActual)
+                    && !EstadoEscrutinio.OBSERVADO.equals(estadoActual)
+                    && !EstadoEscrutinio.ANULADO.equals(estadoActual)) {
+                throw new NegocioException("Solo se puede reabrir un escrutinio cerrado, observado o anulado.");
+            }
+            return;
+        }
+        throw new NegocioException("El cambio de estado solicitado no esta permitido.");
+    }
+
+    private void validarMotivo(String motivo) {
+        if (motivo == null || motivo.trim().isEmpty()) {
+            throw new NegocioException("Debe ingresar un motivo para realizar esta accion.");
         }
     }
 
@@ -424,6 +534,31 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             }
         }
         return null;
+    }
+
+    private ResultadoMesaPublicaDTO toResultadoMesaPublicaDTO(EscrutinioCabecera cabecera) {
+        ResultadoMesaPublicaDTO dto = new ResultadoMesaPublicaDTO();
+        if (cabecera == null) {
+            return dto;
+        }
+        Mesa mesa = cabecera.getMesa();
+        Recinto recinto = mesa != null ? mesa.getRecinto() : null;
+        Geograp parroquia = recinto != null ? recinto.getUbicacion() : null;
+        Geograp canton = parroquia != null ? parroquia.getGeograp() : null;
+        Geograp provincia = canton != null ? canton.getGeograp() : null;
+        dto.setMesaId(mesa != null ? mesa.getId() : null);
+        dto.setMesa(mesa != null ? mesa.getNombre() : "");
+        dto.setRecinto(recinto != null ? recinto.getNombre() : "");
+        dto.setParroquia(parroquia != null ? parroquia.getName() : "");
+        dto.setCanton(canton != null ? canton.getName() : "");
+        dto.setProvincia(provincia != null ? provincia.getName() : "");
+        dto.setSufragantesAsignados(cabecera.getTotalSufragantes());
+        dto.setVotosRegistrados(cabecera.getTotalVotosRegistrados());
+        dto.setVotosValidos(cabecera.getTotalVotosValidos());
+        dto.setVotosBlancos(cabecera.getTotalVotosBlancos());
+        dto.setVotosNulos(cabecera.getTotalVotosNulos());
+        dto.setFechaCierre(cabecera.getFechaCierre());
+        return dto;
     }
 
     private List<EscrutinioDTO> mapearLista(List<Escrutinio> escrutinios) {

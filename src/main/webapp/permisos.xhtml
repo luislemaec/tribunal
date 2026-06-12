@@ -34,8 +34,6 @@
 
         <h:form id="frmPermisos">
 
-            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
             <!-- SELECTOR DE ROL -->
             <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                 <div class="flex align-items-center gap-2 mb-3">
@@ -81,7 +79,7 @@
                         <p:column headerText="#{permisosController.rolSeleccionado.nombre}"
                                   styleClass="text-center" style="width:10rem">
                             <p:selectBooleanCheckbox value="#{menuRol.estado}">
-                                <p:ajax event="change" update="msgs" process="@this"
+                                <p:ajax event="change" process="@this"
                                         listener="#{permisosController.guardarMenuRol(menuRol)}"/>
                             </p:selectBooleanCheckbox>
                         </p:column>

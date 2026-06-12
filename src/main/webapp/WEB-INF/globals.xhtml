@@ -5,10 +5,10 @@
                 xmlns:p="http://primefaces.org/ui">
 
     <!-- Growl global con presentación profesional.
-         id="msgs" + autoUpdate="true" hace que cualquier
+         id="growlGlobal" + autoUpdate="true" hace que cualquier
          JsfUtil.addInfoMessage(...) / addSuccessMessage(...) etc. aparezca
-         automáticamente sin necesitar update="msgs" en cada commandButton.
-         widgetVar="msgs" permite invocarlo desde JS vía Tribunal.toast.*
+         automáticamente sin necesitar update del growl en cada commandButton.
+         widgetVar="growlGlobal" permite invocarlo desde JS vía Tribunal.toast.*
          (ver tribunal-globals.js â†’ showToast â†’ renderMessage). -->
     <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
          consistente con el tema, sin necesidad de declararlo página por página.
@@ -32,7 +32,7 @@
     </h:panelGroup>
 
     <h:form id="frmGlobal">
-        <p:growl id="msgs" widgetVar="msgs" globalOnly="true"
+        <p:growl id="growlGlobal" widgetVar="growlGlobal" globalOnly="true"
                  showDetail="false" showSummary="true" sticky="false"
                  life="5000">
             <p:autoUpdate/>

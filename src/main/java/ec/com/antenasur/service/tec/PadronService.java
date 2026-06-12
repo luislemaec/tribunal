@@ -245,6 +245,10 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
     }
 
+    public long contarMesasPorProceso(Integer procesoId) {
+        return padronFacade.contarMesasPorProceso(procesoId);
+    }
+
     public List<PadronDTO> listarDTOsTodosOrdenados() {
         return mapearLista(padronFacade.getAllOrderbyId());
     }

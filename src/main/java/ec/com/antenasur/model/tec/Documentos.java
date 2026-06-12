@@ -92,6 +92,11 @@ public class Documentos extends EntidadAuditable implements Serializable {
 
     @Setter
     @Getter
+    @Column(name = "doc_hash_sha256", length = 64)
+    private String hashSha256;
+
+    @Setter
+    @Getter
     @Transient
     private byte[] contenidoDocumento;
 

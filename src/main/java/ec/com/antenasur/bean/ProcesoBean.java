@@ -75,7 +75,7 @@ public class ProcesoBean {
     public void okActivityRegister(String activity, String datos) {
         try {
             proceso = new Proceso(JsfUtil.getIPAddress());
-            proceso.setActividad(activity);
+            proceso.setActividad(datos != null && !datos.isBlank() ? activity + " | " + datos : activity);
             procesoService.create(proceso);
         } catch (Exception e) {
             e.printStackTrace();

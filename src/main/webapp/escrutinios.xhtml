@@ -42,8 +42,6 @@
 
         <h:form id="frmActaE">
 
-            <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
             <!-- FILTROS GEOGRAFICOS -->
             <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                 <div class="flex align-items-center gap-2 mb-3">
@@ -59,7 +57,7 @@
                             <f:selectItems value="#{recintoController.cantones}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{totalVotosController.cargaParroquiasPorCanton()}"
-                                    process="@this" update="frmActaE msgs"/>
+                                    process="@this" update="frmActaE"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
@@ -69,7 +67,7 @@
                             <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{totalVotosController.cargaRecintosPorParroquia()}"
-                                    process="@this" update="frmActaE msgs"/>
+                                    process="@this" update="frmActaE"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">
@@ -81,7 +79,7 @@
                             <f:selectItems value="#{totalVotosController.recintos}" var="recinto"
                                            itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
                             <p:ajax event="change" listener="#{totalVotosController.cargaMesasPorRecintos()}"
-                                    process="@this" update="frmActaE msgs"/>
+                                    process="@this" update="frmActaE"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-3">

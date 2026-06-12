@@ -234,8 +234,6 @@
             <div class="surface-card shadow-1 border-round-lg p-3">
 
                 <!-- Mensajes del sistema -->
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- Banner IglesiaAdmin: contexto fijo a su iglesia -->
                 <ui:fragment rendered="#{personaController.restringidoAIglesia}">
                     <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3"
@@ -375,7 +373,7 @@
                                     <f:selectItems value="#{personaController.parroquias}" var="parroquia"
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}"
-                                            process="@this" update="frmPersonas msgs"/>
+                                            process="@this" update="frmPersonas"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 md:col-6">
@@ -389,7 +387,7 @@
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
                                                    itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}"
-                                            process="@this" update="frmPersonas msgs"/>
+                                            process="@this" update="frmPersonas"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>
@@ -434,7 +432,7 @@
                                       invalidFileMessage="#{msg['msg.invalid.file']}"
                                       invalidSizeMessage="#{msg['msg.invalid.max.size.file']}"
                                       auto="true" oncomplete="PF('statusDialog').hide()"
-                                      update="frmPersonas, msgs"
+                                      update="frmPersonas"
                                       maxFileSize="2000000" fileLimit="1"
                                       allowTypes="/(\.|\/)(xlsx|xls|)$/"
                                       multiple="false" cancelLabel="Cancelar"
@@ -627,7 +625,7 @@
                                              styleClass="w-full">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
-                                            update="frmPersonas:outPnlPersonas msgs"
+                                            update="frmPersonas:outPnlPersonas"
                                             listener="#{personaController.buscaPersonaPorCedula}"
                                             process="@this"/>
                                     <f:validateLength minimum="10" maximum="10"/>

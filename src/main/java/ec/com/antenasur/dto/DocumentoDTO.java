@@ -28,6 +28,7 @@ public class DocumentoDTO implements Serializable {
     private String extension;
     private String mime;
     private String codigo;
+    private String hashSha256;
 
     public static DocumentoDTO fromEntity(Documentos d) {
         if (d == null) {
@@ -41,6 +42,7 @@ public class DocumentoDTO implements Serializable {
         dto.setExtension(d.getExtension());
         dto.setMime(d.getMime());
         dto.setCodigo(d.getCodigo());
+        dto.setHashSha256(d.getHashSha256());
         if (d.getTipoDocumento() != null) {
             dto.setTipoDocumentoId(d.getTipoDocumento().getId());
         }

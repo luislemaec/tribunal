@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,6 +48,9 @@ public class DocumentoBean implements Serializable {
 
     @Inject
     private DocumentoService documentoService;
+
+    @Inject
+    private ProcesoBean procesoBean;
 
     @Setter
     @Getter
@@ -120,13 +126,22 @@ public class DocumentoBean implements Serializable {
      */
     public void descargarArchivoDirectorio() throws IOException {
         if (documento.getNombre() != null) {
-            try (InputStream inp = new FileInputStream(documento.getPath())) {
+            try {
+                Path path = Paths.get(documento.getPath()).toAbsolutePath().normalize();
+                if (!Files.isRegularFile(path)) {
+                    log.warn("DOCUMENTO NO ENCONTRADO PARA DESCARGA: {}", path);
+                    return;
+                }
+                InputStream inp = new FileInputStream(path.toFile());
                 byte[] imageInByte = IOUtils.toByteArray(inp);
+                inp.close();
                 file = DefaultStreamedContent.builder()
                         .contentType(documento.getMime() != null ? documento.getMime() : "application/octet-stream")
                         .name(documento.getNombre() + documento.getExtension())
                         .stream(() -> new ByteArrayInputStream(imageInByte))
                         .build();
+                procesoBean.okActivityRegister("DESCARGA DOCUMENTO " + documento.getNombre(),
+                        documento.getPath());
 
             } catch (Exception e) {
                 log.error("ERROR DESCARGAR DOCUMENTO", e);

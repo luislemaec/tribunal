@@ -37,9 +37,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <!-- Mensajes -->
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
                     <p:commandButton value="#{msg['form.catalogos.btn.new']}" icon="pi pi-plus"
@@ -55,8 +52,8 @@
                 <p:treeTable value="#{catalogoController.root}" var="catalogo"
                              showGridlines="true" editable="true" id="trTblCatalogo"
                              styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:ajax event="rowEdit"       listener="#{catalogoController.onRowEdit}"   update="msgs"/>
-                    <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}" update="msgs"/>
+                    <p:ajax event="rowEdit"       listener="#{catalogoController.onRowEdit}"/>
+                    <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}"/>
 
                     <p:column headerText="#{msg['form.catalogos.table.header.id']}"
                               sortBy="#{catalogo.id}" style="width:7%" responsivePriority="1">
@@ -96,7 +93,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.catalogos.btn.delete.title']}"
                                          actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
-                                         process="@this" update="@form msgs">
+                                         process="@this" update="@form">
                             <f:setPropertyActionListener value="#{catalogo}"
                                                          target="#{catalogoController.catalogoSeleccionado}"/>
                             <p:confirm header="#{msg['form.catalogos.confirm.delete.header']}"
@@ -187,7 +184,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{catalogoController.guardarCatalogo}"
-                                         update="outPnlCatalogo trTblCatalogo msgs"
+                                         update="outPnlCatalogo trTblCatalogo"
                                          process="outPnlCatalogo @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgCatalogo').hide()"/>
                     </div>

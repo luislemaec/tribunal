@@ -723,3 +723,7 @@ SELECT e.mesa_id,
  GROUP BY e.mesa_id, e.proce_id, m.estado_tarea, m.u_responsable, m.f_actualiza,
           m.totalvotos, m.observacion
 ON CONFLICT (proce_id, mesa_id) DO NOTHING;
+
+-- 14. Seguridad documental de actas PDF
+ALTER TABLE tec.documentos
+    ADD COLUMN IF NOT EXISTS doc_hash_sha256 VARCHAR(64);

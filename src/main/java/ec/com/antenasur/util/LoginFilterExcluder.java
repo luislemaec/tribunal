@@ -26,12 +26,15 @@ public class LoginFilterExcluder {
          */
         excludeUrls.add("/resources/");
         excludeUrls.add("/jakarta.faces.resource/");
+        excludeUrls.add("/public/");
         excludeUrls.add("/errors/");
         excludeUrls.add("/index.html");
         excludeUrls.add("/login.jsf");
         excludeUrls.add("/olvidoClave.jsf");
         excludeUrls.add("/recuperaClaveCorrecto.jsf");
         excludeUrls.add("/consultar.jsf");
+        excludeUrls.add("/resultados.jsf");
+        excludeUrls.add("/resultados.xhtml");
     }
 
     public boolean isExcludeUrl(String url) {

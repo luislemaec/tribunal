@@ -256,10 +256,6 @@
         <h:form id="frmAsignacion">
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <!-- Mensajes locales -->
-                <p:messages id="msgs" showDetail="false" showSummary="true"
-                            closable="true" styleClass="mb-3"/>
-
                 <!-- Banner bloqueo de fase -->
                 <p:outputPanel rendered="#{not asignacionUsuariosController.puedeAsignar}"
                                styleClass="mb-3" layout="block">
@@ -383,7 +379,7 @@
                                          title="#{asignacionUsuariosController.puedeAsignar ? 'Asignar administrador' : asignacionUsuariosController.tooltipAccionDeshabilitada}"
                                          actionListener="#{asignacionUsuariosController.prepararAsignacion(ig)}"
                                          oncomplete="if (#{asignacionUsuariosController.puedeAsignar}) PF('dlgAsignacion').show()"
-                                         update=":frmDlgAsignacion :frmAsignacion:msgs"
+                                         update=":frmDlgAsignacion"
                                          process="@this">
                             <p:resetInput target=":frmDlgAsignacion"/>
                         </p:commandButton>
@@ -396,7 +392,7 @@
                                          title="#{asignacionUsuariosController.puedeAsignar ? 'Reasignar administrador' : asignacionUsuariosController.tooltipAccionDeshabilitada}"
                                          actionListener="#{asignacionUsuariosController.prepararReasignacion(ig)}"
                                          oncomplete="if (#{asignacionUsuariosController.puedeAsignar}) PF('dlgAsignacion').show()"
-                                         update=":frmDlgAsignacion :frmAsignacion:msgs"
+                                         update=":frmDlgAsignacion"
                                          process="@this">
                             <p:resetInput target=":frmDlgAsignacion"/>
                         </p:commandButton>
@@ -451,7 +447,7 @@
                     </p:outputPanel>
 
                     <!-- Mensajes locales del diálogo -->
-                    <p:messages id="dlgMsgs" showDetail="false" showSummary="true"
+                    <p:messages id="messagesDialogAsignacion" showDetail="false" showSummary="true"
                                 closable="true" styleClass="mb-2"/>
 
                     <!-- Los inputs viven dentro de adminFields para que el AJAX de cédula
@@ -470,7 +466,7 @@
                                     <p:keyFilter mask="num"/>
                                     <p:ajax event="change"
                                             listener="#{asignacionUsuariosController.buscarPersonaPorCedula()}"
-                                            process="@this" update="adminFields dlgMsgs"/>
+                                            process="@this" update="adminFields messagesDialogAsignacion"/>
                                     <f:validateLength minimum="10"/>
                                 </p:inputText>
                                 <small class="text-500">Tab para buscar persona en BD o Registro Civil.</small>
@@ -530,7 +526,7 @@
                                          actionListener="#{asignacionUsuariosController.asignarAdmin}"
                                          oncomplete="if (!args.validationFailed) PF('dlgAsignacion').hide()"
                                          process="@form"
-                                         update="adminFields dlgMsgs :frmAsignacion :frmStats :frmProgreso"/>
+                                         update="adminFields messagesDialogAsignacion :frmAsignacion :frmStats :frmProgreso"/>
                     </div>
                 </f:facet>
 

@@ -38,8 +38,6 @@
             <div class="surface-card shadow-1 border-round-lg p-3">
 
                 <!-- Mensajes -->
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
@@ -55,7 +53,7 @@
                                          styleClass="ui-button-danger"
                                          actionListener="#{rolController.eliminarRolesSeleccionados}"
                                          disabled="#{!rolController.existeRolesSeleccionados()}"
-                                         update="@this tblRoles msgs">
+                                         update="@this tblRoles">
                             <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
                                        message="#{msg['form.roles.confirm.delete.multiple']}"
                                        icon="pi pi-exclamation-triangle"/>
@@ -124,7 +122,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.roles.confirm.delete.header']}"
                                          actionListener="#{rolController.eliminarRolesSeleccionados}"
-                                         process="@this" update="tblRoles msgs">
+                                         process="@this" update="tblRoles">
                             <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
                             <p:confirm header="#{msg['form.roles.confirm.delete.header']}"
                                        message="#{msg['form.roles.confirm.delete.message']}"
@@ -171,7 +169,7 @@
                                              disabled="#{not empty rolController.rolSeleccionado.id}"
                                              required="true" styleClass="w-full">
                                     <p:ajax event="change"
-                                            update="frmRoles:outPnlRoles msgs"
+                                            update="frmRoles:outPnlRoles"
                                             listener="#{rolController.buscaRolPorNombre}"
                                             process="@this"/>
                                 </p:inputText>
@@ -201,7 +199,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{rolController.actualizarRegistro}"
-                                         update="outPnlRoles tblRoles msgs"
+                                         update="outPnlRoles tblRoles"
                                          process="outPnlRoles @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgRol').hide()"/>
                     </div>

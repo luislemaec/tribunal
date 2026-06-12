@@ -59,8 +59,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <p:dataTable id="tblListas" widgetVar="wdTblCandidatos" var="candidato"
                              value="#{candidatoController.candidatos}" reflow="true"
                              paginator="true" rows="10" rowSelectMode="add"
@@ -112,7 +110,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.candidatos.btn.delete.title']}"
                                          actionListener="#{candidatoController.eliminarSeleccionado}"
-                                         process="@this" update="tblListas msgs">
+                                         process="@this" update="tblListas">
                             <f:setPropertyActionListener value="#{candidato}"
                                                          target="#{candidatoController.candidatoSeleccionado}"/>
                             <p:confirm header="#{msg['form.candidatos.confirm.delete.header']}"
@@ -162,7 +160,7 @@
                                     <p:commandButton icon="pi pi-search"
                                                      styleClass="ui-button-info"
                                                      actionListener="#{candidatoController.buscaPersona}"
-                                                     update="outPnlAsignaCandidatoBusca outPnlAsignaCandidato msgs outPnlFooter"
+                                                     update="outPnlAsignaCandidatoBusca outPnlAsignaCandidato outPnlFooter"
                                                      process="outPnlAsignaCandidatoBusca @this"/>
                                 </div>
                                 <small class="text-500">#{msg['form.candidatos.search.hint']}</small>
@@ -214,7 +212,7 @@
                             <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
                                              styleClass="ui-button-success"
                                              actionListener="#{candidatoController.guardarCandidato}"
-                                             update="outPnlAsignaCandidato tblListas msgs"
+                                             update="outPnlAsignaCandidato tblListas"
                                              process="outPnlAsignaCandidato @this"
                                              oncomplete="if (!args.validationFailed) PF('dlgAsignaCandidato').hide()"
                                              rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}"/>

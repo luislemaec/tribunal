@@ -4,6 +4,8 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -128,17 +130,17 @@ public class Constantes {
         if (directorio == null || directorio.isBlank()) {
             String jbossDataDir = System.getProperty("jboss.server.data.dir");
             directorio = (jbossDataDir != null && !jbossDataDir.isBlank())
-                    ? jbossDataDir + File.separator + "documentos"
-                    : System.getProperty("java.io.tmpdir") + File.separator + "tec" + File.separator + "documentos";
+                    ? resolverPath(jbossDataDir, "documentos")
+                    : resolverPath(System.getProperty("java.io.tmpdir"), "tec", "documentos");
         }
-        return directorio;
+        return resolverPath(directorio);
     }
 
     public static String getDirectorioDocumentos(String subdirectorio) {
         if (subdirectorio == null || subdirectorio.isBlank()) {
             return getDirectorioDocumentos();
         }
-        return getDirectorioDocumentos() + File.separator + subdirectorio;
+        return resolverPath(getDirectorioDocumentos(), subdirectorio);
     }
 
     public static String getDirectorioActasEscrutinio() {
@@ -149,15 +151,30 @@ public class Constantes {
         if (directorio == null || directorio.isBlank()) {
             directorio = getDirectorioDocumentos("actas-escrutinio");
         }
-        return directorio;
+        return resolverPath(directorio);
     }
 
     public static String getPathActaEscrutinio(String nombreDocumento) {
-        return getDirectorioActasEscrutinio() + File.separator + nombreDocumento + ".pdf";
+        return resolverPath(getDirectorioActasEscrutinio(), nombreDocumento + ".pdf");
     }
 
     public static String getPathListaMiembros(String nombreDocumento, String extension) {
-        return getDirectorioDocumentos("listas-miembros") + File.separator + nombreDocumento + extension;
+        return resolverPath(getDirectorioDocumentos("listas-miembros"), nombreDocumento + extension);
+    }
+
+    private static String resolverPath(String primerSegmento, String... segmentos) {
+        if (primerSegmento == null || primerSegmento.isBlank()) {
+            primerSegmento = System.getProperty("java.io.tmpdir");
+        }
+        Path path = Paths.get(primerSegmento.trim());
+        if (segmentos != null) {
+            for (String segmento : segmentos) {
+                if (segmento != null && !segmento.isBlank()) {
+                    path = path.resolve(segmento.trim());
+                }
+            }
+        }
+        return path.toAbsolutePath().normalize().toString();
     }
 
     public static String getRolSuperadministrador() {

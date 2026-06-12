@@ -37,8 +37,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
                     <p:commandButton value="Nuevo" icon="pi pi-plus"
@@ -54,8 +52,8 @@
                 <p:treeTable value="#{menuController.root}" var="menu"
                              showGridlines="true" editable="true" id="trTblMenuo"
                              styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:ajax event="rowEdit"       listener="#{menuController.onRowEdit}"   update="msgs"/>
-                    <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}" update="msgs"/>
+                    <p:ajax event="rowEdit"       listener="#{menuController.onRowEdit}"/>
+                    <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}"/>
 
                     <p:column headerText="ID" sortBy="#{menu.id}" style="width:6%" responsivePriority="1">
                         <p:cellEditor>
@@ -140,7 +138,7 @@
                                      styleClass="ui-button-danger"
                                      actionListener="#{menuController.eliminarMenuSeleccionado}"
                                      process="@this"
-                                     update="trTblMenuo msgs"
+                                     update="trTblMenuo"
                                      oncomplete="PF('dlgEliminaRegistro').hide()"/>
                     <p:commandButton value="Cancelar" icon="pi pi-times"
                                      styleClass="ui-button-secondary ml-2" type="button"
@@ -217,7 +215,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{menuController.guardarMenu}"
-                                         update="outPnlMenu trTblMenuo msgs"
+                                         update="outPnlMenu trTblMenuo"
                                          process="outPnlMenu @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgMenuo').hide()"/>
                     </div>

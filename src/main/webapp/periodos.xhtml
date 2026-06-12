@@ -37,8 +37,6 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <p:messages id="msgs" showDetail="true" closable="true" styleClass="mb-3"/>
-
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
@@ -54,7 +52,7 @@
                                          styleClass="ui-button-danger"
                                          actionListener="#{periodoController.eliminarPeriodoSeleccionadas}"
                                          disabled="#{!periodoController.existePeriodosSeleccionadas()}"
-                                         update="@this tblPeriodos msgs">
+                                         update="@this tblPeriodos">
                             <p:confirm header="#{msg['form.periodos.confirm.delete.header']}"
                                        message="#{msg['form.periodos.confirm.delete.multiple']}"
                                        icon="pi pi-exclamation-triangle"/>
@@ -135,7 +133,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.periodos.btn.delete.title']}"
                                          actionListener="#{periodoController.eliminarPeriodoSeleccionados}"
-                                         process="@this" update="tblPeriodos msgs">
+                                         process="@this" update="tblPeriodos">
                             <f:setPropertyActionListener value="#{periodo}" target="#{periodoController.periodoSeleccionado}"/>
                             <p:confirm header="#{msg['form.periodos.confirm.delete.header']}"
                                        message="#{msg['form.periodos.confirm.delete.message']}"
@@ -217,7 +215,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{periodoController.guardar}"
-                                         update="outPnlPeriodo tblPeriodos msgs"
+                                         update="outPnlPeriodo tblPeriodos"
                                          process="outPnlPeriodo @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgPeriodo').hide()"/>
                     </div>

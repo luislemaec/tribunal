@@ -335,6 +335,26 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         }
     }
 
+    public long contarMesasPorProceso(Integer procesoId) {
+        if (procesoId == null) {
+            return 0L;
+        }
+        try {
+            String sql = "SELECT COUNT(DISTINCT m.id) FROM Padron p"
+                    + " JOIN p.mesa m"
+                    + " JOIN p.proceso pro"
+                    + " WHERE pro.id = :procesoId"
+                    + " AND " + ACTIVOS;
+            TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+            query.setParameter("procesoId", procesoId);
+            Long total = query.getSingleResult();
+            return total != null ? total : 0L;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0L;
+        }
+    }
+
     public List<Padron> getPadronesPorIglesiaMesaProceso(Integer iglesiaId, Integer mesaId, Integer procesoId) {
         if (iglesiaId == null || mesaId == null || procesoId == null) {
             return java.util.Collections.emptyList();

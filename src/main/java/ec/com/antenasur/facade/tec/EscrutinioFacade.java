@@ -3,6 +3,8 @@ package ec.com.antenasur.facade.tec;
 import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.tec.Escrutinio;
+import ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO;
+import ec.com.antenasur.enums.EstadoEscrutinio;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
@@ -62,6 +64,34 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
             return null;
         }
         return null;
+    }
+
+    public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
+        if (procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = "SELECT new ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO("
+                + " c.id, c.nombre, COALESCE(SUM(e.totalVotos), 0), c.orden)"
+                + " FROM Escrutinio e"
+                + " JOIN e.categoria c"
+                + " JOIN e.mesa m"
+                + " JOIN e.proceso pro"
+                + " WHERE pro.id = :procesoId"
+                + " AND e.estado = TRUE"
+                + " AND EXISTS ("
+                + "     SELECT cab.id FROM EscrutinioCabecera cab"
+                + "     WHERE cab.mesa.id = m.id"
+                + "     AND cab.proceso.id = :procesoId"
+                + "     AND cab.estado = TRUE"
+                + "     AND cab.estadoEscrutinio = :estadoCerrado"
+                + " )"
+                + " GROUP BY c.id, c.nombre, c.orden"
+                + " ORDER BY c.orden, c.nombre";
+        TypedQuery<ResultadoCategoriaPublicaDTO> query = super.getEntityManager()
+                .createQuery(sql, ResultadoCategoriaPublicaDTO.class);
+        query.setParameter("procesoId", procesoId);
+        query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        return query.getResultList();
     }
 
 }
