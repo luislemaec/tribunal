@@ -52,6 +52,7 @@
         <version.jakarta.mail>2.1.3</version.jakarta.mail>
         <version.angus.mail>2.0.3</version.angus.mail>
         <version.bcrypt>0.10.2</version.bcrypt>
+        <version.flyway>11.14.1</version.flyway>
     </properties>
 
 
@@ -108,6 +109,23 @@
             <groupId>at.favre.lib</groupId>
             <artifactId>bcrypt</artifactId>
             <version>${version.bcrypt}</version>
+        </dependency>
+
+        <!-- ================================================================
+             Flyway: migraciones versionadas de base de datos.
+             PostgreSQL requiere el modulo especifico desde Flyway 10+.
+             Se ejecuta solo si se habilita explicitamente en runtime.
+             ================================================================ -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>${version.flyway}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>${version.flyway}</version>
         </dependency>
 
         <!-- ================================================================

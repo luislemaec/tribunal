@@ -22,8 +22,8 @@ Guia rapida para agentes que trabajen en este proyecto.
 tec/
 |-- Agents.md
 |-- pom.xml
-|-- migraciones.sql
 |-- db_tribunal.backup
+|-- docs/
 +-- src/
     |-- main/
     |   |-- java/
@@ -192,7 +192,8 @@ Pantallas destacadas:
 src/main/resources/
 |-- META-INF/
 |   +-- persistence.xml
-|-- import.sql
+|-- db/
+|   +-- migration/
 +-- ec/com/antenasur/resources/
     +-- messages_es.properties
 ```
@@ -209,7 +210,12 @@ Notas:
 
 - `hibernate.hbm2ddl.auto` esta en `update`; para produccion preferir `validate` o `none` y aplicar cambios con scripts/versionado.
 - `hibernate.jpa.compliance.query=false` conserva compatibilidad con queries heredadas de Hibernate 5, especialmente aliases en `JOIN FETCH`.
-- `migraciones.sql` contiene scripts manuales de BD; tratarlo como archivo sensible.
+- Flyway es la fuente oficial de estructura y semillas en `src/main/resources/db/migration`.
+- `V1__baseline_inicial.sql` genera el modelo completo para una base limpia; no ejecutarlo sobre una base existente.
+- `V2__datos_iniciales.sql` contiene catalogos y datos operativos iniciales autorizados: geografia, personas, iglesias, usuarios BCrypt, proceso, cronograma, recintos, mesas, plantillas, menus y relaciones.
+- V2 contiene datos personales y hashes BCrypt reales; tratar el repositorio y el WAR como artefactos sensibles y restringidos.
+- No agregar claves en texto plano ni hashes distintos de BCrypt.
+- Los archivos legacy `migraciones.sql` e `import.sql` fueron retirados para evitar doble fuente de verdad.
 - Todos los textos visibles al usuario deben centralizarse en `messages_es.properties`.
 - En `messages_es.properties`, usar caracteres especiales escapados en ASCII/Unicode (`\u00e1`, `\u00e9`, `\u00ed`, `\u00f3`, `\u00fa`, `\u00f1`, `\u00bf`, etc.).
 - Las claves de configuracion antes tomadas de `rpm-catalogos.properties` se centralizan en `messages_es.properties` y/o propiedades JVM:
@@ -361,5 +367,6 @@ mvn -DskipTests compile
 - `src/main/java/ec/com/antenasur/itext/ReportePFD.java`: generacion y guardado obligatorio de PDF.
 - `src/main/java/ec/com/antenasur/itext/ReporteXLSX.java`: reportes Excel institucionales.
 - `src/main/resources/ec/com/antenasur/resources/messages_es.properties`: textos visibles y configuracion centralizada.
-- `migraciones.sql`: scripts manuales de BD.
+- `src/main/resources/db/migration/V1__baseline_inicial.sql`: baseline estructural de base nueva.
+- `src/main/resources/db/migration/V2__datos_iniciales.sql`: datos iniciales versionados.
 - `db_tribunal.backup`: respaldo de BD; no modificar ni reemplazar sin indicacion explicita.
