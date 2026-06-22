@@ -216,6 +216,8 @@ Notas:
 - V2 contiene datos personales y hashes BCrypt reales; tratar el repositorio y el WAR como artefactos sensibles y restringidos.
 - No agregar claves en texto plano ni hashes distintos de BCrypt.
 - Los archivos legacy `migraciones.sql` e `import.sql` fueron retirados para evitar doble fuente de verdad.
+- Las migraciones legacy `@Startup` fueron retiradas; no ejecutar DDL/backfills desde beans al desplegar.
+- El usuario runtime de `TribunalDS` requiere `USAGE` en schemas `public/tec`, DML en tablas y uso de secuencias. No conceder permisos a `PUBLIC`.
 - Todos los textos visibles al usuario deben centralizarse en `messages_es.properties`.
 - En `messages_es.properties`, usar caracteres especiales escapados en ASCII/Unicode (`\u00e1`, `\u00e9`, `\u00ed`, `\u00f3`, `\u00fa`, `\u00f1`, `\u00bf`, etc.).
 - Las claves de configuracion antes tomadas de `rpm-catalogos.properties` se centralizan en `messages_es.properties` y/o propiedades JVM:

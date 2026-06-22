@@ -55211,10 +55211,10 @@ SELECT v.menu_id::INTEGER, TRUE, NOW(), 'flyway',
   FROM (
     VALUES
       (2, NULL, 'm_administracion', 'pi pi-fw pi-briefcase', FALSE, 'ADMIN', 2, NULL, 1),
-      (10, '/dashboard', 'm_dashboard', 'pi pi-fw pi-home', TRUE, 'Escritorio', 0, '/tec/dashboard.jsf', 1),
+      (10, '/dashboard', 'm_dashboard', 'pi pi-fw pi-home', TRUE, 'Escritorio', 0, '/dashboard.jsf', 1),
       (11, NULL, 'm_tribunal', 'pi pi-fw pi-prime', FALSE, 'TRIBUNAL', 3, NULL, 1),
       (16, NULL, 'm_seguridad', 'pi pi-fw pi-lock', FALSE, 'SEGURIDAD', 4, NULL, 1),
-      (25, '/escrutinios', 'm_escrutinios', 'pi pi-fw pi-chart-bar', TRUE, 'Resultados', 1, '/tec/escrutinios.jsf', 1)
+      (25, '/escrutinios', 'm_escrutinios', 'pi pi-fw pi-chart-bar', TRUE, 'Resultados', 1, '/escrutinios.jsf', 1)
   ) AS v(menu_id, menu_accion, componente_id, menu_ico, menu_nodo_final,
          menu_nombre, menu_orden, menu_url, menu_padre_id)
  WHERE NOT EXISTS (

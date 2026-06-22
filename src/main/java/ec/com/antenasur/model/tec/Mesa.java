@@ -76,8 +76,9 @@ public class Mesa extends EntidadAuditable implements Serializable {
     private EstadoTarea estadoTarea;
 
     @Setter
-    @Getter    
-    private Integer totalVotos;
+    @Getter
+    @Column(name = "totalvotos")
+    private Integer totalVotos = 0;
     
     @Setter
     @Getter    

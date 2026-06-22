@@ -38,8 +38,8 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "estado", column = @Column(name = "estado")),
     @AttributeOverride(name = "fechaCrea", column = @Column(name = "f_crea")),
     @AttributeOverride(name = "fechaActualiza", column = @Column(name = "f_actualiza")),
-    @AttributeOverride(name = "iglesiaCrea", column = @Column(name = "u_crea")),
-    @AttributeOverride(name = "iglesiaActualiza", column = @Column(name = "u_actualiza"))})
+    @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
+    @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 @Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
 public class IglesiaPersona extends EntidadAuditable implements Serializable {

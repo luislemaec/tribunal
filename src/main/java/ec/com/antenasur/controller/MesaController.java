@@ -173,14 +173,37 @@ public class MesaController implements Serializable {
         return JsfUtil.getMessage("mesas.boton.eliminar");
     }
 
-    public void eliminarMesaSeleccionado() {
-        if (mesaSeleccionado != null && mesaSeleccionado.getId() != null) {
-            mesaService.eliminarPorId(mesaSeleccionado.getId());
+    public void eliminarMesa(MesaDTO mesa) {
+        if (mesa == null || mesa.getId() == null) {
+            JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+            return;
         }
-        recargarListaMesasActual();
-        actualizarTotalesPorRecinto();
-        JsfUtil.addInfoMessageFromBundle(MENSAJE_ELIMINA_OK);
+
+        try {
+            MesaDTO mesaEliminada = mesaService.eliminarPorId(mesa.getId());
+            if (mesaEliminada == null) {
+                JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
+                FacesContext.getCurrentInstance().validationFailed();
+                PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+                return;
+            }
+
+            mesaSeleccionado = null;
+            recargarListaMesasActual();
+            actualizarTotalesPorRecinto();
+            JsfUtil.addInfoMessageFromBundle(MENSAJE_ELIMINA_OK);
+        } catch (Exception e) {
+            log.error("ERROR AL ELIMINAR MESA id={}", mesa.getId(), e);
+            JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
+            FacesContext.getCurrentInstance().validationFailed();
+        }
         PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+    }
+
+    public void eliminarMesaSeleccionado() {
+        eliminarMesa(mesaSeleccionado);
     }
 
     public void obtieneParroquias() {

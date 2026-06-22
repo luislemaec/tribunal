@@ -9,6 +9,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 @Slf4j
 public class FlywayMigrationRunner {
 

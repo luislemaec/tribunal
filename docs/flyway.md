@@ -38,6 +38,10 @@ Version usada: `11.14.1`.
 El runner `ec.com.antenasur.util.FlywayMigrationRunner` esta deshabilitado por
 defecto.
 
+El runner se ejecuta con `TransactionAttributeType.NOT_SUPPORTED`. Flyway debe
+administrar `autoCommit` y sus propias transacciones sobre el datasource de
+WildFly; no debe envolverse en una transaccion CMT `REQUIRED` o `REQUIRES_NEW`.
+
 Para habilitarlo:
 
 ```bash
@@ -68,6 +72,29 @@ Flyway marca la version 1 como ya aplicada y no ejecuta
 Con baseline version `1` en una base existente, revisar si los datos de V2 ya
 estan cargados. Si ya existen, ejecutar V2 no debe duplicarlos porque usa
 validaciones idempotentes; aun asi debe probarse sobre una copia.
+
+## Ejecucion externa antes del despliegue
+
+Con Hibernate en `validate`, las migraciones estructurales deben ejecutarse
+antes de desplegar el WAR. JPA valida el esquema antes de construir los EJB
+`@Startup`, por lo que el runner interno no puede corregir una tabla faltante.
+
+El proyecto incluye `flyway-maven-plugin` con soporte PostgreSQL. Las
+credenciales deben suministrarse desde el ambiente o la linea de comandos, sin
+guardarlas en `pom.xml`:
+
+```bash
+mvn flyway:migrate \
+  -Dflyway.url=jdbc:postgresql://127.0.0.1:5432/tecdb \
+  -Dflyway.user=USUARIO \
+  -Dflyway.password=CLAVE \
+  -Dflyway.locations=filesystem:src/main/resources/db/migration \
+  -Dflyway.defaultSchema=public \
+  -Dflyway.baselineOnMigrate=false
+```
+
+En una base limpia no se debe habilitar baseline: Flyway debe ejecutar V1. En
+una base existente y verificada se usa baseline solo despues de respaldo.
 
 ## Migraciones
 
@@ -166,6 +193,15 @@ El usuario del datasource debe poder:
 - Ejecutar `ALTER TABLE`, `CREATE INDEX`, `CREATE SEQUENCE` y DML segun el
   contenido de cada migracion.
 - Usar los schemas donde viven las tablas: actualmente `public` y `tec`.
+
+El script manual `src/main/resources/db/manual/permisos_datasource.sql` concede
+los permisos runtime necesarios. Se debe reemplazar `TRIBUNAL_DS_USER` por el
+usuario real configurado en WildFly y ejecutarlo como propietario de los
+objetos. Nunca conceder los permisos a `PUBLIC`.
+
+Para mantener minimo privilegio, ejecutar Flyway con un usuario propietario
+separado y mantener el runner automatico deshabilitado en produccion. El usuario
+runtime necesita DML y uso de secuencias, no propiedad sobre el esquema.
 
 ## Recomendacion de produccion
 

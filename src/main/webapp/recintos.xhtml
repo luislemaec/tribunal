@@ -286,9 +286,8 @@
                                         <p:commandButton icon="pi pi-trash"
                                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                          title="#{msg['recintos.mesas.tooltip.eliminar']}"
-                                                         actionListener="#{mesaController.eliminarMesaSeleccionado}"
+                                                         action="#{mesaController.eliminarMesa(mesa)}"
                                                          process="@this" update=":frmRecintos:resumenRecintos :frmRecintos:pnlMesasRecinto">
-                                            <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
                                             <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
                                                        message="#{msg['recintos.mesas.confirmacion.eliminar']}"
                                                        icon="pi pi-exclamation-triangle"/>

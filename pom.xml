@@ -8,7 +8,7 @@
     <artifactId>tec</artifactId>
     <version>1.0.1</version>
     <packaging>war</packaging>
-    <name>tec</name>
+    <name>ROOT</name>
     <description>Tribunal Electoral System - Jakarta EE 10 / WildFly 39 / Java 17</description>
 
     <url>http://wildfly.org</url>
@@ -23,8 +23,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Maven 3.9+: garantiza que los .properties NO se "filtren" en
-             ISO-8859-1 al copiarse al WAR. -->
         <propertiesEncoding>UTF-8</propertiesEncoding>
 
         <!-- Java 17 -->
@@ -53,6 +51,7 @@
         <version.angus.mail>2.0.3</version.angus.mail>
         <version.bcrypt>0.10.2</version.bcrypt>
         <version.flyway>11.14.1</version.flyway>
+        <version.postgresql.jdbc>42.7.5</version.postgresql.jdbc>
     </properties>
 
 
@@ -267,6 +266,23 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.wildfly.maven.plugin}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${version.flyway}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-database-postgresql</artifactId>
+                        <version>${version.flyway}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${version.postgresql.jdbc}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>

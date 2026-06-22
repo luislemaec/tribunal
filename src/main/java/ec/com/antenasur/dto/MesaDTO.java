@@ -30,7 +30,7 @@ public class MesaDTO implements Serializable {
     private Integer cantonId;
     private String cantonNombre;
     private EstadoTarea estadoTarea;
-    private Integer totalVotos;
+    private Integer totalVotos = 0;
     private Integer totalPapetelasUso;
     private Integer totalAusentismo;
     private Boolean tieneErrorConteo;

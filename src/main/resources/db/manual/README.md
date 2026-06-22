@@ -14,6 +14,7 @@ relaciones institucionales.
 Script preparado:
 
 - `importacion_iglesias_personas.sql`
+- `permisos_datasource.sql`: permisos runtime para el usuario de `TribunalDS`.
 
 Este script se conserva como alternativa manual. No ejecutarlo si
 `V2__datos_iniciales.sql` ya fue aplicado, porque V2 contiene estos datos.

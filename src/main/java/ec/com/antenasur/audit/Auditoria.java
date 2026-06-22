@@ -30,11 +30,11 @@ import org.hibernate.envers.RevisionTimestamp;
 @Data
 
 @AttributeOverrides({
-    @AttributeOverride(name = "status", column = @Column(name = "data_aud_status")),
-    @AttributeOverride(name = "createDate", column = @Column(name = "create_date")),
-    @AttributeOverride(name = "updateDate", column = @Column(name = "update_date")),
-    @AttributeOverride(name = "createUser", column = @Column(name = "create_user")),
-    @AttributeOverride(name = "updateUser", column = @Column(name = "update_user"))})
+    @AttributeOverride(name = "estado", column = @Column(name = "data_aud_status")),
+    @AttributeOverride(name = "fechaCrea", column = @Column(name = "create_date")),
+    @AttributeOverride(name = "fechaActualiza", column = @Column(name = "update_date")),
+    @AttributeOverride(name = "usuarioCrea", column = @Column(name = "create_user")),
+    @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "update_user"))})
 public class Auditoria extends EntidadAuditable implements Serializable {
 
     private static final long serialVersionUID = 1L;

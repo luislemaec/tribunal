@@ -150,7 +150,7 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         actual.setRecinto(recinto);
         actual.setUbicacion(ubicacion);
         actual.setEstadoTarea(dto.getEstadoTarea());
-        actual.setTotalVotos(dto.getTotalVotos());
+        actual.setTotalVotos(valorEntero(dto.getTotalVotos()));
         actual.setTotalPapetelasUso(dto.getTotalPapetelasUso());
         actual.setTotalAusentismo(dto.getTotalAusentismo());
         actual.setTieneErrorConteo(dto.getTieneErrorConteo());
@@ -206,10 +206,9 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         resumen.setMesas(mesas != null ? mesas : Collections.<Mesa>emptyList());
         resumen.setMesasEscrutadas(mesasEscrutadas != null ? mesasEscrutadas : Collections.<Mesa>emptyList());
 
-        int totalVotantes = 0;
-        for (Mesa mesa : resumen.getMesas()) {
-            totalVotantes += mesa.getTotalVotos();
-        }
+        int totalVotantes = resumen.getMesas().stream()
+                .mapToInt(mesa -> valorEntero(mesa.getTotalVotos()))
+                .sum();
         resumen.setTotalVotantes(totalVotantes);
 
         if (!resumen.getMesas().isEmpty() && !resumen.getMesasEscrutadas().isEmpty()) {
@@ -217,6 +216,10 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
                     (resumen.getMesasEscrutadas().size() * 100f) / resumen.getMesas().size());
         }
         return resumen;
+    }
+
+    private int valorEntero(Integer valor) {
+        return valor != null ? valor : 0;
     }
 
     /**
