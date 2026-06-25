@@ -70,23 +70,42 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         return null;
     }
     
-        public Boolean getTieneDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
-        try {
-            String sql = HQL
-                    + " LEFT JOIN FETCH d.tipoDocumento  tp"
-                    + " WHERE d.entidadId=:entidadId AND tp.id=:tipoDocId" + ORDENADO;
-            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
-            query.setParameter("entidadId", entidadId);
-            query.setParameter("tipoDocId", tipoDocId);
-            List<Documentos> result = query.getResultList();
-            if (result != null && !result.isEmpty()) {
-                return true;
-            }
-        } catch (NoResultException e) {
-            e.printStackTrace();
+    public Boolean getTieneDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        if (entidadId == null || tipoDocId == null) {
             return false;
         }
-        return false;
+        try {
+            String sql = "SELECT COUNT(d) FROM Documentos d"
+                    + " WHERE d.entidadId = :entidadId"
+                    + " AND d.tipoDocumento.id = :tipoDocId"
+                    + " AND d.estado = TRUE";
+            TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+            query.setParameter("entidadId", entidadId);
+            query.setParameter("tipoDocId", tipoDocId);
+            Long total = query.getSingleResult();
+            return total != null && total > 0L;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public long contarDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        if (entidadId == null || tipoDocId == null) {
+            return 0L;
+        }
+        try {
+            String sql = "SELECT COUNT(d) FROM Documentos d"
+                    + " WHERE d.entidadId = :entidadId"
+                    + " AND d.tipoDocumento.id = :tipoDocId"
+                    + " AND d.estado = TRUE";
+            TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+            query.setParameter("entidadId", entidadId);
+            query.setParameter("tipoDocId", tipoDocId);
+            Long total = query.getSingleResult();
+            return total != null ? total : 0L;
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 
     /**

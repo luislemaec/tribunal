@@ -87,8 +87,8 @@
                         <p:commandButton icon="pi pi-user-minus"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="Quitar autoridad"
-                                         actionListener="#{tribunalController.eliminarPeriodoSeleccionados}"
-                                         process="@this" update="tbtribunal"
+                                         actionListener="#{tribunalController.eliminarAutoridadSeleccionada}"
+                                         process="@this" update="@form"
                                          disabled="#{tribunal.iglesiaPersona.persona eq null}">
                             <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
                             <p:confirm header="Confirmar eliminación"
@@ -97,17 +97,6 @@
                         </p:commandButton>
                     </p:column>
                 </p:dataTable>
-
-                <!-- Confirm dialog global -->
-                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                                 responsive="true" width="400" style="max-width:96vw">
-                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
-                                     styleClass="ui-button-danger" type="button"
-                                     onclick="PF('dlgConfirm').accept()"/>
-                    <p:commandButton value="Cancelar" icon="pi pi-times"
-                                     styleClass="ui-button-secondary ml-2" type="button"
-                                     onclick="PF('dlgConfirm').reject()"/>
-                </p:confirmDialog>
 
             </div><!-- /surface-card -->
 

@@ -39,8 +39,10 @@ public class IglesiaPersonaDTO implements Serializable {
      */
     private Boolean habilitadoPadron;
 
-    /** Derivado: true si la fila se editó después de crearse (ciclo de
-     *  actualización). Regla: fechaActualiza > fechaCrea + 2 seg. */
+    /**
+     * Derivado: true si el vínculo iglesia-persona ya fue revisado dentro del
+     * ciclo de actualización. La revisión se persiste mediante f_actualiza.
+     */
     private Boolean actualizada;
 
     public static IglesiaPersonaDTO fromEntity(IglesiaPersona ip) {
@@ -63,9 +65,9 @@ public class IglesiaPersonaDTO implements Serializable {
     }
 
     private static boolean esActualizada(Date creada, Date modificada) {
-        if (modificada == null || creada == null) return false;
-        // Tolerancia de 2 segundos: el merge inmediato post-create deja un
-        // delta pequeño que no debe contar como "actualización del usuario".
-        return modificada.getTime() - creada.getTime() > 2000L;
+        if (modificada == null) {
+            return false;
+        }
+        return creada == null || !modificada.before(creada);
     }
 }

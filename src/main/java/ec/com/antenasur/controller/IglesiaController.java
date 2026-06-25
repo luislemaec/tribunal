@@ -24,6 +24,7 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.service.GeograpService;
 import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CronogramaService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
@@ -46,6 +47,9 @@ public class IglesiaController implements Serializable {
 
     @Inject
     private IglesiaService iglesiaService;
+
+    @Inject
+    private UsuarioService usuarioService;
 
     @Inject
     private GeograpService geograpService;
@@ -137,6 +141,9 @@ public class IglesiaController implements Serializable {
     @Getter
     private boolean restringidoAIglesia;
 
+    @Getter
+    private boolean tieneIglesiaAsignada;
+
     /**
      * Los botones "Sí, tiene RUC" / "No tiene RUC" solo se habilitan cuando
      * el campo igl_documento aún está vacío: iglesia nueva o iglesia existente
@@ -175,9 +182,11 @@ public class IglesiaController implements Serializable {
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
             puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
-            if (faseVigente != null) {
+            if (!restringidoAIglesia && faseVigente != null) {
                 progresoRegistro = iglesiaService.calcularProgresoRegistro(
                         faseVigente.getFechaInicio(), faseVigente.getFechaFin());
+            } else {
+                progresoRegistro = new int[]{0, 0, 0};
             }
         } catch (Exception e) {
             log.error("Error al inicializar IglesiaController", e);
@@ -355,16 +364,23 @@ public class IglesiaController implements Serializable {
      */
     public void editarIglesiaFila() {
         if (iglesiaSeleccionado == null) {
+            rechazarAccesoIglesia();
             log.warn("editarIglesiaFila: iglesiaSeleccionado es null — verifique que el botón use 'action' y no 'actionListener'");
             return;
         }
         if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
-            rechazarConMensaje("No tiene permisos para gestionar esta iglesia.");
+            rechazarAccesoIglesia();
             return;
         }
         esNuevoRegistro = false;
         tieneRuc = !esDocumentoGenerico(iglesiaSeleccionado.getDocumento());
         cargarParroquiasParaDialogo(iglesiaSeleccionado.getUbicacionId());
+    }
+
+    public void verDetalleIglesiaFila() {
+        if (iglesiaSeleccionado == null || !esIglesiaPermitida(iglesiaSeleccionado.getId())) {
+            rechazarAccesoIglesia();
+        }
     }
 
     /** Botón "Sí, tiene RUC" — habilita el campo y limpia el código genérico si existía. */
@@ -468,10 +484,15 @@ public class IglesiaController implements Serializable {
                 || iglesiaSeleccionado.getDocumento().trim().isEmpty()) {
             return;
         }
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+            rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
+            return;
+        }
         IglesiaDTO encontrada = iglesiaService.buscarDTOPorDocumento(iglesiaSeleccionado.getDocumento());
         if (encontrada != null) {
             if (!esIglesiaPermitida(encontrada.getId())) {
-                rechazarConMensaje("No tiene permisos para gestionar esta iglesia.");
+                rechazarAccesoIglesia();
                 return;
             }
             iglesiaSeleccionado = encontrada;
@@ -493,7 +514,7 @@ public class IglesiaController implements Serializable {
                 return;
             }
             if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
-                rechazarConMensaje("No tiene permisos para guardar esta iglesia.");
+                rechazarAccesoIglesia();
                 return;
             }
             if (iglesiaSeleccionado.getNombre() == null || iglesiaSeleccionado.getNombre().trim().isEmpty()) {
@@ -558,6 +579,12 @@ public class IglesiaController implements Serializable {
         PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
     }
 
+    private void rechazarAccesoIglesia() {
+        iglesiaSeleccionado = null;
+        documentos = Collections.emptyList();
+        rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
+    }
+
     public void cancelarIglesia() {
         iglesiaSeleccionado = null;
         provinciaFiltroId = null;
@@ -585,40 +612,33 @@ public class IglesiaController implements Serializable {
         }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
-        if (faseVigente != null) {
+        if (!restringidoAIglesia && faseVigente != null) {
             progresoRegistro = iglesiaService.calcularProgresoRegistro(
                     faseVigente.getFechaInicio(), faseVigente.getFechaFin());
+        } else {
+            progresoRegistro = new int[]{0, 0, 0};
         }
     }
 
-    public long getIglesiasConDocumentos() {
-        if (listaIglesias == null) {
-            return 0;
-        }
-        long count = 0;
-        for (IglesiaDTO i : listaIglesias) {
-            if (Boolean.TRUE.equals(i.getTieneDocumentos())) {
-                count++;
-            }
-        }
-        return count;
+    public int getTotalIglesiasIndicador() {
+        return restringidoAIglesia || listaIglesias == null ? 0 : listaIglesias.size();
     }
 
-    public long getIglesiasSinDocumentos() {
-        if (listaIglesias == null) {
-            return 0;
-        }
-        return listaIglesias.size() - getIglesiasConDocumentos();
+    public int getTotalProvinciasIndicador() {
+        return restringidoAIglesia || provincias == null ? 0 : provincias.size();
     }
 
     public void cargaArchivosListaMiembros() {
+        documentos = Collections.emptyList();
         try {
             if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
                 if (!esIglesiaPermitida(iglesiaSeleccionado.getId())) {
-                    JsfUtil.addErrorMessage("No tiene permisos para consultar documentos de esta iglesia.");
+                    rechazarAccesoIglesia();
                     return;
                 }
                 documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(iglesiaSeleccionado.getId(), Constantes.LISTA_MIEMBROS);
+            } else {
+                rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
             }
         } catch (Exception e) {
             log.error("Error al obtener documentos de iglesia id={}", iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null, e);
@@ -628,6 +648,12 @@ public class IglesiaController implements Serializable {
 
     public void exportarExcel() {
         try {
+            if (restringidoAIglesia) {
+                cargarIglesiaAsignada();
+                if (!tieneIglesiaAsignada) {
+                    return;
+                }
+            }
             List<IglesiaDTO> lista = listaIglesias != null ? listaIglesias : Collections.emptyList();
             String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
             String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
@@ -637,9 +663,9 @@ public class IglesiaController implements Serializable {
 
             String[] columnas = {
                 "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
-                "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS", "DOCUMENTOS"
+                "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS"
             };
-            int[] anchos = { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500, 3500 };
+            int[] anchos = { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500 };
             ReporteXLSX.creaCabeceraTabla(columnas, anchos);
 
             String[][] datos = new String[lista.size()][columnas.length];
@@ -653,7 +679,6 @@ public class IglesiaController implements Serializable {
                 datos[i][5] = ig.getCantonNombre() != null ? ig.getCantonNombre() : "";
                 datos[i][6] = ig.getUbicacionNombre() != null ? ig.getUbicacionNombre() : "";
                 datos[i][7] = ig.getTotalMiembros() != null ? String.valueOf(ig.getTotalMiembros()) : "";
-                datos[i][8] = Boolean.TRUE.equals(ig.getTieneDocumentos()) ? "Sí" : "No";
             }
 
             ReporteXLSX.creaContenidoTabla(datos, columnas);
@@ -683,14 +708,18 @@ public class IglesiaController implements Serializable {
         listaIglesiasSeleccionadas = null;
         listaIglesiasFiltrada = null;
         listaIglesias = new ArrayList<>();
-        Integer iglesiaId = getIglesiaAsignadaId();
+        tieneIglesiaAsignada = false;
+        Integer iglesiaId = obtenerIglesiaAsignadaIdActual();
         if (iglesiaId == null) {
-            JsfUtil.addWarningMessage("El usuario IglesiaAdmin no tiene una iglesia asignada.");
+            JsfUtil.addWarningMessageFromBundle("form.iglesias.mensaje.sin.asignacion");
             return;
         }
         IglesiaDTO iglesia = iglesiaService.obtenerDTOConFlagDocumentos(iglesiaId, Constantes.LISTA_MIEMBROS);
         if (iglesia != null) {
             listaIglesias.add(iglesia);
+            tieneIglesiaAsignada = true;
+        } else {
+            JsfUtil.addWarningMessageFromBundle("form.iglesias.mensaje.asignacion.no.disponible");
         }
     }
 
@@ -698,19 +727,20 @@ public class IglesiaController implements Serializable {
         if (!restringidoAIglesia) {
             return true;
         }
-        Integer iglesiaAsignadaId = getIglesiaAsignadaId();
+        Integer iglesiaAsignadaId = obtenerIglesiaAsignadaIdActual();
         return iglesiaAsignadaId != null && iglesiaAsignadaId.equals(iglesiaId);
     }
 
-    private Integer getIglesiaAsignadaId() {
-        return loginBean != null && loginBean.getUsuario() != null ? loginBean.getUsuario().getIglesiaId() : null;
+    private Integer obtenerIglesiaAsignadaIdActual() {
+        if (loginBean == null || loginBean.getUsuario() == null
+                || loginBean.getUsuario().getId() == null) {
+            return null;
+        }
+        var usuarioActual = usuarioService.obtenerDTOPorId(loginBean.getUsuario().getId());
+        return usuarioActual != null ? usuarioActual.getIglesiaId() : null;
     }
 
     public String getNombreIglesiaAsignada() {
-        if (loginBean != null && loginBean.getUsuario() != null
-                && loginBean.getUsuario().getIglesiaNombre() != null) {
-            return loginBean.getUsuario().getIglesiaNombre();
-        }
         return listaIglesias != null && !listaIglesias.isEmpty() ? listaIglesias.get(0).getNombre() : "";
     }
 }

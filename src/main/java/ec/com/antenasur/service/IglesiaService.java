@@ -92,7 +92,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         if (dto == null || id == null || tipoDocumentoId == null) {
             return dto;
         }
-        dto.setTieneDocumentos(documentoFacade.getEntidadesIdsConDocumentos(tipoDocumentoId).contains(id));
+        dto.setTieneDocumentos(documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(id, tipoDocumentoId));
         return dto;
     }
 

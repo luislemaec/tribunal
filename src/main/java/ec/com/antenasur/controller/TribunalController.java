@@ -119,6 +119,29 @@ public class TribunalController implements Serializable {
         this.listaPeriodosSeleccionados = null;
     }
 
+    public void eliminarAutoridadSeleccionada() {
+        try {
+            if (tribunalSeleccionado == null || tribunalSeleccionado.getId() == null) {
+                JsfUtil.addWarningMessage("Seleccione una autoridad para eliminar.");
+                PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+                return;
+            }
+            TribunalDTO eliminada = tribunalService.eliminarPorId(tribunalSeleccionado.getId());
+            if (eliminada == null) {
+                JsfUtil.addWarningMessage("No se pudo eliminar la autoridad seleccionada.");
+            } else {
+                JsfUtil.addSuccessMessage("Autoridad eliminada correctamente.");
+            }
+            tribunalSeleccionado = null;
+            cargarAutoridadesTribunal();
+            PrimeFaces.current().ajax().update("frmPeriodos:tbtribunal", "frmGlobal:growlGlobal");
+        } catch (Exception e) {
+            log.error("ERROR AL ELIMINAR AUTORIDAD", e);
+            JsfUtil.addErrorMessage("No se pudo eliminar la autoridad. Verifique si tiene relaciones activas.");
+            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+        }
+    }
+
     public void guardarAutoridad() {
         try {
             if (tribunalSeleccionado == null) {

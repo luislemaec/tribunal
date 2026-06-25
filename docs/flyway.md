@@ -9,12 +9,15 @@ JDBC hardcodeadas; las migraciones de arranque usan:
 `java:jboss/datasources/TribunalDS`
 
 El proyecto ahora centraliza estructura y datos iniciales en Flyway. El archivo
-`persistence.xml` mantiene `hibernate.hbm2ddl.auto=update`; para produccion, la
-transicion correcta es:
+`persistence.xml` usa `hibernate.hbm2ddl.auto=none`; Flyway es la unica
+autoridad para crear o modificar el esquema. Para produccion, la transicion
+correcta es:
 
 1. Respaldar la base de datos.
 2. Crear baseline Flyway sobre la base existente.
-3. Cambiar Hibernate a `validate` o `none`.
+3. Mantener Hibernate en `none` cuando Flyway se ejecuta mediante el EJB
+   `@Startup`; JPA se inicializa antes que los EJB y `validate` impediria crear
+   una base limpia.
 4. Aplicar cambios futuros solo mediante scripts versionados.
 
 `src/main/resources/db/migration/V1__baseline_inicial.sql` representa la
@@ -48,6 +51,10 @@ Para habilitarlo:
 -Dtec.flyway.enabled=true
 ```
 
+Esta propiedad es obligatoria cuando el WAR debe inicializar automaticamente
+una base limpia. `ResultadosPublicosCacheService` depende explicitamente de
+`FlywayMigrationRunner`, evitando consultas antes de completar V1, V2 y V3.
+
 Configuracion disponible:
 
 ```bash
@@ -75,9 +82,10 @@ validaciones idempotentes; aun asi debe probarse sobre una copia.
 
 ## Ejecucion externa antes del despliegue
 
-Con Hibernate en `validate`, las migraciones estructurales deben ejecutarse
-antes de desplegar el WAR. JPA valida el esquema antes de construir los EJB
-`@Startup`, por lo que el runner interno no puede corregir una tabla faltante.
+Si se decide usar Hibernate en `validate`, las migraciones estructurales deben
+ejecutarse antes de desplegar el WAR. JPA valida el esquema antes de construir
+los EJB `@Startup`, por lo que el runner interno no puede corregir una tabla
+faltante bajo esa configuracion.
 
 El proyecto incluye `flyway-maven-plugin` con soporte PostgreSQL. Las
 credenciales deben suministrarse desde el ambiente o la linea de comandos, sin

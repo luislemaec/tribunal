@@ -321,20 +321,36 @@ public class PersonaController implements Serializable {
     }
 
     public void eliminarIglesiaPersonaSeleccionadas() {
-        int eliminadas = 0;
-        if (listaIglesiaPersonaSeleccionados != null) {
-            List<Integer> ids = new ArrayList<>();
+        List<Integer> ids = new ArrayList<>();
+        if (listaIglesiaPersonaSeleccionados != null && !listaIglesiaPersonaSeleccionados.isEmpty()) {
             for (IglesiaPersonaDTO item : listaIglesiaPersonaSeleccionados) {
-                if (item.getId() != null) {
+                if (puedeEliminarMiembro(item)) {
                     ids.add(item.getId());
                 }
             }
-            eliminadas = iglesiaPersonaService.eliminarPorIds(ids);
         }
-        listaIglesiaPersona = iglesiaPersonaService.listarDTOs();
-        JsfUtil.addInfoMessage(eliminadas + " Personas eliminadas");
+        eliminarMiembrosPorIds(ids);
+    }
+
+    public void eliminarIglesiaPersonaSeleccionada() {
+        List<Integer> ids = new ArrayList<>();
+        if (puedeEliminarMiembro(iglesiaPersonaSeleccionado)) {
+            ids.add(iglesiaPersonaSeleccionado.getId());
+        }
+        eliminarMiembrosPorIds(ids);
+    }
+
+    private void eliminarMiembrosPorIds(List<Integer> ids) {
+        int eliminadas = iglesiaPersonaService.eliminarPorIds(ids);
+        refrescarListadoMiembrosActual();
+        if (eliminadas > 0) {
+            JsfUtil.addInfoMessage(eliminadas + " Personas eliminadas");
+        } else {
+            JsfUtil.addWarningMessage("No se encontraron miembros seleccionados para eliminar");
+        }
         this.listaIglesiaPersonaSeleccionados = null;
-        PrimeFaces.current().ajax().update("frmPersonas", "msgs");
+        this.iglesiaPersonaSeleccionado = null;
+        PrimeFaces.current().ajax().update("frmPersonas", "frmGlobal:growlGlobal");
     }
 
     public void buscaPersonaPorCedula() {
@@ -378,22 +394,44 @@ public class PersonaController implements Serializable {
                 }
                 personaSeleccionado = null;
                 iglesiaPersonaSeleccionado = null;
-                // Refresca lista de miembros y recalcula progreso (la edición
-                // mueve f_actualiza vía @PreUpdate de Hibernate, lo cual hace
-                // que la regla "delta > 2s" del DTO marque actualizada).
-                if (restringidoAIglesia && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
-                    listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
-                    progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
-                } else if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
-                    listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
-                    progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
-                }
+                refrescarListadoMiembrosActual();
             }
         } catch (Exception e) {
             log.error("Error al guardar persona", e);
         }
         PrimeFaces.current().executeScript("PF('dlgPersona').hide()");
         PrimeFaces.current().ajax().update("frmPersonas");
+    }
+
+    private void refrescarListadoMiembrosActual() {
+        if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
+            progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
+            return;
+        }
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+            List<Geograp> parroquiasFiltro = new ArrayList<>();
+            parroquiasFiltro.add(parroquiaSeleccionado);
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquiasFiltro);
+            return;
+        }
+        if (parroquias != null && !parroquias.isEmpty()) {
+            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquias);
+            return;
+        }
+        listaIglesiaPersona = iglesiaPersonaService.listarDTOs();
+    }
+
+    private boolean puedeEliminarMiembro(IglesiaPersonaDTO miembro) {
+        if (miembro == null || miembro.getId() == null) {
+            return false;
+        }
+        if (!restringidoAIglesia) {
+            return true;
+        }
+        Integer iglesiaAsignadaId = iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null;
+        Integer iglesiaMiembroId = miembro.getIglesia() != null ? miembro.getIglesia().getId() : null;
+        return iglesiaAsignadaId != null && iglesiaAsignadaId.equals(iglesiaMiembroId);
     }
 
     /**

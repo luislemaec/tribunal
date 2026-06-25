@@ -34,7 +34,8 @@
 
             <!-- Accesos rápidos: SpeedDial flotante (ligero, sin queries). -->
             <h:form id="frmSpeedDial">
-                <p:speedDial type="quarter-circle" radius="120" direction="up-left"
+                <p:speedDial rendered="#{not dashboardController.dashboardRestringido}"
+                             type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
                     <p:menuitem outcome="/iglesias"    icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-success"/>
@@ -42,15 +43,29 @@
                     <p:menuitem outcome="/mesas"       icon="pi pi-list"        title="#{msg['form.dashboard.shortcut.mesas']}"        styleClass="ui-button-warning"/>
                     <p:menuitem outcome="/escrutinios" icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-help"/>
                 </p:speedDial>
+                <p:speedDial rendered="#{dashboardController.restringidoAIglesia and dashboardController.tieneIglesiaAsignada}"
+                             type="quarter-circle" radius="120" direction="up-left"
+                             showIcon="pi pi-plus" hideIcon="pi pi-times"
+                             buttonStyleClass="dashboard-speeddial">
+                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="#{msg['dashboard.iglesia.accion.actualizarIglesia']}" styleClass="ui-button-success"/>
+                    <p:menuitem outcome="/personas" icon="pi pi-users" title="#{msg['dashboard.iglesia.accion.gestionarPersonas']}" styleClass="ui-button-info"/>
+                </p:speedDial>
+                <p:speedDial rendered="#{dashboardController.restringidoAPresidenteMesa and dashboardController.tieneMesaAsignada}"
+                             type="quarter-circle" radius="120" direction="up-left"
+                             showIcon="pi pi-plus" hideIcon="pi pi-times"
+                             buttonStyleClass="dashboard-speeddial">
+                    <p:menuitem outcome="/actaE" icon="pi pi-file-edit" title="#{msg['dashboard.presidente.accion.acta']}" styleClass="ui-button-success"/>
+                </p:speedDial>
             </h:form>
 
-            <p:divider align="left" type="solid">
+            <p:divider rendered="#{not dashboardController.dashboardRestringido}" align="left" type="solid">
                 <span class="p-tag" style="background:#fff7ed; color:#92400e">
                     <i class="pi pi-chart-bar" style="margin-right:.4rem"/>#{msg['form.dashboard.summary']}
                 </span>
             </p:divider>
 
             <!-- KPIs — DashboardController (queries livianas COUNT/SUM). -->
+            <ui:fragment rendered="#{not dashboardController.dashboardRestringido}">
             <div class="grid">
 
                 <div class="col-12 md:col-6 lg:col-3">
@@ -114,6 +129,291 @@
                 </div>
 
             </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{dashboardController.restringidoAPresidenteMesa}">
+                <p:divider align="left" type="solid">
+                    <span class="p-tag" style="background:#eff6ff; color:#1d4ed8">
+                        <i class="pi pi-id-card" style="margin-right:.4rem"/>#{msg['dashboard.presidente.summary']}
+                    </span>
+                </p:divider>
+
+                <ui:fragment rendered="#{not dashboardController.tieneMesaAsignada}">
+                    <div class="surface-card shadow-1 border-round-lg p-4" style="border-left:4px solid #dc2626">
+                        <div class="flex align-items-start gap-3">
+                            <i class="pi pi-exclamation-triangle text-red-600 text-2xl"/>
+                            <div>
+                                <h3 class="mt-0 mb-2 text-900">#{msg['dashboard.presidente.sinAsignacion.titulo']}</h3>
+                                <p class="m-0 text-700 line-height-3">#{msg['dashboard.presidente.sinAsignacion.detalle']}</p>
+                            </div>
+                        </div>
+                    </div>
+                </ui:fragment>
+
+                <ui:fragment rendered="#{dashboardController.tieneMesaAsignada}">
+                    <div class="grid">
+                        <div class="col-12 lg:col-8">
+                            <div id="integrantesMesaPanel" class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <div class="flex align-items-start justify-content-between gap-3 flex-wrap">
+                                    <div>
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.mesaAsignada']}</span>
+                                        <h2 class="mt-1 mb-2 text-900">#{dashboardController.mesaAsignadaPresidente.nombre}</h2>
+                                        <div class="flex flex-wrap gap-2">
+                                            <p:tag value="#{dashboardController.estadoMesa}" icon="pi pi-circle-fill"
+                                                   severity="#{dashboardController.estadoMesa eq 'CERRADO' ? 'success' : (dashboardController.estadoMesa eq 'PENDIENTE' ? 'warning' : 'info')}"/>
+                                            <p:tag value="#{dashboardController.procesoActivoNombre}" icon="pi pi-calendar" severity="info"
+                                                   rendered="#{not empty dashboardController.procesoActivoNombre}"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid mt-3">
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.recinto']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.nombre ? msg['dashboard.valor.noAsignado'] : dashboardController.mesaAsignadaPresidente.recinto.nombre}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.proceso']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.procesoActivoNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.procesoActivoNombre}</span>
+                                    </div>
+                                    <div class="col-12 md:col-4">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.provincia']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre}</span>
+                                    </div>
+                                    <div class="col-12 md:col-4">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.canton']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.cantonNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.cantonNombre}</span>
+                                    </div>
+                                    <div class="col-12 md:col-4">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.parroquia']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 lg:col-4">
+                            <div class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.alertas']}</span>
+                                <ui:repeat value="#{dashboardController.alertasMesa}" var="alerta">
+                                    <div class="flex align-items-start gap-2 mb-3">
+                                        <i class="pi pi-exclamation-circle text-orange-500 mt-1"/>
+                                        <span class="text-700 line-height-3">#{alerta}</span>
+                                    </div>
+                                </ui:repeat>
+                                <ui:fragment rendered="#{empty dashboardController.alertasMesa}">
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="pi pi-check-circle text-green-600"/>
+                                        <span class="text-700">#{msg['dashboard.presidente.sinPendientes']}</span>
+                                    </div>
+                                </ui:fragment>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid mt-2">
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #0ea5e9">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.sufragantes']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.sufragantesAsignados}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #22c55e">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.habilitados']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.personasHabilitadasMesa}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #f59e0b">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.votos']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalVotosRegistrados}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #ef4444">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.diferencia']}</span>
+                                <span class="block text-900 font-bold text-lg">#{dashboardController.diferenciaMesaTexto}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid mt-2">
+                        <div class="col-12 lg:col-8">
+                            <div class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.estados']}</span>
+                                <div class="grid">
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.apertura']}</span>
+                                        <span class="block text-900 font-semibold">#{dashboardController.estadoApertura}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.conteo']}</span>
+                                        <span class="block text-900 font-semibold">#{dashboardController.estadoConteo}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.cierre']}</span>
+                                        <span class="block text-900 font-semibold">#{dashboardController.estadoCierre}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.acta']}</span>
+                                        <span class="block text-900 font-semibold">#{dashboardController.estadoActaPdf}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 lg:col-4">
+                            <div class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.integrantes']}</span>
+                                <ui:repeat value="#{dashboardController.integrantesMesa}" var="integrante">
+                                    <div class="mb-3">
+                                        <span class="block text-900 font-semibold">#{integrante.cargoNombre}</span>
+                                        <span class="block text-600 text-sm">#{integrante.iglesiaPersona.persona.nombres} #{integrante.iglesiaPersona.persona.apellidos}</span>
+                                    </div>
+                                </ui:repeat>
+                                <ui:fragment rendered="#{empty dashboardController.integrantesMesa}">
+                                    <span class="text-600">#{msg['dashboard.presidente.integrantes.vacio']}</span>
+                                </ui:fragment>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="surface-card shadow-1 border-round-lg p-4 mt-3">
+                        <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.acciones']}</span>
+                        <div class="flex flex-wrap gap-2">
+                            <p:button outcome="/actaE" value="#{msg['dashboard.presidente.accion.abrir']}" icon="pi pi-play"
+                                      disabled="#{not dashboardController.puedeAbrirMesa}" styleClass="ui-button-success"/>
+                            <p:button outcome="/actaE" value="#{msg['dashboard.presidente.accion.conteo']}" icon="pi pi-pencil"
+                                      disabled="#{not dashboardController.puedeRegistrarConteo}" styleClass="ui-button-info"/>
+                            <p:button outcome="/actaE" value="#{msg['dashboard.presidente.accion.validar']}" icon="pi pi-check-square"
+                                      disabled="#{not dashboardController.puedeValidarResultados}" styleClass="ui-button-warning"/>
+                            <p:button outcome="/actaE" value="#{msg['dashboard.presidente.accion.cerrar']}" icon="pi pi-lock"
+                                      disabled="#{not dashboardController.puedeCerrarMesa}" styleClass="ui-button-danger"/>
+                            <p:button outcome="/actaE" value="#{msg['dashboard.presidente.accion.descargar']}" icon="pi pi-download"
+                                      disabled="#{not dashboardController.puedeDescargarActa}" styleClass="ui-button-secondary"/>
+                            <h:link outcome="/dashboard" fragment="integrantesMesaPanel"
+                                    styleClass="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-left ui-button-secondary">
+                                <span class="ui-button-icon-left ui-icon ui-c pi pi-users"/>
+                                <span class="ui-button-text">#{msg['dashboard.presidente.accion.integrantes']}</span>
+                            </h:link>
+                        </div>
+                    </div>
+                </ui:fragment>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{dashboardController.restringidoAIglesia}">
+                <p:divider align="left" type="solid">
+                    <span class="p-tag" style="background:#ecfdf5; color:#166534">
+                        <i class="pi pi-home" style="margin-right:.4rem"/>#{msg['dashboard.iglesia.summary']}
+                    </span>
+                </p:divider>
+
+                <ui:fragment rendered="#{not dashboardController.tieneIglesiaAsignada}">
+                    <div class="surface-card shadow-1 border-round-lg p-4" style="border-left:4px solid #dc2626">
+                        <div class="flex align-items-start gap-3">
+                            <i class="pi pi-exclamation-triangle text-red-600 text-2xl"/>
+                            <div>
+                                <h3 class="mt-0 mb-2 text-900">#{msg['dashboard.iglesia.sinAsignacion.titulo']}</h3>
+                                <p class="m-0 text-700 line-height-3">#{msg['dashboard.iglesia.sinAsignacion.detalle']}</p>
+                            </div>
+                        </div>
+                    </div>
+                </ui:fragment>
+
+                <ui:fragment rendered="#{dashboardController.tieneIglesiaAsignada}">
+                    <div class="grid">
+                        <div class="col-12 lg:col-8">
+                            <div class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <div class="flex align-items-start justify-content-between gap-3 flex-wrap">
+                                    <div>
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.asignada']}</span>
+                                        <h2 class="mt-1 mb-2 text-900">#{dashboardController.iglesiaAsignada.nombre}</h2>
+                                        <div class="flex flex-wrap gap-2">
+                                            <p:tag value="#{dashboardController.iglesiaAsignada.provinciaNombre}" icon="pi pi-map" severity="info"
+                                                   rendered="#{not empty dashboardController.iglesiaAsignada.provinciaNombre}"/>
+                                            <p:tag value="#{dashboardController.iglesiaAsignada.cantonNombre}" icon="pi pi-map-marker" severity="success"
+                                                   rendered="#{not empty dashboardController.iglesiaAsignada.cantonNombre}"/>
+                                            <p:tag value="#{dashboardController.iglesiaAsignada.ubicacionNombre}" icon="pi pi-compass" severity="warning"
+                                                   rendered="#{not empty dashboardController.iglesiaAsignada.ubicacionNombre}"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid mt-3">
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.comunidad']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.iglesiaAsignada.comunidad ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.comunidad}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.rucCodigo']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.iglesiaAsignada.documento ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.documento}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.recinto']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.recintosAsignados ? msg['dashboard.valor.noAsignado'] : dashboardController.recintosAsignados}</span>
+                                    </div>
+                                    <div class="col-12 md:col-6">
+                                        <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.mesa']}</span>
+                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesasAsignadas ? msg['dashboard.valor.noAsignado'] : dashboardController.mesasAsignadas}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 lg:col-4">
+                            <div class="surface-card shadow-1 border-round-lg p-4 h-full">
+                                <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.iglesia.alertas']}</span>
+                                <ui:repeat value="#{dashboardController.alertasIglesia}" var="alerta">
+                                    <div class="flex align-items-start gap-2 mb-3">
+                                        <i class="pi pi-exclamation-circle text-orange-500 mt-1"/>
+                                        <span class="text-700 line-height-3">#{alerta}</span>
+                                    </div>
+                                </ui:repeat>
+                                <ui:fragment rendered="#{empty dashboardController.alertasIglesia}">
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="pi pi-check-circle text-green-600"/>
+                                        <span class="text-700">#{msg['dashboard.iglesia.sinPendientes']}</span>
+                                    </div>
+                                </ui:fragment>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid mt-2">
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #22c55e">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.personas']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalPersonasIglesia}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #0ea5e9">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.completas']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.personasInformacionCompleta}</span>
+                            </div>
+                        </div>
+                        <div class="col-12 md:col-6 lg:col-3">
+                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #f59e0b">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.pendientesRevision']}</span>
+                                <span class="block text-900 font-bold text-2xl">#{dashboardController.personasPendientesRevision}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="surface-card shadow-1 border-round-lg p-4 mt-3">
+                        <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.iglesia.acciones']}</span>
+                        <div class="flex flex-wrap gap-2">
+                            <p:linkButton outcome="/iglesias" value="#{msg['dashboard.iglesia.accion.actualizarIglesia']}" icon="pi pi-home"
+                                          styleClass="ui-button-success"/>
+                            <p:linkButton outcome="/personas" value="#{msg['dashboard.iglesia.accion.gestionarPersonas']}" icon="pi pi-users"
+                                          styleClass="ui-button-info"/>
+                            <p:linkButton outcome="/personas" value="#{msg['dashboard.iglesia.accion.revisarPendientes']}" icon="pi pi-list-check"
+                                          styleClass="ui-button-secondary"/>
+                        </div>
+                    </div>
+                </ui:fragment>
+            </ui:fragment>
 
         </div>
     </ui:define>

@@ -307,8 +307,10 @@
             </p:outputPanel>
 
             <p:tabView id="tabActaE" dynamic="false" cache="true"
+                       activeIndex="#{actaEController.tabActivoActaE}"
                        rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}"
                        styleClass="mb-3">
+                <p:ajax event="tabChange" process="@this" update="@none"/>
                 <p:tab title="#{msg['actaE.tab.resumen']}">
                     <div class="surface-card shadow-1 border-round-lg p-3">
                         <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -391,11 +393,11 @@
                         <div class="font-semibold text-800">
                             <i class="pi pi-calculator text-500 mr-2"></i>#{msg['actaE.seccion.conteo']}
                         </div>
-                        <div class="flex gap-2 flex-wrap">
+                        <p:outputPanel id="resumenConteoEstado" layout="block" styleClass="flex gap-2 flex-wrap">
                             <p:tag value="#{msg['actaE.total.registrado']}: #{actaEController.totalVotosRegistrados}" severity="info"/>
                             <p:tag value="#{msg['actaE.diferencia']}: #{actaEController.diferenciaConteo}"
                                    severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
-                        </div>
+                        </p:outputPanel>
                     </div>
 
                     <p:dataTable id="tblActaE" var="actaE"
@@ -410,7 +412,7 @@
                                            minValue="0" maxValue="#{actaEController.totalSufragantesAsignados}"
                                            decimalPlaces="0" placeholder="0" required="true"
                                            disabled="#{not actaEController.puedeEditarConteo}">
-                                <p:ajax event="valueChange" process="@this" update=":frmActaE"/>
+                                <p:ajax event="valueChange" process="@this" update=":frmActaE:tabActaE:resumenConteoEstado"/>
                             </p:inputNumber>
                         </p:column>
                     </p:dataTable>

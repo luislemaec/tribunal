@@ -11,7 +11,8 @@ Convencion:
 Reglas operativas:
 
 - No ejecutar migraciones en produccion sin respaldo verificado.
-- No mezclar Flyway activo con `hibernate.hbm2ddl.auto=update` en produccion.
+- Usar `hibernate.hbm2ddl.auto=none` cuando Flyway se ejecuta al iniciar el WAR.
+- Si se usa `validate`, ejecutar Flyway externamente antes de desplegar el WAR.
 - Para una base existente, usar primero baseline controlado y documentado.
 - `V1__baseline_inicial.sql` es solo para bases nuevas.
 - En una base existente usar `baselineOnMigrate=true` y `baselineVersion=1`; no ejecutar V1.

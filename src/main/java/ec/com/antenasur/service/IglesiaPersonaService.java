@@ -1,6 +1,7 @@
 package ec.com.antenasur.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -184,6 +185,10 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             ip.setHabilitadoPadron(dto.getHabilitadoPadron() != null
                     ? dto.getHabilitadoPadron()
                     : (ip.getHabilitadoPadron() != null ? ip.getHabilitadoPadron() : Boolean.TRUE));
+            // La revisión del miembro pertenece al vínculo iglesia-persona.
+            // Si se editan solo datos de Persona, Hibernate no siempre marca
+            // este vínculo como modificado; por eso se persiste explícitamente.
+            ip.setFechaActualiza(new Date());
             ip = iglesiaPersonaFacade.edit(ip);
         } else {
             IglesiaPersona nueva = new IglesiaPersona(iglesia, persona);
@@ -193,13 +198,10 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             nueva.setHabilitadoPadron(dto.getHabilitadoPadron() != null
                     ? dto.getHabilitadoPadron() : Boolean.TRUE);
             ip = iglesiaPersonaFacade.create(nueva);
-            // Marca como "actualizada" desde su creación: forzamos
-            // fechaActualiza = fechaCrea + 3s para que la regla del DTO
-            // (delta > 2s) los considere ya actualizados al venir de un alta
-            // hecha por el IglesiaAdmin. Cualquier edit posterior la moverá
-            // a now() y seguirá siendo > fechaCrea.
+            // Marca como revisada desde su creación cuando el alta ocurre
+            // desde esta pantalla administrativa.
             if (ip != null && ip.getFechaCrea() != null) {
-                ip.setFechaActualiza(new java.util.Date(ip.getFechaCrea().getTime() + 3000L));
+                ip.setFechaActualiza(new Date());
                 ip = iglesiaPersonaFacade.edit(ip);
             }
         }
@@ -263,8 +265,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         int total = miembros.size();
         int actualizados = 0;
         for (IglesiaPersona ip : miembros) {
-            if (ip.getFechaCrea() != null && ip.getFechaActualiza() != null
-                    && ip.getFechaActualiza().getTime() - ip.getFechaCrea().getTime() > 2000L) {
+            if (esRevisionCompleta(ip)) {
                 actualizados++;
             }
         }
@@ -272,6 +273,13 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         resultado[1] = actualizados;
         resultado[2] = (int) Math.round((actualizados * 100.0) / total);
         return resultado;
+    }
+
+    private boolean esRevisionCompleta(IglesiaPersona ip) {
+        if (ip == null || ip.getFechaActualiza() == null) {
+            return false;
+        }
+        return ip.getFechaCrea() == null || !ip.getFechaActualiza().before(ip.getFechaCrea());
     }
 
     /**

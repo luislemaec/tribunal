@@ -416,7 +416,8 @@
                                          styleClass="ui-button-danger"
                                          disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
-                                         update="@this">
+                                         process="@this tblPersonas"
+                                         update="@form">
                             <p:confirm header="Confirmar eliminación"
                                        message="¿Eliminar los miembros seleccionados? Esta acción no se puede deshacer."
                                        icon="pi pi-exclamation-triangle"/>
@@ -570,7 +571,7 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma'}"
                                          disabled="#{not personaController.puedeEditarPadron}"
-                                         actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
+                                         actionListener="#{personaController.eliminarIglesiaPersonaSeleccionada}"
                                          process="@this" update="@form">
                             <f:setPropertyActionListener value="#{iglPers}"
                                                          target="#{personaController.iglesiaPersonaSeleccionado}"/>
@@ -581,17 +582,6 @@
                     </p:column>
 
                 </p:dataTable>
-
-                <!-- Confirm dialog global -->
-                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                                 responsive="true" width="400" style="max-width:96vw">
-                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
-                                     styleClass="ui-button-danger" type="button"
-                                     onclick="PF('dlgConfirm').accept()"/>
-                    <p:commandButton value="Cancelar" icon="pi pi-times"
-                                     styleClass="ui-button-secondary ml-2" type="button"
-                                     onclick="PF('dlgConfirm').reject()"/>
-                </p:confirmDialog>
 
             </div><!-- /surface-card -->
 
@@ -695,15 +685,17 @@
                                         </small>
                                     </div>
                                     <div class="flex flex-column align-items-center gap-2" style="min-width:6rem">
-                                        <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                               value="Habilitado" severity="success"
-                                               icon="pi pi-check-circle" style="white-space:nowrap"/>
-                                        <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                               value="No habilitado" severity="secondary"
-                                               icon="pi pi-ban" style="white-space:nowrap"/>
+                                        <p:outputPanel id="estadoHabilitadoPadron" layout="block">
+                                            <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="Habilitado" severity="success"
+                                                   icon="pi pi-check-circle" style="white-space:nowrap"/>
+                                            <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="No habilitado" severity="secondary"
+                                                   icon="pi pi-ban" style="white-space:nowrap"/>
+                                        </p:outputPanel>
                                         <p:toggleSwitch id="habilitadoPadron"
                                                         value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}">
-                                            <p:ajax update="frmPersonas:outPnlPersonas"/>
+                                            <p:ajax process="@this" update="estadoHabilitadoPadron"/>
                                         </p:toggleSwitch>
                                     </div>
                                 </div>

@@ -36,6 +36,10 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
         return documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }
 
+    public long contarDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        return documentoFacade.contarDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+    }
+
     public Documentos obtenerDocumentoPorWorkspace(String workspace) {
         return documentoFacade.obtenerDocumentoPorWorkspace(workspace);
     }

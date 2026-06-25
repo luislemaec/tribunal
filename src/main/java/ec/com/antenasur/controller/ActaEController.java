@@ -222,6 +222,10 @@ public class ActaEController implements Serializable {
 
     @Setter
     @Getter
+    private int tabActivoActaE;
+
+    @Setter
+    @Getter
     private List<ActaEGerencialDTO> listaConsultaGerencial;
 
     @Getter

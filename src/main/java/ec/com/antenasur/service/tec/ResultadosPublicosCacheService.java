@@ -13,6 +13,7 @@ import ec.com.antenasur.model.tec.ProcesoElectoral;
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.ConcurrencyManagement;
 import jakarta.ejb.ConcurrencyManagementType;
+import jakarta.ejb.DependsOn;
 import jakarta.ejb.Lock;
 import jakarta.ejb.LockType;
 import jakarta.ejb.Schedule;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Startup
+@DependsOn("FlywayMigrationRunner")
 @ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
 @Slf4j
 public class ResultadosPublicosCacheService {

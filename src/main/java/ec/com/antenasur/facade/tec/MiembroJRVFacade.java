@@ -181,6 +181,39 @@ public class MiembroJRVFacade extends AbstractFacade<MiembroJRV, Integer> {
         }
     }
 
+    public MiembroJRV buscarPresidentePorPersonaProceso(Integer personaId, Integer procesoId) {
+        if (personaId == null || procesoId == null) {
+            return null;
+        }
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH jrv.mesa m"
+                    + " LEFT JOIN FETCH m.recinto r"
+                    + " LEFT JOIN FETCH r.ubicacion ru"
+                    + " LEFT JOIN FETCH ru.geograp rc"
+                    + " LEFT JOIN FETCH rc.geograp rp"
+                    + " LEFT JOIN FETCH jrv.proceso pro"
+                    + " LEFT JOIN FETCH jrv.iglesiaPersona ip"
+                    + " LEFT JOIN FETCH ip.persona per"
+                    + " LEFT JOIN FETCH ip.iglesia ig"
+                    + " LEFT JOIN FETCH jrv.cargo car"
+                    + " WHERE per.id = :personaId"
+                    + " AND pro.id = :procesoId"
+                    + " AND jrv.estado = TRUE"
+                    + " AND UPPER(car.nombre) LIKE :cargo"
+                    + ORDENADO;
+            TypedQuery<MiembroJRV> query = super.getEntityManager().createQuery(sql, MiembroJRV.class);
+            query.setParameter("personaId", personaId);
+            query.setParameter("procesoId", procesoId);
+            query.setParameter("cargo", "%PRESIDENTE%");
+            List<MiembroJRV> resultado = query.getResultList();
+            return resultado.isEmpty() ? null : resultado.get(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public Set<Integer> listarIglesiaPersonaIdsDesignadas(Integer procesoId) {
         if (procesoId == null) {
             return Collections.emptySet();

@@ -25,6 +25,8 @@ public class RecintoDTO implements Serializable {
     private String ubicacionNombre;
     private Integer cantonId;
     private String cantonNombre;
+    private Integer provinciaId;
+    private String provinciaNombre;
     private EstadoTarea estadoTarea;
 
     public static RecintoDTO fromEntity(Recinto r) {
@@ -41,6 +43,10 @@ public class RecintoDTO implements Serializable {
             if (r.getUbicacion().getGeograp() != null) {
                 dto.setCantonId(r.getUbicacion().getGeograp().getId());
                 dto.setCantonNombre(r.getUbicacion().getGeograp().getName());
+                if (r.getUbicacion().getGeograp().getGeograp() != null) {
+                    dto.setProvinciaId(r.getUbicacion().getGeograp().getGeograp().getId());
+                    dto.setProvinciaNombre(r.getUbicacion().getGeograp().getGeograp().getName());
+                }
             }
         }
         return dto;

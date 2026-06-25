@@ -533,16 +533,5 @@
             </p:dialog>
         </h:form>
 
-        <!-- Confirm dialog global -->
-        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                         responsive="true" width="380" style="max-width:96vw">
-            <p:commandButton value="Sí" icon="pi pi-check"
-                             styleClass="ui-button-danger" type="button"
-                             onclick="PF('dlgConfirm').accept()"/>
-            <p:commandButton value="Cancelar" icon="pi pi-times"
-                             styleClass="ui-button-secondary ml-2" type="button"
-                             onclick="PF('dlgConfirm').reject()"/>
-        </p:confirmDialog>
-
     </ui:define>
 </ui:composition>

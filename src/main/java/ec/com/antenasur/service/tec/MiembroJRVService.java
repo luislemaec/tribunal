@@ -172,6 +172,10 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         return MiembroJRVDTO.fromEntity(miembroJRVFacade.buscarPorPersonaProceso(personaId, procesoId));
     }
 
+    public MiembroJRVDTO obtenerDesignacionPresidentePorPersonaProceso(Integer personaId, Integer procesoId) {
+        return MiembroJRVDTO.fromEntity(miembroJRVFacade.buscarPresidentePorPersonaProceso(personaId, procesoId));
+    }
+
     public Set<Integer> obtenerIglesiaPersonaIdsDesignadas(Integer procesoId) {
         if (procesoId == null) {
             return new HashSet<>();

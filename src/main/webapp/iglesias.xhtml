@@ -37,6 +37,7 @@
              TARJETAS DE RESUMEN (KPI)
              ====================================================== -->
         <h:form id="frmStats">
+            <p:outputPanel rendered="#{not iglesiaController.restringidoAIglesia}" layout="block">
             <div class="grid mb-2">
 
                 <!-- Total iglesias -->
@@ -51,42 +52,8 @@
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.total']}</span>
                                 <span class="block text-900 font-bold text-2xl">
-                                    <h:outputText value="#{empty iglesiaController.listaIglesias ? 0 : iglesiaController.listaIglesias.size()}"/>
+                                    <h:outputText value="#{iglesiaController.totalIglesiasIndicador}"/>
                                 </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Con documentos -->
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid #22c55e">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
-                                <i class="pi pi-file-pdf text-white"></i>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.con.docs']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{iglesiaController.iglesiasConDocumentos}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sin documentos -->
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid #f97316">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f97316,#fb923c);flex-shrink:0">
-                                <i class="pi pi-exclamation-triangle text-white"></i>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.sin.docs']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{iglesiaController.iglesiasSinDocumentos}</span>
                             </div>
                         </div>
                     </div>
@@ -104,7 +71,7 @@
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.provincias']}</span>
                                 <span class="block text-900 font-bold text-2xl">
-                                    <h:outputText value="#{empty iglesiaController.provincias ? 0 : iglesiaController.provincias.size()}"/>
+                                    <h:outputText value="#{iglesiaController.totalProvinciasIndicador}"/>
                                 </span>
                             </div>
                         </div>
@@ -112,13 +79,14 @@
                 </div>
 
             </div>
+            </p:outputPanel>
         </h:form>
 
         <!-- ======================================================
              BARRA DE PROGRESO — FASE ACTIVA
              ====================================================== -->
         <h:form id="frmProgreso">
-            <p:outputPanel rendered="#{iglesiaController.faseVigente ne null}" styleClass="mb-2" layout="block">
+            <p:outputPanel rendered="#{not iglesiaController.restringidoAIglesia and iglesiaController.faseVigente ne null}" styleClass="mb-2" layout="block">
                 <div class="surface-card shadow-1 border-round-lg p-3"
                      style="border-left:4px solid #6366f1">
                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
@@ -234,7 +202,7 @@
             <div class="surface-card shadow-1 border-round-lg p-3">
 
                 <!-- Mensajes -->
-                <ui:fragment rendered="#{iglesiaController.restringidoAIglesia}">
+                <ui:fragment rendered="#{iglesiaController.restringidoAIglesia and iglesiaController.tieneIglesiaAsignada}">
                     <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3"
                          style="background:#eff6ff; border-left:4px solid #2563eb">
                         <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
@@ -243,6 +211,14 @@
                             #{msg['form.iglesias.banner.iglesia.admin.detalle']}
                             <b>'#{iglesiaController.nombreIglesiaAsignada}'</b>.
                         </span>
+                    </div>
+                </ui:fragment>
+
+                <ui:fragment rendered="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
+                    <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3 surface-100"
+                         style="border-left:4px solid #f97316">
+                        <i class="pi pi-exclamation-triangle text-orange-500 flex-shrink-0"/>
+                        <span class="text-700 text-sm">#{msg['form.iglesias.mensaje.sin.asignacion']}</span>
                     </div>
                 </ui:fragment>
 
@@ -296,12 +272,14 @@
                     </div>
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.iglesias.btn.export.pdf']}" icon="pi pi-file-pdf"
-                                         styleClass="ui-button-outlined ui-button-warning" ajax="false">
+                                         styleClass="ui-button-outlined ui-button-warning" ajax="false"
+                                         disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
                             <p:dataExporter type="pdf" target="tblIglesia" fileName="iglesias"
                                             pageOnly="false"/>
                         </p:commandButton>
                         <p:commandButton value="#{msg['form.iglesias.btn.export.excel']}" icon="pi pi-file-excel"
                                          styleClass="ui-button-outlined ui-button-success"
+                                         disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}"
                                          actionListener="#{iglesiaController.exportarExcel}"
                                          ajax="false"/>
                     </div>
@@ -399,7 +377,9 @@
                         <p:commandButton icon="pi pi-eye"
                                          styleClass="ui-button-rounded ui-button-text ui-button-info"
                                          title="#{msg['form.iglesias.btn.detail.title']}"
-                                         oncomplete="PF('dlgDetalle').show()"
+                                         action="#{iglesiaController.verDetalleIglesiaFila}"
+                                         process="@this"
+                                         oncomplete="if (!args.validationFailed) PF('dlgDetalle').show()"
                                          update=":frmDetalle">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
@@ -411,7 +391,7 @@
                                          title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.edit.title'] : msg['form.iglesias.btn.disabled.title']}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          action="#{iglesiaController.editarIglesiaFila}"
-                                         oncomplete="PF('dlgIglesia').show()"
+                                         oncomplete="if (!args.validationFailed) PF('dlgIglesia').show()"
                                          process="@this" update=":frmDlgIglesia">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
@@ -436,7 +416,8 @@
                                          title="#{msg['form.iglesias.btn.docs.title']}"
                                          rendered="#{iglesia.tieneDocumentos}"
                                          action="#{iglesiaController.cargaArchivosListaMiembros()}"
-                                         oncomplete="PF('pndHistory').show()"
+                                         process="@this"
+                                         oncomplete="if (!args.validationFailed) PF('pndHistory').show()"
                                          update=":frmDocs">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
@@ -444,16 +425,6 @@
                     </p:column>
 
                 </p:dataTable>
-
-                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
-                                 responsive="true" width="380" style="max-width:96vw">
-                    <p:commandButton value="#{msg['form.iglesias.confirm.btn.yes']}" icon="pi pi-check"
-                                     styleClass="ui-button-danger" type="button"
-                                     onclick="PF('dlgConfirm').accept()"/>
-                    <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
-                                     styleClass="ui-button-secondary ml-2" type="button"
-                                     onclick="PF('dlgConfirm').reject()"/>
-                </p:confirmDialog>
 
             </div>
         </h:form>
@@ -655,10 +626,6 @@
                             <span class="block font-bold text-900 text-lg">#{iglesiaController.iglesiaSeleccionado.nombre}</span>
                             <small class="text-500">#{iglesiaController.iglesiaSeleccionado.comunidad}</small>
                         </div>
-                        <p:tag rendered="#{iglesiaController.iglesiaSeleccionado.tieneDocumentos}"
-                               value="#{msg['form.iglesias.tag.con.docs']}" severity="success" icon="pi pi-check"/>
-                        <p:tag rendered="#{not iglesiaController.iglesiaSeleccionado.tieneDocumentos}"
-                               value="#{msg['form.iglesias.tag.sin.docs']}" severity="warning" icon="pi pi-exclamation-triangle"/>
                     </div>
 
                     <!-- Datos de identificación -->
