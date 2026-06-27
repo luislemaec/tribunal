@@ -1,4 +1,4 @@
-﻿const state = {
+const state = {
             data: null,
             filters: {
                 canton: "",
@@ -82,7 +82,7 @@
             }
             setLoading(true);
             try {
-                const response = await fetch("resultados.json", {cache: "default"});
+                const response = await fetch(buildResultsUrl(), {cache: "default"});
                 if (!response.ok) {
                     throw new Error("HTTP " + response.status);
                 }
@@ -97,6 +97,25 @@
             } finally {
                 setLoading(false);
             }
+        }
+
+        function buildResultsUrl() {
+            const configuredUrl = readConfiguredResultsUrl();
+            if (configuredUrl) {
+                return configuredUrl;
+            }
+            return new URL("resultados.json", window.location.href).toString();
+        }
+
+        function readConfiguredResultsUrl() {
+            const meta = document.querySelector('meta[name="resultados-api-url"]');
+            if (meta && meta.content) {
+                return meta.content.trim();
+            }
+            if (typeof window.RESULTADOS_API_URL === "string" && window.RESULTADOS_API_URL.trim()) {
+                return window.RESULTADOS_API_URL.trim();
+            }
+            return "";
         }
 
         function renderAll() {

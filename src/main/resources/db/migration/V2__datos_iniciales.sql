@@ -28029,6 +28029,8 @@ SELECT setval(pg_get_serial_sequence('public.tb_persona', 'pers_id'), GREATEST((
 -- 3. Iglesias iniciales
 -- ----------------------------------------------------------------------------
 -- Fuente consolidada desde la importacion manual validada previamente.
+-- Se normalizan todas las iglesias iniciales con f_crea = NOW(),
+-- f_actualiza = NULL, u_actualiza = NULL e igl_documento = NULL.
 -- ============================================================================
 
 INSERT INTO public.tb_iglesia (igl_id, estado, f_actualiza, f_crea, u_actualiza, u_crea, igl_comunidad_barrio, igl_documento, igl_nombre, igl_total_miembros, gelo_id, igl_version)
@@ -28368,6 +28370,13 @@ VALUES
     (333, TRUE, NULL, TIMESTAMP '2022-12-13 17:22:33.307', NULL, 'llema', 'COMUNIDAD SANJAPAMBA', NULL, 'REY PACHACA', NULL, 541, 0)
 ON CONFLICT DO NOTHING;
 
+UPDATE public.tb_iglesia
+SET f_actualiza = NULL,
+    f_crea = NOW(),
+    u_actualiza = NULL,
+    igl_documento = NULL
+WHERE igl_id BETWEEN 1 AND 333;
+
 SELECT setval(pg_get_serial_sequence('public.tb_iglesia', 'igl_id'), GREATEST((SELECT COALESCE(MAX(igl_id), 1) FROM public.tb_iglesia), 1), TRUE);
 
 -- ============================================================================
@@ -28375,7 +28384,7 @@ SELECT setval(pg_get_serial_sequence('public.tb_iglesia', 'igl_id'), GREATEST((S
 -- ----------------------------------------------------------------------------
 -- Origen validado: tb_iglesia_persona.xlsx. pers_id se normaliza restando 7
 -- para coincidir con la nueva numeracion de tb_persona.
--- igpe_habilitado_padron se inicializa en TRUE.
+-- igpe_habilitado_padron se inicializa en FALSE.
 -- ============================================================================
 
 INSERT INTO public.tb_iglesia_persona (igpe_id, estado, f_actualiza, f_crea, u_actualiza, u_crea, igpe_f_desde, igpe_f_hasta, igl_id, pers_id, igpe_habilitado_padron)
@@ -54787,6 +54796,10 @@ VALUES
     (26197, TRUE, NULL, NULL, NULL, 'flyway', NULL, NULL, 333, 26197, TRUE)
 ON CONFLICT DO NOTHING;
 
+UPDATE public.tb_iglesia_persona
+SET igpe_habilitado_padron = FALSE
+WHERE igpe_id BETWEEN 1 AND 26197;
+
 SELECT setval(pg_get_serial_sequence('public.tb_iglesia_persona', 'igpe_id'), GREATEST((SELECT COALESCE(MAX(igpe_id), 1) FROM public.tb_iglesia_persona), 1), TRUE);
 
 -- ============================================================================
@@ -55357,3 +55370,4 @@ SELECT r.rol_id, m.menu_id, TRUE, NOW(), 'flyway'
 -- Los usuarios iniciales contienen exclusivamente hashes BCrypt costo 12.
 -- Nunca convertirlos a texto plano ni registrar su contenido en logs.
 -- ============================================================================
+

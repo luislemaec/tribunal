@@ -12,16 +12,26 @@ Esta carpeta contiene los archivos necesarios para publicar la pagina publica de
 - `assets/img/logo.png`: logo local.
 - `assets/img/favicon.ico`: icono local.
 
-## Migracion a Nginx
+## Despliegue recomendado en subdominios
 
-Copiar toda la carpeta `public` al sitio estatico de Nginx y proxyar solo:
+La pagina resuelve los resultados en este orden:
+
+1. Meta tag `resultados-api-url` o `window.RESULTADOS_API_URL`, si existe.
+2. `resultados.json` relativo al mismo origen.
+
+Para `https://resultados.conpociiech.org`, la recomendacion es publicar los archivos estaticos de `public` y exponer `https://resultados.conpociiech.org/resultados.json` con proxy hacia WildFly.
+
+## Nginx recomendado
 
 ```nginx
 location = /resultados.json {
-    proxy_pass http://127.0.0.1:8080/tec/public/resultados.json;
+    proxy_pass http://127.0.0.1:8080/public/resultados.json;
     proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_cache_valid 200 15s;
 }
 ```
 
-La pagina usa `fetch("resultados.json")`, por lo que funcionara igual si `resultados.html` y `resultados.json` estan bajo el mismo subdominio.
+Con este esquema el navegador siempre consulta `resultados.json` en el mismo subdominio y no depende de CORS.
+

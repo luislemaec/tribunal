@@ -46,7 +46,8 @@ public class LoginFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
 
-        if (LoginFilterExcluder.getInstance(req.getContextPath()).isExcludeUrl(req.getRequestURI()) || req.getRequestURI().isEmpty()) {
+        if (req.getRequestURI().isEmpty() || esRutaPublica(req)
+                || LoginFilterExcluder.getInstance(req.getContextPath()).isExcludeUrl(req.getRequestURI())) {
             next.doFilter(request, response);
             return;
         }
@@ -68,6 +69,15 @@ public class LoginFilter implements Filter {
             }
         }
 
+    }
+
+    private boolean esRutaPublica(HttpServletRequest req) {
+        String contextPath = req.getContextPath();
+        String requestUri = req.getRequestURI();
+        String publicBase = contextPath + "/public/";
+        return requestUri.startsWith(publicBase)
+                || requestUri.equals(contextPath + "/resultados.xhtml")
+                || requestUri.equals(contextPath + "/resultados.jsf");
     }
 
     private boolean validarPagina(final String pagina, final List<String> listaPermisos) {

@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
 
 import ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO;
@@ -24,6 +27,12 @@ public class ResultadoPublicoJsonServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private static final int CACHE_SECONDS = 15;
+    private static final Set<String> ALLOWED_ORIGINS = new HashSet<>(Arrays.asList(
+            "https://resultados.conpociiech.org",
+            "http://resultados.conpociiech.org",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"
+    ));
 
     @Inject
     private ResultadosPublicosCacheService resultadosPublicosCacheService;
@@ -35,15 +44,34 @@ public class ResultadoPublicoJsonServlet extends HttpServlet {
         String etag = construirEtag(snapshot);
         if (etag.equals(request.getHeader("If-None-Match"))) {
             response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+            aplicarHeadersCors(request, response);
             aplicarHeadersCache(response, etag);
             return;
         }
 
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json;charset=UTF-8");
+        aplicarHeadersCors(request, response);
         aplicarHeadersCache(response, etag);
         try (PrintWriter writer = response.getWriter()) {
             writer.write(toJson(snapshot));
+        }
+    }
+
+    @Override
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        aplicarHeadersCors(request, response);
+        response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type, If-None-Match");
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
+    private void aplicarHeadersCors(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader("Origin");
+        if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Vary", "Origin");
         }
     }
 
