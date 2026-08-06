@@ -4,32 +4,13 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui">
 
-    <!-- Growl global con presentación profesional.
-         id="growlGlobal" + autoUpdate="true" hace que cualquier
-         JsfUtil.addInfoMessage(...) / addSuccessMessage(...) etc. aparezca
-         automáticamente sin necesitar update del growl en cada commandButton.
-         widgetVar="growlGlobal" permite invocarlo desde JS vía Tribunal.toast.*
-         (ver tribunal-globals.js â†’ showToast â†’ renderMessage). -->
-    <!-- Tooltip global: cualquier elemento con title="..." obtiene tooltip
-         consistente con el tema, sin necesidad de declararlo página por página.
-         Excluye el editor PrimeFaces (que usa title internamente). -->
+
     <p:tooltip globalSelector="[title]:not(.p-editor *)" trackMouse="true"
                showEffect="fade" hideEffect="fade"/>
 
-    <!-- ScrollTop: botón flotante "ir arriba" cuando se hace scroll.
-         Aplica a toda página con contenido largo (datatables, escrutinios). -->
+
     <p:scrollTop target="window" threshold="400" icon="pi pi-arrow-up"
                  styleClass="custom-scroll-top"/>
-
-    <!-- Indicador de ambiente: chip flotante discreto en la esquina inferior
-         izquierda (solo fuera de PRODUCCIÓN). Reemplaza al notificationBar
-         full-width que ocupaba demasiado espacio sin aportar valor. -->
-    <h:panelGroup layout="block"
-                  rendered="#{loginBean.loggedIn and loginBean.servidor ne 'P R O D U C C I Ó N'}"
-                  styleClass="ambiente-chip">
-        <i class="pi pi-server" style="margin-right:.4rem"/>
-        <b>#{loginBean.servidor}</b>
-    </h:panelGroup>
 
     <h:form id="frmGlobal">
         <p:growl id="growlGlobal" widgetVar="growlGlobal" globalOnly="true"

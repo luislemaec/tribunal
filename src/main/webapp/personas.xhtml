@@ -385,7 +385,7 @@
                                                  styleClass="w-full">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
-                                                   itemLabel="#{iglesia.nombre} - #{iglesia.id}" itemValue="#{iglesia.id}"/>
+                                                   itemLabel="#{iglesia.nombre} - #{iglesia.comunidad}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}"
                                             process="@this" update="frmPersonas"/>
                                 </p:selectOneMenu>
@@ -495,10 +495,10 @@
 
                     <!-- Miembro: Apellidos + Nombres + pill de sexo -->
                     <p:column headerText="Miembro"
-                              sortBy="#{iglPers.persona.apellidos}"
-                              filterBy="#{iglPers.persona.apellidos}"
+                              sortBy="#{empty iglPers.persona.apellidos ? iglPers.persona.nombres : iglPers.persona.apellidos}"
+                              filterBy="#{iglPers.persona.apellidos} #{iglPers.persona.nombres}"
                               filterMatchMode="contains"
-                              filterPlaceholder="Filtrar por apellido…"
+                              filterPlaceholder="Filtrar por nombres o apellidos..."
                               style="min-width:14rem">
                         <f:facet name="export">
                             <h:outputText value="#{iglPers.persona.apellidos} #{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>

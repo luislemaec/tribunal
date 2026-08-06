@@ -13,7 +13,6 @@ import org.primefaces.event.RowEditEvent;
 import org.primefaces.model.CheckboxTreeNode;
 import org.primefaces.model.TreeNode;
 
-import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.MenuDTO;
 import ec.com.antenasur.service.MenuService;
 import ec.com.antenasur.util.JsfUtil;
@@ -29,9 +28,6 @@ public class MenuController implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Inject
-    private LoginBean loginBean;
-
-    @Inject
     private MenuService menuService;
 
     @Setter
@@ -41,6 +37,10 @@ public class MenuController implements Serializable {
     @Setter
     @Getter
     private List<MenuDTO> listaMenuPadres, listaMenuHijos;
+
+    @Setter
+    @Getter
+    private List<MenuDTO> listaOpcionesPadre;
 
     @Setter
     @Getter
@@ -59,12 +59,14 @@ public class MenuController implements Serializable {
     private void init() {
         try {
             listaMenuPadres = menuService.listarDTOsPadres();
+            listaOpcionesPadre = menuService.listarDTOs();
+            root = new CheckboxTreeNode<MenuDTO>(new MenuDTO(), null);
             if (listaMenuPadres != null && !listaMenuPadres.isEmpty()) {
-                this.root = new CheckboxTreeNode<MenuDTO>(listaMenuPadres.get(0), null);
                 crearNodoRecursivo(listaMenuPadres, root);
             }
         } catch (Exception e) {
-            log.error("Error al inicializar valores", e);
+            log.error("Error al inicializar valores del menu", e);
+            JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorInicializar");
         }
     }
 
@@ -78,34 +80,40 @@ public class MenuController implements Serializable {
                 }
             }
         } catch (Exception e) {
-            log.error("ERROR EN CREAR NODO RECURSIVO", e);
+            log.error("Error al crear el arbol de menu", e);
+            JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorInicializar");
         }
     }
 
     @SuppressWarnings("rawtypes")
     public void onRowEdit(RowEditEvent<TreeNode> event) {
         try {
-            this.menuSeleccionado = (MenuDTO) event.getObject().getData();
+            menuSeleccionado = (MenuDTO) event.getObject().getData();
             if (menuSeleccionado != null) {
-                menuSeleccionado = menuService.guardarDesdeDTO(menuSeleccionado);
-                JsfUtil.addSuccessMessage("Catálogo actualizado!");
+                menuService.guardarDesdeDTO(menuSeleccionado);
+                JsfUtil.addSuccessMessageFromBundle("menu.mensaje.actualizado");
                 init();
+                PrimeFaces.current().ajax().update("frmMenu:trTblMenuo");
             }
         } catch (Exception e) {
-            log.error("Error al actualizar", e);
+            log.error("Error al actualizar menu", e);
+            JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorGuardar");
         }
     }
 
     @SuppressWarnings("rawtypes")
     public void onRowCancel(RowEditEvent<TreeNode> event) {
-        this.menuSeleccionado = (MenuDTO) event.getObject().getData();
-        JsfUtil.addWarningMessage("Cancelado! " + menuSeleccionado.getNombre());
+        menuSeleccionado = (MenuDTO) event.getObject().getData();
+        if (menuSeleccionado != null) {
+            JsfUtil.addWarningMessageFromBundle("menu.mensaje.cancelado", menuSeleccionado.getNombre());
+        }
         menuSeleccionado = null;
-        PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
+        PrimeFaces.current().ajax().update("frmMenu:trTblMenuo");
     }
 
     public void nuevoMenu() {
-        this.menuSeleccionado = new MenuDTO();
+        menuSeleccionado = new MenuDTO();
+        menuSeleccionado.setNodoFinal(Boolean.FALSE);
     }
 
     public void guardarMenu() {
@@ -116,27 +124,51 @@ public class MenuController implements Serializable {
             boolean esEdicion = menuSeleccionado.getId() != null;
             MenuDTO persistido = menuService.guardarDesdeDTO(menuSeleccionado);
             if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
+                JsfUtil.addSuccessMessageFromBundle(esEdicion ? "menu.mensaje.actualizado" : "menu.mensaje.creado");
             }
             menuSeleccionado = null;
             init();
-            PrimeFaces.current().executeScript("PF('dlgCatalogo').hide()");
-            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
+            PrimeFaces.current().executeScript("PF('dlgMenuo').hide()");
+            PrimeFaces.current().ajax().update("frmMenu:trTblMenuo", "frmMenu:outPnlMenu");
         } catch (Exception e) {
-            log.error("Error al guardar informacion", e);
+            log.error("Error al guardar menu", e);
+            JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorGuardar");
         }
     }
 
     public void eliminarMenuSeleccionado() {
         try {
             if (menuSeleccionado != null && menuSeleccionado.getId() != null) {
+                Integer menuId = menuSeleccionado.getId();
                 menuService.eliminarPorId(menuSeleccionado.getId());
-                JsfUtil.addSuccessMessage("Catálogo eliminado!");
+                eliminarNodoDelArbol(root, menuId);
+                listaOpcionesPadre = menuService.listarDTOs();
+                JsfUtil.addSuccessMessageFromBundle("menu.mensaje.eliminado");
             }
-            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
-            init();
+            menuSeleccionado = null;
+            PrimeFaces.current().ajax().update("frmMenu:trTblMenuo", "frmMenu:outPnlMenu");
         } catch (Exception e) {
-            log.error("Error al eliminar catalogo", e);
+            log.error("Error al eliminar menu", e);
+            JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorEliminar");
         }
+    }
+
+    private boolean eliminarNodoDelArbol(TreeNode<MenuDTO> nodoActual, Integer menuId) {
+        if (nodoActual == null || menuId == null) {
+            return false;
+        }
+        List<TreeNode<MenuDTO>> hijos = nodoActual.getChildren();
+        for (int i = 0; i < hijos.size(); i++) {
+            TreeNode<MenuDTO> hijo = hijos.get(i);
+            MenuDTO data = hijo.getData();
+            if (data != null && menuId.equals(data.getId())) {
+                hijos.remove(i);
+                return true;
+            }
+            if (eliminarNodoDelArbol(hijo, menuId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

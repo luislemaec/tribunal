@@ -5,29 +5,28 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">Menú</ui:define>
+    <ui:define name="title">#{msg['menu.titulo']}</ui:define>
 
     <ui:define name="viewname">
-        <li>Admin</li>
+        <li>#{msg['menu.crumb.admin']}</li>
         <li>/</li>
         <li>
-            <p:link outcome="/menu">Menú</p:link>
+            <p:link outcome="/menu">#{msg['menu.titulo']}</p:link>
         </li>
     </ui:define>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#06b6d4,#0891b2);flex-shrink:0">
-                        <i class="pi pi-bars text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0f766e,#0891b2);flex-shrink:0">
+                        <i class="pi pi-sitemap text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">Administración de Menú</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Gestión de la estructura de menús del sistema</p>
+                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['menu.encabezado']}</h2>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['menu.subtitulo']}</p>
                     </div>
                 </div>
             </div>
@@ -37,123 +36,144 @@
 
             <div class="surface-card shadow-1 border-round-lg p-3">
 
-                <!-- TOOLBAR -->
-                <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
-                    <p:commandButton value="Nuevo" icon="pi pi-plus"
-                                     styleClass="ui-button-success"
-                                     actionListener="#{menuController.nuevoMenu}"
-                                     update="frmMenu:outPnlMenu"
-                                     oncomplete="PF('dlgMenuo').show()">
-                        <p:resetInput target="frmMenu:outPnlMenu"/>
-                    </p:commandButton>
+                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <h3 class="m-0 text-900 text-lg font-semibold">#{msg['menu.seccion.estructura']}</h3>
+                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['menu.seccion.estructura.detalle']}</p>
+                    </div>
+
+                    <div class="flex flex-wrap align-items-center justify-content-end gap-2">
+                        <p:commandButton value="#{msg['menu.boton.nuevo']}" icon="pi pi-plus"
+                                         styleClass="ui-button-success"
+                                         actionListener="#{menuController.nuevoMenu}"
+                                         update="frmMenu:outPnlMenu"
+                                         oncomplete="PF('dlgMenuo').show()">
+                            <p:resetInput target="frmMenu:outPnlMenu"/>
+                        </p:commandButton>
+                    </div>
                 </div>
 
-                <!-- TREE TABLE con inline edit -->
-                <p:treeTable value="#{menuController.root}" var="menu"
-                             showGridlines="true" editable="true" id="trTblMenuo"
-                             styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:ajax event="rowEdit"       listener="#{menuController.onRowEdit}"/>
-                    <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}"/>
+                <div style="overflow-x:auto">
+                    <p:treeTable value="#{menuController.root}" var="menu"
+                                 showGridlines="true" editable="true" id="trTblMenuo"
+                                 emptyMessage="#{msg['menu.tabla.vacia']}"
+                                 styleClass="ui-datatable-striped ui-datatable-sm"
+                                 tableStyle="min-width:980px">
+                        <p:ajax event="rowEdit" listener="#{menuController.onRowEdit}" update="trTblMenuo"/>
+                        <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}" update="trTblMenuo"/>
 
-                    <p:column headerText="ID" sortBy="#{menu.id}" style="width:6%" responsivePriority="1">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm text-500">#{menu.id}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.id}" style="width:100%" disabled="true"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.menu']}" sortBy="#{menu.nombre}"
+                                  style="min-width:260px" responsivePriority="1">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <div class="flex align-items-start gap-2">
+                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono} text-primary mt-1"/>
+                                        <div>
+                                            <div class="text-sm font-semibold text-900">#{menu.nombre}</div>
+                                            <div class="text-xs text-500">#{empty menu.padreNombre ? msg['menu.valor.sinPadre'] : menu.padreNombre}</div>
+                                        </div>
+                                    </div>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:inputText value="#{menu.nombre}" style="width:100%"
+                                                 maxlength="100"
+                                                 onkeyup="this.value = this.value.toUpperCase()"/>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="Nombre" sortBy="#{menu.nombre}" styleClass="w-auto" responsivePriority="1">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm font-medium text-900">#{menu.nombre}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.nombre}" style="width:100%" onkeyup="this.value = this.value.toUpperCase()"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.tipo']}" style="width:120px" responsivePriority="2">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <p:tag value="#{menu.nodoFinal ? msg['menu.tipo.opcion'] : msg['menu.tipo.grupo']}"
+                                           severity="#{menu.nodoFinal ? 'info' : 'success'}"/>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:selectBooleanButton value="#{menu.nodoFinal}"
+                                                           onLabel="#{msg['menu.tipo.opcion']}"
+                                                           offLabel="#{msg['menu.tipo.grupo']}"
+                                                           onIcon="pi pi-link"
+                                                           offIcon="pi pi-folder"/>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="Acción" sortBy="#{menu.accion}" styleClass="w-auto" responsivePriority="2">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm text-600">#{menu.accion}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.accion}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.url']}" style="min-width:170px" responsivePriority="3">
+                            <p:cellEditor>
+                                <f:facet name="output"><span class="text-sm text-600 font-mono">#{menu.url}</span></f:facet>
+                                <f:facet name="input"><p:inputText value="#{menu.url}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="URL" styleClass="w-auto" responsivePriority="3">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm text-500 font-mono">#{menu.url}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.url}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.accion']}" style="min-width:160px" responsivePriority="4">
+                            <p:cellEditor>
+                                <f:facet name="output"><span class="text-sm text-600 font-mono">#{menu.accion}</span></f:facet>
+                                <f:facet name="input"><p:inputText value="#{menu.accion}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="Icono" styleClass="w-auto" responsivePriority="4">
-                        <p:cellEditor>
-                            <f:facet name="output">
-                                <div class="flex align-items-center gap-2">
-                                    <i class="#{menu.icono}"/>
-                                    <span class="text-sm text-500">#{menu.icono}</span>
-                                </div>
-                            </f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.icono}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.icono']}" style="min-width:160px" responsivePriority="4">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono}"/>
+                                        <span class="text-xs text-500 font-mono">#{menu.icono}</span>
+                                    </div>
+                                </f:facet>
+                                <f:facet name="input"><p:inputText value="#{menu.icono}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="Orden" style="width:5%" responsivePriority="3">
-                        <p:cellEditor>
-                            <f:facet name="output"><p:badge value="#{menu.orden}" severity="info"/></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.orden}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.orden']}" style="width:90px" responsivePriority="3">
+                            <p:cellEditor>
+                                <f:facet name="output"><p:badge value="#{menu.orden}" severity="info"/></f:facet>
+                                <f:facet name="input"><p:inputNumber value="#{menu.orden}" decimalPlaces="0" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="Nodo final" styleClass="w-auto" responsivePriority="4">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm text-500">#{menu.nodoFinal}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.nodoFinal}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.componente']}" style="min-width:150px" responsivePriority="5">
+                            <p:cellEditor>
+                                <f:facet name="output"><span class="text-xs text-500 font-mono">#{menu.componenteid}</span></f:facet>
+                                <f:facet name="input"><p:inputText value="#{menu.componenteid}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
 
-                    <p:column headerText="ComponenteId" styleClass="w-auto" responsivePriority="5">
-                        <p:cellEditor>
-                            <f:facet name="output"><span class="text-sm text-500 font-mono">#{menu.componenteid}</span></f:facet>
-                            <f:facet name="input"><p:inputText value="#{menu.componenteid}" style="width:100%"/></f:facet>
-                        </p:cellEditor>
-                    </p:column>
+                        <p:column headerText="#{msg['menu.tabla.acciones']}" style="width:110px" responsivePriority="1"
+                                  styleClass="text-center">
+                            <p:rowEditor/>
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             title="#{msg['menu.boton.eliminar']}"
+                                             process="@this"
+                                             oncomplete="PF('dlgEliminaRegistro').show()">
+                                <f:setPropertyActionListener value="#{menu}" target="#{menuController.menuSeleccionado}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:treeTable>
+                </div>
 
-                    <p:column style="width:7%" responsivePriority="5" styleClass="text-center">
-                        <p:rowEditor/>
-                        <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="Eliminar menú"
-                                         process="@this"
-                                         oncomplete="PF('dlgEliminaRegistro').show()">
-                            <f:setPropertyActionListener value="#{menu}" target="#{menuController.menuSeleccionado}"/>
-                        </p:commandButton>
-                    </p:column>
-                </p:treeTable>
-
-                <!-- Confirm dialog para eliminar (con action específica) -->
                 <p:confirmDialog widgetVar="dlgEliminaRegistro"
                                  showEffect="fade" hideEffect="fade"
-                                 responsive="true" width="400" style="max-width:96vw"
-                                 message="¿Está seguro que desea eliminar este menú?"
-                                 header="Confirmar eliminación" severity="warn">
-                    <p:commandButton value="Sí, eliminar" icon="pi pi-check"
+                                 responsive="true" width="420" style="max-width:96vw"
+                                 message="#{msg['menu.confirmacion.eliminar']}"
+                                 header="#{msg['menu.confirmacion.titulo']}" severity="warn">
+                    <p:commandButton value="#{msg['menu.boton.confirmarEliminar']}" icon="pi pi-check"
                                      styleClass="ui-button-danger"
                                      actionListener="#{menuController.eliminarMenuSeleccionado}"
                                      process="@this"
-                                     update="trTblMenuo"
+                                     update="trTblMenuo outPnlMenu"
                                      oncomplete="PF('dlgEliminaRegistro').hide()"/>
-                    <p:commandButton value="Cancelar" icon="pi pi-times"
+                    <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                      styleClass="ui-button-secondary ml-2" type="button"
                                      onclick="PF('dlgEliminaRegistro').hide()"/>
                 </p:confirmDialog>
 
-            </div><!-- /surface-card -->
+            </div>
 
-            <!-- ======================================================
-                 DIALOGO: NUEVO MENU
-                 ====================================================== -->
-            <p:dialog header="Detalles del menú"
+            <p:dialog header="#{msg['menu.dialogo.titulo']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgMenuo"
-                      responsive="true" width="480"
+                      responsive="true" width="640"
                       style="max-width:96vw"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
@@ -163,42 +183,96 @@
 
                         <div class="formgrid grid">
 
-                            <div class="field col-12">
+                            <div class="field col-12 md:col-8">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    Nombre <span class="text-red-500">*</span>
+                                    #{msg['menu.campo.nombre']} <span class="text-red-500">*</span>
                                 </label>
                                 <p:inputText id="nombre" styleClass="w-full"
                                              value="#{menuController.menuSeleccionado.nombre}"
                                              maxlength="100" required="true"
+                                             requiredMessage="#{msg['menu.validacion.nombre']}"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
-                            <div class="field col-12 md:col-6">
+                            <div class="field col-12 md:col-4">
                                 <label for="orden" class="font-medium text-700 text-sm">
-                                    Orden <span class="text-red-500">*</span>
+                                    #{msg['menu.campo.orden']} <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="orden" styleClass="w-full"
-                                             value="#{menuController.menuSeleccionado.orden}"
-                                             required="true"/>
+                                <p:inputNumber id="orden" styleClass="w-full"
+                                               value="#{menuController.menuSeleccionado.orden}"
+                                               decimalPlaces="0" required="true"
+                                               requiredMessage="#{msg['menu.validacion.orden']}"/>
                             </div>
 
                             <div class="field col-12 md:col-6">
                                 <label for="padre" class="font-medium text-700 text-sm">
-                                    Menú padre <span class="text-red-500">*</span>
+                                    #{msg['menu.campo.padre']}
                                 </label>
-                                <p:inputText id="padre" styleClass="w-full"
-                                             value="#{menuController.menuSeleccionado.padre.id}"
-                                             required="true"/>
+                                <p:selectOneMenu id="padre" styleClass="w-full"
+                                                 value="#{menuController.menuSeleccionado.padreId}"
+                                                 filter="true" filterMatchMode="contains">
+                                    <f:selectItem itemLabel="#{msg['menu.valor.sinPadre']}" itemValue="#{null}"
+                                                  noSelectionOption="true"/>
+                                    <f:selectItems value="#{menuController.listaOpcionesPadre}" var="opcion"
+                                                   itemLabel="#{opcion.nombre}" itemValue="#{opcion.id}"
+                                                   itemDisabled="#{opcion.id eq menuController.menuSeleccionado.id}"/>
+                                </p:selectOneMenu>
                             </div>
 
-                            <div class="field col-12">
-                                <label for="descripcion" class="font-medium text-700 text-sm">
-                                    Descripción <span class="text-red-500">*</span>
+                            <div class="field col-12 md:col-6">
+                                <label for="nodoFinal" class="font-medium text-700 text-sm">
+                                    #{msg['menu.campo.tipo']}
                                 </label>
-                                <p:inputText id="descripcion" styleClass="w-full"
-                                             value="#{menuController.menuSeleccionado.descripcion}"
-                                             maxlength="150" required="true"
-                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                                <p:selectBooleanButton id="nodoFinal"
+                                                       value="#{menuController.menuSeleccionado.nodoFinal}"
+                                                       onLabel="#{msg['menu.tipo.opcion']}"
+                                                       offLabel="#{msg['menu.tipo.grupo']}"
+                                                       onIcon="pi pi-link"
+                                                       offIcon="pi pi-folder"
+                                                       styleClass="w-full"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="url" class="font-medium text-700 text-sm">
+                                    #{msg['menu.campo.url']}
+                                </label>
+                                <p:inputText id="url" styleClass="w-full"
+                                             value="#{menuController.menuSeleccionado.url}"
+                                             maxlength="150"
+                                             placeholder="/dashboard.jsf"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="accion" class="font-medium text-700 text-sm">
+                                    #{msg['menu.campo.accion']}
+                                </label>
+                                <p:inputText id="accion" styleClass="w-full"
+                                             value="#{menuController.menuSeleccionado.accion}"
+                                             maxlength="150"/>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="icono" class="font-medium text-700 text-sm">
+                                    #{msg['menu.campo.icono']}
+                                </label>
+                                <div class="p-inputgroup">
+                                    <span class="p-inputgroup-addon">
+                                        <i class="#{empty menuController.menuSeleccionado.icono ? 'pi pi-circle' : menuController.menuSeleccionado.icono}"/>
+                                    </span>
+                                    <p:inputText id="icono" styleClass="w-full"
+                                                 value="#{menuController.menuSeleccionado.icono}"
+                                                 maxlength="80"
+                                                 placeholder="pi pi-home"/>
+                                </div>
+                            </div>
+
+                            <div class="field col-12 md:col-6">
+                                <label for="componenteid" class="font-medium text-700 text-sm">
+                                    #{msg['menu.campo.componente']}
+                                </label>
+                                <p:inputText id="componenteid" styleClass="w-full"
+                                             value="#{menuController.menuSeleccionado.componenteid}"
+                                             maxlength="80"/>
                             </div>
 
                         </div>
@@ -208,7 +282,7 @@
 
                 <f:facet name="footer">
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
-                        <p:commandButton value="Cancelar" icon="pi pi-times"
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgMenuo').hide()"
                                          styleClass="ui-button-outlined ui-button-secondary"
                                          type="button"/>

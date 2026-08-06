@@ -5,7 +5,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
@@ -86,6 +89,16 @@ public class IglesiaController implements Serializable {
     @Setter
     @Getter
     private Geograp parroquiaSeleccionado, cantonSeleccionado;
+
+    @Setter
+    @Getter
+    private List<String> comunidadesFiltro;
+
+    @Setter
+    @Getter
+    private String comunidadFiltro;
+
+    private List<IglesiaDTO> listaIglesiasFiltroGeografico;
 
     // â”€â”€ Estado exclusivo del diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Setter
@@ -178,6 +191,8 @@ public class IglesiaController implements Serializable {
                 cargarIglesiaAsignada();
             } else {
                 listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+                listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
+                actualizarComunidadesFiltro();
             }
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
@@ -208,17 +223,18 @@ public class IglesiaController implements Serializable {
         cantonSeleccionado = new Geograp();
         parroquias = null;
         parroquiaSeleccionado = new Geograp();
+        comunidadFiltro = null;
 
         if (provinciaFiltroId != null) {
             cantonesFiltro = geograpService.findByFatherId(provinciaFiltroId);
             List<Geograp> parroquiasDeProvincia = geograpService.obtenerParroquiasDeCantones(cantonesFiltro);
             if (parroquiasDeProvincia != null && !parroquiasDeProvincia.isEmpty()) {
-                listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiasDeProvincia);
+                aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquias(parroquiasDeProvincia));
             } else {
-                listaIglesias = Collections.emptyList();
+                aplicarResultadoFiltroGeografico(Collections.emptyList());
             }
         } else {
-            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS));
         }
     }
 
@@ -228,17 +244,23 @@ public class IglesiaController implements Serializable {
             cargarIglesiaAsignada();
             return;
         }
+        parroquiaSeleccionado = new Geograp();
+        comunidadFiltro = null;
         if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
             parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
-            parroquiaSeleccionado = new Geograp();
             obtieneIglesiasPorCanton();
+        } else {
+            parroquias = null;
+            obtieneCantonesFiltro();
         }
     }
 
     private void obtieneIglesiasPorCanton() {
         if (parroquias != null && !parroquias.isEmpty()) {
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
+            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquias(parroquias));
+        } else {
+            aplicarResultadoFiltroGeografico(Collections.emptyList());
         }
     }
 
@@ -247,11 +269,31 @@ public class IglesiaController implements Serializable {
             cargarIglesiaAsignada();
             return;
         }
+        comunidadFiltro = null;
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
-            listaIglesias = iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
-            PrimeFaces.current().ajax().update("frmIglesias", "msgs");
+            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado));
+        } else {
+            obtieneParroquias();
         }
+    }
+
+    public void obtieneIglesiasPorComunidad() {
+        if (restringidoAIglesia) {
+            cargarIglesiaAsignada();
+            return;
+        }
+        if (comunidadFiltro == null || comunidadFiltro.trim().isEmpty()) {
+            listaIglesias = listaIglesiasFiltroGeografico != null
+                    ? new ArrayList<>(listaIglesiasFiltroGeografico)
+                    : iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+            return;
+        }
+        String comunidadNormalizada = normalizarTexto(comunidadFiltro);
+        listaIglesias = (listaIglesiasFiltroGeografico == null ? Collections.<IglesiaDTO>emptyList() : listaIglesiasFiltroGeografico)
+                .stream()
+                .filter(iglesia -> comunidadNormalizada.equals(normalizarTexto(iglesia.getComunidad())))
+                .collect(Collectors.toList());
     }
 
     // â”€â”€ Diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -592,6 +634,9 @@ public class IglesiaController implements Serializable {
         cantonSeleccionado = new Geograp();
         parroquias = null;
         parroquiaSeleccionado = new Geograp();
+        comunidadFiltro = null;
+        comunidadesFiltro = null;
+        listaIglesiasFiltroGeografico = null;
         provinciaDialogoId = null;
         cantonesDialogo = null;
         cantonDialogoId = null;
@@ -609,6 +654,8 @@ public class IglesiaController implements Serializable {
             cargarIglesiaAsignada();
         } else {
             listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+            listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
+            actualizarComunidadesFiltro();
         }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
@@ -742,5 +789,32 @@ public class IglesiaController implements Serializable {
 
     public String getNombreIglesiaAsignada() {
         return listaIglesias != null && !listaIglesias.isEmpty() ? listaIglesias.get(0).getNombre() : "";
+    }
+
+    private void aplicarResultadoFiltroGeografico(List<IglesiaDTO> iglesias) {
+        listaIglesiasFiltroGeografico = iglesias != null ? new ArrayList<>(iglesias) : new ArrayList<>();
+        listaIglesias = new ArrayList<>(listaIglesiasFiltroGeografico);
+        actualizarComunidadesFiltro();
+    }
+
+    private void actualizarComunidadesFiltro() {
+        Set<String> comunidades = new LinkedHashSet<>();
+        List<IglesiaDTO> origen = listaIglesiasFiltroGeografico != null
+                ? listaIglesiasFiltroGeografico
+                : listaIglesias;
+        if (origen != null) {
+            for (IglesiaDTO iglesia : origen) {
+                String comunidad = iglesia != null ? iglesia.getComunidad() : null;
+                if (comunidad != null && !comunidad.trim().isEmpty()) {
+                    comunidades.add(comunidad.trim());
+                }
+            }
+        }
+        comunidadesFiltro = new ArrayList<>(comunidades);
+        Collections.sort(comunidadesFiltro);
+    }
+
+    private String normalizarTexto(String valor) {
+        return valor == null ? "" : valor.trim().toUpperCase();
     }
 }

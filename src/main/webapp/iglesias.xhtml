@@ -143,7 +143,7 @@
                     <div class="flex align-items-center gap-2">
                         <i class="pi pi-filter text-primary"></i>
                         <span class="font-semibold text-900">#{msg['form.iglesias.filters.title']}</span>
-                        <p:tag rendered="#{iglesiaController.provinciaFiltroId ne null}"
+                        <p:tag rendered="#{iglesiaController.provinciaFiltroId ne null or iglesiaController.comunidadFiltro ne null}"
                                value="#{msg['form.iglesias.filters.activo']}" severity="info" icon="pi pi-check-circle"
                                styleClass="ml-1"/>
                     </div>
@@ -155,10 +155,12 @@
                                          filter="true" filterMatchMode="contains"
                                          placeholder="#{msg['form.iglesias.filters.placeholder.provincia']}"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                          itemValue="#{null}" noSelectionOption="true"/>
                             <f:selectItems value="#{iglesiaController.provincias}" var="prov"
                                            itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesFiltro()}"
-                                    process="@this" update=":frmFiltros:canton :frmFiltros:parroquia :frmIglesias:tblIglesia"/>
+                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-3">
@@ -167,10 +169,12 @@
                                          filter="true" filterMatchMode="contains"
                                          placeholder="#{msg['form.iglesias.filters.placeholder.canton']}"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                          itemValue="#{null}" noSelectionOption="true"/>
                             <f:selectItems value="#{iglesiaController.cantonesFiltro}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneParroquias()}"
-                                    process="@this" update=":frmFiltros:parroquia :frmIglesias:tblIglesia"/>
+                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-3">
@@ -179,10 +183,26 @@
                                          filter="true" filterMatchMode="contains"
                                          placeholder="#{msg['form.iglesias.filters.placeholder.parroquia']}"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                          itemValue="#{null}" noSelectionOption="true"/>
                             <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorParroquia()}"
-                                    process="@this" update=":frmIglesias:tblIglesia"/>
+                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="comunidad" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.comunidad']}</label>
+                        <p:selectOneMenu id="comunidad" value="#{iglesiaController.comunidadFiltro}"
+                                         filter="true" filterMatchMode="contains"
+                                         placeholder="#{msg['form.iglesias.filters.placeholder.comunidad']}"
+                                         styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                          itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{iglesiaController.comunidadesFiltro}" var="comunidad"
+                                           itemLabel="#{comunidad}" itemValue="#{comunidad}"/>
+                            <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorComunidad()}"
+                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-3 flex align-items-end">
