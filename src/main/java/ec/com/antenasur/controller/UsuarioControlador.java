@@ -3,10 +3,13 @@ package ec.com.antenasur.controller;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.inject.Model;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -17,6 +20,7 @@ import jakarta.ws.rs.core.Response;
 
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.dto.FiltroUsuarioDTO;
 import ec.com.antenasur.dto.RegistroCivilDTO;
 import ec.com.antenasur.dto.RolUsuarioDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
@@ -35,6 +39,9 @@ import ec.com.antenasur.util.JsfUtil;
 import ec.com.antenasur.util.SendEmail;
 import lombok.Getter;
 import lombok.Setter;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortMeta;
 
 @Named(value = "usuarioControlador")
 @ViewScoped
@@ -96,6 +103,14 @@ public class UsuarioControlador implements Serializable {
 
     @Setter
     @Getter
+    private RolUsuarioDTO rolUsuarioParaReactivacion;
+
+    @Setter
+    @Getter
+    private Integer iglesiaReactivacionId;
+
+    @Setter
+    @Getter
     private RegistroCivilDTO personaRegistroCivil;
 
     @Setter
@@ -106,16 +121,69 @@ public class UsuarioControlador implements Serializable {
     @Getter
     private Boolean esUsuarioNuevo = false;
 
+    @Getter
+    private FiltroUsuarioDTO filtroUsuarios;
+
+    @Getter
+    private LazyDataModel<RolUsuarioDTO> usuariosLazy;
+
+    @Getter
+    private boolean busquedaUsuariosEjecutada;
+
+    @Setter
+    @Getter
+    private int primerRegistroUsuarios;
+
     public UsuarioControlador() {
     }
 
     @PostConstruct
     private void init() {
+        filtroUsuarios = new FiltroUsuarioDTO();
+        inicializarModeloUsuarios();
+        cargarCatalogos();
+    }
+
+    private void cargarCatalogos() {
         listaRoles = rolService.getRolesAplicativoSeleccion();
+        if (listaRoles == null) {
+            listaRoles = Collections.emptyList();
+        }
         rolSeleccionado = new Rol();
-        listaRolUsuarios = rolUsuarioService.listarDTOsActivosPorRoles(listaRoles);
-        listaUsuarios = usuarioService.listarDTOPorRoles(listaRoles);
         listaIglesias = iglesiaService.listarDTOs();
+    }
+
+    private void inicializarModeloUsuarios() {
+        usuariosLazy = new LazyDataModel<>() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public int count(Map<String, FilterMeta> filterBy) {
+                return busquedaUsuariosEjecutada ? rolUsuarioService.contarUsuarios(filtroUsuarios) : 0;
+            }
+
+            @Override
+            public List<RolUsuarioDTO> load(int first, int pageSize, Map<String, SortMeta> sortBy,
+                    Map<String, FilterMeta> filterBy) {
+                if (!busquedaUsuariosEjecutada) {
+                    return Collections.emptyList();
+                }
+                return rolUsuarioService.buscarUsuarios(filtroUsuarios, first, pageSize);
+            }
+        };
+    }
+
+    /** Ejecuta una consulta paginada; no se carga ningún usuario antes de esta acción. */
+    public void buscarUsuarios() {
+        primerRegistroUsuarios = 0;
+        busquedaUsuariosEjecutada = true;
+    }
+
+    /** Limpia los criterios y deja la tabla sin resultados hasta una nueva búsqueda. */
+    public void limpiarBusquedaUsuarios() {
+        filtroUsuarios = new FiltroUsuarioDTO();
+        primerRegistroUsuarios = 0;
+        busquedaUsuariosEjecutada = false;
     }
 
     /**
@@ -142,77 +210,142 @@ public class UsuarioControlador implements Serializable {
         return rolSeleccionado.getNombre().endsWith(Constantes.getRolIglesiaAdmin());
     }
 
-    public void eliminarUsuario() throws RuntimeException, IOException {
-        if (usuarioSeleccionado == null || usuarioSeleccionado.getId() == null) {
+    public void eliminarUsuario(UsuarioDTO usuario) throws RuntimeException, IOException {
+        if (usuario == null || usuario.getId() == null) {
             return;
         }
-        UsuarioDTO eliminado = usuarioService.eliminarPorId(usuarioSeleccionado.getId());
-        if (eliminado != null) {
-            init();
-            JsfUtil.addInfoMessage(eliminado.getUsername() + ", ELIMINADO");
-            procesoBean.registraActividad("ELIMINA USUARIO: " + eliminado.getUsername());
-        } else {
-            JsfUtil.addWarningMessage("Problemas en eliminar");
-            procesoBean.registraActividad("ERROR  AL ELIMINAR USUARIO");
+        try {
+            UsuarioDTO eliminado = usuarioService.eliminarPorId(usuario.getId());
+            if (eliminado != null) {
+                cargarCatalogos();
+                JsfUtil.addInfoMessage(eliminado.getUsername() + ", DESACTIVADO");
+                procesoBean.registraActividad("DESACTIVA USUARIO: " + eliminado.getUsername());
+            } else {
+                JsfUtil.addWarningMessage("No fue posible desactivar el usuario.");
+            }
+        } catch (Exception e) {
+            JsfUtil.addErrorMessage("No fue posible desactivar el usuario.");
+        }
+    }
+
+    /** Prepara la reactivación sin habilitar la cuenta todavía. */
+    public void prepararReactivacion(RolUsuarioDTO rolUsuario) {
+        if (rolUsuario == null || rolUsuario.getId() == null || rolUsuario.getUsuario() == null) {
+            return;
+        }
+        rolUsuarioParaReactivacion = rolUsuario;
+        iglesiaReactivacionId = null;
+    }
+
+    public boolean isRolReactivacionRequiereIglesia() {
+        return rolUsuarioParaReactivacion != null
+                && rolUsuarioParaReactivacion.getRol() != null
+                && rolUsuarioParaReactivacion.getRol().getNombre() != null
+                && rolUsuarioParaReactivacion.getRol().getNombre()
+                        .endsWith(Constantes.getRolIglesiaAdmin());
+    }
+
+    public void confirmarReactivacion() {
+        if (rolUsuarioParaReactivacion == null || rolUsuarioParaReactivacion.getId() == null
+                || rolUsuarioParaReactivacion.getUsuario() == null) {
+            JsfUtil.addErrorMessage("No fue posible determinar el usuario a reactivar.");
+            FacesContext.getCurrentInstance().validationFailed();
+            return;
+        }
+        try {
+            UsuarioDTO reactivado = usuarioService.reactivarPorId(
+                    rolUsuarioParaReactivacion.getUsuario().getId(),
+                    rolUsuarioParaReactivacion.getId(), iglesiaReactivacionId);
+            cargarCatalogos();
+            JsfUtil.addSuccessMessage(reactivado.getUsername() + ", REACTIVADO");
+            procesoBean.registraActividad("REACTIVA USUARIO: " + reactivado.getUsername()
+                    + " ROL: " + (rolUsuarioParaReactivacion.getRol() != null
+                    ? rolUsuarioParaReactivacion.getRol().getNombre() : "(sin rol)"));
+            rolUsuarioParaReactivacion = null;
+            iglesiaReactivacionId = null;
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
+        } catch (Exception e) {
+            JsfUtil.addErrorMessage("No fue posible reactivar el usuario.");
+            FacesContext.getCurrentInstance().validationFailed();
         }
     }
 
     public void actualizarUsuario() throws RuntimeException, IOException {
-        if (isRolRequiereIglesia()
-                && (usuarioSeleccionado == null || usuarioSeleccionado.getIglesiaId() == null)) {
-            JsfUtil.addErrorMessage("Debe seleccionar una iglesia para el rol IglesiaAdmin");
+        if (usuarioSeleccionado == null || rolSeleccionado == null || rolSeleccionado.getId() == null) {
+            JsfUtil.addErrorMessage("Debe seleccionar un rol para el usuario.");
+            FacesContext.getCurrentInstance().validationFailed();
             return;
         }
-        if (!isRolRequiereIglesia() && usuarioSeleccionado != null) {
+        if (isRolRequiereIglesia()
+                && usuarioSeleccionado.getIglesiaId() == null) {
+            JsfUtil.addErrorMessage("Debe seleccionar una iglesia para el rol IglesiaAdmin");
+            FacesContext.getCurrentInstance().validationFailed();
+            return;
+        }
+        if (!isRolRequiereIglesia()) {
             // Otros roles no llevan iglesia: limpiamos por si quedó del cambio.
             usuarioSeleccionado.setIglesiaId(null);
         }
-        if (esUsuarioNuevo) {
-            UsuarioDTO creado = usuarioService.crearUsuarioDesdeDTO(usuarioSeleccionado, rolSeleccionado);
-            if (creado != null) {
+        try {
+            if (esUsuarioNuevo) {
+                UsuarioDTO creado = usuarioService.crearUsuarioDesdeDTO(usuarioSeleccionado, rolSeleccionado);
+                if (creado == null) {
+                    JsfUtil.addErrorMessage("No fue posible registrar el usuario.");
+                    FacesContext.getCurrentInstance().validationFailed();
+                    return;
+                }
                 this.usuarioSeleccionado = creado;
-                JsfUtil.addSuccessMessage("Usuario registrado correctamente");
-                // Auditoría y envío de correo se aíslan: si fallan, el usuario
-                // YA está persistido — nunca se debe revertir el registro por
-                // problemas de logging o mailing.
+                boolean reactivado = Boolean.TRUE.equals(creado.getReactivado());
+                JsfUtil.addSuccessMessage(reactivado
+                        ? "Usuario reactivado correctamente."
+                        : "Usuario registrado correctamente.");
                 try {
-                    procesoBean.registraActividad("CREA USUARIO: " + creado.getUsername()
-                            + " ROL: " + (rolSeleccionado != null ? rolSeleccionado.getNombre() : "(null)"));
+                    procesoBean.registraActividad((reactivado ? "REACTIVA" : "CREA") + " USUARIO: "
+                            + creado.getUsername() + " ROL: " + rolSeleccionado.getNombre());
                 } catch (Exception logEx) {
                     logEx.printStackTrace();
                 }
-                try {
-                    enviarCorreoCreacionUser();
-                } catch (Exception mailEx) {
-                    mailEx.printStackTrace();
-                    JsfUtil.addWarningMessage("Usuario creado correctamente; el correo de bienvenida no pudo enviarse.");
+                if (!reactivado) {
+                    try {
+                        enviarCorreoCreacionUser();
+                    } catch (Exception mailEx) {
+                        mailEx.printStackTrace();
+                        JsfUtil.addWarningMessage("Usuario creado correctamente; el correo de bienvenida no pudo enviarse.");
+                    }
                 }
-                // Refresca listas para que el usuario recién creado aparezca
-                // en la tabla sin necesidad de recargar la página.
-                init();
+                cargarCatalogos();
                 esUsuarioNuevo = false;
-            }
-        } else {
-            UsuarioDTO actual = usuarioService.obtenerDTOPorId(usuarioSeleccionado.getId());
-            String correoAnterior = (actual != null) ? actual.getCorreo() : null;
-            Rol rolPersistido = rolService.find(rolSeleccionado.getId());
-            RolUsuario rolUsuarioActual = (rolUsuarioSeleccionado != null && rolUsuarioSeleccionado.getId() != null)
-                    ? rolUsuarioService.find(rolUsuarioSeleccionado.getId()) : null;
-            UsuarioDTO actualizado = usuarioService.actualizarUsuarioDesdeDTO(
-                    usuarioSeleccionado, rolUsuarioActual, rolPersistido);
-            if (actualizado != null) {
+            } else {
+                UsuarioDTO actual = usuarioService.obtenerDTOPorId(usuarioSeleccionado.getId());
+                String correoAnterior = actual != null ? actual.getCorreo() : null;
+                Rol rolPersistido = rolService.find(rolSeleccionado.getId());
+                RolUsuario rolUsuarioActual = rolUsuarioSeleccionado != null && rolUsuarioSeleccionado.getId() != null
+                        ? rolUsuarioService.find(rolUsuarioSeleccionado.getId()) : null;
+                UsuarioDTO actualizado = usuarioService.actualizarUsuarioDesdeDTO(
+                        usuarioSeleccionado, rolUsuarioActual, rolPersistido);
                 this.usuarioSeleccionado = actualizado;
-                procesoBean.registraActividad("ACTUALIZA CORREO: " + actualizado.getUsername(),
+                procesoBean.registraActividad("ACTUALIZA USUARIO: " + actualizado.getUsername(),
                         correoAnterior, actualizado.getCorreo());
-                init();
+                cargarCatalogos();
                 JsfUtil.addInfoMessage(actualizado.getUsername() + ", ACTUALIZADO");
             }
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
+        } catch (Exception e) {
+            JsfUtil.addErrorMessage("No fue posible guardar el usuario.");
+            FacesContext.getCurrentInstance().validationFailed();
         }
     }
 
     public void crearNuevoUsuario() {
         esUsuarioNuevo = true;
         this.usuarioSeleccionado = new UsuarioDTO();
+        this.rolSeleccionado = new Rol();
+        this.rolUsuarioSeleccionado = null;
+        this.personaRegistroCivil = null;
     }
 
     public void blurEvent() {
@@ -238,9 +371,9 @@ public class UsuarioControlador implements Serializable {
             // flujo Registro Civil). Si Persona expone correo y existe se
             // prefiere el real.
             if (usuarioSeleccionado.getCorreo() == null || usuarioSeleccionado.getCorreo().isEmpty()) {
-                usuarioSeleccionado.setCorreo(personaExistente.getDocumento() + "@consejodecomunicacion.gob.ec");
+                usuarioSeleccionado.setCorreo(personaExistente.getDocumento() + "@gmail.com");
             }
-            usuarioSeleccionado.setPermanente(true);
+            usuarioSeleccionado.setPermanente(false);
             // Iglesia asociada vía tb_iglesia_persona (vínculo activo más reciente)
             Iglesia iglesia = iglesiaPersonaService.obtenerIglesiaDePersona(personaExistente.getId());
             if (iglesia != null) {
@@ -258,8 +391,8 @@ public class UsuarioControlador implements Serializable {
             usuarioSeleccionado.setPersonaNombres(personaRegistroCivil.getNombre());
             usuarioSeleccionado.setPersonaDocumento(personaRegistroCivil.getCedula());
             usuarioSeleccionado.setUsername(personaRegistroCivil.getCedula());
-            usuarioSeleccionado.setPermanente(true);
-            usuarioSeleccionado.setCorreo(personaRegistroCivil.getCedula() + "@consejodecomunicacion.gob.ec");
+            usuarioSeleccionado.setPermanente(false);
+            usuarioSeleccionado.setCorreo(personaRegistroCivil.getCedula() + "@gmail.com");
             JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil");
         }
     }
@@ -280,11 +413,12 @@ public class UsuarioControlador implements Serializable {
             return;
         }
         this.rolUsuarioSeleccionado = rolUs;
-        this.usuarioSeleccionado = rolUs.getUsuario();
+        this.usuarioSeleccionado = usuarioService.obtenerDTOPorId(rolUs.getUsuario().getId());
         if (rolUs.getRol() != null && rolUs.getRol().getId() != null) {
             this.rolSeleccionado = rolService.find(rolUs.getRol().getId());
         }
-        obtenerDatosUsuarioSeleccionado();
+        this.listaRoles = rolService.getRolesAplicativoSeleccion();
+        this.esUsuarioNuevo = false;
     }
 
     public void obtenerDatosUsuarioSeleccionado() {
@@ -305,7 +439,7 @@ public class UsuarioControlador implements Serializable {
         Client clienteRC = ClientBuilder.newClient();
         WebTarget targetRC = clienteRC.target("http://192.168.26.32:8090/WS_REST/datos_regitrocivil/");
         Response respuestaRegistroCivil = targetRC.path(identificacion).request().get();
-        personaRegistroCivil = new RegistroCivilDTO();
+        personaRegistroCivil = null;
         boolean operationStus = false;
         try {
             if (respuestaRegistroCivil.getStatus() == 200) {

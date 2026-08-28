@@ -2,6 +2,8 @@ package ec.com.antenasur.itext;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.ServletContext;
@@ -27,6 +29,23 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
 
     private static final BaseColor COLOR_INSTITUCIONAL = new BaseColor(24, 82, 133);
     private static final BaseColor COLOR_TEXTO_SECUNDARIO = new BaseColor(90, 100, 110);
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    private final String codigoDocumento;
+    private final String tituloDocumento;
+    private final LocalDateTime fechaGeneracion;
+
+    public HeaderFooterPageEvent() {
+        this("", "Documento electoral", LocalDateTime.now());
+    }
+
+    public HeaderFooterPageEvent(String codigoDocumento, String tituloDocumento,
+            LocalDateTime fechaGeneracion) {
+        this.codigoDocumento = codigoDocumento != null ? codigoDocumento : "";
+        this.tituloDocumento = tituloDocumento != null && !tituloDocumento.isBlank()
+                ? tituloDocumento : "Documento electoral";
+        this.fechaGeneracion = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+    }
 
     public void onStartPage(PdfWriter writer, Document document) {
         try {
@@ -63,8 +82,9 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             Phrase datos = new Phrase();
             datos.add(new Chunk(Constantes.INSTITUCION + "\n", titulo));
             datos.add(new Chunk(Constantes.SISTEMA + "\n", texto));
-            datos.add(new Chunk("Documento electoral generado electronicamente\n", texto));
-            datos.add(new Chunk("Codigo: " + ReportePFD.getCodigoDocumentoActual(), texto));
+            datos.add(new Chunk(tituloDocumento + "\n", texto));
+            datos.add(new Chunk("Codigo: " + codigoDocumento + " | "
+                    + fechaGeneracion.format(FORMATO_FECHA), texto));
             PdfPCell celdaTexto = new PdfPCell(datos);
             celdaTexto.setBorder(Rectangle.NO_BORDER);
             celdaTexto.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -107,7 +127,7 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
 
             Font footerFont = FontFactory.getFont("arial", 7, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
             String textoFooter = "Pagina " + writer.getPageNumber()
-                    + " | Codigo de validacion: " + ReportePFD.getCodigoDocumentoActual()
+                    + " | Codigo de validacion: " + codigoDocumento
                     + " | Documento generado electronicamente por el Sistema TEC";
             ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER,
                     new Phrase(textoFooter, footerFont),

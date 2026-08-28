@@ -50,6 +50,22 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
         }
         return null;
     }
+
+    public List<Escrutinio> listarPorMesaProceso(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String hql = HQL
+                + " JOIN FETCH e.mesa m"
+                + " JOIN FETCH e.proceso pro"
+                + " JOIN FETCH e.categoria cat"
+                + " WHERE m.id = :mesaId AND pro.id = :procesoId"
+                + " AND e.estado = TRUE ORDER BY cat.orden, e.id";
+        TypedQuery<Escrutinio> query = getEntityManager().createQuery(hql, Escrutinio.class);
+        query.setParameter("mesaId", mesaId);
+        query.setParameter("procesoId", procesoId);
+        return query.getResultList();
+    }
     
     public List<Escrutinio> buscaCanton(Mesa mesa) {
         try {

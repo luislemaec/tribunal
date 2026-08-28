@@ -33,25 +33,47 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
     }
 
     public List<Documentos> getDocumentosPorMesa(Mesa mesa) {
-        try {
-            String sql = HQL + " WHERE d.mesa=:mesa" + ORDENADO;
-            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
-            query.setParameter("mesa", mesa);
-            List<Documentos> result = query.getResultList();
-            if (result != null && !result.isEmpty()) {
-                return result;
-            }
-        } catch (NoResultException e) {
-            e.printStackTrace();
-            return null;
+        if (mesa == null || mesa.getId() == null) {
+            return java.util.Collections.emptyList();
         }
-        return null;
+        try {
+            String sql = HQL
+                    + " JOIN FETCH d.tipoDocumento tp"
+                    + " LEFT JOIN FETCH d.proceso pro"
+                    + " LEFT JOIN FETCH d.recinto rec"
+                    + " LEFT JOIN FETCH d.mesa m"
+                    + " WHERE m.id=:mesaId AND d.estado=TRUE ORDER BY d.id DESC";
+            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
+            query.setParameter("mesaId", mesa.getId());
+            return query.getResultList();
+        } catch (Exception e) {
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public List<Documentos> listarPorMesaProceso(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        TypedQuery<Documentos> query = getEntityManager().createQuery(
+                HQL
+                + " JOIN FETCH d.tipoDocumento tp"
+                + " LEFT JOIN FETCH d.documentoOrigen origen"
+                + " LEFT JOIN FETCH d.proceso pro"
+                + " LEFT JOIN FETCH d.recinto rec"
+                + " LEFT JOIN FETCH d.mesa m"
+                + " WHERE m.id = :mesaId AND pro.id = :procesoId"
+                + " AND d.estado = TRUE ORDER BY d.id DESC", Documentos.class);
+        query.setParameter("mesaId", mesaId);
+        query.setParameter("procesoId", procesoId);
+        return query.getResultList();
     }
 
     public List<Documentos> getDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
         try {
             String sql = HQL
                     + " LEFT JOIN FETCH d.tipoDocumento  tp"
+                    + " LEFT JOIN FETCH d.documentoOrigen origen"
                     + " WHERE d.entidadId=:entidadId"
                     + " AND tp.id=:tipoDocId"
                     + " AND d.estado = TRUE"
@@ -150,5 +172,41 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
             return null;
         }
         return null;
+    }
+
+    public Documentos buscarActivoPorEntidadTipoYContexto(
+            Integer entidadId, Integer tipoDocumentoId, String contextoHash) {
+        if (entidadId == null || tipoDocumentoId == null || contextoHash == null || contextoHash.isBlank()) {
+            return null;
+        }
+        TypedQuery<Documentos> query = getEntityManager().createQuery(
+                HQL + " LEFT JOIN FETCH d.tipoDocumento"
+                + " WHERE d.entidadId = :entidadId"
+                + " AND d.tipoDocumento.id = :tipoDocumentoId"
+                + " AND d.contextoHash = :contextoHash"
+                + " AND d.estado = TRUE ORDER BY d.id DESC", Documentos.class);
+        query.setParameter("entidadId", entidadId);
+        query.setParameter("tipoDocumentoId", tipoDocumentoId);
+        query.setParameter("contextoHash", contextoHash);
+        query.setMaxResults(1);
+        List<Documentos> resultado = query.getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
+    }
+
+    public Documentos buscarFirmadoActivoPorOrigen(Integer documentoOrigenId, Integer tipoDocumentoId) {
+        if (documentoOrigenId == null || tipoDocumentoId == null) {
+            return null;
+        }
+        TypedQuery<Documentos> query = getEntityManager().createQuery(
+                HQL + " LEFT JOIN FETCH d.tipoDocumento"
+                + " LEFT JOIN FETCH d.documentoOrigen"
+                + " WHERE d.documentoOrigen.id = :documentoOrigenId"
+                + " AND d.tipoDocumento.id = :tipoDocumentoId"
+                + " AND d.estado = TRUE ORDER BY d.id DESC", Documentos.class);
+        query.setParameter("documentoOrigenId", documentoOrigenId);
+        query.setParameter("tipoDocumentoId", tipoDocumentoId);
+        query.setMaxResults(1);
+        List<Documentos> resultado = query.getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
     }
 }

@@ -109,9 +109,16 @@ public class MesaController implements Serializable {
             this.cantonSeleccionado = parroquiaSeleccionado = new Geograp();
             this.recintoSeleccionado = new RecintoDTO();
             this.listaMesasSeleccionados = new ArrayList<>();
-            this.cantones = geograpBean.getByFatherId(7);
-            this.listaMesas = mesaService.listarDTOs();
-            this.listaRecintos = recintoService.listarDTOs();
+            if (esVistaRecintos()) {
+                this.cantones = new ArrayList<>();
+                this.parroquias = new ArrayList<>();
+                this.listaMesas = new ArrayList<>();
+                this.listaRecintos = new ArrayList<>();
+            } else {
+                this.cantones = geograpBean.getByFatherId(7);
+                this.listaMesas = mesaService.listarDTOs();
+                this.listaRecintos = recintoService.listarDTOs();
+            }
             actualizarTotalesPorRecinto();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
@@ -242,6 +249,7 @@ public class MesaController implements Serializable {
     public void guardarMesaSeleccionado() {
         try {
             if (mesaSeleccionado == null) {
+                FacesContext.getCurrentInstance().validationFailed();
                 return;
             }
             boolean esEdicion = mesaSeleccionado.getId() != null;
@@ -264,7 +272,6 @@ public class MesaController implements Serializable {
             FacesContext.getCurrentInstance().validationFailed();
             PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
         }
-        PrimeFaces.current().executeScript("PF('dlgMesa').hide()");
         PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
@@ -376,15 +383,12 @@ public class MesaController implements Serializable {
     }
 
     private void actualizarTotalesPorRecinto() {
-        totalMesasPorRecinto = new HashMap<>();
-        List<MesaDTO> mesas = mesaService.listarDTOs();
-        if (mesas == null) {
-            return;
-        }
-        for (MesaDTO mesa : mesas) {
-            if (mesa.getRecinto() != null && mesa.getRecinto().getId() != null) {
-                totalMesasPorRecinto.merge(mesa.getRecinto().getId(), 1L, Long::sum);
-            }
-        }
+        totalMesasPorRecinto = mesaService.contarActivasPorRecinto();
+    }
+
+    private boolean esVistaRecintos() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        return context != null && context.getViewRoot() != null
+                && context.getViewRoot().getViewId().endsWith("/recintos.xhtml");
     }
 }

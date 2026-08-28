@@ -285,6 +285,33 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
         return resultado;
     }
 
+    public List<IglesiaAsignacionDTO> listarParaAsignacionFiltrada(
+            Integer provinciaId, Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
+        List<Iglesia> iglesias = iglesiaFacade.listarParaAsignacionFiltrada(
+                provinciaId, cantonId, parroquiaId, conAdmin);
+        List<Integer> iglesiaIds = iglesias.stream()
+                .map(Iglesia::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Map<Integer, Usuario> adminPorIglesia = Boolean.FALSE.equals(conAdmin)
+                ? Collections.emptyMap()
+                : construirMapaAdmins(iglesiaIds);
+        List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
+        for (Iglesia iglesia : iglesias) {
+            resultado.add(IglesiaAsignacionDTO.fromEntity(
+                    iglesia, adminPorIglesia.get(iglesia.getId())));
+        }
+        return resultado;
+    }
+
+    public long[] resumirAsignacionFiltrada(Integer provinciaId, Integer cantonId, Integer parroquiaId) {
+        long total = iglesiaFacade.contarParaAsignacionFiltrada(
+                provinciaId, cantonId, parroquiaId, null);
+        long conAdmin = iglesiaFacade.contarParaAsignacionFiltrada(
+                provinciaId, cantonId, parroquiaId, Boolean.TRUE);
+        return new long[] {total, conAdmin};
+    }
+
     /** Variante filtrada por parroquias para el filtro geográfico. */
     public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquias(List<Geograp> parroquias) {
         if (parroquias == null || parroquias.isEmpty()) {
@@ -345,6 +372,20 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
                 if (u.getIglesia() != null && u.getIglesia().getId() != null) {
                     mapa.put(u.getIglesia().getId(), u);
                 }
+            }
+        }
+        return mapa;
+    }
+
+    private Map<Integer, Usuario> construirMapaAdmins(List<Integer> iglesiaIds) {
+        Map<Integer, Usuario> mapa = new HashMap<>();
+        if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+            return mapa;
+        }
+        List<Usuario> admins = usuarioFacade.findIglesiaAdminsPorIglesias(iglesiaIds);
+        for (Usuario usuario : admins) {
+            if (usuario.getIglesia() != null && usuario.getIglesia().getId() != null) {
+                mapa.put(usuario.getIglesia().getId(), usuario);
             }
         }
         return mapa;

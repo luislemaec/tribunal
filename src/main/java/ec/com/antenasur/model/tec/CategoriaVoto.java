@@ -5,7 +5,6 @@
 package ec.com.antenasur.model.tec;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
-import ec.com.antenasur.model.generic.EntidadBase;
 import java.io.Serializable;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -14,12 +13,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
 
 @Entity
@@ -33,7 +35,6 @@ import org.hibernate.envers.Audited;
     @AttributeOverride(name = "usuarioCrea", column = @Column(name = "u_crea")),
     @AttributeOverride(name = "usuarioActualiza", column = @Column(name = "u_actualiza"))})
 
-@Filter(name = EntidadBase.FILTER_ACTIVE, condition = "estado = 'TRUE'")
 @Audited
 public class CategoriaVoto extends EntidadAuditable implements Serializable {
 
@@ -58,6 +59,24 @@ public class CategoriaVoto extends EntidadAuditable implements Serializable {
     @Getter
     @Column(name = "cat_orden")
     private Integer orden;
+
+    /** Clasifica las categorías dinámicas de lista y las categorías especiales. */
+    @Setter
+    @Getter
+    @Column(name = "cat_tipo", length = 20)
+    private String tipo;
+
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lista_id", foreignKey = @ForeignKey(name = "fk_categoria_voto_lista"))
+    private Lista lista;
+
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proce_id", foreignKey = @ForeignKey(name = "fk_categoria_voto_proceso"))
+    private ProcesoElectoral proceso;
         
 
 }

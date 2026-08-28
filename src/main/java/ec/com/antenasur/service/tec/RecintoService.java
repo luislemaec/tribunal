@@ -52,6 +52,10 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
         return mapearLista(recintoFacade.getRecintosPorParroquias(parroquias));
     }
 
+    public List<RecintoDTO> listarDTOsPorProceso(Integer procesoId) {
+        return mapearLista(recintoFacade.listarPorProceso(procesoId));
+    }
+
     public RecintoDTO buscarDTOPorNombre(String nombre) {
         if (nombre == null || nombre.isEmpty()) {
             return null;

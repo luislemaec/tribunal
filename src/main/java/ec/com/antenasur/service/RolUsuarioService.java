@@ -7,6 +7,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.RolUsuarioDTO;
+import ec.com.antenasur.dto.FiltroUsuarioDTO;
 import ec.com.antenasur.facade.RolUsuarioFacade;
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.RolUsuario;
@@ -67,6 +68,14 @@ public class RolUsuarioService extends AbstractService<RolUsuario, Integer, RolU
 
     public List<RolUsuarioDTO> listarDTOsActivosPorRoles(List<Rol> listaRoles) {
         return mapearLista(rolUsuarioFacade.getRolesUsuariosActivos(listaRoles));
+    }
+
+    public List<RolUsuarioDTO> buscarUsuarios(FiltroUsuarioDTO filtro, int primerRegistro, int tamanoPagina) {
+        return mapearLista(rolUsuarioFacade.buscarUsuarios(filtro, primerRegistro, tamanoPagina));
+    }
+
+    public int contarUsuarios(FiltroUsuarioDTO filtro) {
+        return rolUsuarioFacade.contarUsuarios(filtro);
     }
 
     private List<RolUsuarioDTO> mapearLista(List<RolUsuario> entidades) {

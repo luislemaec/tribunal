@@ -21,6 +21,7 @@ import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.exception.NegocioException;
+import ec.com.antenasur.util.Constantes;
 
 @Stateless
 public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFacade> {
@@ -148,59 +149,75 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return UsuarioDTO persistido, o null si hubo error
      */
     public UsuarioDTO crearUsuarioDesdeDTO(UsuarioDTO dto, Rol rol) {
-        if (dto == null || rol == null) {
-            return null;
-        }
-        // Reusa la persona si ya existe en BD (el blurEvent del controller
-        // pre-carga personaId cuando la cédula coincide con un registro
-        // existente en tb_persona). Si no, crea una persona nueva.
-        Persona persona = null;
-        boolean personaEsNueva = false;
-        if (dto.getPersonaId() != null) {
-            persona = personaFacade.find(dto.getPersonaId());
-        }
-        if (persona == null) {
-            persona = new Persona();
-            persona.setDocumento(dto.getPersonaDocumento());
-            persona.setNombres(dto.getPersonaNombres());
-            persona.setApellidos(dto.getPersonaApellidos());
-            personaEsNueva = true;
+        validarDatosCreacion(dto, rol);
+        dto.setUsername(dto.getUsername().trim());
+        dto.setPersonaDocumento(dto.getPersonaDocumento().trim());
+
+        Persona persona = resolverPersona(dto);
+        boolean personaEsNueva = persona.getId() == null;
+        Iglesia iglesia = resolverIglesiaParaRol(dto.getIglesiaId(), rol, null);
+
+        // usu_nombre tiene una restricción única que incluye los registros
+        // inactivos. Por eso una cuenta dada de baja se restaura en vez de
+        // insertar una segunda fila con la misma identidad de acceso.
+        Usuario existente = usuarioFacade.findByUsuarioNameIncluyendoInactivos(dto.getUsername());
+        if (existente != null) {
+            if (Boolean.TRUE.equals(existente.getEstado())) {
+                throw new NegocioException("Ya existe un usuario activo con el nombre " + dto.getUsername() + ".");
+            }
+            validarPersonaDeCuentaExistente(existente, dto.getPersonaDocumento());
+            if (existente.getPersonsa() == null) {
+                existente.setPersonsa(persistirPersonaSiNecesario(persona));
+            }
+            existente.setCorreo(dto.getCorreo());
+            existente.setIglesia(iglesia);
+            existente.setEstado(true);
+            usuarioFacade.edit(existente);
+            activarSoloRolSeleccionado(existente, rol);
+
+            UsuarioDTO reactivado = UsuarioDTO.fromEntity(existente);
+            reactivado.setReactivado(true);
+            return reactivado;
         }
 
+        if (persona.getId() != null) {
+            Usuario cuentaDeLaPersona = usuarioFacade.findByPersonaIdIncluyendoInactivos(persona.getId());
+            if (cuentaDeLaPersona != null) {
+                String estado = Boolean.TRUE.equals(cuentaDeLaPersona.getEstado()) ? "activo" : "eliminado";
+                throw new NegocioException("La persona ya tiene un usuario " + estado + " ("
+                        + cuentaDeLaPersona.getUsername() + ").");
+            }
+        }
+
+        Persona personaPersistida = persistirPersonaSiNecesario(persona);
         Usuario nuevo = dto.toEntity();
-        // Resuelve iglesia desde el id del DTO (solo aplica si se eligió rol IglesiaAdmin).
-        Iglesia iglesia = null;
-        if (dto.getIglesiaId() != null) {
-            iglesia = iglesiaFacade.find(dto.getIglesiaId());
-            nuevo.setIglesia(iglesia);
-        }
-        RolUsuario creado = crearUsuarioConRol(nuevo, persona, rol);
-        if (creado == null) {
-            return null;
-        }
+        nuevo.setPersonsa(personaPersistida);
+        nuevo.setIglesia(iglesia);
+        nuevo.setEstado(true);
+        nuevo.setPermanente(false);
+        nuevo.setContrasenia(passwordService.hashBcrypt(personaPersistida.getDocumento()));
+        Usuario usuarioPersistido = usuarioFacade.create(nuevo);
 
-        // Si la persona se creó en este flujo y se asignó una iglesia,
-        // registramos el vínculo en tb_iglesia_persona para que el usuario
-        // figure como miembro/admin de esa iglesia desde el inicio.
-        // Para personas EXISTENTES se confía en que el caller (controller)
-        // gestione el vínculo via IglesiaPersonaService.crearVinculoSiNoExiste,
-        // que es idempotente y aplica las reglas de negocio (bloqueo si la
-        // persona ya pertenece a otra iglesia, etc.).
+        RolUsuario relacion = new RolUsuario();
+        relacion.setUsuario(usuarioPersistido);
+        relacion.setRol(rol);
+        rolUsuarioFacade.create(relacion);
+
         if (personaEsNueva && iglesia != null) {
             IglesiaPersona vinculo = new IglesiaPersona();
-            vinculo.setPersona(creado.getUsuario().getPersonsa());
+            vinculo.setPersona(personaPersistida);
             vinculo.setIglesia(iglesia);
             vinculo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
             iglesiaPersonaFacade.create(vinculo);
         }
-        return UsuarioDTO.fromEntity(creado.getUsuario());
+        return UsuarioDTO.fromEntity(usuarioPersistido);
     }
 
     public Usuario asegurarUsuarioConRol(Persona persona, Rol rol) {
         if (persona == null || persona.getDocumento() == null || persona.getDocumento().isBlank() || rol == null) {
             throw new NegocioException("No se pudo crear el usuario porque faltan datos de la persona o del rol.");
         }
-        Usuario usuario = usuarioFacade.findByUsuarioName(persona.getDocumento());
+        Usuario usuario = usuarioFacade.findByUsuarioNameIncluyendoInactivos(persona.getDocumento());
         if (usuario == null) {
             usuario = new Usuario();
             usuario.setUsername(persona.getDocumento());
@@ -210,19 +227,18 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             usuario.setContraseniaTemp(persona.getDocumento());
             usuario.setContrasenia(passwordService.hashBcrypt(persona.getDocumento()));
             usuario = usuarioFacade.create(usuario);
-        } else if (usuario.getPersonsa() == null) {
-            usuario.setPersonsa(persona);
+        } else {
+            boolean reactivado = !Boolean.TRUE.equals(usuario.getEstado());
+            usuario.setEstado(true);
+            if (usuario.getPersonsa() == null) {
+                usuario.setPersonsa(persona);
+            }
             usuario = usuarioFacade.edit(usuario);
+            if (reactivado) {
+                desactivarRoles(usuario);
+            }
         }
-
-        List<RolUsuario> rolesActuales = rolUsuarioFacade.findByUserNameAndRoleName(
-                usuario.getUsername(), rol.getNombre());
-        if (rolesActuales == null || rolesActuales.isEmpty()) {
-            RolUsuario rolUsuario = new RolUsuario();
-            rolUsuario.setUsuario(usuario);
-            rolUsuario.setRol(rol);
-            rolUsuarioFacade.create(rolUsuario);
-        }
+        asegurarRolActivo(usuario, rol);
         return usuario;
     }
 
@@ -236,22 +252,47 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      *         el id es inválido
      */
     public UsuarioDTO actualizarUsuarioDesdeDTO(UsuarioDTO dto, RolUsuario rolUsuarioActual, Rol nuevoRol) {
-        if (dto == null || dto.getId() == null) {
-            return null;
+        if (dto == null || dto.getId() == null || rolUsuarioActual == null || nuevoRol == null) {
+            throw new NegocioException("No se pudo determinar el usuario y rol a actualizar.");
         }
         Usuario actual = usuarioFacade.find(dto.getId());
         if (actual == null) {
-            return null;
+            throw new NegocioException("El usuario ya no está activo o no existe.");
         }
+        RolUsuario relacionActual = rolUsuarioFacade.find(rolUsuarioActual.getId());
+        if (relacionActual == null || relacionActual.getUsuario() == null
+                || !actual.getId().equals(relacionActual.getUsuario().getId())) {
+            throw new NegocioException("La relación de rol del usuario no es válida.");
+        }
+
+        Iglesia iglesia = resolverIglesiaParaRol(dto.getIglesiaId(), nuevoRol, actual.getId());
+        boolean rolCambio = !relacionActual.getRol().getId().equals(nuevoRol.getId());
+        RolUsuario relacionDestino = rolCambio
+                ? buscarRelacionPorRol(actual.getId(), nuevoRol.getId()) : null;
+        if (relacionDestino != null && !relacionDestino.getId().equals(relacionActual.getId())
+                && Boolean.TRUE.equals(relacionDestino.getEstado())) {
+            throw new NegocioException("El usuario ya tiene asignado el rol seleccionado.");
+        }
+        boolean correoCambio = !java.util.Objects.equals(actual.getCorreo(), dto.getCorreo());
+        boolean iglesiaCambio = !java.util.Objects.equals(
+                actual.getIglesia() != null ? actual.getIglesia().getId() : null,
+                iglesia != null ? iglesia.getId() : null);
         actual.setCorreo(dto.getCorreo());
-        // Sincroniza iglesia: si el id viene null limpia el vínculo (cuando el
-        // usuario deja de ser IglesiaAdmin); si trae id, resuelve y asigna.
-        if (dto.getIglesiaId() != null) {
-            actual.setIglesia(iglesiaFacade.find(dto.getIglesiaId()));
-        } else {
-            actual.setIglesia(null);
+        actual.setIglesia(iglesia);
+        if (correoCambio || iglesiaCambio) {
+            usuarioFacade.edit(actual);
         }
-        actualizarUsuarioConRol(actual, rolUsuarioActual, nuevoRol);
+
+        if (rolCambio) {
+            if (relacionDestino != null && !relacionDestino.getId().equals(relacionActual.getId())) {
+                rolUsuarioFacade.delete(relacionActual);
+                relacionDestino.setEstado(true);
+                rolUsuarioFacade.edit(relacionDestino);
+            } else {
+                relacionActual.setRol(nuevoRol);
+                rolUsuarioFacade.edit(relacionActual);
+            }
+        }
         return UsuarioDTO.fromEntity(actual);
     }
 
@@ -323,7 +364,52 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         if (u == null) {
             return null;
         }
+        // La eliminación es lógica. Se libera la iglesia en esta misma
+        // transacción y se inactivan los roles para no conservar permisos ni
+        // bloquear una futura asignación de otro IglesiaAdmin.
+        u.setIglesia(null);
+        desactivarRoles(u);
         return UsuarioDTO.fromEntity(usuarioFacade.delete(u));
+    }
+
+    /**
+     * Reactiva una cuenta eliminada lógicamente y el rol elegido por el
+     * administrador. No se inserta ningún registro ni se restauran roles
+     * distintos al seleccionado.
+     */
+    public UsuarioDTO reactivarPorId(Integer usuarioId, Integer rolUsuarioId, Integer iglesiaId) {
+        if (usuarioId == null || rolUsuarioId == null) {
+            throw new NegocioException("No se pudo determinar el usuario y rol a reactivar.");
+        }
+        Usuario usuario = usuarioFacade.findByIdIncluyendoInactivos(usuarioId);
+        if (usuario == null || Boolean.TRUE.equals(usuario.getEstado())) {
+            throw new NegocioException("El usuario no está dado de baja o ya fue reactivado.");
+        }
+
+        RolUsuario relacionSeleccionada = null;
+        for (RolUsuario relacion : rolUsuarioFacade.findByUsuarioIdIncluyendoInactivos(usuarioId)) {
+            if (rolUsuarioId.equals(relacion.getId())) {
+                relacionSeleccionada = relacion;
+                break;
+            }
+        }
+        if (relacionSeleccionada == null || relacionSeleccionada.getRol() == null
+                || !Boolean.TRUE.equals(relacionSeleccionada.getRol().getEstado())) {
+            throw new NegocioException("El rol seleccionado ya no está disponible para reactivar el usuario.");
+        }
+
+        // Un IglesiaAdmin dado de baja no conserva iglesia. Al reactivarlo debe
+        // tomar una iglesia disponible, validada antes de habilitar cuenta/rol.
+        Iglesia iglesia = resolverIglesiaParaRol(iglesiaId, relacionSeleccionada.getRol(), usuarioId);
+        usuario.setIglesia(iglesia);
+        usuario.setEstado(true);
+        usuarioFacade.edit(usuario);
+        relacionSeleccionada.setEstado(true);
+        rolUsuarioFacade.edit(relacionSeleccionada);
+
+        UsuarioDTO reactivado = UsuarioDTO.fromEntity(usuario);
+        reactivado.setReactivado(true);
+        return reactivado;
     }
 
     /**
@@ -360,17 +446,116 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         }
         Usuario actual = usuarioFacade.find(usuarioActualizado.getId());
         boolean correoCambio = actual != null
-                && !actual.getCorreo().equals(usuarioActualizado.getCorreo());
+                && !java.util.Objects.equals(actual.getCorreo(), usuarioActualizado.getCorreo());
         boolean rolCambio = rolUsuarioActual.getRol() == null
                 || !rolUsuarioActual.getRol().getId().equals(nuevoRol.getId());
-        if (!correoCambio && !rolCambio) {
+        boolean iglesiaCambio = actual != null && !java.util.Objects.equals(
+                actual.getIglesia() != null ? actual.getIglesia().getId() : null,
+                usuarioActualizado.getIglesia() != null ? usuarioActualizado.getIglesia().getId() : null);
+        if (!correoCambio && !rolCambio && !iglesiaCambio) {
             return false;
         }
-        usuarioFacade.edit(usuarioActualizado);
-        rolUsuarioActual.getUsuario().setId(usuarioActualizado.getId());
-        rolUsuarioActual.setRol(nuevoRol);
-        rolUsuarioFacade.edit(rolUsuarioActual);
+        UsuarioDTO dto = UsuarioDTO.fromEntity(usuarioActualizado);
+        actualizarUsuarioDesdeDTO(dto, rolUsuarioActual, nuevoRol);
         return true;
+    }
+
+    private void validarDatosCreacion(UsuarioDTO dto, Rol rol) {
+        if (dto == null || rol == null || rol.getId() == null) {
+            throw new NegocioException("Debe seleccionar un rol para el usuario.");
+        }
+        if (dto.getUsername() == null || dto.getUsername().isBlank()
+                || dto.getPersonaDocumento() == null || dto.getPersonaDocumento().isBlank()
+                || dto.getPersonaNombres() == null || dto.getPersonaNombres().isBlank()) {
+            throw new NegocioException("Cédula, nombres y usuario son obligatorios.");
+        }
+    }
+
+    private Persona resolverPersona(UsuarioDTO dto) {
+        Persona persona = dto.getPersonaId() != null ? personaFacade.find(dto.getPersonaId()) : null;
+        if (persona != null && !dto.getPersonaDocumento().equals(persona.getDocumento())) {
+            throw new NegocioException("La cédula no coincide con la persona seleccionada.");
+        }
+        if (persona == null) {
+            persona = personaFacade.finByPersonaDocument(dto.getPersonaDocumento());
+        }
+        if (persona == null) {
+            persona = new Persona();
+            persona.setDocumento(dto.getPersonaDocumento());
+            persona.setNombres(dto.getPersonaNombres());
+            persona.setApellidos(dto.getPersonaApellidos());
+            persona.setEstado(true);
+        }
+        return persona;
+    }
+
+    private Persona persistirPersonaSiNecesario(Persona persona) {
+        return persona.getId() == null ? personaFacade.create(persona) : persona;
+    }
+
+    private Iglesia resolverIglesiaParaRol(Integer iglesiaId, Rol rol, Integer usuarioId) {
+        boolean requiereIglesia = rol != null && rol.getNombre() != null
+                && rol.getNombre().endsWith(Constantes.getRolIglesiaAdmin());
+        if (!requiereIglesia) {
+            return null;
+        }
+        if (iglesiaId == null) {
+            throw new NegocioException("Debe seleccionar una iglesia para el rol IglesiaAdmin.");
+        }
+        // El bloqueo de la iglesia serializa la comprobación y la asignación
+        // frente a otras altas, cambios de rol o reactivaciones concurrentes.
+        Iglesia iglesia = iglesiaFacade.findForAdminAssignment(iglesiaId);
+        if (iglesia == null) {
+            throw new NegocioException("La iglesia seleccionada no está disponible.");
+        }
+        Usuario adminActual = usuarioFacade.findAdminByIglesiaId(iglesiaId);
+        if (adminActual != null && (usuarioId == null || !adminActual.getId().equals(usuarioId))) {
+            throw new NegocioException("La iglesia seleccionada ya tiene un usuario administrador activo.");
+        }
+        return iglesia;
+    }
+
+    private void validarPersonaDeCuentaExistente(Usuario existente, String documento) {
+        if (existente.getPersonsa() != null && existente.getPersonsa().getDocumento() != null
+                && !existente.getPersonsa().getDocumento().equals(documento)) {
+            throw new NegocioException("El usuario eliminado pertenece a otra persona y no puede reutilizarse.");
+        }
+    }
+
+    private void desactivarRoles(Usuario usuario) {
+        for (RolUsuario relacion : rolUsuarioFacade.findByUsuarioIdIncluyendoInactivos(usuario.getId())) {
+            if (Boolean.TRUE.equals(relacion.getEstado())) {
+                rolUsuarioFacade.delete(relacion);
+            }
+        }
+    }
+
+    private void activarSoloRolSeleccionado(Usuario usuario, Rol rol) {
+        desactivarRoles(usuario);
+        asegurarRolActivo(usuario, rol);
+    }
+
+    private void asegurarRolActivo(Usuario usuario, Rol rol) {
+        RolUsuario relacion = buscarRelacionPorRol(usuario.getId(), rol.getId());
+        if (relacion == null) {
+            relacion = new RolUsuario();
+            relacion.setUsuario(usuario);
+            relacion.setRol(rol);
+            relacion.setEstado(true);
+            rolUsuarioFacade.create(relacion);
+        } else if (!Boolean.TRUE.equals(relacion.getEstado())) {
+            relacion.setEstado(true);
+            rolUsuarioFacade.edit(relacion);
+        }
+    }
+
+    private RolUsuario buscarRelacionPorRol(Integer usuarioId, Integer rolId) {
+        for (RolUsuario relacion : rolUsuarioFacade.findByUsuarioIdIncluyendoInactivos(usuarioId)) {
+            if (relacion.getRol() != null && rolId.equals(relacion.getRol().getId())) {
+                return relacion;
+            }
+        }
+        return null;
     }
 
     /**

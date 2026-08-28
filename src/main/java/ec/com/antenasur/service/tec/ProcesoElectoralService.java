@@ -17,6 +17,9 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
     @Inject
     private ProcesoElectoralFacade procesoElectoralFacade;
 
+    @Inject
+    private CategoriaVotoService categoriaVotoService;
+
     @Override
     protected ProcesoElectoralFacade getFacade() {
         return procesoElectoralFacade;
@@ -56,7 +59,11 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
             }
         }
         if (dto.getId() == null) {
-            return ProcesoElectoralDTO.fromEntity(procesoElectoralFacade.create(dto.toEntity()));
+            ProcesoElectoral persistido = procesoElectoralFacade.create(dto.toEntity());
+            if (Boolean.TRUE.equals(persistido.getActivo())) {
+                categoriaVotoService.sincronizarListasVigentes(persistido);
+            }
+            return ProcesoElectoralDTO.fromEntity(persistido);
         }
         ProcesoElectoral actual = procesoElectoralFacade.find(dto.getId());
         if (actual == null) return null;
@@ -65,7 +72,11 @@ public class ProcesoElectoralService extends AbstractService<ProcesoElectoral, I
         actual.setFechaInicio(dto.getFechaInicio());
         actual.setFechaFin(dto.getFechaFin());
         actual.setActivo(dto.getActivo());
-        return ProcesoElectoralDTO.fromEntity(procesoElectoralFacade.edit(actual));
+        ProcesoElectoral persistido = procesoElectoralFacade.edit(actual);
+        if (Boolean.TRUE.equals(persistido.getActivo())) {
+            categoriaVotoService.sincronizarListasVigentes(persistido);
+        }
+        return ProcesoElectoralDTO.fromEntity(persistido);
     }
 
     public ProcesoElectoralDTO eliminarPorId(Integer id) {

@@ -2,6 +2,8 @@ package ec.com.antenasur.facade.tec;
 
 import ec.com.antenasur.model.Geograp;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.NoResultException;
@@ -183,6 +185,78 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
             return null;
         }
         return null;
+    }
+
+    /** Obtiene los conteos por recinto sin materializar todas las mesas. */
+    public Map<Integer, Long> contarActivasPorRecinto() {
+        String hql = "SELECT r.id, COUNT(m.id) FROM Mesa m JOIN m.recinto r "
+                + "WHERE m.estado = TRUE GROUP BY r.id";
+        List<Object[]> filas = getEntityManager().createQuery(hql, Object[].class).getResultList();
+        Map<Integer, Long> resultado = new LinkedHashMap<>();
+        for (Object[] fila : filas) {
+            resultado.put((Integer) fila[0], (Long) fila[1]);
+        }
+        return resultado;
+    }
+
+    public List<Mesa> listarPorRecinto(Integer recintoId) {
+        if (recintoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String hql = HQL
+                + " JOIN FETCH m.recinto r"
+                + " LEFT JOIN FETCH r.ubicacion ru"
+                + " LEFT JOIN FETCH ru.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " LEFT JOIN FETCH m.ubicacion mu"
+                + " WHERE r.id = :recintoId AND m.estado = TRUE ORDER BY m.nombre, m.id";
+        TypedQuery<Mesa> query = getEntityManager().createQuery(hql, Mesa.class);
+        query.setParameter("recintoId", recintoId);
+        return query.getResultList();
+    }
+
+    /** Carga solo mesas que contienen información o documentos del proceso. */
+    public List<Mesa> listarPorRecintoYProceso(Integer recintoId, Integer procesoId) {
+        if (recintoId == null || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String hql = HQL
+                + " JOIN FETCH m.recinto r"
+                + " LEFT JOIN FETCH r.ubicacion ru"
+                + " LEFT JOIN FETCH ru.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " LEFT JOIN FETCH m.ubicacion mu"
+                + " WHERE r.id = :recintoId AND m.estado = TRUE AND ("
+                + " EXISTS (SELECT p.id FROM Padron p WHERE p.mesa.id = m.id"
+                + " AND p.proceso.id = :procesoId AND p.estado = TRUE)"
+                + " OR EXISTS (SELECT ec.id FROM EscrutinioCabecera ec WHERE ec.mesa.id = m.id"
+                + " AND ec.proceso.id = :procesoId AND ec.estado = TRUE)"
+                + " OR EXISTS (SELECT j.id FROM MiembroJRV j WHERE j.mesa.id = m.id"
+                + " AND j.proceso.id = :procesoId AND j.estado = TRUE)"
+                + " OR EXISTS (SELECT d.id FROM Documentos d WHERE d.mesa.id = m.id"
+                + " AND d.proceso.id = :procesoId AND d.estado = TRUE))"
+                + " ORDER BY m.nombre, m.id";
+        TypedQuery<Mesa> query = getEntityManager().createQuery(hql, Mesa.class);
+        query.setParameter("recintoId", recintoId);
+        query.setParameter("procesoId", procesoId);
+        return query.getResultList();
+    }
+
+    public Mesa buscarDetallePorId(Integer mesaId) {
+        if (mesaId == null) {
+            return null;
+        }
+        String hql = HQL
+                + " JOIN FETCH m.recinto r"
+                + " LEFT JOIN FETCH r.ubicacion ru"
+                + " LEFT JOIN FETCH ru.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " LEFT JOIN FETCH m.ubicacion mu"
+                + " WHERE m.id = :mesaId AND m.estado = TRUE";
+        TypedQuery<Mesa> query = getEntityManager().createQuery(hql, Mesa.class);
+        query.setParameter("mesaId", mesaId);
+        List<Mesa> resultado = query.getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
     }
 
 }

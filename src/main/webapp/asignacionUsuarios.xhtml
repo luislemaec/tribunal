@@ -183,7 +183,8 @@
                             <f:selectItem itemLabel="Todas"                  itemValue="TODAS"/>
                             <p:ajax event="change"
                                     listener="#{asignacionUsuariosController.cambiarFiltroEstado()}"
-                                    process="@this" update=":frmAsignacion:tblAsignacion"/>
+                                    process="@this" partialSubmit="true"
+                                    update=":frmAsignacion:tblAsignacion"/>
                         </p:selectOneMenu>
                     </div>
 
@@ -193,13 +194,14 @@
                         <p:selectOneMenu id="provinciaSel"
                                          value="#{asignacionUsuariosController.provinciaFiltroId}"
                                          filter="true" filterMatchMode="contains"
-                                         placeholder="-- Todas las provincias --"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.asignacionUsuarios.filters.provincias.todas']}"
+                                          itemValue="#{null}"/>
                             <f:selectItems value="#{asignacionUsuariosController.provincias}" var="prov"
                                            itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
                             <p:ajax event="change"
                                     listener="#{asignacionUsuariosController.obtieneCantonesFiltro()}"
-                                    process="@this"
+                                    process="@this" partialSubmit="true" resetValues="true"
                                     update=":frmFiltros:canton :frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
@@ -208,15 +210,16 @@
                     <div class="field col-12 md:col-2">
                         <label for="canton" class="text-700 font-medium text-sm">Cantón</label>
                         <p:selectOneMenu id="canton"
-                                         value="#{asignacionUsuariosController.cantonSeleccionado.id}"
+                                         value="#{asignacionUsuariosController.cantonFiltroId}"
                                          filter="true" filterMatchMode="contains"
-                                         placeholder="-- Todos los cantones --"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.asignacionUsuarios.filters.cantones.todos']}"
+                                          itemValue="#{null}"/>
                             <f:selectItems value="#{asignacionUsuariosController.cantonesFiltro}" var="canton"
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change"
                                     listener="#{asignacionUsuariosController.obtieneParroquias()}"
-                                    process="@this"
+                                    process="@this" partialSubmit="true" resetValues="true"
                                     update=":frmFiltros:parroquia :frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
@@ -225,15 +228,16 @@
                     <div class="field col-12 md:col-2">
                         <label for="parroquia" class="text-700 font-medium text-sm">Parroquia</label>
                         <p:selectOneMenu id="parroquia"
-                                         value="#{asignacionUsuariosController.parroquiaSeleccionado.id}"
+                                         value="#{asignacionUsuariosController.parroquiaFiltroId}"
                                          filter="true" filterMatchMode="contains"
-                                         placeholder="-- Todas las parroquias --"
                                          styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['form.asignacionUsuarios.filters.parroquias.todas']}"
+                                          itemValue="#{null}"/>
                             <f:selectItems value="#{asignacionUsuariosController.parroquias}" var="parroquia"
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change"
                                     listener="#{asignacionUsuariosController.obtieneIglesiasPorParroquia()}"
-                                    process="@this"
+                                    process="@this" partialSubmit="true"
                                     update=":frmAsignacion:tblAsignacion :frmStats"/>
                         </p:selectOneMenu>
                     </div>
@@ -243,7 +247,8 @@
                         <p:commandButton value="Limpiar" icon="pi pi-times-circle"
                                          styleClass="ui-button-outlined w-full"
                                          actionListener="#{asignacionUsuariosController.limpiarFiltros}"
-                                         process="@this" update=":frmFiltros :frmAsignacion :frmStats"/>
+                                         process="@this" partialSubmit="true" resetValues="true"
+                                         update=":frmFiltros :frmAsignacion:tblAsignacion :frmStats"/>
                     </div>
 
                 </div>
@@ -288,7 +293,7 @@
                 <p:dataTable id="tblAsignacion" widgetVar="wdTblAsignacion" var="ig"
                              value="#{asignacionUsuariosController.listaIglesias}"
                              filteredValue="#{asignacionUsuariosController.listaIglesiasFiltrada}"
-                             rowKey="#{ig.id}"
+                             rowKey="#{ig.id}" multiViewState="true"
                              paginator="true" rows="10" rowsPerPageTemplate="10,25,50,100"
                              paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
@@ -378,7 +383,7 @@
                                          styleClass="ui-button-rounded ui-button-success"
                                          title="#{asignacionUsuariosController.puedeAsignar ? 'Asignar administrador' : asignacionUsuariosController.tooltipAccionDeshabilitada}"
                                          actionListener="#{asignacionUsuariosController.prepararAsignacion(ig)}"
-                                         oncomplete="if (#{asignacionUsuariosController.puedeAsignar}) PF('dlgAsignacion').show()"
+                                         oncomplete="if (args.dialogReady) PF('dlgAsignacion').show()"
                                          update=":frmDlgAsignacion"
                                          process="@this">
                             <p:resetInput target=":frmDlgAsignacion"/>
@@ -391,7 +396,7 @@
                                          styleClass="ui-button-rounded ui-button-warning ml-1"
                                          title="#{asignacionUsuariosController.puedeAsignar ? 'Reasignar administrador' : asignacionUsuariosController.tooltipAccionDeshabilitada}"
                                          actionListener="#{asignacionUsuariosController.prepararReasignacion(ig)}"
-                                         oncomplete="if (#{asignacionUsuariosController.puedeAsignar}) PF('dlgAsignacion').show()"
+                                         oncomplete="if (args.dialogReady) PF('dlgAsignacion').show()"
                                          update=":frmDlgAsignacion"
                                          process="@this">
                             <p:resetInput target=":frmDlgAsignacion"/>
@@ -526,7 +531,7 @@
                                          actionListener="#{asignacionUsuariosController.asignarAdmin}"
                                          oncomplete="if (!args.validationFailed) PF('dlgAsignacion').hide()"
                                          process="@form"
-                                         update="adminFields messagesDialogAsignacion :frmAsignacion :frmStats :frmProgreso"/>
+                                         update="adminFields messagesDialogAsignacion"/>
                     </div>
                 </f:facet>
 

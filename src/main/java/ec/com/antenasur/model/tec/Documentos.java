@@ -1,7 +1,5 @@
 package ec.com.antenasur.model.tec;
 
-import ec.com.antenasur.model.tec.TipoDocumento;
-import ec.com.antenasur.model.tec.Mesa;
 import java.io.Serializable;
 
 import jakarta.persistence.AttributeOverride;
@@ -14,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
 
 import ec.com.antenasur.model.generic.EntidadAuditable;
@@ -94,6 +93,36 @@ public class Documentos extends EntidadAuditable implements Serializable {
     @Getter
     @Column(name = "doc_hash_sha256", length = 64)
     private String hashSha256;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_contexto_hash", length = 64)
+    private String contextoHash;
+
+    /** Acta generada de la cual proviene un documento firmado. */
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doc_origen_id", foreignKey = @ForeignKey(name = "fk_documentos_documento_origen"))
+    private Documentos documentoOrigen;
+
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proce_id", foreignKey = @ForeignKey(name = "fk_documentos_proceso_electoral"))
+    private ProcesoElectoral proceso;
+
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rec_id", foreignKey = @ForeignKey(name = "fk_documentos_recinto"))
+    private Recinto recinto;
+
+    @Setter
+    @Getter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mesa_id", foreignKey = @ForeignKey(name = "fk_documentos_mesa"))
+    private Mesa mesa;
 
     @Setter
     @Getter

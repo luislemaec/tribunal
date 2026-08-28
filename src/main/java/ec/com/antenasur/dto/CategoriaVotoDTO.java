@@ -19,6 +19,9 @@ public class CategoriaVotoDTO implements Serializable {
     private String nombre;
     private Integer categoriaVoto;
     private Integer orden;
+    private String tipo;
+    private Integer listaId;
+    private Integer procesoId;
 
     public static CategoriaVotoDTO fromEntity(CategoriaVoto c) {
         if (c == null) {
@@ -29,6 +32,9 @@ public class CategoriaVotoDTO implements Serializable {
         dto.setNombre(c.getNombre());
         dto.setCategoriaVoto(c.getCategoriaVoto());
         dto.setOrden(c.getOrden());
+        dto.setTipo(c.getTipo());
+        dto.setListaId(c.getLista() != null ? c.getLista().getId() : null);
+        dto.setProcesoId(c.getProceso() != null ? c.getProceso().getId() : null);
         return dto;
     }
 
@@ -38,6 +44,7 @@ public class CategoriaVotoDTO implements Serializable {
         c.setNombre(this.nombre);
         c.setCategoriaVoto(this.categoriaVoto);
         c.setOrden(this.orden);
+        c.setTipo(this.tipo);
         return c;
     }
 }

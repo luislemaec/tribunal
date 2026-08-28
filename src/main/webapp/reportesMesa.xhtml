@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="title">#{msg['reportesMesa.title']}</ui:define>
+
+    <ui:define name="viewname">
+        <li>#{msg['reportesMesa.menu.reportes']}</li>
+        <li>/</li>
+        <li><p:link outcome="/reportesMesa">#{msg['reportesMesa.title']}</p:link></li>
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="surface-ground p-2 md:p-4">
+            <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
+                <div>
+                    <span class="inline-flex align-items-center gap-2 text-primary font-semibold text-sm uppercase">
+                        <i class="pi pi-chart-bar"/>#{msg['reportesMesa.eyebrow']}
+                    </span>
+                    <h1 class="text-900 text-3xl font-bold mt-2 mb-1">#{msg['reportesMesa.title']}</h1>
+                    <p class="text-500 m-0">#{msg['reportesMesa.subtitle']}</p>
+                </div>
+            </div>
+
+            <h:form id="frmReportesMesa">
+                <div class="surface-card border-round-xl shadow-1 p-3 md:p-4 mb-4">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-filter text-primary"/>
+                        <span class="font-semibold text-900">#{msg['reportesMesa.filtros.titulo']}</span>
+                    </div>
+                    <div class="formgrid grid align-items-end">
+                        <div class="field col-12 lg:col-4">
+                            <label for="proceso" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.proceso']}</label>
+                            <p:selectOneMenu id="proceso" value="#{reporteMesaController.procesoId}"
+                                             styleClass="w-full" filter="true" filterMatchMode="contains"
+                                             disabled="#{reporteMesaController.presidenteRestringido}">
+                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.proceso']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{reporteMesaController.procesos}" var="proceso"
+                                               itemLabel="#{proceso.nombre}" itemValue="#{proceso.id}"/>
+                                <p:ajax listener="#{reporteMesaController.cargarRecintos}" process="@this"
+                                        update=":frmReportesMesa:recinto :frmReportesMesa:mesa :frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="recinto" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.recinto']}</label>
+                            <p:selectOneMenu id="recinto" value="#{reporteMesaController.recintoId}"
+                                             styleClass="w-full" filter="true" filterMatchMode="contains"
+                                             disabled="#{empty reporteMesaController.recintos or reporteMesaController.presidenteRestringido}">
+                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.recinto']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{reporteMesaController.recintos}" var="recinto"
+                                               itemLabel="#{recinto.nombre}" itemValue="#{recinto.id}"/>
+                                <p:ajax listener="#{reporteMesaController.cargarMesas}" process="@this"
+                                        update=":frmReportesMesa:mesa :frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="mesa" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.mesa']}</label>
+                            <p:selectOneMenu id="mesa" value="#{reporteMesaController.mesaId}"
+                                             styleClass="w-full" filter="true" filterMatchMode="contains"
+                                             disabled="#{empty reporteMesaController.mesas or reporteMesaController.presidenteRestringido}">
+                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.mesa']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{reporteMesaController.mesas}" var="mesa"
+                                               itemLabel="#{mesa.nombre}" itemValue="#{mesa.id}"/>
+                                <p:ajax listener="#{reporteMesaController.consultar}" process="@this"
+                                        update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 lg:col-2">
+                            <p:commandButton value="#{msg['reportesMesa.boton.consultar']}" icon="pi pi-search"
+                                             styleClass="w-full" action="#{reporteMesaController.consultar}"
+                                             process="@this proceso recinto mesa"
+                                             update="panelContenido :frmGlobal:growlGlobal"/>
+                        </div>
+                    </div>
+                </div>
+
+                <p:outputPanel id="panelContenido" layout="block">
+                    <p:outputPanel rendered="#{empty reporteMesaController.reporte}">
+                        <div class="surface-card border-round-xl shadow-1 p-6 text-center">
+                            <i class="pi pi-folder-open text-primary" style="font-size:2.5rem"/>
+                            <h3 class="text-900 mt-3 mb-2">#{msg['reportesMesa.empty.title']}</h3>
+                            <p class="text-500 m-0">#{msg['reportesMesa.empty.detail']}</p>
+                        </div>
+                    </p:outputPanel>
+
+                    <p:outputPanel rendered="#{not empty reporteMesaController.reporte}">
+                        <div class="grid mb-3">
+                            <div class="col-12 sm:col-6 xl:col-3">
+                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-primary">
+                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.estado']}</span>
+                                    <div class="text-900 font-bold text-xl mt-2">
+                                        #{empty reporteMesaController.reporte.cabecera ? msg['reportesMesa.estado.sin.iniciar'] : reporteMesaController.reporte.cabecera.estadoEscrutinio}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 sm:col-6 xl:col-3">
+                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-green-500">
+                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.padron']}</span>
+                                    <div class="text-900 font-bold text-2xl mt-2">#{reporteMesaController.reporte.totalPadron}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 sm:col-6 xl:col-3">
+                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-orange-500">
+                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.votos']}</span>
+                                    <div class="text-900 font-bold text-2xl mt-2">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosRegistrados}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 sm:col-6 xl:col-3">
+                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-blue-500">
+                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.documentos']}</span>
+                                    <div class="text-900 font-bold text-2xl mt-2">#{reporteMesaController.reporte.documentos.size()}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="surface-card border-round-xl shadow-1 overflow-hidden">
+                            <p:tabView id="tabsReporte" dynamic="false">
+                                <p:tab title="#{msg['reportesMesa.tab.resumen']}">
+                                    <div class="grid">
+                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.proceso']}</span><strong class="text-900">#{reporteMesaController.reporte.proceso.nombre}</strong></div>
+                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.recinto']}</span><strong class="text-900">#{reporteMesaController.reporte.recinto.nombre}</strong></div>
+                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.mesa']}</span><strong class="text-900">#{reporteMesaController.reporte.mesa.nombre}</strong></div>
+                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.resumen.jrv']}</span><strong class="text-900">#{reporteMesaController.reporte.totalMiembrosJrv}</strong></div>
+                                    </div>
+                                    <p:dataTable value="#{reporteMesaController.reporte.miembrosJrv}" var="miembro"
+                                                 paginator="true" rows="5" reflow="true" styleClass="ui-datatable-sm mt-3"
+                                                 emptyMessage="#{msg['reportesMesa.jrv.empty']}">
+                                        <p:column headerText="#{msg['reportesMesa.jrv.cargo']}">#{miembro.cargoNombre}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.jrv.nombre']}">#{miembro.iglesiaPersona.persona.nombres} #{miembro.iglesiaPersona.persona.apellidos}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.jrv.cedula']}">#{miembro.iglesiaPersona.persona.documento}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.jrv.iglesia']}">#{miembro.iglesiaPersona.iglesia.nombre}</p:column>
+                                    </p:dataTable>
+                                </p:tab>
+
+                                <p:tab title="#{msg['reportesMesa.tab.escrutinio']}">
+                                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
+                                        <div>
+                                            <h3 class="text-900 m-0">#{msg['reportesMesa.acta.titulo']}</h3>
+                                            <small class="text-500">#{msg['reportesMesa.acta.descripcion']}</small>
+                                        </div>
+                                        <p:commandButton value="#{msg['reportesMesa.boton.generar.acta']}" icon="pi pi-file-pdf"
+                                                         action="#{reporteMesaController.generarActaParcial}" process="@this"
+                                                         update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"
+                                                         disabled="#{not reporteMesaController.puedeGenerarActaParcial}"
+                                                         styleClass="ui-button-danger"/>
+                                    </div>
+                                    <p:dataTable value="#{reporteMesaController.reporte.escrutinios}" var="item"
+                                                 reflow="true" styleClass="ui-datatable-sm ui-datatable-striped"
+                                                 emptyMessage="#{msg['reportesMesa.escrutinio.empty']}">
+                                        <p:column headerText="#{msg['reportesMesa.escrutinio.categoria']}">#{item.categoriaNombre}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.escrutinio.votos']}" styleClass="text-right">#{item.totalVotos}</p:column>
+                                    </p:dataTable>
+                                    <div class="grid mt-3">
+                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.validos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosValidos}</strong></div></div>
+                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.nulos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosNulos}</strong></div></div>
+                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.blancos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosBlancos}</strong></div></div>
+                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.registrados']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosRegistrados}</strong></div></div>
+                                    </div>
+                                </p:tab>
+
+                                <p:tab title="#{msg['reportesMesa.tab.padron']}">
+                                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
+                                        <div>
+                                            <h3 class="text-900 m-0">#{msg['reportesMesa.padron.titulo']}</h3>
+                                            <small class="text-500">#{msg['reportesMesa.padron.descripcion']}</small>
+                                        </div>
+                                        <p:commandButton value="#{msg['reportesMesa.boton.generar.padron']}" icon="pi pi-file-excel"
+                                                         action="#{reporteMesaController.generarPadron}" process="@this"
+                                                         update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"
+                                                         disabled="#{not reporteMesaController.puedeGenerarPadron}"
+                                                         styleClass="ui-button-success"/>
+                                    </div>
+                                    <p:dataTable value="#{reporteMesaController.reporte.padron}" var="padron"
+                                                 paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
+                                                 reflow="true" styleClass="ui-datatable-sm ui-datatable-striped"
+                                                 emptyMessage="#{msg['reportesMesa.padron.empty']}">
+                                        <p:column headerText="#{msg['reportesMesa.padron.cedula']}" filterBy="#{padron.iglesiaPersona.persona.documento}">#{padron.iglesiaPersona.persona.documento}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.padron.nombres']}" filterBy="#{padron.iglesiaPersona.persona.nombres}">#{padron.iglesiaPersona.persona.nombres} #{padron.iglesiaPersona.persona.apellidos}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.padron.iglesia']}" filterBy="#{padron.iglesiaPersona.iglesia.nombre}">#{padron.iglesiaPersona.iglesia.nombre}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.padron.estado']}"><p:tag value="#{padron.sufrago ? msg['reportesMesa.padron.sufrago'] : msg['reportesMesa.padron.pendiente']}" severity="#{padron.sufrago ? 'success' : 'warning'}"/></p:column>
+                                    </p:dataTable>
+                                </p:tab>
+
+                                <p:tab title="#{msg['reportesMesa.tab.documentos']}">
+                                    <p:dataTable value="#{reporteMesaController.reporte.documentos}" var="doc"
+                                                 paginator="true" rows="10" reflow="true"
+                                                 styleClass="ui-datatable-sm ui-datatable-striped"
+                                                 emptyMessage="#{msg['reportesMesa.documentos.empty']}">
+                                        <p:column headerText="#{msg['reportesMesa.documento.tipo']}">#{doc.tipoDocumentoNombre}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.documento.nombre']}"><span class="font-medium">#{doc.nombre}#{doc.extension}</span><small class="block text-500">#{doc.codigo}</small></p:column>
+                                        <p:column headerText="#{msg['reportesMesa.documento.fecha']}"><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText></p:column>
+                                        <p:column headerText="#{msg['reportesMesa.documento.responsable']}">#{doc.usuarioCrea}</p:column>
+                                        <p:column headerText="#{msg['reportesMesa.documento.estado']}" styleClass="text-center"><p:tag value="#{doc.disponible ? msg['reportesMesa.documento.disponible'] : msg['reportesMesa.documento.no.disponible']}" severity="#{doc.disponible ? 'success' : 'danger'}"/></p:column>
+                                        <p:column exportable="false" styleClass="text-center" style="width:5rem">
+                                            <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
+                                                             disabled="#{not doc.disponible}" title="#{msg['reportesMesa.boton.descargar']}"
+                                                             styleClass="ui-button-rounded ui-button-text ui-button-info">
+                                                <p:fileDownload value="#{documentoBean.obtenerArchivo(doc)}" contentDisposition="attachment"/>
+                                            </p:commandButton>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+                            </p:tabView>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
+            </h:form>
+        </div>
+    </ui:define>
+</ui:composition>

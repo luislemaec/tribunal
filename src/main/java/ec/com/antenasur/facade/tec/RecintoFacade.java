@@ -67,4 +67,29 @@ public class RecintoFacade extends AbstractFacade<Recinto, Integer> {
         return null;
     }
 
+    /** Carga solo recintos con información electoral para el proceso indicado. */
+    public List<Recinto> listarPorProceso(Integer procesoId) {
+        if (procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String hql = "SELECT DISTINCT r FROM Mesa m"
+                + " JOIN m.recinto r"
+                + " LEFT JOIN FETCH r.ubicacion parroquia"
+                + " LEFT JOIN FETCH parroquia.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " WHERE m.estado = TRUE AND r.estado = TRUE AND ("
+                + " EXISTS (SELECT p.id FROM Padron p WHERE p.mesa.id = m.id"
+                + " AND p.proceso.id = :procesoId AND p.estado = TRUE)"
+                + " OR EXISTS (SELECT ec.id FROM EscrutinioCabecera ec WHERE ec.mesa.id = m.id"
+                + " AND ec.proceso.id = :procesoId AND ec.estado = TRUE)"
+                + " OR EXISTS (SELECT j.id FROM MiembroJRV j WHERE j.mesa.id = m.id"
+                + " AND j.proceso.id = :procesoId AND j.estado = TRUE)"
+                + " OR EXISTS (SELECT d.id FROM Documentos d WHERE d.mesa.id = m.id"
+                + " AND d.proceso.id = :procesoId AND d.estado = TRUE))"
+                + " ORDER BY r.nombre";
+        TypedQuery<Recinto> query = getEntityManager().createQuery(hql, Recinto.class);
+        query.setParameter("procesoId", procesoId);
+        return query.getResultList();
+    }
+
 }

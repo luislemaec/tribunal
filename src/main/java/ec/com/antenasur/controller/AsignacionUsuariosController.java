@@ -115,7 +115,16 @@ public class AsignacionUsuariosController implements Serializable {
     private List<Geograp> parroquias;
 
     @Getter @Setter
-    private Geograp cantonSeleccionado, parroquiaSeleccionado;
+    private Integer cantonFiltroId, parroquiaFiltroId;
+
+    @Getter
+    private long totalIglesias;
+
+    @Getter
+    private long totalConAdmin;
+
+    @Getter
+    private long totalSinAdmin;
 
     // â”€â”€ Estado del diálogo de asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Getter @Setter
@@ -145,8 +154,8 @@ public class AsignacionUsuariosController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            cantonSeleccionado = new Geograp();
-            parroquiaSeleccionado = new Geograp();
+            cantonesFiltro = Collections.emptyList();
+            parroquias = Collections.emptyList();
 
             // Provincias dinámicas — mismo patrón que IglesiaController
             Geograp provRef = geograpService.find(7);
@@ -169,100 +178,75 @@ public class AsignacionUsuariosController implements Serializable {
     // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void obtieneCantonesFiltro() {
-        cantonesFiltro = null;
-        cantonSeleccionado = new Geograp();
-        parroquias = null;
-        parroquiaSeleccionado = new Geograp();
+        cantonFiltroId = null;
+        parroquiaFiltroId = null;
+        parroquias = Collections.emptyList();
         if (provinciaFiltroId != null) {
-            cantonesFiltro = geograpService.findByFatherId(provinciaFiltroId);
-            List<Geograp> parroquiasDeProvincia = geograpService.obtenerParroquiasDeCantones(cantonesFiltro);
-            if (parroquiasDeProvincia != null && !parroquiasDeProvincia.isEmpty()) {
-                listaIglesiasOriginal = iglesiaService.listarParaAsignacionPorParroquias(parroquiasDeProvincia);
-            } else {
-                listaIglesiasOriginal = Collections.emptyList();
-            }
+            cantonesFiltro = listaSegura(geograpService.findByFatherId(provinciaFiltroId));
         } else {
-            listaIglesiasOriginal = iglesiaService.listarParaAsignacionUsuarios();
+            cantonesFiltro = Collections.emptyList();
         }
-        aplicarFiltroEstado();
+        ejecutarFiltros();
     }
 
     public void obtieneParroquias() {
-        if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
-            cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
-            parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
-            parroquiaSeleccionado = new Geograp();
-            if (parroquias != null && !parroquias.isEmpty()) {
-                listaIglesiasOriginal = iglesiaService.listarParaAsignacionPorParroquias(parroquias);
-            }
-            aplicarFiltroEstado();
+        parroquiaFiltroId = null;
+        if (cantonFiltroId != null) {
+            parroquias = listaSegura(geograpService.findByFatherId(cantonFiltroId));
+        } else {
+            parroquias = Collections.emptyList();
         }
+        ejecutarFiltros();
     }
 
     public void obtieneIglesiasPorParroquia() {
-        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
-            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
-            listaIglesiasOriginal = iglesiaService.listarParaAsignacionPorParroquia(parroquiaSeleccionado);
-            aplicarFiltroEstado();
-        }
+        ejecutarFiltros();
     }
 
     public void cambiarFiltroEstado() {
-        aplicarFiltroEstado();
+        ejecutarFiltros(false);
     }
 
     public void limpiarFiltros() {
         provinciaFiltroId = null;
-        cantonesFiltro = null;
-        cantonSeleccionado = new Geograp();
-        parroquias = null;
-        parroquiaSeleccionado = new Geograp();
+        cantonFiltroId = null;
+        parroquiaFiltroId = null;
+        cantonesFiltro = Collections.emptyList();
+        parroquias = Collections.emptyList();
         estadoFiltro = ESTADO_SIN_ADMIN;
         recargarListaCompleta();
     }
 
     private void recargarListaCompleta() {
-        listaIglesiasOriginal = iglesiaService.listarParaAsignacionUsuarios();
-        aplicarFiltroEstado();
+        ejecutarFiltros();
     }
 
-    private void aplicarFiltroEstado() {
-        if (listaIglesiasOriginal == null) {
-            listaIglesias = Collections.emptyList();
-            return;
+    private void ejecutarFiltros() {
+        ejecutarFiltros(true);
+    }
+
+    private void ejecutarFiltros(boolean actualizarResumen) {
+        Boolean conAdmin = ESTADO_TODAS.equals(estadoFiltro)
+                ? null
+                : ESTADO_CON_ADMIN.equals(estadoFiltro);
+        listaIglesias = iglesiaService.listarParaAsignacionFiltrada(
+                provinciaFiltroId, cantonFiltroId, parroquiaFiltroId, conAdmin);
+        listaIglesiasOriginal = listaIglesias;
+        listaIglesiasFiltrada = null;
+
+        if (actualizarResumen) {
+            long[] resumen = iglesiaService.resumirAsignacionFiltrada(
+                    provinciaFiltroId, cantonFiltroId, parroquiaFiltroId);
+            totalIglesias = resumen[0];
+            totalConAdmin = resumen[1];
+            totalSinAdmin = totalIglesias - totalConAdmin;
         }
-        if (ESTADO_TODAS.equals(estadoFiltro)) {
-            listaIglesias = new ArrayList<>(listaIglesiasOriginal);
-            return;
-        }
-        boolean buscarConAdmin = ESTADO_CON_ADMIN.equals(estadoFiltro);
-        List<IglesiaAsignacionDTO> filtrada = new ArrayList<>();
-        for (IglesiaAsignacionDTO ig : listaIglesiasOriginal) {
-            boolean tiene = Boolean.TRUE.equals(ig.getTieneAdmin());
-            if (tiene == buscarConAdmin) {
-                filtrada.add(ig);
-            }
-        }
-        listaIglesias = filtrada;
     }
 
     // â”€â”€ KPIs derivados de la lista completa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    public long getTotalIglesias() {
-        return listaIglesiasOriginal == null ? 0 : listaIglesiasOriginal.size();
-    }
-
-    public long getTotalConAdmin() {
-        if (listaIglesiasOriginal == null) return 0;
-        long count = 0;
-        for (IglesiaAsignacionDTO i : listaIglesiasOriginal) {
-            if (Boolean.TRUE.equals(i.getTieneAdmin())) count++;
-        }
-        return count;
-    }
-
-    public long getTotalSinAdmin() {
-        return getTotalIglesias() - getTotalConAdmin();
+    private List<Geograp> listaSegura(List<Geograp> elementos) {
+        return elementos != null ? elementos : Collections.emptyList();
     }
 
     // â”€â”€ Mensajería de fase / permisos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -328,12 +312,16 @@ public class AsignacionUsuariosController implements Serializable {
      * cambió, mostramos el mensaje preciso y NO abrimos el diálogo.
      */
     public void prepararAsignacion(IglesiaAsignacionDTO iglesia) {
-        if (iglesia == null) return;
+        if (iglesia == null) {
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
         refrescarEstadoFase();
         if (!puedeAsignar) {
             JsfUtil.addWarningMessage(getMensajeBloqueoFase());
             this.iglesiaSeleccionada = null;
             this.nuevoAdmin = null;
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
             return;
         }
         this.iglesiaSeleccionada = iglesia;
@@ -342,6 +330,7 @@ public class AsignacionUsuariosController implements Serializable {
         this.nuevoAdmin.setIglesiaNombre(iglesia.getNombre());
         this.personaRegistroCivil = null;
         this.personaExistente = false;
+        PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }
 
     /** Abre el diálogo en modo "reasignar" sobre una iglesia que ya tiene admin. */
@@ -613,7 +602,8 @@ public class AsignacionUsuariosController implements Serializable {
             // 6) Refrescar UI
             recargarListaCompleta();
             progresoAsignacion = iglesiaService.calcularProgresoAsignacionUsuarios();
-            PrimeFaces.current().ajax().update("frmAsignacion", "frmStats", "frmProgreso", "msgs");
+            PrimeFaces.current().ajax().update(
+                    "frmAsignacion:tblAsignacion", "frmStats", "frmProgreso");
         } catch (Exception e) {
             log.error("Error al asignar admin a iglesia id={}",
                     iglesiaSeleccionada != null ? iglesiaSeleccionada.getId() : null, e);

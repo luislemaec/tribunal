@@ -115,6 +115,18 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
         return null;
     }
 
+    /** Obtiene varios catálogos activos en una sola consulta, ordenados para UI. */
+    public List<CatalogoGeneral> listarPorIds(List<Integer> catalogoIds) {
+        if (catalogoIds == null || catalogoIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.id IN :catalogoIds"
+                + " AND gc.estado = TRUE ORDER BY gc.orden";
+        TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
+        query.setParameter("catalogoIds", catalogoIds);
+        return query.getResultList();
+    }
+
     public List<CatalogoGeneral> findByFather() {
         try {
             String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.id is null AND gc.estado=TRUE ORDER BY orden";

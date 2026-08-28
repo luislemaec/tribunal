@@ -1,34 +1,27 @@
 package ec.com.antenasur.bean;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.compress.utils.IOUtils;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.dto.DocumentoDTO;
 import ec.com.antenasur.service.tec.DocumentoService;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
+import ec.com.antenasur.util.RepositorioDocumentos;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 public class DocumentoBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final String PATH_DESTINO = System.getProperty("java.io.tmpdir") + File.separator;
 
     @Inject
     private DocumentoService documentoService;
@@ -64,13 +55,35 @@ public class DocumentoBean implements Serializable {
     private StreamedContent file;
 
     public StreamedContent getFile() {
+        file = null;
         try {
-            descargarArchivoDirectorio();
+            file = construirDescarga(documento);
             return file;
-        } catch (IOException ex) {
-            Logger.getLogger(DocumentoBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException e) {
+            notificarErrorDescarga(e);
             return null;
         }
+    }
+
+    /** Construye la descarga directamente desde el documento de la fila seleccionada. */
+    public StreamedContent obtenerArchivo(Documentos item) {
+        documento = item;
+        try {
+            file = construirDescarga(item);
+            return file;
+        } catch (IOException e) {
+            notificarErrorDescarga(e);
+            return null;
+        }
+    }
+
+    public StreamedContent obtenerArchivo(DocumentoDTO item) {
+        if (item == null || item.getId() == null) {
+            documento = null;
+            notificarErrorDescarga(new IOException(Constantes.getMensaje("documentos.error.not.selected")));
+            return null;
+        }
+        return obtenerArchivo(documentoService.find(item.getId()));
     }
 
     public List<Documentos> getDocumentoPorMesa(Mesa mesa) {
@@ -100,23 +113,9 @@ public class DocumentoBean implements Serializable {
         return documentoService.create(documento);
     }
 
-    public void descargaDocumento() throws IOException {
-        try {
-            HttpServletResponse response = JsfUtil.getHttpServletResponse();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            if (documento.getNombre() != null) {
-                InputStream inp = new FileInputStream(documento.getPath());
-                OutputStream out = response.getOutputStream();
-                response.setContentType("application/octet-stream");
-                response.setHeader("Content-Disposition", "attachment;filename=\"" + documento.getNombre() + ".pdf\"");
-                response.setDateHeader("Expires", 0);
-                baos.writeTo(out);
-                out.flush();
-                FacesContext.getCurrentInstance().responseComplete();
-            }
-        } catch (Exception e) {
-            log.error("ERROR DESCARGAR DOCUMENTO", e);
-        }
+    public Documentos guardarDocumentoMesa(Documentos documento, Integer mesaId,
+            Integer procesoId, Integer recintoId) {
+        return documentoService.registrarDocumentoMesa(documento, mesaId, procesoId, recintoId);
     }
 
     /**
@@ -125,28 +124,60 @@ public class DocumentoBean implements Serializable {
      * @throws IOException
      */
     public void descargarArchivoDirectorio() throws IOException {
-        if (documento.getNombre() != null) {
-            try {
-                Path path = Paths.get(documento.getPath()).toAbsolutePath().normalize();
-                if (!Files.isRegularFile(path)) {
-                    log.warn("DOCUMENTO NO ENCONTRADO PARA DESCARGA: {}", path);
-                    return;
-                }
-                InputStream inp = new FileInputStream(path.toFile());
-                byte[] imageInByte = IOUtils.toByteArray(inp);
-                inp.close();
-                file = DefaultStreamedContent.builder()
-                        .contentType(documento.getMime() != null ? documento.getMime() : "application/octet-stream")
-                        .name(documento.getNombre() + documento.getExtension())
-                        .stream(() -> new ByteArrayInputStream(imageInByte))
-                        .build();
-                procesoBean.okActivityRegister("DESCARGA DOCUMENTO " + documento.getNombre(),
-                        documento.getPath());
+        file = construirDescarga(documento);
+    }
 
-            } catch (Exception e) {
-                log.error("ERROR DESCARGAR DOCUMENTO", e);
-            }
+    private StreamedContent construirDescarga(Documentos item) throws IOException {
+        if (item == null || item.getNombre() == null) {
+            throw new IOException(Constantes.getMensaje("documentos.error.not.selected"));
         }
+        Path path = RepositorioDocumentos.resolverRutaAlmacenada(item.getPath());
+        StreamedContent descarga = DefaultStreamedContent.builder()
+                .contentType(tipoMime(item, path))
+                .name(nombreDescarga(item))
+                .contentLength(Files.size(path))
+                .stream(() -> abrirStream(path))
+                .build();
+        procesoBean.okActivityRegister("DESCARGA DOCUMENTO " + item.getNombre(), item.getPath());
+        return descarga;
+    }
+
+    private InputStream abrirStream(Path path) {
+        try {
+            return Files.newInputStream(path);
+        } catch (IOException e) {
+            log.error("ERROR ABRIR DOCUMENTO PARA DESCARGA {}", path, e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private String nombreDescarga(Documentos item) throws IOException {
+        String nombre = item.getNombre();
+        String extension = extensionDocumento(item);
+        if (!extension.isBlank() && !nombre.toLowerCase().endsWith(extension.toLowerCase())) {
+            nombre += extension;
+        }
+        return RepositorioDocumentos.nombreArchivoSeguro(nombre);
+    }
+
+    private String tipoMime(Documentos item, Path path) throws IOException {
+        if (item.getMime() != null
+                && item.getMime().matches("^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+$")) {
+            return item.getMime().toLowerCase();
+        }
+        String detectado = Files.probeContentType(path);
+        return detectado != null ? detectado : "application/octet-stream";
+    }
+
+    private String extensionDocumento(Documentos item) {
+        return item.getExtension() != null ? item.getExtension() : "";
+    }
+
+    private void notificarErrorDescarga(Exception e) {
+        String nombre = documento != null && documento.getNombre() != null
+                ? documento.getNombre() : "";
+        log.error("ERROR DESCARGAR DOCUMENTO {}", nombre, e);
+        JsfUtil.addErrorMessage(Constantes.getMensaje("documentos.error.download", nombre));
     }
 
 }

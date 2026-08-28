@@ -63,6 +63,10 @@ public class RecintoController implements Serializable {
     @Getter
     private List<RecintoDTO> listaRecintos, listaRecintosSeleccionados;
 
+    private Integer indiceFilaEdicion;
+
+    private RecintoDTO recintoFilaEdicion;
+
     @PostConstruct
     private void init() {
         try {
@@ -84,6 +88,8 @@ public class RecintoController implements Serializable {
     }
 
     public void nuevaRecinto() {
+        indiceFilaEdicion = null;
+        recintoFilaEdicion = null;
         inicializaRecintoSeleccionado();
     }
 
@@ -119,7 +125,12 @@ public class RecintoController implements Serializable {
                 PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
                 return;
             }
-            recintoService.eliminarPorId(recintoSeleccionado.getId());
+            Integer recintoEliminadoId = recintoSeleccionado.getId();
+            recintoService.eliminarPorId(recintoEliminadoId);
+            if (mesaController.getRecintoSeleccionado() != null
+                    && recintoEliminadoId.equals(mesaController.getRecintoSeleccionado().getId())) {
+                mesaController.liberarRecintoSeleccionado();
+            }
         }
         JsfUtil.addInfoMessageFromBundle("recintos.mensaje.eliminar.exito");
         recargarListaRecintosActual();
@@ -183,6 +194,7 @@ public class RecintoController implements Serializable {
     public void guardarRecintoSeleccionado() {
         try {
             if (recintoSeleccionado == null) {
+                FacesContext.getCurrentInstance().validationFailed();
                 return;
             }
             boolean esEdicion = recintoSeleccionado.getId() != null;
@@ -191,8 +203,25 @@ public class RecintoController implements Serializable {
                 JsfUtil.addSuccessMessageFromBundle(esEdicion
                         ? "recintos.mensaje.actualizar.exito"
                         : "recintos.mensaje.guardar.exito");
-                recintoSeleccionado = null;
-                recargarListaRecintosActual();
+                boolean recintoPermaneceSeleccionado = mesaController.getRecintoSeleccionado() != null
+                        && persistido.getId().equals(mesaController.getRecintoSeleccionado().getId());
+                if (esEdicion) {
+                    RecintoDTO filaActualizada = actualizarObjetoFila(persistido);
+                    recintoSeleccionado = filaActualizada;
+                    if (recintoPermaneceSeleccionado) {
+                        mesaController.setRecintoSeleccionado(filaActualizada);
+                    }
+                    actualizarFilaEditada();
+                    if (recintoPermaneceSeleccionado) {
+                        PrimeFaces.current().ajax().update("frmRecintos:infoRecintoSeleccionado");
+                    }
+                } else {
+                    recintoSeleccionado = persistido;
+                    recargarListaRecintosActual();
+                    PrimeFaces.current().ajax().update(
+                            "frmRecintos:tblRecintos",
+                            "frmRecintos:resumenRecintos");
+                }
             } else {
                 JsfUtil.addErrorMessageFromBundle("recintos.mensaje.parroquia.requerida");
                 FacesContext.getCurrentInstance().validationFailed();
@@ -206,7 +235,6 @@ public class RecintoController implements Serializable {
             PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
             return;
         }
-        PrimeFaces.current().executeScript("PF('dlgRecinto').hide()");
         PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 
@@ -248,6 +276,13 @@ public class RecintoController implements Serializable {
         }
     }
 
+    public void prepararEdicion(RecintoDTO recinto, Integer indiceFila) {
+        this.recintoFilaEdicion = recinto;
+        this.recintoSeleccionado = copiarRecinto(recinto);
+        this.indiceFilaEdicion = indiceFila;
+        cagraDatosRecintoSeleccionado();
+    }
+
     private void liberarContextoRecintoMesa() {
         this.recintoSeleccionado = null;
         this.listaRecintosSeleccionados = new ArrayList<>();
@@ -282,6 +317,45 @@ public class RecintoController implements Serializable {
             return;
         }
         listaRecintos = new ArrayList<>();
+    }
+
+    private RecintoDTO actualizarObjetoFila(RecintoDTO persistido) {
+        RecintoDTO destino = recintoFilaEdicion != null ? recintoFilaEdicion : persistido;
+        copiarDatosRecinto(persistido, destino);
+        return destino;
+    }
+
+    private void actualizarFilaEditada() {
+        if (indiceFilaEdicion != null && indiceFilaEdicion >= 0) {
+            String prefijoFila = "frmRecintos:tblRecintos:" + indiceFilaEdicion + ":";
+            FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add(
+                    prefijoFila + "nombreRecintoFila");
+            FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add(
+                    prefijoFila + "cantonRecintoFila");
+            FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add(
+                    prefijoFila + "parroquiaRecintoFila");
+        }
+    }
+
+    private RecintoDTO copiarRecinto(RecintoDTO origen) {
+        if (origen == null) {
+            return null;
+        }
+        RecintoDTO copia = new RecintoDTO();
+        copiarDatosRecinto(origen, copia);
+        return copia;
+    }
+
+    private void copiarDatosRecinto(RecintoDTO origen, RecintoDTO destino) {
+        destino.setId(origen.getId());
+        destino.setNombre(origen.getNombre());
+        destino.setUbicacionId(origen.getUbicacionId());
+        destino.setUbicacionNombre(origen.getUbicacionNombre());
+        destino.setCantonId(origen.getCantonId());
+        destino.setCantonNombre(origen.getCantonNombre());
+        destino.setProvinciaId(origen.getProvinciaId());
+        destino.setProvinciaNombre(origen.getProvinciaNombre());
+        destino.setEstadoTarea(origen.getEstadoTarea());
     }
 
     public int getTotalRecintos() {

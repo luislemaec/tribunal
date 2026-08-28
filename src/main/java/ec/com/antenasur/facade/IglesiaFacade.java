@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import jakarta.ejb.Stateless;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
@@ -16,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 @Stateless
 @Slf4j
 public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
+
+    private static final String ROL_IGLESIA_ADMIN = "%IglesiaAdmin";
 
     static final String HQL = " SELECT ig FROM Iglesia ig";
     /** HQL base con parroquia, cantÃƒÂ³n y provincia (3 niveles) ya cargados eager. */
@@ -73,6 +76,83 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
             log.error("Error al cargar iglesia con canton id={}", id, e);
             return null;
         }
+    }
+
+    public List<Iglesia> listarParaAsignacionFiltrada(
+            Integer provinciaId, Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
+        StringBuilder hql = new StringBuilder(HQL_CON_CANTON)
+                .append(" WHERE ig.estado = TRUE");
+        agregarFiltrosAsignacion(hql, provinciaId, cantonId, parroquiaId, conAdmin);
+        hql.append(" ORDER BY provincia.name, canton.name, ub.name, ig.nombre, ig.id");
+
+        TypedQuery<Iglesia> query = getEntityManager().createQuery(hql.toString(), Iglesia.class);
+        parametrizarFiltrosAsignacion(query, provinciaId, cantonId, parroquiaId, conAdmin);
+        return query.getResultList();
+    }
+
+    public long contarParaAsignacionFiltrada(
+            Integer provinciaId, Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
+        StringBuilder hql = new StringBuilder("SELECT COUNT(ig) FROM Iglesia ig")
+                .append(" LEFT JOIN ig.ubicacion ub")
+                .append(" LEFT JOIN ub.geograp canton")
+                .append(" LEFT JOIN canton.geograp provincia")
+                .append(" WHERE ig.estado = TRUE");
+        agregarFiltrosAsignacion(hql, provinciaId, cantonId, parroquiaId, conAdmin);
+
+        TypedQuery<Long> query = getEntityManager().createQuery(hql.toString(), Long.class);
+        parametrizarFiltrosAsignacion(query, provinciaId, cantonId, parroquiaId, conAdmin);
+        Long total = query.getSingleResult();
+        return total != null ? total : 0L;
+    }
+
+    private void agregarFiltrosAsignacion(StringBuilder hql, Integer provinciaId,
+            Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
+        if (provinciaId != null) {
+            hql.append(" AND provincia.id = :provinciaId");
+        }
+        if (cantonId != null) {
+            hql.append(" AND canton.id = :cantonId");
+        }
+        if (parroquiaId != null) {
+            hql.append(" AND ub.id = :parroquiaId");
+        }
+        if (conAdmin != null) {
+            hql.append(Boolean.TRUE.equals(conAdmin) ? " AND EXISTS (" : " AND NOT EXISTS (")
+                    .append("SELECT ru.id FROM RolUsuario ru")
+                    .append(" WHERE ru.usuario.iglesia = ig")
+                    .append(" AND ru.usuario.estado = TRUE")
+                    .append(" AND ru.estado = TRUE")
+                    .append(" AND ru.rol.estado = TRUE")
+                    .append(" AND ru.rol.nombre LIKE :rolIglesiaAdmin)");
+        }
+    }
+
+    private void parametrizarFiltrosAsignacion(jakarta.persistence.Query query,
+            Integer provinciaId, Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
+        if (provinciaId != null) {
+            query.setParameter("provinciaId", provinciaId);
+        }
+        if (cantonId != null) {
+            query.setParameter("cantonId", cantonId);
+        }
+        if (parroquiaId != null) {
+            query.setParameter("parroquiaId", parroquiaId);
+        }
+        if (conAdmin != null) {
+            query.setParameter("rolIglesiaAdmin", ROL_IGLESIA_ADMIN);
+        }
+    }
+
+    /**
+     * Bloquea la iglesia mientras se valida y persiste su administrador.
+     * Evita que dos transacciones asignen simultáneamente IglesiaAdmin a la
+     * misma iglesia.
+     */
+    public Iglesia findForAdminAssignment(Integer id) {
+        if (id == null) {
+            return null;
+        }
+        return super.getEntityManager().find(Iglesia.class, id, LockModeType.PESSIMISTIC_WRITE);
     }
 
     public Iglesia getIglesiaPorDocumento(String documento) {

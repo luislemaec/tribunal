@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -142,23 +143,51 @@ public class TribunalController implements Serializable {
         }
     }
 
+    /** Prepara una copia de la fila para asignar o reasignar sin alterar la tabla. */
+    public void prepararAsignacionAutoridad(TribunalDTO autoridad) {
+        if (autoridad == null || autoridad.getCargoId() == null || autoridad.getProcesoId() == null) {
+            JsfUtil.addWarningMessage("No se pudo determinar el cargo a asignar.");
+            return;
+        }
+        TribunalDTO seleccion = new TribunalDTO();
+        seleccion.setId(autoridad.getId());
+        seleccion.setProcesoId(autoridad.getProcesoId());
+        seleccion.setProcesoNombre(autoridad.getProcesoNombre());
+        seleccion.setPeriodoId(autoridad.getPeriodoId());
+        seleccion.setPeriodoNombre(autoridad.getPeriodoNombre());
+        seleccion.setCargoId(autoridad.getCargoId());
+        seleccion.setCargoNombre(autoridad.getCargoNombre());
+        seleccion.setIglesiaPersona(autoridad.getIglesiaPersona());
+        tribunalSeleccionado = seleccion;
+        cedulaBuscar = null;
+    }
+
     public void guardarAutoridad() {
         try {
             if (tribunalSeleccionado == null) {
+                JsfUtil.addWarningMessage("Seleccione una autoridad para guardar.");
+                FacesContext.getCurrentInstance().validationFailed();
                 return;
             }
             boolean esEdicion = tribunalSeleccionado.getId() != null;
             TribunalDTO persistido = tribunalService.guardarDesdeDTO(tribunalSeleccionado);
             if (persistido != null) {
                 tribunalSeleccionado = persistido;
-                JsfUtil.addSuccessMessage(esEdicion ? "Actualido correctamente" : "Autoridad agregada");
-                PrimeFaces.current().ajax().update("msgs", "frmPeriodos");
+                cargarAutoridadesTribunal();
+                JsfUtil.addSuccessMessage(esEdicion ? "Autoridad reasignada correctamente." : "Autoridad asignada correctamente.");
+                PrimeFaces.current().ajax().update("frmPeriodos:tbtribunal", "frmGlobal:growlGlobal");
+                PrimeFaces.current().executeScript("PF('dlgAsignaAutoridad').hide()");
             }
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR AUTORIDADES", e);
+            JsfUtil.addErrorMessage("No se pudo guardar la autoridad.");
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
         }
-        PrimeFaces.current().executeScript("PF('dlgPeriodo').hide()");
-        PrimeFaces.current().ajax().update("frmPeriodos:msgs", "frmPeriodos:tblPeriodos");
     }
 
     public void buscaPersona() {
@@ -171,8 +200,16 @@ public class TribunalController implements Serializable {
                 JsfUtil.addWarningMessage("PERSONA NO ENCONTRADA");
             }
             PrimeFaces.current().ajax().update("frmPeriodos:outPnlAsignaAutoridadBusca",
-                    "frmPeriodos:outPnlAsignaAutoridad", "msgs");
+                    "frmPeriodos:outPnlAsignaAutoridad", "frmPeriodos:outPnlFooter", "frmGlobal:growlGlobal");
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update("frmPeriodos:outPnlAsignaAutoridadBusca",
+                    "frmPeriodos:outPnlAsignaAutoridad", "frmPeriodos:outPnlFooter", "frmGlobal:growlGlobal");
         } catch (Exception e) {
+            log.error("ERROR AL BUSCAR PERSONA PARA AUTORIDAD", e);
+            JsfUtil.addErrorMessage("No se pudo buscar la persona.");
+            FacesContext.getCurrentInstance().validationFailed();
         }
     }
 }

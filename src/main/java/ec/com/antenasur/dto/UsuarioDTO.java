@@ -35,6 +35,8 @@ public class UsuarioDTO implements Serializable {
     /** Flag derivado: true si el usuario tiene una clave temporal pendiente
      *  (la clave temporal en sí NO se expone). */
     private Boolean tienePasswordTemporal;
+    /** Indica que la operación reutilizó una cuenta eliminada lógicamente. */
+    private Boolean reactivado;
 
     private Integer personaId;
     private String personaDocumento;

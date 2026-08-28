@@ -1,8 +1,6 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +34,7 @@ import ec.com.antenasur.service.tec.PadronService;
 import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.RepositorioDocumentos;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -446,8 +445,7 @@ public class DashboardController implements Serializable {
         List<DocumentoDTO> documentos = documentoService.listarDTOsPorEntidadYTipo(mesaId, Constantes.ACTA_ESCRUTINIO);
         for (DocumentoDTO documento : documentos) {
             try {
-                if (documento != null && documento.getPath() != null && !documento.getPath().isBlank()
-                        && Files.isRegularFile(Paths.get(documento.getPath()).toAbsolutePath().normalize())) {
+                if (documento != null && RepositorioDocumentos.estaDisponible(documento.getPath())) {
                     return true;
                 }
             } catch (Exception e) {

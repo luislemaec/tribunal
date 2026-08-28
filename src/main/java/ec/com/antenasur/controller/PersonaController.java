@@ -3,13 +3,12 @@ package ec.com.antenasur.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
@@ -45,6 +44,7 @@ import ec.com.antenasur.service.tec.RecintoService;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.ExcelPadronParser;
 import ec.com.antenasur.util.JsfUtil;
+import ec.com.antenasur.util.RepositorioDocumentos;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -564,25 +564,40 @@ public class PersonaController implements Serializable {
         }
     }
 
-    public void guardarArchivoExcel() {
+    public boolean guardarArchivoExcel() {
+        Path archivoAlmacenado = null;
         try {
-            int tamanioNombre = file.getFileName().length();
-            String extencion = file.getFileName().substring(tamanioNombre - 5, tamanioNombre);
-            String nombreArchivo = iglesiaSeleccionado.getNombre() + "-" + JsfUtil.getFechaStringYYYYMMddHHmm(new Date());
-            String pathCompleto = Constantes.getPathListaMiembros(nombreArchivo, extencion);
-
-            Documentos documentoNuevo = new Documentos(nombreArchivo, pathCompleto, new TipoDocumento(2),
-                    iglesiaSeleccionado.getId(), extencion, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
-            documentoBean.guardarDocumento(documentoNuevo);
-
-            Path path = Paths.get(pathCompleto);
-            if (path.getParent() != null) {
-                Files.createDirectories(path.getParent());
+            if (file == null || file.getContent() == null || file.getContent().length == 0
+                    || file.getFileName() == null || !file.getFileName().toLowerCase().endsWith(".xlsx")) {
+                throw new IOException(Constantes.getMensaje("documentos.error.xlsx"));
             }
-            Files.write(path, file.getContent());
-            JsfUtil.addSuccessMessage(nombreArchivo + " Almacenado");
-        } catch (IOException e) {
+            if (iglesiaSeleccionado == null || iglesiaSeleccionado.getId() == null) {
+                throw new IOException(Constantes.getMensaje("documentos.error.entidad"));
+            }
+            String nombreArchivo = iglesiaSeleccionado.getNombre() + "-"
+                    + JsfUtil.getFechaStringYYYYMMddHHmm(new Date()) + "-"
+                    + UUID.randomUUID().toString().substring(0, 8);
+            byte[] contenido = file.getContent();
+            archivoAlmacenado = RepositorioDocumentos.escribirAtomico(
+                    "listas-miembros", nombreArchivo + ".xlsx", contenido);
+
+            Documentos documentoNuevo = new Documentos(nombreArchivo, archivoAlmacenado.toString(),
+                    new TipoDocumento(Constantes.LISTA_MIEMBROS), iglesiaSeleccionado.getId(), ".xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+            documentoNuevo.setHashSha256(RepositorioDocumentos.sha256(contenido));
+            Documentos persistido = documentoBean.guardarDocumentoPersistido(documentoNuevo);
+            if (persistido == null || persistido.getId() == null) {
+                throw new IOException(Constantes.getMensaje("documentos.error.metadata"));
+            }
+
+            JsfUtil.addSuccessMessage(Constantes.getMensaje("documentos.success.stored", nombreArchivo));
+            return true;
+        } catch (Exception e) {
+            RepositorioDocumentos.eliminarSilencioso(archivoAlmacenado);
             log.error("ERROR AL GUARDAR ARCHIVOS", e);
+            JsfUtil.addErrorMessage(e.getMessage() != null
+                    ? e.getMessage() : Constantes.getMensaje("documentos.error.storage"));
+            return false;
         }
     }
 
@@ -592,7 +607,9 @@ public class PersonaController implements Serializable {
                     || file.getFileName() == null) {
                 return;
             }
-            guardarArchivoExcel();
+            if (!guardarArchivoExcel()) {
+                return;
+            }
             if (excelMigracion == null) {
                 JsfUtil.addWarningMessage("Archivo formato incorrecto");
                 return;

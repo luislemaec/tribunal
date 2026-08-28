@@ -15,6 +15,8 @@ import jakarta.persistence.TypedQuery;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Filter;
+import org.hibernate.Session;
 
 /**
  *
@@ -28,6 +30,7 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
         super(Usuario.class, Integer.class);
     }
     private static final String SQL = "SELECT u FROM Usuario u ";
+    private static final String ROL_IGLESIA_ADMIN = "%IglesiaAdmin";
 
     /**
      *
@@ -104,6 +107,84 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             log.error("findByUsuarioName('{}'): fallback simple también falló", username, e2);
         }
         return null;
+    }
+
+    /**
+     * Busca por nombre de usuario sin aplicar el filtro de registros activos.
+     * Se usa exclusivamente en flujos administrativos para reactivar una cuenta
+     * dada de baja, ya que {@code usu_nombre} es único incluso cuando
+     * {@code estado = false}.
+     */
+    public Usuario findByUsuarioNameIncluyendoInactivos(String username) {
+        if (username == null || username.isBlank()) {
+            return null;
+        }
+        Session session = super.getEntityManager().unwrap(Session.class);
+        Filter filtroActivo = session.getEnabledFilter("filterActive");
+        if (filtroActivo != null) {
+            session.disableFilter("filterActive");
+        }
+        try {
+            TypedQuery<Usuario> query = session.createQuery(
+                    SQL + "LEFT JOIN FETCH u.personsa p WHERE u.username = :username", Usuario.class);
+            query.setParameter("username", username.trim());
+            query.setMaxResults(1);
+            List<Usuario> resultado = query.getResultList();
+            return resultado.isEmpty() ? null : resultado.get(0);
+        } finally {
+            if (filtroActivo != null) {
+                session.enableFilter("filterActive");
+            }
+        }
+    }
+
+    /** Busca un usuario por persona, sin ocultar cuentas eliminadas lógicamente. */
+    public Usuario findByPersonaIdIncluyendoInactivos(Integer personaId) {
+        if (personaId == null) {
+            return null;
+        }
+        Session session = super.getEntityManager().unwrap(Session.class);
+        Filter filtroActivo = session.getEnabledFilter("filterActive");
+        if (filtroActivo != null) {
+            session.disableFilter("filterActive");
+        }
+        try {
+            TypedQuery<Usuario> query = session.createQuery(
+                    SQL + "LEFT JOIN FETCH u.personsa p WHERE p.id = :personaId ORDER BY u.id ASC", Usuario.class);
+            query.setParameter("personaId", personaId);
+            query.setMaxResults(1);
+            List<Usuario> resultado = query.getResultList();
+            return resultado.isEmpty() ? null : resultado.get(0);
+        } finally {
+            if (filtroActivo != null) {
+                session.enableFilter("filterActive");
+            }
+        }
+    }
+
+    /** Recupera una cuenta por id sin ocultar registros dados de baja. */
+    public Usuario findByIdIncluyendoInactivos(Integer usuarioId) {
+        if (usuarioId == null) {
+            return null;
+        }
+        Session session = super.getEntityManager().unwrap(Session.class);
+        Filter filtroActivo = session.getEnabledFilter("filterActive");
+        if (filtroActivo != null) {
+            session.disableFilter("filterActive");
+        }
+        try {
+            TypedQuery<Usuario> query = session.createQuery(
+                    SQL + "LEFT JOIN FETCH u.personsa p LEFT JOIN FETCH u.iglesia i WHERE u.id = :usuarioId",
+                    Usuario.class);
+            query.setParameter("usuarioId", usuarioId);
+            query.setMaxResults(1);
+            List<Usuario> resultado = query.getResultList();
+            return resultado.isEmpty() ? null : resultado.get(0);
+        } finally {
+            if (filtroActivo != null) {
+                session.enableFilter("filterActive");
+            }
+        }
     }
 
     public Usuario findUsuarioByRucOrMail(String username, String correo) {
@@ -185,12 +266,17 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             return null;
         }
         try {
-            String sql = SQL
-                    + "LEFT JOIN FETCH u.personsa p"
-                    + " WHERE u.iglesia.id = :iglesiaId AND u.estado = TRUE"
-                    + " ORDER BY u.id DESC";
+            String sql = "SELECT DISTINCT u FROM Usuario u "
+                    + "LEFT JOIN FETCH u.personsa p "
+                    + "JOIN u.rolUsuarios ru "
+                    + "JOIN ru.rol r "
+                    + "WHERE u.iglesia.id = :iglesiaId "
+                    + "AND u.estado = TRUE AND ru.estado = TRUE AND r.estado = TRUE "
+                    + "AND r.nombre LIKE :rolIglesiaAdmin "
+                    + "ORDER BY u.id DESC";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
             query.setParameter("iglesiaId", iglesiaId);
+            query.setParameter("rolIglesiaAdmin", ROL_IGLESIA_ADMIN);
             query.setMaxResults(1);
             List<Usuario> result = query.getResultList();
             return (result != null && !result.isEmpty()) ? result.get(0) : null;
@@ -206,15 +292,38 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
      */
     public List<Usuario> findAllIglesiaAdmins() {
         try {
-            String sql = SQL
-                    + "LEFT JOIN FETCH u.personsa p"
-                    + " LEFT JOIN FETCH u.iglesia i"
-                    + " WHERE u.iglesia IS NOT NULL AND u.estado = TRUE";
+            String sql = "SELECT DISTINCT u FROM Usuario u "
+                    + "LEFT JOIN FETCH u.personsa p "
+                    + "LEFT JOIN FETCH u.iglesia i "
+                    + "JOIN u.rolUsuarios ru "
+                    + "JOIN ru.rol r "
+                    + "WHERE u.iglesia IS NOT NULL "
+                    + "AND u.estado = TRUE AND ru.estado = TRUE AND r.estado = TRUE "
+                    + "AND r.nombre LIKE :rolIglesiaAdmin";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
+            query.setParameter("rolIglesiaAdmin", ROL_IGLESIA_ADMIN);
             return query.getResultList();
         } catch (Exception e) {
             return java.util.Collections.emptyList();
         }
+    }
+
+    public List<Usuario> findIglesiaAdminsPorIglesias(List<Integer> iglesiaIds) {
+        if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        String hql = "SELECT DISTINCT u FROM Usuario u "
+                + "LEFT JOIN FETCH u.personsa p "
+                + "LEFT JOIN FETCH u.iglesia i "
+                + "JOIN u.rolUsuarios ru "
+                + "JOIN ru.rol r "
+                + "WHERE i.id IN :iglesiaIds "
+                + "AND u.estado = TRUE AND ru.estado = TRUE AND r.estado = TRUE "
+                + "AND r.nombre LIKE :rolIglesiaAdmin";
+        TypedQuery<Usuario> query = getEntityManager().createQuery(hql, Usuario.class);
+        query.setParameter("iglesiaIds", iglesiaIds);
+        query.setParameter("rolIglesiaAdmin", ROL_IGLESIA_ADMIN);
+        return query.getResultList();
     }
 
     /**

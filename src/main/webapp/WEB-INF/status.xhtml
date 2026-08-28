@@ -2,7 +2,9 @@
       xmlns:ui="jakarta.faces.facelets" 
       xmlns:p="http://primefaces.org/ui">
     <ui:composition>
-        <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()" />
+        <p:ajaxStatus onstart="PF('statusDialog').show()"
+                      oncomplete="PF('statusDialog').hide()"
+                      onerror="PF('statusDialog').hide()" />
         <p:dialog modal="true" widgetVar="statusDialog" header="#{msg['topbar.status.wait']}" draggable="false" closable="false" resizable="false">
             <p:graphicImage value="/resources/img/loader.gif" width="75%"/>
         </p:dialog>

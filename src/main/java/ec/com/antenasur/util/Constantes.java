@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.text.MessageFormat;
 
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
@@ -19,6 +20,7 @@ import jakarta.faces.context.FacesContext;
 public class Constantes {
 
     private static final String BUNDLE_MESSAGES = "ec.com.antenasur.resources.messages_es";
+    private static final String DIRECTORIO_DOCUMENTOS_DEFAULT = "/var/app/tec/documentos";
 
     /*NOTIFICACIONES*/
     public static final String INSTITUCION = "CONPOCIIECH";
@@ -33,6 +35,10 @@ public class Constantes {
     /*TIPOS DE DOCUMENTOS*/
     public static final Integer ACTA_ESCRUTINIO = 1;
     public static final Integer LISTA_MIEMBROS = 2;
+    public static final String TIPO_ACTA_INSCRIPCION_GENERADA = "ACTA DE INSCRIPCION GENERADA";
+    public static final String TIPO_ACTA_INSCRIPCION_FIRMADA = "ACTA DE INSCRIPCION FIRMADA";
+    public static final String TIPO_ACTA_PARCIAL_ESCRUTINIO = "ACTA PARCIAL DE ESCRUTINIO";
+    public static final String TIPO_PADRON_ELECTORAL_MESA = "PADRON ELECTORAL DE MESA";
     /**
      * Retorna pirma del correo
      */
@@ -126,12 +132,12 @@ public class Constantes {
     }
 
     public static String getDirectorioDocumentos() {
-        String directorio = loadFromMessages("rpm.files.path");
+        String directorio = System.getProperty("rpm.files.path");
         if (directorio == null || directorio.isBlank()) {
-            String jbossDataDir = System.getProperty("jboss.server.data.dir");
-            directorio = (jbossDataDir != null && !jbossDataDir.isBlank())
-                    ? resolverPath(jbossDataDir, "documentos")
-                    : resolverPath(System.getProperty("java.io.tmpdir"), "tec", "documentos");
+            directorio = loadFromMessages("rpm.files.path");
+        }
+        if (directorio == null || directorio.isBlank()) {
+            directorio = DIRECTORIO_DOCUMENTOS_DEFAULT;
         }
         return resolverPath(directorio);
     }
@@ -140,18 +146,16 @@ public class Constantes {
         if (subdirectorio == null || subdirectorio.isBlank()) {
             return getDirectorioDocumentos();
         }
-        return resolverPath(getDirectorioDocumentos(), subdirectorio);
+        Path base = Paths.get(getDirectorioDocumentos()).toAbsolutePath().normalize();
+        Path destino = base.resolve(subdirectorio.trim()).normalize();
+        if (!destino.startsWith(base)) {
+            throw new IllegalArgumentException("Subdirectorio fuera del repositorio institucional.");
+        }
+        return destino.toString();
     }
 
     public static String getDirectorioActasEscrutinio() {
-        String directorio = loadFromMessages("tec.actas.escrutinio.dir");
-        if (directorio == null || directorio.isBlank()) {
-            directorio = loadFromMessages("rpm.actas.escrutinio.dir");
-        }
-        if (directorio == null || directorio.isBlank()) {
-            directorio = getDirectorioDocumentos("actas-escrutinio");
-        }
-        return resolverPath(directorio);
+        return getDirectorioDocumentos("actas-escrutinio");
     }
 
     public static String getPathActaEscrutinio(String nombreDocumento) {
@@ -160,6 +164,28 @@ public class Constantes {
 
     public static String getPathListaMiembros(String nombreDocumento, String extension) {
         return resolverPath(getDirectorioDocumentos("listas-miembros"), nombreDocumento + extension);
+    }
+
+    public static String getDirectorioActasInscripcionGeneradas() {
+        return resolverPath(getDirectorioDocumentos("actas-inscripcion"), "generadas");
+    }
+
+    public static String getDirectorioActasInscripcionFirmadas() {
+        return resolverPath(getDirectorioDocumentos("actas-inscripcion"), "firmadas");
+    }
+
+    public static String getLugarActaInscripcion() {
+        String lugar = loadFromMessages("tec.actas.inscripcion.lugar");
+        return lugar != null && !lugar.isBlank() ? lugar : INSTITUCION;
+    }
+
+    public static String getMensaje(String clave, Object... argumentos) {
+        String mensaje = loadFromMessages(clave);
+        if (mensaje == null) {
+            return clave;
+        }
+        return argumentos == null || argumentos.length == 0
+                ? mensaje : MessageFormat.format(mensaje, argumentos);
     }
 
     private static String resolverPath(String primerSegmento, String... segmentos) {

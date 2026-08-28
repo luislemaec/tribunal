@@ -233,6 +233,10 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return mapearLista(escrutinioFacade.buscaPorMesa(mesa));
     }
 
+    public List<EscrutinioDTO> listarDTOsPorMesaYProceso(Integer mesaId, Integer procesoId) {
+        return mapearLista(escrutinioFacade.listarPorMesaProceso(mesaId, procesoId));
+    }
+
     /**
      * Versión DTO de {@link #prepararActaPorMesa(Mesa, Periodo, List)}: dado
      * un id de mesa, id de periodo e ids de categorías, devuelve la lista de

@@ -3,6 +3,7 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -46,6 +47,10 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
     /** Suma totalVotos de todas las mesas activas en una sola query agregada. */
     public long sumTotalVotos() {
         return mesaFacade.sumTotalVotos();
+    }
+
+    public Map<Integer, Long> contarActivasPorRecinto() {
+        return mesaFacade.contarActivasPorRecinto();
     }
 
     public List<Mesa> getMesasPorParroquias(List<Geograp> parroquias) {
@@ -106,6 +111,18 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
 
     public List<MesaDTO> listarDTOsPorRecintos(List<Recinto> recintos) {
         return mapearLista(mesaFacade.getMesasPorRecintos(recintos));
+    }
+
+    public List<MesaDTO> listarDTOsPorRecintoId(Integer recintoId) {
+        return mapearLista(mesaFacade.listarPorRecinto(recintoId));
+    }
+
+    public List<MesaDTO> listarDTOsPorRecintoYProceso(Integer recintoId, Integer procesoId) {
+        return mapearLista(mesaFacade.listarPorRecintoYProceso(recintoId, procesoId));
+    }
+
+    public MesaDTO obtenerDetalleDTOPorId(Integer mesaId) {
+        return MesaDTO.fromEntity(mesaFacade.buscarDetallePorId(mesaId));
     }
 
     public List<MesaDTO> listarDTOsEscrutadas(EstadoTarea estadoTarea) {

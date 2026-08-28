@@ -19,6 +19,7 @@ public class ListaDTO implements Serializable {
     private String nombre;
     private String slogan;
     private String numero;
+    private Boolean estado;
 
     public static ListaDTO fromEntity(Lista l) {
         if (l == null) {
@@ -29,6 +30,7 @@ public class ListaDTO implements Serializable {
         dto.setNombre(l.getNombre());
         dto.setSlogan(l.getSlogan());
         dto.setNumero(l.getNumero());
+        dto.setEstado(l.getEstado());
         return dto;
     }
 
@@ -38,6 +40,7 @@ public class ListaDTO implements Serializable {
         l.setNombre(this.nombre);
         l.setSlogan(this.slogan);
         l.setNumero(this.numero);
+        l.setEstado(this.estado != null ? this.estado : Boolean.TRUE);
         return l;
     }
 }

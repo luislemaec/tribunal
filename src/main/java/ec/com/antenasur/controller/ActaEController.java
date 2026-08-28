@@ -1,9 +1,7 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -55,6 +53,7 @@ import ec.com.antenasur.service.tec.ProcesoElectoralService;
 import ec.com.antenasur.service.tec.PlantillaCorreoService;
 import ec.com.antenasur.service.tec.RecintoService;
 import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.RepositorioDocumentos;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -297,7 +296,8 @@ public class ActaEController implements Serializable {
         this.listaRecintos = new ArrayList<>();
         this.listaMesas = new ArrayList<>();
         this.listas = listaService.findAll();
-        this.categoriasVotos = categoriaVotoService.getCategoriasOrdenados();
+        this.categoriasVotos = categoriaVotoService.getCategoriasOrdenados(
+                procesoActivo != null ? procesoActivo.getId() : null);
 
         accesoRestringidoPresidenteMesa = esPresidenteMesa();
         usuarioConsultaGerencial = !accesoRestringidoPresidenteMesa && tieneRolConsultaGerencial();
@@ -887,10 +887,7 @@ public class ActaEController implements Serializable {
             return false;
         }
         try {
-            Path path = Paths.get(documento.getPath()).toAbsolutePath().normalize();
-            if (!Files.isRegularFile(path)) {
-                return false;
-            }
+            Path path = RepositorioDocumentos.resolverRutaAlmacenada(documento.getPath());
             if (documento.getHashSha256() == null || documento.getHashSha256().isBlank()) {
                 return true;
             }
@@ -906,7 +903,7 @@ public class ActaEController implements Serializable {
         if (documento == null || documento.getPath() == null || documento.getPath().isBlank()) {
             return false;
         }
-        return Files.isRegularFile(Paths.get(documento.getPath()).toAbsolutePath().normalize());
+        return RepositorioDocumentos.estaDisponible(documento.getPath());
     }
 
     public int getTotalVotosRegistrados() {
@@ -1193,13 +1190,22 @@ public class ActaEController implements Serializable {
         documentoNuevo.setHashSha256(ReportePFD.calcularHashSha256Actual());
         String archivoGenerado = ReportePFD.guardarDocumentosActasEObligatorio(documentoActaE.getNombreReporte());
         documentoNuevo.setPath(archivoGenerado);
-        this.guardarDocumentoBD(documentoNuevo);
+        try {
+            this.guardarDocumentoBD(documentoNuevo);
+        } catch (Exception e) {
+            RepositorioDocumentos.eliminarSilencioso(Path.of(archivoGenerado));
+            throw e;
+        }
         procesoBean.okActivityRegister("GENERA " + documentoActaE.getNombreReporte(), documentoActaE.getNombreReporte() + ".pdf");
         return archivoGenerado;
     }
 
     private Documentos guardarDocumentoBD(Documentos documentoNuevo) {
-        Documentos documentoPersistido = documentoBean.guardarDocumentoPersistido(documentoNuevo);
+        Integer recintoId = mesaSeleccionado != null && mesaSeleccionado.getRecinto() != null
+                ? mesaSeleccionado.getRecinto().getId() : null;
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        Documentos documentoPersistido = documentoBean.guardarDocumentoMesa(
+                documentoNuevo, mesaSeleccionado.getId(), procesoId, recintoId);
         if (documentoPersistido == null || documentoPersistido.getId() == null) {
             throw new IllegalStateException("No se pudo registrar el documento generado.");
         }

@@ -2,6 +2,7 @@ package ec.com.antenasur.itext;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -226,6 +227,17 @@ public class ReporteXLSX {
             FacesContext.getCurrentInstance().responseComplete();
         } catch (IOException ex) {
             LOG.error("ERROR AL DESCARGAR ARCHIVO EXCEL" + ex);
+        }
+    }
+
+    /** Obtiene el libro actual para almacenamiento institucional sin escribir la respuesta HTTP. */
+    public static byte[] obtenerContenidoExcel() throws IOException {
+        if (LIBRO == null) {
+            throw new IOException("No existe un libro Excel inicializado.");
+        }
+        try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            LIBRO.write(salida);
+            return salida.toByteArray();
         }
     }
 

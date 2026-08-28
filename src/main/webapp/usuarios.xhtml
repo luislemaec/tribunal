@@ -52,46 +52,72 @@
                     <p:commandButton value="#{msg['form.usuarios.btn.new']}" icon="pi pi-plus"
                                      styleClass="ui-button-success"
                                      actionListener="#{usuarioControlador.crearNuevoUsuario}"
+                                     process="@this"
                                      update=":frmUsuarios:outPnlUsuario"
                                      oncomplete="PF('dlgUsuario').show()">
                         <p:resetInput target=":frmUsuarios:outPnlUsuario"/>
                     </p:commandButton>
                 </div>
 
-                <!-- DATATABLE -->
+                <p:outputPanel id="pnlBusquedaUsuarios" styleClass="ui-fluid mb-3">
+                    <div class="formgrid grid align-items-end">
+                        <div class="field col-12 md:col-3">
+                            <label for="filtroRol" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.rol']}</label>
+                            <p:selectOneMenu id="filtroRol" value="#{usuarioControlador.filtroUsuarios.rolId}"
+                                             filter="true" filterMatchMode="contains">
+                                <f:selectItem itemLabel="#{msg['form.usuarios.filter.rol.todos']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{usuarioControlador.listaRoles}" var="rol"
+                                               itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-2">
+                            <label for="filtroUsername" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.username']}</label>
+                            <p:inputText id="filtroUsername" value="#{usuarioControlador.filtroUsuarios.username}"
+                                         maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.username']}"/>
+                        </div>
+                        <div class="field col-12 md:col-2">
+                            <label for="filtroNombres" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.nombres']}</label>
+                            <p:inputText id="filtroNombres" value="#{usuarioControlador.filtroUsuarios.nombres}"
+                                         maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.nombres']}"/>
+                        </div>
+                        <div class="field col-12 md:col-3">
+                            <label for="filtroIglesia" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.iglesia']}</label>
+                            <p:inputText id="filtroIglesia" value="#{usuarioControlador.filtroUsuarios.iglesiaNombre}"
+                                         maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.iglesia']}"/>
+                        </div>
+                        <div class="field col-12 md:col-2 flex align-items-end mb-3">
+                            <p:selectBooleanCheckbox id="soloDadosBaja"
+                                                     value="#{usuarioControlador.filtroUsuarios.soloDadosBaja}"
+                                                     itemLabel="#{msg['form.usuarios.filter.dados.baja']}"/>
+                        </div>
+                        <div class="field col-12 flex justify-content-end gap-2 mb-0">
+                            <p:commandButton value="#{msg['form.usuarios.btn.search']}" icon="pi pi-search"
+                                             action="#{usuarioControlador.buscarUsuarios}"
+                                             process="pnlBusquedaUsuarios" update="tblUsuarios"/>
+                            <p:commandButton value="#{msg['form.usuarios.btn.clear']}" icon="pi pi-filter-slash"
+                                             styleClass="ui-button-outlined ui-button-secondary"
+                                             action="#{usuarioControlador.limpiarBusquedaUsuarios}"
+                                             process="@this" update="pnlBusquedaUsuarios tblUsuarios"/>
+                        </div>
+                    </div>
+                </p:outputPanel>
+
+                <!-- DATATABLE: la consulta y el conteo se ejecutan bajo demanda. -->
                 <p:dataTable id="tblUsuarios" widgetVar="wdTablaUsuarios" var="rolUs"
-                             value="#{usuarioControlador.listaRolUsuarios}"
+                             value="#{usuarioControlador.usuariosLazy}" lazy="true"
                              reflow="true"
+                             first="#{usuarioControlador.primerRegistroUsuarios}"
                              paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
                              rowSelectMode="add"
                              paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} usuarios"
-                             emptyMessage="No hay usuarios registrados. Use el botón 'Nuevo' para crear uno."
+                             emptyMessage="#{usuarioControlador.busquedaUsuariosEjecutada ? msg['form.usuarios.empty.search'] : msg['form.usuarios.empty.initial']}"
                              showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm"
-                             globalFilter="#{globalFilter}"
-                             filteredValue="#{usuarioControlador.listaRolUsuariosFiltrada}">
-
-                    <f:facet name="header">
-                        <div class="flex flex-column md:flex-row md:justify-content-end gap-2">
-                            <span class="p-input-icon-left">
-                                <i class="pi pi-search"></i>
-                                <p:inputText id="globalFilter"
-                                             placeholder="Buscar usuario, nombre, rol…"
-                                             onkeyup="PF('wdTablaUsuarios').filter()"
-                                             styleClass="w-full md:w-20rem"/>
-                            </span>
-                        </div>
-                    </f:facet>
+                             styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <!-- Acceso: username (bold) + correo apilados -->
-                    <p:column headerText="Acceso"
-                              sortBy="#{rolUs.usuario.username}"
-                              filterBy="#{rolUs.usuario.username}"
-                              filterMatchMode="contains"
-                              filterPlaceholder="Filtrar usuario…"
-                              style="min-width:13rem">
+                    <p:column headerText="Acceso" style="min-width:13rem">
                         <f:facet name="export">
                             <h:outputText value="#{rolUs.usuario.username} — #{rolUs.usuario.correo}"/>
                         </f:facet>
@@ -109,12 +135,7 @@
                     </p:column>
 
                     <!-- Persona: nombres + apellidos -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.nombres']}"
-                              sortBy="#{rolUs.usuario.personaNombres}"
-                              filterBy="#{rolUs.usuario.personaNombres}"
-                              filterMatchMode="contains"
-                              filterPlaceholder="Filtrar nombre…"
-                              style="min-width:12rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.nombres']}" style="min-width:12rem">
                         <span class="text-800 text-sm">
                             #{rolUs.usuario.personaNombres}
                             <h:outputText rendered="#{not empty rolUs.usuario.personaApellidos}"
@@ -123,11 +144,7 @@
                     </p:column>
 
                     <!-- Rol -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.rol']}"
-                              sortBy="#{rolUs.rol.nombre}"
-                              filterBy="#{rolUs.rol.nombre}"
-                              filterMatchMode="contains"
-                              styleClass="text-center"
+                    <p:column headerText="#{msg['form.usuarios.table.header.rol']}" styleClass="text-center"
                               style="width:12rem">
                         <p:tag value="#{rolUs.rol.nombre}"
                                severity="#{rolUs.rol.nombre.contains('Administrador') ? 'danger'
@@ -137,15 +154,17 @@
                     </p:column>
 
                     <!-- Iglesia asignada -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.iglesia']}"
-                              sortBy="#{rolUs.usuario.iglesiaNombre}"
-                              filterBy="#{rolUs.usuario.iglesiaNombre}"
-                              filterMatchMode="contains"
-                              style="min-width:11rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.iglesia']}" style="min-width:11rem">
                         <p:chip rendered="#{not empty rolUs.usuario.iglesiaNombre}"
                                 label="#{rolUs.usuario.iglesiaNombre}" icon="pi pi-home"/>
                         <h:outputText rendered="#{empty rolUs.usuario.iglesiaNombre}"
                                       value="—" styleClass="text-400"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.usuarios.table.header.estado']}"
+                              styleClass="text-center" style="width:9rem">
+                        <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
+                               severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"/>
                     </p:column>
 
                     <!-- Acciones -->
@@ -155,6 +174,7 @@
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                          title="#{msg['form.usuarios.btn.edit.title']}"
+                                         rendered="#{rolUs.usuario.estado}"
                                          update="frmUsuarios:outPnlUsuario"
                                          oncomplete="PF('dlgUsuario').show()"
                                          process="@this"
@@ -165,13 +185,21 @@
                         <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.usuarios.confirm.delete.header']}"
-                                         actionListener="#{usuarioControlador.eliminarUsuario}"
+                                         rendered="#{rolUs.usuario.estado}"
+                                         action="#{usuarioControlador.eliminarUsuario(rolUs.usuario)}"
                                          process="@this" update="tblUsuarios">
-                            <f:setPropertyActionListener value="#{rolUs.usuario}"
-                                                         target="#{usuarioControlador.usuarioSeleccionado}"/>
                             <p:confirm header="#{msg['form.usuarios.confirm.delete.header']}"
                                        message="#{msg['form.usuarios.confirm.delete.message']}"
                                        icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+
+                        <p:commandButton icon="pi pi-refresh"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                         title="#{msg['form.usuarios.btn.restore']}"
+                                         rendered="#{not rolUs.usuario.estado}"
+                                         action="#{usuarioControlador.prepararReactivacion(rolUs)}"
+                                         process="@this" update="outPnlReactivarUsuario"
+                                         oncomplete="PF('dlgReactivarUsuario').show()">
                         </p:commandButton>
 
                     </p:column>
@@ -183,7 +211,7 @@
             <!-- ======================================================
                  DIÁLOGO: NUEVO / EDITAR USUARIO
                  ====================================================== -->
-            <p:dialog header="#{msg['form.usuarios.dialog.title']}"
+            <p:dialog header="#{usuarioControlador.esUsuarioNuevo ? msg['form.usuarios.dialog.title.new'] : msg['form.usuarios.dialog.title.edit']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgUsuario"
                       responsive="true" width="620"
@@ -205,8 +233,9 @@
                                              value="#{usuarioControlador.usuarioSeleccionado.personaDocumento}"
                                              required="true" maxlength="13"
                                              styleClass="w-full"
-                                             disabled="#{(usuarioControlador.personaRegistroCivil ne null)
-                                                         or (not empty usuarioControlador.usuarioSeleccionado.personaDocumento)}">
+                                             disabled="#{not usuarioControlador.esUsuarioNuevo
+                                                         or (usuarioControlador.personaRegistroCivil ne null)
+                                                         or (usuarioControlador.usuarioSeleccionado.personaId ne null)}">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
                                             update="cedula nombres rolUs correo iglesiaPanel"
@@ -235,7 +264,7 @@
                                 <p:inputText id="rolUs"
                                              value="#{usuarioControlador.usuarioSeleccionado.username}"
                                              required="true"
-                                             disabled="#{usuarioControlador.personaRegistroCivil eq null}"
+                                             disabled="#{not usuarioControlador.esUsuarioNuevo}"
                                              styleClass="w-full"/>
                             </div>
 
@@ -304,13 +333,68 @@
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
-                                         actionListener="#{usuarioControlador.actualizarUsuario()}"
+                                         action="#{usuarioControlador.actualizarUsuario}"
                                          update="outPnlUsuario tblUsuarios"
                                          process="outPnlUsuario @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgUsuario').hide()"/>
                     </div>
                 </f:facet>
 
+            </p:dialog>
+
+            <p:dialog header="#{msg['form.usuarios.confirm.restore.header']}"
+                      showEffect="fade" hideEffect="fade"
+                      modal="true" widgetVar="dlgReactivarUsuario"
+                      responsive="true" width="520" style="max-width:96vw"
+                      closeOnEscape="true">
+
+                <p:outputPanel id="outPnlReactivarUsuario" class="ui-fluid">
+                    <p:outputPanel rendered="#{not empty usuarioControlador.rolUsuarioParaReactivacion}">
+                        <p class="mt-0 mb-4">
+                            #{msg['form.usuarios.confirm.restore.message']}
+                        </p>
+                        <div class="field">
+                            <label class="font-medium text-700 text-sm">
+                                #{msg['form.usuarios.label.username']}
+                            </label>
+                            <p:inputText value="#{usuarioControlador.rolUsuarioParaReactivacion.usuario.username}"
+                                         disabled="true" styleClass="w-full"/>
+                        </div>
+                        <p:outputPanel rendered="#{usuarioControlador.rolReactivacionRequiereIglesia}"
+                                       styleClass="field block">
+                            <label for="iglesiaReactivacion" class="font-medium text-700 text-sm">
+                                #{msg['form.usuarios.label.iglesia']} <span class="text-red-500">*</span>
+                            </label>
+                            <p:selectOneMenu id="iglesiaReactivacion"
+                                             value="#{usuarioControlador.iglesiaReactivacionId}"
+                                             filter="true" filterMatchMode="contains" required="true"
+                                             requiredMessage="#{msg['form.usuarios.label.iglesia.required']}"
+                                             styleClass="w-full">
+                                <f:selectItem itemLabel="#{msg['form.usuarios.placeholder.iglesia']}" itemValue=""/>
+                                <f:selectItems value="#{usuarioControlador.listaIglesias}" var="igl"
+                                               itemLabel="#{igl.nombre} - #{igl.comunidad}"
+                                               itemValue="#{igl.id}"/>
+                            </p:selectOneMenu>
+                            <small class="text-500 mt-1 block">
+                                #{msg['form.usuarios.label.iglesia.hint']}
+                            </small>
+                        </p:outputPanel>
+                    </p:outputPanel>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
+                                         onclick="PF('dlgReactivarUsuario').hide()"
+                                         styleClass="ui-button-outlined ui-button-secondary" type="button"/>
+                        <p:commandButton value="#{msg['form.usuarios.btn.restore']}" icon="pi pi-refresh"
+                                         styleClass="ui-button-success"
+                                         action="#{usuarioControlador.confirmarReactivacion}"
+                                         process="outPnlReactivarUsuario @this"
+                                         update="outPnlReactivarUsuario tblUsuarios"
+                                         oncomplete="if (!args.validationFailed) PF('dlgReactivarUsuario').hide()"/>
+                    </div>
+                </f:facet>
             </p:dialog>
 
         </h:form>
