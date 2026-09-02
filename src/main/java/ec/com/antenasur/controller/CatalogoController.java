@@ -1,9 +1,12 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -15,7 +18,9 @@ import org.primefaces.model.TreeNode;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.CatalogoGeneralDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.service.tec.CatalogoGeneralService;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 public class CatalogoController implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final String FORMULARIO = "frmCatalogos";
+    private static final String TABLA = FORMULARIO + ":trTblCatalogo";
+    private static final String PANEL_DIALOGO = FORMULARIO + ":outPnlCatalogo";
+    private static final String GROWL_GLOBAL = JsfUtil.GROWL_MESSAGES;
 
     @Inject
     private LoginBean loginBean;
@@ -40,7 +49,14 @@ public class CatalogoController implements Serializable {
 
     @Setter
     @Getter
-    private List<CatalogoGeneralDTO> listaCatalogoPadres, listaCatalogoHijos;
+    private List<CatalogoGeneralDTO> listaCatalogoPadres;
+
+    @Setter
+    @Getter
+    private List<CatalogoGeneralDTO> listaCatalogoHijos;
+
+    @Setter
+    private List<CatalogoGeneralDTO> catalogosPadreDisponibles;
 
     @Setter
     @Getter
@@ -57,86 +73,168 @@ public class CatalogoController implements Serializable {
 
     @PostConstruct
     private void init() {
-        try {
-            listaCatalogoPadres = catalogoService.listarDTOsPorPadre();
-            if (listaCatalogoPadres != null && !listaCatalogoPadres.isEmpty()) {
-                this.root = new CheckboxTreeNode<CatalogoGeneralDTO>(listaCatalogoPadres.get(0), null);
-                crearNodoRecursivo(listaCatalogoPadres, root);
-            }
-        } catch (Exception e) {
-            log.error("Error al inicializar valores", e);
-        }
+        cargarArbolCatalogos();
     }
 
     public void crearNodoRecursivo(List<CatalogoGeneralDTO> objData, TreeNode<CatalogoGeneralDTO> nodoPadre) {
-        try {
-            for (CatalogoGeneralDTO varnodo : objData) {
-                TreeNode<CatalogoGeneralDTO> nodoHijo = new CheckboxTreeNode<CatalogoGeneralDTO>(varnodo, nodoPadre);
-                List<CatalogoGeneralDTO> listaHijos = catalogoService.listarDTOsHijosDe(varnodo.getId());
-                if (listaHijos != null && !listaHijos.isEmpty()) {
-                    crearNodoRecursivo(listaHijos, nodoHijo);
-                }
+        if (objData == null || objData.isEmpty() || nodoPadre == null) {
+            return;
+        }
+        for (CatalogoGeneralDTO varnodo : objData) {
+            TreeNode<CatalogoGeneralDTO> nodoHijo = new CheckboxTreeNode<>(varnodo, nodoPadre);
+            List<CatalogoGeneralDTO> listaHijos = catalogoService.listarDTOsHijosDe(varnodo.getId());
+            if (listaHijos != null && !listaHijos.isEmpty()) {
+                crearNodoRecursivo(listaHijos, nodoHijo);
             }
-        } catch (Exception e) {
-            log.error("ERROR EN CREAR NODO RECURSIVO", e);
         }
     }
 
     @SuppressWarnings("rawtypes")
     public void onRowEdit(RowEditEvent<TreeNode> event) {
         try {
+            validarPermisoAdministracion();
             this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
-            if (catalogoSeleccionado != null) {
-                catalogoSeleccionado = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
-                JsfUtil.addSuccessMessage("Catálogo actualizado!");
-                init();
+            if (catalogoSeleccionado == null) {
+                throw new NegocioException("catalogo.mensaje.no.seleccionado");
             }
+            catalogoService.guardarDesdeDTO(catalogoSeleccionado);
+            JsfUtil.addSuccessMessageFromBundle("catalogo.mensaje.actualizado");
+        } catch (NegocioException e) {
+            manejarErrorNegocio(e);
         } catch (Exception e) {
-            log.error("Error al actualizar", e);
+            log.error("Error al actualizar catalogo", e);
+            marcarValidacionFallida();
+            JsfUtil.addErrorMessageFromBundle("catalogo.mensaje.error");
+        } finally {
+            catalogoSeleccionado = null;
+            cargarArbolCatalogos();
+            PrimeFaces.current().ajax().update(TABLA, GROWL_GLOBAL);
         }
     }
 
     @SuppressWarnings("rawtypes")
     public void onRowCancel(RowEditEvent<TreeNode> event) {
         this.catalogoSeleccionado = (CatalogoGeneralDTO) event.getObject().getData();
-        JsfUtil.addWarningMessage("Cancelado! " + catalogoSeleccionado.getNombre());
+        JsfUtil.addWarningMessageFromBundle("catalogo.mensaje.edicion.cancelada",
+                catalogoSeleccionado != null ? catalogoSeleccionado.getNombre() : "");
         catalogoSeleccionado = null;
-        PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
+        PrimeFaces.current().ajax().update(GROWL_GLOBAL);
     }
 
     public void nuevoCatalogo() {
-        this.catalogoSeleccionado = new CatalogoGeneralDTO();
+        try {
+            validarPermisoAdministracion();
+            this.catalogoSeleccionado = new CatalogoGeneralDTO();
+        } catch (NegocioException e) {
+            manejarErrorNegocio(e);
+        }
     }
 
     public void guardarCatalogo() {
         try {
+            validarPermisoAdministracion();
             if (catalogoSeleccionado == null) {
-                return;
+                throw new NegocioException("catalogo.mensaje.no.seleccionado");
             }
             boolean esEdicion = catalogoSeleccionado.getId() != null;
-            CatalogoGeneralDTO persistido = catalogoService.guardarDesdeDTO(catalogoSeleccionado);
-            if (persistido != null) {
-                JsfUtil.addSuccessMessage(esEdicion ? "Catálogo actualizado!" : "Catálogo creado!");
-            }
+            catalogoService.guardarDesdeDTO(catalogoSeleccionado);
+            JsfUtil.addSuccessMessageFromBundle(esEdicion
+                    ? "catalogo.mensaje.actualizado"
+                    : "catalogo.mensaje.creado");
             catalogoSeleccionado = null;
-            init();
-            PrimeFaces.current().executeScript("PF('dlgCatalogo').hide()");
-            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo");
+            cargarArbolCatalogos();
+        } catch (NegocioException e) {
+            manejarErrorNegocio(e);
         } catch (Exception e) {
-            log.error("Error al guardar informacion", e);
+            log.error("Error al guardar catalogo", e);
+            marcarValidacionFallida();
+            JsfUtil.addErrorMessageFromBundle("catalogo.mensaje.error");
+        } finally {
+            PrimeFaces.current().ajax().update(PANEL_DIALOGO, TABLA, GROWL_GLOBAL);
         }
     }
 
     public void eliminarCatalogoSeleccionado() {
         try {
-            if (catalogoSeleccionado != null && catalogoSeleccionado.getId() != null) {
-                catalogoService.eliminarPorId(catalogoSeleccionado.getId());
-                JsfUtil.addSuccessMessage("Catálogo eliminado!");
+            validarPermisoAdministracion();
+            if (catalogoSeleccionado == null || catalogoSeleccionado.getId() == null) {
+                throw new NegocioException("catalogo.mensaje.no.seleccionado");
             }
-            PrimeFaces.current().ajax().update("frmPersonas:trTblCatalogo", "msgs");
-            init();
+            catalogoService.deshabilitarPorId(catalogoSeleccionado.getId());
+            JsfUtil.addSuccessMessageFromBundle("catalogo.mensaje.deshabilitado");
+            catalogoSeleccionado = null;
+            cargarArbolCatalogos();
+        } catch (NegocioException e) {
+            manejarErrorNegocio(e);
         } catch (Exception e) {
-            log.error("Error al eliminar catalogo", e);
+            log.error("Error al deshabilitar catalogo", e);
+            marcarValidacionFallida();
+            JsfUtil.addErrorMessageFromBundle("catalogo.mensaje.error");
+        } finally {
+            PrimeFaces.current().ajax().update(TABLA, GROWL_GLOBAL);
         }
+    }
+
+    public void cancelarDialogo() {
+        catalogoSeleccionado = null;
+        PrimeFaces.current().ajax().update(PANEL_DIALOGO);
+    }
+
+    public boolean puedeAdministrarCatalogos() {
+        return tieneRol(Constantes.getRolAdministrador()) || tieneRol(Constantes.getRolTribunal());
+    }
+
+    public List<CatalogoGeneralDTO> getCatalogosPadreDisponibles() {
+        if (catalogosPadreDisponibles == null) {
+            return Collections.emptyList();
+        }
+        if (catalogoSeleccionado == null || catalogoSeleccionado.getId() == null) {
+            return catalogosPadreDisponibles;
+        }
+        List<CatalogoGeneralDTO> disponibles = new ArrayList<>();
+        for (CatalogoGeneralDTO catalogo : catalogosPadreDisponibles) {
+            if (catalogo != null && !catalogoSeleccionado.getId().equals(catalogo.getId())) {
+                disponibles.add(catalogo);
+            }
+        }
+        return disponibles;
+    }
+
+    private void cargarArbolCatalogos() {
+        try {
+            listaCatalogoPadres = catalogoService.listarDTOsPorPadre();
+            catalogosPadreDisponibles = catalogoService.listarDTOs();
+            root = new CheckboxTreeNode<>(new CatalogoGeneralDTO(), null);
+            crearNodoRecursivo(listaCatalogoPadres, root);
+        } catch (Exception e) {
+            log.error("Error al inicializar catalogos", e);
+            root = new CheckboxTreeNode<>(new CatalogoGeneralDTO(), null);
+            catalogosPadreDisponibles = Collections.emptyList();
+            JsfUtil.addErrorMessageFromBundle("catalogo.mensaje.error");
+        }
+    }
+
+    private void validarPermisoAdministracion() {
+        if (!puedeAdministrarCatalogos()) {
+            throw new NegocioException("catalogo.mensaje.sin.permiso");
+        }
+    }
+
+    private boolean tieneRol(String rolCorto) {
+        if (loginBean == null || loginBean.getRoles() == null || rolCorto == null) {
+            return false;
+        }
+        String prefijo = JsfUtil.getProperty("roles.sitec", true);
+        return loginBean.getRoles().contains((prefijo == null ? "" : prefijo) + rolCorto);
+    }
+
+    private void manejarErrorNegocio(NegocioException e) {
+        marcarValidacionFallida();
+        JsfUtil.addWarningMessageFromBundle(e.getMessage());
+    }
+
+    private void marcarValidacionFallida() {
+        FacesContext.getCurrentInstance().validationFailed();
+        PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
     }
 }

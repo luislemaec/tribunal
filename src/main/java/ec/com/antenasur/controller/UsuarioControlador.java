@@ -477,7 +477,7 @@ public class UsuarioControlador implements Serializable {
                 return;
             }
             textHtml = "<p><strong>Estimado/a " + usuarioSeleccionado.getPersonaNombres() + "</strong></p>"
-                    + "<p>Se ha creado el usuario en el Sistema de Seleccion de Medios, puede iniciar su sesi&oacute;n con su usuario </p>"
+                    + "<p>Se ha creado el usuario en el TEC, puede iniciar su sesi&oacute;n con su usuario </p>"
                     + "<p>Datos de acceso:&nbsp;</p>" + "<p><strong>Usuario:</strong> "
                     + usuarioSeleccionado.getUsername() + "</p>" + "<p><strong>Contrase&ntilde;a:</strong> "
                     + usuarioSeleccionado.getPersonaDocumento() + "</p>"

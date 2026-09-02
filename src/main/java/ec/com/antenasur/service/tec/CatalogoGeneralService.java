@@ -7,6 +7,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.CatalogoGeneralDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.service.AbstractService;
@@ -95,29 +96,76 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
     }
 
     public CatalogoGeneralDTO guardarDesdeDTO(CatalogoGeneralDTO dto) {
-        if (dto == null) return null;
+        validarCatalogo(dto);
         CatalogoGeneral padre = (dto.getPadreId() != null) ? catalogoFacade.find(dto.getPadreId()) : null;
+        if (dto.getPadreId() != null && padre == null) {
+            throw new NegocioException("catalogo.mensaje.padre.invalido");
+        }
+        if (dto.getId() != null && dto.getId().equals(dto.getPadreId())) {
+            throw new NegocioException("catalogo.mensaje.padre.mismo");
+        }
+        if (catalogoFacade.buscarActivoPorPadreYNombre(dto.getPadreId(), dto.getNombre(), dto.getId()) != null) {
+            throw new NegocioException("catalogo.mensaje.duplicado");
+        }
         if (dto.getId() == null) {
             CatalogoGeneral nuevo = dto.toEntity();
+            aplicarValoresNormalizados(nuevo, dto);
             nuevo.setPadre(padre);
             return CatalogoGeneralDTO.fromEntity(catalogoFacade.create(nuevo));
         }
         CatalogoGeneral actual = catalogoFacade.find(dto.getId());
-        if (actual == null) return null;
-        actual.setNombre(dto.getNombre());
-        actual.setDescripcion(dto.getDescripcion());
-        actual.setHistorial(dto.getHistorial());
-        actual.setOrden(dto.getOrden());
-        actual.setInfo(dto.getInfo());
+        if (actual == null) {
+            throw new NegocioException("catalogo.mensaje.no.encontrado");
+        }
+        aplicarValoresNormalizados(actual, dto);
         actual.setPadre(padre);
         return CatalogoGeneralDTO.fromEntity(catalogoFacade.edit(actual));
     }
 
-    public CatalogoGeneralDTO eliminarPorId(Integer id) {
-        if (id == null) return null;
+    public CatalogoGeneralDTO deshabilitarPorId(Integer id) {
+        if (id == null) {
+            throw new NegocioException("catalogo.mensaje.no.seleccionado");
+        }
         CatalogoGeneral c = catalogoFacade.find(id);
-        if (c == null) return null;
+        if (c == null) {
+            throw new NegocioException("catalogo.mensaje.no.encontrado");
+        }
+        if (catalogoFacade.contarHijosActivos(id) > 0) {
+            throw new NegocioException("catalogo.mensaje.usado");
+        }
+        if (catalogoFacade.contarReferenciasOperativas(id) > 0) {
+            throw new NegocioException("catalogo.mensaje.usado");
+        }
         return CatalogoGeneralDTO.fromEntity(catalogoFacade.delete(c));
+    }
+
+    public CatalogoGeneralDTO eliminarPorId(Integer id) {
+        return deshabilitarPorId(id);
+    }
+
+    private void validarCatalogo(CatalogoGeneralDTO dto) {
+        if (dto == null) {
+            throw new NegocioException("catalogo.mensaje.no.seleccionado");
+        }
+        if (!tieneTexto(dto.getNombre()) || !tieneTexto(dto.getDescripcion()) || dto.getOrden() == null) {
+            throw new NegocioException("catalogo.mensaje.campos.obligatorios");
+        }
+    }
+
+    private void aplicarValoresNormalizados(CatalogoGeneral catalogo, CatalogoGeneralDTO dto) {
+        catalogo.setNombre(normalizar(dto.getNombre()));
+        catalogo.setDescripcion(normalizar(dto.getDescripcion()));
+        catalogo.setHistorial(dto.getHistorial());
+        catalogo.setOrden(dto.getOrden());
+        catalogo.setInfo(tieneTexto(dto.getInfo()) ? dto.getInfo().trim() : null);
+    }
+
+    private boolean tieneTexto(String valor) {
+        return valor != null && !valor.trim().isEmpty();
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim().toUpperCase();
     }
 
     private List<CatalogoGeneralDTO> mapearLista(List<CatalogoGeneral> entidades) {

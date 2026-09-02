@@ -17,157 +17,232 @@
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
-        <div class="grid mb-2">
+        <div class="grid mb-3">
             <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f59e0b,#d97706);flex-shrink:0">
-                        <i class="pi pi-star text-white" style="font-size:1.5rem"></i>
+                <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="flex align-items-center gap-3">
+                        <div class="flex justify-content-center align-items-center border-round-lg bg-orange-500 text-white w-4rem h-4rem flex-shrink-0">
+                            <i class="pi pi-star text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.autoridades.title']}</h2>
+                            <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.autoridades.header']}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.autoridades.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.autoridades.header']}</p>
-                    </div>
+                    <p:tag value="#{empty tribunalController.periodoSeleccionado ? msg['form.autoridades.estado.sinProceso'] : tribunalController.periodoSeleccionado.nombre}"
+                           severity="#{empty tribunalController.periodoSeleccionado ? 'warning' : 'info'}"
+                           icon="pi pi-calendar"/>
                 </div>
             </div>
         </div>
 
         <h:form id="frmPeriodos">
 
-            <div class="surface-card shadow-1 border-round-lg p-3">
+            <div class="surface-card shadow-1 border-round-lg p-3 md:p-4">
 
-                <!-- DATATABLE TRIBUNAL -->
+                <div class="flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                    <div>
+                        <h3 class="m-0 text-900 font-semibold text-xl">#{msg['form.autoridades.seccion.listado']}</h3>
+                        <span class="text-500 text-sm">#{msg['form.autoridades.seccion.listado.detalle']}</span>
+                    </div>
+                    <span class="p-input-icon-left w-full sm:w-20rem">
+                        <i class="pi pi-search"/>
+                        <p:inputText id="globalFilter" styleClass="w-full"
+                                     placeholder="#{msg['form.autoridades.placeholder.buscar']}"
+                                     onkeyup="PF('tblAutoridadesWidget').filter()"/>
+                    </span>
+                </div>
+
                 <p:dataTable id="tbtribunal" var="tribunal"
-                             value="#{tribunalController.listaAutoridadesTribunal}" reflow="true"
-                             emptyMessage="No hay autoridades registradas."
+                             value="#{tribunalController.listaAutoridadesTribunal}"
+                             widgetVar="tblAutoridadesWidget"
+                             reflow="true" paginator="true" rows="10"
+                             rowsPerPageTemplate="10,20,50"
+                             paginatorPosition="bottom"
+                             currentPageReportTemplate="{startRecord}-{endRecord} / {totalRecords}"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             emptyMessage="#{msg['form.autoridades.empty']}"
                              showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
-                    <p:column headerText="Id"
-                              sortBy="#{tribunal.id}"
+                    <p:column headerText="#{msg['form.autoridades.table.id']}"
+                              sortBy="#{tribunal.id}" filterBy="#{tribunal.id}"
                               rendered="#{loginBean.roles.contains('SITEC-Administrador')}"
-                              style="width:6rem">
+                              styleClass="text-center" style="width:6rem">
                         <span class="text-sm text-500">#{tribunal.id}</span>
                     </p:column>
 
-                    <p:column headerText="Cargo" sortBy="#{tribunal.cargoNombre}" style="min-width:10rem">
-                        <span class="text-sm font-medium text-900">#{tribunal.cargoNombre}</span>
+                    <p:column headerText="#{msg['form.autoridades.table.cargo']}"
+                              sortBy="#{tribunal.cargoNombre}" filterBy="#{tribunal.cargoNombre}"
+                              style="min-width:12rem">
+                        <span class="text-sm font-semibold text-900">#{tribunal.cargoNombre}</span>
                     </p:column>
 
-                    <p:column headerText="Periodo" sortBy="#{tribunal.periodoNombre}" style="min-width:9rem">
-                        <p:tag value="#{tribunal.periodoNombre}" severity="info"/>
+                    <p:column headerText="#{msg['form.autoridades.table.proceso']}"
+                              sortBy="#{tribunal.periodoNombre}" filterBy="#{tribunal.periodoNombre}"
+                              style="min-width:12rem">
+                        <p:tag value="#{tribunal.periodoNombre}" severity="info" icon="pi pi-calendar"/>
                     </p:column>
 
-                    <p:column headerText="Nombres" style="min-width:14rem">
-                        <p:commandButton icon="pi pi-user-plus"
-                                         styleClass="ui-button-rounded ui-button-info"
-                                         update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter"
-                                         oncomplete="PF('dlgAsignaAutoridad').show()"
-                                         process="@this"
-                                         rendered="#{tribunal.iglesiaPersona.persona eq null}"
-                                         action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}">
-                        </p:commandButton>
-                        <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}"
-                                      rendered="#{tribunal.iglesiaPersona.persona ne null}"
-                                      styleClass="text-sm font-medium text-900"/>
+                    <p:column headerText="#{msg['form.autoridades.table.autoridad']}"
+                              sortBy="#{tribunal.iglesiaPersona.persona.nombres}"
+                              filterBy="#{tribunal.iglesiaPersona.persona.nombres}"
+                              style="min-width:16rem">
+                        <div class="flex align-items-center gap-2">
+                            <span class="inline-flex align-items-center justify-content-center border-circle bg-primary-50 text-primary w-2rem h-2rem flex-shrink-0">
+                                <i class="pi #{tribunal.iglesiaPersona.persona ne null ? 'pi-user' : 'pi-user-plus'}"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}"
+                                              rendered="#{tribunal.iglesiaPersona.persona ne null}"
+                                              styleClass="block text-sm font-medium text-900 white-space-normal"/>
+                                <p:commandButton value="#{msg['form.autoridades.btn.asignar']}" icon="pi pi-user-plus"
+                                                 styleClass="ui-button-info ui-button-sm"
+                                                 update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
+                                                 oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
+                                                 process="@this"
+                                                 rendered="#{tribunal.iglesiaPersona.persona eq null}"
+                                                 action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}"/>
+                            </div>
+                        </div>
                     </p:column>
 
-                    <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:8rem">
-                        <p:commandButton icon="pi pi-user-edit"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="Reasignar autoridad"
-                                         update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter"
-                                         oncomplete="PF('dlgAsignaAutoridad').show()"
-                                         process="@this"
-                                         disabled="#{tribunal.iglesiaPersona.persona eq null}"
-                                         action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}">
-                        </p:commandButton>
-                        <p:commandButton icon="pi pi-user-minus"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="Quitar autoridad"
-                                         actionListener="#{tribunalController.eliminarAutoridadSeleccionada}"
-                                         process="@this" update="@form"
-                                         disabled="#{tribunal.iglesiaPersona.persona eq null}">
-                            <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
-                            <p:confirm header="Confirmar eliminación"
-                                       message="¿Está seguro que desea eliminar esta autoridad?"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
+                    <p:column headerText="#{msg['form.autoridades.table.iglesia']}"
+                              sortBy="#{tribunal.iglesiaPersona.iglesia.nombre}"
+                              filterBy="#{tribunal.iglesiaPersona.iglesia.nombre}"
+                              style="min-width:14rem">
+                        <h:outputText value="#{tribunal.iglesiaPersona.iglesia.nombre}"
+                                      rendered="#{tribunal.iglesiaPersona.iglesia ne null}"
+                                      styleClass="text-sm text-700 white-space-normal"/>
+                        <p:tag value="#{msg['form.autoridades.estado.pendiente']}"
+                               severity="warning"
+                               rendered="#{tribunal.iglesiaPersona.iglesia eq null}"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.autoridades.table.acciones']}" exportable="false"
+                              styleClass="text-center" style="width:9rem">
+                        <div class="flex justify-content-center gap-2">
+                            <p:commandButton icon="pi pi-user-edit"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             title="#{msg['form.autoridades.btn.reasignar.title']}"
+                                             update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
+                                             oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
+                                             process="@this"
+                                             disabled="#{tribunal.iglesiaPersona.persona eq null}"
+                                             action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}"/>
+                            <p:commandButton icon="pi pi-user-minus"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             title="#{msg['form.autoridades.btn.quitar.title']}"
+                                             actionListener="#{tribunalController.eliminarAutoridadSeleccionada}"
+                                             process="@this" update="tbtribunal :frmGlobal:growlGlobal"
+                                             disabled="#{tribunal.iglesiaPersona.persona eq null}">
+                                <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
+                                <p:confirm header="#{msg['form.autoridades.confirm.delete.header']}"
+                                           message="#{msg['form.autoridades.confirm.delete.message']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </div>
                     </p:column>
                 </p:dataTable>
 
-            </div><!-- /surface-card -->
+            </div>
 
-            <!-- ======================================================
-                 DIALOGO: ASIGNAR AUTORIDAD
-                 ====================================================== -->
-            <p:dialog header="Asignar o reasignar autoridad"
+            <p:dialog header="#{msg['form.autoridades.dialog.title']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgAsignaAutoridad"
-                      responsive="true" width="520"
+                      responsive="true" width="672"
                       style="max-width:96vw"
-                      contentStyle="overflow-y:auto;max-height:75vh"
+                      contentStyleClass="p-0"
                       closeOnEscape="true">
 
-                <!-- Búsqueda por cédula -->
-                <p:outputPanel id="outPnlAsignaAutoridadBusca" class="ui-fluid">
-                    <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
-                        <div class="formgrid grid">
-                            <div class="field col-12">
-                                <label for="cedulaBuscar" class="font-medium text-700 text-sm">
-                                    Número de cédula
-                                </label>
-                                <div class="flex gap-2">
-                                    <p:inputText id="cedulaBuscar" type="text"
-                                                 placeholder="0600000000" styleClass="mask-cedula flex-1"
-                                                 value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
-                                    <p:commandButton icon="pi pi-search"
-                                                     styleClass="ui-button-info"
-                                                     actionListener="#{tribunalController.buscaPersona}"
-                                                     update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad outPnlFooter"
-                                                     process="outPnlAsignaAutoridadBusca @this"/>
+                <div class="p-3 md:p-4">
+                    <p:outputPanel id="outPnlAsignaAutoridadBusca" class="ui-fluid">
+                        <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
+                            <div class="surface-50 border-round-lg p-3 mb-3">
+                                <div class="flex align-items-center gap-2 mb-2">
+                                    <i class="pi pi-id-card text-primary"></i>
+                                    <span class="font-semibold text-800">#{msg['form.autoridades.seccion.busqueda']}</span>
                                 </div>
-                                <small class="text-500">Ingrese el número de cédula a buscar.</small>
+                                <div class="formgrid grid">
+                                    <div class="field col-12 md:col-8">
+                                        <label for="cedulaBuscar" class="font-medium text-700 text-sm">
+                                            #{msg['form.autoridades.label.cedula']} <span class="text-red-500">*</span>
+                                        </label>
+                                        <p:inputText id="cedulaBuscar" type="text"
+                                                     placeholder="#{msg['form.autoridades.placeholder.cedula']}"
+                                                     styleClass="mask-cedula w-full"
+                                                     value="#{tribunalController.cedulaBuscar}" maxlength="10"/>
+                                        <small class="text-500">#{msg['form.autoridades.help.cedula']}</small>
+                                        <p:message for="cedulaBuscar" display="text"/>
+                                    </div>
+                                    <div class="field col-12 md:col-4 flex align-items-end">
+                                        <p:commandButton value="#{msg['btn.search']}" icon="pi pi-search"
+                                                         styleClass="ui-button-info w-full"
+                                                         actionListener="#{tribunalController.buscaPersona}"
+                                                         update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad outPnlFooter :frmGlobal:growlGlobal"
+                                                         process="outPnlAsignaAutoridadBusca @this"
+                                                         onstart="PF('statusDialog').show()"
+                                                         oncomplete="PF('statusDialog').hide()"/>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </p:outputPanel>
                     </p:outputPanel>
-                </p:outputPanel>
 
-                <!-- Datos de la persona encontrada -->
-                <p:outputPanel id="outPnlAsignaAutoridad" class="ui-fluid">
-                    <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}">
-                        <div class="formgrid grid">
-                            <div class="field col-12 md:col-6">
-                                <label for="personaNombreBusca" class="font-medium text-700 text-sm">Nombres</label>
-                                <p:inputText id="personaNombreBusca" styleClass="w-full"
-                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}"
-                                             disabled="true"/>
+                    <p:outputPanel id="outPnlAsignaAutoridad" class="ui-fluid">
+                        <p:outputPanel rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}">
+                            <div class="formgrid grid">
+                                <div class="field col-12 md:col-6">
+                                    <label for="cargoSeleccionado" class="font-medium text-700 text-sm">
+                                        #{msg['form.autoridades.table.cargo']}
+                                    </label>
+                                    <p:inputText id="cargoSeleccionado" styleClass="w-full"
+                                                 value="#{tribunalController.tribunalSeleccionado.cargoNombre}"
+                                                 disabled="true"/>
+                                </div>
+                                <div class="field col-12 md:col-6">
+                                    <label for="procesoSeleccionado" class="font-medium text-700 text-sm">
+                                        #{msg['form.autoridades.table.proceso']}
+                                    </label>
+                                    <p:inputText id="procesoSeleccionado" styleClass="w-full"
+                                                 value="#{tribunalController.tribunalSeleccionado.periodoNombre}"
+                                                 disabled="true"/>
+                                </div>
+                                <div class="field col-12 md:col-6">
+                                    <label for="personaNombreBusca" class="font-medium text-700 text-sm">
+                                        #{msg['form.autoridades.table.autoridad']}
+                                    </label>
+                                    <p:inputText id="personaNombreBusca" styleClass="w-full"
+                                                 value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.persona.nombres}"
+                                                 disabled="true"/>
+                                </div>
+                                <div class="field col-12 md:col-6">
+                                    <label for="iglesiaNombreBusca" class="font-medium text-700 text-sm">
+                                        #{msg['form.autoridades.table.iglesia']}
+                                    </label>
+                                    <p:inputText id="iglesiaNombreBusca" styleClass="w-full"
+                                                 value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.iglesia.nombre}"
+                                                 disabled="true"/>
+                                </div>
                             </div>
-                            <div class="field col-12">
-                                <label for="iglesiaNombreBusca" class="font-medium text-700 text-sm">Iglesia</label>
-                                <p:inputText id="iglesiaNombreBusca" styleClass="w-full"
-                                             value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.iglesia.nombre}"
-                                             disabled="true"/>
-                            </div>
-                        </div>
+                        </p:outputPanel>
                     </p:outputPanel>
-                </p:outputPanel>
+                </div>
 
                 <f:facet name="footer">
                     <p:outputPanel id="outPnlFooter" class="ui-fluid">
-                        <div class="flex justify-content-end flex-wrap gap-2 w-full">
-                            <p:commandButton value="Cancelar" icon="pi pi-times"
+                        <div class="flex justify-content-end flex-column sm:flex-row gap-2 w-full">
+                            <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                              onclick="PF('dlgAsignaAutoridad').hide()"
-                                             styleClass="ui-button-outlined ui-button-secondary"
+                                             styleClass="ui-button-outlined ui-button-secondary w-full sm:w-auto"
                                              type="button"/>
                             <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
-                                             styleClass="ui-button-success"
+                                             styleClass="ui-button-success w-full sm:w-auto"
                                              action="#{tribunalController.guardarAutoridad}"
-                                             update="outPnlAsignaAutoridad outPnlAsignaAutoridadBusca outPnlFooter tbtribunal"
+                                             update="outPnlAsignaAutoridad outPnlAsignaAutoridadBusca outPnlFooter tbtribunal :frmGlobal:growlGlobal"
                                              process="outPnlAsignaAutoridad @this"
-                                             oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').hide()"
+                                             onstart="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide(); if (!args.validationFailed) PF('dlgAsignaAutoridad').hide()"
                                              rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>
                         </div>
                     </p:outputPanel>

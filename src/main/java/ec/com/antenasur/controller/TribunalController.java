@@ -30,6 +30,12 @@ public class TribunalController implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final Integer ID_CARGO_PADRE = 2;
+    private static final String FORMULARIO = "frmPeriodos";
+    private static final String TABLA_AUTORIDADES = FORMULARIO + ":tbtribunal";
+    private static final String PANEL_BUSQUEDA = FORMULARIO + ":outPnlAsignaAutoridadBusca";
+    private static final String PANEL_AUTORIDAD = FORMULARIO + ":outPnlAsignaAutoridad";
+    private static final String PANEL_FOOTER = FORMULARIO + ":outPnlFooter";
+    private static final String GROWL_GLOBAL = "frmGlobal:growlGlobal";
 
     @Inject
     private LoginBean loginBean;
@@ -123,30 +129,30 @@ public class TribunalController implements Serializable {
     public void eliminarAutoridadSeleccionada() {
         try {
             if (tribunalSeleccionado == null || tribunalSeleccionado.getId() == null) {
-                JsfUtil.addWarningMessage("Seleccione una autoridad para eliminar.");
-                PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+                JsfUtil.addWarningMessageFromBundle("autoridades.mensaje.no.seleccionada");
+                PrimeFaces.current().ajax().update(GROWL_GLOBAL);
                 return;
             }
             TribunalDTO eliminada = tribunalService.eliminarPorId(tribunalSeleccionado.getId());
             if (eliminada == null) {
-                JsfUtil.addWarningMessage("No se pudo eliminar la autoridad seleccionada.");
+                JsfUtil.addWarningMessageFromBundle("autoridades.mensaje.no.eliminada");
             } else {
-                JsfUtil.addSuccessMessage("Autoridad eliminada correctamente.");
+                JsfUtil.addSuccessMessageFromBundle("autoridades.mensaje.eliminada");
             }
             tribunalSeleccionado = null;
             cargarAutoridadesTribunal();
-            PrimeFaces.current().ajax().update("frmPeriodos:tbtribunal", "frmGlobal:growlGlobal");
+            PrimeFaces.current().ajax().update(TABLA_AUTORIDADES, GROWL_GLOBAL);
         } catch (Exception e) {
             log.error("ERROR AL ELIMINAR AUTORIDAD", e);
-            JsfUtil.addErrorMessage("No se pudo eliminar la autoridad. Verifique si tiene relaciones activas.");
-            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+            JsfUtil.addErrorMessageFromBundle("autoridades.mensaje.error.eliminar");
+            PrimeFaces.current().ajax().update(GROWL_GLOBAL);
         }
     }
 
     /** Prepara una copia de la fila para asignar o reasignar sin alterar la tabla. */
     public void prepararAsignacionAutoridad(TribunalDTO autoridad) {
         if (autoridad == null || autoridad.getCargoId() == null || autoridad.getProcesoId() == null) {
-            JsfUtil.addWarningMessage("No se pudo determinar el cargo a asignar.");
+            JsfUtil.addWarningMessageFromBundle("autoridades.mensaje.cargo.no.determinado");
             return;
         }
         TribunalDTO seleccion = new TribunalDTO();
@@ -165,7 +171,7 @@ public class TribunalController implements Serializable {
     public void guardarAutoridad() {
         try {
             if (tribunalSeleccionado == null) {
-                JsfUtil.addWarningMessage("Seleccione una autoridad para guardar.");
+                JsfUtil.addWarningMessageFromBundle("autoridades.mensaje.no.seleccionada.guardar");
                 FacesContext.getCurrentInstance().validationFailed();
                 return;
             }
@@ -174,19 +180,20 @@ public class TribunalController implements Serializable {
             if (persistido != null) {
                 tribunalSeleccionado = persistido;
                 cargarAutoridadesTribunal();
-                JsfUtil.addSuccessMessage(esEdicion ? "Autoridad reasignada correctamente." : "Autoridad asignada correctamente.");
-                PrimeFaces.current().ajax().update("frmPeriodos:tbtribunal", "frmGlobal:growlGlobal");
-                PrimeFaces.current().executeScript("PF('dlgAsignaAutoridad').hide()");
+                JsfUtil.addSuccessMessageFromBundle(esEdicion
+                        ? "autoridades.mensaje.reasignada"
+                        : "autoridades.mensaje.asignada");
+                PrimeFaces.current().ajax().update(TABLA_AUTORIDADES, GROWL_GLOBAL);
             }
         } catch (ec.com.antenasur.exception.NegocioException e) {
-            JsfUtil.addErrorMessage(e.getMessage());
+            JsfUtil.addErrorMessageFromBundle(e.getMessage());
             FacesContext.getCurrentInstance().validationFailed();
-            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+            PrimeFaces.current().ajax().update(GROWL_GLOBAL);
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR AUTORIDADES", e);
-            JsfUtil.addErrorMessage("No se pudo guardar la autoridad.");
+            JsfUtil.addErrorMessageFromBundle("autoridades.mensaje.error.guardar");
             FacesContext.getCurrentInstance().validationFailed();
-            PrimeFaces.current().ajax().update("frmGlobal:growlGlobal");
+            PrimeFaces.current().ajax().update(GROWL_GLOBAL);
         }
     }
 
@@ -195,20 +202,18 @@ public class TribunalController implements Serializable {
             TribunalDTO actualizado = tribunalService.asignarPersonaPorCedula(tribunalSeleccionado, cedulaBuscar);
             if (actualizado != null) {
                 tribunalSeleccionado = actualizado;
-                JsfUtil.addInfoMessage("PERSONA SELECCIONADA");
+                JsfUtil.addInfoMessageFromBundle("autoridades.mensaje.persona.seleccionada");
             } else {
-                JsfUtil.addWarningMessage("PERSONA NO ENCONTRADA");
+                JsfUtil.addWarningMessageFromBundle("autoridades.mensaje.persona.no.encontrada");
             }
-            PrimeFaces.current().ajax().update("frmPeriodos:outPnlAsignaAutoridadBusca",
-                    "frmPeriodos:outPnlAsignaAutoridad", "frmPeriodos:outPnlFooter", "frmGlobal:growlGlobal");
+            PrimeFaces.current().ajax().update(PANEL_BUSQUEDA, PANEL_AUTORIDAD, PANEL_FOOTER, GROWL_GLOBAL);
         } catch (ec.com.antenasur.exception.NegocioException e) {
-            JsfUtil.addErrorMessage(e.getMessage());
+            JsfUtil.addErrorMessageFromBundle(e.getMessage());
             FacesContext.getCurrentInstance().validationFailed();
-            PrimeFaces.current().ajax().update("frmPeriodos:outPnlAsignaAutoridadBusca",
-                    "frmPeriodos:outPnlAsignaAutoridad", "frmPeriodos:outPnlFooter", "frmGlobal:growlGlobal");
+            PrimeFaces.current().ajax().update(PANEL_BUSQUEDA, PANEL_AUTORIDAD, PANEL_FOOTER, GROWL_GLOBAL);
         } catch (Exception e) {
             log.error("ERROR AL BUSCAR PERSONA PARA AUTORIDAD", e);
-            JsfUtil.addErrorMessage("No se pudo buscar la persona.");
+            JsfUtil.addErrorMessageFromBundle("autoridades.mensaje.error.buscar");
             FacesContext.getCurrentInstance().validationFailed();
         }
     }

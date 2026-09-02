@@ -129,7 +129,7 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
 
     public List<CatalogoGeneral> findByFather() {
         try {
-            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre.id is null AND gc.estado=TRUE ORDER BY orden";
+            String sql = "SELECT gc FROM CatalogoGeneral gc WHERE gc.padre IS NULL AND gc.estado=TRUE ORDER BY orden";
             TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
             List<CatalogoGeneral> resultList = query.getResultList();
             if (resultList != null && !resultList.isEmpty()) {
@@ -138,6 +138,51 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
         } catch (Exception e) {
         }
         return null;
+    }
+
+    public CatalogoGeneral buscarActivoPorPadreYNombre(Integer padreId, String nombre, Integer excluirId) {
+        String sql = "SELECT gc FROM CatalogoGeneral gc "
+                + "WHERE gc.estado = TRUE "
+                + "AND UPPER(TRIM(gc.nombre)) = :nombre "
+                + (padreId == null ? "AND gc.padre IS NULL " : "AND gc.padre.id = :padreId ")
+                + (excluirId == null ? "" : "AND gc.id <> :excluirId");
+        TypedQuery<CatalogoGeneral> query = super.getEntityManager().createQuery(sql, CatalogoGeneral.class);
+        query.setParameter("nombre", normalizar(nombre));
+        if (padreId != null) {
+            query.setParameter("padreId", padreId);
+        }
+        if (excluirId != null) {
+            query.setParameter("excluirId", excluirId);
+        }
+        query.setMaxResults(1);
+        List<CatalogoGeneral> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
+    }
+
+    public long contarHijosActivos(Integer padreId) {
+        if (padreId == null) {
+            return 0L;
+        }
+        String sql = "SELECT COUNT(gc) FROM CatalogoGeneral gc "
+                + "WHERE gc.estado = TRUE AND gc.padre.id = :padreId";
+        TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class);
+        query.setParameter("padreId", padreId);
+        return query.getSingleResult();
+    }
+
+    public long contarReferenciasOperativas(Integer catalogoId) {
+        if (catalogoId == null) {
+            return 0L;
+        }
+        return contar("SELECT COUNT(c) FROM Candidato c WHERE c.cargo.id = :catalogoId", catalogoId)
+                + contar("SELECT COUNT(m) FROM MiembroJRV m WHERE m.cargo.id = :catalogoId", catalogoId)
+                + contar("SELECT COUNT(t) FROM Tribunal t WHERE t.cargo.id = :catalogoId", catalogoId);
+    }
+
+    private long contar(String jpql, Integer catalogoId) {
+        TypedQuery<Long> query = super.getEntityManager().createQuery(jpql, Long.class);
+        query.setParameter("catalogoId", catalogoId);
+        return query.getSingleResult();
     }
 
     public CatalogoGeneral findByFatherIdAndCatalogueName(Integer idPadre, String nombreCatalogo) {
@@ -230,6 +275,10 @@ public class CatalogoGeneralFacade extends AbstractFacade<CatalogoGeneral, Integ
             return null;
         }
         return null;
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim().toUpperCase();
     }
 
 }

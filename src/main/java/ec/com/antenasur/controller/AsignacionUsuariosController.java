@@ -382,7 +382,7 @@ public class AsignacionUsuariosController implements Serializable {
                 nuevoAdmin.setUsername(p.getDocumento());
             }
             if (nuevoAdmin.getCorreo() == null || nuevoAdmin.getCorreo().isEmpty()) {
-                nuevoAdmin.setCorreo(p.getDocumento() + "@consejodecomunicacion.gob.ec");
+                nuevoAdmin.setCorreo(p.getDocumento() + "@gmail.com");
             }
             nuevoAdmin.setPermanente(true);
             personaExistente = true;
@@ -409,7 +409,7 @@ public class AsignacionUsuariosController implements Serializable {
             nuevoAdmin.setPersonaNombres(personaRegistroCivil.getNombre());
             nuevoAdmin.setPersonaDocumento(personaRegistroCivil.getCedula());
             nuevoAdmin.setUsername(personaRegistroCivil.getCedula());
-            nuevoAdmin.setCorreo(personaRegistroCivil.getCedula() + "@consejodecomunicacion.gob.ec");
+            nuevoAdmin.setCorreo(personaRegistroCivil.getCedula() + "@gmail.com");
             nuevoAdmin.setPermanente(true);
             personaExistente = false;
             JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil. Se creará el registro y la vinculación a la iglesia al guardar.");

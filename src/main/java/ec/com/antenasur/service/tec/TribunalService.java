@@ -68,7 +68,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
 
     public TribunalDTO guardarDesdeDTO(TribunalDTO dto) {
         if (dto == null) {
-            throw new NegocioException("No se pudo determinar la autoridad a guardar.");
+            throw new NegocioException("autoridades.mensaje.no.determinada");
         }
         Integer procesoId = dto.getProcesoId() != null ? dto.getProcesoId() : dto.getPeriodoId();
         ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
@@ -83,7 +83,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         if (dto.getId() == null) {
             if (registroLogico != null) {
                 if (Boolean.TRUE.equals(registroLogico.getEstado())) {
-                    throw new NegocioException("El cargo seleccionado ya tiene una autoridad asignada en este proceso.");
+                    throw new NegocioException("autoridades.mensaje.cargo.duplicado");
                 }
                 registroLogico.setIglesiaPersona(ip);
                 registroLogico.setProceso(proceso);
@@ -99,11 +99,11 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         }
         Tribunal actual = tribunalFacade.find(dto.getId());
         if (actual == null) {
-            throw new NegocioException("La autoridad seleccionada ya no está disponible.");
+            throw new NegocioException("autoridades.mensaje.no.disponible");
         }
         if (registroLogico != null && !actual.getId().equals(registroLogico.getId())
                 && Boolean.TRUE.equals(registroLogico.getEstado())) {
-            throw new NegocioException("El cargo seleccionado ya tiene una autoridad asignada en este proceso.");
+            throw new NegocioException("autoridades.mensaje.cargo.duplicado");
         }
         actual.setProceso(proceso);
         actual.setCargo(cargo);
@@ -116,14 +116,14 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
      */
     public TribunalDTO asignarPersonaPorCedula(TribunalDTO dto, String cedula) {
         if (dto == null) {
-            throw new NegocioException("Seleccione el cargo al que asignará la autoridad.");
+            throw new NegocioException("autoridades.mensaje.cargo.requerido");
         }
         if (cedula == null || !cedula.trim().matches("\\d{10}")) {
-            throw new NegocioException("Ingrese una cédula válida de 10 dígitos.");
+            throw new NegocioException("autoridades.mensaje.cedula.invalida");
         }
         IglesiaPersona ip = iglesiaPersonaFacade.buscarPorCedulaPersona(cedula.trim());
         if (ip == null || ip.getPersona() == null || ip.getIglesia() == null) {
-            throw new NegocioException("No existe un miembro activo de iglesia para la cédula ingresada.");
+            throw new NegocioException("autoridades.mensaje.persona.no.encontrada");
         }
         dto.setIglesiaPersona(ec.com.antenasur.dto.IglesiaPersonaDTO.fromEntity(ip));
         return dto;
@@ -184,14 +184,14 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
 
     private void validarAsignacion(ProcesoElectoral proceso, CatalogoGeneral cargo, IglesiaPersona iglesiaPersona) {
         if (proceso == null) {
-            throw new NegocioException("Debe seleccionar un proceso electoral válido.");
+            throw new NegocioException("autoridades.mensaje.proceso.invalido");
         }
         if (cargo == null || cargo.getPadre() == null
                 || !CARGO_PADRE_AUTORIDADES_TRIBUNAL.equals(cargo.getPadre().getId())) {
-            throw new NegocioException("El cargo seleccionado no corresponde a una autoridad del tribunal.");
+            throw new NegocioException("autoridades.mensaje.cargo.invalido");
         }
         if (iglesiaPersona == null) {
-            throw new NegocioException("Debe buscar y seleccionar un miembro de iglesia para asignar la autoridad.");
+            throw new NegocioException("autoridades.mensaje.miembro.requerido");
         }
     }
 }

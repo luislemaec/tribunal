@@ -33,10 +33,10 @@
         <p:idleMonitor timeout="3000000">
             <p:ajax event="idle" oncomplete="PF('dlgIdle').show()"/>
         </p:idleMonitor>
-        <p:dialog widgetVar="dlgIdle" header="Sesión por expirar" modal="true"
+        <p:dialog widgetVar="dlgIdle" header="#{msg['msg.session.expiring.title']}" modal="true"
                   closable="false" resizable="false" width="380">
-            <p style="margin:0 0 1rem">Su sesión expirará por inactividad en pocos minutos.</p>
-            <p:commandButton value="Continuar" icon="pi pi-refresh" ajax="true"
+            <p style="margin:0 0 1rem">#{msg['msg.session.expiring.detail']}</p>
+            <p:commandButton value="#{msg['btn.continue']}" icon="pi pi-refresh" ajax="true"
                              onclick="PF('dlgIdle').hide()" process="@this"/>
         </p:dialog>
     </h:form>

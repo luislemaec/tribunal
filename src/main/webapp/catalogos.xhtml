@@ -42,8 +42,9 @@
                     <p:commandButton value="#{msg['form.catalogos.btn.new']}" icon="pi pi-plus"
                                      styleClass="ui-button-success"
                                      actionListener="#{catalogoController.nuevoCatalogo}"
-                                     update="frmCatalogos:outPnlCatalogo"
-                                     oncomplete="PF('dlgCatalogo').show()">
+                                     process="@this" update="outPnlCatalogo :frmGlobal:growlGlobal"
+                                     rendered="#{catalogoController.puedeAdministrarCatalogos()}"
+                                     oncomplete="if (!args.validationFailed) PF('dlgCatalogo').show()">
                         <p:resetInput target="frmCatalogos:outPnlCatalogo"/>
                     </p:commandButton>
                 </div>
@@ -52,8 +53,10 @@
                 <p:treeTable value="#{catalogoController.root}" var="catalogo"
                              showGridlines="true" editable="true" id="trTblCatalogo"
                              styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:ajax event="rowEdit"       listener="#{catalogoController.onRowEdit}"/>
-                    <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}"/>
+                    <p:ajax event="rowEdit" listener="#{catalogoController.onRowEdit}" process="@this"
+                            update="trTblCatalogo :frmGlobal:growlGlobal"/>
+                    <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}" process="@this"
+                            update=":frmGlobal:growlGlobal"/>
 
                     <p:column headerText="#{msg['form.catalogos.table.header.id']}"
                               sortBy="#{catalogo.id}" style="width:7%" responsivePriority="1">
@@ -88,16 +91,17 @@
                     </p:column>
 
                     <p:column style="width:7%" responsivePriority="5" styleClass="text-center">
-                        <p:rowEditor/>
+                        <p:rowEditor rendered="#{catalogoController.puedeAdministrarCatalogos()}"/>
                         <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{msg['form.catalogos.btn.delete.title']}"
                                          actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
-                                         process="@this" update="@form">
+                                         process="@this" update="trTblCatalogo :frmGlobal:growlGlobal"
+                                         rendered="#{catalogoController.puedeAdministrarCatalogos()}">
                             <f:setPropertyActionListener value="#{catalogo}"
                                                          target="#{catalogoController.catalogoSeleccionado}"/>
-                            <p:confirm header="#{msg['form.catalogos.confirm.delete.header']}"
-                                       message="#{msg['form.catalogos.confirm.delete.message']}"
+                            <p:confirm header="#{msg['form.catalogos.confirm.disable.header']}"
+                                       message="#{msg['form.catalogos.confirm.disable.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
                     </p:column>
@@ -118,6 +122,7 @@
 
                 <p:outputPanel id="outPnlCatalogo" class="ui-fluid">
                     <p:outputPanel rendered="#{catalogoController.catalogoSeleccionado ne null}">
+                        <p:messages id="messagesCatalogos" showDetail="false" closable="true" styleClass="mb-3"/>
 
                         <div class="formgrid grid">
 
@@ -128,6 +133,7 @@
                                 <p:inputText id="nombre"
                                              value="#{catalogoController.catalogoSeleccionado.nombre}"
                                              maxlength="100" required="true" styleClass="w-full"
+                                             requiredMessage="#{msg['catalogo.mensaje.campos.obligatorios']}"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
@@ -135,18 +141,26 @@
                                 <label for="orden" class="font-medium text-700 text-sm">
                                     #{msg['form.catalogos.label.orden']} <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="orden"
-                                             value="#{catalogoController.catalogoSeleccionado.orden}"
-                                             required="true" styleClass="w-full"/>
+                                <p:inputNumber id="orden"
+                                               value="#{catalogoController.catalogoSeleccionado.orden}"
+                                               decimalPlaces="0" minValue="0"
+                                               required="true" styleClass="w-full"
+                                               requiredMessage="#{msg['catalogo.mensaje.campos.obligatorios']}"/>
                             </div>
 
                             <div class="field col-12 md:col-6">
                                 <label for="padre" class="font-medium text-700 text-sm">
                                     #{msg['form.catalogos.label.padre']} <span class="text-red-500">*</span>
                                 </label>
-                                <p:inputText id="padre"
-                                             value="#{catalogoController.catalogoSeleccionado.padre.id}"
-                                             required="true" styleClass="w-full"/>
+                                <p:selectOneMenu id="padre"
+                                                 value="#{catalogoController.catalogoSeleccionado.padreId}"
+                                                 filter="true" filterMatchMode="contains"
+                                                 required="true" styleClass="w-full"
+                                                 requiredMessage="#{msg['catalogo.mensaje.campos.obligatorios']}">
+                                    <f:selectItem itemLabel="#{msg['label.none.selected']}" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{catalogoController.catalogosPadreDisponibles}" var="padre"
+                                                   itemValue="#{padre.id}" itemLabel="#{padre.nombre}"/>
+                                </p:selectOneMenu>
                             </div>
 
                             <div class="field col-12">
@@ -156,6 +170,7 @@
                                 <p:inputText id="descripcion"
                                              value="#{catalogoController.catalogoSeleccionado.descripcion}"
                                              maxlength="150" required="true" styleClass="w-full"
+                                             requiredMessage="#{msg['catalogo.mensaje.campos.obligatorios']}"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 
@@ -173,7 +188,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="ui-button-success"
                                          actionListener="#{catalogoController.guardarCatalogo}"
-                                         update="outPnlCatalogo trTblCatalogo"
+                                         update="outPnlCatalogo trTblCatalogo :frmGlobal:growlGlobal"
                                          process="outPnlCatalogo @this"
                                          oncomplete="if (!args.validationFailed) PF('dlgCatalogo').hide()"/>
                     </div>

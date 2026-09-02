@@ -46,7 +46,7 @@ public class Constantes {
             + "<h5>" + SISTEMA + "</h5>"
             + "<h5>" + INSTITUCION + "</h5>"
             + "</div>"
-            + "<p><strong>IMPORTANTE:</strong> <span style=color: #333333;><em>El env&iacute;o de este correo es autom&aacute;tico, por favor no lo responda. </em></span><br /><span style=color: #333333;><em>Si tiene alguna inquietud puede contactarse al correo electr&oacute;nico: rpm.medios@consejodecomunicacion.gob.ec o al tel&eacute;fono: (02) 3938720 ext. 2233</em></span></p>";
+            + "<p><strong>IMPORTANTE:</strong> <span style=color: #333333;><em>El env&iacute;o de este correo es autom&aacute;tico, por favor no lo responda. </em></span><br /><span style=color: #333333;></span></p>";
 
     /**
      * @author Luis Lema Retorna el path de la imagen para enviar al correo
