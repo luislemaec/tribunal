@@ -45,6 +45,18 @@ public class IglesiaPersonaDTO implements Serializable {
      */
     private Boolean actualizada;
 
+    /** Cantidad de iglesias activas distintas asociadas al documento. */
+    private Integer cantidadIglesiasActivas;
+
+    /** Indicador derivado para impedir que la inconsistencia use el CRUD normal. */
+    private Boolean inconsistenciaIglesias;
+
+    /** Nombres de las iglesias activas, utilizado por el reporte de inconsistencias. */
+    private String iglesiasActivas;
+
+    /** Estado persistido de esta relacion, incluido en reportes de trazabilidad. */
+    private Boolean estadoRelacion;
+
     public static IglesiaPersonaDTO fromEntity(IglesiaPersona ip) {
         if (ip == null) {
             return null;
@@ -59,6 +71,9 @@ public class IglesiaPersonaDTO implements Serializable {
         dto.setFechaCrea(ip.getFechaCrea());
         dto.setFechaActualiza(ip.getFechaActualiza());
         dto.setActualizada(esActualizada(ip.getFechaCrea(), ip.getFechaActualiza()));
+        dto.setEstadoRelacion(ip.getEstado());
+        dto.setCantidadIglesiasActivas(0);
+        dto.setInconsistenciaIglesias(Boolean.FALSE);
         // Regla estricta: solo true habilita para el padron.
         dto.setHabilitadoPadron(Boolean.TRUE.equals(ip.getHabilitadoPadron()));
         return dto;

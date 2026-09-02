@@ -1,14 +1,24 @@
 package ec.com.antenasur.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.PersonaFacade;
@@ -17,9 +27,15 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Persona;
+import ec.com.antenasur.util.Constantes;
 
 @Stateless
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
+@RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
 public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integer, IglesiaPersonaFacade> {
+
+    private static final String ROL_TRIBUNAL = "SITEC-" + Constantes.getRolTribunal();
+    private static final String ROL_ADMINISTRADOR = "SITEC-" + Constantes.getRolAdministrador();
 
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
@@ -32,6 +48,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     @Inject
     private CronogramaService cronogramaService;
+
+    @Resource
+    private SessionContext sessionContext;
 
     @Override
     protected IglesiaPersonaFacade getFacade() {
@@ -95,6 +114,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             return null;
         }
         Persona persona = iglesiaPersona.getPersona();
+        String documento = normalizarDocumento(persona.getDocumento());
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        validarAsignacionNormal(activas, iglesiaPersona.getId(), iglesiaPersona.getIglesia().getId());
         Persona personaPersistida = (persona.getId() != null)
                 ? personaFacade.edit(persona)
                 : personaFacade.create(persona);
@@ -123,6 +145,35 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     public List<IglesiaPersonaDTO> listarDTOsPorIglesia(int iglesiaId) {
         return mapearLista(iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesiaId));
+    }
+
+    public List<IglesiaPersonaDTO> listarDTOsActivosPorDocumento(String documento) {
+        return mapearLista(iglesiaPersonaFacade.listarActivasPorDocumento(documento));
+    }
+
+    /**
+     * Reporte controlado de personas con mas de una iglesia activa. La consulta
+     * es agregada por documento y las relaciones se hidratan en bloque.
+     */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public List<IglesiaPersonaDTO> listarInconsistenciasIglesias() {
+        if (!esCallerAdministradorOTribunal()) {
+            throw new IglesiaPersonaException("form.personas.inconsistencias.error.permiso");
+        }
+        List<String> documentos = iglesiaPersonaFacade.listarDocumentosConMultiplesIglesiasActivas();
+        if (documentos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<IglesiaPersona> relaciones = iglesiaPersonaFacade.listarRelacionesPorDocumentos(documentos);
+        Map<String, Integer> cantidades = iglesiaPersonaFacade
+                .contarIglesiasActivasPorDocumentos(documentos);
+        Map<String, String> nombresActivos = construirNombresIglesiasActivas(relaciones);
+        List<IglesiaPersonaDTO> resultado = mapearLista(relaciones, cantidades);
+        for (IglesiaPersonaDTO dto : resultado) {
+            String documento = documentoDe(dto);
+            dto.setIglesiasActivas(nombresActivos.getOrDefault(documento, ""));
+        }
+        return resultado;
     }
 
     public IglesiaPersonaDTO buscarDTOPorCedula(String cedula) {
@@ -155,28 +206,22 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             return null;
         }
 
-        Persona persona;
-        if (dto.getPersona().getId() != null) {
-            persona = personaFacade.find(dto.getPersona().getId());
-            if (persona == null) {
-                return null;
-            }
-            persona.setNombres(dto.getPersona().getNombres());
-            persona.setApellidos(dto.getPersona().getApellidos());
-            persona.setDocumento(dto.getPersona().getDocumento());
-            persona.setTratamiento(dto.getPersona().getTratamiento());
-            persona.setSexo(dto.getPersona().getSexo());
-            persona = personaFacade.edit(persona);
-        } else {
-            persona = personaFacade.create(dto.getPersona().toEntity());
+        String documento = normalizarDocumento(dto.getPersona().getDocumento());
+        IglesiaPersona ip = dto.getId() != null ? iglesiaPersonaFacade.find(dto.getId()) : null;
+        if (dto.getId() != null && ip == null) {
+            return null;
         }
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        validarAsignacionNormal(activas, dto.getId(), iglesia.getId());
 
-        IglesiaPersona ip;
-        if (dto.getId() != null) {
-            ip = iglesiaPersonaFacade.find(dto.getId());
-            if (ip == null) {
-                return null;
-            }
+        Persona persona = resolverPersona(dto, ip, documento);
+        if (persona == null) {
+            return null;
+        }
+        actualizarPersona(persona, dto, documento);
+        persona = persona.getId() != null ? personaFacade.edit(persona) : personaFacade.create(persona);
+
+        if (ip != null) {
             ip.setIglesia(iglesia);
             ip.setPersona(persona);
             ip.setDesde(dto.getDesde());
@@ -209,6 +254,66 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     }
 
     /**
+     * Conserva una sola relacion activa para el documento indicado. El rol se
+     * comprueba en el contexto Elytron del EJB y todas las bajas quedan dentro
+     * de la misma transaccion y registradas por Envers.
+     */
+    @RolesAllowed("SITEC-Tribunal")
+    public IglesiaPersonaDTO regularizarDesdeDTO(IglesiaPersonaDTO dto, Integer vinculoDefinitivoId) {
+        if (!esCallerTribunal()) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.permiso");
+        }
+        if (dto == null || dto.getPersona() == null) {
+            return null;
+        }
+        if (!cronogramaService.permiteEdicionPadron()) {
+            throw new IglesiaPersonaException("form.personas.error.cronograma");
+        }
+        if (vinculoDefinitivoId == null) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion");
+        }
+
+        String documento = normalizarDocumento(dto.getPersona().getDocumento());
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        if (contarIglesiasDistintas(activas) < 2) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.no.requerida");
+        }
+
+        IglesiaPersona definitiva = null;
+        for (IglesiaPersona activa : activas) {
+            if (vinculoDefinitivoId.equals(activa.getId())) {
+                definitiva = activa;
+                break;
+            }
+        }
+        if (definitiva == null) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion.invalida");
+        }
+
+        Date ahora = new Date();
+        for (IglesiaPersona activa : activas) {
+            if (!activa.getId().equals(definitiva.getId())) {
+                activa.setEstado(Boolean.FALSE);
+                activa.setHasta(new java.sql.Timestamp(ahora.getTime()));
+                activa.setHabilitadoPadron(Boolean.FALSE);
+                iglesiaPersonaFacade.edit(activa);
+            }
+        }
+        // El trigger de unicidad debe observar primero las bajas. Mantiene la
+        // auditoria Envers porque no se sustituye por un UPDATE masivo.
+        iglesiaPersonaFacade.flushCambios();
+
+        Persona personaDefinitiva = definitiva.getPersona();
+        actualizarPersona(personaDefinitiva, dto, documento);
+        personaFacade.edit(personaDefinitiva);
+        definitiva.setHasta(null);
+        definitiva.setHabilitadoPadron(dto.getHabilitadoPadron() != null
+                ? dto.getHabilitadoPadron() : definitiva.getHabilitadoPadron());
+        definitiva.setFechaActualiza(ahora);
+        return IglesiaPersonaDTO.fromEntity(iglesiaPersonaFacade.edit(definitiva));
+    }
+
+    /**
      * Crea el vínculo {@link IglesiaPersona} entre la persona y la iglesia
      * indicadas si aún no existe. Idempotente: si ya hay un vínculo activo,
      * lo retorna sin tocar BD.
@@ -222,19 +327,86 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (iglesiaId == null || personaId == null) {
             return null;
         }
-        IglesiaPersona existente = iglesiaPersonaFacade.findByIglesiaAndPersona(iglesiaId, personaId);
-        if (existente != null) {
-            return new ResultadoVinculo(existente, false);
-        }
         Iglesia iglesia = iglesiaFacade.find(iglesiaId);
         Persona persona = personaFacade.find(personaId);
         if (iglesia == null || persona == null) {
             return null;
         }
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(
+                normalizarDocumento(persona.getDocumento()), true);
+        if (activas.size() > 1) {
+            throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
+        }
+        if (!activas.isEmpty()) {
+            IglesiaPersona existente = activas.get(0);
+            if (existente.getIglesia() != null && iglesiaId.equals(existente.getIglesia().getId())) {
+                return new ResultadoVinculo(existente, false);
+            }
+            throw conflictoOtraIglesia(existente);
+        }
         IglesiaPersona nuevo = new IglesiaPersona(iglesia, persona);
         nuevo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
         IglesiaPersona creado = iglesiaPersonaFacade.create(nuevo);
         return new ResultadoVinculo(creado, true);
+    }
+
+    private void validarAsignacionNormal(List<IglesiaPersona> activas,
+            Integer vinculoActualId, Integer iglesiaDestinoId) {
+        if (activas.size() > 1) {
+            throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
+        }
+        if (activas.isEmpty()) {
+            return;
+        }
+        IglesiaPersona activa = activas.get(0);
+        if (vinculoActualId == null || !vinculoActualId.equals(activa.getId())) {
+            throw conflictoOtraIglesia(activa);
+        }
+        if (activa.getIglesia() == null || !iglesiaDestinoId.equals(activa.getIglesia().getId())) {
+            throw conflictoOtraIglesia(activa);
+        }
+    }
+
+    private IglesiaPersonaException conflictoOtraIglesia(IglesiaPersona activa) {
+        String iglesia = activa != null && activa.getIglesia() != null
+                ? activa.getIglesia().getNombre() : "";
+        return new IglesiaPersonaException("form.personas.error.otra.iglesia", iglesia);
+    }
+
+    private Persona resolverPersona(IglesiaPersonaDTO dto, IglesiaPersona ip, String documento) {
+        if (ip != null && ip.getPersona() != null) {
+            return ip.getPersona();
+        }
+        if (dto.getPersona().getId() != null) {
+            return personaFacade.find(dto.getPersona().getId());
+        }
+        Persona existente = personaFacade.finByPersonaDocument(documento);
+        return existente != null ? existente : dto.getPersona().toEntity();
+    }
+
+    private void actualizarPersona(Persona persona, IglesiaPersonaDTO dto, String documento) {
+        persona.setNombres(dto.getPersona().getNombres());
+        persona.setApellidos(dto.getPersona().getApellidos());
+        persona.setDocumento(documento);
+        persona.setTratamiento(dto.getPersona().getTratamiento());
+        persona.setSexo(dto.getPersona().getSexo());
+    }
+
+    private String normalizarDocumento(String documento) {
+        if (documento == null || documento.trim().isEmpty()) {
+            throw new IglesiaPersonaException("form.personas.error.documento.requerido");
+        }
+        return documento.trim();
+    }
+
+    private boolean esCallerTribunal() {
+        return sessionContext != null && sessionContext.isCallerInRole(ROL_TRIBUNAL);
+    }
+
+    private boolean esCallerAdministradorOTribunal() {
+        return sessionContext != null
+                && (sessionContext.isCallerInRole(ROL_ADMINISTRADOR)
+                    || sessionContext.isCallerInRole(ROL_TRIBUNAL));
     }
 
     /** Resultado de {@link #crearVinculoSiNoExiste(Integer, Integer)}. */
@@ -305,6 +477,11 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (ip == null) {
             return null;
         }
+        String documento = ip.getPersona() != null ? ip.getPersona().getDocumento() : null;
+        if (documento != null && contarIglesiasDistintas(
+                iglesiaPersonaFacade.listarActivasPorDocumento(documento, true)) > 1) {
+            throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
+        }
         return IglesiaPersonaDTO.fromEntity(iglesiaPersonaFacade.delete(ip));
     }
 
@@ -323,13 +500,68 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
     }
 
     private List<IglesiaPersonaDTO> mapearLista(List<IglesiaPersona> entidades) {
+        Set<String> documentos = new LinkedHashSet<>();
+        if (entidades != null) {
+            for (IglesiaPersona entidad : entidades) {
+                if (entidad.getPersona() != null && entidad.getPersona().getDocumento() != null) {
+                    documentos.add(entidad.getPersona().getDocumento().trim());
+                }
+            }
+        }
+        return mapearLista(entidades,
+                iglesiaPersonaFacade.contarIglesiasActivasPorDocumentos(documentos));
+    }
+
+    private List<IglesiaPersonaDTO> mapearLista(List<IglesiaPersona> entidades,
+            Map<String, Integer> cantidades) {
         List<IglesiaPersonaDTO> resultado = new ArrayList<>();
         if (entidades == null) {
             return resultado;
         }
-        for (IglesiaPersona ip : entidades) {
-            resultado.add(IglesiaPersonaDTO.fromEntity(ip));
+        for (IglesiaPersona entidad : entidades) {
+            IglesiaPersonaDTO dto = IglesiaPersonaDTO.fromEntity(entidad);
+            String documento = documentoDe(dto);
+            int cantidad = cantidades.getOrDefault(documento, 0);
+            dto.setCantidadIglesiasActivas(cantidad);
+            dto.setInconsistenciaIglesias(cantidad > 1);
+            resultado.add(dto);
         }
         return resultado;
+    }
+
+    private Map<String, String> construirNombresIglesiasActivas(List<IglesiaPersona> relaciones) {
+        Map<String, Set<String>> nombres = new LinkedHashMap<>();
+        for (IglesiaPersona relacion : relaciones) {
+            if (!Boolean.TRUE.equals(relacion.getEstado()) || relacion.getPersona() == null
+                    || relacion.getIglesia() == null) {
+                continue;
+            }
+            String documento = relacion.getPersona().getDocumento() != null
+                    ? relacion.getPersona().getDocumento().trim() : "";
+            nombres.computeIfAbsent(documento, key -> new LinkedHashSet<>())
+                    .add(relacion.getIglesia().getNombre());
+        }
+        return nombres.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> String.join(", ", entry.getValue()),
+                (primero, segundo) -> primero,
+                LinkedHashMap::new));
+    }
+
+    private int contarIglesiasDistintas(Collection<IglesiaPersona> relaciones) {
+        if (relaciones == null) {
+            return 0;
+        }
+        return (int) relaciones.stream()
+                .filter(relacion -> relacion.getIglesia() != null
+                        && relacion.getIglesia().getId() != null)
+                .map(relacion -> relacion.getIglesia().getId())
+                .distinct()
+                .count();
+    }
+
+    private String documentoDe(IglesiaPersonaDTO dto) {
+        return dto != null && dto.getPersona() != null && dto.getPersona().getDocumento() != null
+                ? dto.getPersona().getDocumento().trim() : "";
     }
 }

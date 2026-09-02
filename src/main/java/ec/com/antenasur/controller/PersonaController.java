@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,6 +28,7 @@ import ec.com.antenasur.dto.FilaPadronImportadaDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
@@ -113,6 +115,26 @@ public class PersonaController implements Serializable {
     @Setter
     @Getter
     private List<IglesiaPersonaDTO> listaIglesiaPersona, listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
+
+    @Setter
+    @Getter
+    private List<IglesiaPersonaDTO> listaIglesiaPersonaFiltrada;
+
+    @Getter
+    private List<IglesiaPersonaDTO> iglesiasActivasPersona = new ArrayList<>();
+
+    @Setter
+    @Getter
+    private Integer iglesiaPersonaDefinitivaId;
+
+    @Getter
+    private boolean requiereRegularizacion;
+
+    @Getter
+    private boolean puedeRegularizarIglesias;
+
+    @Getter
+    private boolean puedeGenerarReporteInconsistencias;
 
     @Setter
     @Getter
@@ -203,6 +225,8 @@ public class PersonaController implements Serializable {
             faseAnterior = cronogramaService.getFaseAnteriorAActualizacion();
             faseSiguiente = cronogramaService.getFaseSiguienteAActualizacion();
             puedeEditarPadron = cronogramaService.permiteEdicionPadron();
+            puedeRegularizarIglesias = esUsuarioTribunal();
+            puedeGenerarReporteInconsistencias = puedeRegularizarIglesias || esUsuarioAdministrador();
 
             // Detección de rol IglesiaAdmin: si el usuario logueado tiene este
             // rol y una iglesia asignada, lo confinamos a esa iglesia y
@@ -240,6 +264,24 @@ public class PersonaController implements Serializable {
             }
         }
         return false;
+    }
+
+    private boolean esUsuarioTribunal() {
+        if (loginBean == null || loginBean.getRoles() == null) {
+            return false;
+        }
+        String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
+        String rolTribunal = (prefijo == null ? "" : prefijo) + Constantes.getRolTribunal();
+        return loginBean.getRoles().contains(rolTribunal);
+    }
+
+    private boolean esUsuarioAdministrador() {
+        if (loginBean == null || loginBean.getRoles() == null) {
+            return false;
+        }
+        String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
+        String rolAdministrador = (prefijo == null ? "" : prefijo) + Constantes.getRolAdministrador();
+        return loginBean.getRoles().contains(rolAdministrador);
     }
 
     public void obtieneParroquias() {
@@ -292,20 +334,55 @@ public class PersonaController implements Serializable {
     }
 
     public void inicializaPersonaSeleccionado() {
-        if (listaIglesiaPersona != null) {
-            listaIglesiaPersona.clear();
-        }
         iglesiaPersonaSeleccionado = new IglesiaPersonaDTO();
         iglesiaPersonaSeleccionado.setPersona(new PersonaDTO());
         iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
         // Por defecto habilitado para padrón: el admin puede desmarcarlo
         iglesiaPersonaSeleccionado.setHabilitadoPadron(Boolean.TRUE);
-        this.iglesiaSeleccionado = new IglesiaDTO();
+        if (!restringidoAIglesia) {
+            this.iglesiaSeleccionado = new IglesiaDTO();
+        }
         this.personaSeleccionado = new PersonaDTO();
+        limpiarEstadoRegularizacion();
     }
 
     public void nuevaPersona() {
         inicializaPersonaSeleccionado();
+    }
+
+    public void prepararEdicion(IglesiaPersonaDTO miembro) {
+        if (Boolean.TRUE.equals(miembro != null ? miembro.getInconsistenciaIglesias() : null)) {
+            iglesiaPersonaSeleccionado = null;
+            JsfUtil.addWarningMessage(mensaje("form.personas.inconsistencia.edicion.bloqueada"));
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
+        iglesiaPersonaSeleccionado = miembro;
+        limpiarEstadoRegularizacion();
+        PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
+    }
+
+    public void prepararRegularizacion(IglesiaPersonaDTO miembro) {
+        limpiarEstadoRegularizacion();
+        if (!puedeRegularizarIglesias) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.regularizacion.error.permiso"));
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
+        if (miembro == null || !Boolean.TRUE.equals(miembro.getInconsistenciaIglesias())) {
+            JsfUtil.addWarningMessage(mensaje("form.personas.regularizacion.error.no.requerida"));
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
+        iglesiaPersonaSeleccionado = miembro;
+        cargarEstadoRegularizacion();
+        if (!requiereRegularizacion) {
+            iglesiaPersonaSeleccionado = null;
+            JsfUtil.addWarningMessage(mensaje("form.personas.regularizacion.error.no.requerida"));
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
+        PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }
 
     public boolean existeIglesiaPersonasSeleccionadas() {
@@ -341,7 +418,13 @@ public class PersonaController implements Serializable {
     }
 
     private void eliminarMiembrosPorIds(List<Integer> ids) {
-        int eliminadas = iglesiaPersonaService.eliminarPorIds(ids);
+        int eliminadas;
+        try {
+            eliminadas = iglesiaPersonaService.eliminarPorIds(ids);
+        } catch (IglesiaPersonaException e) {
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+            return;
+        }
         refrescarListadoMiembrosActual();
         if (eliminadas > 0) {
             JsfUtil.addInfoMessage(eliminadas + " Personas eliminadas");
@@ -350,7 +433,9 @@ public class PersonaController implements Serializable {
         }
         this.listaIglesiaPersonaSeleccionados = null;
         this.iglesiaPersonaSeleccionado = null;
-        PrimeFaces.current().ajax().update("frmPersonas", "frmGlobal:growlGlobal");
+        PrimeFaces.current().ajax().update(
+                "frmPersonas:tblPersonas", "frmPersonas:btnEliminaRegistros",
+                "frmPersonas:panelResumenMiembros");
     }
 
     public void buscaPersonaPorCedula() {
@@ -360,7 +445,16 @@ public class PersonaController implements Serializable {
         PersonaDTO encontrada = personaService.buscarDTOPorDocumento(iglesiaPersonaSeleccionado.getPersona().getDocumento());
         if (encontrada != null) {
             iglesiaPersonaSeleccionado.setPersona(encontrada);
-            JsfUtil.addInfoMessage("Persona con CI: " + encontrada.getDocumento() + " ya se encuentra registrado ");
+            cargarEstadoRegularizacion();
+            if (requiereRegularizacion) {
+                JsfUtil.addWarningMessage(mensaje("form.personas.error.varias.iglesias"));
+            } else if (!iglesiasActivasPersona.isEmpty()) {
+                String iglesia = iglesiasActivasPersona.get(0).getIglesia() != null
+                        ? iglesiasActivasPersona.get(0).getIglesia().getNombre() : "";
+                JsfUtil.addWarningMessage(mensaje("form.personas.error.otra.iglesia", iglesia));
+            } else {
+                JsfUtil.addInfoMessage(mensaje("form.personas.persona.existente", encontrada.getDocumento()));
+            }
         }
     }
 
@@ -375,7 +469,8 @@ public class PersonaController implements Serializable {
                 iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
             }
             if (!cronogramaService.permiteEdicionPadron()) {
-                JsfUtil.addErrorMessage("La actualización del padrón está cerrada por el cronograma electoral.");
+                JsfUtil.addErrorMessage(mensaje("form.personas.error.cronograma"));
+                PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
                 return;
             }
             IglesiaPersonaDTO persistido = iglesiaPersonaService.guardarDesdeDTO(iglesiaPersonaSeleccionado);
@@ -394,13 +489,78 @@ public class PersonaController implements Serializable {
                 }
                 personaSeleccionado = null;
                 iglesiaPersonaSeleccionado = null;
+                limpiarEstadoRegularizacion();
                 refrescarListadoMiembrosActual();
+                PrimeFaces.current().ajax().update(
+                        "frmPersonas:tblPersonas", "frmPersonas:panelResumenMiembros");
+            } else {
+                JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
+                PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
             }
+        } catch (IglesiaPersonaException e) {
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+            return;
         } catch (Exception e) {
             log.error("Error al guardar persona", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
+            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+            return;
         }
-        PrimeFaces.current().executeScript("PF('dlgPersona').hide()");
-        PrimeFaces.current().ajax().update("frmPersonas");
+    }
+
+    public void regularizarIglesias() {
+        try {
+            if (!puedeRegularizarIglesias) {
+                throw new IglesiaPersonaException("form.personas.regularizacion.error.permiso");
+            }
+            IglesiaPersonaDTO persistido = iglesiaPersonaService.regularizarDesdeDTO(
+                    iglesiaPersonaSeleccionado, iglesiaPersonaDefinitivaId);
+            if (persistido == null) {
+                throw new IglesiaPersonaException("form.personas.error.guardar");
+            }
+            String nombre = persistido.getPersona() != null
+                    ? safe(persistido.getPersona().getNombres()) : "";
+            JsfUtil.addSuccessMessage(mensaje("form.personas.regularizacion.exito", nombre));
+            iglesiaPersonaSeleccionado = null;
+            limpiarEstadoRegularizacion();
+            refrescarListadoMiembrosActual();
+            PrimeFaces.current().ajax().update(
+                    "frmPersonas:tblPersonas", "frmPersonas:btnEliminaRegistros",
+                    "frmPersonas:panelResumenMiembros");
+        } catch (IglesiaPersonaException e) {
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+        } catch (Exception e) {
+            log.error("Error al regularizar iglesias de la persona", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
+            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+        }
+    }
+
+    private void cargarEstadoRegularizacion() {
+        iglesiasActivasPersona = new ArrayList<>();
+        requiereRegularizacion = false;
+        if (iglesiaPersonaSeleccionado == null || iglesiaPersonaSeleccionado.getPersona() == null
+                || iglesiaPersonaSeleccionado.getPersona().getDocumento() == null) {
+            return;
+        }
+        iglesiasActivasPersona = iglesiaPersonaService.listarDTOsActivosPorDocumento(
+                iglesiaPersonaSeleccionado.getPersona().getDocumento());
+        requiereRegularizacion = iglesiasActivasPersona.stream()
+                .anyMatch(relacion -> Boolean.TRUE.equals(relacion.getInconsistenciaIglesias()));
+    }
+
+    private void limpiarEstadoRegularizacion() {
+        iglesiasActivasPersona = new ArrayList<>();
+        iglesiaPersonaDefinitivaId = null;
+        requiereRegularizacion = false;
+    }
+
+    private String mensaje(String clave, Object... argumentos) {
+        Object valor = JsfUtil.getProperty(clave, true);
+        String patron = valor != null ? valor.toString() : clave;
+        return MessageFormat.format(patron, argumentos != null ? argumentos : new Object[0]);
     }
 
     private void refrescarListadoMiembrosActual() {
@@ -498,19 +658,27 @@ public class PersonaController implements Serializable {
 
     public void exportarExcel() {
         try {
-            List<IglesiaPersonaDTO> lista = listaIglesiaPersona != null ? listaIglesiaPersona : new ArrayList<>();
+            List<IglesiaPersonaDTO> lista = listaIglesiaPersonaFiltrada != null
+                    ? new ArrayList<>(listaIglesiaPersonaFiltrada)
+                    : (listaIglesiaPersona != null
+                            ? new ArrayList<>(listaIglesiaPersona) : new ArrayList<>());
             String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
             String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
 
-            ReporteXLSX.nuevoExcel("Listado de Miembros");
-            ReporteXLSX.creaEspacioInformativo(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
-
             String[] columnas = {
-                "N°", "CEDULA", "NOMBRES", "SEXO", "IGLESIA",
-                "PADRON", "REVISION", "FECHA ACTUALIZACION"
+                mensaje("form.personas.exportar.col.numero"),
+                mensaje("form.personas.exportar.col.identificacion"),
+                mensaje("form.personas.exportar.col.nombres"),
+                mensaje("form.personas.exportar.col.sexo"),
+                mensaje("form.personas.exportar.col.iglesia"),
+                mensaje("form.personas.exportar.col.padron"),
+                mensaje("form.personas.exportar.col.revision"),
+                mensaje("form.personas.exportar.col.inconsistencia"),
+                mensaje("form.personas.exportar.col.cantidad.iglesias"),
+                mensaje("form.personas.exportar.col.fecha.actualizacion")
             };
-            int[] anchos = { 1800, 4500, 9500, 2500, 9000, 4500, 4500, 6000 };
-            ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+            int[] anchos = {1800, 4500, 9500, 2500, 9000,
+                4500, 4500, 6500, 4500, 6000};
 
             String[][] datos = new String[lista.size()][columnas.length];
             SimpleDateFormat fmtFechaHora = new SimpleDateFormat("dd/MM/yyyy HH:mm");
@@ -524,18 +692,36 @@ public class PersonaController implements Serializable {
                 datos[i][2] = persona != null
                         ? (safe(persona.getApellidos()) + " " + safe(persona.getNombres())).trim() : "";
                 datos[i][3] = persona != null ? safe(persona.getSexo()) : "";
-                datos[i][4] = iglesia != null ? safe(iglesia.getNombre()) : safe(iglesiaSeleccionado.getNombre());
-                datos[i][5] = Boolean.TRUE.equals(ip.getHabilitadoPadron()) ? "Habilitado" : "No habilitado";
-                datos[i][6] = Boolean.TRUE.equals(ip.getActualizada()) ? "Revisado" : "Pendiente";
-                datos[i][7] = ip.getFechaActualiza() != null ? fmtFechaHora.format(ip.getFechaActualiza()) : "";
+                datos[i][4] = iglesia != null ? safe(iglesia.getNombre())
+                        : (iglesiaSeleccionado != null ? safe(iglesiaSeleccionado.getNombre()) : "");
+                datos[i][5] = Boolean.TRUE.equals(ip.getHabilitadoPadron())
+                        ? mensaje("form.personas.exportar.estado.habilitado")
+                        : mensaje("form.personas.exportar.estado.no.habilitado");
+                datos[i][6] = Boolean.TRUE.equals(ip.getActualizada())
+                        ? mensaje("form.personas.exportar.estado.revisado")
+                        : mensaje("form.personas.exportar.estado.pendiente");
+                datos[i][7] = Boolean.TRUE.equals(ip.getInconsistenciaIglesias())
+                        ? mensaje("form.personas.inconsistencia.con")
+                        : mensaje("form.personas.inconsistencia.sin");
+                datos[i][8] = String.valueOf(ip.getCantidadIglesiasActivas() != null
+                        ? ip.getCantidadIglesiasActivas() : 0);
+                datos[i][9] = ip.getFechaActualiza() != null
+                        ? fmtFechaHora.format(ip.getFechaActualiza()) : "";
             }
 
-            ReporteXLSX.creaContenidoTabla(datos, columnas);
-            ReporteXLSX.setFinalParagraph(lista.size());
-            ReporteXLSX.descargarExcel("Personas");
+            synchronized (ReporteXLSX.class) {
+                ReporteXLSX.nuevoExcel(mensaje("form.personas.exportar.titulo"));
+                ReporteXLSX.creaEspacioInformativo(
+                        fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
+                ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+                ReporteXLSX.creaContenidoTabla(datos, columnas);
+                ReporteXLSX.setFinalParagraph(lista.size());
+                String marcaTiempo = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date());
+                ReporteXLSX.descargarExcel("personas_" + marcaTiempo);
+            }
         } catch (Exception e) {
             log.error("Error al exportar listado de personas a Excel", e);
-            JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");
+            JsfUtil.addErrorMessage(mensaje("form.personas.exportar.error"));
         }
     }
 
@@ -598,6 +784,77 @@ public class PersonaController implements Serializable {
             JsfUtil.addErrorMessage(e.getMessage() != null
                     ? e.getMessage() : Constantes.getMensaje("documentos.error.storage"));
             return false;
+        }
+    }
+
+    public void exportarInconsistenciasExcel() {
+        if (!puedeGenerarReporteInconsistencias) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.inconsistencias.error.permiso"));
+            return;
+        }
+        try {
+            List<IglesiaPersonaDTO> relaciones = iglesiaPersonaService.listarInconsistenciasIglesias();
+            if (relaciones.isEmpty()) {
+                JsfUtil.addInfoMessage(mensaje("form.personas.inconsistencias.sin.datos"));
+                return;
+            }
+            String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+            String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
+            String[] columnas = {
+                mensaje("form.personas.inconsistencias.reporte.col.numero"),
+                mensaje("form.personas.inconsistencias.reporte.col.identificacion"),
+                mensaje("form.personas.inconsistencias.reporte.col.nombres"),
+                mensaje("form.personas.inconsistencias.reporte.col.cantidad"),
+                mensaje("form.personas.inconsistencias.reporte.col.iglesias"),
+                mensaje("form.personas.inconsistencias.reporte.col.relacion"),
+                mensaje("form.personas.inconsistencias.reporte.col.provincia"),
+                mensaje("form.personas.inconsistencias.reporte.col.canton"),
+                mensaje("form.personas.inconsistencias.reporte.col.parroquia"),
+                mensaje("form.personas.inconsistencias.reporte.col.estado.relacion"),
+                mensaje("form.personas.inconsistencias.reporte.col.estado.inconsistencia"),
+                mensaje("form.personas.inconsistencias.reporte.col.fecha")
+            };
+            int[] anchos = {1800, 4500, 9500, 4500, 12000, 9000,
+                5500, 5500, 5500, 4500, 6500, 6000};
+            String[][] datos = new String[relaciones.size()][columnas.length];
+            String fechaGeneracion = fecha + " " + hora;
+            for (int i = 0; i < relaciones.size(); i++) {
+                IglesiaPersonaDTO relacion = relaciones.get(i);
+                PersonaDTO persona = relacion.getPersona();
+                IglesiaDTO iglesia = relacion.getIglesia();
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = persona != null ? safe(persona.getDocumento()) : "";
+                datos[i][2] = persona != null
+                        ? (safe(persona.getApellidos()) + " " + safe(persona.getNombres())).trim() : "";
+                datos[i][3] = String.valueOf(relacion.getCantidadIglesiasActivas());
+                datos[i][4] = safe(relacion.getIglesiasActivas());
+                datos[i][5] = iglesia != null ? safe(iglesia.getNombre()) : "";
+                datos[i][6] = iglesia != null ? safe(iglesia.getProvinciaNombre()) : "";
+                datos[i][7] = iglesia != null ? safe(iglesia.getCantonNombre()) : "";
+                datos[i][8] = iglesia != null ? safe(iglesia.getUbicacionNombre()) : "";
+                datos[i][9] = Boolean.TRUE.equals(relacion.getEstadoRelacion())
+                        ? mensaje("form.personas.inconsistencias.estado.activa")
+                        : mensaje("form.personas.inconsistencias.estado.inactiva");
+                datos[i][10] = Boolean.TRUE.equals(relacion.getInconsistenciaIglesias())
+                        ? mensaje("form.personas.inconsistencias.estado.pendiente")
+                        : mensaje("form.personas.inconsistencias.estado.historica");
+                datos[i][11] = fechaGeneracion;
+            }
+            synchronized (ReporteXLSX.class) {
+                ReporteXLSX.nuevoExcel(mensaje("form.personas.inconsistencias.reporte.titulo"));
+                ReporteXLSX.creaEspacioInformativo(
+                        fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
+                ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+                ReporteXLSX.creaContenidoTabla(datos, columnas);
+                ReporteXLSX.setFinalParagraph(relaciones.size());
+                String marcaTiempo = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date());
+                ReporteXLSX.descargarExcel("personas_inconsistencias_" + marcaTiempo);
+            }
+        } catch (IglesiaPersonaException e) {
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+        } catch (Exception e) {
+            log.error("Error al generar reporte de inconsistencias de iglesias", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.inconsistencias.error.reporte"));
         }
     }
 

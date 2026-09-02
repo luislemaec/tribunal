@@ -249,6 +249,7 @@
                 </ui:fragment>
 
                 <!-- ── KPIs + progreso (cuando hay iglesia cargada) ── -->
+                <p:outputPanel id="panelResumenMiembros" layout="block">
                 <ui:fragment rendered="#{personaController.iglesiaSeleccionado.id ne null}">
 
                     <!-- Tarjetas KPI -->
@@ -340,6 +341,7 @@
                     </div>
 
                 </ui:fragment>
+                </p:outputPanel>
 
                 <!-- ── Filtros geográficos (solo administrador global) ── -->
                 <ui:fragment rendered="#{not personaController.restringidoAIglesia}">
@@ -361,7 +363,8 @@
                                     <f:selectItems value="#{personaController.cantones}" var="canton"
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneParroquias()}"
-                                            process="@this" update="frmPersonas"/>
+                                            process="@this" partialSubmit="true"
+                                            update="parroquia iglesias tblPersonas panelResumenMiembros"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 md:col-3">
@@ -373,7 +376,8 @@
                                     <f:selectItems value="#{personaController.parroquias}" var="parroquia"
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}"
-                                            process="@this" update="frmPersonas"/>
+                                            process="@this" partialSubmit="true"
+                                            update="iglesias tblPersonas panelResumenMiembros"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 md:col-6">
@@ -387,7 +391,8 @@
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
                                                    itemLabel="#{iglesia.nombre} - #{iglesia.comunidad}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}"
-                                            process="@this" update="frmPersonas"/>
+                                            process="@this" partialSubmit="true"
+                                            update="tblPersonas panelResumenMiembros"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>
@@ -417,7 +422,7 @@
                                          disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
                                          process="@this tblPersonas"
-                                         update="@form">
+                                         update="btnEliminaRegistros">
                             <p:confirm header="Confirmar eliminación"
                                        message="¿Eliminar los miembros seleccionados? Esta acción no se puede deshacer."
                                        icon="pi pi-exclamation-triangle"/>
@@ -433,7 +438,7 @@
                                       invalidFileMessage="#{msg['msg.invalid.file']}"
                                       invalidSizeMessage="#{msg['msg.invalid.max.size.file']}"
                                       auto="true" oncomplete="PF('statusDialog').hide()"
-                                      update="frmPersonas"
+                                      update=":frmPersonas"
                                       maxFileSize="2000000" fileLimit="1"
                                       allowTypes="/(\.|\/)(xlsx|xls|)$/"
                                       multiple="false" cancelLabel="Cancelar"
@@ -442,11 +447,18 @@
                                       styleClass="ui-button-raised ui-button-info"/>
 
                         <!-- Exportar listado en Excel -->
-                        <p:commandButton value="Exportar" icon="pi pi-file-excel"
+                        <p:commandButton value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
                                          styleClass="ui-button-outlined ui-button-success"
                                          ajax="false"
                                          actionListener="#{personaController.exportarExcel}"
                                          disabled="#{empty personaController.listaIglesiaPersona}"/>
+
+                        <p:commandButton value="#{msg['form.personas.inconsistencias.reporte.boton']}"
+                                         icon="pi pi-exclamation-triangle"
+                                         styleClass="ui-button-outlined ui-button-warning"
+                                         ajax="false"
+                                         rendered="#{personaController.puedeGenerarReporteInconsistencias}"
+                                         actionListener="#{personaController.exportarInconsistenciasExcel}"/>
 
                         <!-- Descargar archivo generado -->
                         <p:commandButton value="Descargar" icon="pi pi-download"
@@ -461,8 +473,11 @@
                 <!-- ── TABLA DE MIEMBROS ── -->
                 <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers"
                              value="#{personaController.listaIglesiaPersona}"
+                             filteredValue="#{personaController.listaIglesiaPersonaFiltrada}"
                              selection="#{personaController.listaIglesiaPersonaSeleccionados}"
                              rowKey="#{iglPers.id}"
+                             selectionDisabled="#{iglPers.inconsistenciaIglesias}"
+                             multiViewState="true"
                              paginator="true" rows="10" rowSelectMode="add"
                              paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
@@ -522,6 +537,27 @@
                         </div>
                     </p:column>
 
+                    <p:column headerText="#{msg['form.personas.inconsistencia.columna']}"
+                              sortBy="#{iglPers.inconsistenciaIglesias}"
+                              styleClass="text-center" style="width:11rem">
+                        <f:facet name="export">
+                            <h:outputText value="#{iglPers.inconsistenciaIglesias
+                                                   ? msg['form.personas.inconsistencia.con']
+                                                   : msg['form.personas.inconsistencia.sin']}"/>
+                        </f:facet>
+                        <p:outputPanel id="panelInconsistencia" layout="inline">
+                            <p:tag rendered="#{iglPers.inconsistenciaIglesias}"
+                                   value="#{msg['form.personas.inconsistencia.con']}"
+                                   severity="danger" icon="pi pi-exclamation-triangle"/>
+                            <p:tag rendered="#{not iglPers.inconsistenciaIglesias}"
+                                   value="#{msg['form.personas.inconsistencia.sin']}"
+                                   severity="success" icon="pi pi-check-circle"/>
+                        </p:outputPanel>
+                        <p:tooltip for="panelInconsistencia"
+                                   rendered="#{iglPers.inconsistenciaIglesias}"
+                                   value="#{msg['form.personas.inconsistencia.tooltip']}"/>
+                    </p:column>
+
                     <!-- Habilitado para padrón electoral -->
                     <p:column headerText="Padrón"
                               sortBy="#{iglPers.habilitadoPadron}"
@@ -556,23 +592,31 @@
                     </p:column>
 
                     <!-- Acciones por fila -->
-                    <p:column exportable="false" styleClass="text-center" style="width:7rem">
+                    <p:column exportable="false" styleClass="text-center" style="width:10rem">
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="#{personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma'}"
-                                         disabled="#{not personaController.puedeEditarPadron}"
+                                         title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
+                                         disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
+                                         actionListener="#{personaController.prepararEdicion(iglPers)}"
                                          update=":frmPersonas:outPnlPersonas"
-                                         oncomplete="PF('dlgPersona').show()"
-                                         process="@this">
-                            <f:setPropertyActionListener value="#{iglPers}"
-                                                         target="#{personaController.iglesiaPersonaSeleccionado}"/>
-                        </p:commandButton>
+                                         oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
+                                         process="@this"/>
+                        <p:commandButton icon="pi pi-wrench"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-help"
+                                         title="#{msg['form.personas.regularizacion.accion']}"
+                                         rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
+                                         disabled="#{not personaController.puedeEditarPadron}"
+                                         actionListener="#{personaController.prepararRegularizacion(iglPers)}"
+                                         process="@this" partialSubmit="true"
+                                         update=":frmPersonas:panelDialogRegularizacion"
+                                         oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
                         <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="#{personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma'}"
-                                         disabled="#{not personaController.puedeEditarPadron}"
+                                         title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
+                                         disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
                                          actionListener="#{personaController.eliminarIglesiaPersonaSeleccionada}"
-                                         process="@this" update="@form">
+                                         process="@this" partialSubmit="true"
+                                         update=":frmPersonas:btnEliminaRegistros">
                             <f:setPropertyActionListener value="#{iglPers}"
                                                          target="#{personaController.iglesiaPersonaSeleccionado}"/>
                             <p:confirm header="Confirmar eliminación"
@@ -615,7 +659,7 @@
                                              styleClass="w-full">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
-                                            update="frmPersonas:outPnlPersonas"
+                                            update="outPnlPersonas"
                                             listener="#{personaController.buscaPersonaPorCedula}"
                                             process="@this"/>
                                     <f:validateLength minimum="10" maximum="10"/>
@@ -668,6 +712,16 @@
                                         icon="pi pi-home"/>
                             </div>
 
+                            <ui:fragment rendered="#{personaController.requiereRegularizacion}">
+                                <div class="field col-12">
+                                    <div class="border-round-lg p-3 text-orange-900"
+                                         style="background:#fff7ed;border-left:4px solid #f97316">
+                                        <i class="pi pi-lock mr-2"/>
+                                        #{msg['form.personas.inconsistencia.edicion.bloqueada']}
+                                    </div>
+                                </div>
+                            </ui:fragment>
+
                             <!-- Fila 4: Habilitado para padrón electoral -->
                             <div class="field col-12">
                                 <div class="flex align-items-start justify-content-between p-3 border-round"
@@ -712,15 +766,70 @@
                                          onclick="PF('dlgPersona').hide()"
                                          styleClass="ui-button-outlined ui-button-secondary"
                                          type="button"/>
-                        <p:commandButton value="Guardar" icon="pi pi-check"
+                        <p:commandButton id="btnGuardarPersona" value="Guardar" icon="pi pi-check"
                                          styleClass="ui-button-success"
+                                         disabled="#{personaController.requiereRegularizacion}"
                                          actionListener="#{personaController.actualizarPersona}"
                                          oncomplete="if (!args.validationFailed) PF('dlgPersona').hide()"
-                                         update=":frmPersonas"
+                                         update="outPnlPersonas"
                                          process="outPnlPersonas @this"/>
                     </div>
                 </f:facet>
 
+            </p:dialog>
+
+            <p:dialog header="#{msg['form.personas.regularizacion.titulo']}"
+                      showEffect="fade" hideEffect="fade" modal="true"
+                      widgetVar="dlgRegularizarIglesias" responsive="true" width="620"
+                      style="max-width:96vw" closeOnEscape="true">
+                <p:outputPanel id="panelDialogRegularizacion" layout="block">
+                    <p:outputPanel id="outPnlRegularizacion" layout="block"
+                                   rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
+                        <div class="border-round-lg p-3 mb-3"
+                             style="background:#fff7ed;border-left:4px solid #f97316">
+                            <div class="flex align-items-start gap-2">
+                                <i class="pi pi-exclamation-triangle text-orange-500 text-xl mt-1"/>
+                                <div>
+                                    <span class="block font-bold text-900">
+                                        #{personaController.iglesiaPersonaSeleccionado.persona.apellidos}
+                                        #{personaController.iglesiaPersonaSeleccionado.persona.nombres}
+                                    </span>
+                                    <small class="text-700 line-height-3">
+                                        #{msg['form.personas.regularizacion.detalle']}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <label for="iglesiaDefinitiva" class="block font-semibold text-800 mb-2">
+                            #{msg['form.personas.regularizacion.label']}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <p:selectOneRadio id="iglesiaDefinitiva"
+                                          value="#{personaController.iglesiaPersonaDefinitivaId}"
+                                          layout="pageDirection" required="true"
+                                          requiredMessage="#{msg['form.personas.regularizacion.error.seleccion']}">
+                            <f:selectItems value="#{personaController.iglesiasActivasPersona}"
+                                           var="relacion" itemValue="#{relacion.id}"
+                                           itemLabel="#{relacion.iglesia.nombre} - #{relacion.iglesia.comunidad}"/>
+                            <p:ajax process="@this" update=":frmPersonas:btnConfirmarRegularizacion"/>
+                        </p:selectOneRadio>
+                    </p:outputPanel>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                        <p:commandButton value="Cancelar" icon="pi pi-times" type="button"
+                                         onclick="PF('dlgRegularizarIglesias').hide()"
+                                         styleClass="ui-button-outlined ui-button-secondary"/>
+                        <p:commandButton id="btnConfirmarRegularizacion"
+                                         value="#{msg['form.personas.regularizacion.confirmar']}"
+                                         icon="pi pi-check" styleClass="ui-button-warning"
+                                         disabled="#{personaController.iglesiaPersonaDefinitivaId eq null}"
+                                         actionListener="#{personaController.regularizarIglesias}"
+                                         process=":frmPersonas:outPnlRegularizacion @this"
+                                         update=":frmPersonas:panelDialogRegularizacion"
+                                         oncomplete="if (!args.validationFailed) PF('dlgRegularizarIglesias').hide()"/>
+                    </div>
+                </f:facet>
             </p:dialog>
 
         </h:form>

@@ -8,14 +8,21 @@ package ec.com.antenasur.facade;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.IglesiaPersona;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.generic.AbstractFacade;
+import ec.com.antenasur.model.generic.EntidadBase;
+import org.hibernate.Filter;
+import org.hibernate.Session;
 
 /**
  *
@@ -61,6 +68,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         try {
             String sql = HQL
                     + " LEFT JOIN FETCH ip.iglesia igl"
+                    + " LEFT JOIN FETCH igl.ubicacion parroquia"
+                    + " LEFT JOIN FETCH parroquia.geograp canton"
+                    + " LEFT JOIN FETCH canton.geograp provincia"
                     + " LEFT JOIN FETCH ip.persona p"
                     + " WHERE igl.ubicacion = :parroquia AND ip.estado = TRUE"
                     + " ORDER BY ip.id";
@@ -78,6 +88,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         try {
             String sql = HQL
                     + " LEFT JOIN FETCH ip.iglesia i"
+                    + " LEFT JOIN FETCH i.ubicacion parroquia"
+                    + " LEFT JOIN FETCH parroquia.geograp canton"
+                    + " LEFT JOIN FETCH canton.geograp provincia"
                     + " LEFT JOIN FETCH ip.persona p"
                     + " WHERE i.id = :iglesiaId AND ip.estado = TRUE"
                     + " ORDER BY ip.id";
@@ -162,6 +175,8 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
             String sql = HQL
                     + " LEFT JOIN FETCH ip.iglesia igl"
                     + " LEFT JOIN FETCH igl.ubicacion ub"
+                    + " LEFT JOIN FETCH ub.geograp canton"
+                    + " LEFT JOIN FETCH canton.geograp provincia"
                     + " LEFT JOIN FETCH ip.persona p"
                     + " WHERE ub IN :parroquias AND ip.estado = TRUE"
                     + " ORDER BY ip.id";
@@ -207,6 +222,120 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    /**
+     * Lista todos los vinculos activos de una persona usando el documento
+     * institucional como identidad funcional. La variante con bloqueo se usa
+     * antes de altas y regularizaciones para serializar operaciones concurrentes.
+     */
+    public List<IglesiaPersona> listarActivasPorDocumento(String documento, boolean bloquear) {
+        if (documento == null || documento.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        String fetchUbicacion = bloquear ? ""
+                : " LEFT JOIN FETCH i.ubicacion parroquia"
+                + " LEFT JOIN FETCH parroquia.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia";
+        String sql = HQL
+                + " JOIN FETCH ip.iglesia i"
+                + fetchUbicacion
+                + " JOIN FETCH ip.persona p"
+                + " WHERE TRIM(p.documento) = :documento"
+                + "   AND ip.estado = TRUE"
+                + "   AND p.estado = TRUE"
+                + " ORDER BY ip.id";
+        TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
+        query.setParameter("documento", documento.trim());
+        if (bloquear) {
+            query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+        }
+        List<IglesiaPersona> resultado = query.getResultList();
+        return resultado != null ? resultado : java.util.Collections.emptyList();
+    }
+
+    public List<IglesiaPersona> listarActivasPorDocumento(String documento) {
+        return listarActivasPorDocumento(documento, false);
+    }
+
+    /**
+     * Cuenta iglesias activas distintas por documento en una sola consulta.
+     * El documento es la identidad funcional porque existen personas historicas
+     * duplicadas con distintos ids internos.
+     */
+    public Map<String, Integer> contarIglesiasActivasPorDocumentos(Collection<String> documentos) {
+        Map<String, Integer> resultado = new LinkedHashMap<>();
+        if (documentos == null || documentos.isEmpty()) {
+            return resultado;
+        }
+        String hql = "SELECT TRIM(p.documento), COUNT(DISTINCT i.id)"
+                + " FROM IglesiaPersona ip"
+                + " JOIN ip.iglesia i"
+                + " JOIN ip.persona p"
+                + " WHERE ip.estado = TRUE"
+                + "   AND p.estado = TRUE"
+                + "   AND TRIM(p.documento) IN :documentos"
+                + " GROUP BY TRIM(p.documento)";
+        List<Object[]> filas = getEntityManager().createQuery(hql, Object[].class)
+                .setParameter("documentos", documentos)
+                .getResultList();
+        for (Object[] fila : filas) {
+            resultado.put((String) fila[0], ((Number) fila[1]).intValue());
+        }
+        return resultado;
+    }
+
+    /** Obtiene los documentos que actualmente pertenecen a mas de una iglesia. */
+    public List<String> listarDocumentosConMultiplesIglesiasActivas() {
+        String hql = "SELECT TRIM(p.documento)"
+                + " FROM IglesiaPersona ip"
+                + " JOIN ip.iglesia i"
+                + " JOIN ip.persona p"
+                + " WHERE ip.estado = TRUE"
+                + "   AND p.estado = TRUE"
+                + "   AND p.documento IS NOT NULL"
+                + " GROUP BY TRIM(p.documento)"
+                + " HAVING COUNT(DISTINCT i.id) > 1"
+                + " ORDER BY TRIM(p.documento)";
+        return getEntityManager().createQuery(hql, String.class).getResultList();
+    }
+
+    /**
+     * Carga en bloque todas las relaciones de los documentos inconsistentes,
+     * incluyendo ubicacion completa. No filtra el estado de la relacion para
+     * que el reporte preserve tambien la trazabilidad historica.
+     */
+    public List<IglesiaPersona> listarRelacionesPorDocumentos(Collection<String> documentos) {
+        if (documentos == null || documentos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Session session = getEntityManager().unwrap(Session.class);
+        Filter filtro = session.getEnabledFilter(EntidadBase.FILTER_ACTIVE);
+        if (filtro != null) {
+            session.disableFilter(EntidadBase.FILTER_ACTIVE);
+        }
+        String hql = HQL
+                + " JOIN FETCH ip.iglesia i"
+                + " LEFT JOIN FETCH i.ubicacion parroquia"
+                + " LEFT JOIN FETCH parroquia.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " JOIN FETCH ip.persona p"
+                + " WHERE TRIM(p.documento) IN :documentos"
+                + " ORDER BY TRIM(p.documento), ip.estado DESC, i.nombre, ip.id";
+        try {
+            return session.createQuery(hql, IglesiaPersona.class)
+                    .setParameter("documentos", documentos)
+                    .getResultList();
+        } finally {
+            if (filtro != null) {
+                session.enableFilter(EntidadBase.FILTER_ACTIVE);
+            }
+        }
+    }
+
+    /** Fuerza las bajas pendientes antes de actualizar la relacion definitiva. */
+    public void flushCambios() {
+        getEntityManager().flush();
     }
 
     /**

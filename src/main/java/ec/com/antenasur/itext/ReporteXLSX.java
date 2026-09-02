@@ -44,7 +44,8 @@ public class ReporteXLSX {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReporteXLSX.class);
 
-    private static ExternalContext externalContext;
+    private static final String MIME_XLSX =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private static String PATH_LOGO;
 
@@ -71,7 +72,6 @@ public class ReporteXLSX {
 
     private static void inicializa() {
         try {
-            externalContext = FacesContext.getCurrentInstance().getExternalContext();
             /* Agrega logo institucional a la cabecera del documento. */
             PATH_LOGO = Constantes.getPathLogo();
             LIBRO = new XSSFWorkbook();
@@ -209,24 +209,33 @@ public class ReporteXLSX {
         }
     }
 
-    public static void descargarExcel(String nombreReporte) {
+    public static void descargarExcel(String nombreReporte) throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || LIBRO == null) {
+            throw new IOException("No existe un contexto o libro Excel disponible para descargar.");
+        }
+        ExternalContext contexto = facesContext.getExternalContext();
+        String nombreSeguro = tieneTexto(nombreReporte)
+                ? nombreReporte.replaceAll("[\\r\\n\\\"/\\\\]", "_") : "reporte";
+        contexto.responseReset();
+        HttpServletResponse response = (HttpServletResponse) contexto.getResponse();
+        response.setContentType(MIME_XLSX);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + nombreSeguro + ".xlsx\"");
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        response.setDateHeader("Expires", 0);
+        OutputStream out = response.getOutputStream();
         try {
-
-            HttpServletResponse response = (HttpServletResponse) externalContext.getResponse();
-            OutputStream out = response.getOutputStream();
-            response.setContentType("application/xlsx");
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + nombreReporte + ".xlsx\"");
-            response.setDateHeader("Expires", 0);
-            try {
-                LIBRO.write(out);
-                out.flush();
-            } catch (IOException ex) {
-                LOG.error("ERROR AL DESCARGAR ARCHIVO EXCEL" + ex);
-            }
+            LIBRO.write(out);
             out.flush();
-            FacesContext.getCurrentInstance().responseComplete();
-        } catch (IOException ex) {
-            LOG.error("ERROR AL DESCARGAR ARCHIVO EXCEL" + ex);
+            facesContext.responseComplete();
+        } finally {
+            try {
+                LIBRO.close();
+            } finally {
+                LIBRO = null;
+                HOJA = null;
+            }
         }
     }
 
