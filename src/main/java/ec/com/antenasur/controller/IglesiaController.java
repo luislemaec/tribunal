@@ -23,6 +23,7 @@ import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.dto.ResultadoProvisionUsuarioDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.model.Geograp;
@@ -176,6 +177,10 @@ public class IglesiaController implements Serializable {
     @Getter
     private boolean puedeRegistrarIglesia;
 
+    /** Habilita la asignaci\u00f3n de administradores solo en la fase correspondiente. */
+    @Getter
+    private boolean puedeAsignarAdministradores;
+
     /** [total, procesadas, porcentaje] para la barra de progreso de la fase activa. */
     @Getter
     private int[] progresoRegistro = {0, 0, 0};
@@ -231,6 +236,7 @@ public class IglesiaController implements Serializable {
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
             puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
+            puedeAsignarAdministradores = cronogramaService.permiteAsignacionUsuarios();
             if (!restringidoAIglesia && faseVigente != null) {
                 progresoRegistro = iglesiaService.calcularProgresoRegistro(
                         faseVigente.getFechaInicio(), faseVigente.getFechaFin());
@@ -328,7 +334,8 @@ public class IglesiaController implements Serializable {
 
     public boolean isPuedeGestionarAdministradores() {
         return loginBean != null && loginBean.getRoles() != null
-                && loginBean.getRoles().contains("SITEC-Administrador");
+                && (loginBean.getRoles().contains("SITEC-Administrador")
+                || loginBean.getRoles().contains("SITEC-Tribunal"));
     }
 
     public void prepararAsignacionAdministrador() {
@@ -336,6 +343,10 @@ public class IglesiaController implements Serializable {
         if (!isPuedeGestionarAdministradores() || iglesiaAdministradorSeleccionada == null
                 || iglesiaAdministradorSeleccionada.getId() == null) {
             rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.no.autorizado"));
+            return;
+        }
+        if (!puedeAsignarAdministradores) {
+            rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.fase.no.permite"));
             return;
         }
         candidatosAdministrador = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaAdministradorSeleccionada.getId());
@@ -349,6 +360,9 @@ public class IglesiaController implements Serializable {
         correoAdministrador = null;
         if (candidatoAdministrador != null && candidatoAdministrador.getPersona() != null
                 && candidatoAdministrador.getPersona().getId() != null) {
+            log.info("Candidato IglesiaAdmin seleccionado. iglesiaId={}, iglesiaPersonaId={}, personaId={}",
+                    iglesiaAdministradorSeleccionada != null ? iglesiaAdministradorSeleccionada.getId() : null,
+                    candidatoAdministrador.getId(), candidatoAdministrador.getPersona().getId());
             var usuario = usuarioService.obtenerUsuarioPorPersonaIncluyendoInactivos(
                     candidatoAdministrador.getPersona().getId());
             correoAdministrador = usuario != null ? usuario.getCorreo() : null;
@@ -358,13 +372,27 @@ public class IglesiaController implements Serializable {
     public void asignarAdministrador() {
         try {
             if (!isPuedeGestionarAdministradores() || iglesiaAdministradorSeleccionada == null
-                    || candidatoAdministrador == null) {
+                    || iglesiaAdministradorSeleccionada.getId() == null) {
                 rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.no.autorizado"));
                 return;
             }
-            asignacionAdministradorIglesiaService.asignar(iglesiaAdministradorSeleccionada.getId(),
-                    candidatoAdministrador.getId(), correoAdministrador);
+            if (candidatoAdministrador == null || candidatoAdministrador.getId() == null
+                    || candidatoAdministrador.getPersona() == null
+                    || candidatoAdministrador.getPersona().getId() == null) {
+                rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.persona.requerida"));
+                return;
+            }
+            Integer iglesiaId = iglesiaAdministradorSeleccionada.getId();
+            Integer personaId = candidatoAdministrador.getPersona() != null
+                    ? candidatoAdministrador.getPersona().getId() : null;
+            log.info("Controller asignar IglesiaAdmin. iglesiaId={}, iglesiaPersonaId={}, personaId={}",
+                    iglesiaId, candidatoAdministrador.getId(), personaId);
+            ResultadoProvisionUsuarioDTO resultado = asignacionAdministradorIglesiaService.asignar(
+                    iglesiaId, candidatoAdministrador.getId(), correoAdministrador);
+            log.info("Controller asignacion IglesiaAdmin exitosa. iglesiaId={}, personaId={}, usuarioId={}",
+                    iglesiaId, personaId, resultado.getUsuario().getId());
             refrescarLista();
+            administradorActual = usuarioService.obtenerAdminDeIglesia(iglesiaId);
             JsfUtil.addSuccessMessageFromBundle("iglesias.admin.mensaje.exito");
             PrimeFaces.current().ajax().addCallbackParam("assignmentSuccess", true);
         } catch (NegocioException e) {

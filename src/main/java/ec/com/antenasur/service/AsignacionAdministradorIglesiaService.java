@@ -18,10 +18,12 @@ import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.service.tec.CronogramaService;
+import lombok.extern.slf4j.Slf4j;
 
 /** Mantiene atomica la reasignacion de administrador de una iglesia. */
 @Stateless
-@DeclareRoles("SITEC-Administrador")
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal"})
+@Slf4j
 public class AsignacionAdministradorIglesiaService {
 
     private static final String ROL_IGLESIA_ADMIN = "SITEC-IglesiaAdmin";
@@ -44,10 +46,12 @@ public class AsignacionAdministradorIglesiaService {
     @Resource
     private SessionContext sessionContext;
 
-    @RolesAllowed("SITEC-Administrador")
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ResultadoProvisionUsuarioDTO asignar(Integer iglesiaId, Integer iglesiaPersonaId, String correo) {
         try {
+            log.info("Asignacion IglesiaAdmin iniciada. iglesiaId={}, iglesiaPersonaId={}",
+                    iglesiaId, iglesiaPersonaId);
             if (!cronogramaService.permiteAsignacionUsuarios()) {
                 throw new NegocioException("iglesias.admin.error.fase.no.permite");
             }
@@ -68,12 +72,20 @@ public class AsignacionAdministradorIglesiaService {
 
             var adminActual = usuarioService.obtenerAdminDeIglesia(iglesiaId);
             if (adminActual != null && !relacion.getPersona().getId().equals(adminActual.getPersonaId())) {
+                log.info("Reasignando IglesiaAdmin. iglesiaId={}, usuarioAnteriorId={}, personaNuevaId={}",
+                        iglesiaId, adminActual.getId(), relacion.getPersona().getId());
                 usuarioService.removerAdminDeIglesia(iglesiaId);
             }
-            return usuarioService.provisionarUsuarioExistenteConRol(
+            ResultadoProvisionUsuarioDTO resultado = usuarioService.provisionarUsuarioExistenteConRol(
                     relacion.getPersona(), correo, rol, iglesiaId);
+            log.info("Asignacion IglesiaAdmin completada. iglesiaId={}, personaId={}, usuarioId={}, rol={}, reutilizado={}, reactivado={}",
+                    iglesiaId, relacion.getPersona().getId(), resultado.getUsuario().getId(),
+                    rol.getNombre(), resultado.isReutilizado(), resultado.isReactivado());
+            return resultado;
         } catch (RuntimeException e) {
             sessionContext.setRollbackOnly();
+            log.warn("Asignacion IglesiaAdmin revertida. iglesiaId={}, iglesiaPersonaId={}, motivo={}",
+                    iglesiaId, iglesiaPersonaId, e.getMessage());
             throw e;
         }
     }

@@ -300,6 +300,27 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
     }
 
     /**
+     * Identifica en bloque las personas que conservan al menos un vínculo
+     * activo. Se usa al regularizar duplicidades para no deshabilitar una
+     * persona que aún mantiene una pertenencia válida.
+     */
+    public java.util.Set<Integer> listarPersonasConRelacionesActivas(Collection<Integer> personaIds) {
+        if (personaIds == null || personaIds.isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+        String hql = "SELECT DISTINCT ip.persona.id"
+                + " FROM IglesiaPersona ip"
+                + " JOIN ip.persona p"
+                + " WHERE ip.estado = TRUE"
+                + "   AND p.estado = TRUE"
+                + "   AND ip.persona.id IN :personaIds";
+        return new java.util.LinkedHashSet<>(getEntityManager()
+                .createQuery(hql, Integer.class)
+                .setParameter("personaIds", personaIds)
+                .getResultList());
+    }
+
+    /**
      * Cuenta iglesias activas distintas por documento en una sola consulta.
      * El documento es la identidad funcional porque existen personas historicas
      * duplicadas con distintos ids internos.

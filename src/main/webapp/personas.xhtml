@@ -533,20 +533,18 @@
                                       style="font-family:monospace"/>
                     </p:column>
 
-                    <!-- Miembro: Apellidos + Nombres + pill de sexo -->
-                    <p:column headerText="Miembro"
-                              sortBy="#{empty iglPers.persona.apellidos ? iglPers.persona.nombres : iglPers.persona.apellidos}"
-                              filterBy="#{iglPers.persona.apellidos} #{iglPers.persona.nombres}"
+                    <!-- Los nombres completos se almacenan en persona.nombres. -->
+                    <p:column headerText="#{msg['form.personas.table.header.nombres']}"
+                              sortBy="#{iglPers.persona.nombres}"
+                              filterBy="#{iglPers.persona.nombres}"
                               filterMatchMode="contains"
-                              filterPlaceholder="Filtrar por nombres o apellidos..."
+                              filterPlaceholder="#{msg['form.personas.table.filtro.nombres']}"
                               style="min-width:14rem">
                         <f:facet name="export">
-                            <h:outputText value="#{iglPers.persona.apellidos} #{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>
+                            <h:outputText value="#{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>
                         </f:facet>
                         <div class="flex align-items-center gap-2">
                             <span class="font-semibold text-800 text-sm">
-                                <h:outputText rendered="#{not empty iglPers.persona.apellidos}"
-                                              value="#{iglPers.persona.apellidos} "/>
                                 <h:outputText value="#{iglPers.persona.nombres}"/>
                             </span>
                             <ui:fragment rendered="#{iglPers.persona.sexo eq 'M'}">
@@ -563,24 +561,30 @@
                     </p:column>
 
                     <p:column headerText="#{msg['form.personas.inconsistencia.columna']}"
-                              sortBy="#{iglPers.inconsistenciaIglesias}"
+                              sortBy="#{iglPers.tieneInconsistencia}"
+                              filterBy="#{iglPers.tieneInconsistencia}"
+                              filterMatchMode="exact"
                               styleClass="text-center" style="width:11rem">
                         <f:facet name="export">
-                            <h:outputText value="#{iglPers.inconsistenciaIglesias
+                            <h:outputText value="#{iglPers.tieneInconsistencia
                                                    ? msg['form.personas.inconsistencia.con']
                                                    : msg['form.personas.inconsistencia.sin']}"/>
                         </f:facet>
                         <p:outputPanel id="panelInconsistencia" layout="inline">
-                            <p:tag rendered="#{iglPers.inconsistenciaIglesias}"
+                            <p:tag rendered="#{iglPers.tieneInconsistencia}"
                                    value="#{msg['form.personas.inconsistencia.con']}"
                                    severity="danger" icon="pi pi-exclamation-triangle"/>
-                            <p:tag rendered="#{not iglPers.inconsistenciaIglesias}"
+                            <p:tag rendered="#{not iglPers.tieneInconsistencia}"
                                    value="#{msg['form.personas.inconsistencia.sin']}"
                                    severity="success" icon="pi pi-check-circle"/>
                         </p:outputPanel>
                         <p:tooltip for="panelInconsistencia"
-                                   rendered="#{iglPers.inconsistenciaIglesias}"
-                                   value="#{msg['form.personas.inconsistencia.tooltip']}"/>
+                                   rendered="#{iglPers.tieneInconsistencia}"
+                                   value="#{iglPers.inconsistenciaIglesias
+                                            ? (iglPers.inconsistenciaCedula
+                                                ? msg['form.personas.inconsistencia.tooltip.ambas']
+                                                : msg['form.personas.inconsistencia.tooltip'])
+                                            : msg['form.personas.inconsistencia.tooltip.cedula']}"/>
                     </p:column>
 
                     <!-- Habilitado para padrón electoral -->
@@ -617,7 +621,8 @@
                     </p:column>
 
                     <!-- Acciones por fila -->
-                    <p:column exportable="false" styleClass="text-center" style="width:8rem">
+                    <p:column headerText="#{msg['form.personas.table.header.acciones']}"
+                              exportable="false" styleClass="text-center" style="width:8rem">
                         <div class="flex justify-content-center align-items-center gap-1 flex-wrap">
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
@@ -640,9 +645,9 @@
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
                                          disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
-                                         actionListener="#{personaController.eliminarIglesiaPersonaSeleccionada}"
+                                         action="#{personaController.eliminarIglesiaPersonaSeleccionada}"
                                          process="@this" partialSubmit="true"
-                                         update=":frmPersonas:btnEliminaRegistros">
+                                         update=":frmGlobal:growlGlobal :frmPersonas:btnEliminaRegistros">
                             <f:setPropertyActionListener value="#{iglPers}"
                                                          target="#{personaController.iglesiaPersonaSeleccionado}"/>
                             <p:confirm header="Confirmar eliminación"

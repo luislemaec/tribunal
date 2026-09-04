@@ -430,10 +430,11 @@
 
                             <p:commandButton icon="#{iglesia.tieneAdministrador ? 'pi pi-user-edit' : 'pi pi-user-plus'}"
                                          styleClass="ui-button-rounded ui-button-text ui-button-secondary"
-                                         title="#{iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']}"
+                                         title="#{iglesiaController.puedeAsignarAdministradores ? (iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']) : msg['iglesias.admin.error.fase.no.permite']}"
                                          rendered="#{iglesiaController.puedeGestionarAdministradores}"
+                                         disabled="#{not iglesiaController.puedeAsignarAdministradores}"
                                          action="#{iglesiaController.prepararAsignacionAdministrador}"
-                                         process="@this" update=":frmDlgAdministradorIglesia"
+                                         process="@this" update=":frmDlgAdministradorIglesia :frmGlobal:growlGlobal"
                                          oncomplete="if (args.dialogReady) PF('dlgAsignarAdministrador').show()">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaAdministradorSeleccionada}"/>
@@ -485,6 +486,9 @@
                             <span class="font-semibold text-900">#{iglesiaController.iglesiaAdministradorSeleccionada.nombre}</span>
                         </div>
                     </div>
+
+                    <p:messages id="messagesAdministrador" globalOnly="false" showDetail="false"
+                                closable="true" styleClass="mx-3 mt-2"/>
 
                     <p:outputPanel id="administradorActual" layout="block" styleClass="px-3 pt-2">
                         <ui:fragment rendered="#{iglesiaController.administradorActual ne null}">
@@ -541,6 +545,7 @@
                                                  validatorMessage="#{msg['usuarios.mensaje.correo.invalido']}">
                                         <f:validateRegex pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
                                     </p:inputText>
+                                    <p:message for="correoAdministrador" display="text" styleClass="block mt-1"/>
                                 </div>
                             </div>
                         </ui:fragment>
@@ -553,10 +558,11 @@
                                          styleClass="ui-button-outlined ui-button-secondary"/>
                         <p:commandButton id="btnConfirmarAdministrador"
                                          value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
-                                         disabled="#{iglesiaController.candidatoAdministrador eq null}"
+                                         title="#{iglesiaController.puedeAsignarAdministradores ? null : msg['iglesias.admin.error.fase.no.permite']}"
+                                         disabled="#{iglesiaController.candidatoAdministrador eq null or not iglesiaController.puedeAsignarAdministradores}"
                                          action="#{iglesiaController.asignarAdministrador}"
-                                         process=":frmDlgAdministradorIglesia:pnlAsignarAdmin"
-                                         update=":frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
+                                         process="@this :frmDlgAdministradorIglesia:datosAdministrador"
+                                         update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
                                          oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
                                          styleClass="ui-button-success"/>
                     </div>

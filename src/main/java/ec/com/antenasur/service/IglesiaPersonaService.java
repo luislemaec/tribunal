@@ -116,6 +116,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         }
         Persona persona = iglesiaPersona.getPersona();
         String documento = normalizarDocumento(persona.getDocumento());
+        validarDocumentoDisponibleParaPersona(documento, persona.getId());
         List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
         validarAsignacionNormal(activas, iglesiaPersona.getId(), iglesiaPersona.getIglesia().getId());
         Persona personaPersistida = (persona.getId() != null)
@@ -220,13 +221,13 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (dto.getId() != null && ip == null) {
             return null;
         }
-        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
-        validarAsignacionNormal(activas, dto.getId(), iglesia.getId());
-
         Persona persona = resolverPersona(dto, ip, documento);
         if (persona == null) {
             return null;
         }
+        validarDocumentoDisponibleParaPersona(documento, persona.getId());
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        validarAsignacionNormal(activas, dto.getId(), iglesia.getId());
         actualizarPersona(persona, dto, documento);
         persona = persona.getId() != null ? personaFacade.edit(persona) : personaFacade.create(persona);
 
@@ -282,8 +283,12 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion");
         }
 
-        String documento = normalizarDocumento(dto.getPersona().getDocumento());
-        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        IglesiaPersona seleccionada = iglesiaPersonaFacade.find(vinculoDefinitivoId);
+        if (seleccionada == null || seleccionada.getPersona() == null) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion.invalida");
+        }
+        String documentoActual = normalizarDocumento(seleccionada.getPersona().getDocumento());
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documentoActual, true);
         if (contarIglesiasDistintas(activas) < 2) {
             throw new IglesiaPersonaException("form.personas.regularizacion.error.no.requerida");
         }
@@ -300,20 +305,41 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         }
 
         Date ahora = new Date();
+        Map<Integer, Persona> personasDescartadas = new LinkedHashMap<>();
+        Integer personaDefinitivaId = definitiva.getPersona() != null ? definitiva.getPersona().getId() : null;
         for (IglesiaPersona activa : activas) {
             if (!activa.getId().equals(definitiva.getId())) {
                 activa.setEstado(Boolean.FALSE);
                 activa.setHasta(new java.sql.Timestamp(ahora.getTime()));
                 activa.setHabilitadoPadron(Boolean.FALSE);
                 iglesiaPersonaFacade.edit(activa);
+                if (activa.getPersona() != null && activa.getPersona().getId() != null
+                        && !activa.getPersona().getId().equals(personaDefinitivaId)) {
+                    personasDescartadas.put(activa.getPersona().getId(), activa.getPersona());
+                }
             }
         }
         // El trigger de unicidad debe observar primero las bajas. Mantiene la
         // auditoria Envers porque no se sustituye por un UPDATE masivo.
         iglesiaPersonaFacade.flushCambios();
 
+        // Una persona duplicada sin vínculos activos deja de participar en
+        // validaciones de cédula, pero se conserva con baja lógica y auditoría.
+        Set<Integer> personasConRelacionActiva = iglesiaPersonaFacade
+                .listarPersonasConRelacionesActivas(personasDescartadas.keySet());
+        for (Map.Entry<Integer, Persona> descartada : personasDescartadas.entrySet()) {
+            if (!personasConRelacionActiva.contains(descartada.getKey())) {
+                descartada.getValue().setEstado(Boolean.FALSE);
+                personaFacade.edit(descartada.getValue());
+            }
+        }
+
         Persona personaDefinitiva = definitiva.getPersona();
-        actualizarPersona(personaDefinitiva, dto, documento);
+        String documentoSolicitado = normalizarDocumento(dto.getPersona().getDocumento());
+        if (!documentoActual.equals(documentoSolicitado)) {
+            validarDocumentoDisponibleParaPersona(documentoSolicitado, personaDefinitiva.getId());
+        }
+        actualizarPersona(personaDefinitiva, dto, documentoSolicitado);
         personaFacade.edit(personaDefinitiva);
         definitiva.setHasta(null);
         definitiva.setHabilitadoPadron(dto.getHabilitadoPadron() != null
@@ -341,9 +367,10 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (iglesia == null || persona == null) {
             return null;
         }
-        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(
-                normalizarDocumento(persona.getDocumento()), true);
-        if (activas.size() > 1) {
+        String documento = normalizarDocumento(persona.getDocumento());
+        validarDocumentoDisponibleParaPersona(documento, persona.getId());
+        List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+        if (contarIglesiasDistintas(activas) > 1) {
             throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
         }
         if (!activas.isEmpty()) {
@@ -361,7 +388,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     private void validarAsignacionNormal(List<IglesiaPersona> activas,
             Integer vinculoActualId, Integer iglesiaDestinoId) {
-        if (activas.size() > 1) {
+        if (contarIglesiasDistintas(activas) > 1) {
             throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
         }
         if (activas.isEmpty()) {
@@ -406,6 +433,23 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             throw new IglesiaPersonaException("form.personas.error.documento.requerido");
         }
         return documento.trim();
+    }
+
+    private void validarDocumentoDisponibleParaPersona(String documento, Integer personaId) {
+        if (esDocumentoHistoricoEspecial(documento)) {
+            return;
+        }
+        if (personaFacade.existeOtraPersonaActivaConDocumento(documento, personaId)) {
+            throw new IglesiaPersonaException("form.personas.error.documento.duplicado");
+        }
+    }
+
+    private boolean esDocumentoHistoricoEspecial(String documento) {
+        if (documento == null) {
+            return false;
+        }
+        String normalizado = documento.trim().toUpperCase(java.util.Locale.ROOT);
+        return "S/N".equals(normalizado) || normalizado.matches("SN-\\d+");
     }
 
     private boolean esCallerTribunal() {
@@ -491,7 +535,17 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
                 iglesiaPersonaFacade.listarActivasPorDocumento(documento, true)) > 1) {
             throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
         }
-        return IglesiaPersonaDTO.fromEntity(iglesiaPersonaFacade.delete(ip));
+        Persona persona = ip.getPersona();
+        IglesiaPersona eliminada = iglesiaPersonaFacade.delete(ip);
+        if (persona != null && persona.getId() != null) {
+            Set<Integer> personasConRelacionActiva = iglesiaPersonaFacade
+                    .listarPersonasConRelacionesActivas(java.util.Collections.singleton(persona.getId()));
+            if (!personasConRelacionActiva.contains(persona.getId())) {
+                persona.setEstado(Boolean.FALSE);
+                personaFacade.edit(persona);
+            }
+        }
+        return IglesiaPersonaDTO.fromEntity(eliminada);
     }
 
     /** Soft-delete batch por lista de ids. */
@@ -523,6 +577,19 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     private List<IglesiaPersonaDTO> mapearLista(List<IglesiaPersona> entidades,
             Map<String, Integer> cantidades) {
+        Set<String> documentos = new LinkedHashSet<>();
+        if (entidades != null) {
+            for (IglesiaPersona entidad : entidades) {
+                if (entidad.getPersona() != null && !esDocumentoHistoricoEspecial(entidad.getPersona().getDocumento())) {
+                    String documento = entidad.getPersona().getDocumento();
+                    if (documento != null && !documento.trim().isEmpty()) {
+                        documentos.add(documento.trim());
+                    }
+                }
+            }
+        }
+        Map<String, Integer> cantidadesCedula = personaFacade
+                .contarPersonasActivasPorDocumentos(documentos);
         List<IglesiaPersonaDTO> resultado = new ArrayList<>();
         if (entidades == null) {
             return resultado;
@@ -533,6 +600,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             int cantidad = cantidades.getOrDefault(documento, 0);
             dto.setCantidadIglesiasActivas(cantidad);
             dto.setInconsistenciaIglesias(cantidad > 1);
+            int cantidadCedula = cantidadesCedula.getOrDefault(documento, 0);
+            dto.setCantidadCedulaDuplicada(cantidadCedula);
+            dto.setInconsistenciaCedula(cantidadCedula > 1);
             resultado.add(dto);
         }
         return resultado;

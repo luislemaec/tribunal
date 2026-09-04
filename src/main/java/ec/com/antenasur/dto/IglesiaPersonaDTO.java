@@ -51,6 +51,12 @@ public class IglesiaPersonaDTO implements Serializable {
     /** Indicador derivado para impedir que la inconsistencia use el CRUD normal. */
     private Boolean inconsistenciaIglesias;
 
+    /** Cantidad de personas activas que comparten la misma cédula normalizada. */
+    private Integer cantidadCedulaDuplicada;
+
+    /** Indicador derivado de cédula duplicada entre personas distintas. */
+    private Boolean inconsistenciaCedula;
+
     /** Nombres de las iglesias activas, utilizado por el reporte de inconsistencias. */
     private String iglesiasActivas;
 
@@ -74,9 +80,17 @@ public class IglesiaPersonaDTO implements Serializable {
         dto.setEstadoRelacion(ip.getEstado());
         dto.setCantidadIglesiasActivas(0);
         dto.setInconsistenciaIglesias(Boolean.FALSE);
+        dto.setCantidadCedulaDuplicada(0);
+        dto.setInconsistenciaCedula(Boolean.FALSE);
         // Regla estricta: solo true habilita para el padron.
         dto.setHabilitadoPadron(Boolean.TRUE.equals(ip.getHabilitadoPadron()));
         return dto;
+    }
+
+    /** Una inconsistencia puede corresponder a iglesias, cédula o ambas. */
+    public boolean isTieneInconsistencia() {
+        return Boolean.TRUE.equals(inconsistenciaIglesias)
+                || Boolean.TRUE.equals(inconsistenciaCedula);
     }
 
     private static boolean esActualizada(Date creada, Date modificada) {
