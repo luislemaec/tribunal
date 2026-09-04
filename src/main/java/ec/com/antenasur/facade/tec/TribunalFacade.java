@@ -87,4 +87,16 @@ public class TribunalFacade extends AbstractFacade<Tribunal, Integer> {
         }
     }
 
+    /** Indica si la persona conserva otra designacion activa en el Tribunal. */
+    public boolean existeAutoridadActivaPorPersona(Integer personaId) {
+        if (personaId == null) {
+            return false;
+        }
+        TypedQuery<Long> query = super.getEntityManager().createQuery(
+                "SELECT COUNT(t.id) FROM Tribunal t WHERE t.estado = TRUE "
+                + "AND t.iglesiaPersona.persona.id = :personaId", Long.class);
+        query.setParameter("personaId", personaId);
+        return query.getSingleResult() > 0;
+    }
+
 }

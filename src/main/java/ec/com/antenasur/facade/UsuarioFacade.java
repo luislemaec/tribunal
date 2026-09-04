@@ -162,6 +162,30 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
         }
     }
 
+    /** Busca una cuenta por correo sin ocultar registros inactivos. */
+    public Usuario findByCorreoIncluyendoInactivos(String correo) {
+        if (correo == null || correo.isBlank()) {
+            return null;
+        }
+        Session session = super.getEntityManager().unwrap(Session.class);
+        Filter filtroActivo = session.getEnabledFilter("filterActive");
+        if (filtroActivo != null) {
+            session.disableFilter("filterActive");
+        }
+        try {
+            TypedQuery<Usuario> query = session.createQuery(
+                    SQL + " WHERE LOWER(u.correo) = :correo ORDER BY u.id ASC", Usuario.class);
+            query.setParameter("correo", correo.trim().toLowerCase(java.util.Locale.ROOT));
+            query.setMaxResults(1);
+            List<Usuario> resultado = query.getResultList();
+            return resultado.isEmpty() ? null : resultado.get(0);
+        } finally {
+            if (filtroActivo != null) {
+                session.enableFilter("filterActive");
+            }
+        }
+    }
+
     /** Recupera una cuenta por id sin ocultar registros dados de baja. */
     public Usuario findByIdIncluyendoInactivos(Integer usuarioId) {
         if (usuarioId == null) {

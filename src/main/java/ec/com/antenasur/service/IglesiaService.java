@@ -121,6 +121,29 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
     }
 
     /**
+     * Completa en bloque el estado de administrador de las iglesias entregadas.
+     * La consulta de usuarios se realiza una sola vez para evitar N+1 en la vista.
+     */
+    public void marcarConAdministrador(List<IglesiaDTO> iglesias) {
+        if (iglesias == null || iglesias.isEmpty()) {
+            return;
+        }
+        List<Integer> ids = iglesias.stream()
+                .map(IglesiaDTO::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Map<Integer, Usuario> admins = construirMapaAdmins(ids);
+        for (IglesiaDTO iglesia : iglesias) {
+            Usuario admin = iglesia != null ? admins.get(iglesia.getId()) : null;
+            if (iglesia != null) {
+                iglesia.setTieneAdministrador(admin != null);
+                iglesia.setAdministradorNombre(admin != null && admin.getPersonsa() != null
+                        ? admin.getPersonsa().getNombres() : null);
+            }
+        }
+    }
+
+    /**
      * Retorna true si ya existe otra iglesia con el mismo nombre, parroquia y comunidad.
      * La comparación es case-insensitive y descarta espacios extremos.
      * Al editar, excluye el propio registro vía {@code idExcluir}.

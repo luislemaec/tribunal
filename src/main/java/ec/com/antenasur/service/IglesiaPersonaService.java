@@ -18,6 +18,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
@@ -145,6 +146,14 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     public List<IglesiaPersonaDTO> listarDTOsPorIglesia(int iglesiaId) {
         return mapearLista(iglesiaPersonaFacade.getPersonasIglesiasPorIglesia(iglesiaId));
+    }
+
+    /**
+     * Resumen eficiente para el dashboard de la iglesia. Mantiene el acceso a
+     * datos en el facade y evita cargar entidades solo para contar indicadores.
+     */
+    public ResumenMiembrosIglesiaDTO obtenerResumenMiembrosActivosPorIglesia(Integer iglesiaId) {
+        return iglesiaPersonaFacade.obtenerResumenMiembrosActivosPorIglesia(iglesiaId);
     }
 
     public List<IglesiaPersonaDTO> listarDTOsActivosPorDocumento(String documento) {

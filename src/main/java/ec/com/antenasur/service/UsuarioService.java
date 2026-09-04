@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.AuthDataDTO;
 import ec.com.antenasur.dto.RolUsuarioDTO;
+import ec.com.antenasur.dto.ResultadoProvisionUsuarioDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
@@ -71,6 +72,10 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     public Usuario findUsuarioByPeople(int persona_id) {
         return usuarioFacade.findUsuarioByPeople(persona_id);
+    }
+
+    public Usuario findUsuarioPorPersonaIncluyendoInactivos(Integer personaId) {
+        return usuarioFacade.findByPersonaIdIncluyendoInactivos(personaId);
     }
 
     public Usuario findUsuariobyUsuarioName(String username) {
@@ -243,6 +248,98 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     }
 
     /**
+     * Asegura una cuenta para una persona ya registrada y habilita el rol
+     * solicitado. Conserva los demas roles legitimos de la cuenta y solo
+     * reactiva la relacion requerida cuando estaba dada de baja.
+     */
+    public ResultadoProvisionUsuarioDTO provisionarUsuarioExistenteConRol(
+            Persona persona, String correo, Rol rol) {
+        return provisionarUsuarioExistenteConRol(persona, correo, rol, null);
+    }
+
+    /**
+     * Variante para roles que requieren una iglesia concreta, como
+     * SITEC-IglesiaAdmin. La validacion de disponibilidad se mantiene en este
+     * servicio para que no dependa de la vista.
+     */
+    public ResultadoProvisionUsuarioDTO provisionarUsuarioExistenteConRol(
+            Persona persona, String correo, Rol rol, Integer iglesiaId) {
+        if (persona == null || persona.getId() == null || persona.getDocumento() == null
+                || persona.getDocumento().isBlank() || rol == null || rol.getId() == null) {
+            throw new NegocioException("usuarios.mensaje.datos.incompletos");
+        }
+        String correoNormalizado = normalizarCorreoObligatorio(correo);
+        Usuario porDocumento = usuarioFacade.findByUsuarioNameIncluyendoInactivos(persona.getDocumento());
+        Usuario porPersona = usuarioFacade.findByPersonaIdIncluyendoInactivos(persona.getId());
+        if (porDocumento != null && porPersona != null && !porDocumento.getId().equals(porPersona.getId())) {
+            throw new NegocioException("usuarios.mensaje.identidad.conflicto");
+        }
+        Usuario usuario = porPersona != null ? porPersona : porDocumento;
+        Usuario porCorreo = usuarioFacade.findByCorreoIncluyendoInactivos(correoNormalizado);
+        if (porCorreo != null && (usuario == null || !porCorreo.getId().equals(usuario.getId()))) {
+            throw new NegocioException("usuarios.mensaje.correo.registrado");
+        }
+
+        boolean reutilizado = usuario != null;
+        boolean reactivado = reutilizado && !Boolean.TRUE.equals(usuario.getEstado());
+        if (!reutilizado) {
+            usuario = new Usuario();
+            usuario.setUsername(persona.getDocumento().trim());
+            usuario.setPersonsa(persona);
+            usuario.setCorreo(correoNormalizado);
+            usuario.setEstado(true);
+            usuario.setPermanente(false);
+            usuario.setContrasenia(passwordService.hashBcrypt(persona.getDocumento().trim()));
+            usuario = usuarioFacade.create(usuario);
+        } else {
+            validarPersonaDeCuentaExistente(usuario, persona.getDocumento().trim());
+            if (usuario.getPersonsa() == null) {
+                usuario.setPersonsa(persona);
+            }
+            usuario.setCorreo(correoNormalizado);
+            usuario.setEstado(true);
+            usuario = usuarioFacade.edit(usuario);
+        }
+        asegurarRolActivo(usuario, rol);
+        Iglesia iglesia = resolverIglesiaParaRol(iglesiaId, rol, usuario.getId());
+        if (iglesia != null) {
+            Integer iglesiaActualId = usuario.getIglesia() != null ? usuario.getIglesia().getId() : null;
+            if (iglesiaActualId != null && !iglesiaActualId.equals(iglesia.getId())) {
+                throw new NegocioException("iglesias.admin.error.usuario.otra.iglesia");
+            }
+            usuario.setIglesia(iglesia);
+            usuario = usuarioFacade.edit(usuario);
+        }
+        return new ResultadoProvisionUsuarioDTO(usuario, reutilizado, reactivado);
+    }
+
+    /**
+     * Retira exclusivamente el rol indicado. La cuenta solo se da de baja si
+     * ya no conserva ningun otro rol activo.
+     */
+    public boolean retirarRolDePersonaSiNoTieneOtrosRoles(Persona persona, Rol rol) {
+        if (persona == null || persona.getId() == null || rol == null || rol.getId() == null) {
+            return false;
+        }
+        Usuario usuario = usuarioFacade.findByPersonaIdIncluyendoInactivos(persona.getId());
+        if (usuario == null) {
+            return false;
+        }
+        RolUsuario relacion = buscarRelacionPorRol(usuario.getId(), rol.getId());
+        if (relacion != null && Boolean.TRUE.equals(relacion.getEstado())) {
+            rolUsuarioFacade.delete(relacion);
+        }
+        boolean tieneOtroRolActivo = rolUsuarioFacade.findByUsuarioIdIncluyendoInactivos(usuario.getId()).stream()
+                .anyMatch(item -> Boolean.TRUE.equals(item.getEstado()) && item.getRol() != null
+                        && Boolean.TRUE.equals(item.getRol().getEstado()));
+        if (!tieneOtroRolActivo && Boolean.TRUE.equals(usuario.getEstado())) {
+            usuario.setEstado(false);
+            usuarioFacade.edit(usuario);
+        }
+        return true;
+    }
+
+    /**
      * Actualiza correo y/o rol del usuario identificado por
      * {@code dto.getId()}. Reusa
      * {@link #actualizarUsuarioConRol(Usuario, RolUsuario, Rol)} pero recibe
@@ -350,6 +447,14 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             return null;
         }
         return UsuarioDTO.fromEntity(usuarioFacade.find(id));
+    }
+
+    /** Consulta puntual usada al preparar asignaciones; incluye cuentas dadas de baja. */
+    public UsuarioDTO obtenerUsuarioPorPersonaIncluyendoInactivos(Integer personaId) {
+        if (personaId == null) {
+            return null;
+        }
+        return UsuarioDTO.fromEntity(usuarioFacade.findByPersonaIdIncluyendoInactivos(personaId));
     }
 
     /**
@@ -491,6 +596,17 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     private Persona persistirPersonaSiNecesario(Persona persona) {
         return persona.getId() == null ? personaFacade.create(persona) : persona;
+    }
+
+    private String normalizarCorreoObligatorio(String correo) {
+        if (correo == null || correo.isBlank()) {
+            throw new NegocioException("usuarios.mensaje.correo.requerido");
+        }
+        String normalizado = correo.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!normalizado.matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$")) {
+            throw new NegocioException("usuarios.mensaje.correo.invalido");
+        }
+        return normalizado;
     }
 
     private Iglesia resolverIglesiaParaRol(Integer iglesiaId, Rol rol, Integer usuarioId) {

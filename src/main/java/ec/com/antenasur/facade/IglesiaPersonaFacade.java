@@ -7,6 +7,7 @@ package ec.com.antenasur.facade;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.IglesiaPersona;
+import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -102,6 +103,46 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
             e.printStackTrace();
             return java.util.Collections.emptyList();
         }
+    }
+
+    /**
+     * Obtiene los indicadores de miembros para una iglesia mediante una sola
+     * consulta. Solo considera vinculos y personas activos. La identidad se
+     * consolida por documento para que una inconsistencia historica no infle
+     * los totales de una misma iglesia; cuando no existe documento se usa el
+     * identificador tecnico de la persona.
+     */
+    public ResumenMiembrosIglesiaDTO obtenerResumenMiembrosActivosPorIglesia(Integer iglesiaId) {
+        if (iglesiaId == null) {
+            return new ResumenMiembrosIglesiaDTO(0, 0, 0);
+        }
+
+        String identidad = "COALESCE(NULLIF(BTRIM(p.pers_documento), ''), CONCAT('#', p.pers_id::TEXT))";
+        // El sistema conserva nombres y apellidos consolidados en pers_nombre;
+        // pers_apellido es un dato historico no requerido para esta validacion.
+        String informacionCompleta = "NULLIF(BTRIM(p.pers_documento), '') IS NOT NULL"
+                + " AND NULLIF(BTRIM(p.pers_nombre), '') IS NOT NULL"
+                + " AND NULLIF(BTRIM(p.pers_sexo), '') IS NOT NULL";
+        String revisionPendiente = "ip.f_actualiza IS NULL"
+                + " OR (ip.f_crea IS NOT NULL AND ip.f_actualiza < ip.f_crea)";
+        String sql = "SELECT COUNT(DISTINCT " + identidad + "), "
+                + "COUNT(DISTINCT CASE WHEN " + informacionCompleta + " THEN " + identidad + " END), "
+                + "COUNT(DISTINCT CASE WHEN " + revisionPendiente + " THEN " + identidad + " END) "
+                + "FROM public.tb_iglesia_persona ip "
+                + "JOIN public.tb_persona p ON p.pers_id = ip.pers_id "
+                + "WHERE ip.igl_id = :iglesiaId "
+                + "AND ip.estado = TRUE "
+                + "AND p.estado = TRUE";
+
+        Object[] fila = (Object[]) getEntityManager().createNativeQuery(sql)
+                .setParameter("iglesiaId", iglesiaId)
+                .getSingleResult();
+        return new ResumenMiembrosIglesiaDTO(
+                numeroComoEntero(fila[0]), numeroComoEntero(fila[1]), numeroComoEntero(fila[2]));
+    }
+
+    private int numeroComoEntero(Object valor) {
+        return valor instanceof Number ? ((Number) valor).intValue() : 0;
     }
 
     public List<IglesiaPersona> getPersonasHabilitadasPadronPorIglesia(int iglesiaId) {

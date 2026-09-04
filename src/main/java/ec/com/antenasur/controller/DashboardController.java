@@ -17,11 +17,10 @@ import ec.com.antenasur.bean.RecintoBean;
 import ec.com.antenasur.dto.DocumentoDTO;
 import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
-import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.MiembroJRVDTO;
 import ec.com.antenasur.dto.PadronDTO;
-import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.enums.EstadoEscrutinio;
 import ec.com.antenasur.service.IglesiaService;
@@ -311,18 +310,11 @@ public class DashboardController implements Serializable {
     }
 
     private void cargarIndicadoresIglesia(Integer iglesiaId) {
-        List<IglesiaPersonaDTO> miembros = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaId);
-        totalPersonasIglesia = miembros.size();
-        personasInformacionCompleta = 0;
-        personasPendientesRevision = 0;
-        for (IglesiaPersonaDTO miembro : miembros) {
-            if (tieneInformacionCompleta(miembro != null ? miembro.getPersona() : null)) {
-                personasInformacionCompleta++;
-            }
-            if (!Boolean.TRUE.equals(miembro != null ? miembro.getActualizada() : null)) {
-                personasPendientesRevision++;
-            }
-        }
+        ResumenMiembrosIglesiaDTO resumen = iglesiaPersonaService
+                .obtenerResumenMiembrosActivosPorIglesia(iglesiaId);
+        totalPersonasIglesia = resumen.getTotalPersonas();
+        personasInformacionCompleta = resumen.getPersonasInformacionCompleta();
+        personasPendientesRevision = resumen.getPersonasPendientesRevision();
         personasInformacionIncompleta = Math.max(0, totalPersonasIglesia - personasInformacionCompleta);
     }
 
@@ -362,18 +354,6 @@ public class DashboardController implements Serializable {
         if (mesasAsignadas == null || mesasAsignadas.isBlank()) {
             alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.sinMesa"));
         }
-    }
-
-    private boolean tieneInformacionCompleta(PersonaDTO persona) {
-        return persona != null
-                && noVacio(persona.getDocumento())
-                && noVacio(persona.getNombres())
-                && noVacio(persona.getApellidos())
-                && noVacio(persona.getSexo());
-    }
-
-    private boolean noVacio(String valor) {
-        return valor != null && !valor.trim().isEmpty();
     }
 
     private Integer obtenerIglesiaAsignadaIdActual() {

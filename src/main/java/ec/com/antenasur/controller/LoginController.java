@@ -288,7 +288,7 @@ public class LoginController implements Serializable {
                 }
             }
         }
-        loginBean.setMenuModel(menuModel);
+        loginBean.inicializarMenuAutorizado(menuModel);
     }
 
     private void cargarPaginasCambioClave() {

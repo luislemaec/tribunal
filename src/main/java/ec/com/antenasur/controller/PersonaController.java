@@ -25,9 +25,11 @@ import org.primefaces.model.file.UploadedFile;
 import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.FilaPadronImportadaDTO;
+import ec.com.antenasur.dto.EstadoActaActualizacionDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.Geograp;
@@ -40,6 +42,7 @@ import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.service.PersonaService;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.service.tec.CronogramaService;
+import ec.com.antenasur.service.tec.ActaActualizacionMiembrosService;
 import ec.com.antenasur.service.tec.MesaService;
 import ec.com.antenasur.service.tec.PadronService;
 import ec.com.antenasur.service.tec.RecintoService;
@@ -87,6 +90,9 @@ public class PersonaController implements Serializable {
 
     @Inject
     private CronogramaService cronogramaService;
+
+    @Inject
+    private ActaActualizacionMiembrosService actaActualizacionMiembrosService;
 
     @Setter
     @Getter
@@ -167,6 +173,10 @@ public class PersonaController implements Serializable {
     /** Progreso de actualización: [total, actualizados, porcentaje]. */
     private int[] progreso = {0, 0, 0};
 
+    @Getter
+    private EstadoActaActualizacionDTO estadoActaActualizacion
+            = new EstadoActaActualizacionDTO(0, 0, false, null);
+
     public int getTotalMiembros() { return progreso[0]; }
     public int getMiembrosActualizados() { return progreso[1]; }
     public int getMiembrosPendientes() { return progreso[0] - progreso[1]; }
@@ -231,14 +241,19 @@ public class PersonaController implements Serializable {
             // Detección de rol IglesiaAdmin: si el usuario logueado tiene este
             // rol y una iglesia asignada, lo confinamos a esa iglesia y
             // precargamos sus miembros directamente.
-            if (esUsuarioIglesiaAdminConIglesia()) {
+            if (esUsuarioIglesiaAdmin()) {
                 restringidoAIglesia = true;
+                if (!esUsuarioIglesiaAdminConIglesia()) {
+                    JsfUtil.addWarningMessageFromBundle("form.iglesias.mensaje.sin.asignacion");
+                    return;
+                }
                 Integer iglesiaId = loginBean.getUsuario().getIglesiaId();
                 iglesiaSeleccionado = iglesiaService.obtenerDTOPorId(iglesiaId);
                 listaIglesias = new ArrayList<>();
                 listaIglesias.add(iglesiaSeleccionado);
                 listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaId);
                 progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
+                actualizarEstadoActaActualizacion();
                 return;
             }
 
@@ -251,9 +266,11 @@ public class PersonaController implements Serializable {
     }
 
     private boolean esUsuarioIglesiaAdminConIglesia() {
-        if (loginBean == null || loginBean.getUsuario() == null
-                || loginBean.getUsuario().getIglesiaId() == null
-                || loginBean.getRoles() == null) {
+        return esUsuarioIglesiaAdmin() && loginBean.getUsuario().getIglesiaId() != null;
+    }
+
+    private boolean esUsuarioIglesiaAdmin() {
+        if (loginBean == null || loginBean.getUsuario() == null || loginBean.getRoles() == null) {
             return false;
         }
         String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
@@ -567,6 +584,9 @@ public class PersonaController implements Serializable {
         if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
             listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
             progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
+            if (restringidoAIglesia) {
+                actualizarEstadoActaActualizacion();
+            }
             return;
         }
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
@@ -580,6 +600,57 @@ public class PersonaController implements Serializable {
             return;
         }
         listaIglesiaPersona = iglesiaPersonaService.listarDTOs();
+    }
+
+    public boolean isPuedeGenerarActaActualizacion() {
+        return restringidoAIglesia && estadoActaActualizacion != null
+                && estadoActaActualizacion.isPuedeGenerar();
+    }
+
+    public boolean isActaActualizacionDisponible() {
+        return estadoActaActualizacion != null && estadoActaActualizacion.getDocumentoId() != null;
+    }
+
+    public void generarActaActualizacionIglesia() {
+        try {
+            if (!restringidoAIglesia || iglesiaSeleccionado == null || iglesiaSeleccionado.getId() == null) {
+                JsfUtil.addErrorMessage(mensaje("actaActualizacion.error.no.autorizada"));
+                return;
+            }
+            actaActualizacionMiembrosService.generarParaUsuarioActual(iglesiaSeleccionado.getId());
+            actualizarEstadoActaActualizacion();
+            JsfUtil.addSuccessMessage(mensaje("actaActualizacion.exito.generada"));
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL GENERAR ACTA DE ACTUALIZACION DE MIEMBROS", e);
+            JsfUtil.addErrorMessage(mensaje("actaActualizacion.error.generar"));
+        }
+        PrimeFaces.current().ajax().update("frmPersonas:panelResumenMiembros", ":frmGlobal:growlGlobal");
+    }
+
+    public StreamedContent getActaActualizacionDescargable() {
+        if (!isActaActualizacionDisponible() || iglesiaSeleccionado == null
+                || iglesiaSeleccionado.getId() == null) {
+            return null;
+        }
+        try {
+            Documentos documento = actaActualizacionMiembrosService.obtenerDocumentoParaUsuarioActual(
+                    iglesiaSeleccionado.getId(), estadoActaActualizacion.getDocumentoId());
+            return documentoBean.obtenerArchivo(documento);
+        } catch (Exception e) {
+            log.error("ERROR AL PREPARAR DESCARGA DEL ACTA DE ACTUALIZACION", e);
+            return null;
+        }
+    }
+
+    private void actualizarEstadoActaActualizacion() {
+        if (!restringidoAIglesia || iglesiaSeleccionado == null || iglesiaSeleccionado.getId() == null) {
+            estadoActaActualizacion = new EstadoActaActualizacionDTO(0, 0, false, null);
+            return;
+        }
+        estadoActaActualizacion = actaActualizacionMiembrosService
+                .evaluarParaUsuarioActual(iglesiaSeleccionado.getId());
     }
 
     private boolean puedeEliminarMiembro(IglesiaPersonaDTO miembro) {

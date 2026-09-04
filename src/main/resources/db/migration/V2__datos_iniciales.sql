@@ -54952,7 +54952,7 @@ SELECT setval(pg_get_serial_sequence('tec.catalogo_general', 'catalogo_id'), GRE
 -- ============================================================================
 -- 9. Tipos de documentos
 -- ----------------------------------------------------------------------------
--- Origen validado: tipo_documentos.xlsx y actas de inscripcion de listas.
+-- Origen validado: tipo_documentos.xlsx y tipos institucionales vigentes.
 -- ============================================================================
 
 INSERT INTO tec.tipo_documentos (tipdoc_id, estado, f_crea, u_crea, tipdoc_nombre)
@@ -54962,7 +54962,8 @@ VALUES
     (3, TRUE, NOW(), 'flyway', 'ACTA DE INSCRIPCION GENERADA'),
     (4, TRUE, NOW(), 'flyway', 'ACTA DE INSCRIPCION FIRMADA'),
     (5, TRUE, NOW(), 'flyway', 'ACTA PARCIAL DE ESCRUTINIO'),
-    (6, TRUE, NOW(), 'flyway', 'PADRON ELECTORAL DE MESA')
+    (6, TRUE, NOW(), 'flyway', 'PADRON ELECTORAL DE MESA'),
+    (7, TRUE, NOW(), 'flyway', 'ACTA DE ACTUALIZACION DE MIEMBROS')
 ON CONFLICT DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('tec.tipo_documentos', 'tipdoc_id'), GREATEST((SELECT COALESCE(MAX(tipdoc_id), 1) FROM tec.tipo_documentos), 1), TRUE);
@@ -55280,16 +55281,15 @@ SELECT v.menu_id::INTEGER, v.estado::BOOLEAN, NOW(), 'flyway',
     VALUES
       (4, FALSE, '/cargaDatos', 'm_cargadatos', 'pi pi-fw pi-upload', TRUE, 'Carga datos', 90, '/cargaDatos.jsf', 3),
       (5, TRUE, '/iglesias', 'm_iglesias', 'pi pi-fw pi-building', TRUE, 'Iglesias', 1, '/iglesias.jsf', 3),
-      (26, TRUE, '/asignacionUsuario', 'm_asignacionUsuario', 'pi pi-users', TRUE, 'Asignacion', 2, '/asignacionUsuarios.jsf', 3),
+      (26, FALSE, '/asignacionUsuario', 'm_asignacionUsuario', 'pi pi-users', TRUE, 'Asignacion', 91, '/asignacionUsuarios.jsf', 3),
       (6, TRUE, '/personas', 'm_personas', 'pi pi-fw pi-users', TRUE, 'Personas', 3, '/personas.jsf', 3),
       (16, TRUE, '/candidatos', 'm_candidatos', 'pi pi-fw pi-users', TRUE, 'Candidatos', 4, '/candidatos.jsf', 3),
       (7, TRUE, '/recintos', 'm_recintos', 'pi pi-fw pi-clone', TRUE, 'Recintos', 5, '/recintos.jsf', 3),
-      (14, TRUE, '/mjrv', 'm_mjrv', 'pi pi-fw pi-folder-open', TRUE, 'MJRV', 6, '/mjrv.jsf', 3),
-
-      (9, TRUE, '/padron', 'm_padron', 'pi pi-fw pi-exclamation-circle', TRUE, 'Padron', 7, '/padron.jsf', 3),
+      (9, TRUE, '/padron', 'm_padron', 'pi pi-fw pi-exclamation-circle', TRUE, 'Padron', 6, '/padron.jsf', 3),
+      (14, TRUE, '/mjrv', 'm_mjrv', 'pi pi-fw pi-folder-open', TRUE, 'MJRV', 7, '/mjrv.jsf', 3),
       (17, TRUE, '/actaE', 'm_actaE', 'pi pi-fw pi-file', TRUE, 'Acta Escrutinio', 8, '/actaE.jsf', 3),
-      (8, FALSE, '/mesas', 'm_mesas', 'pi pi-fw pi-tablet', TRUE, 'Mesas', 91, '/mesas.jsf', 3),
-      
+      (8, FALSE, '/mesas', 'm_mesas', 'pi pi-fw pi-tablet', TRUE, 'Mesas', 92, '/mesas.jsf', 3),
+
       (11, FALSE, '/listas', 'm_listas', 'pi pi-fw pi-list', TRUE, 'Listas', 90, '/listas.jsf', 10),
       (12, TRUE, '/autoridades', 'm_autoridades', 'pi pi-fw pi-eye', TRUE, 'Autoridades', 1, '/autoridades.jsf', 10),
       (13, FALSE, '/periodos', 'm_periodos', 'pi pi-fw pi-calendar-plus', TRUE, 'Periodos', 91, '/periodos.jsf', 10),

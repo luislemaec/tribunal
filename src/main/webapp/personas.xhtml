@@ -44,7 +44,8 @@
                  ====================================================== -->
 
             <!-- Timeline: visible cuando ACTUALIZACION_MIEMBROS está configurada -->
-            <ui:fragment rendered="#{personaController.faseActualizacionMiembros ne null}">
+            <ui:fragment rendered="#{not personaController.restringidoAIglesia
+                                    and personaController.faseActualizacionMiembros ne null}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
 
                     <!-- Cabecera del timeline -->
@@ -196,7 +197,8 @@
             </ui:fragment>
 
             <!-- Fallback B: proceso activo pero ACTUALIZACION_MIEMBROS no configurada -->
-            <ui:fragment rendered="#{personaController.faseActualizacionMiembros eq null
+            <ui:fragment rendered="#{not personaController.restringidoAIglesia
+                                    and personaController.faseActualizacionMiembros eq null
                                     and personaController.faseVigente ne null}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3"
                      style="border-left:4px solid #2563eb">
@@ -214,7 +216,8 @@
             </ui:fragment>
 
             <!-- Fallback C: sin proceso electoral activo -->
-            <ui:fragment rendered="#{personaController.faseActualizacionMiembros eq null
+            <ui:fragment rendered="#{not personaController.restringidoAIglesia
+                                    and personaController.faseActualizacionMiembros eq null
                                     and personaController.faseVigente eq null}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3"
                      style="border-left:4px solid #6b7280">
@@ -236,8 +239,13 @@
                 <!-- Mensajes del sistema -->
                 <!-- Banner IglesiaAdmin: contexto fijo a su iglesia -->
                 <ui:fragment rendered="#{personaController.restringidoAIglesia}">
-                    <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3"
+                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 border-round-lg p-3 mb-3"
                          style="background:#eff6ff; border-left:4px solid #2563eb">
+                        <p:tag rendered="#{personaController.faseActualizacionMiembros ne null
+                                           and personaController.faseActualizacionMiembros.vigente}"
+                               value="#{personaController.faseActualizacionMiembros.diasRestantes} #{msg['form.iglesias.progress.dias.restantes']}"
+                               icon="pi pi-clock" severity="info"
+                               style="margin-left:auto; order:2"/>
                         <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
                         <span class="text-700 text-sm">
                             <b>Iglesia asignada:</b>
@@ -325,7 +333,24 @@
                                     <h:outputText value="#{personaController.totalMiembros}"/>
                                     miembros
                                 </small>
-                                <p:commandButton value="Generar acta" icon="pi pi-file-pdf"
+                                <p:commandButton id="btnGenerarActaActualizacion"
+                                                 rendered="#{personaController.restringidoAIglesia}"
+                                                 value="#{msg['actaActualizacion.boton.generar']}" icon="pi pi-file-pdf"
+                                                 title="#{personaController.puedeGenerarActaActualizacion ? msg['actaActualizacion.ayuda.generar'] : msg['actaActualizacion.ayuda.incompleta']}"
+                                                 actionListener="#{personaController.generarActaActualizacionIglesia}"
+                                                 process="@this" update="panelResumenMiembros"
+                                                 styleClass="ui-button-outlined ui-button-help"
+                                                 style="height:1.75rem;padding:.25rem .75rem;font-size:.8rem"
+                                                 disabled="#{not personaController.puedeGenerarActaActualizacion}"/>
+                                <p:commandButton rendered="#{personaController.restringidoAIglesia and personaController.actaActualizacionDisponible}"
+                                                 value="#{msg['actaActualizacion.boton.descargar']}" icon="pi pi-download"
+                                                 ajax="false" immediate="true"
+                                                 styleClass="ui-button-outlined ui-button-secondary"
+                                                 style="height:1.75rem;padding:.25rem .75rem;font-size:.8rem">
+                                    <p:fileDownload value="#{personaController.actaActualizacionDescargable}"/>
+                                </p:commandButton>
+                                <p:commandButton rendered="#{not personaController.restringidoAIglesia}"
+                                                 value="Generar acta" icon="pi pi-file-pdf"
                                                  ajax="false"
                                                  title="Descargar acta PDF de actualización"
                                                  actionListener="#{personaController.generarActaActualizacion}"
@@ -486,7 +511,7 @@
                              emptyMessage="No hay miembros registrados. Seleccione una iglesia o registre un nuevo miembro."
                              reflow="true" size="small"
                              showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm">
+                             styleClass="ui-datatable-striped ui-datatable-sm tabla-personas-compacta">
 
                     <p:ajax event="rowSelect"           update=":frmPersonas:btnEliminaRegistros"/>
                     <p:ajax event="rowUnselect"         update=":frmPersonas:btnEliminaRegistros"/>
@@ -592,7 +617,8 @@
                     </p:column>
 
                     <!-- Acciones por fila -->
-                    <p:column exportable="false" styleClass="text-center" style="width:10rem">
+                    <p:column exportable="false" styleClass="text-center" style="width:8rem">
+                        <div class="flex justify-content-center align-items-center gap-1 flex-wrap">
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                          title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
@@ -623,6 +649,7 @@
                                        message="¿Está seguro de eliminar este miembro? El registro será dado de baja."
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                        </div>
                     </p:column>
 
                 </p:dataTable>

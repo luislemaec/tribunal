@@ -41,6 +41,10 @@ public class IglesiaDTO implements Serializable {
     /** Versión para control de edición concurrente. Nunca editable por el usuario. */
     private Long version;
     private Boolean tieneDocumentos;
+    /** Indicador de UI calculado en bloque para el filtro de administradores. */
+    private Boolean tieneAdministrador;
+    /** Nombre del administrador activo, cuando existe. */
+    private String administradorNombre;
 
     public static IglesiaDTO fromEntity(Iglesia i) {
         if (i == null) {

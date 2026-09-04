@@ -7,6 +7,8 @@ package ec.com.antenasur.bean;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.Normalizer;
+import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +22,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.constraints.Email;
+import org.primefaces.model.menu.DefaultMenuItem;
+import org.primefaces.model.menu.DefaultMenuModel;
+import org.primefaces.model.menu.DefaultSubMenu;
+import org.primefaces.model.menu.MenuElement;
+import org.primefaces.model.menu.MenuItem;
 import org.primefaces.model.menu.MenuModel;
+import org.primefaces.model.menu.Submenu;
 
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.AccessAuditory;
@@ -67,6 +75,19 @@ public class LoginBean implements Serializable {
     @Setter
     @Getter
     private MenuModel menuModel;
+
+    @Setter
+    private MenuModel menuModelCompleto;
+
+    @Getter
+    @Setter
+    private String filtroMenu;
+
+    @Getter
+    private boolean filtroMenuActivo;
+
+    @Getter
+    private boolean menuFiltradoSinResultados;
 
     @Getter
     @Setter
@@ -175,6 +196,141 @@ public class LoginBean implements Serializable {
 
     public void setContent(Map<String, Object> content) {
         this.content = content;
+    }
+
+    public void inicializarMenuAutorizado(MenuModel menuAutorizado) {
+        this.menuModelCompleto = menuAutorizado;
+        this.menuModel = menuAutorizado;
+        this.filtroMenu = null;
+        this.filtroMenuActivo = false;
+        this.menuFiltradoSinResultados = false;
+    }
+
+    public void filtrarMenuPrincipal() {
+        if (menuModelCompleto == null) {
+            menuModelCompleto = menuModel;
+        }
+
+        String filtroNormalizado = normalizar(filtroMenu);
+        filtroMenuActivo = filtroNormalizado != null && !filtroNormalizado.isBlank();
+        menuFiltradoSinResultados = false;
+
+        if (!filtroMenuActivo) {
+            menuModel = menuModelCompleto;
+            return;
+        }
+
+        DefaultMenuModel filtrado = new DefaultMenuModel();
+        if (menuModelCompleto != null && menuModelCompleto.getElements() != null) {
+            for (MenuElement elemento : menuModelCompleto.getElements()) {
+                MenuElement coincidencia = filtrarElemento(elemento, filtroNormalizado);
+                if (coincidencia != null) {
+                    filtrado.getElements().add(coincidencia);
+                }
+            }
+        }
+
+        menuFiltradoSinResultados = filtrado.getElements().isEmpty();
+        menuModel = filtrado;
+    }
+
+    public void limpiarFiltroMenu() {
+        filtroMenu = null;
+        filtrarMenuPrincipal();
+    }
+
+    private MenuElement filtrarElemento(MenuElement elemento, String filtroNormalizado) {
+        if (elemento instanceof MenuItem menuItem) {
+            return coincideMenuItem(menuItem, filtroNormalizado) ? copiarMenuItem(menuItem) : null;
+        }
+        if (elemento instanceof Submenu submenu) {
+            boolean coincidePadre = contiene(normalizar(submenu.getLabel()), filtroNormalizado);
+            DefaultSubMenu copia = copiarSubmenu(submenu, filtroMenuActivo);
+            for (MenuElement hijo : submenu.getElements()) {
+                MenuElement hijoFiltrado = coincidePadre ? copiarElementoCompleto(hijo) : filtrarElemento(hijo, filtroNormalizado);
+                if (hijoFiltrado != null) {
+                    copia.getElements().add(hijoFiltrado);
+                }
+            }
+            return !copia.getElements().isEmpty() ? copia : null;
+        }
+        return null;
+    }
+
+    private MenuElement copiarElementoCompleto(MenuElement elemento) {
+        if (elemento instanceof MenuItem menuItem) {
+            return copiarMenuItem(menuItem);
+        }
+        if (elemento instanceof Submenu submenu) {
+            DefaultSubMenu copia = copiarSubmenu(submenu, filtroMenuActivo);
+            for (MenuElement hijo : submenu.getElements()) {
+                MenuElement hijoCopiado = copiarElementoCompleto(hijo);
+                if (hijoCopiado != null) {
+                    copia.getElements().add(hijoCopiado);
+                }
+            }
+            return copia;
+        }
+        return null;
+    }
+
+    private DefaultSubMenu copiarSubmenu(Submenu submenu, boolean expandido) {
+        DefaultSubMenu copia = new DefaultSubMenu();
+        copia.setId(submenu.getId());
+        copia.setLabel(submenu.getLabel());
+        copia.setIcon(submenu.getIcon());
+        copia.setRendered(submenu.isRendered());
+        copia.setStyle(submenu.getStyle());
+        copia.setStyleClass(construirStyleClass(submenu.getStyleClass(), expandido));
+        return copia;
+    }
+
+    private DefaultMenuItem copiarMenuItem(MenuItem menuItem) {
+        DefaultMenuItem copia = new DefaultMenuItem();
+        copia.setId(menuItem.getId());
+        copia.setValue(menuItem.getValue());
+        copia.setIcon(menuItem.getIcon());
+        copia.setOutcome(menuItem.getOutcome());
+        copia.setUrl(menuItem.getUrl());
+        copia.setCommand(menuItem.getCommand());
+        copia.setTarget(menuItem.getTarget());
+        copia.setTitle(menuItem.getTitle());
+        copia.setDisabled(menuItem.isDisabled());
+        copia.setRendered(menuItem.isRendered());
+        copia.setStyle(menuItem.getStyle());
+        copia.setStyleClass(menuItem.getStyleClass());
+        return copia;
+    }
+
+    private boolean coincideMenuItem(MenuItem menuItem, String filtroNormalizado) {
+        return contiene(normalizar(menuItem.getValue()), filtroNormalizado)
+                || contiene(normalizar(menuItem.getTitle()), filtroNormalizado)
+                || contiene(normalizar(menuItem.getOutcome()), filtroNormalizado)
+                || contiene(normalizar(menuItem.getUrl()), filtroNormalizado);
+    }
+
+    private boolean contiene(String valor, String filtroNormalizado) {
+        return valor != null && filtroNormalizado != null && valor.contains(filtroNormalizado);
+    }
+
+    private String construirStyleClass(String actual, boolean expandido) {
+        if (!expandido) {
+            return actual;
+        }
+        String clases = actual == null ? "" : actual.trim();
+        return clases.contains("active-menuitem") ? clases : (clases + " active-menuitem").trim();
+    }
+
+    private String normalizar(Object valor) {
+        if (valor == null) {
+            return null;
+        }
+        String texto = valor.toString().trim().toLowerCase(Locale.ROOT);
+        if (texto.isEmpty()) {
+            return "";
+        }
+        return Normalizer.normalize(texto, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
     }
 
     /**

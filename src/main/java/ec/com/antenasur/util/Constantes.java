@@ -39,6 +39,7 @@ public class Constantes {
     public static final String TIPO_ACTA_INSCRIPCION_FIRMADA = "ACTA DE INSCRIPCION FIRMADA";
     public static final String TIPO_ACTA_PARCIAL_ESCRUTINIO = "ACTA PARCIAL DE ESCRUTINIO";
     public static final String TIPO_PADRON_ELECTORAL_MESA = "PADRON ELECTORAL DE MESA";
+    public static final String TIPO_ACTA_ACTUALIZACION_MIEMBROS = "ACTA DE ACTUALIZACION DE MIEMBROS";
     /**
      * Retorna pirma del correo
      */

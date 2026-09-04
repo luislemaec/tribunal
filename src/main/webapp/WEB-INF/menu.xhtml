@@ -8,7 +8,13 @@
     <div class="layout-sidebar">
         <div class="layout-menu-title">#{msg['menu.titulo.principal']}</div>
         <h:form id="menuform" rendered="#{loginBean.loggedIn}">
-            <pe:menu widgetVar="me" model="#{loginBean.menuModel}"/>            
+            <p:outputPanel styleClass="menu-search-empty" rendered="#{loginBean.menuFiltradoSinResultados}">
+                <i class="pi pi-search"></i>
+                <span>#{msg['menu.busqueda.sinResultados']}</span>
+            </p:outputPanel>
+            <pe:menu widgetVar="me"
+                     model="#{loginBean.menuModel}"
+                     rendered="#{not loginBean.menuFiltradoSinResultados}"/>
         </h:form>
     </div>
 </ui:composition>

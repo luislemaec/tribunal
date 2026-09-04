@@ -101,7 +101,7 @@
                                                  update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
                                                  oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
                                                  process="@this"
-                                                 rendered="#{tribunal.iglesiaPersona.persona eq null}"
+                                                 rendered="#{tribunalController.puedeGestionarAutoridades and tribunal.iglesiaPersona.persona eq null}"
                                                  action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}"/>
                             </div>
                         </div>
@@ -128,14 +128,14 @@
                                              update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
                                              oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
                                              process="@this"
-                                             disabled="#{tribunal.iglesiaPersona.persona eq null}"
+                                             disabled="#{not tribunalController.puedeGestionarAutoridades or tribunal.iglesiaPersona.persona eq null}"
                                              action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}"/>
                             <p:commandButton icon="pi pi-user-minus"
                                              styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                              title="#{msg['form.autoridades.btn.quitar.title']}"
                                              actionListener="#{tribunalController.eliminarAutoridadSeleccionada}"
                                              process="@this" update="tbtribunal :frmGlobal:growlGlobal"
-                                             disabled="#{tribunal.iglesiaPersona.persona eq null}">
+                                             disabled="#{not tribunalController.puedeGestionarAutoridades or tribunal.iglesiaPersona.persona eq null}">
                                 <f:setPropertyActionListener value="#{tribunal}" target="#{tribunalController.tribunalSeleccionado}"/>
                                 <p:confirm header="#{msg['form.autoridades.confirm.delete.header']}"
                                            message="#{msg['form.autoridades.confirm.delete.message']}"
@@ -224,6 +224,21 @@
                                                  value="#{tribunalController.tribunalSeleccionado.iglesiaPersona.iglesia.nombre}"
                                                  disabled="true"/>
                                 </div>
+                                <div class="field col-12">
+                                    <label for="correoAutoridad" class="font-medium text-700 text-sm">
+                                        #{msg['form.autoridades.label.correo']} <span class="text-red-500">*</span>
+                                    </label>
+                                    <p:inputText id="correoAutoridad" type="email" styleClass="w-full"
+                                                 value="#{tribunalController.tribunalSeleccionado.correoAutoridad}"
+                                                 required="true"
+                                                 requiredMessage="#{msg['usuarios.mensaje.correo.requerido']}"
+                                                 validatorMessage="#{msg['usuarios.mensaje.correo.invalido']}"
+                                                 placeholder="#{msg['form.autoridades.placeholder.correo']}">
+                                        <f:validateRegex pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
+                                    </p:inputText>
+                                    <small class="text-500">#{msg['form.autoridades.help.correo']}</small>
+                                    <p:message for="correoAutoridad" display="text"/>
+                                </div>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
@@ -243,7 +258,7 @@
                                              process="outPnlAsignaAutoridad @this"
                                              onstart="PF('statusDialog').show()"
                                              oncomplete="PF('statusDialog').hide(); if (!args.validationFailed) PF('dlgAsignaAutoridad').hide()"
-                                             rendered="#{tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>
+                                             rendered="#{tribunalController.puedeGestionarAutoridades and tribunalController.tribunalSeleccionado.iglesiaPersona ne null}"/>
                         </div>
                     </p:outputPanel>
                 </f:facet>

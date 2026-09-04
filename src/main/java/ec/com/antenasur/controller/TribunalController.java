@@ -104,6 +104,12 @@ public class TribunalController implements Serializable {
         return this.listaPeriodosSeleccionados != null && !this.listaPeriodosSeleccionados.isEmpty();
     }
 
+    public boolean isPuedeGestionarAutoridades() {
+        return loginBean != null && loginBean.getRoles() != null
+                && (loginBean.getRoles().contains("SITEC-Administrador")
+                || loginBean.getRoles().contains("SITEC-Tribunal"));
+    }
+
     public String getMensajeBotonEliminar() {
         if (existePeriodosSeleccionadas()) {
             int size = this.listaPeriodosSeleccionados.size();
@@ -164,6 +170,10 @@ public class TribunalController implements Serializable {
         seleccion.setCargoId(autoridad.getCargoId());
         seleccion.setCargoNombre(autoridad.getCargoNombre());
         seleccion.setIglesiaPersona(autoridad.getIglesiaPersona());
+        seleccion.setCorreoAutoridad(autoridad.getIglesiaPersona() != null
+                && autoridad.getIglesiaPersona().getPersona() != null
+                ? tribunalService.obtenerCorreoUsuarioPorPersonaId(
+                        autoridad.getIglesiaPersona().getPersona().getId()) : null);
         tribunalSeleccionado = seleccion;
         cedulaBuscar = null;
     }
@@ -180,9 +190,13 @@ public class TribunalController implements Serializable {
             if (persistido != null) {
                 tribunalSeleccionado = persistido;
                 cargarAutoridadesTribunal();
-                JsfUtil.addSuccessMessageFromBundle(esEdicion
-                        ? "autoridades.mensaje.reasignada"
-                        : "autoridades.mensaje.asignada");
+                if (Boolean.TRUE.equals(persistido.getUsuarioReutilizado())) {
+                    JsfUtil.addSuccessMessageFromBundle("autoridades.mensaje.usuario.reutilizado");
+                } else {
+                    JsfUtil.addSuccessMessageFromBundle(esEdicion
+                            ? "autoridades.mensaje.actualizada"
+                            : "autoridades.mensaje.asignada.usuario");
+                }
                 PrimeFaces.current().ajax().update(TABLA_AUTORIDADES, GROWL_GLOBAL);
             }
         } catch (ec.com.antenasur.exception.NegocioException e) {

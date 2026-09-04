@@ -26,6 +26,9 @@ public class TribunalDTO implements Serializable {
     private String periodoNombre;
     private Integer cargoId;
     private String cargoNombre;
+    private String correoAutoridad;
+    private Boolean usuarioReutilizado;
+    private Boolean usuarioReactivado;
 
     public static TribunalDTO fromEntity(Tribunal t) {
         if (t == null) {

@@ -22,11 +22,15 @@ import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.dto.IglesiaPersonaDTO;
+import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.service.GeograpService;
+import ec.com.antenasur.service.AsignacionAdministradorIglesiaService;
 import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CronogramaService;
 import ec.com.antenasur.util.Constantes;
@@ -53,6 +57,12 @@ public class IglesiaController implements Serializable {
 
     @Inject
     private UsuarioService usuarioService;
+
+    @Inject
+    private AsignacionAdministradorIglesiaService asignacionAdministradorIglesiaService;
+
+    @Inject
+    private IglesiaPersonaService iglesiaPersonaService;
 
     @Inject
     private GeograpService geograpService;
@@ -99,6 +109,30 @@ public class IglesiaController implements Serializable {
     private String comunidadFiltro;
 
     private List<IglesiaDTO> listaIglesiasFiltroGeografico;
+
+    @Setter
+    @Getter
+    private String estadoAdministradorFiltro = "TODAS";
+
+    @Setter
+    @Getter
+    private IglesiaDTO iglesiaAdministradorSeleccionada;
+
+    @Setter
+    @Getter
+    private List<IglesiaPersonaDTO> candidatosAdministrador = Collections.emptyList();
+
+    @Setter
+    @Getter
+    private IglesiaPersonaDTO candidatoAdministrador;
+
+    @Setter
+    @Getter
+    private String correoAdministrador;
+
+    @Setter
+    @Getter
+    private UsuarioDTO administradorActual;
 
     // â”€â”€ Estado exclusivo del diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @Setter
@@ -192,7 +226,7 @@ public class IglesiaController implements Serializable {
             } else {
                 listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
                 listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
-                actualizarComunidadesFiltro();
+                enriquecerYAplicarFiltros();
             }
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
@@ -283,17 +317,62 @@ public class IglesiaController implements Serializable {
             cargarIglesiaAsignada();
             return;
         }
-        if (comunidadFiltro == null || comunidadFiltro.trim().isEmpty()) {
-            listaIglesias = listaIglesiasFiltroGeografico != null
-                    ? new ArrayList<>(listaIglesiasFiltroGeografico)
-                    : iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
+        aplicarFiltrosLocales();
+    }
+
+    public void cambiarFiltroEstadoAdministrador() {
+        if (!restringidoAIglesia) {
+            aplicarFiltrosLocales();
+        }
+    }
+
+    public boolean isPuedeGestionarAdministradores() {
+        return loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Administrador");
+    }
+
+    public void prepararAsignacionAdministrador() {
+        administradorActual = null;
+        if (!isPuedeGestionarAdministradores() || iglesiaAdministradorSeleccionada == null
+                || iglesiaAdministradorSeleccionada.getId() == null) {
+            rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.no.autorizado"));
             return;
         }
-        String comunidadNormalizada = normalizarTexto(comunidadFiltro);
-        listaIglesias = (listaIglesiasFiltroGeografico == null ? Collections.<IglesiaDTO>emptyList() : listaIglesiasFiltroGeografico)
-                .stream()
-                .filter(iglesia -> comunidadNormalizada.equals(normalizarTexto(iglesia.getComunidad())))
-                .collect(Collectors.toList());
+        candidatosAdministrador = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaAdministradorSeleccionada.getId());
+        administradorActual = usuarioService.obtenerAdminDeIglesia(iglesiaAdministradorSeleccionada.getId());
+        candidatoAdministrador = null;
+        correoAdministrador = null;
+        PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
+    }
+
+    public void seleccionarCandidatoAdministrador() {
+        correoAdministrador = null;
+        if (candidatoAdministrador != null && candidatoAdministrador.getPersona() != null
+                && candidatoAdministrador.getPersona().getId() != null) {
+            var usuario = usuarioService.obtenerUsuarioPorPersonaIncluyendoInactivos(
+                    candidatoAdministrador.getPersona().getId());
+            correoAdministrador = usuario != null ? usuario.getCorreo() : null;
+        }
+    }
+
+    public void asignarAdministrador() {
+        try {
+            if (!isPuedeGestionarAdministradores() || iglesiaAdministradorSeleccionada == null
+                    || candidatoAdministrador == null) {
+                rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.error.no.autorizado"));
+                return;
+            }
+            asignacionAdministradorIglesiaService.asignar(iglesiaAdministradorSeleccionada.getId(),
+                    candidatoAdministrador.getId(), correoAdministrador);
+            refrescarLista();
+            JsfUtil.addSuccessMessageFromBundle("iglesias.admin.mensaje.exito");
+            PrimeFaces.current().ajax().addCallbackParam("assignmentSuccess", true);
+        } catch (NegocioException e) {
+            rechazarConMensaje(JsfUtil.getMessage(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error al asignar administrador de iglesia", e);
+            rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.mensaje.error"));
+        }
     }
 
     // â”€â”€ Diálogo Nueva / Editar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -635,6 +714,7 @@ public class IglesiaController implements Serializable {
         parroquias = null;
         parroquiaSeleccionado = new Geograp();
         comunidadFiltro = null;
+        estadoAdministradorFiltro = "TODAS";
         comunidadesFiltro = null;
         listaIglesiasFiltroGeografico = null;
         provinciaDialogoId = null;
@@ -655,7 +735,7 @@ public class IglesiaController implements Serializable {
         } else {
             listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
             listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
-            actualizarComunidadesFiltro();
+            enriquecerYAplicarFiltros();
         }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
@@ -764,6 +844,7 @@ public class IglesiaController implements Serializable {
         IglesiaDTO iglesia = iglesiaService.obtenerDTOConFlagDocumentos(iglesiaId, Constantes.LISTA_MIEMBROS);
         if (iglesia != null) {
             listaIglesias.add(iglesia);
+            iglesiaService.marcarConAdministrador(listaIglesias);
             tieneIglesiaAsignada = true;
         } else {
             JsfUtil.addWarningMessageFromBundle("form.iglesias.mensaje.asignacion.no.disponible");
@@ -793,8 +874,28 @@ public class IglesiaController implements Serializable {
 
     private void aplicarResultadoFiltroGeografico(List<IglesiaDTO> iglesias) {
         listaIglesiasFiltroGeografico = iglesias != null ? new ArrayList<>(iglesias) : new ArrayList<>();
-        listaIglesias = new ArrayList<>(listaIglesiasFiltroGeografico);
+        enriquecerYAplicarFiltros();
+    }
+
+    private void enriquecerYAplicarFiltros() {
+        iglesiaService.marcarConAdministrador(listaIglesiasFiltroGeografico);
         actualizarComunidadesFiltro();
+        aplicarFiltrosLocales();
+    }
+
+    private void aplicarFiltrosLocales() {
+        List<IglesiaDTO> origen = listaIglesiasFiltroGeografico == null
+                ? Collections.emptyList() : listaIglesiasFiltroGeografico;
+        String comunidadNormalizada = normalizarTexto(comunidadFiltro);
+        listaIglesias = origen.stream()
+                .filter(iglesia -> comunidadNormalizada.isEmpty()
+                        || comunidadNormalizada.equals(normalizarTexto(iglesia.getComunidad())))
+                .filter(iglesia -> "TODAS".equals(estadoAdministradorFiltro)
+                        || ("CON_ADMIN".equals(estadoAdministradorFiltro)
+                        && Boolean.TRUE.equals(iglesia.getTieneAdministrador()))
+                        || ("SIN_ADMIN".equals(estadoAdministradorFiltro)
+                        && !Boolean.TRUE.equals(iglesia.getTieneAdministrador())))
+                .collect(Collectors.toList());
     }
 
     private void actualizarComunidadesFiltro() {

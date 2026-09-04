@@ -32,6 +32,63 @@
 /* Inputmask placeholder más sutil */
 input[data-inputmask]::placeholder { color: #cbd5e1; }
 
+/* Buscador del menu principal en topbar */
+.layout-wrapper .layout-topbar .topbar-search-form {
+    display: contents;
+}
+
+.layout-wrapper .layout-topbar .topbar-menu-search {
+    position: relative;
+}
+
+.layout-wrapper .layout-topbar .topbar-menu-search input {
+    padding-right: 2.75rem !important;
+}
+
+.layout-wrapper .layout-topbar .topbar-search-clear.ui-button {
+    position: absolute;
+    right: .2rem;
+    top: 50%;
+    width: 2rem;
+    height: 2rem;
+    transform: translateY(-50%);
+    color: #64748b !important;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-profile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-left: .5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .18);
+    color: inherit;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-profile-icon i {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.layout-wrapper .layout-sidebar .menu-search-empty {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .75rem 1rem;
+    padding: .75rem;
+    border-radius: .5rem;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .9rem;
+    line-height: 1.25;
+}
+
+.layout-wrapper .layout-sidebar .menu-search-empty i {
+    color: #2563eb;
+}
+
 /* ScrollTop flotante con color Ecuador */
 .custom-scroll-top.ui-scrolltop {
     background: #f59e0b !important;
@@ -120,4 +177,24 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     font-size: .8rem !important;
     padding: .35rem .6rem !important;
     border-radius: 6px !important;
+}
+
+/* Tablas operativas compactas: preservan lectura y reducen altura por fila. */
+.tabla-personas-compacta .ui-datatable-data > tr > td,
+.tabla-asignar-admin-compacta .ui-datatable-data > tr > td {
+    padding-top: .42rem !important;
+    padding-bottom: .42rem !important;
+    font-size: .875rem;
+}
+
+.tabla-personas-compacta thead > tr > th,
+.tabla-asignar-admin-compacta thead > tr > th {
+    padding-top: .5rem !important;
+    padding-bottom: .5rem !important;
+    font-size: .8rem;
+}
+
+.tabla-asignar-admin-compacta .ui-column-filter {
+    font-size: .8rem;
+    padding: .3rem .45rem;
 }

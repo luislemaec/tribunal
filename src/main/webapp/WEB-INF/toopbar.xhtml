@@ -10,10 +10,30 @@
             <i class="pi pi-angle-up mobile"/>
         </a>
 
-        <div class="search-input">
-            <i class="pi pi-search icon-search"/>
-            <p:inputText/>
-        </div>
+        <h:form id="frmTopbarSearch" styleClass="topbar-search-form">
+            <div class="search-input topbar-menu-search">
+                <i class="pi pi-search icon-search"/>
+                <p:inputText id="menuSearch"
+                             value="#{loginBean.filtroMenu}"
+                             placeholder="#{msg['topbar.search.menu']}"
+                             title="#{msg['topbar.search.menu.title']}">
+                    <p:ajax event="keyup"
+                            listener="#{loginBean.filtrarMenuPrincipal}"
+                            process="@this"
+                            update=":menuform clearSearchPanel"
+                            delay="350"/>
+                </p:inputText>
+                <p:outputPanel id="clearSearchPanel" layout="inline">
+                    <p:commandButton icon="pi pi-times"
+                                     title="#{msg['topbar.search.clear']}"
+                                     actionListener="#{loginBean.limpiarFiltroMenu}"
+                                     process="@this"
+                                     update=":menuform :frmTopbarSearch"
+                                     rendered="#{loginBean.filtroMenuActivo}"
+                                     styleClass="ui-button-rounded ui-button-text ui-button-plain topbar-search-clear"/>
+                </p:outputPanel>
+            </div>
+        </h:form>
 
         <h:link outcome="/dashboard" styleClass="logo-container">
             <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout" />
@@ -21,7 +41,9 @@
 
         <a id="topbar-profile-menu-button" href="#">
             <span>#{loginBean.usuario.username}</span>
-            <p:graphicImage name="images/avatar.png" library="ecuador-layout" styleClass="topbar-profile" />
+            <span class="topbar-profile-icon" aria-hidden="true">
+                <i class="pi pi-user"/>
+            </span>
             <i class="pi pi-caret-down"/>
         </a>
 

@@ -149,7 +149,7 @@
                     </div>
                 </f:facet>
                 <div class="formgrid grid pt-1">
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-4">
                         <label for="provinciaSel" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.provincia']}</label>
                         <p:selectOneMenu id="provinciaSel" value="#{iglesiaController.provinciaFiltroId}"
                                          filter="true" filterMatchMode="contains"
@@ -163,7 +163,7 @@
                                     process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-4">
                         <label for="canton" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.canton']}</label>
                         <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
@@ -177,7 +177,7 @@
                                     process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-4">
                         <label for="parroquia" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.parroquia']}</label>
                         <p:selectOneMenu id="parroquia" value="#{iglesiaController.parroquiaSeleccionado.id}"
                                          filter="true" filterMatchMode="contains"
@@ -191,7 +191,7 @@
                                     process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-6">
                         <label for="comunidad" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.comunidad']}</label>
                         <p:selectOneMenu id="comunidad" value="#{iglesiaController.comunidadFiltro}"
                                          filter="true" filterMatchMode="contains"
@@ -203,6 +203,17 @@
                                            itemLabel="#{comunidad}" itemValue="#{comunidad}"/>
                             <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorComunidad()}"
                                     process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-3">
+                        <label for="estadoAdministrador" class="text-700 font-medium text-sm">#{msg['iglesias.admin.filtro.label']}</label>
+                        <p:selectOneMenu id="estadoAdministrador" value="#{iglesiaController.estadoAdministradorFiltro}"
+                                         styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.todas']}" itemValue="TODAS"/>
+                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.con']}" itemValue="CON_ADMIN"/>
+                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.sin']}" itemValue="SIN_ADMIN"/>
+                            <p:ajax event="change" listener="#{iglesiaController.cambiarFiltroEstadoAdministrador}"
+                                    process="@this" update=":frmIglesias:tblIglesia"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-3 flex align-items-end">
@@ -390,23 +401,23 @@
                         </div>
                     </p:column>
 
+                    <p:column headerText="#{msg['form.iglesias.table.header.administrador']}"
+                              sortBy="#{iglesia.tieneAdministrador}" filterBy="#{iglesia.tieneAdministrador}"
+                              styleClass="text-center" style="width:12rem">
+                        <p:tag rendered="#{iglesia.tieneAdministrador}"
+                               value="#{msg['iglesias.admin.estado.con']}" severity="success" icon="pi pi-user-check"/>
+                        <small rendered="#{iglesia.tieneAdministrador and not empty iglesia.administradorNombre}"
+                               class="block text-500 text-xs mt-1">#{iglesia.administradorNombre}</small>
+                        <p:tag rendered="#{not iglesia.tieneAdministrador}"
+                               value="#{msg['iglesias.admin.estado.sin']}" severity="warning" icon="pi pi-user-minus"/>
+                    </p:column>
+
                     <!-- Acciones -->
                     <p:column headerText="#{msg['form.iglesias.table.header.acciones']}" exportable="false"
                               styleClass="text-center" style="width:11rem">
-
-                        <p:commandButton icon="pi pi-eye"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-info"
-                                         title="#{msg['form.iglesias.btn.detail.title']}"
-                                         action="#{iglesiaController.verDetalleIglesiaFila}"
-                                         process="@this"
-                                         oncomplete="if (!args.validationFailed) PF('dlgDetalle').show()"
-                                         update=":frmDetalle">
-                            <f:setPropertyActionListener value="#{iglesia}"
-                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
-                        </p:commandButton>
-
-                        <!-- action (no actionListener) para garantizar el orden tras f:setPropertyActionListener -->
-                        <p:commandButton icon="pi pi-pencil"
+                        <div class="flex justify-content-center align-items-center gap-1 flex-wrap">
+                            <!-- action (no actionListener) para garantizar el orden tras f:setPropertyActionListener -->
+                            <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                          title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.edit.title'] : msg['form.iglesias.btn.disabled.title']}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
@@ -415,9 +426,20 @@
                                          process="@this" update=":frmDlgIglesia">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
-                        </p:commandButton>
+                            </p:commandButton>
 
-                        <p:commandButton icon="pi pi-trash"
+                            <p:commandButton icon="#{iglesia.tieneAdministrador ? 'pi pi-user-edit' : 'pi pi-user-plus'}"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                         title="#{iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']}"
+                                         rendered="#{iglesiaController.puedeGestionarAdministradores}"
+                                         action="#{iglesiaController.prepararAsignacionAdministrador}"
+                                         process="@this" update=":frmDlgAdministradorIglesia"
+                                         oncomplete="if (args.dialogReady) PF('dlgAsignarAdministrador').show()">
+                            <f:setPropertyActionListener value="#{iglesia}"
+                                                         target="#{iglesiaController.iglesiaAdministradorSeleccionada}"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-trash"
                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                          title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
                                          rendered="#{not iglesiaController.restringidoAIglesia}"
@@ -429,9 +451,9 @@
                             <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
                                        message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
                                        icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
+                            </p:commandButton>
 
-                        <p:commandButton icon="pi pi-folder-open"
+                            <p:commandButton icon="pi pi-folder-open"
                                          styleClass="ui-button-rounded ui-button-text ui-button-success"
                                          title="#{msg['form.iglesias.btn.docs.title']}"
                                          rendered="#{iglesia.tieneDocumentos}"
@@ -441,12 +463,105 @@
                                          update=":frmDocs">
                             <f:setPropertyActionListener value="#{iglesia}"
                                                          target="#{iglesiaController.iglesiaSeleccionado}"/>
-                        </p:commandButton>
+                            </p:commandButton>
+                        </div>
                     </p:column>
 
                 </p:dataTable>
 
             </div>
+        </h:form>
+
+        <h:form id="frmDlgAdministradorIglesia">
+            <p:dialog widgetVar="dlgAsignarAdministrador" modal="true" responsive="true"
+                      closable="true" closeOnEscape="true" width="760" style="max-width:95vw;max-height:90vh"
+                      header="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.dialogo.titulo']}"
+                      contentStyle="padding:0;overflow:hidden">
+                <p:outputPanel id="pnlAsignarAdmin" layout="block">
+                    <div class="flex align-items-center gap-2 surface-100 px-3 py-2">
+                        <i class="pi pi-building text-primary"/>
+                        <div>
+                            <span class="block text-500 text-sm">#{msg['iglesias.admin.dialogo.iglesia']}</span>
+                            <span class="font-semibold text-900">#{iglesiaController.iglesiaAdministradorSeleccionada.nombre}</span>
+                        </div>
+                    </div>
+
+                    <p:outputPanel id="administradorActual" layout="block" styleClass="px-3 pt-2">
+                        <ui:fragment rendered="#{iglesiaController.administradorActual ne null}">
+                            <div class="surface-50 border-round p-2">
+                                <span class="block text-500 text-xs font-medium mb-1">#{msg['iglesias.admin.dialogo.actual']}</span>
+                                <div class="flex flex-wrap align-items-center gap-x-3 gap-y-1 text-sm">
+                                    <span class="font-semibold text-800">#{iglesiaController.administradorActual.personaNombres}</span>
+                                    <span class="text-600">#{iglesiaController.administradorActual.personaDocumento}</span>
+                                    <span class="text-500">#{empty iglesiaController.administradorActual.correo ? '—' : iglesiaController.administradorActual.correo}</span>
+                                </div>
+                            </div>
+                        </ui:fragment>
+                    </p:outputPanel>
+
+                    <div class="px-3 pt-2">
+                    <p:dataTable id="tblCandidatosAdministrador"
+                                 value="#{iglesiaController.candidatosAdministrador}" var="vinculo"
+                                 selection="#{iglesiaController.candidatoAdministrador}" rowKey="#{vinculo.id}"
+                                 selectionMode="single" paginator="true" paginatorPosition="top" rows="6"
+                                 emptyMessage="#{msg['iglesias.admin.lista.vacia']}"
+                                 responsiveLayout="scroll" scrollable="true" scrollHeight="230"
+                                 styleClass="ui-datatable-sm tabla-asignar-admin-compacta">
+                        <p:ajax event="rowSelect" listener="#{iglesiaController.seleccionarCandidatoAdministrador}"
+                                process="@this"
+                                update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
+                        <p:column selectionMode="single" style="width:3rem" exportable="false"/>
+                        <p:column headerText="#{msg['iglesias.admin.columna.cedula']}"
+                                  filterBy="#{vinculo.persona.documento}" filterMatchMode="contains" style="width:12rem">
+                            <h:outputText value="#{vinculo.persona.documento}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['iglesias.admin.columna.nombres']}"
+                                  filterBy="#{vinculo.persona.nombres}" filterMatchMode="contains">
+                            <h:outputText value="#{vinculo.persona.nombres}"/>
+                        </p:column>
+                    </p:dataTable>
+                    </div>
+
+                    <p:outputPanel id="datosAdministrador" layout="block" styleClass="px-3 pb-2">
+                        <ui:fragment rendered="#{iglesiaController.candidatoAdministrador ne null}">
+                            <div class="formgrid grid">
+                                <div class="field col-12 mb-2">
+                                    <div class="flex flex-wrap align-items-center gap-x-3 gap-y-1 surface-50 border-round p-2 text-sm">
+                                        <span class="text-500">#{msg['iglesias.admin.dialogo.seleccionado']}</span>
+                                        <span class="font-semibold text-800">#{iglesiaController.candidatoAdministrador.persona.nombres}</span>
+                                        <span class="text-600">#{iglesiaController.candidatoAdministrador.persona.documento}</span>
+                                    </div>
+                                </div>
+                                <div class="field col-12 md:col-6 mb-0">
+                                    <label for="correoAdministrador" class="text-700 font-medium text-sm">
+                                        #{msg['iglesias.admin.label.correo']} <span class="text-red-500">*</span>
+                                    </label>
+                                    <p:inputText id="correoAdministrador" value="#{iglesiaController.correoAdministrador}"
+                                                 required="true" maxlength="150" type="email" styleClass="w-full"
+                                                 validatorMessage="#{msg['usuarios.mensaje.correo.invalido']}">
+                                        <f:validateRegex pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
+                                    </p:inputText>
+                                </div>
+                            </div>
+                        </ui:fragment>
+                    </p:outputPanel>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="flex justify-content-end flex-wrap gap-2">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
+                                         type="button" onclick="PF('dlgAsignarAdministrador').hide()"
+                                         styleClass="ui-button-outlined ui-button-secondary"/>
+                        <p:commandButton id="btnConfirmarAdministrador"
+                                         value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
+                                         disabled="#{iglesiaController.candidatoAdministrador eq null}"
+                                         action="#{iglesiaController.asignarAdministrador}"
+                                         process=":frmDlgAdministradorIglesia:pnlAsignarAdmin"
+                                         update=":frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
+                                         oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
+                                         styleClass="ui-button-success"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
         </h:form>
 
         <!-- ======================================================

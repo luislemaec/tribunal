@@ -15,7 +15,7 @@ Reglas operativas:
 - Si se usa `validate`, ejecutar Flyway externamente antes de desplegar el WAR.
 - Para una base existente, usar primero baseline controlado y documentado.
 - `V1__baseline_inicial.sql` es solo para bases nuevas.
-- La secuencia consolidada para una base limpia en desarrollo es: V1 estructura completa, V2 datos iniciales definitivos y V3 normalizacion de total de votos en mesas.
+- La secuencia consolidada para una base limpia en desarrollo es: V1 estructura completa, V2 datos iniciales definitivos (incluye el tipo documental de acta de actualizacion de miembros) y V3 normalizacion de total de votos en mesas.
 - En una base existente usar `baselineOnMigrate=true` y `baselineVersion=1`; no ejecutar V1.
 - `V2__datos_iniciales.sql` carga catalogos, personas, iglesias, el usuario administrador BCrypt, tipos documentales, categorias de voto normalizadas, proceso, cronograma, recintos, mesas, plantillas, menus y relaciones iniciales autorizadas para una base nueva.
 - V2 contiene datos sensibles; restringir acceso al repositorio y al WAR generado.
