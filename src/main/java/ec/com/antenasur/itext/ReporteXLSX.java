@@ -61,6 +61,72 @@ public class ReporteXLSX {
 
     private static final int HEADER_LOGO_MAX_HEIGHT_PX = 108;
 
+    /** Exportacion por lotes, sin estado estatico ni una matriz con todo el padron. */
+    public static byte[] generarPadronGeneral(
+            java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor)
+            throws IOException {
+        try (InputStream logo = FacesContext.getCurrentInstance().getExternalContext()
+                .getResourceAsStream("/resources/img/logo_consejo_417x150.png")) {
+            return generarPadronGeneral(proveedor, logo);
+        }
+    }
+
+    static byte[] generarPadronGeneral(
+            java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor,
+            InputStream logo) throws IOException {
+        XSSFWorkbook base = new XSSFWorkbook();
+        Sheet detalle = base.createSheet("Padron");
+        crearEncabezadoInstitucional(base, detalle, Constantes.getMensaje("gestionPadron.reporte"), logo);
+        org.apache.poi.xssf.streaming.SXSSFWorkbook libro = new org.apache.poi.xssf.streaming.SXSSFWorkbook(base, 200);
+        libro.setCompressTempFiles(true);
+        try (libro; ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            Sheet hoja = libro.getSheetAt(0);
+            String[] claves = {"proceso", "provincia", "canton", "parroquia", "recinto", "mesa", "iglesia", "documento", "nombres", "estado"};
+            var cabecera = libro.createCellStyle();
+            var fuente = libro.createFont(); fuente.setBold(true); fuente.setColor(IndexedColors.WHITE.index);
+            cabecera.setFont(fuente); cabecera.setFillForegroundColor(IndexedColors.DARK_BLUE.index);
+            cabecera.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            Row titulos = hoja.createRow(5);
+            for (int i = 0; i < claves.length; i++) {
+                Cell celda = titulos.createCell(i); celda.setCellValue(Constantes.getMensaje("gestionPadron." + claves[i]));
+                celda.setCellStyle(cabecera); hoja.setColumnWidth(i, i == 8 ? 14000 : 7000);
+            }
+            hoja.createFreezePane(0, 6);
+            java.util.Map<String, Long> recintos = new java.util.LinkedHashMap<>();
+            java.util.Map<String, Long> mesas = new java.util.LinkedHashMap<>();
+            java.util.Map<String, Long> iglesias = new java.util.LinkedHashMap<>();
+            int[] fila = {6};
+            proveedor.accept(p -> {
+                if (fila[0] >= 1_048_576) throw new IllegalStateException(Constantes.getMensaje("gestionPadron.error.reporte.limite"));
+                String[] valores = {p.getProceso(), p.getProvincia(), p.getCanton(), p.getParroquia(), p.getRecinto(),
+                    p.getMesa(), p.getIglesia(), p.getDocumento(),
+                    ((p.getNombres() == null ? "" : p.getNombres()) + " " + (p.getApellidos() == null ? "" : p.getApellidos())).trim(),
+                    Constantes.getMensaje("gestionPadron.activo")};
+                Row row = hoja.createRow(fila[0]++);
+                for (int i = 0; i < valores.length; i++) row.createCell(i).setCellValue(valores[i] == null ? "" : valores[i]);
+                String recinto = p.getProceso() + " / " + p.getRecinto() + " [" + p.getRecintoId() + "]";
+                recintos.merge(recinto, 1L, Long::sum);
+                mesas.merge(recinto + " / " + p.getMesa() + " [" + p.getMesaId() + "]", 1L, Long::sum);
+                iglesias.merge(p.getProceso() + " / " + p.getIglesia() + " [" + p.getIglesiaId() + "]", 1L, Long::sum);
+            });
+            hoja.setAutoFilter(new CellRangeAddress(5, Math.max(5, fila[0] - 1), 0, claves.length - 1));
+            Sheet resumen = libro.createSheet(Constantes.getMensaje("gestionPadron.totales"));
+            Row total = resumen.createRow(0);
+            total.createCell(0).setCellValue(Constantes.getMensaje("gestionPadron.total")); total.createCell(1).setCellValue(fila[0] - 6);
+            int numero = 2;
+            for (var grupo : java.util.List.of(recintos, mesas, iglesias)) {
+                for (var entrada : grupo.entrySet()) {
+                    Row row = resumen.createRow(numero++);
+                    row.createCell(0).setCellValue(entrada.getKey()); row.createCell(1).setCellValue(entrada.getValue());
+                }
+                numero++;
+            }
+            resumen.setColumnWidth(0, 28000); resumen.setColumnWidth(1, 4500);
+            libro.write(salida);
+            return salida.toByteArray();
+        } finally { libro.dispose(); }
+    }
+
     public static String getNombreUsuarioAutenticado() {
         String userName = JsfUtil.getNombreUsuarioAutenticado();
         return tieneTexto(userName) ? userName : "<desconocido>";

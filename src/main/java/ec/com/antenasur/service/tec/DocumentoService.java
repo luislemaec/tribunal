@@ -75,6 +75,17 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
         return documentoFacade.create(documento);
     }
 
+    /** El bloqueo incluye el caso sin versiones previas y se mantiene hasta el commit JTA. */
+    public Documentos registrarVersionMesa(Documentos documento, Integer mesaId,
+            Integer procesoId, Integer recintoId) {
+        documentoFacade.bloquearMesaParaVersion(mesaId);
+        for (Documentos anterior : documentoFacade.listarVersionesActivas(
+                mesaId, procesoId, documento.getTipoDocumento().getId())) {
+            documentoFacade.delete(anterior);
+        }
+        return registrarDocumentoMesa(documento, mesaId, procesoId, recintoId);
+    }
+
     public Documentos buscarActivoPorEntidadTipoYContexto(
             Integer entidadId, Integer tipoDocumentoId, String contextoHash) {
         return documentoFacade.buscarActivoPorEntidadTipoYContexto(entidadId, tipoDocumentoId, contextoHash);

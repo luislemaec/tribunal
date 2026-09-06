@@ -39,6 +39,7 @@ public class ReporteMesaController implements Serializable {
     @Getter private List<RecintoDTO> recintos = new ArrayList<>();
     @Getter private List<MesaDTO> mesas = new ArrayList<>();
     @Getter private ReporteMesaDTO reporte;
+    @Getter private DocumentoDTO certificados;
 
     @Getter @Setter private Integer procesoId;
     @Getter @Setter private Integer recintoId;
@@ -94,6 +95,7 @@ public class ReporteMesaController implements Serializable {
     }
 
     public void consultar() {
+        certificados = null;
         reporte = null;
         if (procesoId == null || recintoId == null || mesaId == null) {
             JsfUtil.addWarningMessage(Constantes.getMensaje("reportesMesa.error.seleccion"));
@@ -140,8 +142,25 @@ public class ReporteMesaController implements Serializable {
         }
     }
 
+    public void generarCertificados() {
+        certificados = null;
+        try {
+            certificados = reporteMesaService.generarCertificados(
+                    procesoId, recintoId, mesaId, personaId(), presidenteRestringido);
+            reporte.getDocumentos().removeIf(d -> certificados.getTipoDocumentoId().equals(d.getTipoDocumentoId()));
+            reporte.getDocumentos().add(0, certificados);
+            procesoBean.okActivityRegister("GENERA CERTIFICADOS DE VOTACION", certificados.getCodigo());
+            JsfUtil.addSuccessMessage(Constantes.getMensaje("reportesMesa.certificados.exito"));
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR GENERAR CERTIFICADOS DE VOTACION", e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("reportesMesa.certificados.error"));
+        }
+    }
+
     public boolean isPuedeGenerarActaParcial() {
-        return reporte != null && reporte.getCabecera() != null;
+        return reporte != null && reporte.getProceso() != null && reporte.getMesa() != null;
     }
 
     public boolean isPuedeGenerarPadron() {

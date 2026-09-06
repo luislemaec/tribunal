@@ -113,7 +113,7 @@
                             <div class="col-12 sm:col-6 xl:col-3">
                                 <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-blue-500">
                                     <span class="text-500 text-sm">#{msg['reportesMesa.resumen.documentos']}</span>
-                                    <div class="text-900 font-bold text-2xl mt-2">#{reporteMesaController.reporte.documentos.size()}</div>
+                                    <div class="text-900 font-bold text-2xl mt-2"><h:outputText id="totalDocumentos" value="#{reporteMesaController.reporte.documentos.size()}"/></div>
                                 </div>
                             </div>
                         </div>
@@ -164,6 +164,19 @@
                                 </p:tab>
 
                                 <p:tab title="#{msg['reportesMesa.tab.padron']}">
+                                    <p:outputPanel id="panelCertificados" layout="block" styleClass="flex flex-wrap gap-2 mb-3">
+                                        <p:commandButton value="#{msg['reportesMesa.certificados.generar']}" icon="pi pi-file-pdf"
+                                                         action="#{reporteMesaController.generarCertificados}" process="@this"
+                                                         update=":frmReportesMesa:tabsReporte:panelCertificados :frmReportesMesa:tabsReporte:tblDocumentos :frmReportesMesa:totalDocumentos :frmGlobal:growlGlobal"
+                                                         rendered="#{loginBean.roles.contains('SITEC-Administrador') or loginBean.roles.contains('SITEC-Tribunal')}"/>
+                                        <p:commandButton value="#{msg['reportesMesa.certificados.descargar']}" icon="pi pi-download"
+                                                         ajax="false" immediate="true" process="@this"
+                                                         rendered="#{not empty reporteMesaController.certificados}">
+                                            <p:fileDownload value="#{documentoBean.obtenerArchivo(reporteMesaController.certificados)}"
+                                                            contentDisposition="attachment"/>
+                                        </p:commandButton>
+                                        <small class="block w-full text-500">#{msg['reportesMesa.certificados.impresion']}</small>
+                                    </p:outputPanel>
                                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
                                         <div>
                                             <h3 class="text-900 m-0">#{msg['reportesMesa.padron.titulo']}</h3>
@@ -187,7 +200,7 @@
                                 </p:tab>
 
                                 <p:tab title="#{msg['reportesMesa.tab.documentos']}">
-                                    <p:dataTable value="#{reporteMesaController.reporte.documentos}" var="doc"
+                                    <p:dataTable id="tblDocumentos" value="#{reporteMesaController.reporte.documentos}" var="doc"
                                                  paginator="true" rows="10" reflow="true"
                                                  styleClass="ui-datatable-sm ui-datatable-striped"
                                                  emptyMessage="#{msg['reportesMesa.documentos.empty']}">

@@ -28,6 +28,18 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
     private static final String HQL = " SELECT d FROM Documentos d";
     private static final String ORDENADO = " ORDER BY d.id";
 
+    public void bloquearMesaParaVersion(Integer mesaId) {
+        getEntityManager().find(Mesa.class, mesaId, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    public List<Documentos> listarVersionesActivas(Integer mesaId, Integer procesoId, Integer tipoId) {
+        return getEntityManager().createQuery(HQL
+                + " WHERE d.mesa.id = :mesa AND d.proceso.id = :proceso"
+                + " AND d.tipoDocumento.id = :tipo AND d.estado = TRUE", Documentos.class)
+                .setParameter("mesa", mesaId).setParameter("proceso", procesoId)
+                .setParameter("tipo", tipoId).getResultList();
+    }
+
     public DocumentoFacade() {
         super(Documentos.class, Integer.class);
     }

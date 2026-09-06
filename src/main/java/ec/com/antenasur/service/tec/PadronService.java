@@ -1,5 +1,7 @@
 package ec.com.antenasur.service.tec;
 
+import ec.com.antenasur.dto.CertificadoVotacionDTO;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +43,8 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
 
     @Inject
     private ProcesoElectoralFacade procesoElectoralFacade;
+
+    @Inject private GestionPadronService gestionPadronService;
 
     @Override
     protected PadronFacade getFacade() {
@@ -122,16 +126,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         if (personas == null) {
             return creados;
         }
-        for (IglesiaPersona ip : personas) {
-            if (!Boolean.TRUE.equals(ip.getHabilitadoPadron())) {
-                continue;
-            }
-            Padron existente = padronFacade.buscaPorPersonaProcesoIglesia(ip.getId(), proceso.getId());
-            if (existente == null) {
-                creados.add(padronFacade.create(new Padron(mesa, proceso, ip)));
-            }
-        }
-        return creados;
+        if (personas.isEmpty()) return creados;
+        return gestionPadronService.asignar(proceso.getId(), mesa.getRecinto().getId(), mesa.getId(),
+                iglesia.getId(), personas.stream().map(IglesiaPersona::getId).toList());
     }
 
     /**
@@ -190,15 +187,9 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         if (padrones == null || padrones.isEmpty()) {
             return 0;
         }
-        int eliminados = 0;
-        for (Padron padron : padrones) {
-            if (Boolean.TRUE.equals(padron.getSufrago())) {
-                continue;
-            }
-            padronFacade.remove(padron);
-            eliminados++;
-        }
-        return eliminados;
+        Mesa mesa = mesaFacade.find(mesaId);
+        return gestionPadronService.retirar(procesoId, mesa.getRecinto().getId(), mesaId,
+                padrones.stream().map(Padron::getId).toList());
     }
 
     // ----- API basada en DTO -----
@@ -238,6 +229,11 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
             return new ArrayList<>();
         }
         return mapearLista(padronFacade.getPadronPorMesaIdsYProceso(mesaIds, procesoId));
+    }
+
+    public List<CertificadoVotacionDTO> listarCertificados(
+            Integer mesaId, Integer procesoId) {
+        return padronFacade.listarCertificados(mesaId, procesoId);
     }
 
     public List<PadronDTO> listarDTOsPorIglesiaYProceso(Integer iglesiaId, Integer procesoId) {

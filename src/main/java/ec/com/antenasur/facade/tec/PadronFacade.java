@@ -6,6 +6,7 @@
 package ec.com.antenasur.facade.tec;
 
 import ec.com.antenasur.model.Iglesia;
+import ec.com.antenasur.dto.CertificadoVotacionDTO;
 import ec.com.antenasur.model.tec.Mesa;
 import java.util.List;
 
@@ -27,6 +28,21 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
     private static final String HQL = " SELECT p FROM Padron p";
     private static final String ACTIVOS = " p.estado = TRUE";
     private static final String ORDENADO = " ORDER BY p.id";
+
+    public List<CertificadoVotacionDTO> listarCertificados(
+            Integer mesaId, Integer procesoId) {
+        return getEntityManager().createQuery(
+                "SELECT new ec.com.antenasur.dto.CertificadoVotacionDTO("
+                + "pr.id, pr.nombres, pr.apellidos, pr.documento, i.nombre, i.comunidad,"
+                + " parroquia.name, canton.name, provincia.name)"
+                + " FROM Padron p JOIN p.iglesiaPersona ip JOIN ip.persona pr JOIN ip.iglesia i"
+                + " LEFT JOIN i.ubicacion parroquia LEFT JOIN parroquia.geograp canton"
+                + " LEFT JOIN canton.geograp provincia"
+                + " WHERE p.mesa.id = :mesa AND p.proceso.id = :proceso AND " + ACTIVOS
+                + " ORDER BY pr.nombres, pr.apellidos, p.id",
+                CertificadoVotacionDTO.class)
+                .setParameter("mesa", mesaId).setParameter("proceso", procesoId).getResultList();
+    }
 
     public PadronFacade() {
         super(Padron.class, Integer.class);

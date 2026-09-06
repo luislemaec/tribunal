@@ -16,8 +16,14 @@ import jakarta.annotation.Resource;
 import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 import ec.com.antenasur.dto.CategoriaVotoDTO;
+import ec.com.antenasur.dto.CertificadoVotacionDTO;
+import ec.com.antenasur.enums.FaseElectoral;
+import ec.com.antenasur.facade.tec.CronogramaFaseFacade;
 import ec.com.antenasur.dto.DocumentoDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
 import ec.com.antenasur.dto.MesaDTO;
@@ -56,6 +62,12 @@ public class ReporteMesaService {
     @Inject private DocumentoService documentoService;
     @Inject private DocumentoFacade documentoFacade;
     @Inject private TipoDocumentoFacade tipoDocumentoFacade;
+    @Inject private CronogramaFaseFacade cronogramaFacade;
+
+    public static final String TIPO_CERTIFICADOS = "CERTIFICADOS DE VOTACION DE MESA";
+
+    @Resource
+    private TransactionSynchronizationRegistry transacciones;
 
     @Resource
     private SessionContext sessionContext;
@@ -119,9 +131,6 @@ public class ReporteMesaService {
     public DocumentoDTO generarActaParcial(Integer procesoId, Integer recintoId, Integer mesaId,
             Integer personaId, boolean presidenteRestringido) {
         ReporteMesaDTO reporte = consultar(procesoId, recintoId, mesaId, personaId, presidenteRestringido);
-        if (reporte.getCabecera() == null) {
-            throw new NegocioException(mensaje("reportesMesa.error.sin.escrutinio"));
-        }
         String contexto = hashContextoActa(reporte);
         TipoDocumento tipo = obtenerTipo(Constantes.TIPO_ACTA_PARCIAL_ESCRUTINIO);
         Documentos existente = buscarDocumentoVigente(mesaId, tipo.getId(), contexto);
@@ -134,7 +143,7 @@ public class ReporteMesaService {
                 + ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + "-" + sufijo();
         byte[] contenido;
         try {
-            contenido = ReportePFD.generarActaParcial(reporte, codigo, ahora, usuarioActual());
+            contenido = ReportePFD.generarActaParcialPreelectoral(reporte, codigo, ahora, usuarioActual());
         } catch (Exception e) {
             throw new NegocioException(mensaje("reportesMesa.error.generar.acta"));
         }
@@ -165,6 +174,45 @@ public class ReporteMesaService {
         return almacenar(reporte, tipo, codigo, ".xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", contenido,
                 "padrones-mesa", contexto);
+    }
+
+    public DocumentoDTO generarCertificados(Integer procesoId, Integer recintoId, Integer mesaId,
+            Integer personaId, boolean presidenteRestringido) {
+        if (!sessionContext.isCallerInRole("SITEC-Administrador")
+                && !sessionContext.isCallerInRole("SITEC-Tribunal")) {
+            throw new NegocioException(mensaje("reportesMesa.certificados.no.autorizado"));
+        }
+        ProcesoElectoral proceso = procesoId != null ? procesoFacade.find(procesoId) : null;
+        Mesa mesa = mesaId != null ? mesaFacade.buscarDetallePorId(mesaId) : null;
+        validarSeleccion(proceso, recintoId, mesa);
+        validarAcceso(mesaId, procesoId, personaId, presidenteRestringido);
+        var personas = padronService.listarCertificados(mesaId, procesoId);
+        if (personas.isEmpty()) {
+            throw new NegocioException(mensaje("reportesMesa.certificados.vacio"));
+        }
+        if (personas.stream().map(CertificadoVotacionDTO::personaId)
+                .distinct().count() != personas.size()) {
+            throw new NegocioException(mensaje("reportesMesa.certificados.duplicados"));
+        }
+        var fase = cronogramaFacade.getFasePorTipo(procesoId, FaseElectoral.SUFRAGIO);
+        if (fase == null || !Boolean.TRUE.equals(fase.getEstado()) || fase.getFechaInicio() == null) {
+            throw new NegocioException(mensaje("reportesMesa.certificados.sin.fecha"));
+        }
+        ReporteMesaDTO contexto = new ReporteMesaDTO();
+        contexto.setProceso(ProcesoElectoralDTO.fromEntity(proceso));
+        contexto.setMesa(MesaDTO.fromEntity(mesa));
+        contexto.setRecinto(RecintoDTO.fromEntity(mesa.getRecinto()));
+        TipoDocumento tipo = obtenerTipo(TIPO_CERTIFICADOS);
+        String codigo = "certificados_votacion_" + procesoId + "_mesa_" + mesaId + "_"
+                + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "_" + sufijo();
+        byte[] contenido;
+        try {
+            contenido = ReportePFD.generarCertificadosVotacion(contexto, personas, fase.getFechaInicio());
+        } catch (Exception e) {
+            throw new NegocioException(mensaje("reportesMesa.certificados.error"));
+        }
+        return almacenar(contexto, tipo, codigo, ".pdf", "application/pdf", contenido,
+                "certificados-votacion", hash(codigo), true);
     }
 
     private List<EscrutinioDTO> listarResultadosCompletos(Integer mesaId, Integer procesoId, MesaDTO mesa) {
@@ -258,9 +306,28 @@ public class ReporteMesaService {
 
     private DocumentoDTO almacenar(ReporteMesaDTO reporte, TipoDocumento tipo, String codigo,
             String extension, String mime, byte[] contenido, String subdirectorio, String contexto) {
+        return almacenar(reporte, tipo, codigo, extension, mime, contenido, subdirectorio, contexto, false);
+    }
+
+    private DocumentoDTO almacenar(ReporteMesaDTO reporte, TipoDocumento tipo, String codigo,
+            String extension, String mime, byte[] contenido, String subdirectorio, String contexto,
+            boolean nuevaVersion) {
         Path archivo = null;
         try {
             archivo = RepositorioDocumentos.escribirAtomico(subdirectorio, codigo + extension, contenido);
+            if (nuevaVersion) {
+                final Path creado = archivo;
+                transacciones.registerInterposedSynchronization(new Synchronization() {
+                    @Override
+                    public void beforeCompletion() { }
+                    @Override
+                    public void afterCompletion(int estado) {
+                        if (estado == Status.STATUS_ROLLEDBACK) {
+                            RepositorioDocumentos.eliminarSilencioso(creado);
+                        }
+                    }
+                });
+            }
             Documentos documento = new Documentos(codigo,
                     RepositorioDocumentos.rutaRelativaParaPersistir(archivo), tipo,
                     reporte.getMesa().getId(), extension, mime, codigo);
@@ -269,12 +336,18 @@ public class ReporteMesaService {
             documento.setMesa(mesaFacade.find(reporte.getMesa().getId()));
             documento.setContextoHash(contexto);
             documento.setHashSha256(RepositorioDocumentos.sha256(contenido));
-            Documentos persistido = documentoFacade.create(documento);
+            Documentos persistido = nuevaVersion
+                    ? documentoService.registrarVersionMesa(documento, reporte.getMesa().getId(),
+                            reporte.getProceso().getId(), reporte.getRecinto().getId())
+                    : documentoFacade.create(documento);
             if (persistido == null || persistido.getId() == null) {
                 throw new IOException("No se registro la metadata del documento.");
             }
             return toDocumentoDisponible(persistido);
         } catch (Exception e) {
+            if (nuevaVersion) {
+                sessionContext.setRollbackOnly();
+            }
             RepositorioDocumentos.eliminarSilencioso(archivo);
             throw new NegocioException(mensaje("reportesMesa.error.almacenar"));
         }
@@ -331,6 +404,7 @@ public class ReporteMesaService {
 
     private String hashContextoActa(ReporteMesaDTO reporte) {
         StringBuilder fuente = contextoBase(reporte);
+        fuente.append("|ACTA-PREELECTORAL-V1");
         for (EscrutinioDTO item : reporte.getEscrutinios()) {
             fuente.append("|E:").append(item.getCategoriaId()).append(':').append(item.getTotalVotos());
         }

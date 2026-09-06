@@ -36,10 +36,12 @@ import java.security.MessageDigest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import ec.com.antenasur.dto.EscrutinioDTO;
+import ec.com.antenasur.dto.CertificadoVotacionDTO;
 import ec.com.antenasur.dto.MiembroJRVDTO;
 import ec.com.antenasur.dto.ReporteMesaDTO;
 
@@ -71,6 +73,17 @@ public class ReportePFD {
     private static Font fuente;
 
     private static String codigoDocumentoActual;
+
+    /** Certificados institucionales a doble cara, sin modificar el padron. */
+    public static byte[] generarCertificadosVotacion(ReporteMesaDTO reporte,
+            List<CertificadoVotacionDTO> personas, Date fechaSufragio) throws DocumentException {
+        try {
+            return CertificadosVotacionPDF.generar(reporte, personas, fechaSufragio,
+                    CertificadosVotacionPDF.Recursos.delProyecto());
+        } catch (IOException e) {
+            throw new DocumentException(e);
+        }
+    }
 
     private static void inicializa() {
         try {
@@ -152,6 +165,17 @@ public class ReportePFD {
     /** Genera un acta informativa sin modificar ni cerrar el escrutinio de la mesa. */
     public static byte[] generarActaParcial(ReporteMesaDTO reporte, String codigo,
             LocalDateTime fechaGeneracion, String usuario) throws DocumentException {
+        return generarActaParcial(reporte, codigo, fechaGeneracion, usuario, false);
+    }
+
+    /** Formulario imprimible: nunca utiliza votos almacenados para sus casillas. */
+    public static byte[] generarActaParcialPreelectoral(ReporteMesaDTO reporte, String codigo,
+            LocalDateTime fechaGeneracion, String usuario) throws DocumentException {
+        return generarActaParcial(reporte, codigo, fechaGeneracion, usuario, true);
+    }
+
+    private static byte[] generarActaParcial(ReporteMesaDTO reporte, String codigo,
+            LocalDateTime fechaGeneracion, String usuario, boolean preelectoral) throws DocumentException {
         if (reporte == null || reporte.getMesa() == null || reporte.getProceso() == null) {
             throw new DocumentException("No existe informacion suficiente para generar el acta parcial.");
         }
@@ -166,7 +190,18 @@ public class ReportePFD {
         Document pdf = contexto.documento();
         try {
             agregarInformacionActaParcial(pdf, reporte, fechaGeneracion, usuario);
-            agregarResultadosActaParcial(pdf, reporte);
+            if (preelectoral && reporte.getRecinto() != null) {
+                PdfPTable ubicacion = new PdfPTable(2);
+                ubicacion.setWidthPercentage(100);
+                ubicacion.setWidths(new float[]{25, 75});
+                ubicacion.setSpacingAfter(12f);
+                agregarDato(ubicacion, Constantes.getMensaje("reportesMesa.acta.ubicacion"),
+                        texto(reporte.getRecinto().getProvinciaNombre()) + " / "
+                        + texto(reporte.getRecinto().getCantonNombre()) + " / "
+                        + texto(reporte.getRecinto().getUbicacionNombre()));
+                pdf.add(ubicacion);
+            }
+            agregarResultadosActaParcial(pdf, reporte, preelectoral);
             agregarFirmasJrv(pdf, reporte);
         } finally {
             pdf.close();
@@ -192,7 +227,7 @@ public class ReportePFD {
         pdf.add(informacion);
     }
 
-    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte)
+    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean preelectoral)
             throws DocumentException {
         PdfPTable resultados = new PdfPTable(2);
         resultados.setWidthPercentage(100);
@@ -203,9 +238,19 @@ public class ReportePFD {
         agregarCabecera(resultados, Constantes.getMensaje("reportesMesa.escrutinio.votos"));
         for (EscrutinioDTO item : reporte.getEscrutinios()) {
             agregarCelda(resultados, item.getCategoriaNombre(), Element.ALIGN_LEFT, Font.NORMAL);
-            agregarCelda(resultados, String.valueOf(valor(item.getTotalVotos())), Element.ALIGN_RIGHT, Font.NORMAL);
+            if (preelectoral) {
+                agregarCasillaManual(resultados);
+            } else {
+                agregarCelda(resultados, String.valueOf(valor(item.getTotalVotos())), Element.ALIGN_RIGHT, Font.NORMAL);
+            }
         }
-        if (reporte.getCabecera() != null) {
+        if (preelectoral) {
+            for (String clave : new String[]{"reportesMesa.total.validos", "reportesMesa.total.nulos",
+                    "reportesMesa.total.blancos", "reportesMesa.total.registrados"}) {
+                agregarCelda(resultados, Constantes.getMensaje(clave), Element.ALIGN_RIGHT, Font.BOLD);
+                agregarCasillaManual(resultados);
+            }
+        } else if (reporte.getCabecera() != null) {
             agregarFilaTotal(resultados, Constantes.getMensaje("reportesMesa.total.validos"),
                     reporte.getCabecera().getTotalVotosValidos());
             agregarFilaTotal(resultados, Constantes.getMensaje("reportesMesa.total.nulos"),
@@ -216,6 +261,14 @@ public class ReportePFD {
                     reporte.getCabecera().getTotalVotosRegistrados());
         }
         pdf.add(resultados);
+    }
+
+    private static void agregarCasillaManual(PdfPTable tabla) {
+        PdfPCell celda = new PdfPCell();
+        celda.setMinimumHeight(32f);
+        celda.setBorderColor(COLOR_BORDE_TABLA);
+        celda.setPadding(8f);
+        tabla.addCell(celda);
     }
 
     private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte) throws DocumentException {
