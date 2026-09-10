@@ -16,30 +16,13 @@
                 <h3 class="mt-0">#{msg['padron.filtros.titulo']}</h3>
                 <div class="formgrid grid">
                     <div class="field col-12 md:col-6 lg:col-4">
-                        <p:outputLabel for="proceso" value="#{msg['gestionPadron.proceso']}"/>
-                        <p:selectOneMenu id="proceso" value="#{gestionPadronController.filtro.procesoId}" styleClass="w-full"
-                                         filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.procesos}">
-                            <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
-                            <f:selectItems value="#{gestionPadronController.procesos}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarProceso}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-4">
-                        <p:outputLabel for="provincia" value="#{msg['gestionPadron.provincia']}"/>
-                        <p:selectOneMenu id="provincia" value="#{gestionPadronController.filtro.provinciaId}" styleClass="w-full"
-                                         filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.provincias}">
-                            <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
-                            <f:selectItems value="#{gestionPadronController.provincias}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarProvincia}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-4">
                         <p:outputLabel for="canton" value="#{msg['gestionPadron.canton']}"/>
                         <p:selectOneMenu id="canton" value="#{gestionPadronController.filtro.cantonId}" styleClass="w-full"
                                          filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.cantones}">
                             <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
                             <f:selectItems value="#{gestionPadronController.cantones}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarCanton}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
+                            <p:ajax listener="#{gestionPadronController.cambiarCanton}" process="@this"
+                                    update=":frmPadron:parroquia :frmPadron:recinto :frmPadron:mesa :frmPadron:contexto :frmPadron:pnlIglesias"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-4">
@@ -48,7 +31,8 @@
                                          filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.parroquias}">
                             <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
                             <f:selectItems value="#{gestionPadronController.parroquias}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarParroquia}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
+                            <p:ajax listener="#{gestionPadronController.cambiarParroquia}" process="@this"
+                                    update=":frmPadron:recinto :frmPadron:mesa :frmPadron:contexto :frmPadron:pnlIglesias"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-4">
@@ -57,7 +41,7 @@
                                          filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.recintos}">
                             <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
                             <f:selectItems value="#{gestionPadronController.recintos}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarRecinto}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
+                            <p:ajax listener="#{gestionPadronController.cambiarRecinto}" process="@this" update=":frmPadron:mesa :frmPadron:contexto :frmPadron:pnlIglesias"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-4">
@@ -66,13 +50,18 @@
                                          filter="true" filterMatchMode="contains" disabled="#{empty gestionPadronController.mesas}">
                             <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
                             <f:selectItems value="#{gestionPadronController.mesas}" var="op" itemLabel="#{op.nombre}" itemValue="#{op.id}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarMesa}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta"/>
+                            <p:ajax listener="#{gestionPadronController.cambiarMesa}" process="@this" update=":frmPadron:contexto :frmPadron:pnlIglesias"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
                 <div class="flex flex-wrap align-items-center gap-3">
-                    <p:commandButton value="#{msg['gestionPadron.simple.cargar']}" icon="pi pi-search"
-                                     action="#{gestionPadronController.buscar}" process="@this" update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:consulta :frmGlobal:growlGlobal"/>
+                    <p:commandButton value="#{msg['gestionPadron.borrar.filtros']}" icon="pi pi-filter-slash"
+                                     styleClass="ui-button-outlined" action="#{gestionPadronController.limpiarFiltros}" process="@this"
+                                     update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias"/>
+                    <p:tag value="#{msg['gestionPadron.proceso.activo']}: #{gestionPadronController.procesoActivo.nombre}"
+                           severity="info" rendered="#{not empty gestionPadronController.procesoActivo}"/>
+                    <h:outputText value="#{msg['gestionPadron.error.proceso.sin.activo']}" styleClass="text-orange-600 text-sm"
+                                  rendered="#{empty gestionPadronController.procesoActivo}"/>
                     <span class="text-500 text-sm">#{msg['gestionPadron.simple.filtros.ayuda']}</span>
                 </div>
             </p:outputPanel>
@@ -91,71 +80,18 @@
                 </div>
             </p:outputPanel>
             <p:outputPanel id="pnlIglesias">
-                <p class="text-600">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
-                <div class="grid">
-                    <div class="col-12 xl:col-6">
-                        <div class="surface-card border-1 surface-border border-round p-3 h-full">
-                            <h3 class="mt-0">#{msg['padron.seccion.iglesias.disponibles']}</h3>
-                            <p:dataTable id="iglesiasDisponibles" value="#{gestionPadronController.iglesiasDisponibles}" var="iglesia"
-                                         rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
-                                         emptyMessage="#{msg['padron.empty.iglesias.disponibles']}" styleClass="ui-datatable-sm">
-                                <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
-                                    <h:outputText value="#{iglesia.nombre}"/>
-                                </p:column>
-                                <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:8rem">
-                                    <p:badge value="#{iglesia.total}" severity="info"/>
-                                </p:column>
-                                <p:column style="width:8rem" exportable="false">
-                                    <p:commandButton value="#{msg['gestionPadron.simple.asignar']}" icon="pi pi-plus"
-                                                     styleClass="ui-button-success"
-                                                     action="#{gestionPadronController.asignarIglesia(iglesia.id)}" process="@this"
-                                                     disabled="#{not gestionPadronController.puedeEditar}"
-                                                     update=":frmPadron:iglesiasDisponibles :frmPadron:iglesiasAsignadas :frmPadron:contexto :frmPadron:tblInscritos :frmPadron:tblMesas :frmPadron:resumenMesas :frmGlobal:growlGlobal">
-                                        <p:confirm header="#{msg['gestionPadron.confirmar']}"
-                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.asignar']}"
-                                                   icon="pi pi-exclamation-triangle"/>
-                                    </p:commandButton>
-                                </p:column>
-                            </p:dataTable>
-                        </div>
-                    </div>
-                    <div class="col-12 xl:col-6">
-                        <div class="surface-card border-1 surface-border border-round p-3 h-full">
-                            <h3 class="mt-0">#{msg['padron.seccion.iglesias.asignadas']}</h3>
-                            <p:dataTable id="iglesiasAsignadas" value="#{gestionPadronController.iglesiasAsignadas}" var="iglesia"
-                                         rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
-                                         emptyMessage="#{msg['padron.empty.iglesias.asignadas']}" styleClass="ui-datatable-sm">
-                                <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
-                                    <h:outputText value="#{iglesia.nombre}"/>
-                                </p:column>
-                                <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:8rem">
-                                    <p:badge value="#{iglesia.total}" severity="success"/>
-                                </p:column>
-                                <p:column style="width:8rem" exportable="false">
-                                    <p:commandButton value="#{msg['gestionPadron.simple.retirar']}" icon="pi pi-minus"
-                                                     styleClass="ui-button-outlined ui-button-danger"
-                                                     action="#{gestionPadronController.retirarIglesia(iglesia.id)}" process="@this"
-                                                     disabled="#{not gestionPadronController.puedeEditar}"
-                                                     update=":frmPadron:iglesiasDisponibles :frmPadron:iglesiasAsignadas :frmPadron:contexto :frmPadron:tblInscritos :frmPadron:tblMesas :frmPadron:resumenMesas :frmGlobal:growlGlobal">
-                                        <p:confirm header="#{msg['gestionPadron.confirmar']}"
-                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.retirar']}"
-                                                   icon="pi pi-exclamation-triangle"/>
-                                    </p:commandButton>
-                                </p:column>
-                            </p:dataTable>
-                        </div>
-                    </div>
-                </div>
-            </p:outputPanel>
-            <p:outputPanel id="consulta">
-                <p:panel header="#{msg['gestionPadron.simple.mesas']}" toggleable="true" collapsed="true" styleClass="mt-3">
+                <p:tabView id="tabsPadron" activeIndex="#{gestionPadronController.tabActivo}" styleClass="surface-card shadow-1 border-round">
+                    <p:tab id="tabAsignar" title="#{msg['gestionPadron.tab.asignar']}">
+                        <p:outputPanel id="consulta">
+                            <div class="p-3">
+                                <h3 class="mt-0">#{msg['gestionPadron.simple.mesas']}</h3>
                     <div class="flex flex-wrap align-items-center gap-3 mb-3">
                         <p:outputLabel for="estadoMesa" value="#{msg['gestionPadron.estado']}"/>
                         <p:selectOneMenu id="estadoMesa" value="#{gestionPadronController.filtro.conPadron}">
                             <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
                             <f:selectItem itemLabel="#{msg['gestionPadron.con']}" itemValue="#{true}"/>
                             <f:selectItem itemLabel="#{msg['gestionPadron.sin']}" itemValue="#{false}"/>
-                            <p:ajax listener="#{gestionPadronController.cambiarEstadoMesas}" process="@this" update=":frmPadron:tblMesas"/>
+                            <p:ajax listener="#{gestionPadronController.cambiarEstadoMesas}" process="@this" update=":frmPadron:pnlIglesias"/>
                         </p:selectOneMenu>
                         <p:outputPanel id="resumenMesas" styleClass="flex gap-2">
                         <p:tag value="#{msg['gestionPadron.con']}: #{gestionPadronController.mesasCon}" severity="success"/>
@@ -167,7 +103,7 @@
                                  rowKey="#{mesa.id}" selectionMode="single" selection="#{gestionPadronController.mesaSeleccionada}"
                                  emptyMessage="#{msg['gestionPadron.vacio']}">
                         <p:ajax event="rowSelect" listener="#{gestionPadronController.seleccionarMesa}" process="@this"
-                                update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias :frmPadron:tblInscritos"/>
+                                update=":frmPadron:filtros :frmPadron:contexto :frmPadron:pnlIglesias"/>
                         <p:column headerText="#{msg['gestionPadron.recinto']}">#{mesa.recinto}</p:column>
                         <p:column headerText="#{msg['gestionPadron.mesa']}">#{mesa.nombre}</p:column>
                         <p:column headerText="#{msg['gestionPadron.total']}">#{mesa.total}</p:column>
@@ -175,14 +111,42 @@
                             <p:tag value="#{mesa.total gt 0 ? msg['gestionPadron.con'] : msg['gestionPadron.sin']}" severity="#{mesa.total gt 0 ? 'success' : 'warning'}"/>
                         </p:column>
                     </p:dataTable>
-                </p:panel>
-                <p:panel header="#{msg['gestionPadron.empadronados']}" toggleable="true" collapsed="true" styleClass="mt-3">
+                            </div>
+                        </p:outputPanel>
+                        <div class="p-3 pt-0">
+                            <h3 class="mt-0">#{msg['padron.seccion.iglesias.disponibles']}</h3>
+                            <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
+                            <p:dataTable id="iglesiasDisponibles" value="#{gestionPadronController.iglesiasDisponibles}" var="iglesia"
+                                         rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
+                                         emptyMessage="#{msg['padron.empty.iglesias.disponibles']}" styleClass="ui-datatable-sm">
+                                <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
+                                    <h:outputText value="#{iglesia.nombre}"/>
+                                </p:column>
+                                <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:8rem">
+                                    <p:badge value="#{iglesia.total}" severity="info"/>
+                                </p:column>
+                                <p:column style="width:8rem" exportable="false">
+                                    <p:commandButton value="#{msg['gestionPadron.simple.asignar']}" icon="pi pi-plus"
+                                                     styleClass="ui-button-success" action="#{gestionPadronController.asignarIglesia(iglesia.id)}"
+                                                     process="@this" disabled="#{not gestionPadronController.puedeEditar}"
+                                                     update=":frmPadron:pnlIglesias :frmPadron:contexto :frmGlobal:growlGlobal">
+                                        <p:confirm header="#{msg['gestionPadron.confirmar']}"
+                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.asignar']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </p:tab>
+                    <p:tab id="tabEmpadronados" title="#{msg['gestionPadron.empadronados']}">
+                        <div class="p-3">
+                            <h3 class="mt-0">#{msg['gestionPadron.empadronados']}</h3>
                     <div class="flex gap-2 mb-3">
                         <p:inputText id="texto" value="#{gestionPadronController.filtro.busqueda}" maxlength="120"
                                      placeholder="#{msg['gestionPadron.busqueda']}" ariaLabel="#{msg['gestionPadron.busqueda']}" styleClass="w-full"/>
                         <p:commandButton value="#{msg['gestionPadron.buscar.personas']}" icon="pi pi-search"
                                          action="#{gestionPadronController.buscarPersonas}" process="@this :frmPadron:texto"
-                                         update=":frmPadron:tblInscritos"/>
+                                         update=":frmPadron:pnlIglesias"/>
                     </div>
                     <p:dataTable id="tblInscritos" value="#{gestionPadronController.inscritos}" var="persona" lazy="true"
                                  paginator="true" rows="20" rowsPerPageTemplate="20,50,100" first="#{gestionPadronController.primeraInscrita}"
@@ -192,21 +156,52 @@
                         <p:column headerText="#{msg['gestionPadron.iglesia']}" sortBy="#{persona.iglesia}" field="iglesia">#{persona.iglesia}</p:column>
                         <p:column headerText="#{msg['gestionPadron.mesa']}">#{persona.mesa}</p:column>
                     </p:dataTable>
-                </p:panel>
+                        </div>
+                    </p:tab>
+                    <p:tab id="tabRetirar" title="#{msg['gestionPadron.simple.retirar']}">
+                        <div class="p-3">
+                            <h3 class="mt-0">#{msg['padron.seccion.iglesias.asignadas']}</h3>
+                            <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
+                            <p:dataTable id="iglesiasAsignadas" value="#{gestionPadronController.iglesiasAsignadas}" var="iglesia"
+                                         rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
+                                         emptyMessage="#{msg['padron.empty.iglesias.asignadas']}" styleClass="ui-datatable-sm">
+                                <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
+                                    <h:outputText value="#{iglesia.nombre}"/>
+                                </p:column>
+                                <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:8rem">
+                                    <p:badge value="#{iglesia.total}" severity="success"/>
+                                </p:column>
+                                <p:column style="width:8rem" exportable="false">
+                                    <p:commandButton value="#{msg['gestionPadron.simple.retirar']}" icon="pi pi-minus"
+                                                     styleClass="ui-button-outlined ui-button-danger" action="#{gestionPadronController.retirarIglesia(iglesia.id)}"
+                                                     process="@this" disabled="#{not gestionPadronController.puedeEditar}"
+                                                     update=":frmPadron:pnlIglesias :frmPadron:contexto :frmGlobal:growlGlobal">
+                                        <p:confirm header="#{msg['gestionPadron.confirmar']}"
+                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.retirar']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </p:tab>
+                    <p:tab id="tabReportes" title="#{msg['gestionPadron.tab.reporte']}">
+                        <div class="p-3">
+                            <p class="mt-0">#{msg['gestionPadron.reporte.ayuda']}</p>
+                            <div class="field">
+                                <p:outputLabel for="nombreIglesiaReporte" value="#{msg['gestionPadron.reporte.iglesia']}"/>
+                                <p:inputText id="nombreIglesiaReporte" value="#{gestionPadronController.nombreIglesiaReporte}" maxlength="150" styleClass="block w-full md:w-6"/>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <p:commandButton value="#{msg['gestionPadron.reporte']}" icon="pi pi-file-excel" ajax="false" styleClass="ui-button-success"
+                                                 disabled="#{empty gestionPadronController.procesoActivo}">
+                                    <p:fileDownload value="#{gestionPadronController.generarReporte()}"/>
+                                </p:commandButton>
+                                <p:button value="#{msg['padron.boton.ver.reporte']}" outcome="/reportePadron" icon="pi pi-list" styleClass="ui-button-outlined"/>
+                            </div>
+                        </div>
+                    </p:tab>
+                </p:tabView>
             </p:outputPanel>
-            <p:panel header="#{msg['gestionPadron.tab.reporte']}" toggleable="true" collapsed="true" styleClass="mt-3">
-                <p>#{msg['gestionPadron.reporte.ayuda']}</p>
-                <div class="field">
-                    <p:outputLabel for="nombreIglesiaReporte" value="#{msg['gestionPadron.reporte.iglesia']}"/>
-                    <p:inputText id="nombreIglesiaReporte" value="#{gestionPadronController.nombreIglesiaReporte}" maxlength="150" styleClass="block w-full md:w-6"/>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <p:commandButton value="#{msg['gestionPadron.reporte']}" icon="pi pi-file-excel" ajax="false" styleClass="ui-button-success">
-                        <p:fileDownload value="#{gestionPadronController.generarReporte()}"/>
-                    </p:commandButton>
-                    <p:button value="#{msg['padron.boton.ver.reporte']}" outcome="/reportePadron" icon="pi pi-list" styleClass="ui-button-outlined"/>
-                </div>
-            </p:panel>
         </h:form>
     </ui:define>
 </ui:composition>

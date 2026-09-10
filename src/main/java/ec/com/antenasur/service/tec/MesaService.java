@@ -117,6 +117,11 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         return mapearLista(mesaFacade.listarPorRecinto(recintoId));
     }
 
+    /** Datos planos para la selección y filtrado de mesas en pantallas JSF. */
+    public List<MesaDTO> listarDTOsActivasConUbicacion() {
+        return mapearLista(mesaFacade.listarActivasConUbicacion());
+    }
+
     public List<MesaDTO> listarDTOsPorRecintoYProceso(Integer recintoId, Integer procesoId) {
         return mapearLista(mesaFacade.listarPorRecintoYProceso(recintoId, procesoId));
     }

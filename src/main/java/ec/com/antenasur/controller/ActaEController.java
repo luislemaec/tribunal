@@ -44,6 +44,7 @@ import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.report.ReportTemplateController;
 import ec.com.antenasur.service.tec.CategoriaVotoService;
+import ec.com.antenasur.service.tec.ActaFisicaEscrutinioService;
 import ec.com.antenasur.service.tec.EscrutinioService;
 import ec.com.antenasur.service.tec.ListaService;
 import ec.com.antenasur.service.tec.MesaService;
@@ -58,6 +59,7 @@ import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.primefaces.model.file.UploadedFile;
 
 @Named
 @ViewScoped
@@ -107,6 +109,9 @@ public class ActaEController implements Serializable {
 
     @Inject
     private PadronService padronService;
+
+    @Inject
+    private ActaFisicaEscrutinioService actaFisicaEscrutinioService;
 
     @Getter
     @Setter
@@ -181,6 +186,13 @@ public class ActaEController implements Serializable {
     @Setter
     @Getter
     private List<Documentos> documentosActa;
+
+    @Getter
+    private Documentos actaFisica;
+
+    @Getter
+    @Setter
+    private transient UploadedFile archivoActaFisica;
 
     @Setter
     @Getter
@@ -593,14 +605,6 @@ public class ActaEController implements Serializable {
         }
         try {
             Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
-            escrutinioCabecera = escrutinioService.guardarBorradorConteoDTO(
-                    mesaSeleccionado.getId(), procesoId, listaCamposActaE, totalSufragantesAsignados);
-            ReportTemplateController documentoActaE = inicializaReporte();
-            getListaStringDatos(documentoActaE);
-            String observacion = escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
-                    ? escrutinioCabecera.getObservacionConteo() : "";
-            exportaPDF(documentoActaE, observacion);
-
             MesaDTO mesaCerrada = escrutinioService.guardarActaCompletaDTO(
                     mesaSeleccionado.getId(), listaCamposActaE);
             if (mesaCerrada != null) {
@@ -608,13 +612,41 @@ public class ActaEController implements Serializable {
             }
             escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
                     mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
-            cargarDocumentosActa();
-            JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.cierre.ok");
+            cargaDatosMesaSeleccionada();
+            if (escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
+                    && !escrutinioCabecera.getObservacionConteo().isBlank()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.cierre.con.observacion");
+            } else {
+                JsfUtil.addSuccessMessageFromBundle("actaE.mensaje.cierre.ok");
+            }
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
             log.error("ERROR AL CERRAR MESA", e);
-            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.pdf.error");
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.error");
+        }
+    }
+
+    public void cargarActaFisica() {
+        try {
+            if (!mesaSeleccionadaValida() || !isMesaCerrada() || !puedeGestionarMesa(mesaSeleccionado.getId())) {
+                JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.autorizada");
+                return;
+            }
+            if (archivoActaFisica == null || archivoActaFisica.getContent() == null) {
+                JsfUtil.addWarningMessageFromBundle("actaE.actaFisica.archivo.requerido");
+                return;
+            }
+            actaFisica = actaFisicaEscrutinioService.cargar(mesaSeleccionado.getId(), procesoActivo.getId(),
+                    loginBean.getUsuario().getPersonaId(), loginBean.getUserName(), archivoActaFisica.getFileName(),
+                    archivoActaFisica.getContentType(), archivoActaFisica.getContent());
+            archivoActaFisica = null;
+            JsfUtil.addSuccessMessageFromBundle("actaE.actaFisica.cargada");
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL CARGAR ACTA FISICA", e);
+            JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.error");
         }
     }
 
@@ -946,9 +978,10 @@ public class ActaEController implements Serializable {
     public boolean isPuedeCerrarMesa() {
         return isPuedeEditarConteo()
                 && escrutinioCabecera != null
-                && (EstadoEscrutinio.CONTEO_REGISTRADO.equals(escrutinioCabecera.getEstadoEscrutinio())
+                && (EstadoEscrutinio.EN_CONTEO.equals(escrutinioCabecera.getEstadoEscrutinio())
+                || EstadoEscrutinio.CONTEO_REGISTRADO.equals(escrutinioCabecera.getEstadoEscrutinio())
                 || EstadoEscrutinio.REABIERTO.equals(escrutinioCabecera.getEstadoEscrutinio()))
-                && getTotalVotosRegistrados() == (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0);
+                && listaCamposActaE != null && !listaCamposActaE.isEmpty();
     }
 
     public String getEstadoValidacionCierreTexto() {
@@ -1029,14 +1062,6 @@ public class ActaEController implements Serializable {
                 return false;
             }
         }
-        if (getTotalVotosRegistrados() > (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0)) {
-            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.total.excede");
-            return false;
-        }
-        if (cierreFinal && getDiferenciaConteo() != 0) {
-            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.total.no.cuadra");
-            return false;
-        }
         return true;
     }
 
@@ -1104,6 +1129,7 @@ public class ActaEController implements Serializable {
 
     private void cargarDocumentosActa() {
         documentosActa = new ArrayList<>();
+        actaFisica = null;
         if (!mesaSeleccionadaValida()) {
             return;
         }
@@ -1115,6 +1141,9 @@ public class ActaEController implements Serializable {
                     documentosActa.add(documento);
                 }
             }
+        }
+        if (procesoActivo != null && procesoActivo.getId() != null) {
+            actaFisica = actaFisicaEscrutinioService.obtenerVigente(mesaSeleccionado.getId(), procesoActivo.getId());
         }
     }
 
@@ -1129,6 +1158,7 @@ public class ActaEController implements Serializable {
     private void limpiarActa() {
         listaCamposActaE = new ArrayList<>();
         documentosActa = new ArrayList<>();
+        actaFisica = null;
         mesaSeleccionado = new MesaDTO();
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;

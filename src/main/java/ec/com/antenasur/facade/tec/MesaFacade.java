@@ -10,6 +10,7 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.dto.MesaDocumentosDTO;
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -28,6 +29,49 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
     public MesaFacade() {
         super(Mesa.class, Integer.class);
     }
+
+    /** Una proyeccion agregada evita una consulta de documentos por cada mesa. */
+    @SuppressWarnings("unchecked")
+    public List<MesaDocumentosDTO> listarResumenDocumentos(Integer procesoId, Integer cantonId,
+            Integer parroquiaId, Integer mesaPermitida) {
+        if (procesoId == null) return java.util.Collections.emptyList();
+        StringBuilder sql = new StringBuilder("SELECT m.mesa_id, m.mesa_nombre, r.rec_id, r.rec_nombre, c.gelo_id, c.gelo_name, "
+                + "p.gelo_id, p.gelo_name, m.estado_tarea, "
+                + "MAX(CASE WHEN td.tipdoc_nombre = 'PADRON ELECTORAL DE MESA' THEN d.doc_id END), "
+                + "MAX(CASE WHEN td.tipdoc_nombre = 'ACTA PARCIAL DE ESCRUTINIO' THEN d.doc_id END), "
+                + "MAX(CASE WHEN td.tipdoc_nombre = 'CERTIFICADOS DE VOTACION DE MESA' THEN d.doc_id END), "
+                + "MAX(CASE WHEN td.tipdoc_nombre = 'ACTA FISICA DE ESCRUTINIO' THEN d.doc_id END), "
+                + "COUNT(DISTINCT j.miem_id) "
+                + "FROM tec.mesas m JOIN tec.recintos r ON r.rec_id = m.rec_id "
+                + "JOIN public.tb_geograp p ON p.gelo_id = r.gelo_id "
+                + "JOIN public.tb_geograp c ON c.gelo_id = p.gelo_parent_id "
+                + "LEFT JOIN tec.documentos d ON d.mesa_id = m.mesa_id AND d.proce_id = :proceso AND d.estado = TRUE "
+                + "LEFT JOIN tec.tipo_documentos td ON td.tipdoc_id = d.tipdoc_id "
+                + "LEFT JOIN tec.miembros_jrv j ON j.mesa_id = m.mesa_id AND j.proce_id = :proceso AND j.estado = TRUE "
+                + "WHERE m.estado = TRUE AND r.estado = TRUE");
+        if (cantonId != null) sql.append(" AND c.gelo_id = :canton");
+        if (parroquiaId != null) sql.append(" AND p.gelo_id = :parroquia");
+        if (mesaPermitida != null) sql.append(" AND m.mesa_id = :mesa");
+        sql.append(" GROUP BY m.mesa_id, r.rec_id, r.rec_nombre, c.gelo_id, c.gelo_name, p.gelo_id, p.gelo_name, m.estado_tarea "
+                + "ORDER BY r.rec_nombre, m.mesa_nombre, m.mesa_id");
+        var query = getEntityManager().createNativeQuery(sql.toString());
+        query.setParameter("proceso", procesoId);
+        if (cantonId != null) query.setParameter("canton", cantonId);
+        if (parroquiaId != null) query.setParameter("parroquia", parroquiaId);
+        if (mesaPermitida != null) query.setParameter("mesa", mesaPermitida);
+        List<Object[]> filas = query.getResultList();
+        List<MesaDocumentosDTO> resultado = new java.util.ArrayList<>();
+        for (Object[] fila : filas) {
+            resultado.add(new MesaDocumentosDTO(numero(fila[0]), texto(fila[1]), numero(fila[2]), texto(fila[3]), numero(fila[4]), texto(fila[5]),
+                    numero(fila[6]), texto(fila[7]), texto(fila[8]), numero(fila[9]), numero(fila[10]), numero(fila[11]),
+                    numero(fila[12]), largo(fila[13])));
+        }
+        return resultado;
+    }
+
+    private Integer numero(Object valor) { return valor == null ? null : ((Number) valor).intValue(); }
+    private Long largo(Object valor) { return valor == null ? 0L : ((Number) valor).longValue(); }
+    private String texto(Object valor) { return valor == null ? null : valor.toString(); }
 
     /**
      * Suma {@code totalVotos} de todas las mesas activas en una sola query
@@ -213,6 +257,23 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
         TypedQuery<Mesa> query = getEntityManager().createQuery(hql, Mesa.class);
         query.setParameter("recintoId", recintoId);
         return query.getResultList();
+    }
+
+    /**
+     * Lista las mesas activas con la ubicación necesaria para filtros de UI.
+     * Mesa no pertenece a un proceso: el proceso se conserva en la operación
+     * que se realice sobre la mesa seleccionada.
+     */
+    public List<Mesa> listarActivasConUbicacion() {
+        String hql = HQL
+                + " JOIN FETCH m.recinto r"
+                + " LEFT JOIN FETCH r.ubicacion ru"
+                + " LEFT JOIN FETCH ru.geograp canton"
+                + " LEFT JOIN FETCH canton.geograp provincia"
+                + " LEFT JOIN FETCH m.ubicacion mu"
+                + " WHERE m.estado = TRUE AND r.estado = TRUE"
+                + " ORDER BY r.nombre, m.nombre, m.id";
+        return getEntityManager().createQuery(hql, Mesa.class).getResultList();
     }
 
     /** Carga solo mesas que contienen información o documentos del proceso. */

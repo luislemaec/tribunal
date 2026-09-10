@@ -39,6 +39,7 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
                 + " LEFT JOIN i.ubicacion parroquia LEFT JOIN parroquia.geograp canton"
                 + " LEFT JOIN canton.geograp provincia"
                 + " WHERE p.mesa.id = :mesa AND p.proceso.id = :proceso AND " + ACTIVOS
+                + " AND ip.estado = TRUE AND ip.habilitadoPadron = TRUE AND pr.estado = TRUE AND i.estado = TRUE"
                 + " ORDER BY pr.nombres, pr.apellidos, p.id",
                 CertificadoVotacionDTO.class)
                 .setParameter("mesa", mesaId).setParameter("proceso", procesoId).getResultList();

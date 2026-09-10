@@ -33,6 +33,19 @@ public final class PdfInstitucional {
                 codigo, titulo, fechaGeneracion);
     }
 
+    /** Formato compacto exclusivo del formulario manual de acta parcial. */
+    public static Contexto crearA4ActaParcial(OutputStream salida, String titulo,
+            String procesoElectoral, LocalDateTime fechaGeneracion) throws Exception {
+        LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        // Margen izquierdo de 3 cm para perforación y archivo físico del acta.
+        Document documento = new Document(PageSize.A4, 85f, 30f, 96f, 34f);
+        PdfWriter writer = PdfWriter.getInstance(documento, salida);
+        writer.setPageEvent(HeaderFooterPageEvent.paraActaParcial(titulo, procesoElectoral, fecha));
+        documento.open();
+        aplicarMetadata(documento, titulo);
+        return new Contexto(documento, writer, fecha);
+    }
+
     private static Contexto crear(OutputStream salida, Rectangle pagina, float margenSuperior,
             String codigo, String titulo, LocalDateTime fechaGeneracion) throws Exception {
         LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();

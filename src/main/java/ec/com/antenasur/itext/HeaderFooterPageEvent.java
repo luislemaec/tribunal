@@ -34,6 +34,8 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
     private final String codigoDocumento;
     private final String tituloDocumento;
     private final LocalDateTime fechaGeneracion;
+    private final String procesoElectoral;
+    private final boolean actaParcial;
 
     public HeaderFooterPageEvent() {
         this("", "Documento electoral", LocalDateTime.now());
@@ -41,10 +43,22 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
 
     public HeaderFooterPageEvent(String codigoDocumento, String tituloDocumento,
             LocalDateTime fechaGeneracion) {
+        this(codigoDocumento, tituloDocumento, fechaGeneracion, null, false);
+    }
+
+    private HeaderFooterPageEvent(String codigoDocumento, String tituloDocumento,
+            LocalDateTime fechaGeneracion, String procesoElectoral, boolean actaParcial) {
         this.codigoDocumento = codigoDocumento != null ? codigoDocumento : "";
         this.tituloDocumento = tituloDocumento != null && !tituloDocumento.isBlank()
                 ? tituloDocumento : "Documento electoral";
         this.fechaGeneracion = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        this.procesoElectoral = procesoElectoral != null ? procesoElectoral : "";
+        this.actaParcial = actaParcial;
+    }
+
+    public static HeaderFooterPageEvent paraActaParcial(String tituloDocumento,
+            String procesoElectoral, LocalDateTime fechaGeneracion) {
+        return new HeaderFooterPageEvent("", tituloDocumento, fechaGeneracion, procesoElectoral, true);
     }
 
     public void onStartPage(PdfWriter writer, Document document) {
@@ -64,38 +78,43 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             /*Agrega logo al documentos*/
             String pathLogo = webRoot + "/resources/img/logo_consejo_417x150.png";
             Image logo = Image.getInstance(pathLogo);
-            logo.scaleToFit(128, 46);
+            logo.scaleToFit(actaParcial ? 104 : 128, actaParcial ? 38 : 46);
 
             PdfPTable cabecera = new PdfPTable(2);
             cabecera.setTotalWidth(document.right() - document.left());
-            cabecera.setWidths(new float[]{28, 72});
+            cabecera.setWidths(new float[]{actaParcial ? 20 : 28, actaParcial ? 80 : 72});
             cabecera.setLockedWidth(true);
 
             PdfPCell celdaLogo = new PdfPCell(logo, false);
             celdaLogo.setBorder(Rectangle.NO_BORDER);
             celdaLogo.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            celdaLogo.setPaddingTop(8f);
+            celdaLogo.setPaddingTop(actaParcial ? 4f : 8f);
             cabecera.addCell(celdaLogo);
 
-            Font titulo = FontFactory.getFont("arial", 11, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font titulo = FontFactory.getFont("arial", actaParcial ? 13 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font institucion = FontFactory.getFont("arial", actaParcial ? 10 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
             Font texto = FontFactory.getFont("arial", 8, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
             Phrase datos = new Phrase();
-            datos.add(new Chunk(Constantes.INSTITUCION + "\n", titulo));
+            datos.add(new Chunk(Constantes.INSTITUCION + "\n", actaParcial ? institucion : titulo));
             datos.add(new Chunk(Constantes.SISTEMA + "\n", texto));
-            datos.add(new Chunk(tituloDocumento + "\n", texto));
-            datos.add(new Chunk("Codigo: " + codigoDocumento + " | "
-                    + fechaGeneracion.format(FORMATO_FECHA), texto));
+            datos.add(new Chunk(tituloDocumento + "\n", actaParcial ? titulo : texto));
+            if (actaParcial) {
+                datos.add(new Chunk(procesoElectoral, texto));
+            } else {
+                datos.add(new Chunk("Codigo: " + codigoDocumento + " | "
+                        + fechaGeneracion.format(FORMATO_FECHA), texto));
+            }
             PdfPCell celdaTexto = new PdfPCell(datos);
             celdaTexto.setBorder(Rectangle.NO_BORDER);
-            celdaTexto.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            celdaTexto.setHorizontalAlignment(actaParcial ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
             celdaTexto.setVerticalAlignment(Element.ALIGN_MIDDLE);
             cabecera.addCell(celdaTexto);
 
-            cabecera.writeSelectedRows(0, -1, document.left(), pageSize.getHeight() - 44, writer.getDirectContent());
+            cabecera.writeSelectedRows(0, -1, document.left(), pageSize.getHeight() - (actaParcial ? 38 : 44), writer.getDirectContent());
 
             String ipServidor = JsfUtil.obtieneIpServidor();
             String servidorProduccion = Constantes.getProduccionServer();
-            if (servidorProduccion == null || !servidorProduccion.equals(ipServidor)) {
+            if (!actaParcial && (servidorProduccion == null || !servidorProduccion.equals(ipServidor))) {
                 /*Agrega borrador*/
                 String pathBorrador = webRoot + "/resources/img/BORRRADOR.png";
                 Image borrador = Image.getInstance(pathBorrador);
@@ -126,7 +145,9 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             document.add(bannerFooter);
 
             Font footerFont = FontFactory.getFont("arial", 7, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
-            String textoFooter = "Pagina " + writer.getPageNumber()
+            String textoFooter = actaParcial
+                    ? Constantes.getMensaje("reportesMesa.acta.pie", writer.getPageNumber())
+                    : "Pagina " + writer.getPageNumber()
                     + " | Codigo de validacion: " + codigoDocumento
                     + " | Documento generado electronicamente por el Sistema TEC";
             ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER,
@@ -139,4 +160,5 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             Logger.getLogger(HeaderFooterPageEvent.class.getName()).log(Level.SEVERE, null, e);
         }
     }
+
 }

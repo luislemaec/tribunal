@@ -1,228 +1,679 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="jakarta.faces.html"
-                xmlns:f="jakarta.faces.core"
-                xmlns:ui="jakarta.faces.facelets"
-                xmlns:p="http://primefaces.org/ui"
-                template="/WEB-INF/template.xhtml">
+	xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core"
+	xmlns:ui="jakarta.faces.facelets" xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/template.xhtml">
+	<ui:define name="title">#{msg['reportesMesa.title']}</ui:define>
+	<ui:define name="viewname">
+		<li>#{msg['reportesMesa.menu.reportes']}</li>
+		<li>/</li>
+		<li>#{msg['reportesMesa.title']}</li>
+	</ui:define>
+	<ui:define name="content">
+		<div class="surface-ground p-2 md:p-4">
+			<div
+				class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
+				<div>
+					<span
+						class="inline-flex align-items-center gap-2 text-primary font-semibold text-sm uppercase"><i
+						class="pi pi-file" />#{msg['reportesMesa.eyebrow']}</span>
+					<h1 class="text-900 text-3xl font-bold mt-2 mb-1">#{msg['reportesMesa.title']}</h1>
+					<p class="text-500 m-0">#{msg['reportesMesa.documentos.resumen']}</p>
+				</div>
+				<p:tag
+					value="#{msg['reportesMesa.proceso.activo']}: #{reporteMesaController.procesoActivo.nombre}"
+					severity="info"
+					rendered="#{not empty reporteMesaController.procesoActivo}" />
+			</div>
+			<h:form id="frmReportesMesa">
+				<p:outputPanel id="panelPrincipal">
+					<div class="surface-card border-round-lg shadow-1 p-3 mb-3">
+						<div class="formgrid grid align-items-end">
+							<div class="field col-12 md:col-6 lg:col-3">
+								<p:outputLabel for="canton"
+									value="#{msg['reportesMesa.filtro.canton']}" />
+								<p:selectOneMenu id="canton"
+									value="#{reporteMesaController.cantonDocumentalId}"
+									styleClass="w-full" filter="true" filterMatchMode="contains">
+									<f:selectItem itemLabel="#{msg['gestionPadron.todos']}"
+										itemValue="#{null}" />
+									<f:selectItems
+										value="#{reporteMesaController.cantonesDocumentales}"
+										var="item" itemLabel="#{item.nombre}" itemValue="#{item.id}" />
+									<p:ajax
+										listener="#{reporteMesaController.cambiarCantonDocumental}"
+										process="@this"
+										update=":frmReportesMesa:parroquia :frmReportesMesa:tablaDocumentosMesas" />
+								</p:selectOneMenu>
+							</div>
+							<div class="field col-12 md:col-6 lg:col-3">
+								<p:outputLabel for="parroquia"
+									value="#{msg['reportesMesa.filtro.parroquia']}" />
+								<p:selectOneMenu id="parroquia"
+									value="#{reporteMesaController.parroquiaDocumentalId}"
+									styleClass="w-full" filter="true" filterMatchMode="contains">
+									<f:selectItem itemLabel="#{msg['gestionPadron.todos']}"
+										itemValue="#{null}" />
+									<f:selectItems
+										value="#{reporteMesaController.parroquiasDocumentales}"
+										var="item" itemLabel="#{item.nombre}" itemValue="#{item.id}" />
+									<p:ajax
+										listener="#{reporteMesaController.cambiarParroquiaDocumental}"
+										process="@this" update=":frmReportesMesa:tablaDocumentosMesas" />
+								</p:selectOneMenu>
+							</div>
+							<div class="field col-12 md:col-6 lg:col-2">
+								<p:outputLabel for="estado"
+									value="#{msg['reportesMesa.documento.estado']}" />
+								<p:selectOneMenu id="estado"
+									value="#{reporteMesaController.estadoDocumental}"
+									styleClass="w-full">
+									<f:selectItem itemLabel="#{msg['gestionPadron.todos']}"
+										itemValue="#{null}" />
+									<f:selectItem
+										itemLabel="#{msg['reportesMesa.estado.completo']}"
+										itemValue="COMPLETO" />
+									<f:selectItem
+										itemLabel="#{msg['reportesMesa.estado.avanzado']}"
+										itemValue="AVANZADO" />
+									<f:selectItem itemLabel="#{msg['reportesMesa.estado.parcial']}"
+										itemValue="PARCIAL" />
+									<f:selectItem
+										itemLabel="#{msg['reportesMesa.estado.pendiente']}"
+										itemValue="PENDIENTE" />
+									<p:ajax
+										listener="#{reporteMesaController.cambiarEstadoDocumental}"
+										process="@this" update=":frmReportesMesa:tablaDocumentosMesas" />
+								</p:selectOneMenu>
+							</div>
+							<div class="field col-12 md:col-6 lg:col-3">
+								<p:outputLabel for="busqueda"
+									value="#{msg['reportesMesa.buscar']}" />
+								<div class="flex gap-2">
+									<p:inputText id="busqueda"
+										value="#{reporteMesaController.busquedaDocumental}"
+										styleClass="w-full" maxlength="100"
+										placeholder="#{msg['reportesMesa.buscar.placeholder']}" />
+									<p:commandButton icon="pi pi-search"
+										title="#{msg['reportesMesa.buscar']}"
+										action="#{reporteMesaController.buscarDocumentos}"
+										process="busqueda"
+										update=":frmReportesMesa:tablaDocumentosMesas" />
+								</div>
+							</div>
+							<div class="field col-12 lg:col-1">
+								<p:commandButton icon="pi pi-filter-slash"
+									title="#{msg['reportesMesa.borrar.filtros']}"
+									styleClass="ui-button-outlined w-full"
+									action="#{reporteMesaController.limpiarFiltrosDocumentales}"
+									process="@this" update=":frmReportesMesa:panelPrincipal" />
+							</div>
+						</div>
+					</div>
+					<p:commandButton
+						value="#{msg['reportesMesa.actualizar.disponibilidad']}"
+						icon="pi pi-refresh" styleClass="ui-button-outlined mb-3"
+						action="#{reporteMesaController.actualizarDisponibilidadDocumental}"
+						process="@this"
+						update=":frmReportesMesa:panelPrincipal :frmGlobal:growlGlobal" />
+					<p:dataTable id="tablaDocumentosMesas"
+						value="#{reporteMesaController.resumenesDocumentales}" var="fila"
+						paginator="true" rows="12"
+						first="#{reporteMesaController.primeraFilaDocumental}"
+						rowsPerPageTemplate="12,25,50" reflow="true"
+						styleClass="ui-datatable-sm"
+						emptyMessage="#{msg['reportesMesa.documentos.empty']}">
+						<p:column headerText="#{msg['reportesMesa.filtro.recinto']}"
+							sortBy="#{fila.recinto}">#{fila.recinto}</p:column>
+						<p:column headerText="#{msg['reportesMesa.filtro.mesa']}"
+							sortBy="#{fila.mesa}">#{fila.mesa}</p:column>
+						<p:column headerText="#{msg['reportesMesa.ubicacion']}"
+							sortBy="#{fila.canton}">#{fila.canton} - #{fila.parroquia}</p:column>
+						<p:column headerText="#{msg['reportesMesa.documento.estado']}"
+							style="width:12rem">
+							<p:tag value="#{fila.resumenDocumental}"
+								severity="#{fila.severidadEstadoDocumental}" />
+						</p:column>
+						<p:column headerText="#{msg['reportesMesa.acciones']}"
+							exportable="false" style="width:7rem" styleClass="text-center">
+							<p:commandButton id="accionesMesa" icon="pi pi-ellipsis-v"
+								type="button" title="#{msg['reportesMesa.acciones']}"
+								styleClass="ui-button-rounded ui-button-text" />
+							<p:tieredMenu overlay="true" trigger="accionesMesa" my="left top"
+								at="left bottom" style="width:18rem">
+								<p:submenu
+									label="#{msg['reportesMesa.documento.padron']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['PADRON_MESA'].estado)]}"
+									icon="pi pi-users">
+									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['PADRON_MESA'].puedeGenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA', false)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['PADRON_MESA'].puedeRegenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA', true)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+										<p:confirm
+											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+											message="#{msg['reportesMesa.confirmar.regenerar']}"
+											icon="pi pi-exclamation-triangle" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
+										icon="pi pi-download" ajax="false"
+										rendered="#{fila.estados['PADRON_MESA'].puedeVisualizar}">
+										<p:fileDownload
+											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA')}" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{fila.estados['PADRON_MESA'].motivoBloqueo}"
+										title="#{fila.estados['PADRON_MESA'].motivoBloqueo}"
+										icon="pi pi-info-circle" disabled="true"
+										rendered="#{not empty fila.estados['PADRON_MESA'].motivoBloqueo}" />
+								</p:submenu>
+								<p:submenu
+									label="#{msg['reportesMesa.documento.acta']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_PARCIAL'].estado)]}"
+									icon="pi pi-file-pdf">
+									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeGenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', false)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeRegenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', true)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+										<p:confirm
+											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+											message="#{msg['reportesMesa.confirmar.regenerar']}"
+											icon="pi pi-exclamation-triangle" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
+										icon="pi pi-download" ajax="false"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeVisualizar}">
+										<p:fileDownload
+											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL')}" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}"
+										title="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}"
+										icon="pi pi-info-circle" disabled="true"
+										rendered="#{not empty fila.estados['ACTA_PARCIAL'].motivoBloqueo}" />
+								</p:submenu>
+								<p:submenu
+									label="#{msg['reportesMesa.documento.certificados']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['CERTIFICADOS_VOTACION'].estado)]}"
+									icon="pi pi-verified">
+									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeGenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', false)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
+										icon="pi pi-file"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeRegenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', true)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+										<p:confirm
+											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+											message="#{msg['reportesMesa.confirmar.regenerar']}"
+											icon="pi pi-exclamation-triangle" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
+										icon="pi pi-download" ajax="false"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeVisualizar}">
+										<p:fileDownload
+											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION')}" />
+									</p:menuitem>
+									<p:menuitem
+										value="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}"
+										title="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}"
+										icon="pi pi-info-circle" disabled="true"
+										rendered="#{not empty fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}" />
+								</p:submenu>
+								<p:submenu
+									label="#{msg['reportesMesa.documento.actaFisica']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].estado)]}"
+									icon="pi pi-image">
+									<p:menuitem value="#{msg['reportesMesa.accion.visualizar']}"
+										icon="pi pi-eye"
+										rendered="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].puedeVisualizar}"
+										action="#{reporteMesaController.visualizarActaFisica(fila.mesaId, fila.recintoId)}"
+										process="@this"
+										update=":frmReportesMesa:dlgActaFisica :frmGlobal:growlGlobal"
+										oncomplete="if (args.documentoDisponible) PF('dlgActaFisica').show()" />
+									<p:menuitem
+										value="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}"
+										title="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}"
+										icon="pi pi-info-circle" disabled="true"
+										rendered="#{not empty fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}" />
+								</p:submenu>
+								<p:submenu
+									label="#{msg['reportesMesa.documento.mjrv']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['DESIGNACION_MJRV'].estado)]}"
+									icon="pi pi-id-card">
+									<p:menuitem value="#{msg['reportesMesa.accion.visualizar']}"
+										icon="pi pi-eye"
+										rendered="#{fila.estados['DESIGNACION_MJRV'].puedeVisualizar}"
+										action="#{reporteMesaController.visualizarJunta(fila.mesaId, fila.recintoId)}"
+										process="@this"
+										update=":frmReportesMesa:dlgJunta :frmGlobal:growlGlobal"
+										oncomplete="if (args.documentoDisponible) PF('dlgJunta').show()" />
+									<p:menuitem
+										value="#{msg['reportesMesa.accion.gestionar.mjrv']}"
+										icon="pi pi-external-link" outcome="/mjrv" />
+									<p:menuitem
+										value="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}"
+										title="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}"
+										icon="pi pi-info-circle" disabled="true"
+										rendered="#{not empty fila.estados['DESIGNACION_MJRV'].motivoBloqueo}" />
+								</p:submenu>
+							</p:tieredMenu>
+						</p:column>
+					</p:dataTable>
+					<div
+						class="surface-card border-round-lg border-1 surface-border p-3 mt-3 text-sm text-600">
+						<strong class="text-900">#{msg['reportesMesa.simbologia.titulo']}</strong>
+						<div class="flex flex-wrap gap-3 mt-2">
+							<span><i class="pi pi-users text-primary" />
+								#{msg['reportesMesa.simbologia.padron']}</span><span><i
+								class="pi pi-file-pdf text-red-500" />
+								#{msg['reportesMesa.simbologia.acta']}</span><span><i
+								class="pi pi-verified text-green-500" />
+								#{msg['reportesMesa.simbologia.certificados']}</span><span><i
+								class="pi pi-image text-orange-500" />
+								#{msg['reportesMesa.simbologia.actaFisica']}</span><span><i
+								class="pi pi-id-card text-blue-500" />
+								#{msg['reportesMesa.simbologia.mjrv']}</span><span><i
+								class="pi pi-check text-green-500" />
+								#{msg['reportesMesa.simbologia.documentos.completos']}</span><span><i
+								class="pi pi-info-circle text-cyan-500" />
+								#{msg['reportesMesa.simbologia.documentos.avanzados']}</span><span><i
+								class="pi pi-exclamation-triangle text-yellow-500" />
+								#{msg['reportesMesa.simbologia.documentos.pendientes']}</span>
+						</div>
+					</div>
+				</p:outputPanel>
+				<p:blockUI block="panelPrincipal" trigger="tablaDocumentosMesas" />
+				<p:dialog id="dlgJunta" widgetVar="dlgJunta" modal="true"
+					responsive="true" width="760"
+					header="#{msg['reportesMesa.documento.mjrv']}">
+					<p:dataTable value="#{reporteMesaController.juntaVisualizada}"
+						var="miembro" reflow="true"
+						emptyMessage="#{msg['reportesMesa.regla.jrv']}">
+						<p:column headerText="#{msg['mjrv.label.dignidad']}">#{miembro.cargoNombre}</p:column>
+						<p:column headerText="#{msg['reportesMesa.filtro.mesa']}">#{miembro.mesa.nombre}</p:column>
+						<p:column headerText="#{msg['mjrv.tabla.persona']}">#{miembro.iglesiaPersona.persona.nombres} #{miembro.iglesiaPersona.persona.apellidos}</p:column>
+					</p:dataTable>
+				</p:dialog>
+				<p:dialog id="dlgActaFisica" widgetVar="dlgActaFisica" modal="true"
+					responsive="true" fitViewport="true" width="1240" minWidth="320"
+					style="max-width:94vw" styleClass="acta-fisica-dialog"
+					header="#{msg['reportesMesa.actaFisica.titulo']}">
+					<p:outputPanel layout="block"
+						rendered="#{not empty reporteMesaController.actaFisicaVisualizada}"
+						styleClass="grid acta-fisica-contenido">
+						<div class="col-12 lg:col-6">
+							<div class="acta-fisica-panel acta-fisica-panel-imagen">
+								<div class="acta-fisica-panel-cabecera">
+									<div>
+										<div class="acta-fisica-panel-titulo">#{msg['reportesMesa.actaFisica.imagen']}</div>
+										<div class="acta-fisica-panel-subtitulo">#{msg['reportesMesa.actaFisica.imagen.ayuda']}</div>
+									</div>
+									<div class="flex gap-1 acta-fisica-herramientas">
+										<p:commandButton type="button" icon="pi pi-search-plus"
+											styleClass="ui-button-text ui-button-rounded"
+											onclick="ajustarImagenActa(0.15, 0)"
+											title="#{msg['reportesMesa.actaFisica.zoom.mas']}" />
+										<p:commandButton type="button" icon="pi pi-search-minus"
+											styleClass="ui-button-text ui-button-rounded"
+											onclick="ajustarImagenActa(-0.15, 0)"
+											title="#{msg['reportesMesa.actaFisica.zoom.menos']}" />
+										<p:commandButton type="button" icon="pi pi-replay"
+											styleClass="ui-button-text ui-button-rounded"
+											onclick="ajustarImagenActa(0, 90)"
+											title="#{msg['reportesMesa.actaFisica.rotar']}" />
+										<p:commandButton type="button" icon="pi pi-undo"
+											styleClass="ui-button-text ui-button-rounded"
+											onclick="restablecerImagenActa()"
+											title="#{msg['reportesMesa.actaFisica.restablecer']}" />
+										<p:commandButton icon="pi pi-download" ajax="false"
+											immediate="true" process="@this"
+											styleClass="ui-button-text ui-button-rounded"
+											title="#{msg['reportesMesa.accion.descargar']}"
+											ariaLabel="#{msg['reportesMesa.accion.descargar']}">
+											<p:fileDownload
+												value="#{reporteMesaController.descargarDocumentoMesa(reporteMesaController.mesaActaFinalId, reporteMesaController.recintoActaFinalId, 'ACTA_FISICA_ESCRUTINIO')}" />
+										</p:commandButton>
+									</div>
+								</div>
+								<div id="visorActaFisica"
+									class="acta-fisica-visor overflow-auto" style="height: 60vh">
+									<div id="lienzoActaFisica"
+										class="flex justify-content-center align-items-center"
+										style="min-width: 100%; min-height: 100%">
+										<p:graphicImage id="imagenActaFisica"
+											value="#{reporteMesaController.imagenActaFisica}"
+											stream="false" cache="false"
+											style="max-width:100%;max-height:58vh;object-fit:contain;transform-origin:center" />
+									</div>
+								</div>
+								<div class="flex align-items-center gap-2 mt-2">
+									<i class="pi pi-search-minus text-500" /> <input
+										id="controlZoomActaFisica" type="range" min="50" max="300"
+										value="100" class="flex-1"
+										oninput="establecerZoom(this.value)"
+										aria-label="#{msg['reportesMesa.actaFisica.control.zoom']}" />
+									<i class="pi pi-search-plus text-500" />
+								</div>
+							</div>
+						</div>
+						<div class="col-12 lg:col-6">
+							<div class="acta-fisica-panel acta-fisica-panel-resultados">
+								<div class="acta-fisica-panel-cabecera">
+									<div>
+										<div class="acta-fisica-panel-titulo">#{msg['reportesMesa.actaFisica.resultados']}</div>
+										<div class="acta-fisica-panel-subtitulo">#{msg['reportesMesa.actaFisica.resultados.ayuda']}</div>
+									</div>
+									<p:tag
+										value="#{reporteMesaController.actaFisicaVisualizada.estadoRevision eq 'VALIDADA' ? msg['reportesMesa.actaFisica.estado.validada'] : msg['reportesMesa.actaFisica.estado.pendiente']}"
+										severity="#{reporteMesaController.actaFisicaVisualizada.estadoRevision eq 'VALIDADA' ? 'success' : 'warning'}" />
+								</div>
+								<p:outputPanel id="pnlResultadosFinales" layout="block">
+									<p:dataTable
+										value="#{reporteMesaController.resultadosActaFinal}"
+										var="resultado" styleClass="ui-datatable-sm acta-fisica-tabla"
+										scrollable="true" scrollHeight="34vh">
+										<p:column
+											headerText="#{msg['reportesMesa.actaFisica.categoria']}">
+										#{resultado.categoriaNombre}
+									</p:column>
+										<p:column headerText="#{msg['reportesMesa.actaFisica.votos']}"
+											style="width:10rem">
+											<p:inputNumber value="#{resultado.totalVotos}" minValue="0"
+												decimalPlaces="0"
+												disabled="#{not reporteMesaController.puedeValidarActaFinal or reporteMesaController.actaFisicaVisualizada.estadoRevision eq 'VALIDADA'}">
+												<p:ajax event="valueChange" process="@this"
+													listener="#{reporteMesaController.cambiarResultadosActaFinal}"
+													update=":frmReportesMesa:pnlResultadosFinales :frmReportesMesa:guardarFinal" />
+											</p:inputNumber>
+										</p:column>
+									</p:dataTable>
+									<div class="formgrid grid mt-3">
+										<div class="field col-12 md:col-6">
+											<p:outputLabel for="validosDeclarados"
+												value="#{msg['reportesMesa.revision.validos']}" />
+											<p:inputNumber id="validosDeclarados"
+												value="#{reporteMesaController.revisionActaFinal.validosDeclarados}"
+												minValue="0" maxValue="2147483647" decimalPlaces="0"
+												emptyValue="empty"
+												disabled="#{not reporteMesaController.puedeValidarActaFinal}">
+												<p:ajax process="@this"
+													listener="#{reporteMesaController.cambiarResultadosActaFinal}"
+													update=":frmReportesMesa:pnlResultadosFinales :frmReportesMesa:guardarFinal" />
+											</p:inputNumber>
+										</div>
+										<div class="field col-12 md:col-6">
+											<p:outputLabel for="totalDeclarado"
+												value="#{msg['reportesMesa.revision.total']}" />
+											<p:inputNumber id="totalDeclarado"
+												value="#{reporteMesaController.revisionActaFinal.totalDeclarado}"
+												minValue="0" maxValue="2147483647" decimalPlaces="0"
+												emptyValue="empty"
+												disabled="#{not reporteMesaController.puedeValidarActaFinal}">
+												<p:ajax process="@this"
+													listener="#{reporteMesaController.cambiarResultadosActaFinal}"
+													update=":frmReportesMesa:pnlResultadosFinales :frmReportesMesa:guardarFinal" />
+											</p:inputNumber>
+										</div>
+									</div>
+									<p>#{msg['reportesMesa.revision.diferencia.validos']}:
+										#{reporteMesaController.revisionActaFinal.diferenciaValidos}</p>
+									<p>#{msg['reportesMesa.revision.diferencia.total']}:
+										#{reporteMesaController.revisionActaFinal.diferenciaTotal}</p>
+									<p:selectBooleanCheckbox id="revisionConfirmada"
+										value="#{reporteMesaController.revisionActaFinal.revisada}"
+										itemLabel="#{msg['reportesMesa.revision.confirmada']}"
+										disabled="#{not reporteMesaController.puedeValidarActaFinal}">
+										<p:ajax process="@this" update=":frmReportesMesa:guardarFinal" />
+									</p:selectBooleanCheckbox>
+									<h:outputText value="#{reporteMesaController.motivoActaFinal}"
+										rendered="#{not empty reporteMesaController.motivoActaFinal}"
+										styleClass="block mt-2 text-orange-700" />
+									<div class="grid acta-fisica-totales text-sm">
+										<div class="col-6">#{msg['reportesMesa.actaFisica.validos']}</div>
+										<div class="col-6 text-right font-bold">#{reporteMesaController.subtotalValidosActaFinal}</div>
+										<div class="col-6">#{msg['reportesMesa.actaFisica.nulos']}</div>
+										<div class="col-6 text-right font-bold">#{reporteMesaController.votosNulosActaFinal}</div>
+										<div class="col-6">#{msg['reportesMesa.actaFisica.blancos']}</div>
+										<div class="col-6 text-right font-bold">#{reporteMesaController.votosBlancosActaFinal}</div>
+										<div class="col-6 font-bold">#{msg['reportesMesa.actaFisica.total']}</div>
+										<div class="col-6 text-right font-bold">#{reporteMesaController.totalVotosActaFinal}</div>
+									</div>
+									<p:tag
+										value="#{reporteMesaController.resultadosActaFinalCuadrados ? msg['reportesMesa.actaFisica.cuadre.ok'] : msg['reportesMesa.actaFisica.cuadre.error']}"
+										severity="#{reporteMesaController.resultadosActaFinalCuadrados ? 'success' : 'danger'}"
+										styleClass="mt-2" />
+								</p:outputPanel>
+							</div>
+						</div>
+					</p:outputPanel>
+					<p:outputPanel layout="block"
+						rendered="#{empty reporteMesaController.actaFisicaVisualizada}">
+						<div class="flex align-items-center gap-2 text-600">
+							<i class="pi pi-clock text-orange-500" /> <span>#{msg['reportesMesa.actaFisica.pendiente']}</span>
+						</div>
+					</p:outputPanel>
+					<f:facet name="footer">
+						<p:commandButton value="#{msg['reportesMesa.accion.cerrar']}"
+							type="button" icon="pi pi-times"
+							styleClass="ui-button-secondary ui-button-outlined"
+							onclick="PF('dlgActaFisica').hide()" />
+						<p:commandButton id="guardarFinal"
+							value="#{msg['reportesMesa.actaFisica.guardar.final']}"
+							icon="pi pi-check-circle" styleClass="ui-button-success"
+							rendered="#{reporteMesaController.puedeValidarActaFinal and reporteMesaController.actaFisicaVisualizada.estadoRevision ne 'VALIDADA'}"
+							disabled="#{not reporteMesaController.resultadosActaFinalCuadrados or not reporteMesaController.revisionActaFinal.revisada}"
+							actionListener="#{reporteMesaController.guardarActaFinal}"
+							process=":frmReportesMesa:pnlResultadosFinales @this"
+							update=":frmReportesMesa:dlgActaFisica :frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+							<p:confirm
+								header="#{msg['reportesMesa.actaFisica.confirmar.titulo']}"
+								message="#{msg['reportesMesa.actaFisica.confirmar']}"
+								icon="pi pi-exclamation-triangle" />
+						</p:commandButton>
+					</f:facet>
+				</p:dialog>
+				<style type="text/css">
+.acta-fisica-dialog .ui-dialog-content {
+	max-height: calc(100vh - 9rem);
+	overflow-y: auto;
+	padding: 1rem 1.25rem;
+}
 
-    <ui:define name="title">#{msg['reportesMesa.title']}</ui:define>
+.acta-fisica-contenido {
+	margin: 0;
+}
 
-    <ui:define name="viewname">
-        <li>#{msg['reportesMesa.menu.reportes']}</li>
-        <li>/</li>
-        <li><p:link outcome="/reportesMesa">#{msg['reportesMesa.title']}</p:link></li>
-    </ui:define>
+.acta-fisica-panel {
+	height: 100%;
+	border: 1px solid var(- -surface-border);
+	border-radius: 6px;
+	background: var(- -surface-card);
+	padding: 1rem;
+}
 
-    <ui:define name="content">
-        <div class="surface-ground p-2 md:p-4">
-            <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
-                <div>
-                    <span class="inline-flex align-items-center gap-2 text-primary font-semibold text-sm uppercase">
-                        <i class="pi pi-chart-bar"/>#{msg['reportesMesa.eyebrow']}
-                    </span>
-                    <h1 class="text-900 text-3xl font-bold mt-2 mb-1">#{msg['reportesMesa.title']}</h1>
-                    <p class="text-500 m-0">#{msg['reportesMesa.subtitle']}</p>
-                </div>
-            </div>
+.acta-fisica-panel-cabecera {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: .75rem;
+	margin-bottom: .875rem;
+}
 
-            <h:form id="frmReportesMesa">
-                <div class="surface-card border-round-xl shadow-1 p-3 md:p-4 mb-4">
-                    <div class="flex align-items-center gap-2 mb-3">
-                        <i class="pi pi-filter text-primary"/>
-                        <span class="font-semibold text-900">#{msg['reportesMesa.filtros.titulo']}</span>
-                    </div>
-                    <div class="formgrid grid align-items-end">
-                        <div class="field col-12 lg:col-4">
-                            <label for="proceso" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.proceso']}</label>
-                            <p:selectOneMenu id="proceso" value="#{reporteMesaController.procesoId}"
-                                             styleClass="w-full" filter="true" filterMatchMode="contains"
-                                             disabled="#{reporteMesaController.presidenteRestringido}">
-                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.proceso']}" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{reporteMesaController.procesos}" var="proceso"
-                                               itemLabel="#{proceso.nombre}" itemValue="#{proceso.id}"/>
-                                <p:ajax listener="#{reporteMesaController.cargarRecintos}" process="@this"
-                                        update=":frmReportesMesa:recinto :frmReportesMesa:mesa :frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 md:col-6 lg:col-3">
-                            <label for="recinto" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.recinto']}</label>
-                            <p:selectOneMenu id="recinto" value="#{reporteMesaController.recintoId}"
-                                             styleClass="w-full" filter="true" filterMatchMode="contains"
-                                             disabled="#{empty reporteMesaController.recintos or reporteMesaController.presidenteRestringido}">
-                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.recinto']}" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{reporteMesaController.recintos}" var="recinto"
-                                               itemLabel="#{recinto.nombre}" itemValue="#{recinto.id}"/>
-                                <p:ajax listener="#{reporteMesaController.cargarMesas}" process="@this"
-                                        update=":frmReportesMesa:mesa :frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 md:col-6 lg:col-3">
-                            <label for="mesa" class="block font-medium text-700 mb-2">#{msg['reportesMesa.filtro.mesa']}</label>
-                            <p:selectOneMenu id="mesa" value="#{reporteMesaController.mesaId}"
-                                             styleClass="w-full" filter="true" filterMatchMode="contains"
-                                             disabled="#{empty reporteMesaController.mesas or reporteMesaController.presidenteRestringido}">
-                                <f:selectItem itemLabel="#{msg['reportesMesa.seleccione.mesa']}" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{reporteMesaController.mesas}" var="mesa"
-                                               itemLabel="#{mesa.nombre}" itemValue="#{mesa.id}"/>
-                                <p:ajax listener="#{reporteMesaController.consultar}" process="@this"
-                                        update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 lg:col-2">
-                            <p:commandButton value="#{msg['reportesMesa.boton.consultar']}" icon="pi pi-search"
-                                             styleClass="w-full" action="#{reporteMesaController.consultar}"
-                                             process="@this proceso recinto mesa"
-                                             update="panelContenido :frmGlobal:growlGlobal"/>
-                        </div>
-                    </div>
-                </div>
+.acta-fisica-panel-titulo {
+	color: var(- -text-color);
+	font-size: 1rem;
+	font-weight: 700;
+}
 
-                <p:outputPanel id="panelContenido" layout="block">
-                    <p:outputPanel rendered="#{empty reporteMesaController.reporte}">
-                        <div class="surface-card border-round-xl shadow-1 p-6 text-center">
-                            <i class="pi pi-folder-open text-primary" style="font-size:2.5rem"/>
-                            <h3 class="text-900 mt-3 mb-2">#{msg['reportesMesa.empty.title']}</h3>
-                            <p class="text-500 m-0">#{msg['reportesMesa.empty.detail']}</p>
-                        </div>
-                    </p:outputPanel>
+.acta-fisica-panel-subtitulo {
+	color: var(- -text-color-secondary);
+	font-size: .8125rem;
+	line-height: 1.35;
+	margin-top: .2rem;
+}
 
-                    <p:outputPanel rendered="#{not empty reporteMesaController.reporte}">
-                        <div class="grid mb-3">
-                            <div class="col-12 sm:col-6 xl:col-3">
-                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-primary">
-                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.estado']}</span>
-                                    <div class="text-900 font-bold text-xl mt-2">
-                                        #{empty reporteMesaController.reporte.cabecera ? msg['reportesMesa.estado.sin.iniciar'] : reporteMesaController.reporte.cabecera.estadoEscrutinio}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 sm:col-6 xl:col-3">
-                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-green-500">
-                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.padron']}</span>
-                                    <div class="text-900 font-bold text-2xl mt-2">#{reporteMesaController.reporte.totalPadron}</div>
-                                </div>
-                            </div>
-                            <div class="col-12 sm:col-6 xl:col-3">
-                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-orange-500">
-                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.votos']}</span>
-                                    <div class="text-900 font-bold text-2xl mt-2">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosRegistrados}</div>
-                                </div>
-                            </div>
-                            <div class="col-12 sm:col-6 xl:col-3">
-                                <div class="surface-card border-round-xl shadow-1 p-3 h-full border-left-3 border-blue-500">
-                                    <span class="text-500 text-sm">#{msg['reportesMesa.resumen.documentos']}</span>
-                                    <div class="text-900 font-bold text-2xl mt-2"><h:outputText id="totalDocumentos" value="#{reporteMesaController.reporte.documentos.size()}"/></div>
-                                </div>
-                            </div>
-                        </div>
+.acta-fisica-herramientas {
+	flex-shrink: 0;
+}
 
-                        <div class="surface-card border-round-xl shadow-1 overflow-hidden">
-                            <p:tabView id="tabsReporte" dynamic="false">
-                                <p:tab title="#{msg['reportesMesa.tab.resumen']}">
-                                    <div class="grid">
-                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.proceso']}</span><strong class="text-900">#{reporteMesaController.reporte.proceso.nombre}</strong></div>
-                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.recinto']}</span><strong class="text-900">#{reporteMesaController.reporte.recinto.nombre}</strong></div>
-                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.filtro.mesa']}</span><strong class="text-900">#{reporteMesaController.reporte.mesa.nombre}</strong></div>
-                                        <div class="col-12 md:col-6"><span class="block text-500 text-sm">#{msg['reportesMesa.resumen.jrv']}</span><strong class="text-900">#{reporteMesaController.reporte.totalMiembrosJrv}</strong></div>
-                                    </div>
-                                    <p:dataTable value="#{reporteMesaController.reporte.miembrosJrv}" var="miembro"
-                                                 paginator="true" rows="5" reflow="true" styleClass="ui-datatable-sm mt-3"
-                                                 emptyMessage="#{msg['reportesMesa.jrv.empty']}">
-                                        <p:column headerText="#{msg['reportesMesa.jrv.cargo']}">#{miembro.cargoNombre}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.jrv.nombre']}">#{miembro.iglesiaPersona.persona.nombres} #{miembro.iglesiaPersona.persona.apellidos}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.jrv.cedula']}">#{miembro.iglesiaPersona.persona.documento}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.jrv.iglesia']}">#{miembro.iglesiaPersona.iglesia.nombre}</p:column>
-                                    </p:dataTable>
-                                </p:tab>
+.acta-fisica-visor {
+	background: #eef2f7;
+	border: 1px solid var(- -surface-border);
+	border-radius: 4px;
+}
 
-                                <p:tab title="#{msg['reportesMesa.tab.escrutinio']}">
-                                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
-                                        <div>
-                                            <h3 class="text-900 m-0">#{msg['reportesMesa.acta.titulo']}</h3>
-                                            <small class="text-500">#{msg['reportesMesa.acta.descripcion']}</small>
-                                        </div>
-                                        <p:commandButton value="#{msg['reportesMesa.boton.generar.acta']}" icon="pi pi-file-pdf"
-                                                         action="#{reporteMesaController.generarActaParcial}" process="@this"
-                                                         update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"
-                                                         disabled="#{not reporteMesaController.puedeGenerarActaParcial}"
-                                                         styleClass="ui-button-danger"/>
-                                    </div>
-                                    <p:dataTable value="#{reporteMesaController.reporte.escrutinios}" var="item"
-                                                 reflow="true" styleClass="ui-datatable-sm ui-datatable-striped"
-                                                 emptyMessage="#{msg['reportesMesa.escrutinio.empty']}">
-                                        <p:column headerText="#{msg['reportesMesa.escrutinio.categoria']}">#{item.categoriaNombre}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.escrutinio.votos']}" styleClass="text-right">#{item.totalVotos}</p:column>
-                                    </p:dataTable>
-                                    <div class="grid mt-3">
-                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.validos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosValidos}</strong></div></div>
-                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.nulos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosNulos}</strong></div></div>
-                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.blancos']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosBlancos}</strong></div></div>
-                                        <div class="col-6 lg:col-3"><div class="surface-50 border-round p-3"><span class="block text-500 text-sm">#{msg['reportesMesa.total.registrados']}</span><strong class="text-xl">#{empty reporteMesaController.reporte.cabecera ? 0 : reporteMesaController.reporte.cabecera.totalVotosRegistrados}</strong></div></div>
-                                    </div>
-                                </p:tab>
+.acta-fisica-visor img {
+	background: #ffffff;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, .18);
+}
 
-                                <p:tab title="#{msg['reportesMesa.tab.padron']}">
-                                    <p:outputPanel id="panelCertificados" layout="block" styleClass="flex flex-wrap gap-2 mb-3">
-                                        <p:commandButton value="#{msg['reportesMesa.certificados.generar']}" icon="pi pi-file-pdf"
-                                                         action="#{reporteMesaController.generarCertificados}" process="@this"
-                                                         update=":frmReportesMesa:tabsReporte:panelCertificados :frmReportesMesa:tabsReporte:tblDocumentos :frmReportesMesa:totalDocumentos :frmGlobal:growlGlobal"
-                                                         rendered="#{loginBean.roles.contains('SITEC-Administrador') or loginBean.roles.contains('SITEC-Tribunal')}"/>
-                                        <p:commandButton value="#{msg['reportesMesa.certificados.descargar']}" icon="pi pi-download"
-                                                         ajax="false" immediate="true" process="@this"
-                                                         rendered="#{not empty reporteMesaController.certificados}">
-                                            <p:fileDownload value="#{documentoBean.obtenerArchivo(reporteMesaController.certificados)}"
-                                                            contentDisposition="attachment"/>
-                                        </p:commandButton>
-                                        <small class="block w-full text-500">#{msg['reportesMesa.certificados.impresion']}</small>
-                                    </p:outputPanel>
-                                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
-                                        <div>
-                                            <h3 class="text-900 m-0">#{msg['reportesMesa.padron.titulo']}</h3>
-                                            <small class="text-500">#{msg['reportesMesa.padron.descripcion']}</small>
-                                        </div>
-                                        <p:commandButton value="#{msg['reportesMesa.boton.generar.padron']}" icon="pi pi-file-excel"
-                                                         action="#{reporteMesaController.generarPadron}" process="@this"
-                                                         update=":frmReportesMesa:panelContenido :frmGlobal:growlGlobal"
-                                                         disabled="#{not reporteMesaController.puedeGenerarPadron}"
-                                                         styleClass="ui-button-success"/>
-                                    </div>
-                                    <p:dataTable value="#{reporteMesaController.reporte.padron}" var="padron"
-                                                 paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
-                                                 reflow="true" styleClass="ui-datatable-sm ui-datatable-striped"
-                                                 emptyMessage="#{msg['reportesMesa.padron.empty']}">
-                                        <p:column headerText="#{msg['reportesMesa.padron.cedula']}" filterBy="#{padron.iglesiaPersona.persona.documento}">#{padron.iglesiaPersona.persona.documento}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.padron.nombres']}" filterBy="#{padron.iglesiaPersona.persona.nombres}">#{padron.iglesiaPersona.persona.nombres} #{padron.iglesiaPersona.persona.apellidos}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.padron.iglesia']}" filterBy="#{padron.iglesiaPersona.iglesia.nombre}">#{padron.iglesiaPersona.iglesia.nombre}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.padron.estado']}"><p:tag value="#{padron.sufrago ? msg['reportesMesa.padron.sufrago'] : msg['reportesMesa.padron.pendiente']}" severity="#{padron.sufrago ? 'success' : 'warning'}"/></p:column>
-                                    </p:dataTable>
-                                </p:tab>
+.acta-fisica-totales {
+	margin: .875rem 0 0;
+	padding: .625rem .75rem;
+	border-top: 1px solid var(- -surface-border);
+	background: var(- -surface-ground);
+}
 
-                                <p:tab title="#{msg['reportesMesa.tab.documentos']}">
-                                    <p:dataTable id="tblDocumentos" value="#{reporteMesaController.reporte.documentos}" var="doc"
-                                                 paginator="true" rows="10" reflow="true"
-                                                 styleClass="ui-datatable-sm ui-datatable-striped"
-                                                 emptyMessage="#{msg['reportesMesa.documentos.empty']}">
-                                        <p:column headerText="#{msg['reportesMesa.documento.tipo']}">#{doc.tipoDocumentoNombre}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.documento.nombre']}"><span class="font-medium">#{doc.nombre}#{doc.extension}</span><small class="block text-500">#{doc.codigo}</small></p:column>
-                                        <p:column headerText="#{msg['reportesMesa.documento.fecha']}"><h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText></p:column>
-                                        <p:column headerText="#{msg['reportesMesa.documento.responsable']}">#{doc.usuarioCrea}</p:column>
-                                        <p:column headerText="#{msg['reportesMesa.documento.estado']}" styleClass="text-center"><p:tag value="#{doc.disponible ? msg['reportesMesa.documento.disponible'] : msg['reportesMesa.documento.no.disponible']}" severity="#{doc.disponible ? 'success' : 'danger'}"/></p:column>
-                                        <p:column exportable="false" styleClass="text-center" style="width:5rem">
-                                            <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                                             disabled="#{not doc.disponible}" title="#{msg['reportesMesa.boton.descargar']}"
-                                                             styleClass="ui-button-rounded ui-button-text ui-button-info">
-                                                <p:fileDownload value="#{documentoBean.obtenerArchivo(doc)}" contentDisposition="attachment"/>
-                                            </p:commandButton>
-                                        </p:column>
-                                    </p:dataTable>
-                                </p:tab>
-                            </p:tabView>
-                        </div>
-                    </p:outputPanel>
-                </p:outputPanel>
-            </h:form>
-        </div>
-    </ui:define>
+.acta-fisica-totales .col-6 {
+	padding-top: .25rem;
+	padding-bottom: .25rem;
+}
+
+.acta-fisica-totales .col-6:nth-last-child(-n+2) {
+	border-top: 1px solid var(- -surface-border);
+	margin-top: .25rem;
+	padding-top: .55rem;
+}
+
+@media ( max-width : 991px) {
+	.acta-fisica-dialog {
+		width: 94vw !important;
+	}
+	.acta-fisica-visor {
+		height: 38vh !important;
+	}
+	.acta-fisica-visor img {
+		max-height: 36vh !important;
+	}
+}
+
+@media ( max-width : 575px) {
+	.acta-fisica-dialog {
+		width: 96vw !important;
+	}
+	.acta-fisica-dialog .ui-dialog-content {
+		max-height: calc(100vh - 7.25rem);
+		padding: .625rem;
+	}
+	.acta-fisica-panel {
+		padding: .75rem;
+	}
+	.acta-fisica-panel-cabecera {
+		flex-wrap: wrap;
+		align-items: flex-start;
+	}
+	.acta-fisica-herramientas {
+		width: 100%;
+		justify-content: flex-end;
+	}
+	.acta-fisica-visor {
+		height: 32vh !important;
+	}
+	.acta-fisica-visor img {
+		max-height: 30vh !important;
+	}
+}
+</style>
+				<script type="text/javascript">
+					var escalaActaFisica = 1;
+					var rotacionActaFisica = 0;
+					function ajustarImagenActa(escala, rotacion) {
+						escalaActaFisica = Math.max(0.5, Math.min(3, escalaActaFisica + escala));
+						rotacionActaFisica = (rotacionActaFisica + rotacion) % 360;
+						aplicarVistaActaFisica();
+					}
+					function establecerZoom(porcentaje) {
+						escalaActaFisica = Math.max(0.5, Math.min(3, Number(porcentaje) / 100));
+						aplicarVistaActaFisica();
+					}
+					function aplicarVistaActaFisica() {
+						var control = document.getElementById('controlZoomActaFisica');
+						var imagen = document.getElementById('frmReportesMesa:imagenActaFisica');
+						var lienzo = document.getElementById('lienzoActaFisica');
+						if (!imagen || !lienzo) return;
+						if (!imagen.dataset.anchoBase) {
+							imagen.dataset.anchoBase = imagen.clientWidth;
+							imagen.dataset.altoBase = imagen.clientHeight;
+						}
+						var ancho = Number(imagen.dataset.anchoBase) * escalaActaFisica;
+						var alto = Number(imagen.dataset.altoBase) * escalaActaFisica;
+						var rotacionNormalizada = ((rotacionActaFisica % 360) + 360) % 360;
+						var intercambiaDimensiones = rotacionNormalizada === 90 || rotacionNormalizada === 270;
+						imagen.style.maxWidth = 'none';
+						imagen.style.maxHeight = 'none';
+						imagen.style.width = ancho + 'px';
+						imagen.style.height = alto + 'px';
+						imagen.style.position = 'absolute';
+						imagen.style.left = '50%';
+						imagen.style.top = '50%';
+						imagen.style.transform = 'translate(-50%, -50%) rotate(' + rotacionNormalizada + 'deg)';
+						lienzo.style.position = 'relative';
+						lienzo.style.display = 'block';
+						lienzo.style.minWidth = (intercambiaDimensiones ? alto : ancho) + 'px';
+						lienzo.style.minHeight = (intercambiaDimensiones ? ancho : alto) + 'px';
+						lienzo.style.width = (intercambiaDimensiones ? alto : ancho) + 'px';
+						lienzo.style.height = (intercambiaDimensiones ? ancho : alto) + 'px';
+						if (control) control.value = Math.round(escalaActaFisica * 100);
+					}
+					function restablecerImagenActa() {
+						escalaActaFisica = 1;
+						rotacionActaFisica = 0;
+						var imagen = document.getElementById('frmReportesMesa:imagenActaFisica');
+						var control = document.getElementById('controlZoomActaFisica');
+						if (!imagen) return;
+						imagen.style.width = '';
+						imagen.style.height = '';
+						imagen.style.maxWidth = '100%';
+						imagen.style.maxHeight = '58vh';
+						imagen.style.position = '';
+						imagen.style.left = '';
+						imagen.style.top = '';
+						imagen.style.transform = '';
+						var lienzo = document.getElementById('lienzoActaFisica');
+						if (lienzo) {
+							lienzo.style.position = '';
+							lienzo.style.display = '';
+							lienzo.style.minWidth = '100%';
+							lienzo.style.minHeight = '100%';
+							lienzo.style.width = '';
+							lienzo.style.height = '';
+						}
+						delete imagen.dataset.anchoBase;
+						delete imagen.dataset.altoBase;
+						if (control) control.value = 100;
+					}
+				</script>
+			</h:form>
+		</div>
+	</ui:define>
 </ui:composition>

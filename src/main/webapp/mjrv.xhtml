@@ -15,6 +15,8 @@
 
     <ui:define name="content">
 
+        <div class="surface-ground p-2 md:p-4">
+
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
@@ -40,12 +42,16 @@
                 </div>
             </p:outputPanel>
 
-            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+            <p:tabView id="tabsMJRV" dynamic="false" cache="true" styleClass="surface-card shadow-1 border-round-lg">
+                <p:tab id="tabMesas" title="#{msg['mjrv.tab.mesas']}">
+                <div class="p-3">
+                <p:outputPanel id="pnlSeleccion" layout="block">
+            <div class="mb-3">
                 <div class="flex align-items-center gap-2 mb-3">
                     <i class="pi pi-filter text-500"></i>
                     <span class="font-semibold text-700">#{msg['mjrv.seccion.seleccion']}</span>
                 </div>
-                <div class="formgrid grid">
+                <div class="formgrid grid align-items-end">
                     <div class="field col-12 md:col-4">
                         <label for="proceso" class="font-medium text-700 text-sm">#{msg['mjrv.label.proceso']}</label>
                         <p:selectOneMenu id="proceso" value="#{jrvController.procesoSeleccionado.id}"
@@ -55,112 +61,135 @@
                             <f:selectItems value="#{jrvController.procesos}" var="proceso"
                                            itemLabel="#{proceso.nombre}" itemValue="#{proceso.id}"/>
                             <p:ajax event="change" listener="#{jrvController.onProcesoChange}"
-                                    process="@this" update=":frmMJRV:recinto :frmMJRV:mesa :frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados"/>
+                                    process="@this" update=":frmMJRV:tabsMJRV:pnlSeleccion :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="recinto" class="font-medium text-700 text-sm">#{msg['mjrv.label.recinto']}</label>
-                        <p:selectOneMenu id="recinto" value="#{jrvController.recintoSeleccionado.id}"
+                        <label for="cantonMesa" class="font-medium text-700 text-sm">#{msg['mjrv.filtro.canton']}</label>
+                        <p:selectOneMenu id="cantonMesa" value="#{jrvController.cantonMesaId}"
                                          disabled="#{jrvController.restringidoAMesaAsignada}"
                                          styleClass="w-full" filter="true" filterMatchMode="contains">
-                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
-                            <f:selectItems value="#{jrvController.recintos}" var="recinto"
-                                           itemLabel="#{recinto.nombre}" itemValue="#{recinto.id}"/>
-                            <p:ajax event="change" listener="#{jrvController.onRecintoChange}"
-                                    process="@this" update=":frmMJRV:mesa :frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados"/>
+                            <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
+                            <f:selectItems value="#{jrvController.cantonesMesas}" var="canton"
+                                           itemLabel="#{canton.nombre}" itemValue="#{canton.id}"/>
+                            <p:ajax event="change" listener="#{jrvController.cambiarCantonMesa}"
+                                    process="@this" update=":frmMJRV:tabsMJRV:parroquiaMesa :frmMJRV:tabsMJRV:tblMesas"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-4">
-                        <label for="mesa" class="font-medium text-700 text-sm">#{msg['mjrv.label.mesa']}</label>
-                        <p:selectOneMenu id="mesa" value="#{jrvController.mesaSeleccionada.id}"
-                                         disabled="#{jrvController.restringidoAMesaAsignada or empty jrvController.mesas}"
+                        <label for="parroquiaMesa" class="font-medium text-700 text-sm">#{msg['mjrv.filtro.parroquia']}</label>
+                        <p:selectOneMenu id="parroquiaMesa" value="#{jrvController.parroquiaMesaId}"
+                                         disabled="#{jrvController.restringidoAMesaAsignada}"
                                          styleClass="w-full" filter="true" filterMatchMode="contains">
-                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
-                            <f:selectItems value="#{jrvController.mesas}" var="mesa"
-                                           itemLabel="#{mesa.nombre}" itemValue="#{mesa.id}"/>
-                            <p:ajax event="change" listener="#{jrvController.onMesaChange}"
-                                    process="@this" update=":frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados"/>
+                            <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
+                            <f:selectItems value="#{jrvController.parroquiasMesas}" var="parroquia"
+                                           itemLabel="#{parroquia.nombre}" itemValue="#{parroquia.id}"/>
+                            <p:ajax event="change" listener="#{jrvController.cambiarParroquiaMesa}"
+                                    process="@this" update=":frmMJRV:tabsMJRV:tblMesas"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
             </div>
 
-            <p:outputPanel id="pnlResumen" layout="block" styleClass="grid mb-3">
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['mjrv.resumen.mesa']}</div>
-                        <div class="text-900 font-bold text-lg mt-1">
-                            #{jrvController.mesaSeleccionada.id ne null ? jrvController.mesaSeleccionada.nombre : msg['padron.estado.seleccione.mesa']}
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['mjrv.resumen.iglesias']}</div>
-                        <div class="text-900 font-bold text-2xl mt-1">#{jrvController.totalIglesiasAsignadas}</div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['mjrv.resumen.obligatorios']}</div>
-                        <div class="text-900 font-bold text-2xl mt-1">#{jrvController.indicadorDignidadesObligatorias}</div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['mjrv.resumen.estado']}</div>
-                        <p:tag value="#{jrvController.estadoJuntaTexto}"
-                               severity="#{jrvController.estadoJuntaSeverity}"
-                               icon="#{jrvController.estadoJuntaIcon}"
-                               styleClass="mt-1"/>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="surface-card shadow-1 border-round-lg p-3">
-                        <div class="grid">
-                            <div class="col-12 md:col-4">
-                                <span class="block text-500 text-sm">#{msg['mjrv.resumen.recinto']}</span>
-                                <span class="font-semibold text-900">
-                                    #{jrvController.mesaSeleccionada.recinto ne null ? jrvController.mesaSeleccionada.recinto.nombre : msg['padron.placeholder.select']}
-                                </span>
-                            </div>
-                            <div class="col-12 md:col-4">
-                                <span class="block text-500 text-sm">#{msg['mjrv.resumen.disponibles']}</span>
-                                <span class="font-semibold text-900">#{jrvController.totalPersonasDisponibles}</span>
-                            </div>
-                            <div class="col-12 md:col-4">
-                                <span class="block text-500 text-sm">#{msg['mjrv.resumen.designados']}</span>
-                                <span class="font-semibold text-900">#{jrvController.totalMiembrosDesignados}</span>
+            <p:outputPanel id="pnlSeleccionMesas" layout="block">
+                <div class="border-top-1 surface-border pt-3 mb-3">
+                    <div class="formgrid grid align-items-end">
+                        <div class="field col-12 md:col-6 lg:col-5">
+                            <label for="busquedaMesa" class="font-medium text-700 text-sm">#{msg['mjrv.buscar.mesa']}</label>
+                            <div class="flex gap-2">
+                                <p:inputText id="busquedaMesa" value="#{jrvController.busquedaMesa}" styleClass="w-full"
+                                             maxlength="100" placeholder="#{msg['mjrv.buscar.mesa.placeholder']}"/>
+                                <p:commandButton icon="pi pi-search" title="#{msg['mjrv.buscar.mesa']}"
+                                                 action="#{jrvController.buscarMesas}" process=":frmMJRV:tabsMJRV:busquedaMesa"
+                                                 update=":frmMJRV:tabsMJRV:tblMesas"/>
                             </div>
                         </div>
+                        <div class="field col-12 md:col-2">
+                            <p:commandButton icon="pi pi-filter-slash" title="#{msg['mjrv.filtros.limpiar']}"
+                                             styleClass="ui-button-outlined w-full"
+                                             action="#{jrvController.limpiarFiltrosMesas}" process="@this"
+                                             update=":frmMJRV:tabsMJRV:pnlSeleccion"/>
+                        </div>
                     </div>
+                    <p:dataTable id="tblMesas" value="#{jrvController.mesasFiltradas}" var="mesa"
+                                 paginator="true" rows="12" first="#{jrvController.primeraFilaMesa}"
+                                 rowsPerPageTemplate="12,25,50" reflow="true" styleClass="ui-datatable-sm mjrv-mesas-table"
+                                 selectionMode="single" selection="#{jrvController.mesaSeleccionada}" rowKey="#{mesa.id}"
+                                 rowStyleClass="#{mesa.id eq jrvController.mesaSeleccionada.id ? 'mesa-seleccionada' : ''}"
+                                 emptyMessage="#{msg['mjrv.empty.mesas']}">
+                        <p:ajax event="rowSelect" listener="#{jrvController.seleccionarMesaDesdeTabla}"
+                                process="@this"
+                                update=":frmMJRV:tabsMJRV:tblMesas :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
+                        <p:column headerText="#{msg['mjrv.label.recinto']}" sortBy="#{mesa.recinto.nombre}">
+                            #{mesa.recinto.nombre}
+                        </p:column>
+                        <p:column headerText="#{msg['mjrv.label.mesa']}" sortBy="#{mesa.nombre}">
+                            #{mesa.nombre}
+                        </p:column>
+                        <p:column headerText="#{msg['mjrv.tabla.ubicacion']}" sortBy="#{mesa.recinto.cantonNombre}">
+                            #{mesa.recinto.cantonNombre} - #{mesa.recinto.ubicacionNombre}
+                        </p:column>
+                    </p:dataTable>
                 </div>
             </p:outputPanel>
-
-            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                <div class="flex align-items-center justify-content-between gap-2 mb-3">
-                    <div class="font-semibold text-800">#{msg['mjrv.seccion.iglesias']}</div>
-                    <p:tag value="#{jrvController.totalIglesiasAsignadas}" severity="info" icon="pi pi-building"/>
+                </p:outputPanel>
                 </div>
-                <p:dataTable id="tblIglesias" var="iglesia" value="#{jrvController.iglesiasAsignadas}"
-                             paginator="true" rows="4" reflow="true" showGridlines="true"
-                             emptyMessage="#{msg['mjrv.empty.iglesias']}"
-                             styleClass="ui-datatable-striped ui-datatable-sm">
-                    <p:column headerText="#{msg['mjrv.tabla.iglesia']}">
-                        <span class="font-medium text-900">#{iglesia.nombre}</span>
-                        <small class="block text-500">#{iglesia.comunidad}</small>
-                    </p:column>
-                    <p:column headerText="#{msg['mjrv.tabla.ubicacion']}">
-                        <span>#{iglesia.cantonNombre}</span>
-                        <small class="block text-500">#{iglesia.ubicacionNombre}</small>
-                    </p:column>
-                </p:dataTable>
+                </p:tab>
+
+                <p:tab id="tabConformacion" title="#{msg['mjrv.tab.conformacion']}">
+                <div class="p-3">
+            <p:outputPanel id="pnlResumen" layout="block" styleClass="mb-4">
+                <div class="flex flex-wrap align-items-center justify-content-between gap-3 pb-3 border-bottom-1 surface-border">
+                    <div>
+                        <span class="block text-500 text-sm">#{msg['mjrv.seccion.contexto']}</span>
+                        <span class="font-semibold text-900">
+                            #{jrvController.procesoSeleccionado.nombre} ·
+                            #{jrvController.mesaSeleccionada.id ne null ? jrvController.mesaSeleccionada.recinto.nombre.concat(' / ').concat(jrvController.mesaSeleccionada.nombre) : msg['padron.estado.seleccione.mesa']}
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap align-items-center gap-2">
+                        <p:tag value="#{msg['mjrv.resumen.obligatorios']}: #{jrvController.indicadorDignidadesObligatorias}" severity="info"/>
+                        <p:tag value="#{jrvController.estadoJuntaTexto}" severity="#{jrvController.estadoJuntaSeverity}"
+                               icon="#{jrvController.estadoJuntaIcon}"/>
+                    </div>
+                </div>
+                <h:panelGroup layout="block" styleClass="text-orange-700 text-sm mt-3"
+                              rendered="#{jrvController.mesaSeleccionadaValida and not jrvController.juntaCompleta}">
+                    <i class="pi pi-info-circle mr-2"></i><h:outputText value="#{jrvController.motivoJuntaIncompleta}"/>
+                </h:panelGroup>
+                <h:panelGroup layout="block" styleClass="text-600 text-sm mt-3"
+                              rendered="#{jrvController.mesaSeleccionadaValida and jrvController.juntaCompleta}">
+                    <i class="pi pi-check-circle mr-2"></i><h:outputText value="#{msg['mjrv.acta.parcial.conformada']}"/>
+                </h:panelGroup>
+            </p:outputPanel>
+
+            <div class="flex justify-content-end mb-3">
+                <p:commandButton id="btnIglesiasAsignadas" type="button" icon="pi pi-building"
+                                 value="#{msg['mjrv.boton.ver.iglesias']} (#{jrvController.totalIglesiasAsignadas})"
+                                 styleClass="ui-button-outlined ui-button-secondary"/>
+                <p:overlayPanel id="opIglesiasAsignadas" for="btnIglesiasAsignadas" showEvent="click"
+                                dismissable="true" my="right top" at="right bottom" style="width:min(42rem, calc(100vw - 2rem))">
+                    <div class="font-semibold text-800 mb-3">#{msg['mjrv.seccion.iglesias']}</div>
+                    <p:dataTable id="tblIglesias" var="iglesia" value="#{jrvController.iglesiasAsignadas}"
+                                 paginator="true" rows="4" reflow="true"
+                                 emptyMessage="#{msg['mjrv.empty.iglesias']}"
+                                 styleClass="ui-datatable-striped ui-datatable-sm">
+                        <p:column headerText="#{msg['mjrv.tabla.iglesia']}">
+                            <span class="font-medium text-900">#{iglesia.nombre}</span>
+                            <small class="block text-500">#{iglesia.comunidad}</small>
+                        </p:column>
+                        <p:column headerText="#{msg['mjrv.tabla.ubicacion']}">
+                            <span>#{iglesia.cantonNombre}</span>
+                            <small class="block text-500">#{iglesia.ubicacionNombre}</small>
+                        </p:column>
+                    </p:dataTable>
+                </p:overlayPanel>
             </div>
 
-            <p:outputPanel id="pnlDesignacion" layout="block">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                    <div class="flex flex-wrap align-items-end gap-3">
-                        <div class="field mb-0 flex-1 min-w-15rem">
+            <p:outputPanel id="pnlDesignacion" layout="block" styleClass="mb-4">
+                <div class="grid align-items-end">
+                    <div class="col-12"><span class="font-semibold text-800">#{msg['mjrv.seccion.designacion']}</span></div>
+                        <div class="field col-12 lg:col-5 mb-0">
                             <label for="persona" class="font-medium text-700 text-sm">#{msg['mjrv.label.persona']}</label>
                             <p:selectOneMenu id="persona" value="#{jrvController.iglesiaPersonaSeleccionadaId}"
                                              disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada or empty jrvController.personasDisponibles}"
@@ -171,7 +200,7 @@
                                                itemValue="#{padron.iglesiaPersona.id}"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field mb-0 w-full md:w-20rem">
+                        <div class="field col-12 lg:col-3 mb-0">
                             <label for="cargo" class="font-medium text-700 text-sm">#{msg['mjrv.label.dignidad']}</label>
                             <p:selectOneMenu id="cargo" value="#{jrvController.cargoSeleccionadoId}"
                                              disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada or empty jrvController.dignidadesPendientes}"
@@ -181,32 +210,29 @@
                                                itemLabel="#{cargo.nombre}" itemValue="#{cargo.id}"/>
                             </p:selectOneMenu>
                         </div>
-                        <p:commandButton value="#{msg['mjrv.boton.asignar']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success mb-0"
+                        <div class="col-12 lg:col-4 flex flex-wrap align-items-end gap-2">
+                        <p:commandButton value="#{msg['mjrv.boton.asignar']}" icon="pi pi-plus" styleClass="ui-button-success"
                                          disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada}"
                                          actionListener="#{jrvController.designarMiembro}"
-                                         process="pnlDesignacion @this"
-                                         update=":frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados"/>
-                        <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle"
-                                         styleClass="ui-button-primary mb-0"
+                                         process=":frmMJRV:tabsMJRV:pnlDesignacion"
+                                         update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
+                        <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle" styleClass="ui-button-primary"
                                          disabled="#{not jrvController.puedeCompletarJunta}"
                                          actionListener="#{jrvController.completarJunta}"
                                          process="@this"
-                                         update=":frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados">
+                                         update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados">
                             <p:confirm header="#{msg['mjrv.confirmacion.titulo']}"
                                        message="#{msg['mjrv.confirmacion.completar']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
-                    </div>
+                        </div>
                 </div>
             </p:outputPanel>
 
-            <div class="grid">
-                <div class="col-12 xl:col-7">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                    <div>
                         <div class="font-semibold text-800 mb-3">#{msg['mjrv.seccion.disponibles']}</div>
                         <p:dataTable id="tblDisponibles" var="padron" value="#{jrvController.personasDisponibles}"
-                                     paginator="true" rows="8" reflow="true" showGridlines="true"
+                                     paginator="true" rows="8" reflow="true"
                                      emptyMessage="#{msg['mjrv.empty.disponibles']}"
                                      styleClass="ui-datatable-striped ui-datatable-sm">
                             <p:column headerText="#{msg['mjrv.tabla.identificacion']}" style="width:9rem">
@@ -229,38 +255,68 @@
                                                  title="#{msg['mjrv.tooltip.seleccionar']}"
                                                  disabled="#{jrvController.edicionBloqueada}"
                                                  actionListener="#{jrvController.seleccionarPersona(padron)}"
-                                                 process="@this" update=":frmMJRV:pnlDesignacion"/>
+                                                 process="@this" update=":frmMJRV:tabsMJRV:pnlDesignacion"/>
                             </p:column>
                         </p:dataTable>
                     </div>
                 </div>
+                </p:tab>
 
-                <div class="col-12 xl:col-5">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="font-semibold text-800 mb-3">#{msg['mjrv.seccion.designados']}</div>
-                        <p:dataTable id="tblDesignados" var="miembro" value="#{jrvController.listaMJRV}"
-                                     paginator="true" rows="8" reflow="true" showGridlines="true"
+                <p:tab id="tabAsignados" title="#{msg['mjrv.tab.asignados']}">
+                <div class="p-3">
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                        <div class="flex align-items-center gap-2">
+                            <span class="font-semibold text-800">#{msg['mjrv.seccion.designados']}</span>
+                            <p:tag value="#{jrvController.totalMiembrosDesignados}" severity="info"/>
+                        </div>
+                        <div class="flex flex-wrap align-items-center gap-2 w-full md:w-auto">
+                            <span class="p-input-icon-left flex-1 md:flex-none">
+                                <i class="pi pi-search"/>
+                                <p:inputText id="filtroGlobalAsignados" widgetVar="filtroGlobalAsignadosWidget"
+                                             onkeyup="PF('tblDesignadosWidget').filter()"
+                                             placeholder="#{msg['mjrv.buscar.asignados']}" styleClass="w-full md:w-20rem"/>
+                            </span>
+                            <p:commandButton type="button" icon="pi pi-filter-slash"
+                                             title="#{msg['mjrv.filtros.limpiar']}" styleClass="ui-button-outlined"
+                                             onclick="PF('tblDesignadosWidget').clearFilters(); PF('filtroGlobalAsignadosWidget').jq.val(''); return false;"/>
+                        </div>
+                    </div>
+                    <div>
+                        <p:dataTable id="tblDesignados" widgetVar="tblDesignadosWidget" var="miembro" value="#{jrvController.listaMJRV}"
+                                     paginator="true" rows="10" rowsPerPageTemplate="10,25,50" reflow="true"
                                      emptyMessage="#{msg['mjrv.empty.designados']}"
                                      styleClass="ui-datatable-striped ui-datatable-sm">
-                            <p:column headerText="#{msg['mjrv.tabla.dignidad']}" style="width:8rem">
+                            <p:column headerText="#{msg['mjrv.tabla.dignidad']}" style="width:18%"
+                                      filterBy="#{miembro.cargoNombre}" filterMatchMode="exact">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('tblDesignadosWidget').filter()" styleClass="w-full">
+                                        <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{jrvController.cargos}" var="cargo"
+                                                       itemLabel="#{cargo.nombre}" itemValue="#{cargo.nombre}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
                                 <p:tag value="#{miembro.cargoNombre}" severity="info"/>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.persona']}">
-                                <span class="font-medium text-900">#{miembro.iglesiaPersona.persona.nombres}</span>
+                            <p:column headerText="#{msg['mjrv.tabla.persona']}" style="width:32%"
+                                      filterBy="#{miembro.iglesiaPersona.persona.nombres}">
+                                <span class="font-medium text-900">#{miembro.iglesiaPersona.persona.nombres} #{miembro.iglesiaPersona.persona.apellidos}</span>
                                 <small class="block text-500">#{miembro.iglesiaPersona.persona.documento}</small>
-                                <small class="block text-500">#{miembro.iglesiaPersona.iglesia.nombre}</small>
+                            </p:column>
+                            <p:column headerText="#{msg['mjrv.tabla.iglesia']}" style="width:30%"
+                                      filterBy="#{miembro.iglesiaPersona.iglesia.nombre}">
+                                <span class="font-medium text-900">#{miembro.iglesiaPersona.iglesia.nombre}</span>
                                 <small class="block text-500">#{miembro.iglesiaPersona.iglesia.comunidad}</small>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:8rem">
+                            <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:14%">
                                 <p:tag value="#{jrvController.edicionBloqueada ? msg['mjrv.estado.completa'] : msg['mjrv.estado.incompleta']}"
                                        severity="#{jrvController.edicionBloqueada ? 'success' : 'warning'}"/>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:5rem">
+                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:6%">
                                 <p:commandButton icon="pi pi-times" styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                  title="#{msg['mjrv.tooltip.quitar']}"
                                                  disabled="#{jrvController.edicionBloqueada}"
                                                  actionListener="#{jrvController.quitarMiembro(miembro)}"
-                                                 process="@this" update=":frmMJRV:pnlResumen :frmMJRV:pnlDesignacion :frmMJRV:tblIglesias :frmMJRV:tblDisponibles :frmMJRV:tblDesignados">
+                                                 process="@this" update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados">
                                     <p:confirm header="#{msg['mjrv.confirmacion.titulo']}"
                                                message="#{msg['mjrv.confirmacion.quitar']}"
                                                icon="pi pi-exclamation-triangle"/>
@@ -269,9 +325,12 @@
                         </p:dataTable>
                     </div>
                 </div>
-            </div>
+                </p:tab>
+            </p:tabView>
 
         </h:form>
+
+        </div>
 
     </ui:define>
 </ui:composition>

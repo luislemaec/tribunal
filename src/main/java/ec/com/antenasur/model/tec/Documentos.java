@@ -89,6 +89,18 @@ public class Documentos extends EntidadAuditable implements Serializable {
     @Column(name = "doc_codigo")
     private String codigo;
 
+    /** Folio visible para documentos electorales versionados. */
+    @Setter
+    @Getter
+    @Column(name = "doc_folio", length = 64)
+    private String folio;
+
+    /** Version secuencial por mesa, proceso y tipo documental. */
+    @Setter
+    @Getter
+    @Column(name = "doc_version")
+    private Integer version;
+
     @Setter
     @Getter
     @Column(name = "doc_hash_sha256", length = 64)
@@ -98,6 +110,27 @@ public class Documentos extends EntidadAuditable implements Serializable {
     @Getter
     @Column(name = "doc_contexto_hash", length = 64)
     private String contextoHash;
+
+    /** Estado de revisi\u00f3n para documentos que requieren validaci\u00f3n humana. */
+    @Setter
+    @Getter
+    @Column(name = "doc_estado_revision", length = 32)
+    private String estadoRevision;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_fecha_revision")
+    private Date fechaRevision;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_usuario_revision", length = 255)
+    private String usuarioRevision;
+
+    @Setter
+    @Getter
+    @Column(name = "doc_observacion_revision", length = 1000)
+    private String observacionRevision;
 
     /** Acta generada de la cual proviene un documento firmado. */
     @Setter

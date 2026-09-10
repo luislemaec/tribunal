@@ -30,6 +30,8 @@ public class DocumentoDTO implements Serializable {
     private String extension;
     private String mime;
     private String codigo;
+    private String folio;
+    private Integer version;
     private String hashSha256;
     private String contextoHash;
     private Integer documentoOrigenId;
@@ -38,6 +40,10 @@ public class DocumentoDTO implements Serializable {
     private Integer mesaId;
     private Date fechaCrea;
     private String usuarioCrea;
+    private String estadoRevision;
+    private Date fechaRevision;
+    private String usuarioRevision;
+    private String observacionRevision;
     private Boolean disponible;
 
     public static DocumentoDTO fromEntity(Documentos d) {
@@ -52,10 +58,16 @@ public class DocumentoDTO implements Serializable {
         dto.setExtension(d.getExtension());
         dto.setMime(d.getMime());
         dto.setCodigo(d.getCodigo());
+        dto.setFolio(d.getFolio());
+        dto.setVersion(d.getVersion());
         dto.setHashSha256(d.getHashSha256());
         dto.setContextoHash(d.getContextoHash());
         dto.setFechaCrea(d.getFechaCrea());
         dto.setUsuarioCrea(d.getUsuarioCrea());
+        dto.setEstadoRevision(d.getEstadoRevision());
+        dto.setFechaRevision(d.getFechaRevision());
+        dto.setUsuarioRevision(d.getUsuarioRevision());
+        dto.setObservacionRevision(d.getObservacionRevision());
         if (d.getDocumentoOrigen() != null) {
             dto.setDocumentoOrigenId(d.getDocumentoOrigen().getId());
         }

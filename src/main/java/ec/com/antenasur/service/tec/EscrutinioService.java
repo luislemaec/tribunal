@@ -12,6 +12,7 @@ import ec.com.antenasur.dto.EscrutinioDTO;
 import ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO;
 import ec.com.antenasur.dto.ResultadoMesaPublicaDTO;
 import ec.com.antenasur.enums.EstadoEscrutinio;
+import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.tec.CategoriaVotoFacade;
 import ec.com.antenasur.facade.tec.EscrutinioCabeceraFacade;
@@ -44,6 +45,10 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
 
     @Inject
     private CategoriaVotoFacade categoriaVotoFacade;
+
+    @Inject private DisponibilidadDocumentoMesaService disponibilidadDocumental;
+    @Inject private DocumentoService documentoService;
+    @Inject private AccesoDocumentoMesaService accesoDocumental;
 
     @Override
     protected EscrutinioFacade getFacade() {
@@ -112,11 +117,11 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                 || EstadoEscrutinio.ANULADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("El escrutinio ya se encuentra cerrado.");
         }
-        if (!EstadoEscrutinio.CONTEO_REGISTRADO.equals(cabecera.getEstadoEscrutinio())
+        if (!EstadoEscrutinio.EN_CONTEO.equals(cabecera.getEstadoEscrutinio())
+                && !EstadoEscrutinio.CONTEO_REGISTRADO.equals(cabecera.getEstadoEscrutinio())
                 && !EstadoEscrutinio.REABIERTO.equals(cabecera.getEstadoEscrutinio())) {
-            throw new NegocioException("Debe registrar el conteo completo antes de cerrar la mesa.");
+            throw new NegocioException("Debe guardar el conteo antes de cerrar la mesa.");
         }
-        int totalPapeletasUso = 0;
         for (Escrutinio item : actaItems) {
             validarItemEscrutinio(item);
             if (item.getId() != null) {
@@ -124,15 +129,8 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             } else {
                 escrutinioFacade.create(item);
             }
-            totalPapeletasUso += item.getTotalVotos();
         }
         int totalSufragantes = cabecera.getTotalSufragantes() != null ? cabecera.getTotalSufragantes() : 0;
-        if (totalPapeletasUso > totalSufragantes) {
-            throw new NegocioException("El total de votos registrados supera el total de sufragantes de la mesa.");
-        }
-        if (totalPapeletasUso != totalSufragantes) {
-            throw new NegocioException("No se puede cerrar la mesa porque el total de votos no cuadra con los sufragantes asignados.");
-        }
         actualizarTotalesCabecera(cabecera, actaItems, totalSufragantes);
         cabecera.setEstadoEscrutinio(EstadoEscrutinio.CERRADO);
         cabecera.setFechaCierre(new Date());
@@ -367,6 +365,87 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                 escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId));
     }
 
+    /** Confirma los valores revisados contra el acta f\u00edsica, sin modificar la evidencia. */
+    public EscrutinioCabeceraDTO validarResultadosFinalesDTO(Integer documentoId, Integer mesaId, Integer procesoId,
+            ec.com.antenasur.dto.RevisionActaFinalDTO revision) {
+        disponibilidadDocumental.validarFinal(procesoId, mesaId);
+        documentoService.bloquearMesaParaVersion(mesaId);
+        var evidencia = documentoService.obtenerEntidad(documentoId);
+        if (evidencia == null || evidencia.getTipoDocumento() == null
+                || !ActaFisicaEscrutinioService.TIPO_DOCUMENTO.equals(evidencia.getTipoDocumento().getNombre())
+                || !Boolean.TRUE.equals(evidencia.getEstado()) || ActaFisicaEscrutinioService.VALIDADA.equals(evidencia.getEstadoRevision())
+                || !"image/jpeg".equalsIgnoreCase(evidencia.getMime())
+                || !ec.com.antenasur.util.RepositorioDocumentos.estaDisponible(evidencia.getPath())) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.evidencia"));
+        }
+        if (revision == null || !revision.isRevisada() || revision.getResultados() == null || revision.getResultados().isEmpty()) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.revisada"));
+        }
+        var items = revision.getResultados();
+        String usuario = accesoDocumental.usuarioActual();
+        Mesa mesa = mesaFacade.find(mesaId);
+        if (mesa == null || mesa.getRecinto() == null)
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.error.seleccion"));
+        documentoService.validarContextoMesa(evidencia, mesaId, procesoId, mesa.getRecinto().getId());
+        var vigente = documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, evidencia.getTipoDocumento().getId());
+        if (vigente == null || !vigente.getId().equals(documentoId))
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.evidencia"));
+        EscrutinioCabecera cabecera = escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId);
+        if (mesa == null || cabecera == null || !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.actaFisica.cierre"));
+        }
+        List<Escrutinio> persistidos = escrutinioFacade.listarPorMesaProceso(mesaId, procesoId);
+        java.util.Map<Integer, Escrutinio> porId = new java.util.HashMap<>();
+        persistidos.forEach(e -> porId.put(e.getId(), e));
+        java.util.Set<Integer> recibidos = new java.util.HashSet<>();
+        java.util.Set<Integer> categorias = new java.util.HashSet<>();
+        var comprobacion = new ec.com.antenasur.dto.RevisionActaFinalDTO();
+        comprobacion.setValidosDeclarados(revision.getValidosDeclarados());
+        comprobacion.setTotalDeclarado(revision.getTotalDeclarado());
+        for (EscrutinioDTO dto : items) {
+            Escrutinio item = dto == null ? null : porId.get(dto.getId());
+            if (item == null || item.getCategoria() == null || !recibidos.add(item.getId())
+                    || !categorias.add(item.getCategoria().getId()) || !item.getCategoria().getId().equals(dto.getCategoriaId())
+                    || (dto.getProcesoId() != null && !procesoId.equals(dto.getProcesoId()))
+                    || (dto.getMesa() != null && !mesaId.equals(dto.getMesa().getId()))) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.resultados"));
+            }
+            EscrutinioDTO seguro = new EscrutinioDTO();
+            seguro.setCategoriaId(item.getCategoria().getId());
+            seguro.setCategoriaNombre(item.getCategoria().getNombre());
+            seguro.setCategoriaTipo(item.getCategoria().getTipo());
+            seguro.setTotalVotos(dto.getTotalVotos());
+            comprobacion.getResultados().add(seguro);
+        }
+        var esperadas = categoriaVotoFacade.getCategoriasOrdenados(procesoId).stream().map(CategoriaVoto::getId).toList();
+        if (recibidos.size() != persistidos.size() || !categorias.containsAll(esperadas))
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.resultados"));
+        if (!comprobacion.isCuadrada())
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.cuadre"));
+        // Todas las validaciones preceden a la primera mutacion de entidades administradas.
+        for (EscrutinioDTO dto : items) {
+            var item = porId.get(dto.getId());
+            item.setTotalVotos(dto.getTotalVotos());
+            item.setUsuarioActualiza(usuario);
+        }
+        cabecera.setTotalVotosValidos(Math.toIntExact(comprobacion.getValidos()));
+        cabecera.setTotalVotosBlancos(Math.toIntExact(comprobacion.getBlancos()));
+        cabecera.setTotalVotosNulos(Math.toIntExact(comprobacion.getNulos()));
+        cabecera.setTotalVotosRegistrados(Math.toIntExact(comprobacion.getTotal()));
+        cabecera.setUsuarioActualiza(usuario);
+        escrutinioCabeceraFacade.edit(cabecera);
+        mesa.setEstadoTarea(EstadoTarea.COMPLETADO);
+        mesa.setUsuarioActualiza(usuario);
+        mesaFacade.edit(mesa);
+        evidencia.setEstadoRevision(ActaFisicaEscrutinioService.VALIDADA);
+        evidencia.setObservacionRevision(null);
+        evidencia.setUsuarioRevision(usuario);
+        evidencia.setFechaRevision(new Date());
+        evidencia.setUsuarioActualiza(usuario);
+        documentoService.actualizar(evidencia);
+        return EscrutinioCabeceraDTO.fromEntity(cabecera);
+    }
+
     public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
         List<ResultadoCategoriaPublicaDTO> resultados = escrutinioFacade.obtenerResultadosPublicosPorCategoria(procesoId);
         resultados.removeIf(resultado -> !esCategoriaLista(resultado));
@@ -477,9 +556,12 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         int nulos = 0;
         for (Escrutinio item : items) {
             int votos = item.getTotalVotos() != null ? item.getTotalVotos() : 0;
-            total += votos;
             String categoria = item.getCategoria() != null && item.getCategoria().getNombre() != null
                     ? item.getCategoria().getNombre().trim().toUpperCase() : "";
+            if (categoria.contains("PAPELETA") || categoria.contains("PAPELTA")) {
+                continue;
+            }
+            total += votos;
             if (categoria.contains("BLANCO")) {
                 blancos += votos;
             } else if (categoria.contains("NULO")) {

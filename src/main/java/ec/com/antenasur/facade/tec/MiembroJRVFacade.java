@@ -79,6 +79,16 @@ public class MiembroJRVFacade extends AbstractFacade<MiembroJRV, Integer> {
         }
     }
 
+    /** Conformacion registrada, con el mismo alcance que listarPorMesaProceso. No requiere documentos. */
+    public List<Object[]> consultarConformacion(Integer procesoId, List<Integer> mesas) {
+        if (procesoId == null || mesas == null || mesas.isEmpty()) return List.of();
+        return getEntityManager().createQuery("SELECT j.mesa.id, c.nombre, pr.id"
+                + " FROM MiembroJRV j LEFT JOIN j.cargo c"
+                + " LEFT JOIN j.iglesiaPersona ip LEFT JOIN ip.persona pr"
+                + " WHERE j.estado = TRUE AND j.proceso.id = :proceso AND j.mesa.id IN :mesas", Object[].class)
+                .setParameter("proceso", procesoId).setParameter("mesas", mesas).getResultList();
+    }
+
     public MiembroJRV buscarPorIglesiaPersonaProceso(Integer iglesiaPersonaId, Integer procesoId) {
         if (iglesiaPersonaId == null || procesoId == null) {
             return null;
@@ -200,12 +210,12 @@ public class MiembroJRVFacade extends AbstractFacade<MiembroJRV, Integer> {
                     + " WHERE per.id = :personaId"
                     + " AND pro.id = :procesoId"
                     + " AND jrv.estado = TRUE"
-                    + " AND UPPER(car.nombre) LIKE :cargo"
+                    + " AND UPPER(TRIM(car.nombre)) IN ('PRESIDENTE', 'PRESIDENTE DE MESA')"
+                    + " AND car.padre.nombre = 'CARGO AUTORIDADES MESA' AND car.estado = TRUE"
                     + ORDENADO;
             TypedQuery<MiembroJRV> query = super.getEntityManager().createQuery(sql, MiembroJRV.class);
             query.setParameter("personaId", personaId);
             query.setParameter("procesoId", procesoId);
-            query.setParameter("cargo", "%PRESIDENTE%");
             List<MiembroJRV> resultado = query.getResultList();
             return resultado.isEmpty() ? null : resultado.get(0);
         } catch (Exception e) {

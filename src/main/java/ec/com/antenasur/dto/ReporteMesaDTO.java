@@ -1,6 +1,7 @@
 package ec.com.antenasur.dto;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ public class ReporteMesaDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private ProcesoElectoralDTO proceso;
+    /** Fecha de inicio configurada para la fase SUFRAGIO del proceso. */
+    private Date fechaSufragio;
     private RecintoDTO recinto;
     private MesaDTO mesa;
     private EscrutinioCabeceraDTO cabecera;

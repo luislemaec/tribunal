@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import ec.com.antenasur.dto.EstadoJuntaDTO;
 
 import ec.com.antenasur.dto.MiembroJRVDTO;
 import ec.com.antenasur.exception.NegocioException;
@@ -33,7 +36,7 @@ import ec.com.antenasur.util.Constantes;
 @Stateless
 public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, MiembroJRVFacade> {
 
-    private static final String[] DIGNIDADES_OBLIGATORIAS = {"PRESIDENTE", "SECRETARIO", "TESORERO", "VOCAL"};
+    public static final List<String> DIGNIDADES_OBLIGATORIAS = List.of("PRESIDENTE", "SECRETARIO", "TESORERO", "VOCAL");
 
     @Inject
     private MiembroJRVFacade miembroJRVFacade;
@@ -150,7 +153,7 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
             throw new NegocioException("No se pudo resolver la mesa seleccionada.");
         }
         List<MiembroJRV> miembros = miembroJRVFacade.listarPorMesaProceso(mesaId, procesoId);
-        validarJuntaCompleta(miembros);
+        validarJuntaCompleta(mesaId, procesoId);
 
         MiembroJRV presidente = obtenerMiembroPorDignidad(miembros, "PRESIDENTE");
         if (presidente == null || presidente.getIglesiaPersona() == null
@@ -191,13 +194,12 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         if (mesa == null || mesa.getResponsable() == null || mesa.getResponsable().isBlank()) {
             return false;
         }
-        List<MiembroJRV> miembros = miembroJRVFacade.listarPorMesaProceso(mesaId, procesoId);
-        try {
-            validarJuntaCompleta(miembros);
-            return true;
-        } catch (NegocioException e) {
-            return false;
+        // El bloqueo de una junta completada no se levanta por cambios posteriores en el padron.
+        Set<String> cargos = new HashSet<>();
+        for (MiembroJRV miembro : miembroJRVFacade.listarPorMesaProceso(mesaId, procesoId)) {
+            if (miembro.getCargo() != null) cargos.add(normalizarCargo(miembro.getCargo().getNombre()));
         }
+        return cargos.containsAll(DIGNIDADES_OBLIGATORIAS);
     }
 
     private void validarParametros(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId, Integer cargoId) {
@@ -231,25 +233,46 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         return false;
     }
 
-    private void validarJuntaCompleta(List<MiembroJRV> miembros) {
-        Set<String> cargos = new HashSet<>();
-        if (miembros != null) {
-            for (MiembroJRV miembro : miembros) {
-                if (miembro != null && miembro.getCargo() != null && miembro.getCargo().getNombre() != null) {
-                    cargos.add(normalizar(miembro.getCargo().getNombre()));
-                }
-            }
+    private void validarJuntaCompleta(Integer mesa, Integer proceso) {
+        EstadoJuntaDTO estado = consultarEstadoJunta(mesa, proceso);
+        if (!estado.isCompleta()) throw new NegocioException(Constantes.getMensaje("mjrv.validacion.conformacion")
+                + (estado.getCargosFaltantes().isEmpty() ? "" : " " + Constantes.getMensaje(
+                        "reportesMesa.regla.cargos", String.join(", ", estado.getCargosFaltantes()))));
+    }
+
+    public EstadoJuntaDTO consultarEstadoJunta(Integer mesa, Integer proceso) {
+        if (mesa == null || proceso == null) return evaluarConformacion(List.of());
+        return consultarEstadosJuntas(proceso, List.of(mesa)).get(mesa);
+    }
+
+    public Map<Integer, EstadoJuntaDTO> consultarEstadosJuntas(Integer proceso, List<Integer> mesas) {
+        Map<Integer, List<Object[]>> porMesa = new HashMap<>();
+        mesas.forEach(mesa -> porMesa.put(mesa, new ArrayList<>()));
+        for (Object[] fila : miembroJRVFacade.consultarConformacion(proceso, mesas)) {
+            porMesa.get((Integer) fila[0]).add(fila);
         }
-        List<String> faltantes = new ArrayList<>();
-        for (String obligatoria : DIGNIDADES_OBLIGATORIAS) {
-            if (!contieneCargo(cargos, obligatoria)) {
-                faltantes.add(obligatoria);
-            }
+        Map<Integer, EstadoJuntaDTO> estados = new HashMap<>();
+        porMesa.forEach((mesa, miembros) -> estados.put(mesa, evaluarConformacion(miembros)));
+        return estados;
+    }
+
+    static EstadoJuntaDTO evaluarConformacion(List<Object[]> miembros) {
+        Map<String, Integer> cargos = new HashMap<>();
+        Set<Integer> personas = new HashSet<>();
+        boolean valida = true;
+        for (Object[] miembro : miembros) {
+            String cargo = normalizarCargo((String) miembro[1]);
+            if (miembro[2] == null
+                    || !personas.add((Integer) miembro[2]) || !DIGNIDADES_OBLIGATORIAS.contains(cargo)) valida = false;
+            if (miembro[2] != null) cargos.merge(cargo, 1, Integer::sum);
         }
-        if (!faltantes.isEmpty()) {
-            throw new NegocioException("No se puede completar la junta. Faltan dignidades obligatorias: "
-                    + String.join(", ", faltantes) + ".");
-        }
+        List<String> faltantes = DIGNIDADES_OBLIGATORIAS.stream()
+                .filter(cargo -> cargos.getOrDefault(cargo, 0) != 1).toList();
+        return new EstadoJuntaDTO(valida && faltantes.isEmpty(), DIGNIDADES_OBLIGATORIAS.size() - faltantes.size(), faltantes);
+    }
+
+    public static String normalizarCargo(String nombre) {
+        return nombre == null ? "" : nombre.trim().toUpperCase(java.util.Locale.ROOT).replaceFirst(" DE MESA$", "");
     }
 
     private MiembroJRV obtenerMiembroPorDignidad(List<MiembroJRV> miembros, String dignidad) {
@@ -271,17 +294,8 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         return rol != null ? rol : rolFacade.buscaPorNombre(nombreRol);
     }
 
-    private static boolean contieneCargo(Set<String> cargos, String dignidad) {
-        for (String cargo : cargos) {
-            if (contieneCargo(cargo, dignidad)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private static boolean contieneCargo(String cargo, String dignidad) {
-        return cargo != null && cargo.contains(dignidad);
+        return dignidad.equals(normalizarCargo(cargo));
     }
 
     private static String normalizar(String valor) {

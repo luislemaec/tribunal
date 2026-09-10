@@ -72,13 +72,32 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
         documento.setMesa(mesaFacade.find(mesaId));
         documento.setProceso(procesoElectoralFacade.find(procesoId));
         documento.setRecinto(recintoId != null ? recintoFacade.find(recintoId) : null);
+        validarContextoMesa(documento, mesaId, procesoId, recintoId);
         return documentoFacade.create(documento);
+    }
+
+    /** Integridad del contexto documental, compartida por registro y lectura autorizada. */
+    public void validarContextoMesa(Documentos documento, Integer mesaId, Integer procesoId, Integer recintoId) {
+        if (documento == null || documento.getMesa() == null || documento.getProceso() == null
+                || documento.getRecinto() == null || documento.getMesa().getRecinto() == null
+                || !java.util.Objects.equals(mesaId, documento.getMesa().getId())
+                || !java.util.Objects.equals(procesoId, documento.getProceso().getId())
+                || !java.util.Objects.equals(recintoId, documento.getRecinto().getId())
+                || !java.util.Objects.equals(recintoId, documento.getMesa().getRecinto().getId())) {
+            throw new ec.com.antenasur.exception.NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.error.seleccion"));
+        }
     }
 
     /** El bloqueo incluye el caso sin versiones previas y se mantiene hasta el commit JTA. */
     public Documentos registrarVersionMesa(Documentos documento, Integer mesaId,
             Integer procesoId, Integer recintoId) {
         documentoFacade.bloquearMesaParaVersion(mesaId);
+        documento.setMesa(mesaFacade.find(mesaId));
+        documento.setProceso(procesoElectoralFacade.find(procesoId));
+        documento.setRecinto(recintoId == null ? null : recintoFacade.find(recintoId));
+        validarContextoMesa(documento, mesaId, procesoId, recintoId);
+        if (documento.getVersion() == null) documento.setVersion(
+                documentoFacade.siguienteVersionMesaProcesoTipo(mesaId, procesoId, documento.getTipoDocumento().getId()));
         for (Documentos anterior : documentoFacade.listarVersionesActivas(
                 mesaId, procesoId, documento.getTipoDocumento().getId())) {
             documentoFacade.delete(anterior);
@@ -91,8 +110,32 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
         return documentoFacade.buscarActivoPorEntidadTipoYContexto(entidadId, tipoDocumentoId, contextoHash);
     }
 
+    public Documentos buscarActivoPorMesaProcesoTipo(Integer mesaId, Integer procesoId, Integer tipoId) {
+        return documentoFacade.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipoId);
+    }
+
     public Documentos buscarFirmadoActivoPorOrigen(Integer documentoOrigenId, Integer tipoDocumentoId) {
         return documentoFacade.buscarFirmadoActivoPorOrigen(documentoOrigenId, tipoDocumentoId);
+    }
+
+    public Documentos obtenerEntidad(Integer id) {
+        return id == null ? null : documentoFacade.find(id);
+    }
+
+    public void refrescar(Documentos documento) {
+        documentoFacade.refrescar(documento);
+    }
+
+    public Documentos actualizar(Documentos documento) {
+        return documento == null ? null : documentoFacade.edit(documento);
+    }
+
+    public void bloquearMesaParaVersion(Integer mesaId) {
+        documentoFacade.bloquearMesaParaVersion(mesaId);
+    }
+
+    public int siguienteVersionMesaProcesoTipo(Integer mesaId, Integer procesoId, Integer tipoDocumentoId) {
+        return documentoFacade.siguienteVersionMesaProcesoTipo(mesaId, procesoId, tipoDocumentoId);
     }
 
     private List<DocumentoDTO> mapearLista(List<Documentos> entidades) {

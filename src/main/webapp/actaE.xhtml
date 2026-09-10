@@ -30,7 +30,7 @@
             </div>
         </div>
 
-        <h:form id="frmActaE">
+        <h:form id="frmActaE" enctype="multipart/form-data">
 
             <p:outputPanel rendered="#{actaEController.sinMesaAsignada}" layout="block" styleClass="mb-3">
                 <div class="border-round-lg p-3" style="background:#fff7ed;border-left:4px solid #f97316">
@@ -409,7 +409,7 @@
                         </p:column>
                         <p:column headerText="#{msg['actaE.tabla.votos']}" style="width:14rem">
                             <p:inputNumber value="#{actaE.totalVotos}" label="#{msg['form.actaE.label.votos']}"
-                                           minValue="0" maxValue="#{actaEController.totalSufragantesAsignados}"
+                                           minValue="0" maxValue="999999"
                                            decimalPlaces="0" placeholder="0" required="true"
                                            disabled="#{not actaEController.puedeEditarConteo}">
                                 <p:ajax event="valueChange" process="@this" update=":frmActaE:tabActaE:resumenConteoEstado"/>
@@ -465,12 +465,6 @@
                                        message="#{msg['actaE.confirmacion.cierre']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
-                        <p:commandButton value="#{msg['actaE.boton.generar.acta']}" icon="pi pi-file-pdf"
-                                         styleClass="ui-button-secondary"
-                                         rendered="#{actaEController.puedeGenerarActaPdf}"
-                                         process="@this"
-                                         actionListener="#{actaEController.generarActaMesaCerrada}"
-                                         update=":frmActaE"/>
                     </div>
                 </div>
             </p:outputPanel>
@@ -531,7 +525,7 @@
 
                 </p:tab>
                 <p:tab title="#{msg['actaE.tab.actas']}">
-            <p:outputPanel id="pnlDocumentosActa" layout="block"
+                <p:outputPanel id="pnlDocumentosActa" layout="block"
                            rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mt-3">
                     <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -591,10 +585,65 @@
                             </h:outputText>
                         </p:column>
                     </p:dataTable>
+
+                    <p:outputPanel id="pnlActaFisica" layout="block" rendered="#{actaEController.mesaCerrada}"
+                                   styleClass="mt-3">
+                        <div class="border-1 border-200 border-round-lg p-3">
+                            <div class="flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+                                <div>
+                                    <div class="font-semibold text-800">#{msg['actaE.actaFisica.titulo']}</div>
+                                    <div class="text-500 text-sm">#{msg['actaE.actaFisica.descripcion']}</div>
+                                </div>
+                                <p:tag value="#{empty actaEController.actaFisica ? msg['actaE.actaFisica.pendiente'] : actaEController.actaFisica.estadoRevision}"
+                                       severity="#{empty actaEController.actaFisica ? 'warning' : (actaEController.actaFisica.estadoRevision eq 'VALIDADA' ? 'success' : 'info')}"/>
+                            </div>
+                            <p:outputPanel rendered="#{not empty actaEController.actaFisica}" layout="block" styleClass="mb-3">
+                                <div class="flex align-items-center gap-2 flex-wrap">
+                                    <i class="pi pi-image text-primary text-xl"/>
+                                    <span class="text-700 text-sm">#{actaEController.actaFisica.nombre}</span>
+                                    <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
+                                                     styleClass="ui-button-rounded ui-button-text" title="#{msg['actaE.documentos.descargar']}">
+                                        <f:setPropertyActionListener value="#{actaEController.actaFisica}" target="#{documentoBean.documento}"/>
+                                        <p:fileDownload value="#{documentoBean.file}"/>
+                                    </p:commandButton>
+                                </div>
+                            </p:outputPanel>
+                            <p:outputPanel rendered="#{actaEController.puedeOperarActa and (empty actaEController.actaFisica or actaEController.actaFisica.estadoRevision ne 'VALIDADA')}"
+                                           layout="block">
+                                <div class="flex align-items-end gap-2 flex-wrap">
+                                    <div class="flex-1" style="min-width:16rem">
+                                        <label for="archivoActaFisica" class="block font-medium text-700 text-sm mb-2">#{msg['actaE.actaFisica.archivo']}</label>
+                                        <p:fileUpload id="archivoActaFisica" mode="simple" skinSimple="true"
+                                                      value="#{actaEController.archivoActaFisica}" accept="image/jpeg,.jpg,.jpeg"
+                                                      chooseLabel="#{msg['actaE.actaFisica.seleccionar']}"
+                                                      onchange="previsualizarActaFisica(this)"/>
+                                        <img id="vistaPreviaActaFisica" alt="#{msg['actaE.actaFisica.vistaPrevia']}"
+                                             class="mt-2 border-round border-1 border-200 hidden" style="max-height:12rem;max-width:100%"/>
+                                    </div>
+                                    <p:commandButton value="#{msg['actaE.actaFisica.cargar']}" icon="pi pi-upload"
+                                                     styleClass="ui-button-primary" process="archivoActaFisica @this"
+                                                     actionListener="#{actaEController.cargarActaFisica}"
+                                                     update="pnlActaFisica :frmActaE:pnlResumen"/>
+                                </div>
+                            </p:outputPanel>
+                        </div>
+                    </p:outputPanel>
                 </div>
             </p:outputPanel>
                 </p:tab>
             </p:tabView>
+
+            <script type="text/javascript">
+                function previsualizarActaFisica(input) {
+                    var archivo = input.files &amp;&amp; input.files[0];
+                    var imagen = document.getElementById('vistaPreviaActaFisica');
+                    if (!archivo || !imagen) {
+                        return;
+                    }
+                    imagen.src = URL.createObjectURL(archivo);
+                    imagen.classList.remove('hidden');
+                }
+            </script>
 
         </h:form>
 

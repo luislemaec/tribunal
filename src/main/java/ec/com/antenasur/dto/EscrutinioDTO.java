@@ -27,6 +27,7 @@ public class EscrutinioDTO implements Serializable {
     private String periodoNombre;
     private Integer categoriaId;
     private String categoriaNombre;
+    private String categoriaTipo;
     private Integer totalVotos;
 
     public static EscrutinioDTO fromEntity(Escrutinio e) {
@@ -49,6 +50,7 @@ public class EscrutinioDTO implements Serializable {
         if (e.getCategoria() != null) {
             dto.setCategoriaId(e.getCategoria().getId());
             dto.setCategoriaNombre(e.getCategoria().getNombre());
+            dto.setCategoriaTipo(e.getCategoria().getTipo());
         }
         return dto;
     }

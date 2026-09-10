@@ -138,6 +138,13 @@ public class GestionPadronService {
     }
 
     public byte[] reporte(FiltroPadronDTO filtro) {
+        if (filtro == null || filtro.getProcesoId() == null) {
+            error("proceso.sin.activo");
+        }
+        ProcesoElectoral activo = facade.bloquearProceso(filtro.getProcesoId());
+        if (activo == null || !Boolean.TRUE.equals(activo.getEstado()) || !Boolean.TRUE.equals(activo.getActivo())) {
+            error("proceso.sin.activo");
+        }
         if (facade.contar(filtro, false) == 0) error("reporte.vacio");
         try {
             return ReporteXLSX.generarPadronGeneral(consumir -> {

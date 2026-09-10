@@ -115,7 +115,6 @@ Convencion:
 ```text
 V1__baseline_inicial.sql
 V2__datos_iniciales.sql
-V3__agregar_indice_padron_proceso_mesa.sql
 ```
 
 `V1__baseline_inicial.sql` contiene:
@@ -124,6 +123,7 @@ V3__agregar_indice_padron_proceso_mesa.sql
 - Tablas principales mapeadas por JPA.
 - Tabla `tec.tec_auditoria` y tablas `_aud` para Hibernate Envers.
 - Primary keys, foreign keys, unique constraints e indices funcionales.
+- Versionado documental para actas parciales y total de votos de mesa con valor inicial cero.
 - Vistas `tec.vw_lugar_votacion` y `tec.vw_total_escrutinios`.
 - Secuencia `public.seq_iglesia_codigo_generico`.
 
@@ -141,7 +141,7 @@ Se excluyen de V1:
 - Roles base completos tomados de `tb_rol`, con `estado=TRUE`.
 - Catalogo general completo, insertado por nivel jerarquico.
 - Tipos de documentos operativos completos con IDs explicitos y `setval`.
-- Categorias de voto completas; se normaliza `PAPELETAS RESTANTES`.
+- Categorias de voto completas, incluidas las categorias especiales historicas.
 - Catalogo geografico base tomado de `tb_geograp.xlsx`, con `estado=TRUE`.
 - Personas e iglesias iniciales con IDs explicitos y secuencias sincronizadas.
 - Relaciones iglesia-persona activas con `igpe_habilitado_padron=TRUE`.

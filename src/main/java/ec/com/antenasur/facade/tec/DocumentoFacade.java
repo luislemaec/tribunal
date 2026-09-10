@@ -32,12 +32,39 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         getEntityManager().find(Mesa.class, mesaId, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
     }
 
+    public void refrescar(Documentos documento) {
+        getEntityManager().refresh(documento);
+    }
+
     public List<Documentos> listarVersionesActivas(Integer mesaId, Integer procesoId, Integer tipoId) {
         return getEntityManager().createQuery(HQL
                 + " WHERE d.mesa.id = :mesa AND d.proceso.id = :proceso"
                 + " AND d.tipoDocumento.id = :tipo AND d.estado = TRUE", Documentos.class)
                 .setParameter("mesa", mesaId).setParameter("proceso", procesoId)
                 .setParameter("tipo", tipoId).getResultList();
+    }
+
+    public Documentos buscarActivoPorMesaProcesoTipo(Integer mesaId, Integer procesoId, Integer tipoId) {
+        if (mesaId == null || procesoId == null || tipoId == null) return null;
+        List<Documentos> resultado = getEntityManager().createQuery(HQL
+                + " JOIN FETCH d.tipoDocumento WHERE d.mesa.id = :mesa AND d.proceso.id = :proceso"
+                + " AND d.tipoDocumento.id = :tipo AND d.estado = TRUE ORDER BY d.id DESC", Documentos.class)
+                .setParameter("mesa", mesaId).setParameter("proceso", procesoId).setParameter("tipo", tipoId)
+                .setMaxResults(1).getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
+    }
+
+    /** Debe invocarse tras bloquear la mesa para evitar reutilizar una version. */
+    public int siguienteVersionMesaProcesoTipo(Integer mesaId, Integer procesoId, Integer tipoId) {
+        Integer ultimaVersion = getEntityManager().createQuery(
+                "SELECT MAX(d.version) FROM Documentos d"
+                        + " WHERE d.mesa.id = :mesa AND d.proceso.id = :proceso"
+                        + " AND d.tipoDocumento.id = :tipo", Integer.class)
+                .setParameter("mesa", mesaId)
+                .setParameter("proceso", procesoId)
+                .setParameter("tipo", tipoId)
+                .getSingleResult();
+        return ultimaVersion == null ? 1 : ultimaVersion + 1;
     }
 
     public DocumentoFacade() {

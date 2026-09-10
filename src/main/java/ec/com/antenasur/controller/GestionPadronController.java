@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
@@ -34,14 +35,17 @@ import lombok.extern.slf4j.Slf4j;
 @ViewScoped
 @Slf4j
 public class GestionPadronController implements Serializable {
+    private static final String PROVINCIA_OPERATIVA = "CHIMBORAZO";
+
     @Inject private GestionPadronService service;
     @Inject private ProcesoElectoralService procesoService;
     @Getter private FiltroPadronDTO filtro = new FiltroPadronDTO();
     private FiltroPadronDTO consultaMesas = new FiltroPadronDTO();
     @Getter @Setter private String nombreIglesiaReporte;
     @Getter private List<ec.com.antenasur.dto.IglesiaPadronDTO> iglesiasDisponibles = List.of(), iglesiasAsignadas = List.of();
-    @Getter private List<ProcesoElectoralDTO> procesos;
-    @Getter private List<OpcionPadronDTO> provincias, cantones = List.of(), parroquias = List.of(),
+    @Getter private ProcesoElectoralDTO procesoActivo;
+    private List<OpcionPadronDTO> provincias = List.of();
+    @Getter private List<OpcionPadronDTO> cantones = List.of(), parroquias = List.of(),
             recintos = List.of(), mesas = List.of(), iglesias = List.of();
     @Getter @Setter private List<FilaPadronDTO> asignar = new ArrayList<>(), retirar = new ArrayList<>();
     @Getter @Setter private MesaPadronDTO mesaSeleccionada;
@@ -54,29 +58,82 @@ public class GestionPadronController implements Serializable {
 
     @PostConstruct
     public void init() {
-        procesos = procesoService.listarDTOs();
-        procesos.stream().filter(p -> Boolean.TRUE.equals(p.getActivo())).findFirst().ifPresent(p -> filtro.setProcesoId(p.getId()));
+        procesoActivo = procesoService.getActivoDTO();
+        if (procesoActivo != null) {
+            filtro.setProcesoId(procesoActivo.getId());
+        } else {
+            JsfUtil.addWarningMessageFromBundle("gestionPadron.error.proceso.sin.activo");
+        }
         provincias = service.geografia(null);
+        inicializarGeografiaOperativa();
+        recargarRecintos();
+        actualizarConsulta();
         disponibles = new FilasLazy(true);
         inscritos = new FilasLazy(false);
         mesasLazy = new MesasLazy();
     }
 
-    public void cambiarProceso() { limpiarRecinto(); consultado = false; total = mesasCon = mesasSin = 0; }
+    private void inicializarGeografiaOperativa() {
+        provincias.stream()
+                .filter(provincia -> PROVINCIA_OPERATIVA.equals((provincia.getNombre() == null ? "" : provincia.getNombre())
+                        .trim().toUpperCase(Locale.ROOT)))
+                .findFirst()
+                .ifPresent(provincia -> {
+                    filtro.setProvinciaId(provincia.getId());
+                    cantones = service.geografia(provincia.getId());
+                });
+    }
+
     public void cambiarProvincia() {
         filtro.setCantonId(null); filtro.setParroquiaId(null); parroquias = List.of();
         cantones = filtro.getProvinciaId() == null ? List.of() : service.geografia(filtro.getProvinciaId());
-        cambiarProceso();
+        recargarRecintos();
+        actualizarConsulta();
     }
     public void cambiarCanton() {
         filtro.setParroquiaId(null);
         parroquias = filtro.getCantonId() == null ? List.of() : service.geografia(filtro.getCantonId());
-        cambiarProceso();
+        recargarRecintos();
+        actualizarConsulta();
     }
-    public void cambiarParroquia() { cambiarProceso(); }
+    public void cambiarParroquia() {
+        recargarRecintos();
+        actualizarConsulta();
+    }
 
-    private void limpiarRecinto() {
-        filtro.setRecintoId(null); recintos = List.of(); limpiarMesa();
+    public void limpiarFiltros() {
+        filtro.setCantonId(null);
+        filtro.setParroquiaId(null);
+        filtro.setRecintoId(null);
+        filtro.setMesaId(null);
+        filtro.setIglesiaId(null);
+        filtro.setBusqueda(null);
+        filtro.setIglesiaNombre(null);
+        filtro.setConPadron(null);
+        parroquias = List.of();
+        cantones = filtro.getProvinciaId() == null ? List.of() : service.geografia(filtro.getProvinciaId());
+        limpiarMesa();
+        recargarRecintos();
+        actualizarConsulta();
+    }
+
+    /**
+     * Los filtros territoriales son opcionales: sin ellos se muestran todos los
+     * recintos activos. Si un filtro excluye el recinto seleccionado, se libera
+     * tambien la mesa y el contexto dependiente para no operar con datos obsoletos.
+     */
+    private void recargarRecintos() {
+        recintos = service.recintos(filtro);
+        if (filtro.getRecintoId() != null && recintos.stream().noneMatch(r -> r.getId().equals(filtro.getRecintoId()))) {
+            filtro.setRecintoId(null);
+            limpiarMesa();
+        }
+    }
+    private void actualizarConsulta() {
+        consultado = filtro.getProcesoId() != null;
+        consultaMesas = new FiltroPadronDTO(filtro);
+        primeraMesa = 0;
+        actualizarResumen();
     }
     private void limpiarMesa() {
         iglesiasDisponibles = List.of(); iglesiasAsignadas = List.of();
@@ -89,10 +146,8 @@ public class GestionPadronController implements Serializable {
     }
     public void buscar() {
         limpiarSeleccion();
-        consultaMesas = new FiltroPadronDTO(filtro);
-        recintos = service.recintos(filtro);
-        consultado = filtro.getProcesoId() != null;
-        actualizarResumen();
+        recargarRecintos();
+        actualizarConsulta();
     }
     public void cambiarRecinto() {
         limpiarMesa();
@@ -139,8 +194,8 @@ public class GestionPadronController implements Serializable {
     public void cambiarEstadoMesas() { primeraMesa = 0; consultaMesas.setConPadron(filtro.getConPadron()); }
 
     public boolean isPuedeEditar() {
-        return filtro.getMesaId() != null && filtro.getRecintoId() != null && procesos.stream()
-                .anyMatch(p -> p.getId().equals(filtro.getProcesoId()) && Boolean.TRUE.equals(p.getActivo()));
+        return procesoActivo != null && procesoActivo.getId().equals(filtro.getProcesoId())
+                && filtro.getMesaId() != null && filtro.getRecintoId() != null;
     }
 
     public void asignarSeleccionados() {
@@ -165,7 +220,12 @@ public class GestionPadronController implements Serializable {
     }
     public StreamedContent generarReporte() {
         try {
+            if (procesoActivo == null) {
+                JsfUtil.addWarningMessageFromBundle("gestionPadron.error.proceso.sin.activo");
+                return null;
+            }
             FiltroPadronDTO reporte = new FiltroPadronDTO(filtro);
+            reporte.setProcesoId(procesoActivo.getId());
             reporte.setIglesiaNombre(nombreIglesiaReporte);
             byte[] contenido = service.reporte(reporte);
             return DefaultStreamedContent.builder().name("empadronados_" + java.time.LocalDate.now() + ".xlsx")
