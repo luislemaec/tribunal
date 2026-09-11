@@ -18,6 +18,7 @@ import ec.com.antenasur.service.AbstractService;
 
 @Stateless
 public class DocumentoService extends AbstractService<Documentos, Integer, DocumentoFacade> {
+    @Inject private AlcanceSesionQrService alcanceQr;
 
     @Inject
     private DocumentoFacade documentoFacade;
@@ -36,7 +37,24 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
     }
 
     public List<Documentos> getDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
+        var qr = alcanceQr.contexto();
+        if (qr != null) {
+            alcanceQr.validar(entidadId, qr.procesoId());
+            return new ArrayList<>(documentoFacade.listarPorMesaProceso(entidadId, qr.procesoId()).stream()
+                    .filter(d -> Boolean.TRUE.equals(d.getEstado()) && d.getTipoDocumento().getId().equals(tipoDocId)).toList());
+        }
         return documentoFacade.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
+    }
+
+    /** En QR no se confia en metadatos/rutas que lleguen de un objeto de la vista. */
+    public Documentos autorizarDescarga(Documentos documento) {
+        var qr = alcanceQr.contexto();
+        if (qr == null) return documento;
+        Documentos persistido = documento == null || documento.getId() == null ? null : documentoFacade.find(documento.getId());
+        if (persistido == null || !Boolean.TRUE.equals(persistido.getEstado()))
+            throw new ec.com.antenasur.security.qr.AccesoQrException();
+        validarContextoMesa(persistido, qr.mesaId(), qr.procesoId(), qr.recintoId());
+        return persistido;
     }
 
     public Boolean getTieneDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
@@ -78,6 +96,7 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
 
     /** Integridad del contexto documental, compartida por registro y lectura autorizada. */
     public void validarContextoMesa(Documentos documento, Integer mesaId, Integer procesoId, Integer recintoId) {
+        alcanceQr.validar(mesaId, procesoId);
         if (documento == null || documento.getMesa() == null || documento.getProceso() == null
                 || documento.getRecinto() == null || documento.getMesa().getRecinto() == null
                 || !java.util.Objects.equals(mesaId, documento.getMesa().getId())

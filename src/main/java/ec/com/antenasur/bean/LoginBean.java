@@ -117,7 +117,7 @@ public class LoginBean implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            sistema = (String) JsfUtil.getProperty("sistema", true);
+            sistema = Constantes.getMensaje("sistema");
             // Etiqueta del ambiente. Se lee de la system property -Dapp.environment;
             // si no está definida, asume DESARROLLO. Antes este bloque hacía dos
             // reverse-DNS lookups via InetAddress.getLocalHost() cuyo resultado se
@@ -182,6 +182,7 @@ public class LoginBean implements Serializable {
     }
 
     public void cerrarSessionExpirada() throws RuntimeException, IOException {
+        log.info("Sesion causa=IDLE_MONITOR; timeoutSegundos={}", tiempoSession);
         procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
         HttpServletRequest request = JsfUtil.getRequest();
         request.getSession().invalidate();

@@ -49,6 +49,19 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         super(Padron.class, Integer.class);
     }
 
+    public java.util.Map<Integer, Long> contarIglesiasPorMesas(Integer procesoId, List<Integer> mesas) {
+        java.util.Map<Integer, Long> resultado = new java.util.HashMap<>();
+        if (procesoId == null || mesas == null || mesas.isEmpty()) return resultado;
+        for (Object[] fila : getEntityManager().createQuery(
+                "SELECT p.mesa.id, COUNT(DISTINCT p.iglesiaPersona.iglesia.id) FROM Padron p"
+                + " WHERE p.estado = TRUE AND p.proceso.id = :proceso AND p.mesa.id IN :mesas"
+                + " GROUP BY p.mesa.id", Object[].class)
+                .setParameter("proceso", procesoId).setParameter("mesas", mesas).getResultList()) {
+            resultado.put((Integer) fila[0], (Long) fila[1]);
+        }
+        return resultado;
+    }
+
     public List<Padron> getAllOrderbyId() {
         try {
             String sql = HQL

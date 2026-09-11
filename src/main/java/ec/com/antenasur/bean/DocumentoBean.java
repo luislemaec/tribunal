@@ -128,6 +128,7 @@ public class DocumentoBean implements Serializable {
     }
 
     private StreamedContent construirDescarga(Documentos item) throws IOException {
+        item = documentoService.autorizarDescarga(item);
         if (item == null || item.getNombre() == null) {
             throw new IOException(Constantes.getMensaje("documentos.error.not.selected"));
         }

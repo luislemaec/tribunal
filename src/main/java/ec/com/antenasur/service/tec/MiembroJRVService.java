@@ -106,6 +106,9 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
 
     public MiembroJRVDTO designarMiembro(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId, Integer cargoId) {
         validarParametros(iglesiaPersonaId, mesaId, procesoId, cargoId);
+        if (padronFacade.contarIglesiasPorMesas(procesoId, List.of(mesaId)).getOrDefault(mesaId, 0L) == 0) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.mesas.sin.iglesias"));
+        }
         if (juntaCompletadaRegistrada(mesaId, procesoId)) {
             throw new NegocioException("La junta ya fue completada. Para modificarla debe reabrirse mediante una accion autorizada.");
         }
@@ -269,6 +272,22 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         List<String> faltantes = DIGNIDADES_OBLIGATORIAS.stream()
                 .filter(cargo -> cargos.getOrDefault(cargo, 0) != 1).toList();
         return new EstadoJuntaDTO(valida && faltantes.isEmpty(), DIGNIDADES_OBLIGATORIAS.size() - faltantes.size(), faltantes);
+    }
+
+    public Map<Integer, ec.com.antenasur.dto.ResumenMesaJrvDTO> consultarResumenMesas(
+            Integer proceso, List<Integer> mesas) {
+        Map<Integer, ec.com.antenasur.dto.ResumenMesaJrvDTO> resultado = new HashMap<>();
+        if (proceso == null || mesas == null || mesas.isEmpty()) return resultado;
+        Map<Integer, List<Object[]>> miembros = new HashMap<>();
+        mesas.forEach(id -> miembros.put(id, new ArrayList<>()));
+        for (Object[] fila : miembroJRVFacade.consultarConformacion(proceso, mesas)) {
+            miembros.get((Integer) fila[0]).add(fila);
+        }
+        Map<Integer, Long> iglesias = padronFacade.contarIglesiasPorMesas(proceso, mesas);
+        miembros.forEach((id, filas) -> resultado.put(id, new ec.com.antenasur.dto.ResumenMesaJrvDTO(
+                filas.size(), DIGNIDADES_OBLIGATORIAS.size(), iglesias.getOrDefault(id, 0L),
+                evaluarConformacion(filas).isCompleta())));
+        return resultado;
     }
 
     public static String normalizarCargo(String nombre) {

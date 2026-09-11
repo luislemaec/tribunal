@@ -48,6 +48,10 @@ public class GestionPadronService {
     public List<MesaPadronDTO> listarMesas(FiltroPadronDTO f, int primero, int cantidad) {
         return f.getProcesoId() == null ? List.of() : facade.listarMesas(f, primero, Math.min(cantidad, 100));
     }
+    public List<MesaPadronDTO> listarMesas(FiltroPadronDTO f, int primero, int cantidad, String campo, boolean descendente) {
+        return f.getProcesoId() == null ? new java.util.ArrayList<>()
+                : new java.util.ArrayList<>(facade.listarMesas(f, primero, Math.min(cantidad, 100), campo, descendente));
+    }
     public int contarMesas(FiltroPadronDTO f) {
         return f.getProcesoId() == null ? 0 : Math.toIntExact(facade.contarMesas(f, f.getConPadron()));
     }

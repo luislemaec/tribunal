@@ -29,6 +29,7 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
+@jakarta.interceptor.Interceptors(ec.com.antenasur.security.qr.AlcanceEscrutinioQrInterceptor.class)
 public class EscrutinioService extends AbstractService<Escrutinio, Integer, EscrutinioFacade> {
 
     @Inject

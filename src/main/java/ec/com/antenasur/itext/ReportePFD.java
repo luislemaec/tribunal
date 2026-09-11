@@ -192,9 +192,20 @@ public class ReportePFD {
 
     public static byte[] generarFormularioActaParcial(ReporteMesaDTO reporte, String folio,
             String codigoBarras, LocalDateTime fechaGeneracion, String usuario) throws DocumentException {
+        return generarFormularioActaParcial(reporte, folio, codigoBarras, fechaGeneracion, usuario, null);
+    }
+
+    public static byte[] generarFormularioActaParcial(ReporteMesaDTO reporte, String folio,
+            String codigoBarras, LocalDateTime fechaGeneracion, String usuario, String accesoQr) throws DocumentException {
+        if (!ec.com.antenasur.security.qr.TokenActaQr.urlAccesoValida(accesoQr))
+            throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.obligatorio"));
         if (reporte == null || reporte.getMesa() == null || reporte.getProceso() == null) {
             throw new DocumentException("No existe informacion suficiente para generar el acta parcial.");
         }
+        var firmantes = reporte.getMiembrosJrv().stream().filter(ReportePFD::esFirmanteActaParcial).toList();
+        if (firmantes.size() != 2 || firmantes.stream()
+                .filter(m -> m.getCargoNombre().trim().toUpperCase(java.util.Locale.ROOT).startsWith("PRESIDENTE")).count() != 1)
+            throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.firmantes"));
         ByteArrayOutputStream salida = new ByteArrayOutputStream();
         PdfInstitucional.Contexto contexto;
         try {
@@ -207,13 +218,24 @@ public class ReportePFD {
         Document pdf = contexto.documento();
         try {
             agregarInformacionActaParcial(pdf, reporte);
-            agregarResultadosActaParcial(pdf, reporte);
-            agregarFirmasJrv(pdf, reporte);
+            agregarResultadosActaParcial(pdf, reporte, accesoQr != null);
+            agregarFirmasJrv(pdf, reporte, accesoQr);
             agregarIdentificacionActaParcial(pdf, contexto.writer(), codigoBarras);
         } finally {
             pdf.close();
         }
-        return salida.toByteArray();
+        byte[] contenido = salida.toByteArray();
+        com.itextpdf.text.pdf.PdfReader comprobacion = null;
+        try {
+            comprobacion = new com.itextpdf.text.pdf.PdfReader(contenido);
+            if (comprobacion.getNumberOfPages() != 1)
+                throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.paginas"));
+        } catch (java.io.IOException e) {
+            throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.obligatorio"));
+        } finally {
+            if (comprobacion != null) comprobacion.close();
+        }
+        return contenido;
     }
 
     private static void agregarInformacionActaParcial(Document pdf, ReporteMesaDTO reporte)
@@ -243,7 +265,7 @@ public class ReportePFD {
                 + texto(reporte.getRecinto().getUbicacionNombre());
     }
 
-    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte)
+    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean conQr)
             throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.resultados.titulo"),
                 FontFactory.getFont("arial", 10, Font.BOLD, COLOR_INSTITUCIONAL));
@@ -254,7 +276,7 @@ public class ReportePFD {
         if (cantidadListas > MAX_LISTAS_ACTA_PARCIAL) {
             throw new DocumentException(Constantes.getMensaje("reportesMesa.acta.error.listas.exceso"));
         }
-        float alturaCasilla = alturaCasillaActaParcial(cantidadListas);
+        float alturaCasilla = alturaCasillaActaParcial(cantidadListas) - (conQr ? 4f : 0f);
         PdfPTable resultados = new PdfPTable(3);
         resultados.setWidthPercentage(100);
         resultados.setWidths(ANCHOS_ACTA_PARCIAL);
@@ -401,15 +423,15 @@ public class ReportePFD {
         return celda;
     }
 
-    private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte) throws DocumentException {
+    private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr) throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.firmas.titulo"),
                 FontFactory.getFont("arial", 10, Font.BOLD, COLOR_INSTITUCIONAL));
         titulo.setSpacingAfter(4f);
         pdf.add(titulo);
 
-        PdfPTable firmas = new PdfPTable(2);
+        PdfPTable firmas = new PdfPTable(accesoQr == null ? 2 : 3);
         firmas.setWidthPercentage(100);
-        firmas.setWidths(new float[]{50, 50});
+        firmas.setWidths(accesoQr == null ? new float[]{50, 50} : new float[]{40, 40, 20});
         firmas.setSpacingBefore(10f);
         int firmantesAgregados = 0;
         for (MiembroJRVDTO miembro : reporte.getMiembrosJrv()) {
@@ -424,7 +446,7 @@ public class ReportePFD {
                 }
             }
             Paragraph contenido = new Paragraph();
-            contenido.add(new Chunk("\n\n_______________________________\n",
+            contenido.add(new Chunk("\n\n________________________\n",
                     FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
             contenido.add(new Chunk(nombre.trim() + "\n",
                     FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
@@ -443,6 +465,19 @@ public class ReportePFD {
             PdfPCell vacia = new PdfPCell();
             vacia.setBorder(PdfPCell.NO_BORDER);
             firmas.addCell(vacia);
+        }
+        if (accesoQr != null) {
+            Image qr = new BarcodeQRCode(accesoQr, 320, 320, null).getImage();
+            qr.scaleAbsolute(78f, 78f);
+            qr.setAlignment(Element.ALIGN_CENTER);
+            PdfPCell celdaQr = new PdfPCell();
+            celdaQr.setBorder(PdfPCell.NO_BORDER);
+            celdaQr.addElement(qr);
+            Paragraph aviso = new Paragraph(Constantes.getMensaje("actaQr.pdf.acceso"),
+                    FontFactory.getFont("arial", 7, Font.NORMAL, BaseColor.BLACK));
+            aviso.setAlignment(Element.ALIGN_CENTER);
+            celdaQr.addElement(aviso);
+            firmas.addCell(celdaQr);
         }
         pdf.add(firmas);
     }

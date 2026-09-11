@@ -1,0 +1,22 @@
+.padron-vista { min-width: 0; padding: 1rem; background: var(--surface-card, #fff); }
+.padron-filtros { padding: .75rem 0 1rem; border-bottom: 1px solid var(--surface-border, #ddd); }
+.padron-contexto { border-top: 1px solid var(--surface-border, #ddd); }
+.padron-vista .field { min-width: 0; margin-bottom: .75rem; }
+.padron-mesas table { table-layout: fixed; width: 100%; }
+.padron-mesas th, .padron-mesas td { overflow-wrap: anywhere; }
+.padron-mesas .padron-col-mesa { width: 7rem; }
+.padron-mesas .padron-col-estado { width: 11rem; }
+.padron-mesas .padron-col-total { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; }
+.padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight {
+    background: #d9eeef; color: #123b40; box-shadow: inset 4px 0 #12656c;
+}
+.padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight td { color: #123b40; }
+.padron-mesas tbody.ui-datatable-data > tr { cursor: pointer; }
+.padron-vista .ui-tabs-nav { display: flex; flex-wrap: wrap; }
+.padron-vista .ui-button-text { white-space: normal; }
+@media (max-width: 640px) {
+    .padron-vista { padding: .5rem; }
+    .padron-mesas .padron-col-mesa, .padron-mesas .padron-col-estado,
+    .padron-mesas .padron-col-total { width: auto; text-align: left; }
+    .padron-vista .ui-datatable-reflow td { overflow-wrap: anywhere; }
+}

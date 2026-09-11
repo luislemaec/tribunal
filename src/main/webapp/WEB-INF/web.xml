@@ -96,6 +96,12 @@
         </description>
         <role-name>Usuario</role-name>
     </security-role>
+    <security-role>
+        <role-name>TEC-QR</role-name>
+    </security-role>
+    <security-role>
+        <role-name>SITEC-Presidente-mesa</role-name>
+    </security-role>
     <session-config>
         <session-timeout>60</session-timeout>
     </session-config>

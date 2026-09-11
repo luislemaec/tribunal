@@ -1,0 +1,26 @@
+# EJECUCION MANUAL. Respaldar standalone.xml y aplicar V4/V5 antes.
+# Precondiciones: dominio original con un solo realm TribunalRealm y sin
+# realm-mapper ni post-realm-principal-transformer. No repetir la instalacion.
+# No cambia TribunalRealm, FORM, BCrypt de usuarios ni el datasource.
+if (result != "TribunalRealm") of /subsystem=elytron/security-domain=TribunalSecurityDomain:read-attribute(name=default-realm)
+    echo ERROR: default-realm distinto. Revisar configuracion antes de continuar.
+    quit
+end-if
+if (result != undefined) of /subsystem=elytron/security-domain=TribunalSecurityDomain:read-attribute(name=realm-mapper)
+    echo ERROR: ya existe un realm-mapper. No sobrescribir.
+    quit
+end-if
+if (result != undefined) of /subsystem=elytron/security-domain=TribunalSecurityDomain:read-attribute(name=post-realm-principal-transformer)
+    echo ERROR: ya existe un transformador. No sobrescribir.
+    quit
+end-if
+batch
+/subsystem=elytron/constant-role-mapper=TribunalQrRoles:add(roles=[SITEC-Presidente-mesa,TEC-QR])
+/subsystem=elytron/regex-principal-transformer=TribunalQrNombre:add(pattern="^TECQR:",replacement="",replace-all=false)
+/subsystem=elytron/mapped-regex-realm-mapper=TribunalQrSelector:add(pattern="^(TECQR):.+$",realm-map={TECQR=TribunalQrRealm})
+/subsystem=elytron/jdbc-realm=TribunalQrRealm:add(principal-query=[{sql="SELECT password_hash FROM tec.credencial_qr_elytron WHERE username = ?",data-source=TribunalDS,modular-crypt-mapper={password-index=1}}])
+/subsystem=elytron/security-domain=TribunalSecurityDomain:list-add(name=realms,value={realm=TribunalQrRealm,role-mapper=TribunalQrRoles})
+/subsystem=elytron/security-domain=TribunalSecurityDomain:write-attribute(name=realm-mapper,value=TribunalQrSelector)
+/subsystem=elytron/security-domain=TribunalSecurityDomain:write-attribute(name=post-realm-principal-transformer,value=TribunalQrNombre)
+run-batch
+echo Configuracion instalada. Revisar resultado, realizar reload controlado y validar FORM antes de habilitar QR.

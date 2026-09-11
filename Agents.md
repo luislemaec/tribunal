@@ -350,6 +350,27 @@ mvn -DskipTests compile
 - Al cambiar seleccion multiple en PrimeFaces, actualizar explicitamente botones/resumenes afectados mediante AJAX.
 - En interfaces institucionales, mantener diseno sobrio, claro y consistente; no saturar formularios ni tablas.
 
+## Acceso QR de Acta Parcial
+
+- Ver `docs/acceso-qr-acta-parcial.md` para estado real y pendientes de seguridad.
+- `V4__credenciales_qr_acta_parcial.sql` agrega credenciales/concesiones/auditoria; no modificar migraciones anteriores.
+- `security/qr`, `AccesoQrActaFacade` y servicios `*AccesoQrService` contienen el nucleo local.
+- `V5__canje_qr_elytron.sql` agrega el puente BCrypt efimero y la vista JDBC sin cambiar claves de usuarios.
+- Endpoint `/acceso-acta`: QR HTTPS con consulta token opaco; GET redirige a fragmento temporal sin consumir, POST automatico/CSRF sin clic, limitador y sesion de 15 minutos. Proteger logs del proxy antes de habilitar. Una vista previa que ejecute JavaScript puede consumir el QR.
+- Acta Parcial exige QR y configuracion habilitada; no generar documentos silenciosamente sin QR. PDF valida una pagina y firmas Presidente/Secretario.
+- ReporteMesaService coordina PDF, registro, emision y revocacion en la transaccion documental.
+- Elytron conserva el principal `TECQR:username`; el realm consulta el username real. Exigir roles `TEC-QR` y `SITEC-Presidente-mesa`.
+- AlcanceSesionQrService y el interceptor de Escrutinio validan mesa/proceso/detalles y deniegan comandos no autorizados.
+- WildFly usa default-missing-method-permissions-deny-access=true: DeclareRoles no autoriza invocaciones.
+- Solo contexto() es PermitAll en AlcanceSesionQrService: consulta sin HTTP/QR devuelve null, no concede permisos. Las guardas operativas usan RolesAllowed electoral.
+- No convertir una identidad TEC-QR/TECQR: sin concesion HTTP en acceso normal: debe fallar cerrado.
+- No publicar el resultado de CanjeAccesoQrService: es una concesion interna, NO una identidad autenticada.
+- No llenar LoginBean para simular autenticacion ni registrar un proveedor JASPI global sin preservar FORM.
+- Conservar tokens originales solo durante emision/canje; BD guarda hashes. Nunca registrar tokens/URLs completas.
+- Pruebas focalizadas: `mvn -Pqr-tests test`. Compilacion: `mvn -DskipTests compile`.
+- Deshabilitado por defecto. Instalar `docs/deployment/instalar-qr-elytron.cli`, validar FORM/proxy y luego activar `tec.qr.enabled`.
+- Pendiente aceptacion integrada WildFly/PostgreSQL/HTTPS; las pruebas unitarias no sustituyen el despliegue real.
+
 ## Archivos Sensibles
 
 - `pom.xml`: versiones Java/WildFly/PrimeFaces y dependencias.

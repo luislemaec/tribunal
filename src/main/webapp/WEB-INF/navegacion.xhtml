@@ -3,9 +3,10 @@
       xmlns:p="http://primefaces.org/ui" >
 
     <ui:composition>
-        <p:idleMonitor timeout="#{loginBean.tiempoSession * 100}">
+        <!-- HttpSession expresa el tiempo en segundos; PrimeFaces usa milisegundos. -->
+        <p:idleMonitor timeout="#{loginBean.tiempoSession * 1000}"
+                       rendered="#{loginBean.loggedIn and loginBean.tiempoSession gt 0}">
             <p:ajax event="idle" listener="#{loginBean.cerrarSessionExpirada()}" />
-            <p:ajax event="active" listener="#{loginBean.cerrarSessionExpirada()}" />
         </p:idleMonitor>
     </ui:composition>
 </html>

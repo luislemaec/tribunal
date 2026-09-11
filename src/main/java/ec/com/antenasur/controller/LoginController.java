@@ -112,6 +112,12 @@ public class LoginController implements Serializable {
     }
 
     public void login() throws Throwable {
+        if (loginBean.getUserName() != null && loginBean.getUserName().startsWith(
+                ec.com.antenasur.security.qr.ConfiguracionQr.PREFIJO)) {
+            loginBean.setPassword(null);
+            JsfUtil.addErrorMessageFromBundle("actaQr.error.acceso");
+            return;
+        }
         inicializarAuditoriaAcceso();
 
         try {

@@ -96,6 +96,8 @@ public class JrvController implements Serializable {
 	@Getter
 	private List<MesaDTO> mesasFiltradas = new ArrayList<>();
 	@Getter
+	private java.util.Map<Integer, ec.com.antenasur.dto.ResumenMesaJrvDTO> resumenMesas = new java.util.HashMap<>();
+	@Getter
 	private List<OpcionPadronDTO> cantonesMesas = new ArrayList<>();
 	@Getter
 	private List<OpcionPadronDTO> parroquiasMesas = new ArrayList<>();
@@ -196,7 +198,10 @@ public class JrvController implements Serializable {
 		cargarDatosMesaSeleccionada();
 	}
 
-	/** Adapta la selección de fila de PrimeFaces al flujo de selección de mesa existente. */
+	/**
+	 * Adapta la selección de fila de PrimeFaces al flujo de selección de mesa
+	 * existente.
+	 */
 	public void seleccionarMesaDesdeTabla(SelectEvent<MesaDTO> evento) {
 		seleccionarMesa(evento != null ? evento.getObject() : null);
 	}
@@ -259,6 +264,10 @@ public class JrvController implements Serializable {
 
 	public boolean isEdicionBloqueada() {
 		return juntaRegistradaComoCompletada;
+	}
+
+	public boolean isAsignacionBloqueada() {
+		return !isMesaSeleccionadaValida() || isEdicionBloqueada() || getTotalIglesiasAsignadas() == 0;
 	}
 
 	public boolean isPuedeCompletarJunta() {
@@ -358,6 +367,8 @@ public class JrvController implements Serializable {
 		listaMJRV = mjrvService.listarDTOsPorMesaProceso(mesaSeleccionada.getId(), procesoSeleccionado.getId());
 		estadoJunta = mjrvService.consultarEstadoJunta(mesaSeleccionada.getId(), procesoSeleccionado.getId());
 		iglesiasAsignadas = obtenerIglesiasAsignadas(padronMesa);
+		resumenMesas.putAll(mjrvService.consultarResumenMesas(procesoSeleccionado.getId(), mesaIds));
+		org.primefaces.PrimeFaces.current().ajax().update("frmMJRV:tabsMJRV:tblMesas");
 		Set<Integer> designadas = mjrvService.obtenerIglesiaPersonaIdsDesignadas(procesoSeleccionado.getId());
 		personasDisponibles = new ArrayList<>();
 		for (PadronDTO padron : padronMesa) {
@@ -442,11 +453,14 @@ public class JrvController implements Serializable {
 		if (procesoSeleccionado == null || procesoSeleccionado.getId() == null) {
 			mesasDisponibles = new ArrayList<>();
 			mesasFiltradas = new ArrayList<>();
+			resumenMesas.clear();
 			cantonesMesas = new ArrayList<>();
 			parroquiasMesas = new ArrayList<>();
 			return;
 		}
 		mesasDisponibles = new ArrayList<>(mesaService.listarDTOsActivasConUbicacion());
+		resumenMesas = mjrvService.consultarResumenMesas(procesoSeleccionado.getId(),
+				mesasDisponibles.stream().map(MesaDTO::getId).toList());
 		filtrarMesasSeleccionables();
 	}
 
@@ -486,7 +500,7 @@ public class JrvController implements Serializable {
 				return false;
 			return texto.isEmpty() || contiene(mesa.getNombre(), texto) || contiene(recinto.getNombre(), texto)
 					|| contiene(recinto.getCantonNombre(), texto) || contiene(recinto.getUbicacionNombre(), texto);
-		}).toList();
+		}).collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 	}
 
 	private static boolean contiene(String valor, String texto) {

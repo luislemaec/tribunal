@@ -20,6 +20,8 @@ import lombok.Setter;
 
 @WebFilter(filterName = "LoginFilter", urlPatterns = {"/*"}, dispatcherTypes = {DispatcherType.REQUEST, DispatcherType.FORWARD})
 public class LoginFilter implements Filter {
+    @jakarta.inject.Inject
+    private ec.com.antenasur.security.qr.ControlHttpSesionQr controlQr;
 
     private String encoding;
 
@@ -45,6 +47,15 @@ public class LoginFilter implements Filter {
         }
 
         HttpServletRequest req = (HttpServletRequest) request;
+        if (controlQr.procesar(req, (jakarta.servlet.http.HttpServletResponse) response, next)) return;
+
+        var sesion = req.getSession(false);
+        // Un POST de login de una sesion destruida tampoco debe restaurar su ViewState.
+        if (sesion == null && "POST".equals(req.getMethod())
+                && (req.getContextPath() + "/login.jsf").equals(req.getRequestURI())) {
+            RedireccionSesion.login(req, (jakarta.servlet.http.HttpServletResponse) response);
+            return;
+        }
 
         if (req.getRequestURI().isEmpty() || esRutaPublica(req)
                 || LoginFilterExcluder.getInstance(req.getContextPath()).isExcludeUrl(req.getRequestURI())) {
@@ -52,20 +63,23 @@ public class LoginFilter implements Filter {
             return;
         }
 
-        LoginBean loginBean = (LoginBean) req.getSession().getAttribute("loginBean");
-        List<String> listaPermisos = (List<String>) req.getSession().getAttribute("listaPermisos");
+        LoginBean loginBean = sesion == null ? null : (LoginBean) sesion.getAttribute("loginBean");
+        List<String> listaPermisos = sesion == null ? null : (List<String>) sesion.getAttribute("listaPermisos");
         if (loginBean == null) {
-            req.getRequestDispatcher("/login.jsf").forward(request, response);
+            RedireccionSesion.login(req, (jakarta.servlet.http.HttpServletResponse) response);
+            return;
         } else {
             if (loginBean.getUsuario().getId() != null) {
                 String pagina = devolverPagina(req.getRequestURL().toString());
                 if (validarPagina(pagina, listaPermisos)) {
                     next.doFilter(request, response);
                 } else {
-                    req.getRequestDispatcher("/errors/permisos.jsf").forward(request, response);
+                    RedireccionSesion.permisos(req, (jakarta.servlet.http.HttpServletResponse) response);
+                    return;
                 }
             } else {
-                req.getRequestDispatcher("/errors/permisos.jsf").forward(request, response);
+                RedireccionSesion.permisos(req, (jakarta.servlet.http.HttpServletResponse) response);
+                return;
             }
         }
 
@@ -81,7 +95,7 @@ public class LoginFilter implements Filter {
     }
 
     private boolean validarPagina(final String pagina, final List<String> listaPermisos) {
-        return listaPermisos.contains(pagina);
+        return listaPermisos != null && listaPermisos.contains(pagina);
     }
 
     private String devolverPagina(final String url) {

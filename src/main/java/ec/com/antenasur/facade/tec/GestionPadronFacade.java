@@ -119,12 +119,27 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
     }
 
     public List<MesaPadronDTO> listarMesas(FiltroPadronDTO f, int primero, int cantidad) {
+        return listarMesas(f, primero, cantidad, null, false);
+    }
+
+    public List<MesaPadronDTO> listarMesas(FiltroPadronDTO f, int primero, int cantidad, String campo, boolean descendente) {
         Consulta c = mesas(f, f.getConPadron());
         c.parametros.put("proceso", f.getProcesoId());
+        String orden = switch (campo == null ? "" : campo) {
+            case "nombre" -> "m.nombre";
+            case "canton" -> "ca.name";
+            case "total" -> "COUNT(p.id)";
+            case "totalIglesias" -> "COUNT(DISTINCT ip.iglesia.id)";
+            case "estado" -> "CASE WHEN COUNT(p.id) > 0 THEN 1 ELSE 0 END";
+            default -> "r.nombre";
+        };
         return c.aplicar(getEntityManager().createQuery("SELECT new ec.com.antenasur.dto.MesaPadronDTO("
-                + "m.id, m.nombre, r.id, r.nombre, COUNT(p.id)) FROM Mesa m JOIN m.recinto r" + GEO
+                + "m.id, m.nombre, r.id, r.nombre, COUNT(p.id), ca.name, pa.name, COUNT(DISTINCT ip.iglesia.id))"
+                + " FROM Mesa m JOIN m.recinto r" + GEO
                 + " LEFT JOIN Padron p ON p.mesa.id = m.id AND p.proceso.id = :proceso AND p.estado = TRUE"
-                + c.where + " GROUP BY m.id, m.nombre, r.id, r.nombre ORDER BY r.nombre, m.nombre, m.id", MesaPadronDTO.class))
+                + " LEFT JOIN p.iglesiaPersona ip"
+                + c.where + " GROUP BY m.id, m.nombre, r.id, r.nombre, ca.name, pa.name ORDER BY "
+                + orden + (descendente ? " DESC" : " ASC") + ", m.nombre, m.id", MesaPadronDTO.class))
                 .setFirstResult(primero).setMaxResults(cantidad).getResultList();
     }
 

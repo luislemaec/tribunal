@@ -129,6 +129,23 @@
                         <p:column headerText="#{msg['mjrv.tabla.ubicacion']}" sortBy="#{mesa.recinto.cantonNombre}">
                             #{mesa.recinto.cantonNombre} - #{mesa.recinto.ubicacionNombre}
                         </p:column>
+                        <p:column headerText="#{msg['mjrv.mesas.estado']}"
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].estadoClave}">
+                            <p:tag value="#{msg[jrvController.resumenMesas[mesa.id].estadoClave]}"
+                                   severity="#{jrvController.resumenMesas[mesa.id].severidad}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['mjrv.mesas.miembros']}"
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].miembrosAsignados}">
+                            <h:outputFormat value="#{msg['mjrv.mesas.progreso']}">
+                                <f:param value="#{jrvController.resumenMesas[mesa.id].progreso}"/>
+                            </h:outputFormat>
+                        </p:column>
+                        <p:column headerText="#{msg['mjrv.mesas.iglesias']}"
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}">
+                            <h:outputText value="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"/>
+                            <p:tag value="#{msg['mjrv.mesas.sin.iglesias.etiqueta']}" severity="warning"
+                                   rendered="#{jrvController.resumenMesas[mesa.id].sinIglesias}"/>
+                        </p:column>
                     </p:dataTable>
                 </div>
             </p:outputPanel>
@@ -187,12 +204,17 @@
             </div>
 
             <p:outputPanel id="pnlDesignacion" layout="block" styleClass="mb-4">
+                <p:outputPanel rendered="#{jrvController.mesaSeleccionadaValida and jrvController.totalIglesiasAsignadas eq 0}"
+                               styleClass="flex align-items-center gap-2 mb-3" layout="block">
+                    <i class="pi pi-info-circle" aria-hidden="true"/>
+                    <h:outputText value="#{msg['mjrv.mesas.sin.iglesias']}"/>
+                </p:outputPanel>
                 <div class="grid align-items-end">
                     <div class="col-12"><span class="font-semibold text-800">#{msg['mjrv.seccion.designacion']}</span></div>
                         <div class="field col-12 lg:col-5 mb-0">
                             <label for="persona" class="font-medium text-700 text-sm">#{msg['mjrv.label.persona']}</label>
                             <p:selectOneMenu id="persona" value="#{jrvController.iglesiaPersonaSeleccionadaId}"
-                                             disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada or empty jrvController.personasDisponibles}"
+                                             disabled="#{jrvController.asignacionBloqueada or empty jrvController.personasDisponibles}"
                                              styleClass="w-full" filter="true" filterMatchMode="contains">
                                 <f:selectItem itemLabel="#{msg['mjrv.placeholder.persona']}" itemValue=""/>
                                 <f:selectItems value="#{jrvController.personasDisponibles}" var="padron"
@@ -203,7 +225,7 @@
                         <div class="field col-12 lg:col-3 mb-0">
                             <label for="cargo" class="font-medium text-700 text-sm">#{msg['mjrv.label.dignidad']}</label>
                             <p:selectOneMenu id="cargo" value="#{jrvController.cargoSeleccionadoId}"
-                                             disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada or empty jrvController.dignidadesPendientes}"
+                                             disabled="#{jrvController.asignacionBloqueada or empty jrvController.dignidadesPendientes}"
                                              styleClass="w-full" filter="true" filterMatchMode="contains">
                                 <f:selectItem itemLabel="#{msg['mjrv.placeholder.dignidad']}" itemValue=""/>
                                 <f:selectItems value="#{jrvController.dignidadesPendientes}" var="cargo"
@@ -212,7 +234,7 @@
                         </div>
                         <div class="col-12 lg:col-4 flex flex-wrap align-items-end gap-2">
                         <p:commandButton value="#{msg['mjrv.boton.asignar']}" icon="pi pi-plus" styleClass="ui-button-success"
-                                         disabled="#{not jrvController.mesaSeleccionadaValida or jrvController.edicionBloqueada}"
+                                         disabled="#{jrvController.asignacionBloqueada}"
                                          actionListener="#{jrvController.designarMiembro}"
                                          process=":frmMJRV:tabsMJRV:pnlDesignacion"
                                          update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>

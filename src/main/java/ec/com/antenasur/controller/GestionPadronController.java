@@ -37,24 +37,48 @@ import lombok.extern.slf4j.Slf4j;
 public class GestionPadronController implements Serializable {
     private static final String PROVINCIA_OPERATIVA = "CHIMBORAZO";
 
-    @Inject private GestionPadronService service;
-    @Inject private ProcesoElectoralService procesoService;
-    @Getter private FiltroPadronDTO filtro = new FiltroPadronDTO();
+    @Inject
+    private GestionPadronService service;
+    @Inject
+    private ProcesoElectoralService procesoService;
+    @Getter
+    private FiltroPadronDTO filtro = new FiltroPadronDTO();
     private FiltroPadronDTO consultaMesas = new FiltroPadronDTO();
-    @Getter @Setter private String nombreIglesiaReporte;
-    @Getter private List<ec.com.antenasur.dto.IglesiaPadronDTO> iglesiasDisponibles = List.of(), iglesiasAsignadas = List.of();
-    @Getter private ProcesoElectoralDTO procesoActivo;
+    @Getter
+    @Setter
+    private String nombreIglesiaReporte;
+    @Getter
+    private List<ec.com.antenasur.dto.IglesiaPadronDTO> iglesiasDisponibles = new ArrayList<>(),
+            iglesiasAsignadas = new ArrayList<>();
+    @Getter
+    private ProcesoElectoralDTO procesoActivo;
     private List<OpcionPadronDTO> provincias = List.of();
-    @Getter private List<OpcionPadronDTO> cantones = List.of(), parroquias = List.of(),
+    @Getter
+    private List<OpcionPadronDTO> cantones = List.of(), parroquias = List.of(),
             recintos = List.of(), mesas = List.of(), iglesias = List.of();
-    @Getter @Setter private List<FilaPadronDTO> asignar = new ArrayList<>(), retirar = new ArrayList<>();
-    @Getter @Setter private MesaPadronDTO mesaSeleccionada;
-    @Getter private LazyDataModel<FilaPadronDTO> disponibles, inscritos;
-    @Getter private LazyDataModel<MesaPadronDTO> mesasLazy;
-    @Getter private long total, mesasCon, mesasSin;
-    @Getter private boolean consultado;
-    @Getter @Setter private int primeraDisponible, primeraInscrita, primeraMesa;
-    @Getter @Setter private int tabActivo;
+    @Getter
+    @Setter
+    private List<FilaPadronDTO> asignar = new ArrayList<>(), retirar = new ArrayList<>();
+    @Getter
+    @Setter
+    private MesaPadronDTO mesaSeleccionada;
+    @Getter
+    @Setter
+    private Integer recintoConsultaId;
+    @Getter
+    private LazyDataModel<FilaPadronDTO> disponibles, inscritos;
+    @Getter
+    private LazyDataModel<MesaPadronDTO> mesasLazy;
+    @Getter
+    private long total, mesasCon, mesasSin;
+    @Getter
+    private boolean consultado;
+    @Getter
+    @Setter
+    private int primeraDisponible, primeraInscrita, primeraMesa;
+    @Getter
+    @Setter
+    private int tabActivo;
 
     @PostConstruct
     public void init() {
@@ -75,8 +99,9 @@ public class GestionPadronController implements Serializable {
 
     private void inicializarGeografiaOperativa() {
         provincias.stream()
-                .filter(provincia -> PROVINCIA_OPERATIVA.equals((provincia.getNombre() == null ? "" : provincia.getNombre())
-                        .trim().toUpperCase(Locale.ROOT)))
+                .filter(provincia -> PROVINCIA_OPERATIVA
+                        .equals((provincia.getNombre() == null ? "" : provincia.getNombre())
+                                .trim().toUpperCase(Locale.ROOT)))
                 .findFirst()
                 .ifPresent(provincia -> {
                     filtro.setProvinciaId(provincia.getId());
@@ -85,23 +110,28 @@ public class GestionPadronController implements Serializable {
     }
 
     public void cambiarProvincia() {
-        filtro.setCantonId(null); filtro.setParroquiaId(null); parroquias = List.of();
+        filtro.setCantonId(null);
+        filtro.setParroquiaId(null);
+        parroquias = List.of();
         cantones = filtro.getProvinciaId() == null ? List.of() : service.geografia(filtro.getProvinciaId());
         recargarRecintos();
         actualizarConsulta();
     }
+
     public void cambiarCanton() {
         filtro.setParroquiaId(null);
         parroquias = filtro.getCantonId() == null ? List.of() : service.geografia(filtro.getCantonId());
         recargarRecintos();
         actualizarConsulta();
     }
+
     public void cambiarParroquia() {
         recargarRecintos();
         actualizarConsulta();
     }
 
     public void limpiarFiltros() {
+        recintoConsultaId = null;
         filtro.setCantonId(null);
         filtro.setParroquiaId(null);
         filtro.setRecintoId(null);
@@ -123,75 +153,137 @@ public class GestionPadronController implements Serializable {
      * tambien la mesa y el contexto dependiente para no operar con datos obsoletos.
      */
     private void recargarRecintos() {
-        recintos = service.recintos(filtro);
-        if (filtro.getRecintoId() != null && recintos.stream().noneMatch(r -> r.getId().equals(filtro.getRecintoId()))) {
-            filtro.setRecintoId(null);
+        FiltroPadronDTO territorio = new FiltroPadronDTO(filtro);
+        territorio.setRecintoId(null);
+        territorio.setMesaId(null);
+        recintos = service.recintos(territorio);
+        if (recintoConsultaId != null && recintos.stream().noneMatch(r -> r.getId().equals(recintoConsultaId))) {
+            recintoConsultaId = null;
+        }
+        if (filtro.getRecintoId() != null
+                && recintos.stream().noneMatch(r -> r.getId().equals(filtro.getRecintoId()))) {
             limpiarMesa();
+            filtro.setRecintoId(recintoConsultaId);
         }
     }
+
     private void actualizarConsulta() {
         consultado = filtro.getProcesoId() != null;
         consultaMesas = new FiltroPadronDTO(filtro);
+        consultaMesas.setMesaId(null);
+        consultaMesas.setRecintoId(recintoConsultaId);
         primeraMesa = 0;
         actualizarResumen();
     }
+
     private void limpiarMesa() {
-        iglesiasDisponibles = List.of(); iglesiasAsignadas = List.of();
-        filtro.setMesaId(null); filtro.setIglesiaId(null); mesas = List.of(); iglesias = List.of();
-        mesaSeleccionada = null; limpiarSeleccion();
+        iglesiasDisponibles = new ArrayList<>();
+        iglesiasAsignadas = new ArrayList<>();
+        filtro.setMesaId(null);
+        filtro.setIglesiaId(null);
+        mesas = List.of();
+        iglesias = List.of();
+        mesaSeleccionada = null;
+        limpiarSeleccion();
     }
+
     private void limpiarSeleccion() {
-        asignar = new ArrayList<>(); retirar = new ArrayList<>();
+        asignar = new ArrayList<>();
+        retirar = new ArrayList<>();
         primeraDisponible = primeraInscrita = primeraMesa = 0;
     }
+
     public void buscar() {
         limpiarSeleccion();
         recargarRecintos();
         actualizarConsulta();
     }
+
     public void cambiarRecinto() {
         limpiarMesa();
-        if (filtro.getRecintoId() != null) mesas = service.mesas(filtro.getRecintoId());
+        filtro.setRecintoId(recintoConsultaId);
+        if (filtro.getRecintoId() != null)
+            mesas = service.mesas(filtro.getRecintoId());
         consultado = filtro.getProcesoId() != null;
         consultaMesas = new FiltroPadronDTO(filtro);
         actualizarResumen();
     }
+
     public void cambiarMesa() {
-        filtro.setIglesiaId(null); limpiarSeleccion();
+        filtro.setIglesiaId(null);
+        limpiarSeleccion();
         iglesias = filtro.getMesaId() == null || filtro.getProcesoId() == null
-                ? List.of() : service.iglesias(filtro.getMesaId(), filtro.getProcesoId());
+                ? List.of()
+                : service.iglesias(filtro.getMesaId(), filtro.getProcesoId());
         consultaMesas = new FiltroPadronDTO(filtro);
         actualizarResumen();
         cargarIglesias();
     }
+
     private void cargarIglesias() {
-        iglesiasDisponibles = service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), false);
-        iglesiasAsignadas = service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), true);
+        iglesiasDisponibles = new ArrayList<>(
+                service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), false));
+        iglesiasAsignadas = new ArrayList<>(service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), true));
     }
+
     public void asignarIglesia(Integer id) {
         filtro.setIglesiaId(id);
-        try { asignarSeleccionados(); } finally { filtro.setIglesiaId(null); cargarIglesias(); }
+        try {
+            asignarSeleccionados();
+        } finally {
+            filtro.setIglesiaId(null);
+            cargarIglesias();
+        }
     }
+
     public void retirarIglesia(Integer id) {
         filtro.setIglesiaId(id);
-        try { retirarSeleccionados(); } finally { filtro.setIglesiaId(null); cargarIglesias(); }
+        try {
+            retirarSeleccionados();
+        } finally {
+            filtro.setIglesiaId(null);
+            cargarIglesias();
+        }
     }
+
     public String getNombreMesa() {
         return mesas.stream().filter(m -> m.getId().equals(filtro.getMesaId())).map(OpcionPadronDTO::getNombre)
                 .findFirst().orElse("");
     }
-    public void cambiarIglesia() { limpiarSeleccion(); actualizarResumen(); }
+
+    public long getTotalMiembrosMesa() {
+        return iglesiasAsignadas.stream().mapToLong(iglesia -> iglesia.getTotal() == null ? 0 : iglesia.getTotal())
+                .sum();
+    }
+
+    public void cambiarIglesia() {
+        limpiarSeleccion();
+        actualizarResumen();
+    }
+
     public void seleccionarMesa(SelectEvent<MesaPadronDTO> event) {
         FiltroPadronDTO consultaAnterior = consultaMesas;
         int paginaAnterior = primeraMesa;
         mesaSeleccionada = event.getObject();
         filtro.setRecintoId(mesaSeleccionada.getRecintoId());
         mesas = service.mesas(filtro.getRecintoId());
-        filtro.setMesaId(mesaSeleccionada.getId()); cambiarMesa();
-        consultaMesas = consultaAnterior; primeraMesa = paginaAnterior; actualizarResumen();
+        filtro.setMesaId(mesaSeleccionada.getId());
+        cambiarMesa();
+        consultaMesas = consultaAnterior;
+        primeraMesa = paginaAnterior;
+        actualizarResumen();
     }
-    public void buscarPersonas() { asignar = new ArrayList<>(); retirar = new ArrayList<>(); primeraDisponible = primeraInscrita = 0; }
-    public void cambiarEstadoMesas() { primeraMesa = 0; consultaMesas.setConPadron(filtro.getConPadron()); }
+
+    public void buscarPersonas() {
+        asignar = new ArrayList<>();
+        retirar = new ArrayList<>();
+        primeraDisponible = primeraInscrita = 0;
+    }
+
+    public void cambiarEstadoMesas() {
+        primeraMesa = 0;
+        consultaMesas.setConPadron(filtro.getConPadron());
+    }
 
     public boolean isPuedeEditar() {
         return procesoActivo != null && procesoActivo.getId().equals(filtro.getProcesoId())
@@ -200,24 +292,41 @@ public class GestionPadronController implements Serializable {
 
     public void asignarSeleccionados() {
         try {
-            int n = service.asignarIglesia(filtro.getProcesoId(), filtro.getRecintoId(), filtro.getMesaId(), filtro.getIglesiaId());
-            asignar = new ArrayList<>(); actualizarResumen();
+            int n = service.asignarIglesia(filtro.getProcesoId(), filtro.getRecintoId(), filtro.getMesaId(),
+                    filtro.getIglesiaId());
+            asignar = new ArrayList<>();
+            actualizarResumen();
             JsfUtil.addSuccessMessage(Constantes.getMensaje("gestionPadron.asignados", n));
-        } catch (NegocioException e) { JsfUtil.addErrorMessage(e.getMessage()); }
-        catch (Exception e) { log.error("Error asignando padron", e); JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.operacion")); }
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error asignando padron", e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.operacion"));
+        }
     }
+
     public void retirarSeleccionados() {
         try {
-            int n = service.retirarIglesia(filtro.getProcesoId(), filtro.getRecintoId(), filtro.getMesaId(), filtro.getIglesiaId());
-            retirar = new ArrayList<>(); actualizarResumen();
+            int n = service.retirarIglesia(filtro.getProcesoId(), filtro.getRecintoId(), filtro.getMesaId(),
+                    filtro.getIglesiaId());
+            retirar = new ArrayList<>();
+            actualizarResumen();
             JsfUtil.addSuccessMessage(Constantes.getMensaje("gestionPadron.retirados", n));
-        } catch (NegocioException e) { JsfUtil.addErrorMessage(e.getMessage()); }
-        catch (Exception e) { log.error("Error retirando padron", e); JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.operacion")); }
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error retirando padron", e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.operacion"));
+        }
     }
+
     private void actualizarResumen() {
         long[] valores = consultado ? service.resumen(consultaMesas) : new long[3];
-        total = valores[0]; mesasCon = valores[1]; mesasSin = valores[2];
+        total = valores[0];
+        mesasCon = valores[1];
+        mesasSin = valores[2];
     }
+
     public StreamedContent generarReporte() {
         try {
             if (procesoActivo == null) {
@@ -231,38 +340,78 @@ public class GestionPadronController implements Serializable {
             return DefaultStreamedContent.builder().name("empadronados_" + java.time.LocalDate.now() + ".xlsx")
                     .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     .stream(() -> new ByteArrayInputStream(contenido)).build();
-        } catch (NegocioException e) { JsfUtil.addErrorMessage(e.getMessage()); }
-        catch (Exception e) { log.error("Error exportando padron", e); JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.reporte")); }
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error exportando padron", e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.reporte"));
+        }
         return null;
     }
 
     private class FilasLazy extends LazyDataModel<FilaPadronDTO> {
         private final boolean candidatos;
         private List<FilaPadronDTO> pagina = List.of();
-        FilasLazy(boolean candidatos) { this.candidatos = candidatos; }
-        @Override public int count(Map<String, FilterMeta> filters) {
+
+        FilasLazy(boolean candidatos) {
+            this.candidatos = candidatos;
+        }
+
+        @Override
+        public int count(Map<String, FilterMeta> filters) {
             return consultado ? service.contar(filtro, candidatos) : 0;
         }
-        @Override public List<FilaPadronDTO> load(int first, int pageSize, Map<String, SortMeta> sort, Map<String, FilterMeta> filters) {
+
+        @Override
+        public List<FilaPadronDTO> load(int first, int pageSize, Map<String, SortMeta> sort,
+                Map<String, FilterMeta> filters) {
             SortMeta orden = sort.values().stream().findFirst().orElse(null);
             pagina = consultado ? service.listar(filtro, candidatos, first, pageSize,
-                    orden == null ? null : orden.getField(), orden != null && orden.getOrder() == SortOrder.DESCENDING) : List.of();
+                    orden == null ? null : orden.getField(), orden != null && orden.getOrder() == SortOrder.DESCENDING)
+                    : List.of();
             return pagina;
         }
-        @Override public String getRowKey(FilaPadronDTO item) { return item.getId().toString(); }
-        @Override public FilaPadronDTO getRowData(String key) {
+
+        @Override
+        public String getRowKey(FilaPadronDTO item) {
+            return item.getId().toString();
+        }
+
+        @Override
+        public FilaPadronDTO getRowData(String key) {
             List<FilaPadronDTO> seleccion = candidatos ? asignar : retirar;
-            return java.util.stream.Stream.concat(pagina.stream(), (seleccion == null ? List.<FilaPadronDTO>of() : seleccion).stream())
+            return java.util.stream.Stream
+                    .concat(pagina.stream(), (seleccion == null ? List.<FilaPadronDTO>of() : seleccion).stream())
                     .filter(p -> p.getId().toString().equals(key)).findFirst().orElse(null);
         }
     }
+
     private class MesasLazy extends LazyDataModel<MesaPadronDTO> {
         private List<MesaPadronDTO> pagina = List.of();
-        @Override public int count(Map<String, FilterMeta> filters) { return consultado ? service.contarMesas(consultaMesas) : 0; }
-        @Override public List<MesaPadronDTO> load(int first, int pageSize, Map<String, SortMeta> sort, Map<String, FilterMeta> filters) {
-            pagina = consultado ? service.listarMesas(consultaMesas, first, pageSize) : List.of(); return pagina;
+
+        @Override
+        public int count(Map<String, FilterMeta> filters) {
+            return consultado ? service.contarMesas(consultaMesas) : 0;
         }
-        @Override public String getRowKey(MesaPadronDTO item) { return item.getId().toString(); }
-        @Override public MesaPadronDTO getRowData(String key) { return pagina.stream().filter(m -> m.getId().toString().equals(key)).findFirst().orElse(null); }
+
+        @Override
+        public List<MesaPadronDTO> load(int first, int pageSize, Map<String, SortMeta> sort,
+                Map<String, FilterMeta> filters) {
+            SortMeta orden = sort.values().stream().findFirst().orElse(null);
+            pagina = consultado ? service.listarMesas(consultaMesas, first, pageSize,
+                    orden == null ? null : orden.getField(), orden != null && orden.getOrder() == SortOrder.DESCENDING)
+                    : new ArrayList<>();
+            return pagina;
+        }
+
+        @Override
+        public String getRowKey(MesaPadronDTO item) {
+            return item.getId().toString();
+        }
+
+        @Override
+        public MesaPadronDTO getRowData(String key) {
+            return pagina.stream().filter(m -> m.getId().toString().equals(key)).findFirst().orElse(null);
+        }
     }
 }

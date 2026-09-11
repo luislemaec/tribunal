@@ -65,6 +65,7 @@ import org.primefaces.model.file.UploadedFile;
 @ViewScoped
 @Slf4j
 public class ActaEController implements Serializable {
+    @Inject private ec.com.antenasur.service.tec.AlcanceSesionQrService alcanceQr;
 
     private static final long serialVersionUID = 1L;
 
@@ -302,6 +303,28 @@ public class ActaEController implements Serializable {
 
     private void cargaDatosIniciales() {
         this.procesoActivo = procesoElectoralService.getActivo();
+        var contextoQr = alcanceQr.contexto();
+        if (contextoQr != null) {
+            alcanceQr.validar(contextoQr.mesaId(), procesoActivo != null ? procesoActivo.getId() : null);
+            procesosElectorales = new ArrayList<>();
+            procesosElectorales.add(procesoActivo);
+            procesoConsultaId = procesoActivo.getId();
+            provincias = new ArrayList<>();
+            cantones = new ArrayList<>();
+            parroquias = new ArrayList<>();
+            listas = new ArrayList<>();
+            categoriasVotos = categoriaVotoService.getCategoriasOrdenados(procesoConsultaId);
+            accesoRestringidoPresidenteMesa = true;
+            usuarioConsultaGerencial = false;
+            mesaSeleccionado = mesaService.obtenerDTOPorId(contextoQr.mesaId());
+            recintoSeleccionado = mesaSeleccionado.getRecinto();
+            listaMesas = new ArrayList<>();
+            listaMesas.add(mesaSeleccionado);
+            listaRecintos = new ArrayList<>();
+            listaRecintos.add(recintoSeleccionado);
+            cargaDatosMesaSeleccionada();
+            return;
+        }
         this.procesosElectorales = procesoElectoralService.findAll();
         this.procesoConsultaId = procesoActivo != null ? procesoActivo.getId() : null;
         cargarProvincias();
@@ -350,6 +373,11 @@ public class ActaEController implements Serializable {
     }
 
     private MesaDTO obtenerMesaPorUsuario() {
+        var contextoQr = alcanceQr.contexto();
+        if (contextoQr != null) {
+            alcanceQr.validar(contextoQr.mesaId(), contextoQr.procesoId());
+            return mesaService.obtenerDTOPorId(contextoQr.mesaId());
+        }
         MesaDTO mesaPorJunta = obtenerMesaPorDesignacionJRV();
         if (mesaPorJunta != null) {
             return mesaPorJunta;
@@ -1066,6 +1094,10 @@ public class ActaEController implements Serializable {
     }
 
     private boolean puedeGestionarMesa(Integer mesaId) {
+        if (alcanceQr.contexto() != null) {
+            alcanceQr.validar(mesaId, procesoActivo != null ? procesoActivo.getId() : null);
+            return true;
+        }
         if (!accesoRestringidoPresidenteMesa) {
             return tieneRolOperacionActa();
         }
@@ -1177,6 +1209,8 @@ public class ActaEController implements Serializable {
     }
 
     public String exportaPDF(ReportTemplateController documentoActaE, String observacion) throws Exception {
+        alcanceQr.validar(mesaSeleccionado != null ? mesaSeleccionado.getId() : null,
+                procesoActivo != null ? procesoActivo.getId() : null);
         cargarDocumentosActa();
         if (getDocumentoActaValido() != null) {
             throw new IllegalStateException("El acta PDF ya fue generada y validada para esta mesa.");
