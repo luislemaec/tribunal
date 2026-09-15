@@ -22,6 +22,7 @@ public class ActividadAuditoriaDTO implements Serializable {
     private String ip;
     private String modulo;
     private String accion;
+    private String resultado;
     private String detalle;
 
     public static ActividadAuditoriaDTO fromEntity(Proceso proceso) {
@@ -38,6 +39,7 @@ public class ActividadAuditoriaDTO implements Serializable {
         dto.setDetalle(partes.length > 1 ? partes[1].trim() : resumen);
         dto.setAccion(resumen.isBlank() ? "SIN ACCIÓN" : resumen.split("\\s+", 2)[0]);
         dto.setModulo(resolverModulo(actividad));
+        dto.setResultado(resolverResultado(actividad));
         return dto;
     }
 
@@ -54,5 +56,11 @@ public class ActividadAuditoriaDTO implements Serializable {
         if (texto.contains("DOCUMENTO") || texto.contains("REPORTE") || texto.contains("PDF")) return "DOCUMENTOS";
         if (texto.contains("INGRESA") || texto.contains("SALE") || texto.contains("LOGIN")) return "ACCESO";
         return "SISTEMA";
+    }
+
+    private static String resolverResultado(String actividad) {
+        Matcher coincidencia = Pattern.compile("RESULTADO\\s*:\\s*([^;|]+)", Pattern.CASE_INSENSITIVE)
+                .matcher(actividad);
+        return coincidencia.find() ? coincidencia.group(1).trim() : "N/A";
     }
 }

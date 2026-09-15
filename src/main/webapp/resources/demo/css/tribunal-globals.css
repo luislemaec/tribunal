@@ -228,3 +228,55 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
 .mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td .ui-column-title {
     color: #0f172a !important;
 }
+
+/* Bitácora de actividades: alcance exclusivo de procesos.xhtml. */
+.audit-page-header { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+.audit-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:3.25rem; height:3.25rem; border-radius:.75rem; background:#e2e8f0; color:#334155; font-size:1.35rem; }
+.audit-page-header h2 { margin:0; color:#0f172a; font-size:1.5rem; }
+.audit-page-header p { margin:.25rem 0 0; color:#64748b; font-size:.9rem; }
+.audit-page-header__scope { margin-left:auto; }
+.audit-card { padding:1.25rem; }
+.audit-filters { padding-bottom:1rem; border-bottom:1px solid #e2e8f0; }
+.audit-section-heading, .audit-table-heading, .audit-filter-actions { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+.audit-section-heading { margin-bottom:1rem; }
+.audit-section-heading__title { display:block; color:#1e293b; font-weight:700; font-size:.95rem; }
+.audit-section-heading__help, .audit-table-heading p { display:block; margin:.2rem 0 0; color:#64748b; font-size:.82rem; }
+.audit-section-heading__icon { color:#64748b; }
+.audit-filters label { display:block; margin-bottom:.4rem; color:#475569; font-size:.82rem; font-weight:600; }
+.audit-search-input { position:relative; }
+.audit-search-input > i { position:absolute; z-index:1; top:50%; left:.8rem; transform:translateY(-50%); color:#64748b; font-size:.85rem; pointer-events:none; }
+.audit-search-input .ui-inputfield { width:100%; padding-left:2.2rem; }
+.audit-filter-actions { justify-content:flex-end; flex-wrap:wrap; margin-top:.25rem; }
+/* ui-fluid da ancho completo a botones; se revierte solo en esta barra. */
+body .ui-fluid .audit-filter-actions .ui-button { width:auto; flex:0 0 auto; }
+.audit-table-heading { margin:1.25rem 0 .75rem; }
+.audit-table-heading h3 { margin:0; color:#1e293b; font-size:1rem; }
+.audit-table .ui-datatable-data > tr { cursor:pointer; transition:background-color .15s ease, box-shadow .15s ease; }
+.audit-table .ui-datatable-data > tr:hover > td { background:#f8fafc !important; }
+.audit-table .ui-datatable-data > tr.ui-state-highlight > td,
+.audit-table .ui-datatable-data > tr.p-highlight > td { background:#e0f2fe !important; color:#0f172a !important; }
+.audit-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
+.audit-table .ui-datatable-data > tr.p-highlight > td:first-child { box-shadow:inset 3px 0 0 #0284c7; }
+.audit-table .ui-datatable-data > tr > td { vertical-align:middle; }
+.audit-date { display:flex; align-items:center; gap:.4rem; color:#475569; font-size:.82rem; white-space:nowrap; }
+.audit-date i { color:#64748b; font-size:.78rem; }
+.audit-user { color:#334155; font-family:monospace; font-size:.84rem; }
+.audit-tag.ui-tag { font-size:.72rem; font-weight:600; white-space:nowrap; }
+.audit-table__detail { text-align:center; }
+.audit-detail-dialog { width:min(42rem, 94vw); }
+.audit-detail-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding-bottom:1rem; border-bottom:1px solid #e2e8f0; }
+.audit-detail-header__eyebrow { color:#64748b; font-size:.78rem; }
+.audit-detail-header h3 { margin:.25rem 0 0; color:#0f172a; font-size:1.1rem; }
+.audit-detail-grid { margin-top:.5rem; }
+.audit-detail-grid .col-12 > span { display:block; margin-bottom:.2rem; color:#64748b; font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.025em; }
+.audit-detail-grid strong { color:#334155; font-size:.9rem; font-weight:600; }
+.audit-detail-grid__text { display:block; padding:.7rem; border-radius:.45rem; background:#f8fafc; font-family:monospace; font-size:.82rem !important; line-height:1.5; overflow-wrap:anywhere; }
+@media (max-width:576px) {
+    .audit-page-header { align-items:flex-start; }
+    .audit-page-header__scope { margin-left:0; }
+    .audit-card { padding:.9rem; }
+    .audit-section-heading__help { display:none; }
+    .audit-filter-actions { justify-content:stretch; }
+    body .ui-fluid .audit-filter-actions .ui-button { flex:1 1 calc(50% - .375rem); width:auto; }
+    .audit-table-heading { align-items:flex-start; }
+}

@@ -6,6 +6,7 @@ import java.util.List;
 
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.SessionContext;
@@ -21,7 +22,14 @@ import ec.com.antenasur.service.AbstractService;
 @Stateless
 @DeclareRoles({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
     "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+@RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
 public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFacade> {
+
+    private static final java.util.regex.Pattern USUARIO_AUDITABLE =
+            java.util.regex.Pattern.compile("[A-Za-z0-9._@-]{1,120}");
+    private static final java.util.regex.Pattern IP_AUDITABLE =
+            java.util.regex.Pattern.compile("[0-9A-Fa-f:.]{1,64}");
 
     @Inject
     private ProcesoFacade procesoFacade;
@@ -32,6 +40,26 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
     @Override
     protected ProcesoFacade getFacade() {
         return procesoFacade;
+    }
+
+    /** Operaciones normales de bitácora: requieren una identidad Elytron. */
+    @Override
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+        "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    public Proceso create(Proceso entity) {
+        return super.create(entity);
+    }
+
+    /**
+     * Excepción mínima para el único momento previo a la autenticación. El
+     * método no permite elegir acción, módulo, resultado ni detalle y sólo
+     * persiste datos normalizados del intento fallido.
+     */
+    @PermitAll
+    public void registrarLoginFallidoPreautenticacion(String usuarioIntentado, String ip) {
+        String usuario = normalizarUsuarioIntentado(usuarioIntentado);
+        String ipNormalizada = normalizarIp(ip);
+        procesoFacade.registrarLoginFallidoPreautenticacion(usuario, ipNormalizada);
     }
 
     public List<Proceso> getProcesoPorUsuario(String usuario) {
@@ -93,5 +121,17 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
         }
         return sessionContext.isCallerInRole("SITEC-Administrador")
                 ? null : sessionContext.getCallerPrincipal().getName();
+    }
+
+    private String normalizarUsuarioIntentado(String usuario) {
+        if (usuario == null) return "<desconocido>";
+        String valor = usuario.trim();
+        return USUARIO_AUDITABLE.matcher(valor).matches() ? valor : "<desconocido>";
+    }
+
+    private String normalizarIp(String ip) {
+        if (ip == null) return "";
+        String valor = ip.trim();
+        return IP_AUDITABLE.matcher(valor).matches() ? valor : "";
     }
 }

@@ -44,7 +44,9 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private FiltroActividadAuditoriaDTO filtro;
     private LazyDataModel<ActividadAuditoriaDTO> auditoriasLazy;
     private List<String> usuariosAuditoria = Collections.emptyList();
+    private List<ActividadAuditoriaDTO> auditoriasCargadas = Collections.emptyList();
     private int primerRegistro;
+    private ActividadAuditoriaDTO registroSeleccionado;
 
     public ProcesoController() {
         super("ACTIVIDAD INTERNA", new float[]{20, 100, 40, 50, 50},
@@ -67,7 +69,27 @@ public class ProcesoController extends ReportTemplateController implements Seria
             @Override
             public List<ActividadAuditoriaDTO> load(int first, int pageSize,
                     Map<String, SortMeta> sortBy, Map<String, FilterMeta> filterBy) {
-                return procesoService.buscarAuditoria(filtro, first, pageSize);
+                auditoriasCargadas = procesoService.buscarAuditoria(filtro, first, pageSize);
+                return auditoriasCargadas;
+            }
+
+            @Override
+            public String getRowKey(ActividadAuditoriaDTO actividad) {
+                return actividad != null && actividad.getId() != null
+                        ? actividad.getId().toString() : null;
+            }
+
+            @Override
+            public ActividadAuditoriaDTO getRowData(String rowKey) {
+                if (rowKey == null || auditoriasCargadas == null) {
+                    return null;
+                }
+                for (ActividadAuditoriaDTO actividad : auditoriasCargadas) {
+                    if (rowKey.equals(getRowKey(actividad))) {
+                        return actividad;
+                    }
+                }
+                return null;
             }
         };
     }
@@ -118,4 +140,8 @@ public class ProcesoController extends ReportTemplateController implements Seria
     public List<String> getUsuariosAuditoria() { return usuariosAuditoria; }
     public int getPrimerRegistro() { return primerRegistro; }
     public void setPrimerRegistro(int primerRegistro) { this.primerRegistro = primerRegistro; }
+    public ActividadAuditoriaDTO getRegistroSeleccionado() { return registroSeleccionado; }
+    public void setRegistroSeleccionado(ActividadAuditoriaDTO registroSeleccionado) {
+        this.registroSeleccionado = registroSeleccionado;
+    }
 }

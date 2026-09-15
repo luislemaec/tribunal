@@ -15,6 +15,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 import jakarta.ejb.Stateless;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 
@@ -25,7 +28,39 @@ import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
  * @author Usuario
  */
 @Stateless
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+@RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
 public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
+
+    /**
+     * La anotación en la clase no siempre se aplica al método heredado por el
+     * proxy EJB de WildFly. La operación normal de auditoría se declara de
+     * forma explícita para que Elytron evalúe los roles SITEC reales.
+     */
+    @Override
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+        "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    public Proceso create(Proceso entity) {
+        return super.create(entity);
+    }
+
+    /**
+     * Punto interno y acotado para fallos anteriores a request.login(). No
+     * recibe actividad libre ni secretos, por lo que no expone un canal de
+     * escritura general para usuarios anónimos.
+     */
+    @PermitAll
+    public void registrarLoginFallidoPreautenticacion(String usuarioIntentado, String ip) {
+        super.getEntityManager().createNativeQuery("INSERT INTO tec.procesos "
+                + "(actividad, ip, estado, f_crea, u_crea) "
+                + "VALUES (:actividad, :ip, TRUE, CURRENT_TIMESTAMP, :usuario)")
+                .setParameter("actividad", "LOGIN | MÓDULO: ACCESO; RESULTADO: FALLIDO; DETALLE: Credenciales rechazadas")
+                .setParameter("ip", ip)
+                .setParameter("usuario", usuarioIntentado)
+                .executeUpdate();
+    }
 
     public ProcesoFacade() {
         super(Proceso.class, Integer.class);
@@ -33,7 +68,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
 
     public List<Proceso> getProcesoPorUsuario(String usuario) {
         try {
-            String hql = "SELECT p FROM Proceso p WHERE p.usuarioCrea=:usuario  AND m.estado=TRUE";
+            String hql = "SELECT p FROM Proceso p WHERE p.usuarioCrea=:usuario AND p.estado=TRUE";
             Query query = super.getEntityManager().createQuery(hql);
             query.setParameter("usuario", usuario);
             List<Proceso> resultList = query.getResultList();
@@ -111,6 +146,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         }
         agregarFiltroActividad(hql, parametros, "accion", criterio.getAccion());
         agregarFiltroActividad(hql, parametros, "modulo", criterio.getModulo());
+        agregarFiltroActividad(hql, parametros, "resultado", criterio.getResultado());
         if (tieneTexto(criterio.getBusqueda())) {
             hql.append(" AND (LOWER(p.actividad) LIKE :busqueda OR LOWER(p.usuarioCrea) LIKE :busqueda OR p.ip LIKE :busqueda)");
             parametros.add(new ParametroAuditoria("busqueda", "%" + criterio.getBusqueda().trim().toLowerCase() + "%"));

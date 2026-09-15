@@ -119,25 +119,32 @@ public class LoginController implements Serializable {
             return;
         }
         inicializarAuditoriaAcceso();
+        HttpServletRequest request = JsfUtil.getRequest();
 
         try {
-            HttpServletRequest request = JsfUtil.getRequest();
             autenticarEnContenedor(request);
+        } catch (Exception e) {
+            registrarErrorLogin(e);
+            guardarAuditoriaAcceso();
+            log.info("=== LOGIN END ===");
+            return;
+        }
+
+        try {
             AuthDataDTO authData = cargarContextoUsuarioAutenticado();
             if (!authData.isResolved()) {
                 cerrarAutenticacionIncompleta(request);
                 registrarLoginRechazado();
-                log.info("=== LOGIN END ===");
                 return;
             }
             prepararSesionAutenticada(request);
+            guardarAuditoriaAcceso();
             redireccionarDespuesDeLogin();
-        } catch (Exception e) {
-            registrarErrorLogin(e);
+        } catch (Throwable e) {
+            registrarErrorPosteriorAutenticacion(e);
+        } finally {
+            log.info("=== LOGIN END ===");
         }
-
-        guardarAuditoriaAcceso();
-        log.info("=== LOGIN END ===");
     }
 
 
@@ -164,8 +171,8 @@ public class LoginController implements Serializable {
     private void registrarLoginRechazado() {
         String motivo = obtenerMotivoRechazo();
         log.warn("Login rechazado por isResolved()=false. Motivo: {}", motivo);
-        JsfUtil.addErrorMessage("Usuario o contraseÃ±a incorrecto");
-        procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA - " + motivo);
+        JsfUtil.addErrorMessageFromBundle("msg.invalid.credentials");
+        procesoBean.registraLoginFallido(loginBean.getUserName());
         accessAuditory.setStatus(false);
         guardarAuditoriaAcceso();
     }
@@ -216,11 +223,11 @@ public class LoginController implements Serializable {
     }
 
     private void redireccionarDespuesDeLogin() throws Throwable {
+        registrarActividadInicioSesionSinInterrumpir();
         if (Boolean.TRUE.equals(user.getPermanente())) {
             fillMenuModel();
             String destino = resolverDestinoUsuarioPermanente();
             log.info("Redireccionando a {}", destino);
-            procesoBean.registraActividad("INGRESA AL SISTEMA CORRECTAMENTE");
             JsfUtil.redirect(destino);
             return;
         }
@@ -244,12 +251,26 @@ public class LoginController implements Serializable {
     }
 
     private void registrarErrorLogin(Exception e) {
-        log.error("Error durante request.login() o redirect para usuario '{}'", loginBean.getUserName(), e);
-        JsfUtil.addErrorMessage("Usuario o contraseÃ±a incorrecto");
-        procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
+        log.warn("Autenticación rechazada para usuario '{}'", loginBean.getUserName());
+        JsfUtil.addErrorMessageFromBundle("msg.invalid.credentials");
+        procesoBean.registraLoginFallido(loginBean.getUserName());
         loginBean.setUserName("");
         loginBean.setPassword("");
         accessAuditory.setStatus(false);
+    }
+
+    private void registrarErrorPosteriorAutenticacion(Throwable e) {
+        log.error("Autenticación correcta, pero falló una operación posterior para usuario '{}'",
+                loginBean.getUserName(), e);
+        JsfUtil.addErrorMessageFromBundle("msg.login.postauth.error");
+    }
+
+    private void registrarActividadInicioSesionSinInterrumpir() {
+        try {
+            procesoBean.registraActividad("LOGIN | MÓDULO: ACCESO; RESULTADO: EXITOSO; DETALLE: Inicio de sesión");
+        } catch (Exception e) {
+            log.error("No se pudo registrar la auditoría posterior a request.login() OK", e);
+        }
     }
 
     private void guardarAuditoriaAcceso() {
@@ -257,7 +278,6 @@ public class LoginController implements Serializable {
             accessService.create(accessAuditory);
         } catch (Exception e) {
             log.error("Error guardando AccessAuditory", e);
-            procesoBean.registraActividad("ERROR DE INGRESO AL SISTEMA");
         }
     }
 

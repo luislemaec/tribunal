@@ -15,11 +15,11 @@ import java.util.Map;
 import jakarta.annotation.PostConstruct;
 
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import jakarta.validation.constraints.Email;
 import org.primefaces.model.menu.DefaultMenuItem;
@@ -146,7 +146,40 @@ public class LoginBean implements Serializable {
                 accessService.edit(accessAuditory);
             }
         } catch (Exception e) {
-            log.info("Error");
+            log.error("No se pudo registrar el cierre en la auditoría de acceso", e);
+        }
+    }
+
+    /**
+     * Registra el cierre antes de retirar la identidad Elytron. La bitácora no
+     * debe impedir que la sesión se cierre aunque su almacenamiento falle.
+     */
+    private void registrarCierreSesion(HttpServletRequest request, String actividad) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            registerAdditory(session.getId());
+        }
+        try {
+            procesoBean.registraActividad(actividad);
+        } catch (Exception e) {
+            log.error("No se pudo registrar la actividad de cierre de sesión", e);
+        }
+    }
+
+    private void invalidarSesion(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+    }
+
+    private void cerrarAutenticacion(HttpServletRequest request) {
+        try {
+            request.logout();
+        } catch (ServletException e) {
+            log.error("No se pudo cerrar la autenticación HTTP", e);
+        } finally {
+            invalidarSesion(request);
         }
     }
 
@@ -160,11 +193,9 @@ public class LoginBean implements Serializable {
      */
     public void logout() throws RuntimeException, IOException, ServletException {
         HttpServletRequest request = JsfUtil.getRequest();
-        registerAdditory(request.getSession().getId().toString());
-        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
-        request.logout();
-
-        FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
+        registrarCierreSesion(request,
+                "LOGOUT | MÓDULO: ACCESO; RESULTADO: EXITOSO; DETALLE: Cierre de sesión");
+        cerrarAutenticacion(request);
         JsfUtil.redirect("/");
     }
 
@@ -183,15 +214,16 @@ public class LoginBean implements Serializable {
 
     public void cerrarSessionExpirada() throws RuntimeException, IOException {
         log.info("Sesion causa=IDLE_MONITOR; timeoutSegundos={}", tiempoSession);
-        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
         HttpServletRequest request = JsfUtil.getRequest();
-        request.getSession().invalidate();
+        registrarCierreSesion(request,
+                "LOGOUT | MÓDULO: ACCESO; RESULTADO: EXPIRADO; DETALLE: Sesión expirada");
+        invalidarSesion(request);
         JsfUtil.redirect("/errors/viewExpired.jsf");
     }
 
     public void cerrarSessionRedireccionar(String url) throws RuntimeException, IOException {
         HttpServletRequest request = JsfUtil.getRequest();
-        request.getSession().invalidate();
+        invalidarSesion(request);
         JsfUtil.redirect(url);
     }
 
@@ -344,10 +376,9 @@ public class LoginBean implements Serializable {
      */
     public void passwordChangued() throws RuntimeException, IOException, ServletException {
         HttpServletRequest request = JsfUtil.getRequest();
-        registerAdditory(request.getSession().getId().toString());
-        procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
-        request.logout();
-        request.getSession().invalidate();
+        registrarCierreSesion(request,
+                "LOGOUT | MÓDULO: ACCESO; RESULTADO: EXITOSO; DETALLE: Cierre tras cambio de clave");
+        cerrarAutenticacion(request);
     }
 
 }

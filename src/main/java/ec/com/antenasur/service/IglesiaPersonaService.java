@@ -267,9 +267,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
      * comprueba en el contexto Elytron del EJB y todas las bajas quedan dentro
      * de la misma transaccion y registradas por Envers.
      */
-    @RolesAllowed("SITEC-Tribunal")
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public IglesiaPersonaDTO regularizarDesdeDTO(IglesiaPersonaDTO dto, Integer vinculoDefinitivoId) {
-        if (!esCallerTribunal()) {
+        if (!esCallerAdministradorOTribunal()) {
             throw new IglesiaPersonaException("form.personas.regularizacion.error.permiso");
         }
         if (dto == null || dto.getPersona() == null) {
@@ -282,11 +282,18 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
             throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion");
         }
 
+        String documentoSolicitado = normalizarDocumento(dto.getPersona().getDocumento());
         IglesiaPersona seleccionada = iglesiaPersonaFacade.find(vinculoDefinitivoId);
         if (seleccionada == null || seleccionada.getPersona() == null) {
             throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion.invalida");
         }
         String documentoActual = normalizarDocumento(seleccionada.getPersona().getDocumento());
+        // El identificador elegido debe pertenecer a la misma persona que se
+        // mostró en el diálogo; evita regularizar un vínculo ajeno mediante un
+        // parámetro JSF manipulado.
+        if (!documentoActual.equals(documentoSolicitado)) {
+            throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion.invalida");
+        }
         List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documentoActual, true);
         if (contarIglesiasDistintas(activas) < 2) {
             throw new IglesiaPersonaException("form.personas.regularizacion.error.no.requerida");
@@ -334,10 +341,6 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         }
 
         Persona personaDefinitiva = definitiva.getPersona();
-        String documentoSolicitado = normalizarDocumento(dto.getPersona().getDocumento());
-        if (!documentoActual.equals(documentoSolicitado)) {
-            validarDocumentoDisponibleParaPersona(documentoSolicitado, personaDefinitiva.getId());
-        }
         actualizarPersona(personaDefinitiva, dto, documentoSolicitado);
         personaFacade.edit(personaDefinitiva);
         definitiva.setHasta(null);

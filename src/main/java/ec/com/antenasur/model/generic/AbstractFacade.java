@@ -23,6 +23,7 @@ import org.hibernate.Session;
 import org.hibernate.envers.Audited;
 
 import ec.com.antenasur.model.tec.Proceso;
+import ec.com.antenasur.model.IglesiaPersona;
 
 /**
  * @author Luis Lema <lemaedu@gmail.com>
@@ -167,6 +168,16 @@ public abstract class AbstractFacade<T, E> {
     }
 
     private String identificarRegistro(Object entity) {
+        if (entity instanceof IglesiaPersona relacion) {
+            String persona = relacion.getPersona() != null
+                    ? obtenerEtiquetaSegura(relacion.getPersona(), "getDocumento", "getNombres") : null;
+            String iglesia = relacion.getIglesia() != null
+                    ? obtenerEtiquetaSegura(relacion.getIglesia(), "getNombre", "getCodigo") : null;
+            if (persona != null || iglesia != null) {
+                return "Persona " + (persona != null ? persona : "sin identificar")
+                        + "; Iglesia " + (iglesia != null ? iglesia : "sin identificar");
+            }
+        }
         String etiqueta = obtenerEtiquetaSegura(entity, "getUsername", "getNombre", "getCodigo", "getCedula", "getNumero");
         String id = entity instanceof EntidadBase base && base.getId() != null
                 ? String.valueOf(base.getId()) : "sin identificador";

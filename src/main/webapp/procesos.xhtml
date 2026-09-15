@@ -1,101 +1,252 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="jakarta.faces.html"
-                xmlns:f="jakarta.faces.core"
-                xmlns:ui="jakarta.faces.facelets"
-                xmlns:p="http://primefaces.org/ui"
-                template="/WEB-INF/template.xhtml">
+	xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core"
+	xmlns:ui="jakarta.faces.facelets" xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.procesos.title']}</ui:define>
-    <ui:define name="viewname">
-        <li>#{msg['form.usuarios.crumb.security']}</li><li>/</li>
-        <li><p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link></li>
-    </ui:define>
+	<ui:define name="title">#{msg['form.procesos.title']}</ui:define>
+	<ui:define name="viewname">
+		<li>#{msg['form.usuarios.crumb.security']}</li>
+		<li>/</li>
+		<li><p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link></li>
+	</ui:define>
 
-    <ui:define name="content">
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#64748b,#475569);flex-shrink:0">
-                        <i class="pi pi-history text-white" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.procesos.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">
-                            #{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+	<ui:define name="content">
+		<div class="audit-page">
+			<div class="audit-page-header">
+				<div class="audit-page-header__icon">
+					<i class="pi pi-history" />
+				</div>
+				<div>
+					<h2>#{msg['form.procesos.title']}</h2>
+					<p>#{procesoController.administrador ? 'Bitácora global de
+						actividades del sistema' : 'Sus actividades registradas en el
+						sistema'}</p>
+				</div>
+				<p:tag rendered="#{procesoController.administrador}"
+					value="Vista global" severity="info" icon="pi pi-shield"
+					styleClass="audit-page-header__scope" />
+			</div>
 
-        <h:form id="frmProcesos">
-            <div class="surface-card shadow-1 border-round-lg p-3">
-                <p:outputPanel id="pnlFiltros" styleClass="ui-fluid">
-                    <div class="formgrid grid align-items-end">
-                        <div class="field col-12 md:col-3" rendered="#{procesoController.administrador}">
-                            <label for="usuario" class="font-medium text-700 text-sm">Usuario</label>
-                            <p:selectOneMenu id="usuario" value="#{procesoController.filtro.usuario}" filter="true" filterMatchMode="contains">
-                                <f:selectItem itemLabel="Todos los usuarios" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{procesoController.usuariosAuditoria}" var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 #{procesoController.administrador ? 'md:col-2' : 'md:col-3'}">
-                            <label for="fechaInicio" class="font-medium text-700 text-sm">Desde</label>
-                            <p:datePicker id="fechaInicio" value="#{procesoController.filtro.fechaInicio}" pattern="dd/MM/yyyy" showIcon="true"/>
-                        </div>
-                        <div class="field col-12 #{procesoController.administrador ? 'md:col-2' : 'md:col-3'}">
-                            <label for="fechaFin" class="font-medium text-700 text-sm">Hasta</label>
-                            <p:datePicker id="fechaFin" value="#{procesoController.filtro.fechaFin}" pattern="dd/MM/yyyy" showIcon="true"/>
-                        </div>
-                        <div class="field col-12 md:col-2">
-                            <label for="modulo" class="font-medium text-700 text-sm">Módulo</label>
-                            <p:selectOneMenu id="modulo" value="#{procesoController.filtro.modulo}">
-                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItem itemLabel="Acceso" itemValue="ACCESO"/>
-                                <f:selectItem itemLabel="Seguridad" itemValue="USUARIO"/>
-                                <f:selectItem itemLabel="JRV" itemValue="JRV"/>
-                                <f:selectItem itemLabel="Padrón" itemValue="PADRON"/>
-                                <f:selectItem itemLabel="Escrutinio" itemValue="ACTA"/>
-                                <f:selectItem itemLabel="Mesas" itemValue="MESA"/>
-                                <f:selectItem itemLabel="Documentos" itemValue="DOCUMENTO"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="accion" class="font-medium text-700 text-sm">Acción</label>
-                            <p:inputText id="accion" value="#{procesoController.filtro.accion}" maxlength="80" placeholder="Ej.: CREA, ACTUALIZA, GENERA"/>
-                        </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="busqueda" class="font-medium text-700 text-sm">Búsqueda general</label>
-                            <p:inputText id="busqueda" value="#{procesoController.filtro.busqueda}" maxlength="120" placeholder="Actividad, detalle, usuario o IP"/>
-                        </div>
-                        <div class="field col-12 flex justify-content-end gap-2 mb-0">
-                            <p:commandButton value="Buscar" icon="pi pi-search" action="#{procesoController.buscar}"
-                                             process="pnlFiltros" update="tblAuditoria"/>
-                            <p:commandButton value="Limpiar" icon="pi pi-filter-slash" styleClass="ui-button-outlined ui-button-secondary"
-                                             action="#{procesoController.limpiarFiltros}" process="@this" update="pnlFiltros tblAuditoria"/>
-                            <p:commandButton value="Exportar PDF" icon="pi pi-file-pdf" styleClass="ui-button-outlined ui-button-help"
-                                             ajax="false" action="#{procesoController.exportaPDF}"/>
-                        </div>
-                    </div>
-                </p:outputPanel>
+			<h:form id="frmProcesos">
+				<div class="surface-card shadow-1 border-round-lg audit-card">
+					<p:outputPanel id="pnlFiltros" styleClass="audit-filters ui-fluid">
+						<div class="audit-section-heading">
+							<div>
+								<span class="audit-section-heading__title">Filtros de
+									consulta</span> <span class="audit-section-heading__help">Refine
+									la bitácora por contexto, fecha o resultado.</span>
+							</div>
+							<i class="pi pi-filter audit-section-heading__icon"
+								aria-hidden="true" />
+						</div>
+						<div class="formgrid grid">
+							<div class="field col-12 md:col-6 lg:col-3"
+								rendered="#{procesoController.administrador}">
+								<label for="usuario">Usuario</label>
+								<p:selectOneMenu id="usuario"
+									value="#{procesoController.filtro.usuario}" filter="true"
+									filterMatchMode="contains">
+									<f:selectItem itemLabel="Todos los usuarios"
+										itemValue="#{null}" noSelectionOption="true" />
+									<f:selectItems value="#{procesoController.usuariosAuditoria}"
+										var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}" />
+								</p:selectOneMenu>
+							</div>
+							<div
+								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
+								<label for="fechaInicio">Desde</label>
+								<p:datePicker id="fechaInicio"
+									value="#{procesoController.filtro.fechaInicio}"
+									pattern="dd/MM/yyyy" showIcon="true" showButtonBar="true" />
+							</div>
+							<div
+								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
+								<label for="fechaFin">Hasta</label>
+								<p:datePicker id="fechaFin"
+									value="#{procesoController.filtro.fechaFin}"
+									pattern="dd/MM/yyyy" showIcon="true" showButtonBar="true" />
+							</div>
+							<div
+								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
+								<label for="modulo">Módulo</label>
+								<p:selectOneMenu id="modulo"
+									value="#{procesoController.filtro.modulo}">
+									<f:selectItem itemLabel="Todos los módulos" itemValue="#{null}"
+										noSelectionOption="true" />
+									<f:selectItem itemLabel="Acceso" itemValue="ACCESO" />
+									<f:selectItem itemLabel="Seguridad" itemValue="USUARIO" />
+									<f:selectItem itemLabel="JRV" itemValue="JRV" />
+									<f:selectItem itemLabel="Padrón" itemValue="PADRON" />
+									<f:selectItem itemLabel="Escrutinio" itemValue="ACTA" />
+									<f:selectItem itemLabel="Mesas" itemValue="MESA" />
+									<f:selectItem itemLabel="Documentos" itemValue="DOCUMENTO" />
+								</p:selectOneMenu>
+							</div>
+							<div class="field col-12 md:col-6 lg:col-3">
+								<label for="accion">Acción</label>
+								<p:inputText id="accion"
+									value="#{procesoController.filtro.accion}" maxlength="80"
+									placeholder="Ej.: CREA, ACTUALIZA, GENERA" />
+							</div>
+							<div class="field col-12 md:col-6 lg:col-3">
+								<label for="resultado">Resultado</label>
+								<p:selectOneMenu id="resultado"
+									value="#{procesoController.filtro.resultado}">
+									<f:selectItem itemLabel="Todos los resultados"
+										itemValue="#{null}" noSelectionOption="true" />
+									<f:selectItem itemLabel="Exitoso" itemValue="EXITOSO" />
+									<f:selectItem itemLabel="Fallido" itemValue="FALLIDO" />
+									<f:selectItem itemLabel="Expirado" itemValue="EXPIRADO" />
+								</p:selectOneMenu>
+							</div>
+							<div class="field col-12 lg:col-6">
+								<label for="busqueda">Búsqueda general</label>
+								<div class="audit-search-input">
+									<i class="pi pi-search" aria-hidden="true" />
+									<p:inputText id="busqueda"
+										value="#{procesoController.filtro.busqueda}" maxlength="120"
+										placeholder="Actividad, detalle, usuario o IP" />
+								</div>
+							</div>
+						</div>
 
-                <p:dataTable id="tblAuditoria" widgetVar="wdTblAuditoria" var="registro"
-                             value="#{procesoController.auditoriasLazy}" lazy="true" first="#{procesoController.primerRegistro}"
-                             paginator="true" rows="25" rowsPerPageTemplate="10,25,50,100" paginatorPosition="bottom"
-                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} actividades"
-                             emptyMessage="No hay actividades para los filtros seleccionados."
-                             reflow="true" styleClass="ui-datatable-striped ui-datatable-sm mt-3">
-                    <p:column headerText="Fecha / hora" style="width:11rem" sortBy="#{registro.fecha}">
-                        <h:outputText value="#{registro.fecha}" styleClass="text-sm text-700"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText>
-                    </p:column>
-                    <p:column headerText="Usuario" style="width:12rem"><span class="font-mono text-sm text-700">#{registro.usuario}</span></p:column>
-                    <p:column headerText="Módulo" style="width:10rem"><p:tag value="#{registro.modulo}" severity="info"/></p:column>
-                    <p:column headerText="Acción" style="width:9rem"><span class="font-semibold text-900 text-sm">#{registro.accion}</span></p:column>
-                    <p:column headerText="Detalle"><div class="flex flex-column gap-1"><span class="text-800 text-sm">#{registro.detalle}</span><small class="text-500 font-mono">IP: #{registro.ip}</small></div></p:column>
-                </p:dataTable>
-            </div>
-        </h:form>
-    </ui:define>
+
+						<div class="audit-filter-actions">
+							<p:commandButton value="Buscar" icon="pi pi-search"
+								action="#{procesoController.buscar}" process="pnlFiltros"
+								update="tblAuditoria" styleClass="ui-button-sm" />
+							<p:commandButton value="Limpiar" icon="pi pi-filter-slash"
+								styleClass="ui-button-sm ui-button-outlined ui-button-secondary"
+								action="#{procesoController.limpiarFiltros}" process="@this"
+								update="pnlFiltros tblAuditoria" />
+							<p:commandButton value="Exportar PDF" icon="pi pi-file-pdf"
+								styleClass="ui-button-sm ui-button-outlined ui-button-help"
+								ajax="false" action="#{procesoController.exportaPDF}" />
+						</div>
+					</p:outputPanel>
+
+					<div class="audit-table-heading">
+						<div>
+							<h3>Actividades registradas</h3>
+							<p>Seleccione una fila o consulte su detalle para ver la
+								información completa.</p>
+						</div>
+					</div>
+					<p:dataTable id="tblAuditoria" widgetVar="wdTblAuditoria"
+						var="registro" value="#{procesoController.auditoriasLazy}"
+						lazy="true" first="#{procesoController.primerRegistro}"
+						paginator="true" rows="25" rowsPerPageTemplate="10,25,50,100"
+						paginatorPosition="bottom"
+						paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+						currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} actividades"
+						emptyMessage="No hay actividades para los filtros seleccionados."
+						reflow="true" showLoader="true"
+						loadingMessage="Cargando actividades..."
+						selection="#{procesoController.registroSeleccionado}"
+						selectionMode="single" rowKey="#{registro.id}"
+						styleClass="audit-table ui-datatable-striped ui-datatable-sm">
+						<p:ajax event="rowSelect"
+							update=":frmProcesos:pnlDetalleAuditoria" />
+						<p:ajax event="rowUnselect"
+							update=":frmProcesos:pnlDetalleAuditoria" />
+						<p:column headerText="Fecha / hora" styleClass="audit-table__date"
+							responsivePriority="1">
+							<div class="audit-date">
+								<i class="pi pi-clock" />
+								<h:outputText value="#{registro.fecha}">
+									<f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+								</h:outputText>
+							</div>
+						</p:column>
+						<p:column headerText="Usuario" styleClass="audit-table__user"
+							responsivePriority="2">
+							<span class="audit-user">#{registro.usuario}</span>
+						</p:column>
+						<p:column headerText="Módulo" responsivePriority="3">
+							<p:tag value="#{registro.modulo}" severity="info"
+								styleClass="audit-tag audit-tag--module" />
+						</p:column>
+						<p:column headerText="Acción" responsivePriority="4">
+							<p:tag value="#{registro.accion}" severity="secondary"
+								styleClass="audit-tag audit-tag--action" />
+						</p:column>
+						<p:column headerText="Resultado" responsivePriority="5">
+							<p:tag value="#{registro.resultado}"
+								severity="#{registro.resultado eq 'FALLIDO' ? 'danger' : registro.resultado eq 'EXITOSO' ? 'success' : 'secondary'}"
+								styleClass="audit-tag audit-tag--result" />
+						</p:column>
+						<p:column headerText="" exportable="false"
+							styleClass="audit-table__detail" responsivePriority="1">
+							<p:commandButton icon="pi pi-eye"
+								title="Ver detalle de la actividad"
+								styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+								process="@this" update=":frmProcesos:pnlDetalleAuditoria"
+								oncomplete="PF('dlgDetalleAuditoria').show()">
+								<f:setPropertyActionListener value="#{registro}"
+									target="#{procesoController.registroSeleccionado}" />
+							</p:commandButton>
+						</p:column>
+					</p:dataTable>
+				</div>
+
+				<p:dialog id="dlgDetalleAuditoria" widgetVar="dlgDetalleAuditoria"
+					header="Detalle de actividad" modal="true" responsive="true"
+					draggable="false" resizable="false" closeOnEscape="true"
+					appendTo="@(body)" styleClass="audit-detail-dialog">
+					<p:outputPanel id="pnlDetalleAuditoria" layout="block">
+						<ui:fragment
+							rendered="#{not empty procesoController.registroSeleccionado}">
+							<div class="audit-detail-header">
+								<div>
+									<span class="audit-detail-header__eyebrow">Actividad
+										##{procesoController.registroSeleccionado.id}</span>
+									<h3>#{procesoController.registroSeleccionado.accion}</h3>
+								</div>
+								<p:tag
+									value="#{procesoController.registroSeleccionado.resultado}"
+									severity="#{procesoController.registroSeleccionado.resultado eq 'FALLIDO' ? 'danger' : procesoController.registroSeleccionado.resultado eq 'EXITOSO' ? 'success' : 'secondary'}" />
+							</div>
+							<div class="grid audit-detail-grid">
+								<div class="col-12 md:col-6">
+									<span>Usuario</span><strong>#{procesoController.registroSeleccionado.usuario}</strong>
+								</div>
+								<div class="col-12 md:col-6">
+									<span>Fecha y hora</span><strong><h:outputText
+											value="#{procesoController.registroSeleccionado.fecha}">
+											<f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+										</h:outputText></strong>
+								</div>
+								<div class="col-12 md:col-6">
+									<span>Módulo</span><strong>#{procesoController.registroSeleccionado.modulo}</strong>
+								</div>
+								<div class="col-12 md:col-6">
+									<span>Acción</span><strong>#{procesoController.registroSeleccionado.accion}</strong>
+								</div>
+								<div class="col-12 md:col-6">
+									<span>Resultado</span><strong>#{procesoController.registroSeleccionado.resultado}</strong>
+								</div>
+								<div class="col-12 md:col-6">
+									<span>IP</span><strong>#{empty
+										procesoController.registroSeleccionado.ip ? 'N/A' :
+										procesoController.registroSeleccionado.ip}</strong>
+								</div>
+								<div class="col-12">
+									<span>Entidad, registro afectado y detalle disponible</span><strong
+										class="audit-detail-grid__text">#{procesoController.registroSeleccionado.detalle}</strong>
+								</div>
+							</div>
+						</ui:fragment>
+						<ui:fragment
+							rendered="#{empty procesoController.registroSeleccionado}">
+							<div class="empty-state">
+								<i class="pi pi-info-circle icon-lg" />
+								<h4>Seleccione una actividad</h4>
+								<p>El detalle se mostrará aquí.</p>
+							</div>
+						</ui:fragment>
+					</p:outputPanel>
+				</p:dialog>
+			</h:form>
+		</div>
+	</ui:define>
 </ui:composition>

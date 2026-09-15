@@ -16,5 +16,6 @@ public class FiltroActividadAuditoriaDTO implements Serializable {
     private LocalDate fechaFin;
     private String accion;
     private String modulo;
+    private String resultado;
     private String busqueda;
 }

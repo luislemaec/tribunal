@@ -239,7 +239,9 @@ public class PersonaController implements Serializable {
             faseAnterior = cronogramaService.getFaseAnteriorAActualizacion();
             faseSiguiente = cronogramaService.getFaseSiguienteAActualizacion();
             puedeEditarPadron = cronogramaService.permiteEdicionPadron();
-            puedeRegularizarIglesias = esUsuarioTribunal();
+            // Tribunal conserva su alcance actual y Administrador puede
+            // regularizar inconsistencias entre iglesias desde el mismo flujo.
+            puedeRegularizarIglesias = esUsuarioTribunal() || esUsuarioAdministrador();
             puedeGenerarReporteInconsistencias = puedeRegularizarIglesias || esUsuarioAdministrador();
 
             // Detección de rol IglesiaAdmin: si el usuario logueado tiene este

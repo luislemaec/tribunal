@@ -13,6 +13,8 @@ import ec.com.antenasur.service.tec.ProcesoService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -21,6 +23,8 @@ import lombok.Setter;
 @Named(value = "procesoBean")
 @RequestScoped
 public class ProcesoBean {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProcesoBean.class);
 
     @Inject
     ProcesoService procesoService;
@@ -45,6 +49,15 @@ public class ProcesoBean {
         proceso.setActividad(actividad);
         proceso.setIp(JsfUtil.getIPAddress());
         procesoService.create(proceso);
+    }
+
+    /** Registra únicamente un rechazo previo a request.login(), sin secreto alguno. */
+    public void registraLoginFallido(String usuarioIntentado) {
+        try {
+            procesoService.registrarLoginFallidoPreautenticacion(usuarioIntentado, JsfUtil.getIPAddress());
+        } catch (Exception e) {
+            LOG.error("No se pudo registrar el intento de inicio de sesión fallido", e);
+        }
     }
 
     public List<Proceso> getTodoProceso() {
@@ -78,7 +91,7 @@ public class ProcesoBean {
             proceso.setActividad(datos != null && !datos.isBlank() ? activity + " | " + datos : activity);
             procesoService.create(proceso);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("No se pudo registrar la actividad: {}", activity, e);
         }
     }
 }
