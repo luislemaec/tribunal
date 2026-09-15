@@ -68,6 +68,11 @@ public class LoginBean implements Serializable {
     @Getter
     private boolean loggedIn;
 
+    /** Guarda de sesión contra envíos concurrentes del formulario de login. */
+    @Setter
+    @Getter
+    private boolean autenticacionEnCurso;
+
     @Setter
     @Getter
     private boolean internalUsuario;

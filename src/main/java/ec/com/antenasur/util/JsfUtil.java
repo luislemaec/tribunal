@@ -22,6 +22,7 @@ import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.logging.Logger;
 
 import jakarta.el.ELContext;
 import jakarta.faces.application.FacesMessage;
@@ -42,6 +43,7 @@ import ec.com.antenasur.dto.UsuarioDTO;
 public class JsfUtil implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger LOG = Logger.getLogger(JsfUtil.class.getName());
 
     public static final String GROWL_MESSAGES = ":frmGlobal:growlGlobal";
 
@@ -92,7 +94,27 @@ public class JsfUtil implements Serializable {
      */
     public static void redirect(String url) throws RuntimeException, IOException {
         FacesContext faces = FacesContext.getCurrentInstance();
-        faces.getExternalContext().redirect(faces.getExternalContext().getRequestContextPath() + url);
+        if (faces == null || faces.getResponseComplete()) {
+            return;
+        }
+        ExternalContext externalContext = faces.getExternalContext();
+        Object respuesta = externalContext.getResponse();
+        if (respuesta instanceof HttpServletResponse response && response.isCommitted()) {
+            LOG.warning("Redirección omitida porque la respuesta HTTP ya fue completada: " + url);
+            faces.responseComplete();
+            return;
+        }
+        try {
+            externalContext.redirect(externalContext.getRequestContextPath() + url);
+            faces.responseComplete();
+        } catch (IllegalStateException e) {
+            if (respuesta instanceof HttpServletResponse response && response.isCommitted()) {
+                LOG.warning("Redirección ya enviada por la respuesta HTTP: " + url);
+                faces.responseComplete();
+                return;
+            }
+            throw e;
+        }
     }
 
     public static HttpServletRequest getRequest() {

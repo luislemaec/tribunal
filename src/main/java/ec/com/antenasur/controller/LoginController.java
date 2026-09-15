@@ -6,6 +6,7 @@ import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,7 +99,8 @@ public class LoginController implements Serializable {
                 if (request.getUserPrincipal() != null) {
                     request.logout();
                 }
-            } else if (loginBean != null && loginBean.getUserName() != null && loginBean.isLoggedIn()
+            } else if (!FacesContext.getCurrentInstance().isPostback()
+                    && loginBean != null && loginBean.getUserName() != null && loginBean.isLoggedIn()
                     && loginBean.getUsuario() != null) {
                 if (Boolean.TRUE.equals(loginBean.getUsuario().getPermanente())) {
                     JsfUtil.redirect("/dashboard.jsf");
@@ -111,39 +113,66 @@ public class LoginController implements Serializable {
         }
     }
 
-    public void login() throws Throwable {
+    public void login() {
         if (loginBean.getUserName() != null && loginBean.getUserName().startsWith(
                 ec.com.antenasur.security.qr.ConfiguracionQr.PREFIJO)) {
             loginBean.setPassword(null);
             JsfUtil.addErrorMessageFromBundle("actaQr.error.acceso");
             return;
         }
-        inicializarAuditoriaAcceso();
         HttpServletRequest request = JsfUtil.getRequest();
-
-        try {
-            autenticarEnContenedor(request);
-        } catch (Exception e) {
-            registrarErrorLogin(e);
-            guardarAuditoriaAcceso();
-            log.info("=== LOGIN END ===");
+        if (!iniciarAutenticacion(request)) {
             return;
         }
 
         try {
-            AuthDataDTO authData = cargarContextoUsuarioAutenticado();
-            if (!authData.isResolved()) {
-                cerrarAutenticacionIncompleta(request);
-                registrarLoginRechazado();
+            inicializarAuditoriaAcceso();
+            try {
+                autenticarEnContenedor(request);
+            } catch (Exception e) {
+                // Solo request.login() puede convertir el error en credenciales inválidas.
+                registrarErrorLogin(e);
+                guardarAuditoriaAcceso();
                 return;
             }
-            prepararSesionAutenticada(request);
-            guardarAuditoriaAcceso();
-            redireccionarDespuesDeLogin();
-        } catch (Throwable e) {
-            registrarErrorPosteriorAutenticacion(e);
+
+            try {
+                AuthDataDTO authData = cargarContextoUsuarioAutenticado();
+                if (!authData.isResolved()) {
+                    cerrarAutenticacionIncompleta(request);
+                    registrarLoginRechazado();
+                    return;
+                }
+                prepararSesionAutenticada(request);
+                guardarAuditoriaAcceso();
+            } catch (Throwable e) {
+                registrarErrorPosteriorAutenticacion(e);
+                return;
+            }
+
+            try {
+                redireccionarDespuesDeLogin();
+            } catch (Throwable e) {
+                registrarErrorRedireccion(e);
+            }
         } finally {
+            loginBean.setAutenticacionEnCurso(false);
             log.info("=== LOGIN END ===");
+        }
+    }
+
+    private boolean iniciarAutenticacion(HttpServletRequest request) {
+        synchronized (loginBean) {
+            if (loginBean.isAutenticacionEnCurso()) {
+                log.warn("Se ignoró un segundo envío de login para '{}': autenticación en curso", loginBean.getUserName());
+                return false;
+            }
+            if (loginBean.isLoggedIn() && request.getUserPrincipal() != null) {
+                log.warn("Se ignoró un segundo envío de login para '{}' ya autenticado", loginBean.getUserName());
+                return false;
+            }
+            loginBean.setAutenticacionEnCurso(true);
+            return true;
         }
     }
 
@@ -226,6 +255,11 @@ public class LoginController implements Serializable {
         registrarActividadInicioSesionSinInterrumpir();
         if (Boolean.TRUE.equals(user.getPermanente())) {
             fillMenuModel();
+            // fillMenuModel puede cerrar la sesión y redirigir cuando no hay
+            // menú disponible. No se debe emitir una segunda redirección.
+            if (FacesContext.getCurrentInstance().getResponseComplete()) {
+                return;
+            }
             String destino = resolverDestinoUsuarioPermanente();
             log.info("Redireccionando a {}", destino);
             JsfUtil.redirect(destino);
@@ -263,6 +297,14 @@ public class LoginController implements Serializable {
         log.error("Autenticación correcta, pero falló una operación posterior para usuario '{}'",
                 loginBean.getUserName(), e);
         JsfUtil.addErrorMessageFromBundle("msg.login.postauth.error");
+    }
+
+    private void registrarErrorRedireccion(Throwable e) {
+        log.error("La autenticación fue correcta, pero no se pudo completar la redirección para usuario '{}'",
+                loginBean.getUserName(), e);
+        if (!FacesContext.getCurrentInstance().getResponseComplete()) {
+            JsfUtil.addErrorMessageFromBundle("msg.login.postauth.error");
+        }
     }
 
     private void registrarActividadInicioSesionSinInterrumpir() {
