@@ -40,6 +40,17 @@ public class AccesoDocumentoMesaService {
 		return qr != null ? qr.username() : contexto.getCallerPrincipal().getName();
 	}
 
+	/** Resuelve la persona real tanto para FORM como para el principal restringido QR. */
+	public Integer personaAutenticadaId() {
+		var qr = alcanceQr == null ? null : alcanceQr.contexto();
+		var usuario = usuarioFacade.findByUsuarioName(usuarioActual());
+		if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado()) || usuario.getPersonsa() == null
+				|| !Boolean.TRUE.equals(usuario.getPersonsa().getEstado())
+				|| (qr != null && !qr.usuarioId().equals(usuario.getId())))
+			throw new NegocioException(Constantes.getMensaje("reportesMesa.error.mesa.no.autorizada"));
+		return usuario.getPersonsa().getId();
+	}
+
 	/** null significa alcance de todas las mesas para un revisor autorizado. */
 	public Integer mesaPermitida(Integer procesoId) {
 		var qr = alcanceQr == null ? null : alcanceQr.contexto();

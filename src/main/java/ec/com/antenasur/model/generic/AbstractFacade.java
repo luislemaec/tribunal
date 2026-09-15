@@ -20,6 +20,9 @@ import lombok.Setter;
 
 import org.hibernate.Filter;
 import org.hibernate.Session;
+import org.hibernate.envers.Audited;
+
+import ec.com.antenasur.model.tec.Proceso;
 
 /**
  * @author Luis Lema <lemaedu@gmail.com>
@@ -93,8 +96,9 @@ public abstract class AbstractFacade<T, E> {
      */
     public <T extends EntidadBase> T delete(T entidad) {
         entidad.setEstado(false);
-        getEntityManager().merge(entidad);
+        T persistida = getEntityManager().merge(entidad);
         em.flush();
+        registrarActividadPersistencia(persistida, "DESACTIVA");
         return entidad;
     }
 
@@ -102,6 +106,7 @@ public abstract class AbstractFacade<T, E> {
         try {
             getEntityManager().persist(entity);
             em.flush();
+            registrarActividadPersistencia(entity, "CREA");
             return entity;
         } catch (NoResultException e) {
             return null;
@@ -110,8 +115,9 @@ public abstract class AbstractFacade<T, E> {
 
     public T edit(T entity) {
         try {
-            getEntityManager().merge(entity);
+            T persistida = getEntityManager().merge(entity);
             em.flush();
+            registrarActividadPersistencia(persistida, "ACTUALIZA");
             return entity;
         } catch (NoResultException e) {
             return null;
@@ -120,6 +126,66 @@ public abstract class AbstractFacade<T, E> {
 
     public void remove(T entity) {
         getEntityManager().remove(getEntityManager().merge(entity));
+        registrarActividadPersistencia(entity, "ELIMINA");
+    }
+
+    /**
+     * Complementa Envers con una entrada funcional consultable en
+     * {@code tec.procesos}. Solo se registra para entidades versionadas por
+     * Envers: no duplica consultas, no guarda el estado completo de la entidad
+     * ni incluye credenciales, tokens, rutas de archivos o valores sensibles.
+     * El detalle de columnas continúa en las tablas {@code *_aud} de Envers.
+     */
+    private void registrarActividadPersistencia(Object entity, String accion) {
+        if (!(entity instanceof EntidadBase)
+                || entity instanceof Proceso
+                || !entity.getClass().isAnnotationPresent(Audited.class)) {
+            return;
+        }
+
+        Proceso actividad = new Proceso();
+        String entidad = entity.getClass().getSimpleName();
+        String descripcion = accion + " | MÓDULO: " + resolverModulo(entidad)
+                + "; ENTIDAD: " + entidad + "; REGISTRO: " + identificarRegistro(entity);
+        actividad.setActividad(descripcion.substring(0, Math.min(descripcion.length(), 255)));
+        getEntityManager().persist(actividad);
+    }
+
+    private String resolverModulo(String entidad) {
+        return switch (entidad) {
+            case "Usuario", "Rol", "RolUsuario", "Menu", "MenuRol" -> "SEGURIDAD";
+            case "Persona", "Iglesia", "IglesiaPersona" -> "PERSONAS E IGLESIAS";
+            case "ProcesoElectoral", "Periodo", "CronogramaFase" -> "PROCESO ELECTORAL";
+            case "Recinto", "Mesa" -> "RECINTOS Y MESAS";
+            case "Padron" -> "PADRÓN";
+            case "MiembroJRV", "Cargo" -> "JRV";
+            case "Escrutinio", "EscrutinioCabecera", "CategoriaVoto" -> "ESCRUTINIO";
+            case "Documentos", "PlantillaCorreo", "Correo" -> "DOCUMENTOS";
+            case "Lista", "Candidato", "Tribunal" -> "POSTULACIONES";
+            default -> "CONFIGURACIÓN";
+        };
+    }
+
+    private String identificarRegistro(Object entity) {
+        String etiqueta = obtenerEtiquetaSegura(entity, "getUsername", "getNombre", "getCodigo", "getCedula", "getNumero");
+        String id = entity instanceof EntidadBase base && base.getId() != null
+                ? String.valueOf(base.getId()) : "sin identificador";
+        return etiqueta == null || etiqueta.isBlank() ? "ID " + id : etiqueta + " (ID " + id + ")";
+    }
+
+    private String obtenerEtiquetaSegura(Object entity, String... metodos) {
+        for (String metodo : metodos) {
+            try {
+                Object valor = entity.getClass().getMethod(metodo).invoke(entity);
+                if (valor != null && !valor.toString().isBlank()) {
+                    return valor.toString().replaceAll("[\\r\\n\\t]", " ").substring(0,
+                            Math.min(valor.toString().length(), 160));
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // La entidad no expone esa etiqueta; se usará su identificador.
+            }
+        }
+        return null;
     }
 
     public T find(E id) {

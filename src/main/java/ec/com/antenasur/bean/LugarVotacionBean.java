@@ -39,7 +39,6 @@ public class LugarVotacionBean implements Serializable {
         try {
             lugares = lugarVotacionService.buscarDTOsPorNombreOCedula(nombreCedula);
             if (lugares != null && !lugares.isEmpty()) {
-                procesoBean.registraActividad("BUSCA LUGAR VOTACION " + nombreCedula);
                 JsfUtil.addSuccessMessage(lugares.size() + " LUGAR ENCONTRADO");
             } else {
                 JsfUtil.addWarningMessage("NO SE ENCONTRO LUGAR DE VOTACIÓN");

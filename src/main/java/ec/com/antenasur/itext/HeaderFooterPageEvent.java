@@ -23,7 +23,6 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
 import ec.com.antenasur.util.Constantes;
-import ec.com.antenasur.util.JsfUtil;
 
 public class HeaderFooterPageEvent extends PdfPageEventHelper {
 
@@ -111,19 +110,6 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             cabecera.addCell(celdaTexto);
 
             cabecera.writeSelectedRows(0, -1, document.left(), pageSize.getHeight() - (actaParcial ? 38 : 44), writer.getDirectContent());
-
-            String ipServidor = JsfUtil.obtieneIpServidor();
-            String servidorProduccion = Constantes.getProduccionServer();
-            if (!actaParcial && (servidorProduccion == null || !servidorProduccion.equals(ipServidor))) {
-                /*Agrega borrador*/
-                String pathBorrador = webRoot + "/resources/img/BORRRADOR.png";
-                Image borrador = Image.getInstance(pathBorrador);
-                borrador.scaleToFit(pageSize.getWidth(), pageSize.getHeight());
-                float x = (pageSize.getWidth() - borrador.getScaledWidth()) / 2;
-                float y = (pageSize.getHeight() - borrador.getScaledHeight()) / 2;
-                borrador.setAbsolutePosition(x, y);
-                document.add(borrador);
-            }
 
         } catch (Exception e) {
             Logger.getLogger(HeaderFooterPageEvent.class.getName()).log(Level.SEVERE, null, e);

@@ -20,6 +20,8 @@ import lombok.Setter;
 
 @WebFilter(filterName = "LoginFilter", urlPatterns = {"/*"}, dispatcherTypes = {DispatcherType.REQUEST, DispatcherType.FORWARD})
 public class LoginFilter implements Filter {
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LoginFilter.class.getName());
+
     @jakarta.inject.Inject
     private ec.com.antenasur.security.qr.ControlHttpSesionQr controlQr;
 
@@ -47,6 +49,14 @@ public class LoginFilter implements Filter {
         }
 
         HttpServletRequest req = (HttpServletRequest) request;
+        if (esSolicitudActa(req)) {
+            LOG.info("QR_TEMP_ACTA; metodo=" + req.getMethod() + "; uri=" + req.getRequestURI()
+                    + "; servletPath=" + req.getServletPath() + "; tipo=" + tipoPeticion(req)
+                    + "; sesion=" + (req.getSession(false) != null)
+                    + "; principalPresente=" + (req.getUserPrincipal() != null)
+                    + "; rolPresidente=" + req.isUserInRole("SITEC-Presidente-mesa")
+                    + "; rolQr=" + req.isUserInRole("TEC-QR") + "; secure=" + req.isSecure());
+        }
         if (controlQr.procesar(req, (jakarta.servlet.http.HttpServletResponse) response, next)) return;
 
         var sesion = req.getSession(false);
@@ -105,6 +115,20 @@ public class LoginFilter implements Filter {
             retorno = str.nextToken();
         }
         return retorno;
+    }
+
+    private boolean esSolicitudActa(HttpServletRequest req) {
+        String ruta = req.getRequestURI().substring(req.getContextPath().length());
+        return "/actaE.jsf".equals(ruta) || "/actaE.faces".equals(ruta)
+                || "/actaE.xhtml".equals(ruta) || "/faces/actaE.xhtml".equals(ruta);
+    }
+
+    private String tipoPeticion(HttpServletRequest req) {
+        String contentType = req.getContentType();
+        if (contentType != null && contentType.toLowerCase(java.util.Locale.ROOT).startsWith("multipart/form-data")) {
+            return "MULTIPART";
+        }
+        return "partial/ajax".equals(req.getHeader("Faces-Request")) ? "JSF_AJAX" : "HTTP";
     }
 
     @Override

@@ -19,7 +19,6 @@ import ec.com.antenasur.bean.PlantillaCorreoBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
-import ec.com.antenasur.service.PasswordService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CorreoService;
 import ec.com.antenasur.util.Constantes;
@@ -46,12 +45,9 @@ public class OlvidoClaveController implements Serializable {
     @Inject
     private CorreoService correoService;
 
-    @Inject
-    private PasswordService passwordService;
-
     @Setter
     @Getter
-    private String username, claveTemporal, correo;
+    private String username, correo;
 
     @Setter
     @Getter
@@ -76,16 +72,12 @@ public class OlvidoClaveController implements Serializable {
             if (username == null || username.isEmpty() || correo == null || correo.isEmpty()) {
                 return;
             }
-            claveTemporal = JsfUtil.generatePassword();
-            String hash = passwordService.hashBcrypt(claveTemporal);
-            usuario = usuarioService.iniciarRecuperacionClave(username, correo, claveTemporal, hash);
-
-            if (usuario == null) {
-                JsfUtil.addWarningMessage("Datos incorrectos, revise por favor");
-                return;
+            UsuarioService.SolicitudRecuperacionClave solicitud = usuarioService.iniciarRecuperacionClave(username, correo);
+            if (solicitud != null) {
+                usuario = solicitud.usuario();
+                sendMailRecoveryPassword(solicitud.token());
             }
             procesoBean.registraActividad("RECUPERA CLAVE OLVIDADO");
-            sendMailRecoveryPassword();
             JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
@@ -93,12 +85,13 @@ public class OlvidoClaveController implements Serializable {
         }
     }
 
-    private void sendMailRecoveryPassword() {
+    private void sendMailRecoveryPassword(String token) {
         try {
             HashMap<String, String> parametros = correoService.construirParametrosBase();
             parametros.put("nombreApellido", usuario.getPersonsa().getNombres());
             parametros.put("nombreUsuario", usuario.getUsername());
-            parametros.put("claveTemporal", claveTemporal);
+            parametros.put("enlaceRecuperacion", JsfUtil.getStartPage() + "/restablecerClave.jsf?token="
+                    + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8));
 
             List<String> destinatarios = new ArrayList<>();
             destinatarios.add(usuario.getCorreo());

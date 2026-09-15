@@ -38,14 +38,6 @@ public class HeaderFooterHorizontalPageEvent extends PdfPageEventHelper {
             logo.scaleToFit(150, 60);
             logo.setAlignment(Chunk.ALIGN_CENTER);
 
-            /*Agrega borrador*/
-            String pathBorrador = webRoot + "/resources/images/certificate/FONDO.png";
-            Image borrador = Image.getInstance(pathBorrador);
-            borrador.scaleToFit(PageSize.A4.rotate().getWidth(), PageSize.A4.rotate().getHeight());
-            float x = (PageSize.A4.rotate().getWidth() - borrador.getScaledWidth()) / 2;
-            float y = (PageSize.A4.rotate().getHeight() - borrador.getScaledHeight()) / 2;
-            borrador.setAbsolutePosition(x, y);
-            document.add(borrador);
             document.add(logo);
             document.add(imgHeader);
 

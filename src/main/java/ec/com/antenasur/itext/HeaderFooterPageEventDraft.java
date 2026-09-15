@@ -9,11 +9,8 @@ import jakarta.servlet.ServletContext;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Image;
-import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
-import ec.com.antenasur.util.Constantes;
-import ec.com.antenasur.util.JsfUtil;
 
 /**
  * Clase agrega cabecera y pie de página a documentos generados con iText
@@ -44,20 +41,6 @@ public class HeaderFooterPageEventDraft extends PdfPageEventHelper {
             logo.setAlignment(Chunk.ALIGN_CENTER);
             document.add(logo);
 
-            /**
-             * Agrega imagen borrador
-             */
-            String ipServidor = JsfUtil.obtieneIpServidor();
-            String servidorProduccion = Constantes.getProduccionServer();
-            if (servidorProduccion == null || !servidorProduccion.equals(ipServidor)) {
-                String pathBorrador = webRoot + "/resources/images/BORRRADOR.png";
-                Image imgBorrador = Image.getInstance(pathBorrador);
-                imgBorrador.scaleToFit(PageSize.A4.getWidth(), PageSize.A4.getHeight());
-                float x = (PageSize.A4.getWidth() - imgBorrador.getScaledWidth()) / 2;
-                float y = (PageSize.A4.getHeight() - imgBorrador.getScaledHeight()) / 2;
-                imgBorrador.setAbsolutePosition(x, y);
-                document.add(imgBorrador);
-            }
         } catch (Exception e) {
             Logger.getLogger(HeaderFooterPageEventDraft.class.getName()).log(Level.SEVERE, null, e);
         }

@@ -169,7 +169,7 @@
 
                     <!-- Acciones -->
                     <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:7rem">
+                              styleClass="text-center" style="width:10rem">
 
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
@@ -190,6 +190,17 @@
                                          process="@this" update="tblUsuarios">
                             <p:confirm header="#{msg['form.usuarios.confirm.delete.header']}"
                                        message="#{msg['form.usuarios.confirm.delete.message']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+
+                        <p:commandButton icon="pi pi-key"
+                                         styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                         title="#{msg['form.usuarios.btn.reset.password']}"
+                                         rendered="#{rolUs.usuario.estado}"
+                                         action="#{usuarioControlador.restablecerContraseniaACedula(rolUs.usuario)}"
+                                         process="@this" update="tblUsuarios">
+                            <p:confirm header="#{msg['form.usuarios.confirm.reset.password.header']}"
+                                       message="#{msg['form.usuarios.confirm.reset.password.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
 

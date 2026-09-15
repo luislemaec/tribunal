@@ -29,6 +29,7 @@ import ec.com.antenasur.util.RepositorioDocumentos;
 /** Gestiona la evidencia fotogr\u00e1fica del acta llenada manualmente. */
 @Stateless
 public class ActaFisicaEscrutinioService {
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ActaFisicaEscrutinioService.class.getName());
 
     public static final String TIPO_DOCUMENTO = "ACTA FISICA DE ESCRUTINIO";
     public static final String PENDIENTE_REVISION = "PENDIENTE_REVISION";
@@ -50,35 +51,54 @@ public class ActaFisicaEscrutinioService {
     private TransactionSynchronizationRegistry transacciones;
     @Resource private SessionContext sessionContext;
 
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-Presidente-mesa"})
     public Documentos obtenerVigente(Integer mesaId, Integer procesoId) {
         accesoDocumental.validar(mesaId, procesoId);
         TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(TIPO_DOCUMENTO);
         return tipo == null ? null : documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
     }
 
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-Presidente-mesa"})
     public Documentos cargar(Integer mesaId, Integer procesoId, Integer personaId,
             String usuario, String nombreOriginal, String mime, byte[] contenido) {
-        validarArchivo(nombreOriginal, mime, contenido);
-        Mesa mesa = validarMesaCerradaYPresidente(mesaId, procesoId, personaId);
-        TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(TIPO_DOCUMENTO);
-        if (tipo == null) {
-            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.1"));
-        }
-        documentoService.bloquearMesaParaVersion(mesaId);
-        Documentos vigente = documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
-        if (vigente != null && VALIDADA.equals(vigente.getEstadoRevision())) {
-            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.2"));
-        }
+        // Compatibilidad con llamados existentes: la identidad no procede de estos parametros.
+        return cargar(mesaId, procesoId, nombreOriginal, mime, contenido);
+    }
 
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-Presidente-mesa"})
+    public Documentos cargar(Integer mesaId, Integer procesoId, String nombreOriginal, String mime, byte[] contenido) {
+        String etapa = "ALCANCE_MESA_PROCESO";
         Path archivo = null;
         try {
+            accesoDocumental.validar(mesaId, procesoId);
+            etapa = "IDENTIDAD_AUTENTICADA";
+            Integer personaId = accesoDocumental.personaAutenticadaId();
+            etapa = "ARCHIVO";
+            validarArchivo(nombreOriginal, mime, contenido);
+            etapa = "PRESIDENTE_MESA_CERRADA";
+            Mesa mesa = validarMesaCerradaYPresidente(mesaId, procesoId, personaId);
+            etapa = "TIPO_DOCUMENTO";
+            TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(TIPO_DOCUMENTO);
+            if (tipo == null) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.1"));
+            }
+            etapa = "VERSION_ACTIVA";
+            documentoService.bloquearMesaParaVersion(mesaId);
+            Documentos vigente = documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
+            if (vigente != null && VALIDADA.equals(vigente.getEstadoRevision())) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.2"));
+            }
+
+            etapa = "BLOQUEO_VERSION";
             documentoService.bloquearMesaParaVersion(mesaId);
             int version = documentoService.siguienteVersionMesaProcesoTipo(mesaId, procesoId, tipo.getId());
             String codigo = String.format(Locale.ROOT, "ACTA-FISICA-PE%02d-M%03d-V%02d-%s",
                     procesoId, mesaId, version, UUID.randomUUID().toString().substring(0, 8));
+            etapa = "ESCRIBIR_ARCHIVO";
             archivo = RepositorioDocumentos.escribirAtomico(
                     "actas-fisicas-escrutinio/proceso-" + procesoId + "/mesa-" + mesaId,
                     codigo + ".jpg", contenido);
+            etapa = "REGISTRAR_ROLLBACK";
             registrarLimpiezaAnteRollback(archivo);
 
             Documentos documento = new Documentos(codigo,
@@ -92,6 +112,7 @@ public class ActaFisicaEscrutinioService {
             documento.setHashSha256(RepositorioDocumentos.sha256(contenido));
             documento.setEstadoRevision(PENDIENTE_REVISION);
             documento.setUsuarioCrea(accesoDocumental.usuarioActual());
+            etapa = "PERSISTIR_DOCUMENTO";
             Documentos persistido = documentoService.registrarVersionMesa(documento, mesaId,
                     procesoId, mesa.getRecinto() != null ? mesa.getRecinto().getId() : null);
             if (persistido == null || persistido.getId() == null) {
@@ -99,6 +120,8 @@ public class ActaFisicaEscrutinioService {
             }
             return persistido;
         } catch (Exception e) {
+            LOG.warning("ACTA_FISICA causa=" + etapa + "; mesa=" + mesaId + "; proceso=" + procesoId
+                    + "; excepcion=" + ec.com.antenasur.security.qr.DiagnosticoQr.tipoExcepcion(e));
             sessionContext.setRollbackOnly();
             RepositorioDocumentos.eliminarSilencioso(archivo);
             throw e instanceof NegocioException ? (NegocioException) e
@@ -106,6 +129,7 @@ public class ActaFisicaEscrutinioService {
         }
     }
 
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public Documentos revisar(Integer documentoId, String estadoRevision, String observacion, String usuario) {
         if (!accesoDocumental.esRevisor()) {
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.4"));
@@ -144,6 +168,7 @@ public class ActaFisicaEscrutinioService {
         return documentoService.actualizar(documento);
     }
 
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public void validarActaFinal(Integer documentoId, Integer mesaId, Integer procesoId,
             ec.com.antenasur.dto.RevisionActaFinalDTO revision) {
         escrutinioService.validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);

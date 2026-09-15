@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:p="http://primefaces.org/ui">
+    <h:head><title>#{msg['app.sistema']} - Contraseña actualizada</title></h:head>
+    <h:body styleClass="login-body">
+        <div class="grid"><div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8"><div class="card text-center">
+            <h3>Contraseña actualizada</h3><p>La contraseña se actualizó correctamente. Ya puede iniciar sesión.</p>
+            <h:outputLink value="#{request.contextPath}/index.html">Ir al inicio de sesión</h:outputLink>
+        </div></div></div>
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

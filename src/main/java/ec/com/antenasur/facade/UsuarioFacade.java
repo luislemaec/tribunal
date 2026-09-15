@@ -229,22 +229,19 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
 
     }
 
-    public Usuario findUsuarioByTemportalPassword(String username, String contraseniaTemp) {
+    public Usuario findUsuarioPorHashRecuperacion(String hash) {
+        if (hash == null || hash.isBlank()) return null;
         try {
-            String sql = SQL + "LEFT JOIN FETCH u.persona p "
-                    + "where u.username = :username and u.contraseniaTemp=:contraseniaTemp and u.estado=true and p.estado=true and u.permanente=true";
+            String sql = SQL + "LEFT JOIN FETCH u.personsa p "
+                    + "where u.link = :hash and u.usuarioFechaExpira > CURRENT_TIMESTAMP "
+                    + "and u.estado=true and p.estado=true";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
-            query.setParameter("username", username);
-            query.setParameter("contraseniaTemp", contraseniaTemp);
-            List<Usuario> resultList = query.getResultList();
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList.get(0);
-            }
+            query.setParameter("hash", hash);
+            List<Usuario> resultados = query.getResultList();
+            return resultados.isEmpty() ? null : resultados.get(0);
         } catch (Exception e) {
             return null;
         }
-        return null;
-
     }
 
     public Usuario findUsuarioByPeople(int persona_id) {

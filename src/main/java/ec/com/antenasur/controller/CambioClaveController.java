@@ -17,10 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.PlantillaCorreoBean;
-import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
-import ec.com.antenasur.service.PasswordService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CorreoService;
 import ec.com.antenasur.util.Constantes;
@@ -39,9 +37,6 @@ public class CambioClaveController implements Serializable {
     LoginBean loginBean;
 
     @Inject
-    ProcesoBean procesoBean;
-
-    @Inject
     private UsuarioService usuarioService;
 
     @Inject
@@ -49,9 +44,6 @@ public class CambioClaveController implements Serializable {
 
     @Inject
     private CorreoService correoService;
-
-    @Inject
-    private PasswordService passwordService;
 
     @Setter
     @Getter
@@ -77,31 +69,34 @@ public class CambioClaveController implements Serializable {
 
     public void cambiarClave() throws RuntimeException, IOException, ServletException {
         try {
-            if (usuario == null) {
-                JsfUtil.addWarningMessage("Usuario o contraseÃƒÂ±a incorrecta");
+            if (usuario == null || usuario.getId() == null) {
+                JsfUtil.addWarningMessage("No fue posible validar la sesión del usuario");
                 return;
             }
-            if (claveTemporal.isEmpty() || clave1.isEmpty() || clave2.isEmpty()) {
+            if (claveTemporal == null || clave1 == null || clave2 == null) {
                 return;
             }
             if (!clave1.equals(clave2)) {
-                JsfUtil.addFatalMessage("Las contraseÃƒÂ±as no coinciden");
+                JsfUtil.addErrorMessage("Las contraseñas no coinciden");
                 return;
             }
             if (!JsfUtil.validarContrasenia(clave1)) {
                 return;
             }
 
-            String hash = passwordService.hashBcrypt(clave2);
-            usuario = usuarioService.cambiarContraseniaPorId(usuario.getId(), hash);
+            usuario = usuarioService.cambiarContraseniaAutenticada(usuario.getId(), usuario.getUsername(),
+                    claveTemporal, clave1);
+            if (usuario == null) {
+                JsfUtil.addErrorMessage("La contraseña actual no es correcta");
+                return;
+            }
 
             enviarCorreoCambioClave();
-            JsfUtil.addSuccessMessage("Cambio de clave exitoso");
-            procesoBean.registraActividad("CAMBIA CONTRASEÃƒ‘A");
             loginBean.passwordChangued();
-            JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
+            JsfUtil.redirect("/claveActualizada.jsf");
         } catch (Exception e) {
-            JsfUtil.addErrorMessage("Problemas al recuperar la contrasenia");
+            LOG.error("Error al cambiar la contraseña", e);
+            JsfUtil.addErrorMessage("No fue posible cambiar la contraseña");
         }
     }
 
@@ -110,7 +105,6 @@ public class CambioClaveController implements Serializable {
             HashMap<String, String> parametros = correoService.construirParametrosBase();
             parametros.put("nombreApellido", usuario.getPersonaNombres());
             parametros.put("nombreUsuario", usuario.getUsername());
-            parametros.put("clave", clave1);
 
             List<String> destinatarios = new ArrayList<>();
             destinatarios.add(usuario.getCorreo());

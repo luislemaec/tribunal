@@ -1,6 +1,8 @@
 package ec.com.antenasur.security.qr;
 
 import java.io.IOException;
+import java.util.Locale;
+import java.util.logging.Logger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.FilterChain;
@@ -12,6 +14,8 @@ import ec.com.antenasur.util.RedireccionSesion;
 
 @ApplicationScoped
 public class ControlHttpSesionQr {
+	private static final Logger LOG = Logger.getLogger(ControlHttpSesionQr.class.getName());
+
 	@Inject
 	private AlcanceSesionQrService alcance;
 
@@ -31,17 +35,19 @@ public class ControlHttpSesionQr {
 		}
 		response.setHeader("Cache-Control", "no-store");
 		response.setHeader("Referrer-Policy", "no-referrer");
+		boolean rutaPermitida = RutasSesionQr.permitida(ruta, request.getMethod());
 		try {
-			if (!request.isSecure() || !RutasSesionQr.permitida(ruta, request.getMethod()))
+			if (!request.isSecure() || !rutaPermitida)
 				throw new AccesoQrException();
 			var contexto = alcance.contexto();
 			if (contexto == null)
 				throw new AccesoQrException();
 			alcance.validar(contexto.mesaId(), contexto.procesoId());
 		} catch (Exception e) {
-			java.util.logging.Logger.getLogger(ControlHttpSesionQr.class.getName()).warning(
-					"QR causa=FILTRO_SESION_PREVIA; secure=" + request.isSecure()
-					+ "; rutaPermitida=" + RutasSesionQr.permitida(ruta, request.getMethod())
+			LOG.warning("QR_TEMP_RECHAZO; causa=FILTRO_SESION_PREVIA; metodo=" + request.getMethod()
+					+ "; uri=" + request.getRequestURI() + "; servletPath=" + request.getServletPath()
+					+ "; dispatcher=" + request.getDispatcherType() + "; tipo=" + tipoPeticion(request)
+					+ "; secure=" + request.isSecure() + "; rutaPermitida=" + rutaPermitida
 					+ "; excepcion=" + DiagnosticoQr.tipoExcepcion(e));
 			boolean logoutCorrecto = true;
 			try { request.logout(); }
@@ -62,5 +68,14 @@ public class ControlHttpSesionQr {
 		}
 		cadena.doFilter(request, response);
 		return true;
+	}
+
+	private static String tipoPeticion(HttpServletRequest request) {
+		String contentType = request.getContentType();
+		if (contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/form-data"))
+			return "MULTIPART";
+		if ("partial/ajax".equals(request.getHeader("Faces-Request")))
+			return "JSF_AJAX";
+		return "HTTP";
 	}
 }

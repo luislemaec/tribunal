@@ -658,22 +658,25 @@ public class ActaEController implements Serializable {
     public void cargarActaFisica() {
         try {
             if (!mesaSeleccionadaValida() || !isMesaCerrada() || !puedeGestionarMesa(mesaSeleccionado.getId())) {
+                log.warn("ACTA_FISICA causa=CONTEXTO_VISTA_NO_AUTORIZADO");
                 JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.autorizada");
                 return;
             }
             if (archivoActaFisica == null || archivoActaFisica.getContent() == null) {
+                log.warn("ACTA_FISICA causa=ARCHIVO_NO_RECIBIDO");
                 JsfUtil.addWarningMessageFromBundle("actaE.actaFisica.archivo.requerido");
                 return;
             }
             actaFisica = actaFisicaEscrutinioService.cargar(mesaSeleccionado.getId(), procesoActivo.getId(),
-                    loginBean.getUsuario().getPersonaId(), loginBean.getUserName(), archivoActaFisica.getFileName(),
+                    archivoActaFisica.getFileName(),
                     archivoActaFisica.getContentType(), archivoActaFisica.getContent());
             archivoActaFisica = null;
             JsfUtil.addSuccessMessageFromBundle("actaE.actaFisica.cargada");
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
-            log.error("ERROR AL CARGAR ACTA FISICA", e);
+            log.error("ACTA_FISICA causa=CONTROLLER; excepcion={}",
+                    ec.com.antenasur.security.qr.DiagnosticoQr.tipoExcepcion(e));
             JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.error");
         }
     }

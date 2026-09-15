@@ -40,8 +40,8 @@
                                         value="#{cambioClaveController.claveTemporal}"
                                         validatorMessage="#{msg['msg.passwordOld.validator']}"
                                         requiredMessage="#{msg['msg.password.required']}"
-                                        redisplay="true" toggleMask="true"
-                                        placeholder="#{msg['msg.placeH.claveTemporat']}"/>
+                                        toggleMask="true"
+                                        placeholder="#{msg['form.cambioClave.label.password.old']}"/>
 
                             <p:password styleClass=" w-full my-3" id="password" required="true"
                                         value="#{cambioClaveController.clave1}"
@@ -54,7 +54,7 @@
                                         value="#{cambioClaveController.clave2}"
                                         validatorMessage="#{msg['msg.password.validator']}"
                                         requiredMessage="#{msg['msg.password.required']}"
-                                        redisplay="true" toggleMask="true"
+                                        toggleMask="true"
                                         placeholder="#{msg['form.cambioClave.placeholder.password.confirm']}"/>
                         </div>
 

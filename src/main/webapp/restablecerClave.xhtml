@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core">
+    <f:metadata>
+        <f:viewParam name="token" value="#{restablecerClaveController.token}" />
+    </f:metadata>
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+        </f:facet>
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>#{msg['app.sistema']} - Restablecer contraseña</title>
+    </h:head>
+    <h:body styleClass="login-body">
+        <div class="login-topbar"><h:link outcome="/dashboard" class="logo"><p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/></h:link></div>
+        <h:form id="frmRestablecerClave">
+            <div class="grid">
+                <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
+                    <div class="card">
+                        <h5><b>Restablecer contraseña</b></h5>
+                        <p:growl id="mensajes" showDetail="true"/>
+                        <p:staticMessage severity="info" summary="Defina una nueva contraseña" detail="El enlace es de un solo uso y tiene vigencia limitada." style="width:100%"/>
+                        <div class="grid ui-fluid mt-3">
+                            <div class="col-12"><p:password id="clave" value="#{restablecerClaveController.clave1}" required="true" requiredMessage="La contraseña es requerida" toggleMask="true" placeholder="Nueva contraseña"/></div>
+                            <div class="col-12"><p:password id="confirmacion" value="#{restablecerClaveController.clave2}" required="true" requiredMessage="Debe confirmar la contraseña" toggleMask="true" placeholder="Repita la contraseña"/></div>
+                        </div>
+                        <h:inputHidden id="token" value="#{restablecerClaveController.token}"/>
+                        <div class="text-center mt-3"><p:commandButton value="Guardar contraseña" action="#{restablecerClaveController.restablecer}" ajax="false" styleClass="ui-button-info"/></div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+        <h:outputStylesheet name="css/primeicons.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
+        <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
+    </h:body>
+</html>

@@ -1,49 +1,36 @@
 package ec.com.antenasur.report;
 
-import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.WEEKS;
-import static java.time.temporal.ChronoUnit.MONTHS;
-import static java.time.temporal.ChronoUnit.YEARS;
-
 import java.io.Serializable;
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortMeta;
 
-import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
-import ec.com.antenasur.model.tec.Proceso;
+import ec.com.antenasur.dto.ActividadAuditoriaDTO;
+import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
 import ec.com.antenasur.itext.ReportePFD;
-import ec.com.antenasur.itext.ReporteXLSX;
+import ec.com.antenasur.model.tec.Proceso;
 import ec.com.antenasur.service.tec.ProcesoService;
 import ec.com.antenasur.util.Constantes;
-import ec.com.antenasur.util.JsfUtil;
-import lombok.Getter;
-import lombok.Setter;
 
+/** Consulta de la bitácora funcional tec.procesos. */
 @Named
 @ViewScoped
 public class ProcesoController extends ReportTemplateController implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Logger LOG = LoggerFactory.getLogger(ReportTemplateController.class);
-
-    private static final Integer TAMANIO_LETRA = 0;
 
     @Inject
     private LoginBean loginBean;
@@ -52,151 +39,83 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private ProcesoBean procesoBean;
 
     @Inject
-    ProcesoService procesoService;
+    private ProcesoService procesoService;
 
-    @Setter
-    @Getter
-    private List<Proceso> listaProceso, procesos;
-
-    @Setter
-    @Getter
-    private LocalDate fechaActual, fechaInicio, fechaFin, minfecha, maxfecha;
+    private FiltroActividadAuditoriaDTO filtro;
+    private LazyDataModel<ActividadAuditoriaDTO> auditoriasLazy;
+    private List<String> usuariosAuditoria = Collections.emptyList();
+    private int primerRegistro;
 
     public ProcesoController() {
-        //Inicializa Datos Padre
-        super(
-                "ACTIVIDAD INTERNA",
-                new float[]{20, 100, 40, 50, 50},
+        super("ACTIVIDAD INTERNA", new float[]{20, 100, 40, 50, 50},
                 new int[]{1200, 3000, 4000, 10000, 4000},
-                new String[]{"Nro", "ACTIVIDAD", "IP", "USUARIO CREA", "FECHA REGISTRO"},
-                TAMANIO_LETRA
-        );
+                new String[]{"Nro", "ACTIVIDAD", "IP", "USUARIO CREA", "FECHA REGISTRO"}, 0);
     }
 
     @PostConstruct
     private void init() {
-        try {
-            fechaFin = fechaInicio = fechaActual = LocalDate.now();
-            listaProceso = procesoService.getProcesoPorUsuario(Date.valueOf(fechaInicio.plusDays(-1)), Date.valueOf(fechaFin), loginBean.getUserName());
-            //listaProceso = procesoService.findAll();
-            procesaLista();
-        } catch (Exception e) {
-            LOG.error("ERROR AL CARGAR DATOS REPORTE " + getNombreReporte(), e);
-        }
+        filtro = new FiltroActividadAuditoriaDTO();
+        if (isAdministrador()) usuariosAuditoria = procesoService.listarUsuariosAuditoria();
+        auditoriasLazy = new LazyDataModel<>() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public int count(Map<String, FilterMeta> filterBy) {
+                return procesoService.contarAuditoria(filtro);
+            }
+
+            @Override
+            public List<ActividadAuditoriaDTO> load(int first, int pageSize,
+                    Map<String, SortMeta> sortBy, Map<String, FilterMeta> filterBy) {
+                return procesoService.buscarAuditoria(filtro, first, pageSize);
+            }
+        };
     }
 
-    private void procesaLista() {
-        try {
-            procesos = new ArrayList<>();
-            for (Proceso proceso : listaProceso) {
-                proceso.setHoras(proceso.getFechaCrea().toString().substring(10, 16));
-                proceso.setDias(calcularDias(proceso.getFechaCrea()));
-                procesos.add(proceso);
-            }
-        } catch (Exception e) {
-            LOG.error("ERROR EN PROCESAR DATOS ", e);
-        }
+    public void buscar() {
+        primerRegistro = 0;
     }
 
-    private String calcularDias(java.util.Date fecha) {
-        try {
-            String tmp = "";
-            LocalDate fechaTmp = fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            long numeroDiasL = DAYS.between(fechaTmp, fechaActual);
-            int dias = (int) numeroDiasL;
-            if (dias < 1) {
-                tmp = "Hoy";
-            }
-            if (dias >= 1 && dias <= 7) {
-                tmp = dias + "d";
-            }
-            if (dias > 7 && dias <= 30) {
-                long numeroSemanasL = WEEKS.between(fechaTmp, fechaActual);
-                int semanasInt = (int) numeroSemanasL;
-                tmp = semanasInt + "s";
-            }
-            if (dias > 30 && dias <= 365) {
-                long numeroMesesL = MONTHS.between(fechaTmp, fechaActual);
-                int mesesInt = (int) numeroMesesL;
-                tmp = mesesInt + "m";
-            }
-            if (dias > 365) {
-                long anionLong = YEARS.between(fechaTmp, fechaActual);
-                int aniosInt = (int) anionLong;
-                tmp = aniosInt + "a";
-            }
-            return tmp;
-        } catch (Exception e) {
-            LOG.error("ERROR EN CALCULAR DIAS ", e);
-            return null;
-        }
-
+    public void limpiarFiltros() {
+        filtro = new FiltroActividadAuditoriaDTO();
+        primerRegistro = 0;
     }
 
-    public void searchData() {
-        if (getFechaInicio() != null && getFechaFin() != null) {
-            listaProceso = procesoService.findAll();
-            if (listaProceso != null) {
-                JsfUtil.addInfoMessage(listaProceso.size() + " Procesos encontrados");
-            } else {
-                JsfUtil.addWarningMessage("No se obtubieron resultado de bÃƒºsqueda");
-            }
-        }
+    public boolean isAdministrador() {
+        return loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Administrador");
     }
 
     public void exportaPDF() {
         try {
-            getListaStringDatos();
-            //(nombrefuenteExtencion,nombre
-            Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(10);
-
+            List<Proceso> registros = procesoService.listarAuditoriaParaReporte(filtro);
+            setListaDatos(new String[registros.size()][getNumeroColumnas()]);
+            int fila = 0;
+            for (Proceso item : registros) {
+                getListaDatos()[fila][0] = String.valueOf(fila + 1);
+                getListaDatos()[fila][1] = item.getActividad();
+                getListaDatos()[fila][2] = item.getIp();
+                getListaDatos()[fila][3] = item.getUsuarioCrea();
+                getListaDatos()[fila][4] = item.getFechaCrea() != null ? item.getFechaCrea().toString() : "";
+                fila++;
+            }
+            Font fuenteCabecera = Constantes.getFuenteCabeceraDefault(10);
             ReportePFD.nuevoPDF(getNombreReporte());
-            ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(), getNombresColumnas(), fuenteCabecerta);
-
-            Font fuenteContenido = Constantes.getFuenteContenidoDefault(10);
-
-            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), fuenteContenido);
+            ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(),
+                    getNombresColumnas(), fuenteCabecera);
+            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), Constantes.getFuenteContenidoDefault(10));
             ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
             ReportePFD.descargarPDF(getNombreReporte());
-            procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(), "NÃƒÅ¡MERO DE REGISTROS: " + listaProceso.size());
-
+            procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(),
+                    "NÚMERO DE REGISTROS: " + registros.size());
         } catch (Exception e) {
-            LOG.error("ERROR AL EXPORTAR EXCEL DATOS REPORTE" + getNombreReporte(), e);
+            org.slf4j.LoggerFactory.getLogger(ProcesoController.class).error("Error al exportar auditoría", e);
         }
     }
 
-    public void exportaXLS() {
-        try {
-            getListaStringDatos();
-            ReporteXLSX.nuevoExcel(getNombreReporte());
-            ReporteXLSX.creaCabeceraTabla(getNombresColumnas(), getTamanioColumnasXLS());
-
-            ReporteXLSX.creaContenidoTabla(getListaDatos(), getNombresColumnas());
-            ReporteXLSX.setFinalParagraph(listaProceso.size());
-            ReporteXLSX.descargarExcel(getNombreReporte());
-            procesoBean.okActivityRegister("DESCARGA REPORTE(XLS) " + getNombreReporte(), "NÃƒÅ¡MERO DE REGISTROS: " + listaProceso.size());
-        } catch (Exception e) {
-            LOG.error("ERROR AL EXPORTAR EXCEL " + getNombreReporte(), e);
-        }
-    }
-
-    private void getListaStringDatos() {
-        try {
-            if (listaProceso != null) {
-                setListaDatos(new String[listaProceso.size()][getNumeroColumnas()]);
-                int fila = 0;
-                for (Proceso item : listaProceso) {
-                    getListaDatos()[fila][0] = String.valueOf(fila + 1);
-                    getListaDatos()[fila][1] = item.getActividad();
-                    getListaDatos()[fila][2] = item.getIp();
-                    getListaDatos()[fila][3] = item.getUsuarioCrea();
-                    getListaDatos()[fila][4] = item.getFechaCrea().toString().substring(0, 16);
-                    fila++;
-                }
-            }
-        } catch (Exception e) {
-            LOG.error("ERROR AL OBTENER LISTA DE DATOS REPORTE " + getNombreReporte(), e);
-        }
-    }
-
+    public FiltroActividadAuditoriaDTO getFiltro() { return filtro; }
+    public LazyDataModel<ActividadAuditoriaDTO> getAuditoriasLazy() { return auditoriasLazy; }
+    public List<String> getUsuariosAuditoria() { return usuariosAuditoria; }
+    public int getPrimerRegistro() { return primerRegistro; }
+    public void setPrimerRegistro(int primerRegistro) { this.primerRegistro = primerRegistro; }
 }

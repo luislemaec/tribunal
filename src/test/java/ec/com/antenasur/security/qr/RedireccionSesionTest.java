@@ -87,7 +87,10 @@ class RedireccionSesionTest {
                         }
                         case "getContextPath" -> "/tec";
                         case "getRequestURI" -> "/tec" + ruta;
+                        case "getServletPath" -> ruta;
+                        case "getDispatcherType" -> jakarta.servlet.DispatcherType.REQUEST;
                         case "getMethod" -> metodo;
+                        case "getContentType" -> null;
                         case "isSecure" -> true;
                         case "getUserPrincipal" -> null;
                         case "isUserInRole" -> qr;

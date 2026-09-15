@@ -47,10 +47,10 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
     /**
      * Procesa la plantilla con los parÃƒ¡metros, envÃƒÂ­a el correo (con adjunto si
      * se indica path) y persiste el registro de notificaciÃƒÂ³n. Los parÃƒ¡metros
-     * sensibles ({@code clave}) se eliminan antes de persistir.
+     * sensibles se eliminan antes de persistir.
      *
      * @param destinatarios lista de emails destino (no null/vacÃƒÂ­a)
-     * @param plantilla plantilla a usar; su {@code mensaje} es modificado in-place
+     * @param plantilla plantilla a usar
      * @param parametros sustituciones para la plantilla
      * @param usuarioId id del usuario asociado al envÃƒÂ­o
      * @param pathAdjunto path absoluto del adjunto, o null para sin adjunto
@@ -61,17 +61,18 @@ public class CorreoService extends AbstractService<Correo, Integer, CorreoFacade
         if (destinatarios == null || destinatarios.isEmpty() || plantilla == null) {
             return null;
         }
-        plantilla.setMensaje(UtilHtml.builTextHTMLToMail(parametros, plantilla.getMensaje()));
+        String mensajeProcesado = UtilHtml.builTextHTMLToMail(parametros, plantilla.getMensaje());
 
         HashMap<String, String> parametrosPersistencia = new HashMap<>(parametros);
         parametrosPersistencia.remove("clave");
         parametrosPersistencia.remove("claveTemporal");
+        parametrosPersistencia.remove("enlaceRecuperacion");
         Correo registro = new Correo(destinatarios.toString(), usuarioId, plantilla,
                 parametrosPersistencia.toString());
         Correo persistido = correoFacade.create(registro);
 
         try {
-            SendEmail.correoAdjunto(destinatarios, plantilla.getAsunto(), plantilla.getMensaje(), pathAdjunto);
+            SendEmail.correoAdjunto(destinatarios, plantilla.getAsunto(), mensajeProcesado, pathAdjunto);
         } catch (Exception e) {
             LOG.error("ERROR AL ENVIAR CORREO " + plantilla.getAsunto(), e);
         }

@@ -11,9 +11,13 @@ class SeguridadHttpQrTest {
     @Test void permiteSoloActaYRecursos() {
         assertTrue(RutasSesionQr.permitida("/actaE.jsf", "GET"));
         assertTrue(RutasSesionQr.permitida("/actaE.jsf", "POST"));
+        assertTrue(RutasSesionQr.permitida("/actaE.xhtml", "GET"));
+        assertTrue(RutasSesionQr.permitida("/actaE.xhtml", "POST"));
+        assertTrue(RutasSesionQr.permitida("/faces/actaE.xhtml", "POST"));
+        assertTrue(RutasSesionQr.permitida("/actaE.faces", "POST"));
         assertTrue(RutasSesionQr.permitida("/jakarta.faces.resource/primefaces.js.jsf", "GET"));
         assertFalse(RutasSesionQr.permitida("/jakarta.faces.resource/primefaces.js.jsf", "POST"));
-        for (String ruta : new String[]{"/dashboard.jsf", "/usuarios.jsf", "/actaE.xhtml", "/faces/actaE.xhtml",
+        for (String ruta : new String[]{"/dashboard.jsf", "/usuarios.jsf", "/faces/actaE.jsf",
                 "/actaE.jsf;jsessionid=123", "/resources/../usuarios.jsf", "/%61ctaE.jsf", "/acceso-acta/canjear"})
             assertFalse(RutasSesionQr.permitida(ruta, "GET"), ruta);
     }

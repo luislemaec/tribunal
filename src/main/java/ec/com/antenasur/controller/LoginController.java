@@ -103,7 +103,7 @@ public class LoginController implements Serializable {
                 if (Boolean.TRUE.equals(loginBean.getUsuario().getPermanente())) {
                     JsfUtil.redirect("/dashboard.jsf");
                 } else {
-                    JsfUtil.redirect("/pages/login/firstLogin.jsf");
+                    JsfUtil.redirect("/cambioClave.jsf");
                 }
             }
         } catch (Exception e) {
@@ -185,8 +185,12 @@ public class LoginController implements Serializable {
             request.logout();
         }
         log.info("Invocando request.login() para '{}'", loginBean.getUserName());
-        request.login(loginBean.getUserName(), loginBean.getPassword());
-        log.info("request.login() OK");
+        try {
+            request.login(loginBean.getUserName(), loginBean.getPassword());
+            log.info("request.login() OK");
+        } finally {
+            loginBean.setPassword(null);
+        }
     }
 
     private void cerrarAutenticacionIncompleta(HttpServletRequest request) {

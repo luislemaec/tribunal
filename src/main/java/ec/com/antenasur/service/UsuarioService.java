@@ -2,6 +2,13 @@ package ec.com.antenasur.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -26,6 +33,9 @@ import ec.com.antenasur.util.Constantes;
 
 @Stateless
 public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFacade> {
+
+    private static final SecureRandom RECUPERACION_RANDOM = new SecureRandom();
+    private static final Duration VIGENCIA_RECUPERACION = Duration.ofMinutes(30);
 
     @Inject
     private UsuarioFacade usuarioFacade;
@@ -64,10 +74,6 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     public Usuario findUsuarioByRucOrMail(String username, String correo) {
         return usuarioFacade.findUsuarioByRucOrMail(username, correo);
-    }
-
-    public Usuario findUsuarioByTemportalPassword(String username, String contraseniaTemp) {
-        return usuarioFacade.findUsuarioByTemportalPassword(username, contraseniaTemp);
     }
 
     public Usuario findUsuarioByPeople(int persona_id) {
@@ -229,7 +235,6 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
             usuario.setPersonsa(persona);
             usuario.setEstado(true);
             usuario.setPermanente(false);
-            usuario.setContraseniaTemp(persona.getDocumento());
             usuario.setContrasenia(passwordService.hashBcrypt(persona.getDocumento()));
             usuario = usuarioFacade.create(usuario);
         } else {
@@ -598,6 +603,29 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         return persona.getId() == null ? personaFacade.create(persona) : persona;
     }
 
+    /**
+     * Restablece una cuenta activa a la cédula de su titular. La cuenta queda
+     * obligada a definir una contraseña propia en el siguiente inicio de sesión.
+     */
+    public UsuarioDTO restablecerContraseniaACedula(Integer usuarioId) {
+        if (usuarioId == null) {
+            throw new NegocioException("No fue posible determinar el usuario.");
+        }
+        Usuario usuario = usuarioFacade.find(usuarioId);
+        if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado())
+                || usuario.getPersonsa() == null || usuario.getPersonsa().getDocumento() == null
+                || usuario.getPersonsa().getDocumento().isBlank()) {
+            throw new NegocioException("El usuario no tiene una cédula válida para restablecer la contraseña.");
+        }
+        String cedula = usuario.getPersonsa().getDocumento().trim();
+        usuario.setContrasenia(passwordService.hashBcrypt(cedula));
+        usuario.setContraseniaTemp(null);
+        usuario.setPermanente(false);
+        usuario.setLink(null);
+        usuario.setUsuarioFechaExpira(null);
+        return UsuarioDTO.fromEntity(usuarioFacade.edit(usuario));
+    }
+
     private String normalizarCorreoObligatorio(String correo) {
         if (correo == null || correo.isBlank()) {
             throw new NegocioException("usuarios.mensaje.correo.requerido");
@@ -685,66 +713,65 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * "SITEC_"); si es null, devuelve un AuthDataDTO sin roles
      * @return AuthDataDTO con usuario y roles; nunca null
      */
-    /**
-     * Aplica el cambio de contraseña: persiste el hash recibido, marca al
-     * usuario como permanente y limpia la contraseña temporal. La validación
-     * de complejidad de la clave y el hashing son responsabilidad del caller
-     * (la capa UI usa {@code JsfUtil.validarContrasenia}). El service solo
-     * asegura que el usuario y el hash no son null/vacíos.
-     *
-     * @return el {@code Usuario} persistido, o {@code null} si la entrada es
-     *         inválida
-     */
-    /**
-     * Inicia el flujo de recuperación: busca al usuario por username + correo,
-     * y si lo encuentra, establece la clave temporal en texto plano (campo
-     * {@code contraseniaTemp}, para que el operador la copie en el primer
-     * login) y persiste el hash como contraseña efectiva. Marca al usuario
-     * como NO permanente — el siguiente login lo forzará a cambiar la clave.
-     *
-     * @param username RUC o documento de identidad
-     * @param correo email registrado del usuario
-     * @param claveTemporalPlana clave generada en el caller (texto plano para
-     *        envío por correo)
-     * @param hashClaveTemporal hash BCrypt de la clave temporal
-     * @return usuario actualizado, o null si no existe usuario con esa
-     *         combinación o si los argumentos son inválidos
-     */
-    public Usuario iniciarRecuperacionClave(String username, String correo,
-            String claveTemporalPlana, String hashClaveTemporal) {
-        if (username == null || username.isEmpty() || correo == null || correo.isEmpty()
-                || claveTemporalPlana == null || hashClaveTemporal == null) {
-            return null;
-        }
-        Usuario usuario = usuarioFacade.findUsuarioByRucOrMail(username, correo);
-        if (usuario == null) {
-            return null;
-        }
-        usuario.setContraseniaTemp(claveTemporalPlana);
-        usuario.setContrasenia(hashClaveTemporal);
-        usuario.setPermanente(false);
-        return usuarioFacade.edit(usuario);
-    }
+    /** Inicia una recuperación con token opaco; la contraseña vigente no se modifica. */
+    public SolicitudRecuperacionClave iniciarRecuperacionClave(String username, String correo) {
+        if (username == null || username.isBlank() || correo == null || correo.isBlank()) return null;
+        Usuario usuario = usuarioFacade.findUsuarioByRucOrMail(username.trim(), correo.trim());
+        if (usuario == null) return null;
 
-    public Usuario cambiarContrasenia(Usuario usuario, String hashClaveNueva) {
-        if (usuario == null || hashClaveNueva == null || hashClaveNueva.isEmpty()) {
-            return null;
-        }
+        String token = generarTokenRecuperacion();
+        usuario.setLink(hashTokenRecuperacion(token));
+        usuario.setUsuarioFechaExpira(Timestamp.from(Instant.now().plus(VIGENCIA_RECUPERACION)));
         usuario.setContraseniaTemp(null);
-        usuario.setContrasenia(hashClaveNueva);
-        usuario.setPermanente(true);
-        return usuarioFacade.edit(usuario);
+        usuarioFacade.edit(usuario);
+        return new SolicitudRecuperacionClave(usuario, token);
     }
 
-    /**
-     * Versión por id: hidrata la entidad desde la BD y aplica el cambio.
-     * Retorna el {@link UsuarioDTO} actualizado, o null si no existe.
-     */
-    public UsuarioDTO cambiarContraseniaPorId(Integer usuarioId, String hashClaveNueva) {
-        if (usuarioId == null) return null;
-        Usuario u = usuarioFacade.find(usuarioId);
-        if (u == null) return null;
-        return UsuarioDTO.fromEntity(cambiarContrasenia(u, hashClaveNueva));
+    /** Consume un enlace de recuperación válido y registra la nueva clave BCrypt. */
+    public boolean restablecerConToken(String token, String claveNueva) {
+        if (token == null || token.isBlank() || claveNueva == null || claveNueva.isBlank()) return false;
+        Usuario usuario = usuarioFacade.findUsuarioPorHashRecuperacion(hashTokenRecuperacion(token));
+        if (usuario == null) return false;
+        usuario.setContrasenia(passwordService.hashBcrypt(claveNueva));
+        usuario.setContraseniaTemp(null);
+        usuario.setPermanente(true);
+        usuario.setLink(null);
+        usuario.setUsuarioFechaExpira(null);
+        usuarioFacade.edit(usuario);
+        return true;
+    }
+
+    /** Verifica la clave vigente antes de permitir un cambio dentro de una sesión autenticada. */
+    public UsuarioDTO cambiarContraseniaAutenticada(Integer usuarioId, String username,
+            String claveActual, String claveNueva) {
+        if (usuarioId == null || username == null || username.isBlank()
+                || claveActual == null || claveNueva == null) return null;
+        Usuario usuario = usuarioFacade.find(usuarioId);
+        if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado())
+                || !username.equals(usuario.getUsername())
+                || !passwordService.verifyBcrypt(claveActual, usuario.getContrasenia())) return null;
+        usuario.setContrasenia(passwordService.hashBcrypt(claveNueva));
+        usuario.setContraseniaTemp(null);
+        usuario.setPermanente(true);
+        return UsuarioDTO.fromEntity(usuarioFacade.edit(usuario));
+    }
+
+    private String generarTokenRecuperacion() {
+        byte[] bytes = new byte[32];
+        RECUPERACION_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hashTokenRecuperacion(String token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 no disponible", e);
+        }
+    }
+
+    public record SolicitudRecuperacionClave(Usuario usuario, String token) {
     }
 
     public AuthDataDTO cargarContextoUsuarioAutenticado(String userName, String prefijoRoles) {

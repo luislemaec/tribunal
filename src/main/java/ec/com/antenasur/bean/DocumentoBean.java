@@ -139,7 +139,8 @@ public class DocumentoBean implements Serializable {
                 .contentLength(Files.size(path))
                 .stream(() -> abrirStream(path))
                 .build();
-        procesoBean.okActivityRegister("DESCARGA DOCUMENTO " + item.getNombre(), item.getPath());
+        procesoBean.okActivityRegister("DESCARGA DOCUMENTO " + item.getNombre(),
+                item.getCodigo() != null ? item.getCodigo() : "DOCUMENTO " + item.getId());
         return descarga;
     }
 

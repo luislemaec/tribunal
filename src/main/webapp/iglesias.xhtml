@@ -304,6 +304,7 @@
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.iglesias.btn.export.pdf']}" icon="pi pi-file-pdf"
                                          styleClass="ui-button-outlined ui-button-warning" ajax="false"
+                                         rendered="false"
                                          disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
                             <p:dataExporter type="pdf" target="tblIglesia" fileName="iglesias"
                                             pageOnly="false"/>

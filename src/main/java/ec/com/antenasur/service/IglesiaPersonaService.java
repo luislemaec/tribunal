@@ -207,8 +207,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         // fase vigente no permite edición del padrón. UI también lo bloquea
         // pero esta capa protege contra requests fuera de flujo.
         if (!cronogramaService.permiteEdicionPadron()) {
-            throw new IllegalStateException(
-                    "La actualización del padrón está cerrada por el cronograma electoral.");
+            throw new IglesiaPersonaException("form.personas.error.cronograma");
         }
         Iglesia iglesia = (dto.getIglesia().getId() != null)
                 ? iglesiaFacade.find(dto.getIglesia().getId()) : null;

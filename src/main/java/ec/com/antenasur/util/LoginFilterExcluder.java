@@ -32,6 +32,8 @@ public class LoginFilterExcluder {
         excludeUrls.add("/login.jsf");
         excludeUrls.add("/olvidoClave.jsf");
         excludeUrls.add("/recuperaClaveCorrecto.jsf");
+        excludeUrls.add("/restablecerClave.jsf");
+        excludeUrls.add("/claveActualizada.jsf");
         excludeUrls.add("/consultar.jsf");
         excludeUrls.add("/resultados.jsf");
         excludeUrls.add("/resultados.xhtml");

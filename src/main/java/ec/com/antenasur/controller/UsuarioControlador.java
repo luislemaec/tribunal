@@ -219,12 +219,28 @@ public class UsuarioControlador implements Serializable {
             if (eliminado != null) {
                 cargarCatalogos();
                 JsfUtil.addInfoMessage(eliminado.getUsername() + ", DESACTIVADO");
-                procesoBean.registraActividad("DESACTIVA USUARIO: " + eliminado.getUsername());
             } else {
                 JsfUtil.addWarningMessage("No fue posible desactivar el usuario.");
             }
         } catch (Exception e) {
             JsfUtil.addErrorMessage("No fue posible desactivar el usuario.");
+        }
+    }
+
+    /** Restablece administrativamente la clave a la cédula y fuerza su cambio posterior. */
+    public void restablecerContraseniaACedula(UsuarioDTO usuario) {
+        if (usuario == null || usuario.getId() == null) {
+            JsfUtil.addWarningMessage("No fue posible determinar el usuario.");
+            return;
+        }
+        try {
+            UsuarioDTO restablecido = usuarioService.restablecerContraseniaACedula(usuario.getId());
+            JsfUtil.addSuccessMessage("La contraseña de " + restablecido.getUsername()
+                    + " fue restablecida a su cédula. Deberá cambiarla al ingresar.");
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            JsfUtil.addErrorMessage("No fue posible restablecer la contraseña del usuario.");
         }
     }
 
@@ -258,9 +274,6 @@ public class UsuarioControlador implements Serializable {
                     rolUsuarioParaReactivacion.getId(), iglesiaReactivacionId);
             cargarCatalogos();
             JsfUtil.addSuccessMessage(reactivado.getUsername() + ", REACTIVADO");
-            procesoBean.registraActividad("REACTIVA USUARIO: " + reactivado.getUsername()
-                    + " ROL: " + (rolUsuarioParaReactivacion.getRol() != null
-                    ? rolUsuarioParaReactivacion.getRol().getNombre() : "(sin rol)"));
             rolUsuarioParaReactivacion = null;
             iglesiaReactivacionId = null;
         } catch (ec.com.antenasur.exception.NegocioException e) {
@@ -301,12 +314,6 @@ public class UsuarioControlador implements Serializable {
                 JsfUtil.addSuccessMessage(reactivado
                         ? "Usuario reactivado correctamente."
                         : "Usuario registrado correctamente.");
-                try {
-                    procesoBean.registraActividad((reactivado ? "REACTIVA" : "CREA") + " USUARIO: "
-                            + creado.getUsername() + " ROL: " + rolSeleccionado.getNombre());
-                } catch (Exception logEx) {
-                    logEx.printStackTrace();
-                }
                 if (!reactivado) {
                     try {
                         enviarCorreoCreacionUser();
@@ -318,16 +325,12 @@ public class UsuarioControlador implements Serializable {
                 cargarCatalogos();
                 esUsuarioNuevo = false;
             } else {
-                UsuarioDTO actual = usuarioService.obtenerDTOPorId(usuarioSeleccionado.getId());
-                String correoAnterior = actual != null ? actual.getCorreo() : null;
                 Rol rolPersistido = rolService.find(rolSeleccionado.getId());
                 RolUsuario rolUsuarioActual = rolUsuarioSeleccionado != null && rolUsuarioSeleccionado.getId() != null
                         ? rolUsuarioService.find(rolUsuarioSeleccionado.getId()) : null;
                 UsuarioDTO actualizado = usuarioService.actualizarUsuarioDesdeDTO(
                         usuarioSeleccionado, rolUsuarioActual, rolPersistido);
                 this.usuarioSeleccionado = actualizado;
-                procesoBean.registraActividad("ACTUALIZA USUARIO: " + actualizado.getUsername(),
-                        correoAnterior, actualizado.getCorreo());
                 cargarCatalogos();
                 JsfUtil.addInfoMessage(actualizado.getUsername() + ", ACTUALIZADO");
             }
@@ -472,7 +475,8 @@ public class UsuarioControlador implements Serializable {
             if (destino == null || destino.trim().isEmpty()) {
                 JsfUtil.addWarningMessage("El usuario fue creado, pero no tiene correo: no se envió notificación.");
                 try {
-                    procesoBean.registraActividad("CREA USUARIO SIN CORREO: " + usuarioSeleccionado.getUsername());
+                    procesoBean.registraActividad("NOTIFICACIÓN DE REGISTRO NO ENVIADA: usuario sin correo "
+                            + usuarioSeleccionado.getUsername());
                 } catch (Exception ignored) { /* nunca interrumpir */ }
                 return;
             }

@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -475,6 +479,26 @@ public class PersonaController implements Serializable {
         }
     }
 
+    /** Valida la cédula antes de consultar o persistir la persona. */
+    public void validarCedula(FacesContext contexto, UIComponent componente, Object valor) {
+        String cedula = valor != null ? valor.toString().trim() : "";
+        if (cedula.isEmpty()) {
+            return;
+        }
+        if (!cedula.matches("\\d{10}") || !JsfUtil.validarCedulaORUC(cedula)) {
+            throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    mensaje("form.personas.error.documento.invalido"), null));
+        }
+    }
+
+    /** Evita que un valor compuesto solo por espacios supere la regla requerida. */
+    public void validarNombres(FacesContext contexto, UIComponent componente, Object valor) {
+        if (valor == null || valor.toString().trim().isEmpty()) {
+            throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    mensaje("form.personas.error.nombres.requerido"), null));
+        }
+    }
+
     public void actualizarPersona() {
         try {
             boolean esActualizacion = iglesiaPersonaSeleccionado != null
@@ -486,8 +510,7 @@ public class PersonaController implements Serializable {
                 iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
             }
             if (!cronogramaService.permiteEdicionPadron()) {
-                JsfUtil.addErrorMessage(mensaje("form.personas.error.cronograma"));
-                PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+                rechazarGuardado("form.personas.error.cronograma");
                 return;
             }
             IglesiaPersonaDTO persistido = iglesiaPersonaService.guardarDesdeDTO(iglesiaPersonaSeleccionado);
@@ -511,19 +534,28 @@ public class PersonaController implements Serializable {
                 PrimeFaces.current().ajax().update(
                         "frmPersonas:tblPersonas", "frmPersonas:panelResumenMiembros");
             } else {
-                JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
-                PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+                rechazarGuardado("form.personas.error.guardar");
             }
         } catch (IglesiaPersonaException e) {
-            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
-            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+            rechazarGuardado(e.getMessageKey(), e.getArguments());
             return;
         } catch (Exception e) {
             log.error("Error al guardar persona", e);
-            JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
-            PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
+            rechazarGuardado("form.personas.error.guardar");
             return;
         }
+    }
+
+    private void rechazarGuardado(String clave, Object... argumentos) {
+        String texto = mensaje(clave, argumentos);
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        if ("form.personas.error.documento.duplicado".equals(clave)) {
+            contexto.addMessage("frmPersonas:cedula", new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
+            PrimeFaces.current().focus("frmPersonas:cedula");
+        } else {
+            contexto.addMessage("frmPersonas:reglasPersona", new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
+        }
+        PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
     }
 
     public void regularizarIglesias() {

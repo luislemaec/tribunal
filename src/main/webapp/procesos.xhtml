@@ -6,18 +6,12 @@
                 template="/WEB-INF/template.xhtml">
 
     <ui:define name="title">#{msg['form.procesos.title']}</ui:define>
-
     <ui:define name="viewname">
-        <li>#{msg['form.usuarios.crumb.security']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link>
-        </li>
+        <li>#{msg['form.usuarios.crumb.security']}</li><li>/</li>
+        <li><p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link></li>
     </ui:define>
 
     <ui:define name="content">
-
-        <!-- ENCABEZADO -->
         <div class="grid mb-2">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
@@ -27,66 +21,81 @@
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.procesos.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Registro de actividades y auditoría del sistema</p>
+                        <p class="text-500 mt-1 mb-0 text-sm">
+                            #{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
         <h:form id="frmProcesos">
-
             <div class="surface-card shadow-1 border-round-lg p-3">
+                <p:outputPanel id="pnlFiltros" styleClass="ui-fluid">
+                    <div class="formgrid grid align-items-end">
+                        <div class="field col-12 md:col-3" rendered="#{procesoController.administrador}">
+                            <label for="usuario" class="font-medium text-700 text-sm">Usuario</label>
+                            <p:selectOneMenu id="usuario" value="#{procesoController.filtro.usuario}" filter="true" filterMatchMode="contains">
+                                <f:selectItem itemLabel="Todos los usuarios" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{procesoController.usuariosAuditoria}" var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 #{procesoController.administrador ? 'md:col-2' : 'md:col-3'}">
+                            <label for="fechaInicio" class="font-medium text-700 text-sm">Desde</label>
+                            <p:datePicker id="fechaInicio" value="#{procesoController.filtro.fechaInicio}" pattern="dd/MM/yyyy" showIcon="true"/>
+                        </div>
+                        <div class="field col-12 #{procesoController.administrador ? 'md:col-2' : 'md:col-3'}">
+                            <label for="fechaFin" class="font-medium text-700 text-sm">Hasta</label>
+                            <p:datePicker id="fechaFin" value="#{procesoController.filtro.fechaFin}" pattern="dd/MM/yyyy" showIcon="true"/>
+                        </div>
+                        <div class="field col-12 md:col-2">
+                            <label for="modulo" class="font-medium text-700 text-sm">Módulo</label>
+                            <p:selectOneMenu id="modulo" value="#{procesoController.filtro.modulo}">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="Acceso" itemValue="ACCESO"/>
+                                <f:selectItem itemLabel="Seguridad" itemValue="USUARIO"/>
+                                <f:selectItem itemLabel="JRV" itemValue="JRV"/>
+                                <f:selectItem itemLabel="Padrón" itemValue="PADRON"/>
+                                <f:selectItem itemLabel="Escrutinio" itemValue="ACTA"/>
+                                <f:selectItem itemLabel="Mesas" itemValue="MESA"/>
+                                <f:selectItem itemLabel="Documentos" itemValue="DOCUMENTO"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-3">
+                            <label for="accion" class="font-medium text-700 text-sm">Acción</label>
+                            <p:inputText id="accion" value="#{procesoController.filtro.accion}" maxlength="80" placeholder="Ej.: CREA, ACTUALIZA, GENERA"/>
+                        </div>
+                        <div class="field col-12 md:col-3">
+                            <label for="busqueda" class="font-medium text-700 text-sm">Búsqueda general</label>
+                            <p:inputText id="busqueda" value="#{procesoController.filtro.busqueda}" maxlength="120" placeholder="Actividad, detalle, usuario o IP"/>
+                        </div>
+                        <div class="field col-12 flex justify-content-end gap-2 mb-0">
+                            <p:commandButton value="Buscar" icon="pi pi-search" action="#{procesoController.buscar}"
+                                             process="pnlFiltros" update="tblAuditoria"/>
+                            <p:commandButton value="Limpiar" icon="pi pi-filter-slash" styleClass="ui-button-outlined ui-button-secondary"
+                                             action="#{procesoController.limpiarFiltros}" process="@this" update="pnlFiltros tblAuditoria"/>
+                            <p:commandButton value="Exportar PDF" icon="pi pi-file-pdf" styleClass="ui-button-outlined ui-button-help"
+                                             ajax="false" action="#{procesoController.exportaPDF}"/>
+                        </div>
+                    </div>
+                </p:outputPanel>
 
-                <!-- TOOLBAR -->
-                <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
-                    <p:commandButton value="Exportar PDF" icon="pi pi-upload"
-                                     styleClass="ui-button-outlined ui-button-help" ajax="false"
-                                     action="#{procesoController.exportaPDF()}"
-                                     disabled="#{empty procesoController.listaProceso}"/>
-                </div>
-
-                <!-- DATATABLE -->
-                <p:dataTable id="tblProcesos" widgetVar="wdTblProcesos" var="proceso"
-                             value="#{procesoController.listaProceso}" reflow="true"
-                             rowSelectMode="add"
-                             paginator="true" rows="10"
-                             rowsPerPageTemplate="10,25,50"
-                             paginatorPosition="bottom"
+                <p:dataTable id="tblAuditoria" widgetVar="wdTblAuditoria" var="registro"
+                             value="#{procesoController.auditoriasLazy}" lazy="true" first="#{procesoController.primerRegistro}"
+                             paginator="true" rows="25" rowsPerPageTemplate="10,25,50,100" paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} registros"
-                             emptyMessage="No hay actividades registradas."
-                             showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm">
-
-                    <p:column headerText="ID" sortBy="#{proceso.id}" filterBy="#{proceso.id}"
-                              style="width:6rem">
-                        <span class="text-sm text-500">#{proceso.id}</span>
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} actividades"
+                             emptyMessage="No hay actividades para los filtros seleccionados."
+                             reflow="true" styleClass="ui-datatable-striped ui-datatable-sm mt-3">
+                    <p:column headerText="Fecha / hora" style="width:11rem" sortBy="#{registro.fecha}">
+                        <h:outputText value="#{registro.fecha}" styleClass="text-sm text-700"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText>
                     </p:column>
-                    <p:column headerText="Actividad" sortBy="#{proceso.actividad}"
-                              filterBy="#{proceso.actividad}" filterMatchMode="contains">
-                        <span class="text-sm text-900">#{proceso.actividad}</span>
-                    </p:column>
-                    <p:column headerText="Usuario" sortBy="#{proceso.usuarioCrea}"
-                              filterBy="#{proceso.usuarioCrea}" filterMatchMode="contains"
-                              style="width:12rem">
-                        <span class="text-sm font-mono text-700">#{proceso.usuarioCrea}</span>
-                    </p:column>
-                    <p:column headerText="IP" sortBy="#{proceso.ip}"
-                              filterBy="#{proceso.ip}" filterMatchMode="contains"
-                              style="width:10rem">
-                        <span class="text-sm font-mono text-500">#{proceso.ip}</span>
-                    </p:column>
-                    <p:column headerText="Fecha" sortBy="#{proceso.fechaCrea}" style="width:10rem">
-                        <h:outputText value="#{proceso.fechaCrea}">
-                            <f:convertDateTime pattern="dd-MM-yyyy"/>
-                        </h:outputText>
-                    </p:column>
-
+                    <p:column headerText="Usuario" style="width:12rem"><span class="font-mono text-sm text-700">#{registro.usuario}</span></p:column>
+                    <p:column headerText="Módulo" style="width:10rem"><p:tag value="#{registro.modulo}" severity="info"/></p:column>
+                    <p:column headerText="Acción" style="width:9rem"><span class="font-semibold text-900 text-sm">#{registro.accion}</span></p:column>
+                    <p:column headerText="Detalle"><div class="flex flex-column gap-1"><span class="text-800 text-sm">#{registro.detalle}</span><small class="text-500 font-mono">IP: #{registro.ip}</small></div></p:column>
                 </p:dataTable>
-
-            </div><!-- /surface-card -->
-
+            </div>
         </h:form>
-
     </ui:define>
 </ui:composition>

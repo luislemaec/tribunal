@@ -343,10 +343,11 @@ public class LoginBean implements Serializable {
      * @throws ServletException
      */
     public void passwordChangued() throws RuntimeException, IOException, ServletException {
-        HttpServletRequest request = JsfUtil.getRequest();       
+        HttpServletRequest request = JsfUtil.getRequest();
         registerAdditory(request.getSession().getId().toString());
         procesoBean.registraActividad("SALE DEL " + Constantes.SISTEMA);
-        request.getSession().invalidate();        
+        request.logout();
+        request.getSession().invalidate();
     }
 
 }

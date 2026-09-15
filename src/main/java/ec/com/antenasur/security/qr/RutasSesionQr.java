@@ -16,12 +16,21 @@ public final class RutasSesionQr {
 	public static boolean permitida(String ruta, String metodo) {
 		if (ruta == null || ruta.contains("..") || ruta.contains("%") || ruta.contains(";") || ruta.contains("\\"))
 			return false;
-		if ("/actaE.jsf".equals(ruta))
+		if (esVistaActa(ruta))
 			return "GET".equals(metodo) || "POST".equals(metodo);
 		if (!"GET".equals(metodo))
 			return false;
 		if (ruta.startsWith("/jakarta.faces.resource/") || ruta.startsWith("/javax.faces.resource/"))
 			return true;
 		return ruta.startsWith("/resources/") && ruta.matches(".*\\.(css|js|png|jpg|jpeg|svg|woff2?|ttf|gif|ico)$");
+	}
+
+	/**
+	 * La misma vista puede ser despachada por cualquiera de los mappings Faces
+	 * declarados en web.xml. La lista permanece cerrada a esos alias exactos.
+	 */
+	private static boolean esVistaActa(String ruta) {
+		return "/actaE.jsf".equals(ruta) || "/actaE.faces".equals(ruta)
+				|| "/actaE.xhtml".equals(ruta) || "/faces/actaE.xhtml".equals(ruta);
 	}
 }

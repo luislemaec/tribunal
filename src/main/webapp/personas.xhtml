@@ -468,7 +468,7 @@
                                       allowTypes="/(\.|\/)(xlsx|xls|)$/"
                                       multiple="false" cancelLabel="Cancelar"
                                       chooseIcon="pi pi-upload"
-                                      rendered="#{personaController.file eq null}"
+                                      rendered="false"
                                       styleClass="ui-button-raised ui-button-info"/>
 
                         <!-- Exportar listado en Excel -->
@@ -675,6 +675,10 @@
                       closeOnEscape="true">
 
                 <p:outputPanel id="outPnlPersonas" class="ui-fluid">
+                    <p:outputPanel id="reglasPersona" layout="block"/>
+                    <p:messages id="mensajesDialogoPersona" for="reglasPersona" closable="true"
+                                showSummary="true" showDetail="false" styleClass="mb-3"/>
+                    <p:focus context="outPnlPersonas"/>
                     <p:outputPanel rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
 
                         <div class="formgrid grid">
@@ -686,7 +690,8 @@
                                 </label>
                                 <p:inputText id="cedula"
                                              value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}"
-                                             required="true" maxlength="10"
+                                             required="true" requiredMessage="#{msg['form.personas.error.documento.requerido']}"
+                                             validator="#{personaController.validarCedula}" maxlength="10"
                                              placeholder="0000000000"
                                              styleClass="w-full">
                                     <p:keyFilter for="cedula" mask="num"/>
@@ -694,8 +699,8 @@
                                             update="outPnlPersonas"
                                             listener="#{personaController.buscaPersonaPorCedula}"
                                             process="@this"/>
-                                    <f:validateLength minimum="10" maximum="10"/>
                                 </p:inputText>
+                                <p:message id="msgCedula" for="cedula" display="text" styleClass="block mt-1"/>
                             </div>
                             <div class="field col-12 md:col-6">
                                 <label for="sexo" class="font-medium text-700 text-sm">Sexo</label>
@@ -716,8 +721,13 @@
                                 <p:inputText id="nombres"
                                              value="#{personaController.iglesiaPersonaSeleccionado.persona.nombres}"
                                              maxlength="100" required="true"
+                                             requiredMessage="#{msg['form.personas.error.nombres.requerido']}"
+                                             validator="#{personaController.validarNombres}"
                                              onkeyup="value = value.toUpperCase()"
-                                             styleClass="w-full"/>
+                                             styleClass="w-full">
+                                    <p:ajax event="blur" process="@this" update="msgNombres"/>
+                                </p:inputText>
+                                <p:message id="msgNombres" for="nombres" display="text" styleClass="block mt-1"/>
                             </div>
 
                             <!-- Fila 3: Iglesia (selector admin / chip IglesiaAdmin) -->
@@ -731,11 +741,14 @@
                                                  filter="true" filterMatchMode="contains"
                                                  disabled="#{empty personaController.listaIglesias}"
                                                  required="true"
+                                                 requiredMessage="#{msg['form.personas.error.iglesia.requerida']}"
                                                  styleClass="w-full">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
                                                    itemLabel="#{iglesia.nombre}" itemValue="#{iglesia.id}"/>
+                                    <p:ajax event="change" process="@this" update="msgIglesia"/>
                                 </p:selectOneMenu>
+                                <p:message id="msgIglesia" for="iglesia" display="text" styleClass="block mt-1"/>
                             </div>
                             <div class="field col-12 md:col-6"
                                  rendered="#{personaController.restringidoAIglesia}">
