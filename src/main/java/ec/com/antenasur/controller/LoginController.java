@@ -50,6 +50,9 @@ public class LoginController implements Serializable {
     private MenuService menuService;
 
     @Inject
+    private ec.com.antenasur.security.menu.AutorizacionMenuService autorizacionMenu;
+
+    @Inject
     private AccessService accessService;
 
     @Inject
@@ -325,7 +328,7 @@ public class LoginController implements Serializable {
 
     public void fillMenuModel() throws Throwable {
         String mnemonic = (String) JsfUtil.getProperty("roles.mnemonic", true);
-        List<MenuVO> menus = menuService.getMenusByrolsDTO(listaRolesUsuario, mnemonic);
+        List<MenuVO> menus = autorizacionMenu.menusActuales();
 
         JsfUtil.cargarObjetoSession("listaPermisos", menuService.extraerPaginasPermitidas(menus));
 

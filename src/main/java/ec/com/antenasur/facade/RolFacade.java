@@ -23,42 +23,42 @@ import ec.com.antenasur.model.generic.AbstractFacade;
 @Stateless
 public class RolFacade extends AbstractFacade<Rol, Integer> {
 
-    public RolFacade() {
-        super(Rol.class, Integer.class);
-    }
+	public RolFacade() {
+		super(Rol.class, Integer.class);
+	}
 
-    public Rol buscaPorNombre(String nombre) {
-        try {
-            String sql = "SELECT r FROM Rol r WHERE r.nombre=:nombre";
-            Query query = super.getEntityManager().createQuery(sql);
-            query.setParameter("nombre", nombre);
-            List<Rol> resultList = query.getResultList();
+	public Rol buscaPorNombre(String nombre) {
+		try {
+			String sql = "SELECT r FROM Rol r WHERE r.nombre=:nombre";
+			Query query = super.getEntityManager().createQuery(sql);
+			query.setParameter("nombre", nombre);
+			List<Rol> resultList = query.getResultList();
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList.get(0);
-            }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList.get(0);
+			}
 
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
-    public List<Rol> getRolesAplicativoSeleccion() {
-        try {
-            String sql = "SELECT r FROM Rol r WHERE r.nombre LIKE :rolSeleccion and r.estado=true";
-            Query query = super.getEntityManager().createQuery(sql);
-            query.setParameter("rolSeleccion", "SITEC-%");
-            List<Rol> resultList = query.getResultList();
+	public List<Rol> getRolesAplicativoSeleccion() {
+		try {
+			String sql = "SELECT r FROM Rol r WHERE r.nombre LIKE :rolSeleccion and r.estado=true";
+			Query query = super.getEntityManager().createQuery(sql);
+			query.setParameter("rolSeleccion", "SITEC-%");
+			List<Rol> resultList = query.getResultList();
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList;
-            }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList;
+			}
 
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
 }

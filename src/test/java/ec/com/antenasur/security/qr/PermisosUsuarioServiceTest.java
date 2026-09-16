@@ -10,12 +10,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PermisosUsuarioServiceTest {
-    @Test void crudGeneralYPermisosSonExclusivosDeAdministrador() throws Exception {
+    private static final Set<String> ROLES = Set.of("SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa");
+
+    @Test void crudAdministrativoExigeMenuAdemasDeIdentidadActiva() throws Exception {
         for (var tipo : java.util.List.of(UsuarioService.class, ec.com.antenasur.service.RolService.class,
                 ec.com.antenasur.service.RolUsuarioService.class, ec.com.antenasur.service.MenuRolService.class)) {
             for (var metodo : tipo.getDeclaredMethods()) {
+                if (metodo.isBridge() || metodo.isSynthetic()) continue;
                 if (!Set.of("create", "edit", "delete", "remove", "find", "findAll", "findRange", "count").contains(metodo.getName())) continue;
-                assertEquals(Set.of("SITEC-Administrador"), Set.of(metodo.getAnnotation(RolesAllowed.class).value()));
+                assertEquals(ROLES, Set.of(metodo.getAnnotation(RolesAllowed.class).value()));
+                assertTrue(metodo.isAnnotationPresent(ec.com.antenasur.security.menu.AccesoPagina.class)
+                        || tipo.isAnnotationPresent(ec.com.antenasur.security.menu.AccesoPagina.class));
             }
         }
         var generales = Set.of("crearUsuarioDesdeDTO", "crearUsuarioConRol", "actualizarUsuarioDesdeDTO",
@@ -23,11 +28,11 @@ class PermisosUsuarioServiceTest {
                 "listarDTOPorRoles", "findAllActiveUsuario");
         for (var metodo : UsuarioService.class.getDeclaredMethods()) {
             if (generales.contains(metodo.getName()))
-                assertEquals(Set.of("SITEC-Administrador"), Set.of(metodo.getAnnotation(RolesAllowed.class).value()));
+                assertEquals(ROLES, Set.of(metodo.getAnnotation(RolesAllowed.class).value()));
         }
         for (var tipo : java.util.List.of(ec.com.antenasur.service.RolService.class,
                 ec.com.antenasur.service.RolUsuarioService.class, ec.com.antenasur.service.MenuRolService.class)) {
-            assertEquals(Set.of("SITEC-Administrador"), Set.of(tipo.getAnnotation(RolesAllowed.class).value()));
+            assertEquals(ROLES, Set.of(tipo.getAnnotation(RolesAllowed.class).value()));
         }
     }
 
@@ -65,7 +70,8 @@ class PermisosUsuarioServiceTest {
             if (!java.lang.reflect.Modifier.isPublic(metodo.getModifiers()) || !nombres.contains(metodo.getName())) continue;
             var permiso = metodo.getAnnotation(RolesAllowed.class);
             assertNotNull(permiso, metodo.getName());
-            assertEquals(Set.of("SITEC-Administrador", "SITEC-Tribunal"), Set.of(permiso.value()));
+            assertEquals(ROLES, Set.of(permiso.value()));
+            assertNotNull(metodo.getAnnotation(ec.com.antenasur.security.menu.AccesoPagina.class));
             verificados++;
         }
         assertEquals(7, verificados);

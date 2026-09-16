@@ -1,5 +1,21 @@
 # Auditoria de autorizacion TEC
 
+## Regla vigente: Usuarios y Roles (2026-09-16)
+
+La confirmacion posterior del usuario reemplaza la exclusividad administrativa
+descrita historicamente abajo SOLO para Usuarios y Roles. Tribunal puede
+consultar, crear, editar, deshabilitar y asignar roles cuando su menu autorice
+la pagina. LoginFilter conserva listaPermisos como control de esas paginas,
+sin la segunda exigencia de Administrador. UsuarioService, RolService y
+RolUsuarioService permiten Administrador/Tribunal, incluidos metodos heredados.
+No se cambiaron permisos de menu en BD ni el constructor del menu.
+Permisos de menu y asignacionUsuarios legacy conservan su alcance anterior.
+El control QR precede al filtro normal y no permite paginas administrativas.
+Las pruebas de filtro cubren permiso presente/ausente para ambos perfiles;
+las pruebas declarativas mantienen MenuRolService exclusivo de Administrador.
+La prueba integrada local debe repetirse contra el WAR actualizado: resultados
+de despliegues anteriores no validan esta nueva matriz.
+
 ## Alcance y limites
 
 Revision estatica de anotaciones, EJB y herencia CRUD, filtros, principal,

@@ -21,6 +21,7 @@
     </licenses>
 
     <properties>
+        <tec.build.directory>${project.basedir}/target</tec.build.directory>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <propertiesEncoding>UTF-8</propertiesEncoding>
@@ -239,6 +240,7 @@
     </dependencies>
 
     <build>
+        <directory>${tec.build.directory}</directory>
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>

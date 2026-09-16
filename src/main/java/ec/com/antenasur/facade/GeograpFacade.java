@@ -22,113 +22,115 @@ import jakarta.persistence.TypedQuery;
 @Stateless
 public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 
-    public GeograpFacade() {
-        super(Geograp.class, Integer.class);
-    }
+	public GeograpFacade() {
+		super(Geograp.class, Integer.class);
+	}
 
-    public List<Geograp> findByFatherId(Integer idFather) {
-        try {
-            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
-            Query query = super.getEntityManager().createQuery(sql);
-            query.setParameter("idFather", idFather);
-            List<Geograp> resultList = query.getResultList();
+	public List<Geograp> findByFatherId(Integer idFather) {
+		try {
+			String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
+			Query query = super.getEntityManager().createQuery(sql);
+			query.setParameter("idFather", idFather);
+			List<Geograp> resultList = query.getResultList();
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList;
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList;
+			}
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
-    public Geograp findByFather_Id(Integer idFather) {
-        try {
-            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
-            //Query query = super.getEntityManager().createQuery(sql);
-            TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
-            query.setParameter("idFather", idFather);
-            List<Geograp> resultList = query.getResultList();
+	public Geograp findByFather_Id(Integer idFather) {
+		try {
+			String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather and m.status=true";
+			// Query query = super.getEntityManager().createQuery(sql);
+			TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
+			query.setParameter("idFather", idFather);
+			List<Geograp> resultList = query.getResultList();
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList.get(0);
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList.get(0);
+			}
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
-    public Geograp findByGeograpName(String nameGeograp) {
-        try {
-            String sql = "SELECT m FROM Geograp m WHERE m.name=:nameGeograp and m.status=true";
-            TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
-            query.setParameter("nameGeograp", nameGeograp);
-            List<Geograp> resultList = query.getResultList();
+	public Geograp findByGeograpName(String nameGeograp) {
+		try {
+			String sql = "SELECT m FROM Geograp m WHERE m.name=:nameGeograp and m.status=true";
+			TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
+			query.setParameter("nameGeograp", nameGeograp);
+			List<Geograp> resultList = query.getResultList();
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList.get(0);
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList.get(0);
+			}
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
-    public Geograp findByFatherIdAndGeographName(Integer idFather, String nameGeograp) {
-        try {
-            String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather AND m.name LIKE '%'||:nameGeograp||'%' and m.status=true";
-            
-            TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
-            query.setParameter("idFather", idFather);
-            query.setParameter("nameGeograp", nameGeograp);
-            List<Geograp> resultList = query.getResultList();
+	public Geograp findByFatherIdAndGeographName(Integer idFather, String nameGeograp) {
+		try {
+			String sql = "SELECT m FROM Geograp m WHERE m.geograp.id=:idFather AND m.name LIKE '%'||:nameGeograp||'%' and m.status=true";
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList.get(0);
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+			TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
+			query.setParameter("idFather", idFather);
+			query.setParameter("nameGeograp", nameGeograp);
+			List<Geograp> resultList = query.getResultList();
 
-    public List<Geograp> findByFatherGeograp(Geograp geograp) {
-        try {
-            String sql = "SELECT m FROM Geograp m WHERE m.geograp=:geograp order by m.name ";
-            TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
-            query.setParameter("geograp", geograp);
-            List<Geograp> resultList = query.getResultList();
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList.get(0);
+			}
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
 
-            if (resultList != null && !resultList.isEmpty()) {
-                return resultList;
-            }
-        } catch (NoResultException e) {
-            return null;
-        }
-        return null;
-    }
+	public List<Geograp> findByFatherGeograp(Geograp geograp) {
+		try {
+			String sql = "SELECT m FROM Geograp m WHERE m.geograp=:geograp order by m.name ";
+			TypedQuery<Geograp> query = super.getEntityManager().createQuery(sql, Geograp.class);
+			query.setParameter("geograp", geograp);
+			List<Geograp> resultList = query.getResultList();
 
-    /**
-     * Devuelve el Geograp padre (cantÃƒÂ³n) de la parroquia indicada consultando
-     * directamente la columna {@code gelo_parent_id} vÃƒÂ­a SQL nativo.
-     * Se usa SQL nativo para evitar que el {@code @Filter} activo de Hibernate
-     * interfiera con la navegaciÃƒÂ³n por la relaciÃƒÂ³n {@code @ManyToOne}.
-     */
-    @SuppressWarnings("unchecked")
-    public Geograp findParentOf(Integer childId) {
-        if (childId == null) return null;
-        try {
-            Query q = getEntityManager().createNativeQuery(
-                    "SELECT gelo_parent_id FROM public.tb_geograp WHERE gelo_id = :id");
-            q.setParameter("id", childId);
-            Object parentId = q.getSingleResult();
-            if (parentId == null) return null;
-            return find(((Number) parentId).intValue());
-        } catch (NoResultException e) {
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+			if (resultList != null && !resultList.isEmpty()) {
+				return resultList;
+			}
+		} catch (NoResultException e) {
+			return null;
+		}
+		return null;
+	}
+
+	/**
+	 * Devuelve el Geograp padre (cantÃƒÂ³n) de la parroquia indicada consultando
+	 * directamente la columna {@code gelo_parent_id} vÃƒÂ­a SQL nativo. Se usa SQL
+	 * nativo para evitar que el {@code @Filter} activo de Hibernate interfiera con
+	 * la navegaciÃƒÂ³n por la relaciÃƒÂ³n {@code @ManyToOne}.
+	 */
+	@SuppressWarnings("unchecked")
+	public Geograp findParentOf(Integer childId) {
+		if (childId == null)
+			return null;
+		try {
+			Query q = getEntityManager()
+					.createNativeQuery("SELECT gelo_parent_id FROM public.tb_geograp WHERE gelo_id = :id");
+			q.setParameter("id", childId);
+			Object parentId = q.getSingleResult();
+			if (parentId == null)
+				return null;
+			return find(((Number) parentId).intValue());
+		} catch (NoResultException e) {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }

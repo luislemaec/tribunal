@@ -456,6 +456,15 @@
                     </div>
                     <div class="flex align-items-center gap-2 flex-wrap">
 
+                        <!-- Consulta secundaria: no modifica el listado ni los datos de miembros. -->
+                        <p:commandButton id="btnBuscarPersona" value="#{msg['form.personas.busqueda.accion']}"
+                                         icon="pi pi-search"
+                                         styleClass="ui-button-text ui-button-secondary"
+                                         actionListener="#{personaController.prepararBusquedaPersonas}"
+                                         process="@this"
+                                         update=":frmPersonas:panelBusquedaPersona"
+                                         oncomplete="PF('dlgBuscarPersonas').show()"/>
+
                         <!-- Importar desde Excel -->
                         <p:fileUpload mode="simple" skinSimple="true" label="Importar"
                                       listener="#{personaController.handleFileUpload}"
@@ -666,6 +675,82 @@
                  IMPORTANTE: dentro del form para que los inputs
                  se serialicen correctamente en AJAX.
                  ====================================================== -->
+            <p:dialog id="dlgBusquedaPersonas"
+                      header="#{msg['form.personas.busqueda.titulo']}"
+                      widgetVar="dlgBuscarPersonas"
+                      modal="true" responsive="true" width="1100"
+                      style="max-width:96vw" contentStyle="overflow-y:auto;max-height:75vh"
+                      closeOnEscape="true">
+                <p:outputPanel id="panelBusquedaPersona" layout="block">
+                    <div class="grid align-items-end mb-3">
+                        <div class="col-12 md:col-8">
+                            <label for="criterioBusquedaPersona" class="block text-700 font-medium text-sm mb-2">
+                                #{msg['form.personas.busqueda.criterio']}
+                            </label>
+                            <p:inputText id="criterioBusquedaPersona"
+                                         value="#{personaController.criterioBusquedaPersona}"
+                                         maxlength="100" styleClass="w-full"
+                                         placeholder="#{msg['form.personas.busqueda.placeholder']}"/>
+                        </div>
+                        <div class="col-12 md:col-4 flex md:justify-content-end">
+                            <p:commandButton id="btnEjecutarBusquedaPersona"
+                                             value="#{msg['form.personas.busqueda.accion']}" icon="pi pi-search"
+                                             styleClass="ui-button-outlined ui-button-secondary"
+                                             actionListener="#{personaController.buscarPersonasParaConsulta}"
+                                             process="criterioBusquedaPersona"
+                                             update="panelBusquedaPersona"/>
+                        </div>
+                    </div>
+
+                    <p:dataTable id="tblBusquedaPersonas" var="resultado"
+                                 value="#{personaController.resultadosBusquedaPersonas}"
+                                 paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
+                                 paginatorPosition="bottom" reflow="true" size="small"
+                                 emptyMessage="#{msg['form.personas.busqueda.sin.resultados']}"
+                                 styleClass="ui-datatable-sm ui-datatable-striped">
+                        <p:column headerText="#{msg['form.personas.busqueda.cedula']}" style="width:10rem">
+                            <h:outputText value="#{resultado.persona.documento}"
+                                          styleClass="font-medium text-800" style="font-family:monospace"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.personas.busqueda.nombres']}" style="min-width:15rem">
+                            <h:outputText value="#{resultado.persona.nombres}" styleClass="font-semibold text-800"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.personas.busqueda.iglesia']}" style="min-width:14rem">
+                            <h:outputText value="#{resultado.iglesia.nombre}" styleClass="font-medium text-800 block"/>
+                            <h:outputText value="#{resultado.iglesia.comunidad}"
+                                          rendered="#{not empty resultado.iglesia.comunidad}"
+                                          styleClass="text-500 text-sm block"/>
+                        </p:column>
+                        <p:column headerText="#{msg['form.personas.busqueda.ubicacion']}" style="min-width:16rem">
+                            <div class="flex flex-column gap-1 text-sm">
+                                <span><span class="text-500">Barrio/Comunidad: </span><h:outputText value="#{resultado.iglesia.comunidad}"/></span>
+                                <span><span class="text-500">Provincia: </span><h:outputText value="#{resultado.iglesia.provinciaNombre}"/></span>
+                                <span><span class="text-500">Cantón: </span><h:outputText value="#{resultado.iglesia.cantonNombre}"/></span>
+                                <span><span class="text-500">Parroquia: </span><h:outputText value="#{resultado.iglesia.ubicacionNombre}"/></span>
+                            </div>
+                        </p:column>
+                        <p:column headerText="#{msg['form.personas.busqueda.estado']}" style="min-width:13rem">
+                            <div class="flex flex-column align-items-start gap-1">
+                                <p:tag rendered="#{not resultado.tieneInconsistencia}"
+                                       value="#{msg['form.personas.inconsistencia.sin']}"
+                                       severity="success" icon="pi pi-check-circle"/>
+                                <p:tag rendered="#{resultado.inconsistenciaIglesias}"
+                                       value="#{msg['form.personas.busqueda.inconsistencia.iglesias']}"
+                                       severity="danger" icon="pi pi-exclamation-triangle"/>
+                                <p:tag rendered="#{resultado.inconsistenciaCedula}"
+                                       value="#{msg['form.personas.busqueda.inconsistencia.cedula']}"
+                                       severity="warning" icon="pi pi-exclamation-triangle"/>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <p:commandButton value="Cancelar" type="button" icon="pi pi-times"
+                                     styleClass="ui-button-text ui-button-secondary"
+                                     onclick="PF('dlgBuscarPersonas').hide()"/>
+                </f:facet>
+            </p:dialog>
+
             <p:dialog header="Datos del miembro"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgPersona"

@@ -27,419 +27,421 @@ import java.util.Map;
 @Slf4j
 public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFacade> {
 
-    @Inject
-    private IglesiaFacade iglesiaFacade;
+	@Inject
+	private IglesiaFacade iglesiaFacade;
 
-    @Inject
-    private DocumentoFacade documentoFacade;
+	@Inject
+	private DocumentoFacade documentoFacade;
 
-    @Inject
-    private GeograpFacade geograpFacade;
+	@Inject
+	private GeograpFacade geograpFacade;
 
-    @Inject
-    private UsuarioFacade usuarioFacade;
+	@Inject
+	private UsuarioFacade usuarioFacade;
 
-    @Override
-    protected IglesiaFacade getFacade() {
-        return iglesiaFacade;
-    }
+	@Override
+	protected IglesiaFacade getFacade() {
+		return iglesiaFacade;
+	}
 
-    public List<Iglesia> getIglesiasPorParroquia(Geograp parroquia) {
-        return iglesiaFacade.getIglesiasPorParroquia(parroquia);
-    }
+	public List<Iglesia> getIglesiasPorParroquia(Geograp parroquia) {
+		return iglesiaFacade.getIglesiasPorParroquia(parroquia);
+	}
 
-    public Iglesia getIglesiaPorDocumento(String documento) {
-        return iglesiaFacade.getIglesiaPorDocumento(documento);
-    }
+	public Iglesia getIglesiaPorDocumento(String documento) {
+		return iglesiaFacade.getIglesiaPorDocumento(documento);
+	}
 
-    public List<Iglesia> obtieneIglesiasAsignadasPorIds(List<Integer> listaIdIglesias) {
-        return iglesiaFacade.obtieneIglesiasAsignadasPorIds(listaIdIglesias);
-    }
+	public List<Iglesia> obtieneIglesiasAsignadasPorIds(List<Integer> listaIdIglesias) {
+		return iglesiaFacade.obtieneIglesiasAsignadasPorIds(listaIdIglesias);
+	}
 
-    public List<Iglesia> obtieneIglesiasPorAsignarPorIds(List<Integer> listaIdIglesias, List<Integer> listaIdParroquias) {
-        return iglesiaFacade.obtieneIglesiasPorAsignarPorIds(listaIdIglesias, listaIdParroquias);
-    }
+	public List<Iglesia> obtieneIglesiasPorAsignarPorIds(List<Integer> listaIdIglesias,
+			List<Integer> listaIdParroquias) {
+		return iglesiaFacade.obtieneIglesiasPorAsignarPorIds(listaIdIglesias, listaIdParroquias);
+	}
 
-    public List<Iglesia> getIglesiasPorParroquias(List<Geograp> parroquias) {
-        return iglesiaFacade.getIglesiasPorParroquias(parroquias);
-    }
+	public List<Iglesia> getIglesiasPorParroquias(List<Geograp> parroquias) {
+		return iglesiaFacade.getIglesiasPorParroquias(parroquias);
+	}
 
-    public Iglesia getIglesiaPorNombreNombreComunidadYUbicacion(Iglesia iglesiaTmp) {
-        return iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(iglesiaTmp);
-    }
+	public Iglesia getIglesiaPorNombreNombreComunidadYUbicacion(Iglesia iglesiaTmp) {
+		return iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(iglesiaTmp);
+	}
 
-    public void marcarConTieneDocumentos(List<Iglesia> iglesias, Integer tipoDocumentoId) {
-        if (iglesias == null || iglesias.isEmpty() || tipoDocumentoId == null) {
-            return;
-        }
-        java.util.Set<Integer> idsConDocs = documentoFacade.getEntidadesIdsConDocumentos(tipoDocumentoId);
-        for (Iglesia iglesia : iglesias) {
-            iglesia.setTieneDocumentos(idsConDocs.contains(iglesia.getId()));
-        }
-    }
+	public void marcarConTieneDocumentos(List<Iglesia> iglesias, Integer tipoDocumentoId) {
+		if (iglesias == null || iglesias.isEmpty() || tipoDocumentoId == null) {
+			return;
+		}
+		java.util.Set<Integer> idsConDocs = documentoFacade.getEntidadesIdsConDocumentos(tipoDocumentoId);
+		for (Iglesia iglesia : iglesias) {
+			iglesia.setTieneDocumentos(idsConDocs.contains(iglesia.getId()));
+		}
+	}
 
-    // ----- API basada en DTO -----
+	// ----- API basada en DTO -----
 
-    public IglesiaDTO obtenerDTOPorId(Integer id) {
-        if (id == null) {
-            return null;
-        }
-        return IglesiaDTO.fromEntity(iglesiaFacade.find(id));
-    }
+	public IglesiaDTO obtenerDTOPorId(Integer id) {
+		if (id == null) {
+			return null;
+		}
+		return IglesiaDTO.fromEntity(iglesiaFacade.find(id));
+	}
 
-    public IglesiaDTO obtenerDTOConFlagDocumentos(Integer id, Integer tipoDocumentoId) {
-        IglesiaDTO dto = obtenerDTOPorId(id);
-        if (dto == null || id == null || tipoDocumentoId == null) {
-            return dto;
-        }
-        dto.setTieneDocumentos(documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(id, tipoDocumentoId));
-        return dto;
-    }
+	public IglesiaDTO obtenerDTOConFlagDocumentos(Integer id, Integer tipoDocumentoId) {
+		IglesiaDTO dto = obtenerDTOPorId(id);
+		if (dto == null || id == null || tipoDocumentoId == null) {
+			return dto;
+		}
+		dto.setTieneDocumentos(documentoFacade.getTieneDocumentosPorEntidadYTipoDoc(id, tipoDocumentoId));
+		return dto;
+	}
 
-    public List<IglesiaDTO> listarDTOs() {
-        return mapearLista(iglesiaFacade.findAll());
-    }
+	public List<IglesiaDTO> listarDTOs() {
+		return mapearLista(iglesiaFacade.findAll());
+	}
 
-    public List<IglesiaDTO> listarDTOsPorParroquias(List<Geograp> parroquias) {
-        if (parroquias == null || parroquias.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return mapearLista(iglesiaFacade.getIglesiasPorParroquias(parroquias));
-    }
+	public List<IglesiaDTO> listarDTOsPorParroquias(List<Geograp> parroquias) {
+		if (parroquias == null || parroquias.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return mapearLista(iglesiaFacade.getIglesiasPorParroquias(parroquias));
+	}
 
-    public List<IglesiaDTO> listarDTOsPorParroquia(Geograp parroquia) {
-        if (parroquia == null || parroquia.getId() == null) {
-            return Collections.emptyList();
-        }
-        return mapearLista(iglesiaFacade.getIglesiasPorParroquia(parroquia));
-    }
+	public List<IglesiaDTO> listarDTOsPorParroquia(Geograp parroquia) {
+		if (parroquia == null || parroquia.getId() == null) {
+			return Collections.emptyList();
+		}
+		return mapearLista(iglesiaFacade.getIglesiasPorParroquia(parroquia));
+	}
 
-    public List<IglesiaDTO> listarDTOsConFlagDocumentos(Integer tipoDocumentoId) {
-        List<Iglesia> iglesias = iglesiaFacade.findAll();
-        marcarConTieneDocumentos(iglesias, tipoDocumentoId);
-        return mapearLista(iglesias);
-    }
+	public List<IglesiaDTO> listarDTOsConFlagDocumentos(Integer tipoDocumentoId) {
+		List<Iglesia> iglesias = iglesiaFacade.findAll();
+		marcarConTieneDocumentos(iglesias, tipoDocumentoId);
+		return mapearLista(iglesias);
+	}
 
-    /**
-     * Completa en bloque el estado de administrador de las iglesias entregadas.
-     * La consulta de usuarios se realiza una sola vez para evitar N+1 en la vista.
-     */
-    public void marcarConAdministrador(List<IglesiaDTO> iglesias) {
-        if (iglesias == null || iglesias.isEmpty()) {
-            return;
-        }
-        List<Integer> ids = iglesias.stream()
-                .map(IglesiaDTO::getId)
-                .filter(java.util.Objects::nonNull)
-                .toList();
-        Map<Integer, Usuario> admins = construirMapaAdmins(ids);
-        for (IglesiaDTO iglesia : iglesias) {
-            Usuario admin = iglesia != null ? admins.get(iglesia.getId()) : null;
-            if (iglesia != null) {
-                iglesia.setTieneAdministrador(admin != null);
-                iglesia.setAdministradorNombre(admin != null && admin.getPersonsa() != null
-                        ? admin.getPersonsa().getNombres() : null);
-            }
-        }
-    }
+	/**
+	 * Completa en bloque el estado de administrador de las iglesias entregadas. La
+	 * consulta de usuarios se realiza una sola vez para evitar N+1 en la vista.
+	 */
+	public void marcarConAdministrador(List<IglesiaDTO> iglesias) {
+		if (iglesias == null || iglesias.isEmpty()) {
+			return;
+		}
+		List<Integer> ids = iglesias.stream().map(IglesiaDTO::getId).filter(java.util.Objects::nonNull).toList();
+		Map<Integer, Usuario> admins = construirMapaAdmins(ids);
+		for (IglesiaDTO iglesia : iglesias) {
+			Usuario admin = iglesia != null ? admins.get(iglesia.getId()) : null;
+			if (iglesia != null) {
+				iglesia.setTieneAdministrador(admin != null);
+				iglesia.setAdministradorNombre(
+						admin != null && admin.getPersonsa() != null ? admin.getPersonsa().getNombres() : null);
+			}
+		}
+	}
 
-    /**
-     * Retorna true si ya existe otra iglesia con el mismo nombre, parroquia y comunidad.
-     * La comparación es case-insensitive y descarta espacios extremos.
-     * Al editar, excluye el propio registro vía {@code idExcluir}.
-     */
-    public boolean existeDuplicado(String nombre, Integer ubicacionId, String comunidad, Integer idExcluir) {
-        String nombreN = normalizar(nombre);
-        if (nombreN == null || ubicacionId == null) return false;
-        Geograp ubicacion = geograpFacade.find(ubicacionId);
-        if (ubicacion == null) return false;
-        Iglesia tmp = new Iglesia();
-        tmp.setNombre(nombreN);
-        tmp.setComunidad(normalizar(comunidad));
-        tmp.setUbicacion(ubicacion);
-        Iglesia encontrada = iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(tmp);
-        if (encontrada == null) return false;
-        return idExcluir == null || !encontrada.getId().equals(idExcluir);
-    }
+	/**
+	 * Retorna true si ya existe otra iglesia con el mismo nombre, parroquia y
+	 * comunidad. La comparación es case-insensitive y descarta espacios extremos.
+	 * Al editar, excluye el propio registro vía {@code idExcluir}.
+	 */
+	public boolean existeDuplicado(String nombre, Integer ubicacionId, String comunidad, Integer idExcluir) {
+		String nombreN = normalizar(nombre);
+		if (nombreN == null || ubicacionId == null)
+			return false;
+		Geograp ubicacion = geograpFacade.find(ubicacionId);
+		if (ubicacion == null)
+			return false;
+		Iglesia tmp = new Iglesia();
+		tmp.setNombre(nombreN);
+		tmp.setComunidad(normalizar(comunidad));
+		tmp.setUbicacion(ubicacion);
+		Iglesia encontrada = iglesiaFacade.getIglesiaPorNombreNombreComunidadYUbicacion(tmp);
+		if (encontrada == null)
+			return false;
+		return idExcluir == null || !encontrada.getId().equals(idExcluir);
+	}
 
-    /**
-     * Persiste la iglesia descrita por el DTO aplicando normalización de strings
-     * (trim + uppercase) antes de persistir.
-     *
-     * Reglas de negocio aplicadas:
-     * - RUC real no puede repetirse en dos iglesias distintas.
-     * - Código genérico existente se conserva en ediciones sin cambio de RUC.
-     * - En edición, la versión del DTO debe coincidir con la de la BD para detectar
-     *   ediciones concurrentes (lanzará {@link NegocioException} si hay conflicto).
-     */
-    public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        Geograp ubicacion = (dto.getUbicacionId() != null)
-                ? geograpFacade.find(dto.getUbicacionId()) : null;
-        if (ubicacion == null) {
-            log.warn("guardarDesdeDTO: ubicacionId={} no encontrado", dto.getUbicacionId());
-            return null;
-        }
+	/**
+	 * Persiste la iglesia descrita por el DTO aplicando normalización de strings
+	 * (trim + uppercase) antes de persistir.
+	 *
+	 * Reglas de negocio aplicadas: - RUC real no puede repetirse en dos iglesias
+	 * distintas. - Código genérico existente se conserva en ediciones sin cambio de
+	 * RUC. - En edición, la versión del DTO debe coincidir con la de la BD para
+	 * detectar ediciones concurrentes (lanzará {@link NegocioException} si hay
+	 * conflicto).
+	 */
+	public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
+		if (dto == null) {
+			return null;
+		}
+		Geograp ubicacion = (dto.getUbicacionId() != null) ? geograpFacade.find(dto.getUbicacionId()) : null;
+		if (ubicacion == null) {
+			log.warn("guardarDesdeDTO: ubicacionId={} no encontrado", dto.getUbicacionId());
+			return null;
+		}
 
-        String nombre    = normalizar(dto.getNombre());
-        String comunidad = normalizar(dto.getComunidad());
+		String nombre = normalizar(dto.getNombre());
+		String comunidad = normalizar(dto.getComunidad());
 
-        if (dto.getId() == null) {
-            // â”€â”€ NUEVO REGISTRO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            String documento = resolverDocumento(dto.getDocumento());
-            validarRucUnico(documento, null);
-            Iglesia nueva = dto.toEntity();
-            nueva.setNombre(nombre);
-            nueva.setComunidad(comunidad);
-            nueva.setDocumento(documento);
-            nueva.setUbicacion(ubicacion);
-            Iglesia creada = iglesiaFacade.create(nueva);
-            return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(creada.getId()));
-        }
+		if (dto.getId() == null) {
+			// â”€â”€ NUEVO REGISTRO
+			// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+			String documento = resolverDocumento(dto.getDocumento());
+			validarRucUnico(documento, null);
+			Iglesia nueva = dto.toEntity();
+			nueva.setNombre(nombre);
+			nueva.setComunidad(comunidad);
+			nueva.setDocumento(documento);
+			nueva.setUbicacion(ubicacion);
+			Iglesia creada = iglesiaFacade.create(nueva);
+			return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(creada.getId()));
+		}
 
-        // â”€â”€ EDICIÓN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        Iglesia actual = iglesiaFacade.find(dto.getId());
-        if (actual == null) {
-            log.warn("guardarDesdeDTO: iglesia id={} no encontrada para edición", dto.getId());
-            return null;
-        }
+		// â”€â”€ EDICIÓN
+		// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+		Iglesia actual = iglesiaFacade.find(dto.getId());
+		if (actual == null) {
+			log.warn("guardarDesdeDTO: iglesia id={} no encontrada para edición", dto.getId());
+			return null;
+		}
 
-        // Control de edición concurrente: versión del DTO debe coincidir con la BD
-        if (dto.getVersion() != null && !dto.getVersion().equals(actual.getVersion())) {
-            throw new NegocioException(
-                "El registro fue modificado por otro usuario mientras lo editaba. "
-                + "Cierre el diálogo, recargue los datos e intente nuevamente.");
-        }
+		// Control de edición concurrente: versión del DTO debe coincidir con la BD
+		if (dto.getVersion() != null && !dto.getVersion().equals(actual.getVersion())) {
+			throw new NegocioException("El registro fue modificado por otro usuario mientras lo editaba. "
+					+ "Cierre el diálogo, recargue los datos e intente nuevamente.");
+		}
 
-        // Preservar el documento recibido desde la UI; no consumir secuencia al guardar.
-        String documento = resolverDocumento(dto.getDocumento());
+		// Preservar el documento recibido desde la UI; no consumir secuencia al
+		// guardar.
+		String documento = resolverDocumento(dto.getDocumento());
 
-        validarRucUnico(documento, dto.getId());
+		validarRucUnico(documento, dto.getId());
 
-        actual.setNombre(nombre);
-        actual.setComunidad(comunidad);
-        actual.setDocumento(documento);
-        actual.setTotalMiembros(dto.getTotalMiembros());
-        actual.setUbicacion(ubicacion);
-        iglesiaFacade.edit(actual);
-        return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(actual.getId()));
-    }
+		actual.setNombre(nombre);
+		actual.setComunidad(comunidad);
+		actual.setDocumento(documento);
+		actual.setTotalMiembros(dto.getTotalMiembros());
+		actual.setUbicacion(ubicacion);
+		iglesiaFacade.edit(actual);
+		return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(actual.getId()));
+	}
 
-    /**
-     * Valida que el RUC real no esté ya asignado a otra iglesia.
-     * Los códigos genéricos no se validan aquí: la secuencia PostgreSQL
-     * ({@code seq_iglesia_codigo_generico}) garantiza que cada llamada a
-     * {@code nextval()} retorne un valor distinto y nunca reusado.
-     */
-    private void validarRucUnico(String documento, Integer idExcluir) {
-        if (documento == null || esDocumentoGenerico(documento)) return;
-        Iglesia existente = iglesiaFacade.getIglesiaPorDocumento(documento);
-        if (existente != null && !existente.getId().equals(idExcluir)) {
-            throw new NegocioException(
-                "El RUC " + documento + " ya está registrado en la iglesia \"" + existente.getNombre() + "\".");
-        }
-    }
+	/**
+	 * Valida que el RUC real no esté ya asignado a otra iglesia. Los códigos
+	 * genéricos no se validan aquí: la secuencia PostgreSQL
+	 * ({@code seq_iglesia_codigo_generico}) garantiza que cada llamada a
+	 * {@code nextval()} retorne un valor distinto y nunca reusado.
+	 */
+	private void validarRucUnico(String documento, Integer idExcluir) {
+		if (documento == null || esDocumentoGenerico(documento))
+			return;
+		Iglesia existente = iglesiaFacade.getIglesiaPorDocumento(documento);
+		if (existente != null && !existente.getId().equals(idExcluir)) {
+			throw new NegocioException(
+					"El RUC " + documento + " ya está registrado en la iglesia \"" + existente.getNombre() + "\".");
+		}
+	}
 
-    /** Delega en {@link IglesiaFacade#generarDocumentoGenerico()}. */
-    public String generarDocumentoGenerico() {
-        return iglesiaFacade.generarDocumentoGenerico();
-    }
+	/** Delega en {@link IglesiaFacade#generarDocumentoGenerico()}. */
+	public String generarDocumentoGenerico() {
+		return iglesiaFacade.generarDocumentoGenerico();
+	}
 
-    /**
-     * Calcula el progreso de registro/actualización de iglesias dentro del
-     * rango de fechas de la fase activa.
-     *
-     * @return array [total, procesadas, porcentaje]
-     */
-    public int[] calcularProgresoRegistro(Date desde, Date hasta) {
-        int[] resultado = {0, 0, 0};
-        if (desde == null || hasta == null) return resultado;
-        int total = iglesiaFacade.count();
-        if (total == 0) return resultado;
-        long procesadas = iglesiaFacade.countActualizadasEnRango(desde, hasta);
-        resultado[0] = total;
-        resultado[1] = (int) procesadas;
-        resultado[2] = (int) Math.round((procesadas * 100.0) / total);
-        return resultado;
-    }
+	/**
+	 * Calcula el progreso de registro/actualización de iglesias dentro del rango de
+	 * fechas de la fase activa.
+	 *
+	 * @return array [total, procesadas, porcentaje]
+	 */
+	public int[] calcularProgresoRegistro(Date desde, Date hasta) {
+		int[] resultado = { 0, 0, 0 };
+		if (desde == null || hasta == null)
+			return resultado;
+		int total = iglesiaFacade.count();
+		if (total == 0)
+			return resultado;
+		long procesadas = iglesiaFacade.countActualizadasEnRango(desde, hasta);
+		resultado[0] = total;
+		resultado[1] = (int) procesadas;
+		resultado[2] = (int) Math.round((procesadas * 100.0) / total);
+		return resultado;
+	}
 
-    public IglesiaDTO eliminarPorId(Integer id) {
-        if (id == null) {
-            return null;
-        }
-        Iglesia i = iglesiaFacade.find(id);
-        if (i == null) {
-            return null;
-        }
-        return IglesiaDTO.fromEntity(iglesiaFacade.delete(i));
-    }
+	public IglesiaDTO eliminarPorId(Integer id) {
+		if (id == null) {
+			return null;
+		}
+		Iglesia i = iglesiaFacade.find(id);
+		if (i == null) {
+			return null;
+		}
+		return IglesiaDTO.fromEntity(iglesiaFacade.delete(i));
+	}
 
-    public IglesiaDTO buscarDTOPorDocumento(String documento) {
-        if (documento == null || documento.trim().isEmpty()) {
-            return null;
-        }
-        return IglesiaDTO.fromEntity(iglesiaFacade.getIglesiaPorDocumento(documento.trim()));
-    }
+	public IglesiaDTO buscarDTOPorDocumento(String documento) {
+		if (documento == null || documento.trim().isEmpty()) {
+			return null;
+		}
+		return IglesiaDTO.fromEntity(iglesiaFacade.getIglesiaPorDocumento(documento.trim()));
+	}
 
-    public List<IglesiaDTO> listarDTOsPorAsignarPorIds(List<Integer> idsExcluir, List<Integer> idsParroquias) {
-        return mapearLista(iglesiaFacade.obtieneIglesiasPorAsignarPorIds(idsExcluir, idsParroquias));
-    }
+	public List<IglesiaDTO> listarDTOsPorAsignarPorIds(List<Integer> idsExcluir, List<Integer> idsParroquias) {
+		return mapearLista(iglesiaFacade.obtieneIglesiasPorAsignarPorIds(idsExcluir, idsParroquias));
+	}
 
-    // ----- API para Asignación de Usuarios -----
+	// ----- API para Asignación de Usuarios -----
 
-    /**
-     * Lista todas las iglesias activas combinadas con su Usuario IglesiaAdmin
-     * (si lo tienen) para la pantalla de asignación. Hace una sola consulta
-     * para iglesias y otra para todos los admins, evitando N+1.
-     */
-    public List<IglesiaAsignacionDTO> listarParaAsignacionUsuarios() {
-        List<Iglesia> iglesias = iglesiaFacade.findAll();
-        Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
-        List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
-        if (iglesias == null) {
-            return resultado;
-        }
-        for (Iglesia ig : iglesias) {
-            Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
-            resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
-        }
-        return resultado;
-    }
+	/**
+	 * Lista todas las iglesias activas combinadas con su Usuario IglesiaAdmin (si
+	 * lo tienen) para la pantalla de asignación. Hace una sola consulta para
+	 * iglesias y otra para todos los admins, evitando N+1.
+	 */
+	public List<IglesiaAsignacionDTO> listarParaAsignacionUsuarios() {
+		List<Iglesia> iglesias = iglesiaFacade.findAll();
+		Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
+		List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
+		if (iglesias == null) {
+			return resultado;
+		}
+		for (Iglesia ig : iglesias) {
+			Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
+			resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
+		}
+		return resultado;
+	}
 
-    public List<IglesiaAsignacionDTO> listarParaAsignacionFiltrada(
-            Integer provinciaId, Integer cantonId, Integer parroquiaId, Boolean conAdmin) {
-        List<Iglesia> iglesias = iglesiaFacade.listarParaAsignacionFiltrada(
-                provinciaId, cantonId, parroquiaId, conAdmin);
-        List<Integer> iglesiaIds = iglesias.stream()
-                .map(Iglesia::getId)
-                .filter(java.util.Objects::nonNull)
-                .toList();
-        Map<Integer, Usuario> adminPorIglesia = Boolean.FALSE.equals(conAdmin)
-                ? Collections.emptyMap()
-                : construirMapaAdmins(iglesiaIds);
-        List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
-        for (Iglesia iglesia : iglesias) {
-            resultado.add(IglesiaAsignacionDTO.fromEntity(
-                    iglesia, adminPorIglesia.get(iglesia.getId())));
-        }
-        return resultado;
-    }
+	public List<IglesiaAsignacionDTO> listarParaAsignacionFiltrada(Integer provinciaId, Integer cantonId,
+			Integer parroquiaId, Boolean conAdmin) {
+		List<Iglesia> iglesias = iglesiaFacade.listarParaAsignacionFiltrada(provinciaId, cantonId, parroquiaId,
+				conAdmin);
+		List<Integer> iglesiaIds = iglesias.stream().map(Iglesia::getId).filter(java.util.Objects::nonNull).toList();
+		Map<Integer, Usuario> adminPorIglesia = Boolean.FALSE.equals(conAdmin) ? Collections.emptyMap()
+				: construirMapaAdmins(iglesiaIds);
+		List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
+		for (Iglesia iglesia : iglesias) {
+			resultado.add(IglesiaAsignacionDTO.fromEntity(iglesia, adminPorIglesia.get(iglesia.getId())));
+		}
+		return resultado;
+	}
 
-    public long[] resumirAsignacionFiltrada(Integer provinciaId, Integer cantonId, Integer parroquiaId) {
-        long total = iglesiaFacade.contarParaAsignacionFiltrada(
-                provinciaId, cantonId, parroquiaId, null);
-        long conAdmin = iglesiaFacade.contarParaAsignacionFiltrada(
-                provinciaId, cantonId, parroquiaId, Boolean.TRUE);
-        return new long[] {total, conAdmin};
-    }
+	public long[] resumirAsignacionFiltrada(Integer provinciaId, Integer cantonId, Integer parroquiaId) {
+		long total = iglesiaFacade.contarParaAsignacionFiltrada(provinciaId, cantonId, parroquiaId, null);
+		long conAdmin = iglesiaFacade.contarParaAsignacionFiltrada(provinciaId, cantonId, parroquiaId, Boolean.TRUE);
+		return new long[] { total, conAdmin };
+	}
 
-    /** Variante filtrada por parroquias para el filtro geográfico. */
-    public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquias(List<Geograp> parroquias) {
-        if (parroquias == null || parroquias.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<Iglesia> iglesias = iglesiaFacade.getIglesiasPorParroquias(parroquias);
-        Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
-        List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
-        if (iglesias == null) {
-            return resultado;
-        }
-        for (Iglesia ig : iglesias) {
-            Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
-            resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
-        }
-        return resultado;
-    }
+	/** Variante filtrada por parroquias para el filtro geográfico. */
+	public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquias(List<Geograp> parroquias) {
+		if (parroquias == null || parroquias.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<Iglesia> iglesias = iglesiaFacade.getIglesiasPorParroquias(parroquias);
+		Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
+		List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
+		if (iglesias == null) {
+			return resultado;
+		}
+		for (Iglesia ig : iglesias) {
+			Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
+			resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
+		}
+		return resultado;
+	}
 
-    /** Variante filtrada por una sola parroquia. */
-    public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquia(Geograp parroquia) {
-        if (parroquia == null || parroquia.getId() == null) {
-            return Collections.emptyList();
-        }
-        List<Iglesia> iglesias = iglesiaFacade.getIglesiasPorParroquia(parroquia);
-        Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
-        List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
-        if (iglesias == null) {
-            return resultado;
-        }
-        for (Iglesia ig : iglesias) {
-            Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
-            resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
-        }
-        return resultado;
-    }
+	/** Variante filtrada por una sola parroquia. */
+	public List<IglesiaAsignacionDTO> listarParaAsignacionPorParroquia(Geograp parroquia) {
+		if (parroquia == null || parroquia.getId() == null) {
+			return Collections.emptyList();
+		}
+		List<Iglesia> iglesias = iglesiaFacade.getIglesiasPorParroquia(parroquia);
+		Map<Integer, Usuario> adminPorIglesia = construirMapaAdmins();
+		List<IglesiaAsignacionDTO> resultado = new ArrayList<>();
+		if (iglesias == null) {
+			return resultado;
+		}
+		for (Iglesia ig : iglesias) {
+			Usuario admin = (ig.getId() != null) ? adminPorIglesia.get(ig.getId()) : null;
+			resultado.add(IglesiaAsignacionDTO.fromEntity(ig, admin));
+		}
+		return resultado;
+	}
 
-    /**
-     * Calcula el progreso de la fase de asignación de usuarios.
-     *
-     * @return array {@code [total, conAdmin, porcentaje]}.
-     */
-    public int[] calcularProgresoAsignacionUsuarios() {
-        int[] resultado = {0, 0, 0};
-        int total = iglesiaFacade.count();
-        if (total == 0) return resultado;
-        int conAdmin = construirMapaAdmins().size();
-        resultado[0] = total;
-        resultado[1] = conAdmin;
-        resultado[2] = (int) Math.round((conAdmin * 100.0) / total);
-        return resultado;
-    }
+	/**
+	 * Calcula el progreso de la fase de asignación de usuarios.
+	 *
+	 * @return array {@code [total, conAdmin, porcentaje]}.
+	 */
+	public int[] calcularProgresoAsignacionUsuarios() {
+		int[] resultado = { 0, 0, 0 };
+		int total = iglesiaFacade.count();
+		if (total == 0)
+			return resultado;
+		int conAdmin = construirMapaAdmins().size();
+		resultado[0] = total;
+		resultado[1] = conAdmin;
+		resultado[2] = (int) Math.round((conAdmin * 100.0) / total);
+		return resultado;
+	}
 
-    private Map<Integer, Usuario> construirMapaAdmins() {
-        Map<Integer, Usuario> mapa = new HashMap<>();
-        List<Usuario> admins = usuarioFacade.findAllIglesiaAdmins();
-        if (admins != null) {
-            for (Usuario u : admins) {
-                if (u.getIglesia() != null && u.getIglesia().getId() != null) {
-                    mapa.put(u.getIglesia().getId(), u);
-                }
-            }
-        }
-        return mapa;
-    }
+	private Map<Integer, Usuario> construirMapaAdmins() {
+		Map<Integer, Usuario> mapa = new HashMap<>();
+		List<Usuario> admins = usuarioFacade.findAllIglesiaAdmins();
+		if (admins != null) {
+			for (Usuario u : admins) {
+				if (u.getIglesia() != null && u.getIglesia().getId() != null) {
+					mapa.put(u.getIglesia().getId(), u);
+				}
+			}
+		}
+		return mapa;
+	}
 
-    private Map<Integer, Usuario> construirMapaAdmins(List<Integer> iglesiaIds) {
-        Map<Integer, Usuario> mapa = new HashMap<>();
-        if (iglesiaIds == null || iglesiaIds.isEmpty()) {
-            return mapa;
-        }
-        List<Usuario> admins = usuarioFacade.findIglesiaAdminsPorIglesias(iglesiaIds);
-        for (Usuario usuario : admins) {
-            if (usuario.getIglesia() != null && usuario.getIglesia().getId() != null) {
-                mapa.put(usuario.getIglesia().getId(), usuario);
-            }
-        }
-        return mapa;
-    }
+	private Map<Integer, Usuario> construirMapaAdmins(List<Integer> iglesiaIds) {
+		Map<Integer, Usuario> mapa = new HashMap<>();
+		if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+			return mapa;
+		}
+		List<Usuario> admins = usuarioFacade.findIglesiaAdminsPorIglesias(iglesiaIds);
+		for (Usuario usuario : admins) {
+			if (usuario.getIglesia() != null && usuario.getIglesia().getId() != null) {
+				mapa.put(usuario.getIglesia().getId(), usuario);
+			}
+		}
+		return mapa;
+	}
 
-    // ----- helpers privados -----
+	// ----- helpers privados -----
 
-    /** Trim + uppercase; retorna null si el string resultante está vacío. */
-    private static String normalizar(String s) {
-        if (s == null) return null;
-        String r = s.trim().toUpperCase();
-        return r.isEmpty() ? null : r;
-    }
+	/** Trim + uppercase; retorna null si el string resultante está vacío. */
+	private static String normalizar(String s) {
+		if (s == null)
+			return null;
+		String r = s.trim().toUpperCase();
+		return r.isEmpty() ? null : r;
+	}
 
-    /** Normaliza el documento recibido; no consume secuencia durante el guardado. */
-    private String resolverDocumento(String documento) {
-        return documento != null ? documento.trim() : null;
-    }
+	/**
+	 * Normaliza el documento recibido; no consume secuencia durante el guardado.
+	 */
+	private String resolverDocumento(String documento) {
+		return documento != null ? documento.trim() : null;
+	}
 
-    private static boolean esDocumentoGenerico(String doc) {
-        return doc != null && doc.startsWith("00");
-    }
+	private static boolean esDocumentoGenerico(String doc) {
+		return doc != null && doc.startsWith("00");
+	}
 
-    private List<IglesiaDTO> mapearLista(List<Iglesia> iglesias) {
-        if (iglesias == null || iglesias.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<IglesiaDTO> resultado = new ArrayList<>(iglesias.size());
-        for (Iglesia i : iglesias) {
-            resultado.add(IglesiaDTO.fromEntity(i));
-        }
-        return resultado;
-    }
+	private List<IglesiaDTO> mapearLista(List<Iglesia> iglesias) {
+		if (iglesias == null || iglesias.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<IglesiaDTO> resultado = new ArrayList<>(iglesias.size());
+		for (Iglesia i : iglesias) {
+			resultado.add(IglesiaDTO.fromEntity(i));
+		}
+		return resultado;
+	}
 }

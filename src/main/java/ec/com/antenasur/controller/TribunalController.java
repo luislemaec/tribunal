@@ -105,9 +105,10 @@ public class TribunalController implements Serializable {
     }
 
     public boolean isPuedeGestionarAutoridades() {
-        return loginBean != null && loginBean.getRoles() != null
-                && (loginBean.getRoles().contains("SITEC-Administrador")
-                || loginBean.getRoles().contains("SITEC-Tribunal"));
+        Object paginas = JsfUtil.devolverObjetoSession("listaPermisos");
+        return paginas instanceof java.util.List<?> lista
+                && lista.stream().anyMatch(p -> p instanceof String pagina
+                && "autoridades.jsf".equals(ec.com.antenasur.security.menu.PaginasMenu.normalizar(pagina)));
     }
 
     public String getMensajeBotonEliminar() {

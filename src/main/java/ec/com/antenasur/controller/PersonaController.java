@@ -166,6 +166,14 @@ public class PersonaController implements Serializable {
     @Getter
     private List<PersonaDTO> listaPersonas;
 
+    /** Criterio y resultados de la consulta secundaria, exclusivamente de lectura. */
+    @Setter
+    @Getter
+    private String criterioBusquedaPersona;
+
+    @Getter
+    private List<IglesiaPersonaDTO> resultadosBusquedaPersonas = new ArrayList<>();
+
     /**
      * Bandera derivada del usuario logueado: true si su rol es IglesiaAdmin
      * y tiene una iglesia asignada. Cuando es true, la vista debe ocultar
@@ -305,6 +313,32 @@ public class PersonaController implements Serializable {
         String prefijo = (String) JsfUtil.getProperty("roles.sitec", true);
         String rolAdministrador = (prefijo == null ? "" : prefijo) + Constantes.getRolAdministrador();
         return loginBean.getRoles().contains(rolAdministrador);
+    }
+
+    /** Abre la consulta sin alterar el listado ni la selección del CRUD principal. */
+    public void prepararBusquedaPersonas() {
+        criterioBusquedaPersona = null;
+        resultadosBusquedaPersonas = new ArrayList<>();
+    }
+
+    /** Busca por cédula o coincidencia parcial de nombres y apellidos. */
+    public void buscarPersonasParaConsulta() {
+        if (criterioBusquedaPersona == null || criterioBusquedaPersona.isBlank()) {
+            JsfUtil.addWarningMessage(mensaje("form.personas.busqueda.criterio.requerido"));
+            resultadosBusquedaPersonas = new ArrayList<>();
+            return;
+        }
+        try {
+            resultadosBusquedaPersonas = iglesiaPersonaService.buscarPersonasParaConsulta(
+                    criterioBusquedaPersona.trim());
+        } catch (IglesiaPersonaException e) {
+            resultadosBusquedaPersonas = new ArrayList<>();
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+        } catch (Exception e) {
+            resultadosBusquedaPersonas = new ArrayList<>();
+            log.error("Error al consultar personas", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.busqueda.error"));
+        }
     }
 
     public void obtieneParroquias() {

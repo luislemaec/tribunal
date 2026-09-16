@@ -55,19 +55,41 @@ class RedireccionSesionTest {
         var campo = LoginFilter.class.getDeclaredField("controlQr");
         campo.setAccessible(true);
         campo.set(filtro, new ControlHttpSesionQr());
+        var permisos = LoginFilter.class.getDeclaredField("autorizacionMenu");
+        permisos.setAccessible(true);
+        permisos.set(filtro, new ec.com.antenasur.security.menu.AutorizacionMenuService() {
+            @Override public java.util.List<String> paginasActuales() {
+                return caso.permisosVigentes;
+            }
+        });
         filtro.doFilter(caso.request(), caso.response(), (r,s) -> caso.continua = true);
     }
 
-    @Test void tribunalNoAccedeAdministracionAunqueMenuHistoricoLaIncluya() throws Exception {
-        for (String pagina : new String[]{"usuarios", "roles", "permisos", "asignacionUsuarios"}) {
+    @Test void menuAutorizaPermisosYAsignacionSinVetoPorRol() throws Exception {
+        for (String pagina : new String[]{"permisos", "asignacionUsuarios"}) {
             var caso = autenticado(pagina, false);
             filtrar(caso);
-            assertFalse(caso.continua, pagina);
-            assertEquals("/tec/errors/permisos.jsf", caso.headers.get("Location"));
+            assertTrue(caso.continua, pagina);
         }
         var iglesias = autenticado("iglesias", false);
         filtrar(iglesias);
         assertTrue(iglesias.continua);
+    }
+
+    @Test void usuariosYRolesRequierenMenuAutorizadoInclusoParaAdministrador() throws Exception {
+        for (boolean administrador : new boolean[]{false, true}) {
+            for (String pagina : new String[]{"usuarios", "roles"}) {
+                var permitido = autenticado(pagina, administrador);
+                filtrar(permitido);
+                assertTrue(permitido.continua, pagina);
+                var denegado = autenticado(pagina, administrador);
+                denegado.atributos.put("listaPermisos", java.util.List.of("dashboard.jsf"));
+                denegado.permisosVigentes = java.util.List.of("dashboard.jsf");
+                filtrar(denegado);
+                assertFalse(denegado.continua, pagina);
+                assertEquals("/tec/errors/permisos.jsf", denegado.headers.get("Location"));
+            }
+        }
     }
 
     @Test void administradorConPermisoConservaPantallasAdministrativas() throws Exception {
@@ -85,10 +107,12 @@ class RedireccionSesionTest {
         caso.administrador = administrador;
         var usuario = new ec.com.antenasur.dto.UsuarioDTO();
         usuario.setId(8);
+        usuario.setPermanente(true);
         var login = new ec.com.antenasur.bean.LoginBean();
         login.setUsuario(usuario);
         caso.atributos.put("loginBean", login);
         caso.atributos.put("listaPermisos", java.util.List.of(pagina + ".jsf"));
+        caso.permisosVigentes = java.util.List.of(pagina + ".jsf");
         return caso;
     }
 
@@ -107,6 +131,7 @@ class RedireccionSesionTest {
         final boolean ajax, qr;
         boolean continua, logout, invalidada, sesionNormal, administrador;
         String principal;
+        java.util.List<String> permisosVigentes = java.util.List.of();
         final HashMap<String,Object> atributos = new HashMap<>();
         int status;
         final HashMap<String,String> headers = new HashMap<>();
@@ -118,6 +143,7 @@ class RedireccionSesionTest {
             return (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{HttpSession.class},
                     (p,m,a) -> {
                         if (m.getName().equals("getAttribute")) return atributos.get(a[0]);
+                        if (m.getName().equals("setAttribute")) { atributos.put((String)a[0], a[1]); return null; }
                         if (m.getName().equals("invalidate")) { invalidada=true; return null; }
                         throw new AssertionError(m.getName());
                     });

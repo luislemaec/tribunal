@@ -14,126 +14,155 @@ import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
 
 @Stateless
-@jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+@jakarta.interceptor.Interceptors(ec.com.antenasur.security.menu.AccesoPaginaInterceptor.class)
+@ec.com.antenasur.security.menu.AccesoPagina({ "usuarios" })
+@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+		"SITEC-Presidente-mesa" })
 public class RolUsuarioService extends AbstractService<RolUsuario, Integer, RolUsuarioFacade> {
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public RolUsuario create(RolUsuario entity) { return getFacade().create(entity); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public RolUsuario create(RolUsuario entity) {
+		return getFacade().create(entity);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public RolUsuario edit(RolUsuario entity) { return getFacade().edit(entity); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public RolUsuario edit(RolUsuario entity) {
+		return getFacade().edit(entity);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public RolUsuario delete(RolUsuario entity) { return getFacade().delete(entity); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public RolUsuario delete(RolUsuario entity) {
+		return getFacade().delete(entity);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public void remove(RolUsuario entity) { getFacade().remove(entity); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public void remove(RolUsuario entity) {
+		getFacade().remove(entity);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public RolUsuario find(Integer id) { return getFacade().find(id); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public RolUsuario find(Integer id) {
+		return getFacade().find(id);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public List<RolUsuario> findAll() { return getFacade().findAll(); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public List<RolUsuario> findAll() {
+		return getFacade().findAll();
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public List<RolUsuario> findRange(int[] range) { return getFacade().findRange(range); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public List<RolUsuario> findRange(int[] range) {
+		return getFacade().findRange(range);
+	}
 
-    @Override
-    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
-    public int count() { return getFacade().count(); }
+	@Override
+	@jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin",
+			"SITEC-Presidente-mesa" })
+	public int count() {
+		return getFacade().count();
+	}
 
+	@Inject
+	private RolUsuarioFacade rolUsuarioFacade;
 
-    @Inject
-    private RolUsuarioFacade rolUsuarioFacade;
+	@Override
+	protected RolUsuarioFacade getFacade() {
+		return rolUsuarioFacade;
+	}
 
-    @Override
-    protected RolUsuarioFacade getFacade() {
-        return rolUsuarioFacade;
-    }
+	public List<RolUsuario> findByUserNameAndRoleName2(String userName, String roleName) {
+		return rolUsuarioFacade.findByUserNameAndRoleName2(userName, roleName);
+	}
 
-    public List<RolUsuario> findByUserNameAndRoleName2(String userName, String roleName) {
-        return rolUsuarioFacade.findByUserNameAndRoleName2(userName, roleName);
-    }
+	public List<RolUsuario> findByUserNameAndRoleName_(String userName) {
+		return rolUsuarioFacade.findByUserNameAndRoleName_(userName);
+	}
 
-    public List<RolUsuario> findByUserNameAndRoleName_(String userName) {
-        return rolUsuarioFacade.findByUserNameAndRoleName_(userName);
-    }
+	public List<RolUsuario> findByUserName(String userName) {
+		return rolUsuarioFacade.findByUserName(userName);
+	}
 
-    public List<RolUsuario> findByUserName(String userName) {
-        return rolUsuarioFacade.findByUserName(userName);
-    }
+	public List<RolUsuario> findByUserNameAndRoleName(String userName, String roleName) {
+		return rolUsuarioFacade.findByUserNameAndRoleName(userName, roleName);
+	}
 
-    public List<RolUsuario> findByUserNameAndRoleName(String userName, String roleName) {
-        return rolUsuarioFacade.findByUserNameAndRoleName(userName, roleName);
-    }
+	public List<RolUsuario> findByRoleName(String roleName) {
+		return rolUsuarioFacade.findByRoleName(roleName);
+	}
 
-    public List<RolUsuario> findByRoleName(String roleName) {
-        return rolUsuarioFacade.findByRoleName(roleName);
-    }
+	public List<RolUsuario> getAllActiveRolesUsers() {
+		return rolUsuarioFacade.getAllActiveRolesUsers();
+	}
 
-    public List<RolUsuario> getAllActiveRolesUsers() {
-        return rolUsuarioFacade.getAllActiveRolesUsers();
-    }
+	public List<RolUsuario> getRolesUsuariosActivos(List<Rol> listaRoles) {
+		return rolUsuarioFacade.getRolesUsuariosActivos(listaRoles);
+	}
 
-    public List<RolUsuario> getRolesUsuariosActivos(List<Rol> listaRoles) {
-        return rolUsuarioFacade.getRolesUsuariosActivos(listaRoles);
-    }
+	/**
+	 * Devuelve los usuarios distintos vinculados a cualquiera de los roles dados
+	 * (rol-usuario activo). Si dos roles comparten un usuario, aparece una sola
+	 * vez.
+	 */
+	public RolUsuarioDTO obtenerDTOPorId(Integer id) {
+		if (id == null)
+			return null;
+		return RolUsuarioDTO.fromEntity(rolUsuarioFacade.find(id));
+	}
 
-    /**
-     * Devuelve los usuarios distintos vinculados a cualquiera de los roles
-     * dados (rol-usuario activo). Si dos roles comparten un usuario, aparece
-     * una sola vez.
-     */
-    public RolUsuarioDTO obtenerDTOPorId(Integer id) {
-        if (id == null) return null;
-        return RolUsuarioDTO.fromEntity(rolUsuarioFacade.find(id));
-    }
+	public List<RolUsuarioDTO> listarDTOsPorUsername(String userName) {
+		return mapearLista(rolUsuarioFacade.findByUserName(userName));
+	}
 
-    public List<RolUsuarioDTO> listarDTOsPorUsername(String userName) {
-        return mapearLista(rolUsuarioFacade.findByUserName(userName));
-    }
+	public List<RolUsuarioDTO> listarDTOsActivosPorRoles(List<Rol> listaRoles) {
+		return mapearLista(rolUsuarioFacade.getRolesUsuariosActivos(listaRoles));
+	}
 
-    public List<RolUsuarioDTO> listarDTOsActivosPorRoles(List<Rol> listaRoles) {
-        return mapearLista(rolUsuarioFacade.getRolesUsuariosActivos(listaRoles));
-    }
+	public List<RolUsuarioDTO> buscarUsuarios(FiltroUsuarioDTO filtro, int primerRegistro, int tamanoPagina) {
+		return mapearLista(rolUsuarioFacade.buscarUsuarios(filtro, primerRegistro, tamanoPagina));
+	}
 
-    public List<RolUsuarioDTO> buscarUsuarios(FiltroUsuarioDTO filtro, int primerRegistro, int tamanoPagina) {
-        return mapearLista(rolUsuarioFacade.buscarUsuarios(filtro, primerRegistro, tamanoPagina));
-    }
+	public int contarUsuarios(FiltroUsuarioDTO filtro) {
+		return rolUsuarioFacade.contarUsuarios(filtro);
+	}
 
-    public int contarUsuarios(FiltroUsuarioDTO filtro) {
-        return rolUsuarioFacade.contarUsuarios(filtro);
-    }
+	private List<RolUsuarioDTO> mapearLista(List<RolUsuario> entidades) {
+		List<RolUsuarioDTO> resultado = new ArrayList<>();
+		if (entidades == null)
+			return resultado;
+		for (RolUsuario ru : entidades)
+			resultado.add(RolUsuarioDTO.fromEntity(ru));
+		return resultado;
+	}
 
-    private List<RolUsuarioDTO> mapearLista(List<RolUsuario> entidades) {
-        List<RolUsuarioDTO> resultado = new ArrayList<>();
-        if (entidades == null) return resultado;
-        for (RolUsuario ru : entidades) resultado.add(RolUsuarioDTO.fromEntity(ru));
-        return resultado;
-    }
-
-    public List<Usuario> obtenerUsuariosPorRoles(List<Rol> roles) {
-        List<Usuario> resultado = new ArrayList<>();
-        if (roles == null || roles.isEmpty()) {
-            return resultado;
-        }
-        List<RolUsuario> rolesUsuarios = rolUsuarioFacade.getRolesUsuariosActivos(roles);
-        if (rolesUsuarios == null) {
-            return resultado;
-        }
-        for (RolUsuario ru : rolesUsuarios) {
-            Usuario usuario = ru.getUsuario();
-            if (usuario != null && !resultado.contains(usuario)) {
-                resultado.add(usuario);
-            }
-        }
-        return resultado;
-    }
+	public List<Usuario> obtenerUsuariosPorRoles(List<Rol> roles) {
+		List<Usuario> resultado = new ArrayList<>();
+		if (roles == null || roles.isEmpty()) {
+			return resultado;
+		}
+		List<RolUsuario> rolesUsuarios = rolUsuarioFacade.getRolesUsuariosActivos(roles);
+		if (rolesUsuarios == null) {
+			return resultado;
+		}
+		for (RolUsuario ru : rolesUsuarios) {
+			Usuario usuario = ru.getUsuario();
+			if (usuario != null && !resultado.contains(usuario)) {
+				resultado.add(usuario);
+			}
+		}
+		return resultado;
+	}
 }

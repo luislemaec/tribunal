@@ -33,6 +33,7 @@ import ec.com.antenasur.facade.RolFacade;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
+@jakarta.interceptor.Interceptors(ec.com.antenasur.security.menu.AccesoPaginaInterceptor.class)
 @DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
 public class TribunalService extends AbstractService<Tribunal, Integer, TribunalFacade> {
 
@@ -69,7 +70,8 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         return tribunalFacade.getRegistrosActivos();
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public TribunalDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;
         return TribunalDTO.fromEntity(tribunalFacade.find(id));
@@ -89,13 +91,15 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         return mapearLista(tribunalFacade.getRegistrosActivosPorProceso(proceso));
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public List<TribunalDTO> listarDTOs() {
         return mapearLista(tribunalFacade.findAll());
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public TribunalDTO guardarDesdeDTO(TribunalDTO dto) {
         try {
             return guardarDesdeDTOTransaccional(dto);
@@ -171,7 +175,8 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
     /**
      * Asigna a un DTO una IglesiaPersona resuelta por cédula. NO persiste.
      */
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public TribunalDTO asignarPersonaPorCedula(TribunalDTO dto, String cedula) {
         if (dto == null) {
             throw new NegocioException("autoridades.mensaje.cargo.requerido");
@@ -188,12 +193,14 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         return dto;
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public String obtenerCorreoUsuario(IglesiaPersona iglesiaPersona) {
         return iglesiaPersona != null ? obtenerCorreoUsuario(iglesiaPersona.getPersona()) : null;
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public String obtenerCorreoUsuarioPorPersonaId(Integer personaId) {
         Usuario usuario = usuarioService.findUsuarioPorPersonaIncluyendoInactivos(personaId);
         return usuario != null ? usuario.getCorreo() : null;
@@ -207,7 +214,8 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
      * Devuelve la lista de autoridades vigentes; si faltan cargos, agrega
      * placeholders (TribunalDTO sin id) por cada cargo que no esté asignado.
      */
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public List<TribunalDTO> listarAutoridadesConPlaceholders(Integer procesoId, Integer cargoPadreId) {
         List<TribunalDTO> resultado = new ArrayList<>();
         ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;
@@ -244,7 +252,8 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
+    @ec.com.antenasur.security.menu.AccesoPagina("autoridades")
     public TribunalDTO eliminarPorId(Integer id) {
         try {
             if (id == null) return null;

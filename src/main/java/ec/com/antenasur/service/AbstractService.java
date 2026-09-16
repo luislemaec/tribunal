@@ -11,37 +11,37 @@ import ec.com.antenasur.model.generic.EntidadBase;
  */
 public abstract class AbstractService<T extends EntidadBase, E, F extends AbstractFacade<T, E>> {
 
-    protected abstract F getFacade();
+	protected abstract F getFacade();
 
-    public T create(T entity) {
-        return getFacade().create(entity);
-    }
+	public T create(T entity) {
+		return getFacade().create(entity);
+	}
 
-    public T edit(T entity) {
-        return getFacade().edit(entity);
-    }
+	public T edit(T entity) {
+		return getFacade().edit(entity);
+	}
 
-    public T delete(T entity) {
-        return getFacade().delete(entity);
-    }
+	public T delete(T entity) {
+		return getFacade().delete(entity);
+	}
 
-    public void remove(T entity) {
-        getFacade().remove(entity);
-    }
+	public void remove(T entity) {
+		getFacade().remove(entity);
+	}
 
-    public T find(E id) {
-        return getFacade().find(id);
-    }
+	public T find(E id) {
+		return getFacade().find(id);
+	}
 
-    public List<T> findAll() {
-        return getFacade().findAll();
-    }
+	public List<T> findAll() {
+		return getFacade().findAll();
+	}
 
-    public List<T> findRange(int[] range) {
-        return getFacade().findRange(range);
-    }
+	public List<T> findRange(int[] range) {
+		return getFacade().findRange(range);
+	}
 
-    public int count() {
-        return getFacade().count();
-    }
+	public int count() {
+		return getFacade().count();
+	}
 }

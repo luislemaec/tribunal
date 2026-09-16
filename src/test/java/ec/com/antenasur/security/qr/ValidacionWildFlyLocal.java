@@ -123,7 +123,8 @@ public final class ValidacionWildFlyLocal {
             exigirPagina(principal, rol + " destino de login");
             for (String pagina : List.of("usuarios", "roles", "permisos", "asignacionUsuarios")) {
                 var resultado = get(cliente, "/" + pagina + ".jsf");
-                if (rol.equals("SITEC-Administrador")) {
+                if (rol.equals("SITEC-Administrador")
+                        || rol.equals("SITEC-Tribunal") && List.of("usuarios", "roles").contains(pagina)) {
                     if (pagina.equals("asignacionUsuarios") && resultado.headers().firstValue("Location").orElse("").contains("/errors/permisos"))
                         System.out.println("INFO pantalla antigua no incluida en menu activo de Administrador");
                     else exigirPagina(resultado, pagina);
