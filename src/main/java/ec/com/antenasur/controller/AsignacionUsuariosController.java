@@ -9,17 +9,12 @@ import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
 
 import org.primefaces.PrimeFaces;
 
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.dto.IglesiaAsignacionDTO;
-import ec.com.antenasur.dto.RegistroCivilDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
@@ -133,10 +128,7 @@ public class AsignacionUsuariosController implements Serializable {
     @Getter @Setter
     private UsuarioDTO nuevoAdmin;
 
-    @Getter @Setter
-    private RegistroCivilDTO personaRegistroCivil;
-
-    /** true si la persona ya existe en BD; false si proviene del Registro Civil. */
+    /** true si la persona ya existe en BD; false si se ingresa manualmente en el formulario. */
     @Getter @Setter
     private boolean personaExistente;
 
@@ -328,7 +320,6 @@ public class AsignacionUsuariosController implements Serializable {
         this.nuevoAdmin = new UsuarioDTO();
         this.nuevoAdmin.setIglesiaId(iglesia.getId());
         this.nuevoAdmin.setIglesiaNombre(iglesia.getNombre());
-        this.personaRegistroCivil = null;
         this.personaExistente = false;
         PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }
@@ -343,9 +334,9 @@ public class AsignacionUsuariosController implements Serializable {
     }
 
     /**
-     * Listener del campo "cédula": busca primero en {@code tb_persona} y si no
-     * existe consulta el WS REST del Registro Civil. Hidrata
-     * {@code nuevoAdmin} con los datos encontrados.
+     * Listener del campo "cédula": busca en {@code tb_persona}. TEC no
+     * consulta ningún servicio externo; si la persona no existe en BD, el
+     * usuario completa nombres/correo manualmente en el formulario.
      */
     public void buscarPersonaPorCedula() {
         if (nuevoAdmin == null || nuevoAdmin.getPersonaDocumento() == null
@@ -386,7 +377,6 @@ public class AsignacionUsuariosController implements Serializable {
             }
             nuevoAdmin.setPermanente(true);
             personaExistente = true;
-            personaRegistroCivil = null;
             // Mensaje contextual según si ya pertenece a la iglesia seleccionada
             // o si está libre (sin iglesia previa).
             // IMPORTANTE: lookup por DOCUMENTO (no por id) — tb_persona puede
@@ -404,19 +394,12 @@ public class AsignacionUsuariosController implements Serializable {
             return;
         }
 
-        // 2) Fallback Registro Civil
-        if (cargarDesdeRegistroCivil(cedula)) {
-            nuevoAdmin.setPersonaNombres(personaRegistroCivil.getNombre());
-            nuevoAdmin.setPersonaDocumento(personaRegistroCivil.getCedula());
-            nuevoAdmin.setUsername(personaRegistroCivil.getCedula());
-            nuevoAdmin.setCorreo(personaRegistroCivil.getCedula() + "@gmail.com");
-            nuevoAdmin.setPermanente(true);
-            personaExistente = false;
-            JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil. Se creará el registro y la vinculación a la iglesia al guardar.");
-        } else {
-            personaRegistroCivil = null;
-            JsfUtil.addWarningMessage("No se encontró la persona en el sistema ni en el Registro Civil");
-        }
+        // 2) No existe en BD: no hay servicio externo de respaldo. Se completa
+        //    manualmente; se crea el registro y la vinculación al guardar.
+        nuevoAdmin.setUsername(cedula);
+        nuevoAdmin.setPermanente(true);
+        personaExistente = false;
+        JsfUtil.addWarningMessage("No se encontró la persona en el sistema. Complete los datos manualmente.");
     }
 
     /**
@@ -455,29 +438,7 @@ public class AsignacionUsuariosController implements Serializable {
             nuevoAdmin.setUsername(null);
             nuevoAdmin.setCorreo(null);
         }
-        personaRegistroCivil = null;
         personaExistente = false;
-    }
-
-    private boolean cargarDesdeRegistroCivil(String cedula) {
-        Client cliente = ClientBuilder.newClient();
-        Response respuesta = null;
-        try {
-            WebTarget target = cliente.target("http://192.168.26.32:8090/WS_REST/datos_regitrocivil/");
-            respuesta = target.path(cedula).request().get();
-            personaRegistroCivil = new RegistroCivilDTO();
-            if (respuesta.getStatus() == 200) {
-                personaRegistroCivil = respuesta.readEntity(RegistroCivilDTO.class);
-                return personaRegistroCivil != null && personaRegistroCivil.getCedula() != null;
-            }
-            return false;
-        } catch (Exception e) {
-            log.warn("WS Registro Civil no disponible o respuesta inválida para cédula {}", cedula, e);
-            personaRegistroCivil = null;
-            return false;
-        } finally {
-            if (respuesta != null) try { respuesta.close(); } catch (Exception ignored) {}
-        }
     }
 
     /**
@@ -654,7 +615,6 @@ public class AsignacionUsuariosController implements Serializable {
     public void cancelarAsignacion() {
         iglesiaSeleccionada = null;
         nuevoAdmin = null;
-        personaRegistroCivil = null;
         personaExistente = false;
     }
 }

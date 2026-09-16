@@ -8,22 +8,35 @@ import ec.com.antenasur.enums.FaseElectoral;
 import ec.com.antenasur.facade.tec.AccesoQrActaFacade;
 import ec.com.antenasur.facade.tec.CronogramaFaseFacade;
 import ec.com.antenasur.model.tec.AccesoQrActa;
+import ec.com.antenasur.security.qr.CausaRechazoQr;
 import ec.com.antenasur.security.qr.ReglasAccesoQr;
 import ec.com.antenasur.security.qr.ResultadoAccesoQr;
 import ec.com.antenasur.security.qr.EstadoAccesoQr;
+import ec.com.antenasur.security.qr.VentanaAccesoQr;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
 public class ValidacionAccesoQrService {
+    private static final java.util.logging.Logger LOG =
+            java.util.logging.Logger.getLogger(ValidacionAccesoQrService.class.getName());
     @Inject private AccesoQrActaFacade facade;
     @Inject private CronogramaFaseFacade cronograma;
     @Inject private MiembroJRVService juntas;
     @Inject private ProcesoElectoralService procesos;
 
     public ResultadoAccesoQr validar(AccesoQrActa qr, boolean sesion, Instant ahora) {
-        if (qr == null) return ResultadoAccesoQr.TOKEN_INVALIDO;
-        if (qr.getEstado() == EstadoAccesoQr.REVOCADO) return ResultadoAccesoQr.REVOCADO;
-        if (!sesion && qr.getEstado() == EstadoAccesoQr.CANJEADO) return ResultadoAccesoQr.YA_UTILIZADO;
+        return diagnosticar(qr, sesion, ahora).resultado();
+    }
+
+    /** Igual que {@link #validar}, devolviendo además la causa técnica para bitácora. */
+    public CausaRechazoQr diagnosticar(AccesoQrActa qr, boolean sesion, Instant ahora) {
+        if (qr == null) return CausaRechazoQr.TOKEN_NO_ENCONTRADO;
+        if (qr.getEstado() == EstadoAccesoQr.REVOCADO)
+            return registrar(CausaRechazoQr.REVOCADO, qr, ahora, null,
+                    "; revocado_en=" + texto(qr.getRevocadoEn()) + "; motivo=" + qr.getMotivoRevocacion());
+        if (!sesion && qr.getEstado() == EstadoAccesoQr.CANJEADO)
+            return registrar(CausaRechazoQr.YA_CANJEADO, qr, ahora, null,
+                    "; canjeado_en=" + texto(qr.getCanjeadoEn()));
         var documento = facade.documento(qr.getDocumentoId());
         var activo = procesos.getActivo();
         var fase = cronograma.getFasePorTipo(qr.getProcesoId(), FaseElectoral.SUFRAGIO);
@@ -39,10 +52,13 @@ public class ValidacionAccesoQrService {
                 && usuario.getUsername() != null && !usuario.getUsername().isBlank()
                 && facade.usernameUnico(usuario.getUsername())
                 && (usuario.getUsuarioFechaExpira() == null || ahora.isBefore(usuario.getUsuarioFechaExpira().toInstant()));
+        // La versión se evalúa aparte para poder distinguir en bitácora un acta
+        // regenerada (QR de una versión anterior) de otros rechazos documentales.
+        boolean documentoVersionValida = documento != null && qr.getDocumentoVersion() != null
+                && qr.getDocumentoVersion() > 0
+                && Objects.equals(documento.getVersion(), qr.getDocumentoVersion());
         boolean documentoValido = documento != null && Boolean.TRUE.equals(documento.getEstado())
                 && ec.com.antenasur.util.RepositorioDocumentos.estaDisponible(documento.getPath())
-                && qr.getDocumentoVersion() != null && qr.getDocumentoVersion() > 0
-                && Objects.equals(documento.getVersion(), qr.getDocumentoVersion())
                 && Objects.equals(documento.getProceso().getId(), qr.getProcesoId())
                 && Objects.equals(documento.getMesa().getId(), qr.getMesaId())
                 && Objects.equals(documento.getRecinto().getId(), qr.getRecintoId())
@@ -58,17 +74,36 @@ public class ValidacionAccesoQrService {
         boolean faseValida = fase != null && Boolean.TRUE.equals(fase.getEstado())
                 && fase.getFechaInicio() != null && fase.getFechaFin() != null;
         boolean juntaCompleta = juntas.consultarEstadoJunta(qr.getMesaId(), qr.getProcesoId()).isCompleta();
-        ResultadoAccesoQr resultado = ReglasAccesoQr.evaluar(qr.getEstado(), sesion, ahora, qr.getVigenteDesde(), qr.getVigenteHasta(),
-                faseValida ? fase.getFechaInicio().toInstant() : null,
-                faseValida ? fase.getFechaFin().toInstant() : null,
-                documentoValido, procesoValido, mesaValida, presidenteValido, usuarioValido,
-                juntaCompleta);
-        if (resultado != ResultadoAccesoQr.VALIDO)
-            java.util.logging.Logger.getLogger(ValidacionAccesoQrService.class.getName()).warning(
-                    "QR causa=" + resultado.name() + "; qr_id=" + qr.getId()
-                    + "; documento=" + documentoValido + "; proceso=" + procesoValido
-                    + "; mesa=" + mesaValida + "; presidente=" + presidenteValido
-                    + "; usuario=" + usuarioValido + "; fase=" + faseValida + "; juntaCompleta=" + juntaCompleta);
-        return resultado;
+        // El canje se habilita al CIERRE del sufragio, no durante el sufragio.
+        Instant finSufragio = faseValida ? VentanaAccesoQr.instante(fase.getFechaFin()) : null;
+        CausaRechazoQr causa = ReglasAccesoQr.diagnosticar(qr.getEstado(), sesion, ahora, qr.getVigenteDesde(),
+                qr.getVigenteHasta(), finSufragio, documentoVersionValida, documentoValido, procesoValido,
+                mesaValida, presidenteValido, usuarioValido, juntaCompleta);
+        return registrar(causa, qr, ahora, finSufragio,
+                "; doc_id=" + qr.getDocumentoId()
+                + "; doc_version_qr=" + qr.getDocumentoVersion()
+                + "; doc_version_actual=" + (documento == null ? null : documento.getVersion())
+                + "; documento=" + documentoValido + "; proceso_vigente=" + procesoValido
+                + "; mesa=" + mesaValida + "; presidente=" + presidenteValido
+                + "; usuario=" + usuarioValido + "; fase=" + faseValida + "; juntaCompleta=" + juntaCompleta);
+    }
+
+    /** Bitácora de la ventana evaluada. Nunca registra el token ni su hash. */
+    private CausaRechazoQr registrar(CausaRechazoQr causa, AccesoQrActa qr, Instant ahora, Instant finSufragio,
+            String detalle) {
+        if (causa != CausaRechazoQr.VALIDO)
+            LOG.warning("QR causa=" + causa.name() + "; resultado=" + causa.resultado().name()
+                    + "; qr_id=" + qr.getId() + "; estado=" + qr.getEstado()
+                    + "; proceso=" + qr.getProcesoId() + "; mesa=" + qr.getMesaId()
+                    + "; ahora=" + texto(ahora) + "; vigente_desde=" + texto(qr.getVigenteDesde())
+                    + "; vigente_hasta=" + texto(qr.getVigenteHasta())
+                    + "; fin_sufragio=" + texto(finSufragio)
+                    + "; vigencia_posterior_horas=" + VentanaAccesoQr.VIGENCIA_POSTERIOR.toHours()
+                    + detalle);
+        return causa;
+    }
+
+    private static String texto(Instant instante) {
+        return instante == null ? "null" : instante.atZone(VentanaAccesoQr.ZONA).toString();
     }
 }

@@ -21,6 +21,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 
+import ec.com.antenasur.audit.CatalogoActividades;
 import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
 
 /**
@@ -159,12 +160,27 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
             LocalDate siguienteDia = criterio.getFechaFin().plusDays(1);
             parametros.add(new ParametroAuditoria("fechaFin", Timestamp.valueOf(siguienteDia.atStartOfDay())));
         }
-        agregarFiltroActividad(hql, parametros, "accion", criterio.getAccion());
-        agregarFiltroActividad(hql, parametros, "modulo", criterio.getModulo());
-        agregarFiltroActividad(hql, parametros, "resultado", criterio.getResultado());
+        // Acción, módulo y resultado llegan con la descripción mostrada al usuario;
+        // el catálogo los traduce a los patrones del texto técnico almacenado.
+        if (tieneTexto(criterio.getAccion())) {
+            hql.append(" AND ").append(condicion(CatalogoActividades.criterioPorAccion(criterio.getAccion().trim()),
+                    "acc", parametros));
+        }
+        if (tieneTexto(criterio.getModulo())) {
+            hql.append(" AND ").append(condicion(CatalogoActividades.criterioPorModulo(criterio.getModulo().trim()),
+                    "mod", parametros));
+        }
+        if (tieneTexto(criterio.getResultado())) {
+            hql.append(" AND ").append(condicion(
+                    CatalogoActividades.criterioPorResultado(criterio.getResultado().trim()), "res", parametros));
+        }
         if (tieneTexto(criterio.getBusqueda())) {
-            hql.append(" AND (LOWER(p.actividad) LIKE :busqueda OR LOWER(p.usuarioCrea) LIKE :busqueda OR p.ip LIKE :busqueda)");
-            parametros.add(new ParametroAuditoria("busqueda", "%" + criterio.getBusqueda().trim().toLowerCase() + "%"));
+            String texto = criterio.getBusqueda().trim();
+            hql.append(" AND (LOWER(p.actividad) LIKE :busqueda OR LOWER(p.usuarioCrea) LIKE :busqueda OR p.ip LIKE :busqueda");
+            CatalogoActividades.CriterioFiltro porAccion = CatalogoActividades.criterioPorTextoDeAccion(texto);
+            if (!porAccion.vacio()) hql.append(" OR ").append(condicion(porAccion, "bus", parametros));
+            hql.append(")");
+            parametros.add(new ParametroAuditoria("busqueda", "%" + texto.toLowerCase() + "%"));
         }
         if (!seleccion.startsWith("SELECT COUNT")) hql.append(" ORDER BY p.fechaCrea DESC, p.id DESC");
 
@@ -173,11 +189,37 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         return query;
     }
 
-    private void agregarFiltroActividad(StringBuilder hql, List<ParametroAuditoria> parametros,
-            String nombre, String valor) {
-        if (!tieneTexto(valor)) return;
-        hql.append(" AND LOWER(p.actividad) LIKE :").append(nombre);
-        parametros.add(new ParametroAuditoria(nombre, "%" + valor.trim().toLowerCase() + "%"));
+    /**
+     * Traduce un {@link CatalogoActividades.CriterioFiltro} a JPQL con
+     * parámetros. Una selección desconocida no devuelve filas.
+     */
+    private String condicion(CatalogoActividades.CriterioFiltro criterio, String prefijo,
+            List<ParametroAuditoria> parametros) {
+        if (criterio.vacio()) return "(1 = 0)";
+        List<String> alternativas = new ArrayList<>();
+        if (!criterio.especificos().isEmpty()) {
+            alternativas.add(algunLike(criterio.especificos(), prefijo + "e", parametros));
+        }
+        if (!criterio.auxiliares().isEmpty()) {
+            alternativas.add("(" + algunLike(criterio.auxiliares(), prefijo + "a", parametros)
+                    + " AND NOT " + algunLike(criterio.todosEspecificos(), prefijo + "x", parametros) + ")");
+        }
+        if (criterio.sinClasificar()) {
+            alternativas.add("(p.actividad IS NULL OR NOT "
+                    + algunLike(criterio.todos(), prefijo + "t", parametros) + ")");
+        }
+        return "(" + String.join(" OR ", alternativas) + ")";
+    }
+
+    private String algunLike(List<String> patrones, String prefijo, List<ParametroAuditoria> parametros) {
+        List<String> partes = new ArrayList<>();
+        for (int i = 0; i < patrones.size(); i++) {
+            String nombre = prefijo + i;
+            // TRIM y LOWER replican CatalogoActividades.comoTrimSql + toLowerCase.
+            partes.add("LOWER(TRIM(p.actividad)) LIKE :" + nombre + " ESCAPE '" + CatalogoActividades.ESCAPE + "'");
+            parametros.add(new ParametroAuditoria(nombre, patrones.get(i)));
+        }
+        return "(" + String.join(" OR ", partes) + ")";
     }
 
     private boolean tieneTexto(String texto) {

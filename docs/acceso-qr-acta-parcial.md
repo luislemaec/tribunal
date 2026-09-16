@@ -27,7 +27,18 @@ No se aplicaron migraciones ni configuracion al servidor. Falta aceptacion integ
 - Auditoria: emision, canje, autenticacion, rechazos de token y cierre de sesion.
   Rechazos HTTP previos al canje no identifican un QR; revisar metricas del proxy sin registrar cuerpos.
 
-La ventana es [inicio, fin) de SUFRAGIO intersectada con la vigencia original del token.
+La ventana de canje es [fin de SUFRAGIO, fin de SUFRAGIO + 6 horas). El acta se escanea
+DESPUES del cierre electoral: antes del fin de SUFRAGIO el canje se rechaza con
+ANTES_DE_VIGENCIA y pasadas las 6 horas con FUERA_DE_VIGENCIA. El PDF/QR puede generarse
+antes del cierre; solo el canje queda restringido a esa ventana.
+La ventana almacenada en acceso_qr_acta debe corresponder exactamente al fin de SUFRAGIO
+vigente: si el cronograma se desplaza despues de emitir, o la fila proviene de la regla
+anterior ([inicio, fin) de SUFRAGIO), el canje se rechaza con
+VENTANA_NO_CORRESPONDE_A_CIERRE_SUFRAGIO y el acta debe regenerarse. No hay migracion de
+filas existentes: un QR emitido con la regla anterior nunca se reinterpreta en silencio.
+cronograma_fase.cref_fecha_fin es TIMESTAMP sin zona y acceso_qr_acta.vigente_* es
+TIMESTAMP WITH TIME ZONE: la conversion se hace en VentanaAccesoQr contra America/Guayaquil
+y no depende de user.timezone del servidor.
 No se extiende automaticamente a ESCRUTINIO. Un token consumido no se recupera:
 si se pierde la sesion, el Tribunal debe regenerar el acta y distribuir la nueva version.
 El QR es una credencial al portador: una copia puede usarse primero por otra persona.
@@ -83,7 +94,10 @@ No constituye por si solo una prueba fisica de identidad.
 | QR valido | Principal TECQR:usuario en Servlet/EJB, roles Presidente y TEC-QR |
 | Login normal | Principal, roles y contrasena originales |
 | Doble POST concurrente | Solo un canje; segundo rechazado y auditado |
-| Expirado/fuera de SUFRAGIO | Sin autenticacion ni escrituras |
+| Antes del cierre de SUFRAGIO | Rechazo ANTES_DE_VIGENCIA, sin autenticacion ni escrituras |
+| Justo en el cierre y dentro de 6 h | Canje permitido una sola vez |
+| Pasadas 6 h del cierre | Rechazo FUERA_DE_VIGENCIA, sin autenticacion ni escrituras |
+| QR emitido con la regla anterior | Rechazo VENTANA_NO_CORRESPONDE_A_CIERRE_SUFRAGIO; regenerar acta |
 | Documento antiguo/regenerado | QR anterior y sesion rechazados |
 | Presidente cambiado/usuario inactivo | Rechazo en siguiente peticion y escritura |
 | Manipular token/mesa/proceso/detalle | Rechazo sin modificar datos ajenos |

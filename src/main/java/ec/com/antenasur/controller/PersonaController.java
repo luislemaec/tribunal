@@ -110,9 +110,15 @@ public class PersonaController implements Serializable {
     @Getter
     private IglesiaPersonaDTO iglesiaPersonaSeleccionado;
 
+    /**
+     * Filtros geográficos como ids planos (igual que
+     * {@code ReporteMesaController.cantonDocumentalId}/{@code parroquiaDocumentalId}):
+     * evita atar el valor del combo a una propiedad anidada de una entidad
+     * compartida, que es lo que causaba el aliasing entre cantón y parroquia.
+     */
     @Setter
     @Getter
-    private Geograp parroquiaSeleccionado, cantonSeleccionado;
+    private Integer cantonId, parroquiaId;
 
     @Setter
     @Getter
@@ -234,7 +240,6 @@ public class PersonaController implements Serializable {
         try {
             listaIglesias = new ArrayList<>();
             listaIglesiaPersona = new ArrayList<>();
-            parroquiaSeleccionado = cantonSeleccionado = new Geograp();
             iglesiaSeleccionado = new IglesiaDTO();
 
             // Cronograma electoral: timeline del módulo personas.
@@ -341,52 +346,65 @@ public class PersonaController implements Serializable {
         }
     }
 
+    /**
+     * Cambio de cantón: reinicia el filtro dependiente (parroquia) igual que
+     * {@code ReporteMesaController.cambiarCantonDocumental()}, recalcula las
+     * parroquias/iglesias del cantón y delega la recarga del listado en
+     * {@link #refrescarListadoMiembrosActual()}, el único punto que aplica los
+     * criterios activos (misma idea que {@code cargarResumenesDocumentales()}).
+     */
     public void obtieneParroquias() {
-        if (cantonSeleccionado.getId() != null) {
-            cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
-            parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquias);
+        parroquiaId = null;
+        iglesiaSeleccionado = new IglesiaDTO();
+        if (cantonId != null) {
+            parroquias = geograpService.findByFatherId(cantonId);
             listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
+            refrescarListadoMiembrosActual();
         } else {
-            if (parroquias != null) {
-                parroquias.clear();
-            }
-            iglesiaSeleccionado = new IglesiaDTO();
+            parroquias = new ArrayList<>();
             listaIglesias.clear();
             listaIglesiaPersona.clear();
         }
     }
 
+    /** Cambio de parroquia: si se limpia, conserva el alcance del cantón activo. */
     public void obtieneIglesiasPorParroquia() {
-        if (parroquiaSeleccionado.getId() != null) {
-            parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
-            List<Geograp> parroquiasTmp = new ArrayList<>();
-            parroquiasTmp.add(parroquiaSeleccionado);
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiasTmp);
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquiasTmp);
+        iglesiaSeleccionado = new IglesiaDTO();
+        if (parroquiaId != null) {
+            Geograp parroquia = geograpService.find(parroquiaId);
+            List<Geograp> parroquiaTmp = new ArrayList<>();
+            if (parroquia != null) {
+                parroquiaTmp.add(parroquia);
+            }
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiaTmp);
             if (listaIglesias == null || listaIglesias.isEmpty()) {
-                JsfUtil.addWarningMessage("No existe registro de Iglesias en " + parroquiaSeleccionado.getName());
+                JsfUtil.addWarningMessage("No existe registro de Iglesias en "
+                        + (parroquia != null ? parroquia.getName() : ""));
             } else {
                 JsfUtil.addInfoMessage(listaIglesias.size() + " Iglesias registradas");
             }
+        } else if (cantonId != null) {
+            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
         } else {
-            iglesiaSeleccionado = new IglesiaDTO();
-            listaIglesias.clear();
-            listaIglesiaPersona.clear();
+            listaIglesias = new ArrayList<>();
         }
+        refrescarListadoMiembrosActual();
     }
 
+    /** Cambio de iglesia: si se limpia, conserva el alcance de parroquia/cantón activo. */
     public void obtienePersonasPorIglesias() {
         if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
             iglesiaSeleccionado = iglesiaService.obtenerDTOPorId(iglesiaSeleccionado.getId());
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
+        } else {
+            iglesiaSeleccionado = new IglesiaDTO();
+        }
+        refrescarListadoMiembrosActual();
+        if (iglesiaSeleccionado.getId() != null) {
             if (listaIglesiaPersona == null || listaIglesiaPersona.isEmpty()) {
                 JsfUtil.addWarningMessage("No existe registro de personas en " + iglesiaSeleccionado.getNombre());
             } else {
                 JsfUtil.addInfoMessage(listaIglesiaPersona.size() + " personas registradas");
             }
-        } else {
-            listaIglesiaPersona.clear();
         }
     }
 
@@ -668,13 +686,23 @@ public class PersonaController implements Serializable {
             }
             return;
         }
-        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+        if (parroquiaId != null) {
+            Geograp parroquia = geograpService.find(parroquiaId);
             List<Geograp> parroquiasFiltro = new ArrayList<>();
-            parroquiasFiltro.add(parroquiaSeleccionado);
+            if (parroquia != null) {
+                parroquiasFiltro.add(parroquia);
+            }
             listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquiasFiltro);
             return;
         }
-        if (parroquias != null && !parroquias.isEmpty()) {
+        if (cantonId != null) {
+            // Filtro activo: solo cantón (sin parroquia/iglesia puntual). Se
+            // recalcula la lista de parroquias del cantón por si la instancia
+            // en memoria ya no está disponible, en vez de confiar únicamente
+            // en que `parroquias` no esté vacía.
+            if (parroquias == null || parroquias.isEmpty()) {
+                parroquias = geograpService.findByFatherId(cantonId);
+            }
             listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquias);
             return;
         }

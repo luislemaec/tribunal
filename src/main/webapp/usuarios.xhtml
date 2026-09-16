@@ -235,7 +235,7 @@
 
                         <div class="formgrid grid">
 
-                            <!-- Fila 1: Cédula + Nombres (autocompletado desde RC) -->
+                            <!-- Fila 1: Cédula + Nombres (autocompletado desde BD local) -->
                             <div class="field col-12 md:col-5">
                                 <label for="cedula" class="font-medium text-700 text-sm">
                                     #{msg['form.usuarios.label.cedula']} <span class="text-red-500">*</span>
@@ -245,7 +245,6 @@
                                              required="true" maxlength="13"
                                              styleClass="w-full"
                                              disabled="#{not usuarioControlador.esUsuarioNuevo
-                                                         or (usuarioControlador.personaRegistroCivil ne null)
                                                          or (usuarioControlador.usuarioSeleccionado.personaId ne null)}">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
@@ -254,7 +253,7 @@
                                             process="@this"/>
                                     <f:validateLength minimum="10"/>
                                 </p:inputText>
-                                <small class="text-500">Tab para buscar en BD o Registro Civil.</small>
+                                <small class="text-500">Tab para buscar en la base de datos local.</small>
                             </div>
 
                             <div class="field col-12 md:col-7">

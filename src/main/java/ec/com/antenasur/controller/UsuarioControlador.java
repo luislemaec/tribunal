@@ -13,15 +13,10 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
 
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.FiltroUsuarioDTO;
-import ec.com.antenasur.dto.RegistroCivilDTO;
 import ec.com.antenasur.dto.RolUsuarioDTO;
 import ec.com.antenasur.dto.UsuarioDTO;
 import ec.com.antenasur.model.Persona;
@@ -108,10 +103,6 @@ public class UsuarioControlador implements Serializable {
     @Setter
     @Getter
     private Integer iglesiaReactivacionId;
-
-    @Setter
-    @Getter
-    private RegistroCivilDTO personaRegistroCivil;
 
     @Setter
     @Getter
@@ -348,9 +339,13 @@ public class UsuarioControlador implements Serializable {
         this.usuarioSeleccionado = new UsuarioDTO();
         this.rolSeleccionado = new Rol();
         this.rolUsuarioSeleccionado = null;
-        this.personaRegistroCivil = null;
     }
 
+    /**
+     * Busca la cédula en la BD interna (tb_persona) e hidrata el formulario.
+     * TEC no consulta ningún servicio externo: si la persona no existe en BD,
+     * el usuario completa nombres/correo manualmente en el formulario.
+     */
     public void blurEvent() {
         if (usuarioSeleccionado == null || usuarioSeleccionado.getPersonaDocumento() == null
                 || usuarioSeleccionado.getPersonaDocumento().isEmpty()) {
@@ -358,45 +353,37 @@ public class UsuarioControlador implements Serializable {
         }
         String cedula = usuarioSeleccionado.getPersonaDocumento();
 
-        // 1) Buscar primero en la BD interna (tb_persona). Si existe, hidratamos
-        //    el formulario con sus datos y la iglesia a la que pertenece (si la
-        //    tiene en tb_iglesia_persona). El username queda igual a la cédula.
         Persona personaExistente = personaService.finByPersonaDocument(cedula);
-        if (personaExistente != null) {
-            usuarioSeleccionado.setPersonaId(personaExistente.getId());
-            usuarioSeleccionado.setPersonaNombres(personaExistente.getNombres());
-            usuarioSeleccionado.setPersonaApellidos(personaExistente.getApellidos());
-            usuarioSeleccionado.setPersonaDocumento(personaExistente.getDocumento());
-            if (usuarioSeleccionado.getUsername() == null || usuarioSeleccionado.getUsername().isEmpty()) {
-                usuarioSeleccionado.setUsername(personaExistente.getDocumento());
-            }
-            // Autogenerar correo si la persona no lo tiene (consistencia con
-            // flujo Registro Civil). Si Persona expone correo y existe se
-            // prefiere el real.
-            if (usuarioSeleccionado.getCorreo() == null || usuarioSeleccionado.getCorreo().isEmpty()) {
-                usuarioSeleccionado.setCorreo(personaExistente.getDocumento() + "@gmail.com");
-            }
+        if (personaExistente == null) {
+            usuarioSeleccionado.setUsername(cedula);
             usuarioSeleccionado.setPermanente(false);
-            // Iglesia asociada vía tb_iglesia_persona (vínculo activo más reciente)
-            Iglesia iglesia = iglesiaPersonaService.obtenerIglesiaDePersona(personaExistente.getId());
-            if (iglesia != null) {
-                usuarioSeleccionado.setIglesiaId(iglesia.getId());
-                usuarioSeleccionado.setIglesiaNombre(iglesia.getNombre());
-                JsfUtil.addInfoMessage("Persona encontrada — iglesia: " + iglesia.getNombre());
-            } else {
-                JsfUtil.addInfoMessage("Persona encontrada (sin iglesia asignada)");
-            }
+            JsfUtil.addInfoMessage("Persona no encontrada. Complete los datos manualmente.");
             return;
         }
 
-        // 2) No existe internamente: caer al fallback del Registro Civil.
-        if (getDatos_registro_civil(cedula)) {
-            usuarioSeleccionado.setPersonaNombres(personaRegistroCivil.getNombre());
-            usuarioSeleccionado.setPersonaDocumento(personaRegistroCivil.getCedula());
-            usuarioSeleccionado.setUsername(personaRegistroCivil.getCedula());
-            usuarioSeleccionado.setPermanente(false);
-            usuarioSeleccionado.setCorreo(personaRegistroCivil.getCedula() + "@gmail.com");
-            JsfUtil.addInfoMessage("Datos obtenidos del Registro Civil");
+        // Hidrata el formulario con los datos de tb_persona y la iglesia a la
+        // que pertenece (si la tiene en tb_iglesia_persona). El username
+        // queda igual a la cédula.
+        usuarioSeleccionado.setPersonaId(personaExistente.getId());
+        usuarioSeleccionado.setPersonaNombres(personaExistente.getNombres());
+        usuarioSeleccionado.setPersonaApellidos(personaExistente.getApellidos());
+        usuarioSeleccionado.setPersonaDocumento(personaExistente.getDocumento());
+        if (usuarioSeleccionado.getUsername() == null || usuarioSeleccionado.getUsername().isEmpty()) {
+            usuarioSeleccionado.setUsername(personaExistente.getDocumento());
+        }
+        // Autogenerar correo si la persona no lo tiene. Si ya existe uno real, se conserva.
+        if (usuarioSeleccionado.getCorreo() == null || usuarioSeleccionado.getCorreo().isEmpty()) {
+            usuarioSeleccionado.setCorreo(personaExistente.getDocumento() + "@gmail.com");
+        }
+        usuarioSeleccionado.setPermanente(false);
+        // Iglesia asociada vía tb_iglesia_persona (vínculo activo más reciente)
+        Iglesia iglesia = iglesiaPersonaService.obtenerIglesiaDePersona(personaExistente.getId());
+        if (iglesia != null) {
+            usuarioSeleccionado.setIglesiaId(iglesia.getId());
+            usuarioSeleccionado.setIglesiaNombre(iglesia.getNombre());
+            JsfUtil.addInfoMessage("Persona encontrada — iglesia: " + iglesia.getNombre());
+        } else {
+            JsfUtil.addInfoMessage("Persona encontrada (sin iglesia asignada)");
         }
     }
 
@@ -436,28 +423,6 @@ public class UsuarioControlador implements Serializable {
                 listaRoles = rolService.getRolesAplicativoSeleccion();
             }
         }
-    }
-
-    private Boolean getDatos_registro_civil(String identificacion) {
-        Client clienteRC = ClientBuilder.newClient();
-        WebTarget targetRC = clienteRC.target("http://192.168.26.32:8090/WS_REST/datos_regitrocivil/");
-        Response respuestaRegistroCivil = targetRC.path(identificacion).request().get();
-        personaRegistroCivil = null;
-        boolean operationStus = false;
-        try {
-            if (respuestaRegistroCivil.getStatus() == 200) {
-                personaRegistroCivil = respuestaRegistroCivil.readEntity(RegistroCivilDTO.class);
-                operationStus = true;
-            }
-            if (respuestaRegistroCivil.getStatus() == 404) {
-                JsfUtil.addInfoMessage("Problemas de interconección, contactese con el administrador");
-            }
-        } catch (Exception e) {
-            personaRegistroCivil = null;
-        } finally {
-            respuestaRegistroCivil.close();
-        }
-        return operationStus;
     }
 
     /**

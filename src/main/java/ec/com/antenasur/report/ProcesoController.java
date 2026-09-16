@@ -1,11 +1,15 @@
 package ec.com.antenasur.report;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.model.SelectItem;
+import jakarta.faces.model.SelectItemGroup;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -16,6 +20,7 @@ import org.primefaces.model.SortMeta;
 
 import com.itextpdf.text.Font;
 
+import ec.com.antenasur.audit.CatalogoActividades;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.ActividadAuditoriaDTO;
@@ -48,16 +53,19 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private int primerRegistro;
     private ActividadAuditoriaDTO registroSeleccionado;
 
+    private List<SelectItem> accionesAuditoria = Collections.emptyList();
+
     public ProcesoController() {
-        super("ACTIVIDAD INTERNA", new float[]{20, 100, 40, 50, 50},
-                new int[]{1200, 3000, 4000, 10000, 4000},
-                new String[]{"Nro", "ACTIVIDAD", "IP", "USUARIO CREA", "FECHA REGISTRO"}, 0);
+        super("ACTIVIDAD INTERNA", new float[]{16, 48, 45, 45, 70, 34, 130, 40},
+                new int[]{1200, 4000, 4000, 4000, 6000, 3000, 12000, 3000},
+                new String[]{"Nro", "FECHA / HORA", "USUARIO", "MÓDULO", "ACCIÓN", "RESULTADO", "DETALLE", "IP"}, 0);
     }
 
     @PostConstruct
     private void init() {
         filtro = new FiltroActividadAuditoriaDTO();
         if (isAdministrador()) usuariosAuditoria = procesoService.listarUsuariosAuditoria();
+        accionesAuditoria = construirAccionesAuditoria();
         auditoriasLazy = new LazyDataModel<>() {
             private static final long serialVersionUID = 1L;
 
@@ -108,24 +116,39 @@ public class ProcesoController extends ReportTemplateController implements Seria
                 && loginBean.getRoles().contains("SITEC-Administrador");
     }
 
+    /** Opciones del filtro Acción agrupadas por módulo, desde el catálogo único. */
+    private static List<SelectItem> construirAccionesAuditoria() {
+        List<SelectItem> grupos = new ArrayList<>();
+        CatalogoActividades.accionesPorModulo().forEach((modulo, acciones) -> {
+            SelectItem[] opciones = acciones.stream().map(a -> new SelectItem(a, a)).toArray(SelectItem[]::new);
+            grupos.add(new SelectItemGroup(modulo, null, false, opciones));
+        });
+        return Collections.unmodifiableList(grupos);
+    }
+
     public void exportaPDF() {
         try {
             List<Proceso> registros = procesoService.listarAuditoriaParaReporte(filtro);
             setListaDatos(new String[registros.size()][getNumeroColumnas()]);
+            SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy HH:mm");
             int fila = 0;
             for (Proceso item : registros) {
+                ActividadAuditoriaDTO actividad = ActividadAuditoriaDTO.fromEntity(item);
                 getListaDatos()[fila][0] = String.valueOf(fila + 1);
-                getListaDatos()[fila][1] = item.getActividad();
-                getListaDatos()[fila][2] = item.getIp();
-                getListaDatos()[fila][3] = item.getUsuarioCrea();
-                getListaDatos()[fila][4] = item.getFechaCrea() != null ? item.getFechaCrea().toString() : "";
+                getListaDatos()[fila][1] = actividad.getFecha() != null ? formatoFecha.format(actividad.getFecha()) : "";
+                getListaDatos()[fila][2] = valor(actividad.getUsuario());
+                getListaDatos()[fila][3] = actividad.getModulo();
+                getListaDatos()[fila][4] = actividad.getAccion();
+                getListaDatos()[fila][5] = actividad.getResultado();
+                getListaDatos()[fila][6] = actividad.getDetalle();
+                getListaDatos()[fila][7] = valor(actividad.getIp());
                 fila++;
             }
-            Font fuenteCabecera = Constantes.getFuenteCabeceraDefault(10);
-            ReportePFD.nuevoPDF(getNombreReporte());
+            Font fuenteCabecera = Constantes.getFuenteCabeceraDefault(9);
+            ReportePFD.nuevoPDFHorizontal(getNombreReporte());
             ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(),
                     getNombresColumnas(), fuenteCabecera);
-            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), Constantes.getFuenteContenidoDefault(10));
+            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), Constantes.getFuenteContenidoDefault(8));
             ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
             ReportePFD.descargarPDF(getNombreReporte());
             procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(),
@@ -135,6 +158,13 @@ public class ProcesoController extends ReportTemplateController implements Seria
         }
     }
 
+    private static String valor(String texto) {
+        return texto == null || texto.isBlank() ? "N/A" : texto;
+    }
+
+    public List<SelectItem> getAccionesAuditoria() { return accionesAuditoria; }
+    public List<String> getModulosAuditoria() { return CatalogoActividades.modulos(); }
+    public List<String> getResultadosAuditoria() { return CatalogoActividades.resultados(); }
     public FiltroActividadAuditoriaDTO getFiltro() { return filtro; }
     public LazyDataModel<ActividadAuditoriaDTO> getAuditoriasLazy() { return auditoriasLazy; }
     public List<String> getUsuariosAuditoria() { return usuariosAuditoria; }

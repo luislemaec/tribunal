@@ -17,374 +17,259 @@
 
     <ui:define name="content">
 
-        <!-- ======================================================
-             ENCABEZADO
-             ====================================================== -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0ea5e9,#6366f1);flex-shrink:0">
-                        <i class="pi pi-users text-white" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.personas.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Gestión de miembros e integrantes del padrón electoral</p>
-                    </div>
-                </div>
+        <div class="tec-page-header">
+            <div class="tec-page-header__icon" aria-hidden="true">
+                <i class="pi pi-users"/>
+            </div>
+            <div class="min-w-0">
+                <h2>#{msg['form.personas.title']}</h2>
+                <p>Gestión de miembros e integrantes del padrón electoral</p>
+            </div>
+            <div class="tec-page-header__aside">
+                <p:tag rendered="#{personaController.puedeEditarPadron}"
+                       value="Edición habilitada" icon="pi pi-pencil" severity="success"
+                       styleClass="tec-status"/>
+                <p:tag rendered="#{not personaController.puedeEditarPadron}"
+                       value="Edición bloqueada" icon="pi pi-lock" severity="warning"
+                       styleClass="tec-status"/>
             </div>
         </div>
 
         <h:form id="frmPersonas">
 
-            <!-- ======================================================
-                 TIMELINE DE CRONOGRAMA
-                 Muestra: fase anterior / ACTUALIZACION_MIEMBROS / fase siguiente.
-                 La adyacencia se determina por cref_orden, no por fechas.
-                 ====================================================== -->
-
-            <!-- Timeline: visible cuando ACTUALIZACION_MIEMBROS está configurada -->
-            <ui:fragment rendered="#{not personaController.restringidoAIglesia
-                                    and personaController.faseActualizacionMiembros ne null}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-
-                    <!-- Cabecera del timeline -->
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="flex align-items-center gap-2">
-                            <i class="pi pi-calendar text-primary"/>
-                            <span class="font-semibold text-900">Cronograma electoral</span>
-                            <h:outputText rendered="#{personaController.faseVigente ne null}"
-                                          value="— #{personaController.faseVigente.titulo}"
-                                          styleClass="text-500 text-sm"/>
-                        </div>
-                        <p:tag rendered="#{personaController.puedeEditarPadron}"
-                               value="Edición habilitada" icon="pi pi-pencil" severity="success"/>
-                        <p:tag rendered="#{not personaController.puedeEditarPadron}"
-                               value="Edición bloqueada" icon="pi pi-lock" severity="warning"/>
-                    </div>
-
-                    <!-- 3 cards: anterior / actual / siguiente -->
-                    <div class="grid">
-
-                        <!-- Fase anterior -->
-                        <div class="col-12 md:col-4">
-                            <h:panelGroup layout="block"
-                                          rendered="#{personaController.faseAnterior eq null}"
-                                          styleClass="p-3 border-round surface-50 text-center"
-                                          style="min-height:6rem;border:1px dashed #e5e7eb">
-                                <i class="pi pi-minus text-300"/>
-                                <p class="text-400 text-xs m-0 mt-1">Sin fase anterior</p>
-                            </h:panelGroup>
-                            <h:panelGroup layout="block"
-                                          rendered="#{personaController.faseAnterior ne null}"
-                                          styleClass="p-3 border-round h-full"
-                                          style="background:#{personaController.faseAnterior.pasada ? '#f9fafb' : '#dbeafe'};
-                                                 border-left:3px solid #{personaController.faseAnterior.pasada ? '#9ca3af' : '#3b82f6'}">
-                                <div class="flex align-items-center gap-1 mb-2">
-                                    <i class="pi pi-chevron-left text-400 text-xs"/>
-                                    <span class="text-xs text-500 font-medium uppercase">Fase anterior</span>
-                                </div>
-                                <span class="block font-semibold text-800 text-sm">
-                                    <h:outputText value="#{personaController.faseAnterior.titulo}"/>
-                                </span>
-                                <small class="block text-500 text-xs mt-1">
-                                    <h:outputText value="#{personaController.faseAnterior.fechaInicio}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                    <span> — </span>
-                                    <h:outputText value="#{personaController.faseAnterior.fechaFin}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                </small>
-                                <p:tag rendered="#{personaController.faseAnterior.vigente}"
-                                       value="En curso" severity="info" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseAnterior.pasada}"
-                                       value="Completada" severity="secondary" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseAnterior.futura}"
-                                       value="Próxima" severity="info" styleClass="mt-2"/>
-                            </h:panelGroup>
-                        </div>
-
-                        <!-- Fase actual: ACTUALIZACION_MIEMBROS -->
-                        <div class="col-12 md:col-4">
-                            <h:panelGroup layout="block"
-                                          styleClass="p-3 border-round h-full"
-                                          style="background:#{personaController.faseActualizacionMiembros.vigente
-                                                     ? (personaController.puedeEditarPadron ? '#dcfce7' : '#fef3c7')
-                                                     : (personaController.faseActualizacionMiembros.pasada ? '#f3f4f6' : '#eff6ff')};
-                                                 border:2px solid #{personaController.faseActualizacionMiembros.vigente
-                                                     ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
-                                                     : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}">
-                                <div class="flex align-items-center gap-1 mb-2">
-                                    <i class="pi #{personaController.faseActualizacionMiembros.vigente
-                                                   ? (personaController.puedeEditarPadron ? 'pi-check-circle' : 'pi-exclamation-triangle')
-                                                   : (personaController.faseActualizacionMiembros.pasada ? 'pi-check-circle' : 'pi-clock')} text-sm"
-                                       style="color:#{personaController.faseActualizacionMiembros.vigente
-                                                ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
-                                                : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}"/>
-                                    <span class="text-xs font-bold uppercase"
-                                          style="color:#{personaController.faseActualizacionMiembros.vigente
-                                                   ? (personaController.puedeEditarPadron ? '#16a34a' : '#d97706')
-                                                   : (personaController.faseActualizacionMiembros.pasada ? '#9ca3af' : '#3b82f6')}">
-                                        Fase actual — este módulo
-                                    </span>
-                                </div>
-                                <span class="block font-bold text-900 text-sm">
-                                    <h:outputText value="#{personaController.faseActualizacionMiembros.titulo}"/>
-                                </span>
-                                <small class="block text-500 text-xs mt-1">
-                                    <h:outputText value="#{personaController.faseActualizacionMiembros.fechaInicio}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                    <span> — </span>
-                                    <h:outputText value="#{personaController.faseActualizacionMiembros.fechaFin}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                </small>
-                                <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and personaController.puedeEditarPadron}"
-                                       value="#{personaController.faseActualizacionMiembros.diasRestantes} días restantes"
-                                       severity="success" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and not personaController.puedeEditarPadron}"
-                                       value="Bloqueada por configuración" severity="warning" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseActualizacionMiembros.futura}"
-                                       value="Próximamente" severity="info" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseActualizacionMiembros.pasada}"
-                                       value="Fase cerrada" severity="secondary" styleClass="mt-2"/>
-                            </h:panelGroup>
-                        </div>
-
-                        <!-- Fase siguiente -->
-                        <div class="col-12 md:col-4">
-                            <h:panelGroup layout="block"
-                                          rendered="#{personaController.faseSiguiente eq null}"
-                                          styleClass="p-3 border-round surface-50 text-center"
-                                          style="min-height:6rem;border:1px dashed #e5e7eb">
-                                <i class="pi pi-minus text-300"/>
-                                <p class="text-400 text-xs m-0 mt-1">Sin fase siguiente</p>
-                            </h:panelGroup>
-                            <h:panelGroup layout="block"
-                                          rendered="#{personaController.faseSiguiente ne null}"
-                                          styleClass="p-3 border-round h-full"
-                                          style="background:#f0f9ff;
-                                                 border-left:3px solid #{personaController.faseSiguiente.pasada ? '#9ca3af' : '#3b82f6'}">
-                                <div class="flex align-items-center gap-1 mb-2">
-                                    <span class="text-xs text-500 font-medium uppercase">Fase siguiente</span>
-                                    <i class="pi pi-chevron-right text-400 text-xs"/>
-                                </div>
-                                <span class="block font-semibold text-800 text-sm">
-                                    <h:outputText value="#{personaController.faseSiguiente.titulo}"/>
-                                </span>
-                                <small class="block text-500 text-xs mt-1">
-                                    <h:outputText value="#{personaController.faseSiguiente.fechaInicio}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                    <span> — </span>
-                                    <h:outputText value="#{personaController.faseSiguiente.fechaFin}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                                </small>
-                                <p:tag rendered="#{personaController.faseSiguiente.vigente}"
-                                       value="En curso" severity="info" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseSiguiente.pasada}"
-                                       value="Completada" severity="secondary" styleClass="mt-2"/>
-                                <p:tag rendered="#{personaController.faseSiguiente.futura}"
-                                       value="Próxima" severity="info" styleClass="mt-2"/>
-                            </h:panelGroup>
-                        </div>
-
-                    </div><!-- /grid 3 cards -->
+            <!-- ── Avisos de contexto ── -->
+            <ui:fragment rendered="#{personaController.restringidoAIglesia}">
+                <div class="callout callout--info personas-aviso mb-3">
+                    <i class="pi pi-info-circle" aria-hidden="true"/>
+                    <span>
+                        <b>Iglesia asignada:</b>
+                        está gestionando los miembros de
+                        <b>'#{personaController.iglesiaSeleccionado.nombre}'</b>.
+                        Solo verá y modificará miembros de esta iglesia.
+                    </span>
+                    <p:tag rendered="#{personaController.faseActualizacionMiembros ne null
+                                       and personaController.faseActualizacionMiembros.vigente}"
+                           value="#{personaController.faseActualizacionMiembros.diasRestantes} #{msg['form.iglesias.progress.dias.restantes']}"
+                           icon="pi pi-clock" severity="info"
+                           styleClass="tec-status personas-aviso__aside"/>
                 </div>
             </ui:fragment>
 
-            <!-- Fallback B: proceso activo pero ACTUALIZACION_MIEMBROS no configurada -->
+            <!-- Proceso activo, pero ACTUALIZACION_MIEMBROS no configurada -->
             <ui:fragment rendered="#{not personaController.restringidoAIglesia
                                     and personaController.faseActualizacionMiembros eq null
                                     and personaController.faseVigente ne null}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3"
-                     style="border-left:4px solid #2563eb">
-                    <div class="flex align-items-center flex-wrap gap-2">
-                        <i class="pi pi-info-circle text-xl" style="color:#2563eb"/>
-                        <b><h:outputText value="#{personaController.faseVigente.titulo}"/></b>
-                        <h:outputText rendered="#{not empty personaController.faseVigente.mensaje}"
-                                      value="— #{personaController.faseVigente.mensaje}" styleClass="text-700"/>
-                        <p:tag value="#{personaController.faseVigente.diasRestantes} días restantes"
-                               severity="info"/>
-                        <p:tag value="Actualización de miembros no programada"
-                               icon="pi pi-lock" severity="warning"/>
-                    </div>
+                <div class="callout callout--info personas-aviso mb-3">
+                    <i class="pi pi-info-circle" aria-hidden="true"/>
+                    <b><h:outputText value="#{personaController.faseVigente.titulo}"/></b>
+                    <h:outputText rendered="#{not empty personaController.faseVigente.mensaje}"
+                                  value="— #{personaController.faseVigente.mensaje}"/>
+                    <p:tag value="#{personaController.faseVigente.diasRestantes} días restantes"
+                           severity="info" styleClass="tec-status"/>
+                    <p:tag value="Actualización de miembros no programada"
+                           icon="pi pi-lock" severity="warning" styleClass="tec-status"/>
                 </div>
             </ui:fragment>
 
-            <!-- Fallback C: sin proceso electoral activo -->
+            <!-- Sin proceso electoral activo -->
             <ui:fragment rendered="#{not personaController.restringidoAIglesia
                                     and personaController.faseActualizacionMiembros eq null
                                     and personaController.faseVigente eq null}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3"
-                     style="border-left:4px solid #6b7280">
-                    <div class="flex align-items-center gap-2">
-                        <i class="pi pi-lock text-600"/>
-                        <span class="text-700 text-sm">
-                            <b>Sin cronograma activo:</b>
-                            no hay un proceso electoral en curso. La pantalla está en modo solo lectura.
-                        </span>
-                    </div>
+                <div class="callout callout--neutral personas-aviso mb-3">
+                    <i class="pi pi-lock" aria-hidden="true"/>
+                    <span>
+                        <b>Sin cronograma activo:</b>
+                        no hay un proceso electoral en curso. La pantalla está en modo solo lectura.
+                    </span>
                 </div>
             </ui:fragment>
 
-            <!-- ======================================================
-                 CONTENIDO PRINCIPAL
-                 ====================================================== -->
-            <div class="surface-card shadow-1 border-round-lg p-3">
-
-                <!-- Mensajes del sistema -->
-                <!-- Banner IglesiaAdmin: contexto fijo a su iglesia -->
-                <ui:fragment rendered="#{personaController.restringidoAIglesia}">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 border-round-lg p-3 mb-3"
-                         style="background:#eff6ff; border-left:4px solid #2563eb">
-                        <p:tag rendered="#{personaController.faseActualizacionMiembros ne null
-                                           and personaController.faseActualizacionMiembros.vigente}"
-                               value="#{personaController.faseActualizacionMiembros.diasRestantes} #{msg['form.iglesias.progress.dias.restantes']}"
-                               icon="pi pi-clock" severity="info"
-                               style="margin-left:auto; order:2"/>
-                        <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
-                        <span class="text-700 text-sm">
-                            <b>Iglesia asignada:</b>
-                            Está gestionando los miembros de
-                            <b>'#{personaController.iglesiaSeleccionado.nombre}'</b>.
-                            Solo verá y modificará miembros de esta iglesia.
-                        </span>
+            <!-- ── Cronograma: fase anterior / ACTUALIZACION_MIEMBROS / fase siguiente (por cref_orden) ── -->
+            <ui:fragment rendered="#{not personaController.restringidoAIglesia
+                                    and personaController.faseActualizacionMiembros ne null}">
+                <section class="surface-card border-round-lg tec-card personas-fases"
+                         aria-label="Cronograma electoral">
+                    <div class="personas-fases__head">
+                        <i class="pi pi-calendar" aria-hidden="true"/>
+                        <span>Cronograma electoral</span>
+                        <h:outputText rendered="#{personaController.faseVigente ne null}"
+                                      value="— #{personaController.faseVigente.titulo}"
+                                      styleClass="personas-fases__vigente"/>
                     </div>
-                </ui:fragment>
+                    <div class="grid">
+                        <div class="col-12 md:col-4">
+                            <h:panelGroup layout="block"
+                                          rendered="#{personaController.faseAnterior eq null}"
+                                          styleClass="personas-fase personas-fase--vacia">
+                                Sin fase anterior
+                            </h:panelGroup>
+                            <h:panelGroup layout="block"
+                                          rendered="#{personaController.faseAnterior ne null}"
+                                          styleClass="personas-fase">
+                                <span class="personas-fase__label">
+                                    <i class="pi pi-chevron-left" aria-hidden="true"/> Fase anterior
+                                </span>
+                                <h:outputText value="#{personaController.faseAnterior.titulo}"
+                                              styleClass="personas-fase__title"/>
+                                <span class="personas-fase__dates">
+                                    <h:outputText value="#{personaController.faseAnterior.fechaInicio}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                    –
+                                    <h:outputText value="#{personaController.faseAnterior.fechaFin}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                </span>
+                                <p:tag rendered="#{personaController.faseAnterior.vigente}"
+                                       value="En curso" severity="info" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseAnterior.pasada}"
+                                       value="Completada" severity="secondary" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseAnterior.futura}"
+                                       value="Próxima" severity="info" styleClass="tec-status"/>
+                            </h:panelGroup>
+                        </div>
 
-                <!-- ── KPIs + progreso (cuando hay iglesia cargada) ── -->
+                        <div class="col-12 md:col-4">
+                            <h:panelGroup layout="block"
+                                          styleClass="personas-fase personas-fase--actual #{personaController.faseActualizacionMiembros.vigente
+                                                      ? (personaController.puedeEditarPadron ? 'personas-fase--activa' : 'personas-fase--bloqueada')
+                                                      : (personaController.faseActualizacionMiembros.pasada ? 'personas-fase--cerrada' : 'personas-fase--proxima')}">
+                                <span class="personas-fase__label">Fase actual — este módulo</span>
+                                <h:outputText value="#{personaController.faseActualizacionMiembros.titulo}"
+                                              styleClass="personas-fase__title"/>
+                                <span class="personas-fase__dates">
+                                    <h:outputText value="#{personaController.faseActualizacionMiembros.fechaInicio}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                    –
+                                    <h:outputText value="#{personaController.faseActualizacionMiembros.fechaFin}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                </span>
+                                <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and personaController.puedeEditarPadron}"
+                                       value="#{personaController.faseActualizacionMiembros.diasRestantes} días restantes"
+                                       severity="success" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseActualizacionMiembros.vigente and not personaController.puedeEditarPadron}"
+                                       value="Bloqueada por configuración" severity="warning" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseActualizacionMiembros.futura}"
+                                       value="Próximamente" severity="info" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseActualizacionMiembros.pasada}"
+                                       value="Fase cerrada" severity="secondary" styleClass="tec-status"/>
+                            </h:panelGroup>
+                        </div>
+
+                        <div class="col-12 md:col-4">
+                            <h:panelGroup layout="block"
+                                          rendered="#{personaController.faseSiguiente eq null}"
+                                          styleClass="personas-fase personas-fase--vacia">
+                                Sin fase siguiente
+                            </h:panelGroup>
+                            <h:panelGroup layout="block"
+                                          rendered="#{personaController.faseSiguiente ne null}"
+                                          styleClass="personas-fase">
+                                <span class="personas-fase__label">
+                                    Fase siguiente <i class="pi pi-chevron-right" aria-hidden="true"/>
+                                </span>
+                                <h:outputText value="#{personaController.faseSiguiente.titulo}"
+                                              styleClass="personas-fase__title"/>
+                                <span class="personas-fase__dates">
+                                    <h:outputText value="#{personaController.faseSiguiente.fechaInicio}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                    –
+                                    <h:outputText value="#{personaController.faseSiguiente.fechaFin}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                </span>
+                                <p:tag rendered="#{personaController.faseSiguiente.vigente}"
+                                       value="En curso" severity="info" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseSiguiente.pasada}"
+                                       value="Completada" severity="secondary" styleClass="tec-status"/>
+                                <p:tag rendered="#{personaController.faseSiguiente.futura}"
+                                       value="Próxima" severity="info" styleClass="tec-status"/>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </section>
+            </ui:fragment>
+
+            <!-- ── Contenido principal ── -->
+            <div class="surface-card border-round-lg tec-card">
+
+                <!-- Resumen de actualización de la iglesia seleccionada -->
                 <p:outputPanel id="panelResumenMiembros" layout="block">
-                <ui:fragment rendered="#{personaController.iglesiaSeleccionado.id ne null}">
-
-                    <!-- Tarjetas KPI -->
-                    <div class="grid mb-3">
-
-                        <!-- Total miembros -->
-                        <div class="col-12 md:col-4">
-                            <div class="surface-0 border-round-lg p-3"
-                                 style="border-left:4px solid #3b82f6;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div class="flex align-items-center gap-3">
-                                    <div class="flex justify-content-center align-items-center border-round-lg flex-shrink-0"
-                                         style="width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#3b82f6,#60a5fa)">
-                                        <i class="pi pi-users text-white text-sm"/>
+                    <ui:fragment rendered="#{personaController.iglesiaSeleccionado.id ne null}">
+                        <div class="personas-resumen">
+                            <div class="grid">
+                                <div class="col-4">
+                                    <div class="kpi-card">
+                                        <span class="label">Total miembros</span>
+                                        <h:outputText value="#{personaController.totalMiembros}" styleClass="value"/>
                                     </div>
-                                    <div>
-                                        <span class="block text-500 text-xs font-medium uppercase">Total miembros</span>
-                                        <span class="block text-900 font-bold text-2xl">
-                                            <h:outputText value="#{personaController.totalMiembros}"/>
-                                        </span>
+                                </div>
+                                <div class="col-4">
+                                    <div class="kpi-card">
+                                        <span class="label">Actualizados</span>
+                                        <h:outputText value="#{personaController.miembrosActualizados}" styleClass="value"/>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="kpi-card">
+                                        <span class="label">Pendientes</span>
+                                        <h:outputText value="#{personaController.miembrosPendientes}" styleClass="value"/>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Actualizados -->
-                        <div class="col-12 md:col-4">
-                            <div class="surface-0 border-round-lg p-3"
-                                 style="border-left:4px solid #22c55e;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div class="flex align-items-center gap-3">
-                                    <div class="flex justify-content-center align-items-center border-round-lg flex-shrink-0"
-                                         style="width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#22c55e,#4ade80)">
-                                        <i class="pi pi-check-circle text-white text-sm"/>
-                                    </div>
-                                    <div>
-                                        <span class="block text-500 text-xs font-medium uppercase">Actualizados</span>
-                                        <span class="block text-900 font-bold text-2xl">
-                                            <h:outputText value="#{personaController.miembrosActualizados}"/>
-                                        </span>
-                                    </div>
-                                </div>
+                            <div class="personas-progreso">
+                                <span>
+                                    Progreso de actualización ·
+                                    <b><h:outputText value="#{personaController.miembrosActualizados}"/></b>
+                                    / <h:outputText value="#{personaController.totalMiembros}"/> miembros
+                                    · <b><h:outputText value="#{personaController.porcentajeActualizacion}"/>%</b>
+                                </span>
+                                <span class="personas-progreso__acciones">
+                                    <p:commandButton id="btnGenerarActaActualizacion"
+                                                     rendered="#{personaController.restringidoAIglesia}"
+                                                     value="#{msg['actaActualizacion.boton.generar']}" icon="pi pi-file-pdf"
+                                                     title="#{personaController.puedeGenerarActaActualizacion ? msg['actaActualizacion.ayuda.generar'] : msg['actaActualizacion.ayuda.incompleta']}"
+                                                     actionListener="#{personaController.generarActaActualizacionIglesia}"
+                                                     process="@this" update="panelResumenMiembros"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                                     disabled="#{not personaController.puedeGenerarActaActualizacion}"/>
+                                    <p:commandButton rendered="#{personaController.restringidoAIglesia and personaController.actaActualizacionDisponible}"
+                                                     value="#{msg['actaActualizacion.boton.descargar']}" icon="pi pi-download"
+                                                     ajax="false" immediate="true"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary">
+                                        <p:fileDownload value="#{personaController.actaActualizacionDescargable}"/>
+                                    </p:commandButton>
+                                    <p:commandButton rendered="#{not personaController.restringidoAIglesia}"
+                                                     value="Generar acta" icon="pi pi-file-pdf"
+                                                     ajax="false"
+                                                     title="Descargar acta PDF de actualización"
+                                                     actionListener="#{personaController.generarActaActualizacion}"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                                     disabled="#{personaController.totalMiembros eq 0}"/>
+                                </span>
                             </div>
+                            <p:progressBar value="#{personaController.porcentajeActualizacion}"
+                                           labelTemplate="{value}% actualizado"
+                                           displayOnly="true"
+                                           styleClass="personas-barra"/>
                         </div>
-
-                        <!-- Pendientes -->
-                        <div class="col-12 md:col-4">
-                            <div class="surface-0 border-round-lg p-3"
-                                 style="border-left:4px solid #f97316;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div class="flex align-items-center gap-3">
-                                    <div class="flex justify-content-center align-items-center border-round-lg flex-shrink-0"
-                                         style="width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#f97316,#fb923c)">
-                                        <i class="pi pi-clock text-white text-sm"/>
-                                    </div>
-                                    <div>
-                                        <span class="block text-500 text-xs font-medium uppercase">Pendientes</span>
-                                        <span class="block text-900 font-bold text-2xl">
-                                            <h:outputText value="#{personaController.miembrosPendientes}"/>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div><!-- /KPIs -->
-
-                    <!-- Barra de progreso de actualización -->
-                    <div class="mb-3">
-                        <div class="flex justify-content-between align-items-center mb-1">
-                            <small class="text-500 font-medium">Progreso de actualización</small>
-                            <div class="flex align-items-center gap-2">
-                                <small class="text-600">
-                                    <h:outputText value="#{personaController.miembrosActualizados}"/>
-                                    /
-                                    <h:outputText value="#{personaController.totalMiembros}"/>
-                                    miembros
-                                </small>
-                                <p:commandButton id="btnGenerarActaActualizacion"
-                                                 rendered="#{personaController.restringidoAIglesia}"
-                                                 value="#{msg['actaActualizacion.boton.generar']}" icon="pi pi-file-pdf"
-                                                 title="#{personaController.puedeGenerarActaActualizacion ? msg['actaActualizacion.ayuda.generar'] : msg['actaActualizacion.ayuda.incompleta']}"
-                                                 actionListener="#{personaController.generarActaActualizacionIglesia}"
-                                                 process="@this" update="panelResumenMiembros"
-                                                 styleClass="ui-button-outlined ui-button-help"
-                                                 style="height:1.75rem;padding:.25rem .75rem;font-size:.8rem"
-                                                 disabled="#{not personaController.puedeGenerarActaActualizacion}"/>
-                                <p:commandButton rendered="#{personaController.restringidoAIglesia and personaController.actaActualizacionDisponible}"
-                                                 value="#{msg['actaActualizacion.boton.descargar']}" icon="pi pi-download"
-                                                 ajax="false" immediate="true"
-                                                 styleClass="ui-button-outlined ui-button-secondary"
-                                                 style="height:1.75rem;padding:.25rem .75rem;font-size:.8rem">
-                                    <p:fileDownload value="#{personaController.actaActualizacionDescargable}"/>
-                                </p:commandButton>
-                                <p:commandButton rendered="#{not personaController.restringidoAIglesia}"
-                                                 value="Generar acta" icon="pi pi-file-pdf"
-                                                 ajax="false"
-                                                 title="Descargar acta PDF de actualización"
-                                                 actionListener="#{personaController.generarActaActualizacion}"
-                                                 styleClass="ui-button-outlined ui-button-help"
-                                                 style="height:1.75rem;padding:.25rem .75rem;font-size:.8rem"
-                                                 disabled="#{personaController.totalMiembros eq 0}"/>
-                            </div>
-                        </div>
-                        <p:progressBar value="#{personaController.porcentajeActualizacion}"
-                                       labelTemplate="{value}% actualizado"
-                                       displayOnly="true"
-                                       style="height:.65rem;border-radius:.5rem"/>
-                    </div>
-
-                </ui:fragment>
+                    </ui:fragment>
                 </p:outputPanel>
 
-                <!-- ── Filtros geográficos (solo administrador global) ── -->
+                <!-- Filtros geográficos (solo administrador global) -->
                 <ui:fragment rendered="#{not personaController.restringidoAIglesia}">
-                    <p:panel toggleable="true" collapsed="false" styleClass="mb-3 shadow-1 border-round-lg">
-                        <f:facet name="header">
-                            <div class="flex align-items-center gap-2">
-                                <i class="pi pi-filter text-primary"/>
-                                <span class="font-semibold text-900">Filtrar por ubicación e iglesia</span>
-                            </div>
-                        </f:facet>
-                        <div class="formgrid grid pt-1">
-                            <div class="field col-12 md:col-3">
-                                <label for="canton" class="text-700 font-medium text-sm">Cantón</label>
-                                <p:selectOneMenu id="canton" value="#{personaController.cantonSeleccionado.id}"
+                    <div class="tec-filters ui-fluid">
+                        <div class="formgrid grid">
+                            <div class="field col-12 md:col-6 xl:col-3">
+                                <p:outputLabel for="canton" value="Cantón"/>
+                                <p:selectOneMenu id="canton" value="#{personaController.cantonId}"
                                                  filter="true" filterMatchMode="startsWith"
                                                  placeholder="Seleccione cantón..."
-                                                 styleClass="w-full">
-                                    <f:selectItem itemLabel="Todos los cantones" itemValue=""/>
+                                                 autoWidth="false" panelStyleClass="tec-select-panel">
+                                    <f:selectItem itemLabel="Todos los cantones" itemValue="#{null}"/>
                                     <f:selectItems value="#{personaController.cantones}" var="canton"
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneParroquias()}"
@@ -392,12 +277,12 @@
                                             update="parroquia iglesias tblPersonas panelResumenMiembros"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 md:col-3">
-                                <label for="parroquia" class="text-700 font-medium text-sm">Parroquia</label>
-                                <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaSeleccionado.id}"
+                            <div class="field col-12 md:col-6 xl:col-3">
+                                <p:outputLabel for="parroquia" value="Parroquia"/>
+                                <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaId}"
                                                  placeholder="Seleccione parroquia..."
-                                                 styleClass="w-full">
-                                    <f:selectItem itemLabel="Todas las parroquias" itemValue=""/>
+                                                 autoWidth="false" panelStyleClass="tec-select-panel">
+                                    <f:selectItem itemLabel="Todas las parroquias" itemValue="#{null}"/>
                                     <f:selectItems value="#{personaController.parroquias}" var="parroquia"
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}"
@@ -405,13 +290,13 @@
                                             update="iglesias tblPersonas panelResumenMiembros"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 md:col-6">
-                                <label for="iglesias" class="text-700 font-medium text-sm">Iglesia</label>
+                            <div class="field col-12 xl:col-6">
+                                <p:outputLabel for="iglesias" value="Iglesia"/>
                                 <p:selectOneMenu id="iglesias" value="#{personaController.iglesiaSeleccionado.id}"
                                                  filter="true" filterMatchMode="contains"
                                                  disabled="#{empty personaController.listaIglesias}"
                                                  placeholder="Seleccione iglesia..."
-                                                 styleClass="w-full">
+                                                 autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
                                                    itemLabel="#{iglesia.nombre} - #{iglesia.comunidad}" itemValue="#{iglesia.id}"/>
@@ -421,16 +306,14 @@
                                 </p:selectOneMenu>
                             </div>
                         </div>
-                    </p:panel>
+                    </div>
                 </ui:fragment>
 
-                <!-- ── TOOLBAR ── -->
-                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <div class="flex align-items-center gap-2 flex-wrap">
-
-                        <!-- Nuevo miembro -->
+                <!-- Acciones -->
+                <div class="personas-toolbar">
+                    <div class="personas-toolbar__grupo">
                         <p:commandButton value="Nuevo" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn tec-btn--primary"
                                          disabled="#{not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.nuevaPersona}"
                                          update="outPnlPersonas"
@@ -439,11 +322,10 @@
                                        value="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
                         </p:commandButton>
 
-                        <!-- Eliminar seleccionados -->
                         <p:commandButton id="btnEliminaRegistros"
                                          value="#{personaController.mensajeBotonEliminar}"
                                          icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
+                                         styleClass="tec-btn ui-button-outlined ui-button-danger"
                                          disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
                                          process="@this tblPersonas"
@@ -452,20 +334,18 @@
                                        message="¿Eliminar los miembros seleccionados? Esta acción no se puede deshacer."
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
-
                     </div>
-                    <div class="flex align-items-center gap-2 flex-wrap">
-
+                    <div class="personas-toolbar__grupo">
                         <!-- Consulta secundaria: no modifica el listado ni los datos de miembros. -->
                         <p:commandButton id="btnBuscarPersona" value="#{msg['form.personas.busqueda.accion']}"
                                          icon="pi pi-search"
-                                         styleClass="ui-button-text ui-button-secondary"
+                                         styleClass="tec-btn ui-button-flat ui-button-secondary"
                                          actionListener="#{personaController.prepararBusquedaPersonas}"
                                          process="@this"
                                          update=":frmPersonas:panelBusquedaPersona"
                                          oncomplete="PF('dlgBuscarPersonas').show()"/>
 
-                        <!-- Importar desde Excel -->
+                        <!-- Importar desde Excel (deshabilitado: se conserva para reactivarlo) -->
                         <p:fileUpload mode="simple" skinSimple="true" label="Importar"
                                       listener="#{personaController.handleFileUpload}"
                                       dragDropSupport="false"
@@ -480,31 +360,28 @@
                                       rendered="false"
                                       styleClass="ui-button-raised ui-button-info"/>
 
-                        <!-- Exportar listado en Excel -->
                         <p:commandButton value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
-                                         styleClass="ui-button-outlined ui-button-success"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          ajax="false"
                                          actionListener="#{personaController.exportarExcel}"
                                          disabled="#{empty personaController.listaIglesiaPersona}"/>
 
                         <p:commandButton value="#{msg['form.personas.inconsistencias.reporte.boton']}"
                                          icon="pi pi-exclamation-triangle"
-                                         styleClass="ui-button-outlined ui-button-warning"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          ajax="false"
                                          rendered="#{personaController.puedeGenerarReporteInconsistencias}"
                                          actionListener="#{personaController.exportarInconsistenciasExcel}"/>
 
-                        <!-- Descargar archivo generado -->
                         <p:commandButton value="Descargar" icon="pi pi-download"
-                                         styleClass="ui-button-outlined ui-button-info"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          rendered="#{personaController.file ne null}">
                             <p:fileDownload value="#{personaController.fileDown}"/>
                         </p:commandButton>
-
                     </div>
                 </div>
 
-                <!-- ── TABLA DE MIEMBROS ── -->
+                <!-- Tabla de miembros: filtrado y orden en memoria de PrimeFaces -->
                 <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers"
                              value="#{personaController.listaIglesiaPersona}"
                              filteredValue="#{personaController.listaIglesiaPersonaFiltrada}"
@@ -513,14 +390,13 @@
                              selectionDisabled="#{iglPers.inconsistenciaIglesias}"
                              multiViewState="true"
                              paginator="true" rows="10" rowSelectMode="add"
-                             paginatorPosition="bottom"
+                             pageLinks="5" paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} miembros"
                              rowsPerPageTemplate="10,25,50"
                              emptyMessage="No hay miembros registrados. Seleccione una iglesia o registre un nuevo miembro."
                              reflow="true" size="small"
-                             showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm tabla-personas-compacta">
+                             styleClass="tec-table personas-table">
 
                     <p:ajax event="rowSelect"           update=":frmPersonas:btnEliminaRegistros"/>
                     <p:ajax event="rowUnselect"         update=":frmPersonas:btnEliminaRegistros"/>
@@ -528,18 +404,38 @@
                     <p:ajax event="rowUnselectCheckbox" update=":frmPersonas:btnEliminaRegistros"/>
                     <p:ajax event="toggleSelect"        update=":frmPersonas:btnEliminaRegistros"/>
 
-                    <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
+                    <!-- Búsqueda rápida: filtro global de PrimeFaces sobre las columnas con filterBy.
+                         Es la única vía de filtrar en móvil, donde los filtros por columna no se muestran. -->
+                    <f:facet name="header">
+                        <div class="tec-search-input personas-busqueda-rapida">
+                            <i class="pi pi-search" aria-hidden="true"/>
+                            <p:outputLabel for="globalFilter" value="Buscar en la lista"
+                                           styleClass="ui-helper-hidden-accessible"/>
+                            <p:inputText id="globalFilter"
+                                         placeholder="Buscar en la lista por cédula o nombres"
+                                         onkeyup="PrimeFaces.debounce(function() { PF('wdTablaPersonas').filter(); }, 350)"
+                                         onkeydown="PrimeFaces.utils.blockEnterKey(event)"/>
+                        </div>
+                    </f:facet>
 
-                    <!-- Cédula: columna independiente con búsqueda y ordenamiento -->
+                    <f:facet name="emptyMessage">
+                        <span class="tec-empty">
+                            <i class="pi pi-users" aria-hidden="true"/>
+                            <span class="tec-empty__title">Sin miembros para mostrar</span>
+                            <span class="tec-empty__text">Seleccione una iglesia, ajuste los filtros o registre un nuevo miembro.</span>
+                        </span>
+                    </f:facet>
+
+                    <p:column selectionMode="multiple" exportable="false" ariaHeaderText="Seleccionar"
+                              styleClass="tec-col-fit personas-col-sel"/>
+
                     <p:column headerText="Cédula"
                               sortBy="#{iglPers.persona.documento}"
                               filterBy="#{iglPers.persona.documento}"
                               filterMatchMode="contains"
-                              filterPlaceholder="Buscar cédula…"
-                              style="width:9rem">
-                        <h:outputText value="#{iglPers.persona.documento}"
-                                      styleClass="font-medium text-800 text-sm"
-                                      style="font-family:monospace"/>
+                              filterPlaceholder="Cédula…"
+                              styleClass="tec-col-fit personas-col-cedula">
+                        <h:outputText value="#{iglPers.persona.documento}" styleClass="tec-mono"/>
                     </p:column>
 
                     <!-- Los nombres completos se almacenan en persona.nombres. -->
@@ -548,32 +444,42 @@
                               filterBy="#{iglPers.persona.nombres}"
                               filterMatchMode="contains"
                               filterPlaceholder="#{msg['form.personas.table.filtro.nombres']}"
-                              style="min-width:14rem">
+                              styleClass="personas-col-nombre tec-col-primary">
                         <f:facet name="export">
                             <h:outputText value="#{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>
                         </f:facet>
-                        <div class="flex align-items-center gap-2">
-                            <span class="font-semibold text-800 text-sm">
-                                <h:outputText value="#{iglPers.persona.nombres}"/>
-                            </span>
-                            <ui:fragment rendered="#{iglPers.persona.sexo eq 'M'}">
-                                <span style="background:#dbeafe;color:#1d4ed8;font-size:.65rem;
-                                             font-weight:700;padding:.1rem .45rem;
-                                             border-radius:1rem;letter-spacing:.03em;white-space:nowrap">M</span>
+                        <span class="personas-nombre">
+                            <h:outputText value="#{iglPers.persona.nombres}" styleClass="personas-nombre__texto"/>
+                            <!-- La iglesia solo aporta cuando el listado mezcla iglesias (filtro por cantón o parroquia). -->
+                            <ui:fragment rendered="#{iglPers.persona.sexo eq 'M' or iglPers.persona.sexo eq 'F'
+                                                    or (personaController.iglesiaSeleccionado.id eq null and not empty iglPers.iglesia.nombre)}">
+                                <span class="personas-nombre__meta">
+                                    <h:outputText rendered="#{iglPers.persona.sexo eq 'M'}" value="Masculino"
+                                                  styleClass="personas-nombre__sexo"/>
+                                    <h:outputText rendered="#{iglPers.persona.sexo eq 'F'}" value="Femenino"
+                                                  styleClass="personas-nombre__sexo"/>
+                                    <h:outputText rendered="#{personaController.iglesiaSeleccionado.id eq null and not empty iglPers.iglesia.nombre}"
+                                                  value="#{iglPers.iglesia.nombre}"
+                                                  styleClass="personas-nombre__iglesia"/>
+                                </span>
                             </ui:fragment>
-                            <ui:fragment rendered="#{iglPers.persona.sexo eq 'F'}">
-                                <span style="background:#fce7f3;color:#be185d;font-size:.65rem;
-                                             font-weight:700;padding:.1rem .45rem;
-                                             border-radius:1rem;letter-spacing:.03em;white-space:nowrap">F</span>
-                            </ui:fragment>
-                        </div>
+                        </span>
                     </p:column>
 
                     <p:column headerText="#{msg['form.personas.inconsistencia.columna']}"
                               sortBy="#{iglPers.tieneInconsistencia}"
                               filterBy="#{iglPers.tieneInconsistencia}"
                               filterMatchMode="exact"
-                              styleClass="text-center" style="width:11rem">
+                              styleClass="tec-col-fit">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('wdTablaPersonas').filter()"
+                                             autoWidth="false" styleClass="personas-filtro-estado"
+                                             panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.inconsistencia.con']}" itemValue="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.inconsistencia.sin']}" itemValue="false"/>
+                            </p:selectOneMenu>
+                        </f:facet>
                         <f:facet name="export">
                             <h:outputText value="#{iglPers.tieneInconsistencia
                                                    ? msg['form.personas.inconsistencia.con']
@@ -582,10 +488,11 @@
                         <p:outputPanel id="panelInconsistencia" layout="inline">
                             <p:tag rendered="#{iglPers.tieneInconsistencia}"
                                    value="#{msg['form.personas.inconsistencia.con']}"
-                                   severity="danger" icon="pi pi-exclamation-triangle"/>
-                            <p:tag rendered="#{not iglPers.tieneInconsistencia}"
-                                   value="#{msg['form.personas.inconsistencia.sin']}"
-                                   severity="success" icon="pi pi-check-circle"/>
+                                   severity="danger" icon="pi pi-exclamation-triangle"
+                                   styleClass="tec-status"/>
+                            <h:outputText rendered="#{not iglPers.tieneInconsistencia}"
+                                          value="#{msg['form.personas.inconsistencia.sin']}"
+                                          styleClass="tec-muted"/>
                         </p:outputPanel>
                         <p:tooltip for="panelInconsistencia"
                                    rendered="#{iglPers.tieneInconsistencia}"
@@ -596,54 +503,79 @@
                                             : msg['form.personas.inconsistencia.tooltip.cedula']}"/>
                     </p:column>
 
-                    <!-- Habilitado para padrón electoral -->
                     <p:column headerText="Padrón"
                               sortBy="#{iglPers.habilitadoPadron}"
                               filterBy="#{iglPers.habilitadoPadron}"
-                              styleClass="text-center" style="width:9rem">
+                              filterMatchMode="exact"
+                              styleClass="tec-col-fit">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('wdTablaPersonas').filter()"
+                                             autoWidth="false" styleClass="personas-filtro-estado"
+                                             panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.exportar.estado.habilitado']}" itemValue="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.exportar.estado.no.habilitado']}" itemValue="false"/>
+                            </p:selectOneMenu>
+                        </f:facet>
                         <f:facet name="export">
                             <h:outputText value="#{iglPers.habilitadoPadron ? 'Habilitado' : 'No habilitado'}"/>
                         </f:facet>
                         <p:tag rendered="#{iglPers.habilitadoPadron}"
-                               value="Habilitado" severity="success" icon="pi pi-check-circle"/>
+                               value="Habilitado" severity="success" icon="pi pi-check-circle"
+                               styleClass="tec-status"/>
                         <p:tag rendered="#{not iglPers.habilitadoPadron}"
-                               value="No habilitado" severity="secondary" icon="pi pi-ban"/>
+                               value="No habilitado" severity="secondary" icon="pi pi-ban"
+                               styleClass="tec-status"/>
                     </p:column>
 
-                    <!-- Estado de revisión en el ciclo de actualización -->
                     <p:column headerText="Revisión"
                               sortBy="#{iglPers.actualizada}"
                               filterBy="#{iglPers.actualizada}"
-                              style="width:10rem">
+                              filterMatchMode="exact"
+                              styleClass="tec-col-fit">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('wdTablaPersonas').filter()"
+                                             autoWidth="false" styleClass="personas-filtro-estado"
+                                             panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.exportar.estado.revisado']}" itemValue="true"/>
+                                <f:selectItem itemLabel="#{msg['form.personas.exportar.estado.pendiente']}" itemValue="false"/>
+                            </p:selectOneMenu>
+                        </f:facet>
                         <f:facet name="export">
                             <h:outputText value="#{iglPers.actualizada ? 'Revisado' : 'Pendiente'}"/>
                         </f:facet>
-                        <p:tag rendered="#{iglPers.actualizada}"
-                               value="Revisado" severity="success" icon="pi pi-check"/>
-                        <p:tag rendered="#{not iglPers.actualizada}"
-                               value="Pendiente" severity="warning" icon="pi pi-clock"/>
-                        <h:outputText rendered="#{iglPers.actualizada and iglPers.fechaActualiza ne null}"
-                                      value="#{iglPers.fechaActualiza}"
-                                      styleClass="block text-500 text-xs mt-1">
-                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
-                        </h:outputText>
+                        <span class="personas-revision">
+                            <p:tag rendered="#{iglPers.actualizada}"
+                                   value="Revisado" severity="success" icon="pi pi-check"
+                                   styleClass="tec-status"/>
+                            <p:tag rendered="#{not iglPers.actualizada}"
+                                   value="Pendiente" severity="warning" icon="pi pi-clock"
+                                   styleClass="tec-status"/>
+                            <h:outputText rendered="#{iglPers.actualizada and iglPers.fechaActualiza ne null}"
+                                          value="#{iglPers.fechaActualiza}"
+                                          styleClass="personas-revision__fecha">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </span>
                     </p:column>
 
-                    <!-- Acciones por fila -->
                     <p:column headerText="#{msg['form.personas.table.header.acciones']}"
-                              exportable="false" styleClass="text-center" style="width:8rem">
-                        <div class="flex justify-content-center align-items-center gap-1 flex-wrap">
+                              exportable="false" selectRow="false"
+                              styleClass="tec-col-actions">
                         <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         styleClass="ui-button-rounded ui-button-flat ui-button-secondary"
                                          title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
+                                         ariaLabel="Editar miembro"
                                          disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
                                          actionListener="#{personaController.prepararEdicion(iglPers)}"
                                          update=":frmPersonas:outPnlPersonas"
                                          oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
                                          process="@this"/>
-                        <p:commandButton icon="pi pi-wrench"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-help"
+                        <p:commandButton icon="pi pi-sync"
+                                         styleClass="ui-button-rounded ui-button-flat ui-button-warning"
                                          title="#{msg['form.personas.regularizacion.accion']}"
+                                         ariaLabel="#{msg['form.personas.regularizacion.accion']}"
                                          rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
                                          disabled="#{not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.prepararRegularizacion(iglPers)}"
@@ -651,8 +583,9 @@
                                          update=":frmPersonas:panelDialogRegularizacion"
                                          oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
                         <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         styleClass="ui-button-rounded ui-button-flat ui-button-danger"
                                          title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
+                                         ariaLabel="Eliminar miembro"
                                          disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
                                          action="#{personaController.eliminarIglesiaPersonaSeleccionada}"
                                          process="@this" partialSubmit="true"
@@ -663,90 +596,95 @@
                                        message="¿Está seguro de eliminar este miembro? El registro será dado de baja."
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
-                        </div>
                     </p:column>
 
                 </p:dataTable>
 
-            </div><!-- /surface-card -->
+            </div>
 
             <!-- ======================================================
-                 DIÁLOGO: NUEVO / EDITAR MIEMBRO
-                 IMPORTANTE: dentro del form para que los inputs
-                 se serialicen correctamente en AJAX.
+                 DIÁLOGOS: permanecen dentro del form (sin appendTo) para que
+                 sus campos se serialicen en AJAX. Enter ejecuta la acción
+                 principal de cada diálogo y no el primer botón del formulario.
                  ====================================================== -->
             <p:dialog id="dlgBusquedaPersonas"
                       header="#{msg['form.personas.busqueda.titulo']}"
                       widgetVar="dlgBuscarPersonas"
-                      modal="true" responsive="true" width="1100"
-                      style="max-width:96vw" contentStyle="overflow-y:auto;max-height:75vh"
-                      closeOnEscape="true">
+                      modal="true" responsive="true" fitViewport="true"
+                      closeOnEscape="true"
+                      styleClass="tec-dialog tec-dialog--lg">
                 <p:outputPanel id="panelBusquedaPersona" layout="block">
-                    <div class="grid align-items-end mb-3">
-                        <div class="col-12 md:col-8">
-                            <label for="criterioBusquedaPersona" class="block text-700 font-medium text-sm mb-2">
-                                #{msg['form.personas.busqueda.criterio']}
-                            </label>
-                            <p:inputText id="criterioBusquedaPersona"
-                                         value="#{personaController.criterioBusquedaPersona}"
-                                         maxlength="100" styleClass="w-full"
-                                         placeholder="#{msg['form.personas.busqueda.placeholder']}"/>
+                    <p:defaultCommand target="btnEjecutarBusquedaPersona" scope="panelBusquedaPersona"/>
+                    <div class="tec-filters personas-dialog-busqueda__fila">
+                        <div class="personas-dialog-busqueda__criterio ui-fluid">
+                            <p:outputLabel for="criterioBusquedaPersona"
+                                           value="#{msg['form.personas.busqueda.criterio']}"/>
+                            <div class="tec-search-input">
+                                <i class="pi pi-search" aria-hidden="true"/>
+                                <p:inputText id="criterioBusquedaPersona"
+                                             value="#{personaController.criterioBusquedaPersona}"
+                                             maxlength="100"
+                                             placeholder="#{msg['form.personas.busqueda.placeholder']}"/>
+                            </div>
                         </div>
-                        <div class="col-12 md:col-4 flex md:justify-content-end">
-                            <p:commandButton id="btnEjecutarBusquedaPersona"
-                                             value="#{msg['form.personas.busqueda.accion']}" icon="pi pi-search"
-                                             styleClass="ui-button-outlined ui-button-secondary"
-                                             actionListener="#{personaController.buscarPersonasParaConsulta}"
-                                             process="criterioBusquedaPersona"
-                                             update="panelBusquedaPersona"/>
-                        </div>
+                        <p:commandButton id="btnEjecutarBusquedaPersona"
+                                         value="#{msg['form.personas.busqueda.accion']}" icon="pi pi-search"
+                                         styleClass="tec-btn tec-btn--primary"
+                                         actionListener="#{personaController.buscarPersonasParaConsulta}"
+                                         process="@this criterioBusquedaPersona"
+                                         update="panelBusquedaPersona :frmGlobal:growlGlobal"/>
                     </div>
 
                     <p:dataTable id="tblBusquedaPersonas" var="resultado"
                                  value="#{personaController.resultadosBusquedaPersonas}"
                                  paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
-                                 paginatorPosition="bottom" reflow="true" size="small"
+                                 pageLinks="5" paginatorPosition="bottom"
+                                 reflow="true" size="small"
                                  emptyMessage="#{msg['form.personas.busqueda.sin.resultados']}"
-                                 styleClass="ui-datatable-sm ui-datatable-striped">
-                        <p:column headerText="#{msg['form.personas.busqueda.cedula']}" style="width:10rem">
-                            <h:outputText value="#{resultado.persona.documento}"
-                                          styleClass="font-medium text-800" style="font-family:monospace"/>
+                                 styleClass="tec-table tec-table--static">
+                        <p:column headerText="#{msg['form.personas.busqueda.cedula']}"
+                                  styleClass="tec-col-fit">
+                            <h:outputText value="#{resultado.persona.documento}" styleClass="tec-mono"/>
                         </p:column>
-                        <p:column headerText="#{msg['form.personas.busqueda.nombres']}" style="min-width:15rem">
-                            <h:outputText value="#{resultado.persona.nombres}" styleClass="font-semibold text-800"/>
+                        <p:column headerText="#{msg['form.personas.busqueda.nombres']}"
+                                  styleClass="tec-col-primary">
+                            <h:outputText value="#{resultado.persona.nombres}" styleClass="personas-nombre__texto"/>
                         </p:column>
-                        <p:column headerText="#{msg['form.personas.busqueda.iglesia']}" style="min-width:14rem">
-                            <h:outputText value="#{resultado.iglesia.nombre}" styleClass="font-medium text-800 block"/>
-                            <h:outputText value="#{resultado.iglesia.comunidad}"
-                                          rendered="#{not empty resultado.iglesia.comunidad}"
-                                          styleClass="text-500 text-sm block"/>
+                        <p:column headerText="#{msg['form.personas.busqueda.iglesia']}">
+                            <span class="personas-nombre">
+                                <h:outputText value="#{resultado.iglesia.nombre}"/>
+                                <h:outputText value="#{resultado.iglesia.comunidad}"
+                                              rendered="#{not empty resultado.iglesia.comunidad}"
+                                              styleClass="personas-nombre__meta"/>
+                            </span>
                         </p:column>
-                        <p:column headerText="#{msg['form.personas.busqueda.ubicacion']}" style="min-width:16rem">
-                            <div class="flex flex-column gap-1 text-sm">
-                                <span><span class="text-500">Barrio/Comunidad: </span><h:outputText value="#{resultado.iglesia.comunidad}"/></span>
-                                <span><span class="text-500">Provincia: </span><h:outputText value="#{resultado.iglesia.provinciaNombre}"/></span>
-                                <span><span class="text-500">Cantón: </span><h:outputText value="#{resultado.iglesia.cantonNombre}"/></span>
-                                <span><span class="text-500">Parroquia: </span><h:outputText value="#{resultado.iglesia.ubicacionNombre}"/></span>
-                            </div>
+                        <p:column headerText="#{msg['form.personas.busqueda.ubicacion']}">
+                            <dl class="personas-ubicacion">
+                                <div><dt>Barrio/Comunidad: </dt><dd><h:outputText value="#{resultado.iglesia.comunidad}"/></dd></div>
+                                <div><dt>Provincia: </dt><dd><h:outputText value="#{resultado.iglesia.provinciaNombre}"/></dd></div>
+                                <div><dt>Cantón: </dt><dd><h:outputText value="#{resultado.iglesia.cantonNombre}"/></dd></div>
+                                <div><dt>Parroquia: </dt><dd><h:outputText value="#{resultado.iglesia.ubicacionNombre}"/></dd></div>
+                            </dl>
                         </p:column>
-                        <p:column headerText="#{msg['form.personas.busqueda.estado']}" style="min-width:13rem">
-                            <div class="flex flex-column align-items-start gap-1">
+                        <p:column headerText="#{msg['form.personas.busqueda.estado']}"
+                                  styleClass="tec-col-fit">
+                            <span class="personas-estados">
                                 <p:tag rendered="#{not resultado.tieneInconsistencia}"
                                        value="#{msg['form.personas.inconsistencia.sin']}"
-                                       severity="success" icon="pi pi-check-circle"/>
+                                       severity="success" icon="pi pi-check-circle" styleClass="tec-status"/>
                                 <p:tag rendered="#{resultado.inconsistenciaIglesias}"
                                        value="#{msg['form.personas.busqueda.inconsistencia.iglesias']}"
-                                       severity="danger" icon="pi pi-exclamation-triangle"/>
+                                       severity="danger" icon="pi pi-exclamation-triangle" styleClass="tec-status"/>
                                 <p:tag rendered="#{resultado.inconsistenciaCedula}"
                                        value="#{msg['form.personas.busqueda.inconsistencia.cedula']}"
-                                       severity="warning" icon="pi pi-exclamation-triangle"/>
-                            </div>
+                                       severity="warning" icon="pi pi-exclamation-triangle" styleClass="tec-status"/>
+                            </span>
                         </p:column>
                     </p:dataTable>
                 </p:outputPanel>
                 <f:facet name="footer">
                     <p:commandButton value="Cancelar" type="button" icon="pi pi-times"
-                                     styleClass="ui-button-text ui-button-secondary"
+                                     styleClass="ui-button-flat ui-button-plain"
                                      onclick="PF('dlgBuscarPersonas').hide()"/>
                 </f:facet>
             </p:dialog>
@@ -754,12 +692,12 @@
             <p:dialog header="Datos del miembro"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgPersona"
-                      responsive="true" width="640"
-                      style="max-width:96vw"
-                      contentStyle="overflow-y:auto;max-height:75vh"
-                      closeOnEscape="true">
+                      responsive="true" fitViewport="true"
+                      closeOnEscape="true"
+                      styleClass="tec-dialog tec-dialog--sm personas-dialog-miembro">
 
-                <p:outputPanel id="outPnlPersonas" class="ui-fluid">
+                <p:outputPanel id="outPnlPersonas" layout="block" styleClass="ui-fluid tec-form">
+                    <p:defaultCommand target="btnGuardarPersona" scope="outPnlPersonas"/>
                     <p:outputPanel id="reglasPersona" layout="block"/>
                     <p:messages id="mensajesDialogoPersona" for="reglasPersona" closable="true"
                                 showSummary="true" showDetail="false" styleClass="mb-3"/>
@@ -767,18 +705,13 @@
                     <p:outputPanel rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
 
                         <div class="formgrid grid">
-
-                            <!-- Fila 1: Cédula + sexo de selección directa -->
-                            <div class="field col-12 md:col-6">
-                                <label for="cedula" class="font-medium text-700 text-sm">
-                                    Cédula <span class="text-red-500">*</span>
-                                </label>
+                            <div class="field col-12 sm:col-6">
+                                <p:outputLabel for="cedula" value="Cédula"/>
                                 <p:inputText id="cedula"
                                              value="#{personaController.iglesiaPersonaSeleccionado.persona.documento}"
                                              required="true" requiredMessage="#{msg['form.personas.error.documento.requerido']}"
                                              validator="#{personaController.validarCedula}" maxlength="10"
-                                             placeholder="0000000000"
-                                             styleClass="w-full">
+                                             placeholder="0000000000">
                                     <p:keyFilter for="cedula" mask="num"/>
                                     <p:ajax event="change"
                                             update="outPnlPersonas"
@@ -787,45 +720,39 @@
                                 </p:inputText>
                                 <p:message id="msgCedula" for="cedula" display="text" styleClass="block mt-1"/>
                             </div>
-                            <div class="field col-12 md:col-6">
-                                <label for="sexo" class="font-medium text-700 text-sm">Sexo</label>
+                            <div class="field col-12 sm:col-6">
+                                <p:outputLabel for="sexo" value="Sexo"/>
                                 <p:selectOneRadio id="sexo"
                                                   value="#{personaController.iglesiaPersonaSeleccionado.persona.sexo}"
-                                                  layout="lineDirection" styleClass="flex gap-3 mt-2">
+                                                  layout="lineDirection">
                                     <f:selectItem itemLabel="Masculino" itemValue="M"/>
                                     <f:selectItem itemLabel="Femenino" itemValue="F"/>
                                 </p:selectOneRadio>
                             </div>
 
-                            <!-- Fila 2: identificación completa -->
-                            <div class="field col-12 md:col-6">
-                                <label for="nombres" class="font-medium text-700 text-sm">
-                                    Apellidos y Nombres <span class="text-red-500">*</span>
-                                </label>
+                            <div class="field col-12">
+                                <p:outputLabel for="nombres" value="Apellidos y Nombres"/>
                                 <p:inputText id="nombres"
                                              value="#{personaController.iglesiaPersonaSeleccionado.persona.nombres}"
                                              maxlength="100" required="true"
                                              requiredMessage="#{msg['form.personas.error.nombres.requerido']}"
                                              validator="#{personaController.validarNombres}"
-                                             onkeyup="value = value.toUpperCase()"
-                                             styleClass="w-full">
+                                             onkeyup="value = value.toUpperCase()">
                                     <p:ajax event="blur" process="@this" update="msgNombres"/>
                                 </p:inputText>
                                 <p:message id="msgNombres" for="nombres" display="text" styleClass="block mt-1"/>
                             </div>
 
-                            <!-- Fila 3: un único selector; fijo al contexto para IglesiaAdmin -->
-                            <div class="field col-12 md:col-6">
-                                <label for="iglesia" class="font-medium text-700 text-sm">
-                                    Iglesia <span class="text-red-500">*</span>
-                                </label>
+                            <!-- Un único selector; fijo al contexto para IglesiaAdmin -->
+                            <div class="field col-12">
+                                <p:outputLabel for="iglesia" value="Iglesia"/>
                                 <p:selectOneMenu id="iglesia"
                                                  value="#{personaController.iglesiaPersonaSeleccionado.iglesia.id}"
                                                  filter="true" filterMatchMode="contains"
                                                  disabled="#{personaController.restringidoAIglesia or empty personaController.listaIglesias}"
                                                  required="true"
                                                  requiredMessage="#{msg['form.personas.error.iglesia.requerida']}"
-                                                 styleClass="w-full">
+                                                 autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
                                                    itemLabel="#{iglesia.nombre}" itemValue="#{iglesia.id}"/>
@@ -836,33 +763,25 @@
 
                             <ui:fragment rendered="#{personaController.requiereRegularizacion}">
                                 <div class="field col-12">
-                                    <div class="border-round-lg p-3 text-orange-900"
-                                         style="background:#fff7ed;border-left:4px solid #f97316">
-                                        <i class="pi pi-lock mr-2"/>
-                                        #{msg['form.personas.inconsistencia.edicion.bloqueada']}
+                                    <div class="callout callout--warning personas-aviso">
+                                        <i class="pi pi-lock" aria-hidden="true"/>
+                                        <span>#{msg['form.personas.inconsistencia.edicion.bloqueada']}</span>
                                     </div>
                                 </div>
                             </ui:fragment>
 
-                            <!-- Fila 4: Habilitado para padrón electoral -->
-                            <div class="field col-12">
-                                <div class="flex align-items-start justify-content-between p-3 border-round"
-                                     style="background:#f8fafc; border:1px solid #e2e8f0; gap:1rem">
-                                    <div class="flex flex-column gap-1 flex-auto">
-                                        <span class="font-semibold text-800">
-                                            <i class="pi pi-id-card mr-2 text-primary"/>
-                                            Habilitado para padrón electoral
-                                        </span>
-                                        <small class="text-500">Active solo a los miembros que participarán en el padrón.</small>
+                            <div class="field col-12 mb-0">
+                                <div class="personas-switch">
+                                    <div class="personas-switch__texto">
+                                        <p:outputLabel for="habilitadoPadron"
+                                                       value="Habilitado para padrón electoral"
+                                                       styleClass="personas-switch__titulo"/>
+                                        <span class="personas-switch__ayuda">Solo miembros que participarán en el padrón.</span>
                                     </div>
-                                    <div class="flex flex-column align-items-center gap-2" style="min-width:6rem">
-                                        <p:outputPanel id="estadoHabilitadoPadron" layout="block">
-                                            <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                                   value="Habilitado" severity="success"
-                                                   icon="pi pi-check-circle" style="white-space:nowrap"/>
-                                            <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                                   value="No habilitado" severity="secondary"
-                                                   icon="pi pi-ban" style="white-space:nowrap"/>
+                                    <div class="personas-switch__control">
+                                        <p:outputPanel id="estadoHabilitadoPadron" layout="inline"
+                                                       styleClass="personas-switch__estado">
+                                            <h:outputText value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron ? 'Sí' : 'No'}"/>
                                         </p:outputPanel>
                                         <p:toggleSwitch id="habilitadoPadron"
                                                         value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}">
@@ -871,20 +790,19 @@
                                     </div>
                                 </div>
                             </div>
-
-                        </div><!-- /formgrid -->
+                        </div>
 
                     </p:outputPanel>
                 </p:outputPanel>
 
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="Cancelar" icon="pi pi-times"
                                          onclick="PF('dlgPersona').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton id="btnGuardarPersona" value="Guardar" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn ui-button-success"
                                          disabled="#{personaController.requiereRegularizacion}"
                                          actionListener="#{personaController.actualizarPersona}"
                                          oncomplete="if (!args.validationFailed) PF('dlgPersona').hide()"
@@ -897,30 +815,24 @@
 
             <p:dialog header="#{msg['form.personas.regularizacion.titulo']}"
                       showEffect="fade" hideEffect="fade" modal="true"
-                      widgetVar="dlgRegularizarIglesias" responsive="true" width="620"
-                      style="max-width:96vw" closeOnEscape="true">
-                <p:outputPanel id="panelDialogRegularizacion" layout="block">
+                      widgetVar="dlgRegularizarIglesias"
+                      responsive="true" fitViewport="true" closeOnEscape="true"
+                      styleClass="tec-dialog tec-dialog--sm">
+                <p:outputPanel id="panelDialogRegularizacion" layout="block" styleClass="tec-form">
                     <p:outputPanel id="outPnlRegularizacion" layout="block"
                                    rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
-                        <div class="border-round-lg p-3 mb-3"
-                             style="background:#fff7ed;border-left:4px solid #f97316">
-                            <div class="flex align-items-start gap-2">
-                                <i class="pi pi-exclamation-triangle text-orange-500 text-xl mt-1"/>
-                                <div>
-                                    <span class="block font-bold text-900">
-                                        #{personaController.iglesiaPersonaSeleccionado.persona.apellidos}
-                                        #{personaController.iglesiaPersonaSeleccionado.persona.nombres}
-                                    </span>
-                                    <small class="text-700 line-height-3">
-                                        #{msg['form.personas.regularizacion.detalle']}
-                                    </small>
-                                </div>
-                            </div>
+                        <div class="callout callout--warning personas-aviso mb-3">
+                            <i class="pi pi-exclamation-triangle" aria-hidden="true"/>
+                            <span>
+                                <span class="personas-regularizacion__persona">
+                                    #{personaController.iglesiaPersonaSeleccionado.persona.apellidos}
+                                    #{personaController.iglesiaPersonaSeleccionado.persona.nombres}
+                                </span>
+                                #{msg['form.personas.regularizacion.detalle']}
+                            </span>
                         </div>
-                        <label for="iglesiaDefinitiva" class="block font-semibold text-800 mb-2">
-                            #{msg['form.personas.regularizacion.label']}
-                            <span class="text-red-500">*</span>
-                        </label>
+                        <p:outputLabel for="iglesiaDefinitiva"
+                                       value="#{msg['form.personas.regularizacion.label']}"/>
                         <p:selectOneRadio id="iglesiaDefinitiva"
                                           value="#{personaController.iglesiaPersonaDefinitivaId}"
                                           layout="pageDirection" required="true"
@@ -933,13 +845,13 @@
                     </p:outputPanel>
                 </p:outputPanel>
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="Cancelar" icon="pi pi-times" type="button"
                                          onclick="PF('dlgRegularizarIglesias').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"/>
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                         <p:commandButton id="btnConfirmarRegularizacion"
                                          value="#{msg['form.personas.regularizacion.confirmar']}"
-                                         icon="pi pi-check" styleClass="ui-button-warning"
+                                         icon="pi pi-check" styleClass="tec-btn ui-button-warning"
                                          disabled="#{personaController.iglesiaPersonaDefinitivaId eq null}"
                                          actionListener="#{personaController.regularizarIglesias}"
                                          process=":frmPersonas:outPnlRegularizacion @this"

@@ -171,10 +171,22 @@ public class LoginBean implements Serializable {
         }
     }
 
+    /**
+     * Invalida la sesión si sigue viva. Igual que en {@code LoginFilter} y
+     * {@code ControlHttpSesionQr}: una petición concurrente (doble clic en
+     * cerrar sesión, o el idle-monitor disparando justo cuando otra acción ya
+     * invalidó la sesión) puede adelantarse entre el chequeo y la invalidación;
+     * IllegalStateException en ese caso se ignora porque el resultado deseado
+     * (sesión inválida) ya se cumplió.
+     */
     private void invalidarSesion(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            session.invalidate();
+            try {
+                session.invalidate();
+            } catch (IllegalStateException ignorada) {
+                /* Ya invalidada por otra petición concurrente. */
+            }
         }
     }
 
@@ -258,7 +270,10 @@ public class LoginBean implements Serializable {
         registrarCierreSesion(request,
                 "LOGOUT | MÓDULO: ACCESO; RESULTADO: EXPIRADO; DETALLE: Sesión expirada");
         cerrarAutenticacion(request);
-        JsfUtil.redirect("/errors/viewExpired.jsf");
+        // Redirige directo al login (no a /errors/viewExpired.jsf) para que
+        // LoginController muestre "Su sesión ha expirado por inactividad" en el
+        // propio formulario, sin paso intermedio.
+        JsfUtil.redirect("/login.jsf?expirado=1");
     }
 
     public void cerrarSessionRedireccionar(String url) throws RuntimeException, IOException {

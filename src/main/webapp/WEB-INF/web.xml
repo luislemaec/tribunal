@@ -103,12 +103,6 @@
         <role-name>SITEC-Administrador</role-name>
     </security-role>
     <security-role>
-        <role-name>SITEC-Tecnico</role-name>
-    </security-role>
-    <security-role>
-        <role-name>SITEC-Analista</role-name>
-    </security-role>
-    <security-role>
         <role-name>SITEC-Tribunal</role-name>
     </security-role>
     <security-role>
@@ -118,7 +112,7 @@
         <role-name>SITEC-Presidente-mesa</role-name>
     </security-role>
     <session-config>
-        <session-timeout>60</session-timeout>
+        <session-timeout>15</session-timeout>
     </session-config>
     <error-page>
         <error-code>404</error-code>

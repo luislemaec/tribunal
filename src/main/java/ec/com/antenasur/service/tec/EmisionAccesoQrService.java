@@ -64,6 +64,11 @@ public class EmisionAccesoQrService {
         if (fase == null || fase.getFechaInicio() == null || fase.getFechaFin() == null)
             throw new AccesoQrException();
         Instant ahora = Instant.now();
+        // El acta se canjea DESPUÉS del cierre: la ventana abre al fin del
+        // SUFRAGIO y dura VentanaAccesoQr.VIGENCIA_POSTERIOR. El PDF puede
+        // generarse antes; el token no se canjea antes del cierre.
+        Instant vigenteDesde = VentanaAccesoQr.desde(fase.getFechaFin());
+        Instant vigenteHasta = VentanaAccesoQr.hasta(fase.getFechaFin());
         AccesoQrActa qr = new AccesoQrActa();
         qr.setTokenHash(TokenActaQr.hash(token));
         qr.setDocumentoId(documento.getId());
@@ -74,12 +79,13 @@ public class EmisionAccesoQrService {
         qr.setTipoDocumentoId(documento.getTipoDocumento().getId());
         qr.setPresidenteId(presidente.getId());
         qr.setUsuarioId(usuarios.get(0).getId());
-        qr.setVigenteDesde(fase.getFechaInicio().toInstant());
-        qr.setVigenteHasta(fase.getFechaFin().toInstant());
+        qr.setVigenteDesde(vigenteDesde);
+        qr.setVigenteHasta(vigenteHasta);
         qr.setEmitidoEn(ahora);
         qr.setEmitidoPor(contexto.getCallerPrincipal().getName());
         qr.setEstado(EstadoAccesoQr.EMITIDO);
-        // Se permite imprimir antes de SUFRAGIO, pero nunca canjear antes de su inicio.
+        // Se permite imprimir antes del cierre, pero nunca canjear antes de él:
+        // la comprobación previa se hace en el instante de apertura de la ventana.
         Instant comprobacion = ahora.isBefore(qr.getVigenteDesde()) ? qr.getVigenteDesde() : ahora;
         if (validacion.validar(qr, false, comprobacion) != ResultadoAccesoQr.VALIDO)
             throw new AccesoQrException();

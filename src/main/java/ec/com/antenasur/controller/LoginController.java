@@ -110,6 +110,15 @@ public class LoginController implements Serializable {
                 } else {
                     JsfUtil.redirect("/cambioClave.jsf");
                 }
+                return;
+            }
+            // La sesión ya fue invalidada por LoginBean.cerrarSessionExpirada()
+            // antes de esta redirección; aquí solo se informa al usuario en la
+            // misma carga del formulario de login, sin depender de flash scope
+            // (que vive en la sesión que acabamos de destruir).
+            if (!FacesContext.getCurrentInstance().isPostback()
+                    && "1".equals(JsfUtil.getRequestParameter("expirado"))) {
+                JsfUtil.addWarningMessageFromBundle("msg.session.expired");
             }
         } catch (Exception e) {
             log.error("Error en init() de LoginController", e);

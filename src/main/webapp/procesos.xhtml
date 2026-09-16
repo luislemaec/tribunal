@@ -12,174 +12,199 @@
 
 	<ui:define name="content">
 		<div class="audit-page">
-			<div class="audit-page-header">
-				<div class="audit-page-header__icon">
+
+			<div class="tec-page-header">
+				<div class="tec-page-header__icon" aria-hidden="true">
 					<i class="pi pi-history" />
 				</div>
-				<div>
+				<div class="min-w-0">
 					<h2>#{msg['form.procesos.title']}</h2>
-					<p>#{procesoController.administrador ? 'Bitácora global de
-						actividades del sistema' : 'Sus actividades registradas en el
-						sistema'}</p>
+					<p>#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}</p>
 				</div>
 				<p:tag rendered="#{procesoController.administrador}"
 					value="Vista global" severity="info" icon="pi pi-shield"
-					styleClass="audit-page-header__scope" />
+					styleClass="tec-page-header__aside tec-status" />
 			</div>
 
 			<h:form id="frmProcesos">
-				<div class="surface-card shadow-1 border-round-lg audit-card">
-					<p:outputPanel id="pnlFiltros" styleClass="audit-filters ui-fluid">
-						<div class="audit-section-heading">
-							<div>
-								<span class="audit-section-heading__title">Filtros de
-									consulta</span> <span class="audit-section-heading__help">Refine
-									la bitácora por contexto, fecha o resultado.</span>
-							</div>
-							<i class="pi pi-filter audit-section-heading__icon"
-								aria-hidden="true" />
-						</div>
+				<div class="surface-card border-round-lg tec-card">
+
+					<!-- Filtros: los botones permanecen dentro de pnlFiltros porque Buscar lo procesa. -->
+					<p:outputPanel id="pnlFiltros" layout="block"
+						styleClass="tec-filters ui-fluid">
+						<p:defaultCommand target="btnBuscar" scope="pnlFiltros" />
 						<div class="formgrid grid">
-							<div class="field col-12 md:col-6 lg:col-3"
-								rendered="#{procesoController.administrador}">
-								<label for="usuario">Usuario</label>
-								<p:selectOneMenu id="usuario"
-									value="#{procesoController.filtro.usuario}" filter="true"
-									filterMatchMode="contains">
-									<f:selectItem itemLabel="Todos los usuarios"
-										itemValue="#{null}" noSelectionOption="true" />
-									<f:selectItems value="#{procesoController.usuariosAuditoria}"
-										var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}" />
-								</p:selectOneMenu>
+							<ui:fragment rendered="#{procesoController.administrador}">
+								<div class="field col-12 md:col-6 xl:col-3">
+									<p:outputLabel for="usuario" value="Usuario" />
+									<p:selectOneMenu id="usuario"
+										value="#{procesoController.filtro.usuario}" filter="true"
+										filterMatchMode="contains" autoWidth="false"
+										panelStyleClass="tec-select-panel">
+										<f:selectItem itemLabel="Todos" itemValue="#{null}"
+											noSelectionOption="true" />
+										<f:selectItems value="#{procesoController.usuariosAuditoria}"
+											var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}" />
+									</p:selectOneMenu>
+								</div>
+							</ui:fragment>
+
+							<div class="field col-12 md:col-6 xl:col-4">
+								<span class="tec-field-label" aria-hidden="true">Rango de fechas</span>
+								<div class="tec-range" role="group" aria-label="Rango de fechas">
+									<p:outputLabel for="fechaInicio" value="Fecha desde"
+										styleClass="ui-helper-hidden-accessible" />
+									<p:datePicker id="fechaInicio"
+										value="#{procesoController.filtro.fechaInicio}"
+										pattern="dd/MM/yyyy" placeholder="Desde" showIcon="true"
+										showButtonBar="true" />
+									<span class="tec-range__sep" aria-hidden="true">–</span>
+									<p:outputLabel for="fechaFin" value="Fecha hasta"
+										styleClass="ui-helper-hidden-accessible" />
+									<p:datePicker id="fechaFin"
+										value="#{procesoController.filtro.fechaFin}"
+										pattern="dd/MM/yyyy" placeholder="Hasta" showIcon="true"
+										showButtonBar="true" />
+								</div>
 							</div>
-							<div
-								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
-								<label for="fechaInicio">Desde</label>
-								<p:datePicker id="fechaInicio"
-									value="#{procesoController.filtro.fechaInicio}"
-									pattern="dd/MM/yyyy" showIcon="true" showButtonBar="true" />
-							</div>
-							<div
-								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
-								<label for="fechaFin">Hasta</label>
-								<p:datePicker id="fechaFin"
-									value="#{procesoController.filtro.fechaFin}"
-									pattern="dd/MM/yyyy" showIcon="true" showButtonBar="true" />
-							</div>
-							<div
-								class="field col-12 md:col-6 #{procesoController.administrador ? 'lg:col-3' : 'lg:col-4'}">
-								<label for="modulo">Módulo</label>
+
+							<div class="field col-12 md:col-6 #{procesoController.administrador ? 'xl:col-3' : 'xl:col-4'}">
+								<p:outputLabel for="modulo" value="Módulo" />
 								<p:selectOneMenu id="modulo"
-									value="#{procesoController.filtro.modulo}">
-									<f:selectItem itemLabel="Todos los módulos" itemValue="#{null}"
+									value="#{procesoController.filtro.modulo}" autoWidth="false"
+									panelStyleClass="tec-select-panel">
+									<f:selectItem itemLabel="Todos" itemValue="#{null}"
 										noSelectionOption="true" />
-									<f:selectItem itemLabel="Acceso" itemValue="ACCESO" />
-									<f:selectItem itemLabel="Seguridad" itemValue="USUARIO" />
-									<f:selectItem itemLabel="JRV" itemValue="JRV" />
-									<f:selectItem itemLabel="Padrón" itemValue="PADRON" />
-									<f:selectItem itemLabel="Escrutinio" itemValue="ACTA" />
-									<f:selectItem itemLabel="Mesas" itemValue="MESA" />
-									<f:selectItem itemLabel="Documentos" itemValue="DOCUMENTO" />
+									<f:selectItems value="#{procesoController.modulosAuditoria}" />
 								</p:selectOneMenu>
 							</div>
-							<div class="field col-12 md:col-6 lg:col-3">
-								<label for="accion">Acción</label>
-								<p:inputText id="accion"
-									value="#{procesoController.filtro.accion}" maxlength="80"
-									placeholder="Ej.: CREA, ACTUALIZA, GENERA" />
-							</div>
-							<div class="field col-12 md:col-6 lg:col-3">
-								<label for="resultado">Resultado</label>
+
+							<div class="field col-12 md:col-6 #{procesoController.administrador ? 'xl:col-2' : 'xl:col-4'}">
+								<p:outputLabel for="resultado" value="Resultado" />
 								<p:selectOneMenu id="resultado"
-									value="#{procesoController.filtro.resultado}">
-									<f:selectItem itemLabel="Todos los resultados"
-										itemValue="#{null}" noSelectionOption="true" />
-									<f:selectItem itemLabel="Exitoso" itemValue="EXITOSO" />
-									<f:selectItem itemLabel="Fallido" itemValue="FALLIDO" />
-									<f:selectItem itemLabel="Expirado" itemValue="EXPIRADO" />
+									value="#{procesoController.filtro.resultado}" autoWidth="false"
+									panelStyleClass="tec-select-panel">
+									<f:selectItem itemLabel="Todos" itemValue="#{null}"
+										noSelectionOption="true" />
+									<f:selectItems value="#{procesoController.resultadosAuditoria}" />
 								</p:selectOneMenu>
 							</div>
-							<div class="field col-12 lg:col-6">
-								<label for="busqueda">Búsqueda general</label>
-								<div class="audit-search-input">
+
+							<div class="field col-12 md:col-6 xl:col-3">
+								<p:outputLabel for="accion" value="Acción" />
+								<p:selectOneMenu id="accion"
+									value="#{procesoController.filtro.accion}" filter="true"
+									filterMatchMode="contains" filterNormalize="true"
+									autoWidth="false" panelStyleClass="tec-select-panel">
+									<f:selectItem itemLabel="Todas" itemValue="#{null}"
+										noSelectionOption="true" />
+									<f:selectItems value="#{procesoController.accionesAuditoria}" />
+								</p:selectOneMenu>
+							</div>
+
+							<div class="field col-12 md:col-6 xl:col-4">
+								<p:outputLabel for="busqueda" value="Búsqueda general" />
+								<div class="tec-search-input">
 									<i class="pi pi-search" aria-hidden="true" />
 									<p:inputText id="busqueda"
 										value="#{procesoController.filtro.busqueda}" maxlength="120"
-										placeholder="Actividad, detalle, usuario o IP" />
+										placeholder="Acción, detalle, usuario o IP" />
+								</div>
+							</div>
+
+							<div class="field col-12 #{procesoController.administrador ? '' : 'md:col-6'} xl:col-5 tec-filter-actions-cell">
+								<div class="tec-filter-actions">
+									<p:commandButton id="btnBuscar" value="Buscar"
+										icon="pi pi-search" styleClass="tec-btn tec-btn--primary"
+										action="#{procesoController.buscar}" process="pnlFiltros"
+										update="tblAuditoria" />
+									<p:commandButton id="btnLimpiar" value="Limpiar"
+										icon="pi pi-filter-slash"
+										styleClass="tec-btn ui-button-outlined ui-button-secondary"
+										action="#{procesoController.limpiarFiltros}" process="@this"
+										update="pnlFiltros tblAuditoria" />
+									<p:commandButton id="btnExportarPdf" value="Exportar PDF"
+										icon="pi pi-file-pdf"
+										styleClass="tec-btn ui-button-outlined ui-button-secondary"
+										ajax="false" action="#{procesoController.exportaPDF}" />
 								</div>
 							</div>
 						</div>
-
-
-						<div class="audit-filter-actions">
-							<p:commandButton value="Buscar" icon="pi pi-search"
-								action="#{procesoController.buscar}" process="pnlFiltros"
-								update="tblAuditoria" styleClass="ui-button-sm" />
-							<p:commandButton value="Limpiar" icon="pi pi-filter-slash"
-								styleClass="ui-button-sm ui-button-outlined ui-button-secondary"
-								action="#{procesoController.limpiarFiltros}" process="@this"
-								update="pnlFiltros tblAuditoria" />
-							<p:commandButton value="Exportar PDF" icon="pi pi-file-pdf"
-								styleClass="ui-button-sm ui-button-outlined ui-button-help"
-								ajax="false" action="#{procesoController.exportaPDF}" />
-						</div>
 					</p:outputPanel>
 
-					<div class="audit-table-heading">
-						<div>
-							<h3>Actividades registradas</h3>
-							<p>Seleccione una fila o consulte su detalle para ver la
-								información completa.</p>
-						</div>
+					<div class="tec-table-heading">
+						<h3>Actividades</h3>
+						<span class="tec-table-heading__aside">
+							<i class="pi pi-sort-amount-down" aria-hidden="true" />
+							Más recientes primero
+						</span>
 					</div>
+
+					<!-- Orden fijo del backend: no se declaran sortBy que el LazyDataModel no aplica. -->
 					<p:dataTable id="tblAuditoria" widgetVar="wdTblAuditoria"
 						var="registro" value="#{procesoController.auditoriasLazy}"
 						lazy="true" first="#{procesoController.primerRegistro}"
 						paginator="true" rows="25" rowsPerPageTemplate="10,25,50,100"
-						paginatorPosition="bottom"
+						pageLinks="5" paginatorPosition="bottom"
 						paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-						currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} actividades"
+						currentPageReportTemplate="{startRecord}–{endRecord} de {totalRecords}"
 						emptyMessage="No hay actividades para los filtros seleccionados."
-						reflow="true" showLoader="true"
-						loadingMessage="Cargando actividades..."
+						reflow="true" size="small"
 						selection="#{procesoController.registroSeleccionado}"
 						selectionMode="single" rowKey="#{registro.id}"
-						styleClass="audit-table ui-datatable-striped ui-datatable-sm">
+						styleClass="tec-table audit-table">
 						<p:ajax event="rowSelect"
-							update=":frmProcesos:pnlDetalleAuditoria" />
+							update=":frmProcesos:pnlDetalleAuditoria"
+							oncomplete="PF('dlgDetalleAuditoria').show()" />
 						<p:ajax event="rowUnselect"
 							update=":frmProcesos:pnlDetalleAuditoria" />
-						<p:column headerText="Fecha / hora" styleClass="audit-table__date"
-							responsivePriority="1">
-							<div class="audit-date">
-								<i class="pi pi-clock" />
-								<h:outputText value="#{registro.fecha}">
-									<f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+
+						<f:facet name="emptyMessage">
+							<span class="tec-empty">
+								<i class="pi pi-inbox" aria-hidden="true" />
+								<span class="tec-empty__title">Sin actividades</span>
+								<span class="tec-empty__text">No hay registros para los filtros seleccionados. Ajuste los filtros o use Limpiar.</span>
+							</span>
+						</f:facet>
+
+						<p:column headerText="Fecha / hora" styleClass="audit-col-fecha">
+							<span class="audit-when">
+								<h:outputText value="#{registro.fecha}" styleClass="audit-when__date">
+									<f:convertDateTime pattern="dd/MM/yyyy" />
 								</h:outputText>
-							</div>
+								<h:outputText value="#{registro.fecha}" styleClass="audit-when__time">
+									<f:convertDateTime pattern="HH:mm" />
+								</h:outputText>
+							</span>
 						</p:column>
-						<p:column headerText="Usuario" styleClass="audit-table__user"
-							responsivePriority="2">
-							<span class="audit-user">#{registro.usuario}</span>
+
+						<p:column headerText="Usuario" styleClass="audit-col-usuario">
+							<span class="tec-mono" title="#{registro.usuario}">#{empty registro.usuario ? '—' : registro.usuario}</span>
 						</p:column>
-						<p:column headerText="Módulo" responsivePriority="3">
-							<p:tag value="#{registro.modulo}" severity="info"
-								styleClass="audit-tag audit-tag--module" />
+
+						<p:column headerText="Módulo" styleClass="audit-col-modulo">
+							<span class="tec-chip">#{registro.modulo}</span>
 						</p:column>
-						<p:column headerText="Acción" responsivePriority="4">
-							<p:tag value="#{registro.accion}" severity="secondary"
-								styleClass="audit-tag audit-tag--action" />
+
+						<!-- Descripción funcional como dato principal; el registro afectado queda en segundo plano. -->
+						<p:column headerText="Detalle" styleClass="audit-col-detalle tec-col-primary">
+							<span class="audit-activity">
+								<span class="audit-activity__head">
+									<span class="audit-activity__title">#{registro.accion}</span>
+									<p:tag value="#{registro.resultado}"
+										severity="#{registro.severidadResultado}"
+										rendered="#{registro.severidadResultado ne 'secondary'}"
+										styleClass="tec-status" />
+								</span>
+								<span class="audit-activity__meta" title="#{registro.detalle}">#{registro.detalle}</span>
+							</span>
 						</p:column>
-						<p:column headerText="Resultado" responsivePriority="5">
-							<p:tag value="#{registro.resultado}"
-								severity="#{registro.resultado eq 'FALLIDO' ? 'danger' : registro.resultado eq 'EXITOSO' ? 'success' : 'secondary'}"
-								styleClass="audit-tag audit-tag--result" />
-						</p:column>
-						<p:column headerText="" exportable="false"
-							styleClass="audit-table__detail" responsivePriority="1">
-							<p:commandButton icon="pi pi-eye"
-								title="Ver detalle de la actividad"
-								styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+
+						<p:column headerText="Ver detalle" selectRow="false"
+							exportable="false" styleClass="audit-col-ver tec-col-actions">
+							<p:commandButton icon="pi pi-eye" title="Ver detalle"
+								ariaLabel="Ver detalle de la actividad"
+								styleClass="ui-button-rounded ui-button-flat ui-button-plain"
 								process="@this" update=":frmProcesos:pnlDetalleAuditoria"
 								oncomplete="PF('dlgDetalleAuditoria').show()">
 								<f:setPropertyActionListener value="#{registro}"
@@ -191,60 +216,72 @@
 
 				<p:dialog id="dlgDetalleAuditoria" widgetVar="dlgDetalleAuditoria"
 					header="Detalle de actividad" modal="true" responsive="true"
-					draggable="false" resizable="false" closeOnEscape="true"
-					appendTo="@(body)" styleClass="audit-detail-dialog">
+					fitViewport="true" blockScroll="true" draggable="false"
+					resizable="false" closeOnEscape="true" appendTo="@(body)"
+					onHide="PF('wdTblAuditoria').unselectAllRows()"
+					styleClass="tec-dialog">
 					<p:outputPanel id="pnlDetalleAuditoria" layout="block">
 						<ui:fragment
 							rendered="#{not empty procesoController.registroSeleccionado}">
 							<div class="audit-detail-header">
-								<div>
-									<span class="audit-detail-header__eyebrow">Actividad
-										##{procesoController.registroSeleccionado.id}</span>
+								<div class="min-w-0">
+									<span class="audit-detail-header__eyebrow">#{procesoController.registroSeleccionado.modulo}</span>
 									<h3>#{procesoController.registroSeleccionado.accion}</h3>
 								</div>
-								<p:tag
-									value="#{procesoController.registroSeleccionado.resultado}"
-									severity="#{procesoController.registroSeleccionado.resultado eq 'FALLIDO' ? 'danger' : procesoController.registroSeleccionado.resultado eq 'EXITOSO' ? 'success' : 'secondary'}" />
+								<p:tag value="#{procesoController.registroSeleccionado.resultado}"
+									severity="#{procesoController.registroSeleccionado.severidadResultado}"
+									styleClass="tec-status" />
 							</div>
-							<div class="grid audit-detail-grid">
-								<div class="col-12 md:col-6">
-									<span>Usuario</span><strong>#{procesoController.registroSeleccionado.usuario}</strong>
-								</div>
-								<div class="col-12 md:col-6">
-									<span>Fecha y hora</span><strong><h:outputText
-											value="#{procesoController.registroSeleccionado.fecha}">
+
+							<dl class="audit-detail-list">
+								<div>
+									<dt>Fecha y hora</dt>
+									<dd><h:outputText value="#{procesoController.registroSeleccionado.fecha}">
 											<f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
-										</h:outputText></strong>
+										</h:outputText></dd>
 								</div>
-								<div class="col-12 md:col-6">
-									<span>Módulo</span><strong>#{procesoController.registroSeleccionado.modulo}</strong>
+								<div>
+									<dt>Usuario</dt>
+									<dd class="tec-mono">#{empty procesoController.registroSeleccionado.usuario ? '—' : procesoController.registroSeleccionado.usuario}</dd>
 								</div>
-								<div class="col-12 md:col-6">
-									<span>Acción</span><strong>#{procesoController.registroSeleccionado.accion}</strong>
+								<div class="audit-detail-list__full">
+									<dt>Registro afectado</dt>
+									<dd>#{procesoController.registroSeleccionado.detalle}</dd>
 								</div>
-								<div class="col-12 md:col-6">
-									<span>Resultado</span><strong>#{procesoController.registroSeleccionado.resultado}</strong>
-								</div>
-								<div class="col-12 md:col-6">
-									<span>IP</span><strong>#{empty
-										procesoController.registroSeleccionado.ip ? 'N/A' :
-										procesoController.registroSeleccionado.ip}</strong>
-								</div>
-								<div class="col-12">
-									<span>Entidad, registro afectado y detalle disponible</span><strong
-										class="audit-detail-grid__text">#{procesoController.registroSeleccionado.detalle}</strong>
-								</div>
-							</div>
+							</dl>
+
+							<section class="audit-detail-tech" aria-label="Información técnica">
+								<h4>Información técnica</h4>
+								<dl class="audit-detail-list">
+									<div>
+										<dt>ID de actividad</dt>
+										<dd>#{procesoController.registroSeleccionado.id}</dd>
+									</div>
+									<div>
+										<dt>Dirección IP</dt>
+										<dd>#{empty procesoController.registroSeleccionado.ip ? 'N/A' : procesoController.registroSeleccionado.ip}</dd>
+									</div>
+									<div class="audit-detail-list__full">
+										<dt>Registro técnico original</dt>
+										<dd><code class="audit-code">#{empty procesoController.registroSeleccionado.actividadOriginal ? 'N/A' : procesoController.registroSeleccionado.actividadOriginal}</code></dd>
+									</div>
+								</dl>
+							</section>
 						</ui:fragment>
 						<ui:fragment
 							rendered="#{empty procesoController.registroSeleccionado}">
-							<div class="empty-state">
-								<i class="pi pi-info-circle icon-lg" />
-								<h4>Seleccione una actividad</h4>
-								<p>El detalle se mostrará aquí.</p>
-							</div>
+							<span class="tec-empty">
+								<i class="pi pi-info-circle" aria-hidden="true" />
+								<span class="tec-empty__title">Seleccione una actividad</span>
+								<span class="tec-empty__text">El detalle se mostrará aquí.</span>
+							</span>
 						</ui:fragment>
 					</p:outputPanel>
+					<f:facet name="footer">
+						<p:commandButton type="button" value="Cerrar" icon="pi pi-times"
+							styleClass="ui-button-flat ui-button-plain"
+							onclick="PF('dlgDetalleAuditoria').hide()" />
+					</f:facet>
 				</p:dialog>
 			</h:form>
 		</div>

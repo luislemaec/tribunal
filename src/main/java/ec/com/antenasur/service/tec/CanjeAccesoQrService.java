@@ -30,13 +30,18 @@ public class CanjeAccesoQrService {
         try {
         if (!ConfiguracionQr.habilitado()) throw new AccesoQrException();
         etapa = "BUSCAR_Y_BLOQUEAR_TOKEN";
-        var qr = TokenActaQr.formatoValido(token) ? facade.bloquearPorHash(TokenActaQr.hash(token)) : null;
+        boolean formatoValido = TokenActaQr.formatoValido(token);
+        var qr = formatoValido ? facade.bloquearPorHash(TokenActaQr.hash(token)) : null;
         qrId = qr == null ? null : qr.getId();
         Instant ahora = Instant.now();
         etapa = "VALIDACION_ELECTORAL";
-        ResultadoAccesoQr resultado = validacion.validar(qr, false, ahora);
+        CausaRechazoQr causa = qr == null
+                ? (formatoValido ? CausaRechazoQr.TOKEN_NO_ENCONTRADO : CausaRechazoQr.TOKEN_FORMATO_INVALIDO)
+                : validacion.diagnosticar(qr, false, ahora);
+        ResultadoAccesoQr resultado = causa.resultado();
         if (resultado != ResultadoAccesoQr.VALIDO) {
-            LOG.warning("QR causa=" + resultado.name() + "; qr_id=" + qrId);
+            // El token nunca se registra: solo su causa de rechazo y el id de la fila.
+            LOG.warning("QR causa=" + causa.name() + "; resultado=" + resultado.name() + "; qr_id=" + qrId);
             etapa = "AUDITAR_RECHAZO";
             auditoria.rechazo(qr, ip, agente, resultado);
             return new CanjeAccesoQr(resultado, null);
