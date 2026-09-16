@@ -162,9 +162,7 @@ public class ActaActualizacionMiembrosService {
         if (iglesiaId == null || sessionContext == null || !sessionContext.isCallerInRole("SITEC-IglesiaAdmin")) {
             throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.no.autorizada"));
         }
-        String username = sessionContext.getCallerPrincipal() != null
-                ? sessionContext.getCallerPrincipal().getName() : null;
-        Usuario usuario = username != null ? usuarioService.findByUsuarioName(username) : null;
+        Usuario usuario = usuarioService.obtenerUsuarioIglesiaAdminAutenticado();
         if (usuario == null || usuario.getIglesia() == null || usuario.getIglesia().getId() == null
                 || !iglesiaId.equals(usuario.getIglesia().getId())) {
             throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.no.autorizada"));

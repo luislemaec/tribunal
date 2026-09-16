@@ -62,26 +62,34 @@ public class LoginFilter implements Filter {
         var sesion = req.getSession(false);
         // Un POST de login de una sesion destruida tampoco debe restaurar su ViewState.
         if (sesion == null && "POST".equals(req.getMethod())
-                && (req.getContextPath() + "/login.jsf").equals(req.getRequestURI())) {
+                && LoginFilterExcluder.getInstance(req.getContextPath()).esLogin(req.getRequestURI())) {
             RedireccionSesion.login(req, (jakarta.servlet.http.HttpServletResponse) response);
             return;
         }
 
-        if (req.getRequestURI().isEmpty() || esRutaPublica(req)
-                || LoginFilterExcluder.getInstance(req.getContextPath()).isExcludeUrl(req.getRequestURI())) {
+        if (LoginFilterExcluder.getInstance(req.getContextPath()).isExcludeUrl(req.getRequestURI())) {
             next.doFilter(request, response);
             return;
         }
 
         LoginBean loginBean = sesion == null ? null : (LoginBean) sesion.getAttribute("loginBean");
         List<String> listaPermisos = sesion == null ? null : (List<String>) sesion.getAttribute("listaPermisos");
-        if (loginBean == null) {
+        if (req.getUserPrincipal() == null) {
+            if (sesion != null) {
+                try { sesion.invalidate(); }
+                catch (IllegalStateException ignorada) { /* Peticion concurrente. */ }
+            }
+            RedireccionSesion.login(req, (jakarta.servlet.http.HttpServletResponse) response);
+            return;
+        }
+        if (loginBean == null || loginBean.getUsuario() == null) {
             RedireccionSesion.login(req, (jakarta.servlet.http.HttpServletResponse) response);
             return;
         } else {
             if (loginBean.getUsuario().getId() != null) {
                 String pagina = devolverPagina(req.getRequestURL().toString());
-                if (validarPagina(pagina, listaPermisos)) {
+                if (validarPagina(pagina, listaPermisos)
+                        && (!esAdministracionUsuarios(pagina) || req.isUserInRole("SITEC-Administrador"))) {
                     next.doFilter(request, response);
                 } else {
                     RedireccionSesion.permisos(req, (jakarta.servlet.http.HttpServletResponse) response);
@@ -95,15 +103,6 @@ public class LoginFilter implements Filter {
 
     }
 
-    private boolean esRutaPublica(HttpServletRequest req) {
-        String contextPath = req.getContextPath();
-        String requestUri = req.getRequestURI();
-        String publicBase = contextPath + "/public/";
-        return requestUri.startsWith(publicBase)
-                || requestUri.equals(contextPath + "/resultados.xhtml")
-                || requestUri.equals(contextPath + "/resultados.jsf");
-    }
-
     private boolean validarPagina(final String pagina, final List<String> listaPermisos) {
         return listaPermisos != null && listaPermisos.contains(pagina);
     }
@@ -115,6 +114,13 @@ public class LoginFilter implements Filter {
             retorno = str.nextToken();
         }
         return retorno;
+    }
+
+    private boolean esAdministracionUsuarios(String pagina) {
+        if (pagina == null) return false;
+        int extension = pagina.lastIndexOf('.');
+        String nombre = extension < 0 ? pagina : pagina.substring(0, extension);
+        return java.util.Set.of("usuarios", "roles", "permisos", "asignacionUsuarios").contains(nombre);
     }
 
     private boolean esSolicitudActa(HttpServletRequest req) {

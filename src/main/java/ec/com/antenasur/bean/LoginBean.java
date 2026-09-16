@@ -178,12 +178,34 @@ public class LoginBean implements Serializable {
         }
     }
 
+    /** Elimina el contexto de aplicación antes de destruir la sesión HTTP. */
+    private void limpiarEstadoAutenticacion() {
+        userName = null;
+        password = null;
+        passwordTemp = null;
+        email = null;
+        usuario = null;
+        roles = null;
+        loggedIn = false;
+        autenticacionEnCurso = false;
+        internalUsuario = false;
+        tiempoSession = 0;
+        menuModel = null;
+        menuModelCompleto = null;
+        filtroMenu = null;
+        filtroMenuActivo = false;
+        menuFiltradoSinResultados = false;
+        content = null;
+        accessAuditory = null;
+    }
+
     private void cerrarAutenticacion(HttpServletRequest request) {
         try {
             request.logout();
         } catch (ServletException e) {
             log.error("No se pudo cerrar la autenticación HTTP", e);
         } finally {
+            limpiarEstadoAutenticacion();
             invalidarSesion(request);
         }
     }
@@ -204,6 +226,19 @@ public class LoginBean implements Serializable {
         JsfUtil.redirect("/");
     }
 
+    /**
+     * Cancela el cambio obligatorio de clave. La cuenta conserva su estado de
+     * cambio pendiente; únicamente se retira la autenticación temporal y se
+     * vuelve al inicio de sesión con una sesión nueva.
+     */
+    public void cancelarCambioClaveObligatorio() throws IOException {
+        HttpServletRequest request = JsfUtil.getRequest();
+        registrarCierreSesion(request,
+                "LOGOUT | MÓDULO: ACCESO; RESULTADO: CANCELADO; DETALLE: Cambio obligatorio de clave cancelado");
+        cerrarAutenticacion(request);
+        JsfUtil.redirect("/login.jsf");
+    }
+
     public void updateUsuario() throws RuntimeException, IOException, ServletException {
         JsfUtil.redirect("/paginas/administracion/actualizar.jsf");
     }
@@ -222,13 +257,13 @@ public class LoginBean implements Serializable {
         HttpServletRequest request = JsfUtil.getRequest();
         registrarCierreSesion(request,
                 "LOGOUT | MÓDULO: ACCESO; RESULTADO: EXPIRADO; DETALLE: Sesión expirada");
-        invalidarSesion(request);
+        cerrarAutenticacion(request);
         JsfUtil.redirect("/errors/viewExpired.jsf");
     }
 
     public void cerrarSessionRedireccionar(String url) throws RuntimeException, IOException {
         HttpServletRequest request = JsfUtil.getRequest();
-        invalidarSesion(request);
+        cerrarAutenticacion(request);
         JsfUtil.redirect(url);
     }
 

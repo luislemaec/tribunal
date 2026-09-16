@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -139,6 +140,40 @@ public class JsfUtil implements Serializable {
         HttpServletRequest req = getRequest();
         String url = req.getRequestURL().toString();
         return url.substring(0, url.indexOf(req.getContextPath()) + req.getContextPath().length());
+    }
+
+    /**
+     * Obtiene el origen HTTPS institucional para enlaces enviados por correo.
+     * No se usa la URL de la petición porque, detrás de un proxy inverso, puede
+     * carecer del host público o reflejar un host interno.
+     *
+     * La propiedad JVM permite variar el valor por ambiente; el recurso de
+     * mensajes aporta el valor institucional predeterminado.
+     *
+     * @return origen HTTPS sin barra final, por ejemplo
+     *         {@code https://tribunal.conpociiech.org}
+     */
+    public static String getRecoveryPublicBaseUrl() {
+        String origen = System.getProperty("tec.public.base-url");
+        if (origen == null || origen.isBlank()) {
+            try {
+                origen = getProperty("tec.public.base-url", true);
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("No se ha configurado el origen público para recuperación de clave", e);
+            }
+        }
+
+        try {
+            URI uri = URI.create(origen.trim());
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
+                    || uri.getUserInfo() != null || uri.getRawQuery() != null || uri.getRawFragment() != null
+                    || (uri.getRawPath() != null && !uri.getRawPath().isEmpty() && !"/".equals(uri.getRawPath()))) {
+                throw new IllegalArgumentException("El origen debe ser una URL HTTPS sin ruta, consulta ni fragmento");
+            }
+            return new URI("https", null, uri.getHost(), uri.getPort(), null, null, null).toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("La propiedad tec.public.base-url no contiene un origen HTTPS válido", e);
+        }
     }
 
     /**

@@ -58,10 +58,56 @@ class RedireccionSesionTest {
         filtro.doFilter(caso.request(), caso.response(), (r,s) -> caso.continua = true);
     }
 
+    @Test void tribunalNoAccedeAdministracionAunqueMenuHistoricoLaIncluya() throws Exception {
+        for (String pagina : new String[]{"usuarios", "roles", "permisos", "asignacionUsuarios"}) {
+            var caso = autenticado(pagina, false);
+            filtrar(caso);
+            assertFalse(caso.continua, pagina);
+            assertEquals("/tec/errors/permisos.jsf", caso.headers.get("Location"));
+        }
+        var iglesias = autenticado("iglesias", false);
+        filtrar(iglesias);
+        assertTrue(iglesias.continua);
+    }
+
+    @Test void administradorConPermisoConservaPantallasAdministrativas() throws Exception {
+        for (String pagina : new String[]{"usuarios", "roles", "permisos", "asignacionUsuarios"}) {
+            var caso = autenticado(pagina, true);
+            filtrar(caso);
+            assertTrue(caso.continua, pagina);
+        }
+    }
+
+    private static Caso autenticado(String pagina, boolean administrador) {
+        var caso = new Caso("/" + pagina + ".jsf", "GET", false, false);
+        caso.sesionNormal = true;
+        caso.principal = "usuario";
+        caso.administrador = administrador;
+        var usuario = new ec.com.antenasur.dto.UsuarioDTO();
+        usuario.setId(8);
+        var login = new ec.com.antenasur.bean.LoginBean();
+        login.setUsuario(usuario);
+        caso.atributos.put("loginBean", login);
+        caso.atributos.put("listaPermisos", java.util.List.of(pagina + ".jsf"));
+        return caso;
+    }
+
+    @Test void sesionNormalSinPrincipalSeInvalidaSinEjecutarCadena() throws Exception {
+        var caso = new Caso("/dashboard.jsf", "POST", false, false);
+        caso.sesionNormal = true;
+        filtrar(caso);
+        assertTrue(caso.invalidada);
+        assertEquals(303, caso.status);
+        assertEquals("/tec/login.jsf", caso.headers.get("Location"));
+        assertFalse(caso.continua);
+    }
+
     private static final class Caso {
         final String ruta, metodo;
         final boolean ajax, qr;
-        boolean continua, logout, invalidada;
+        boolean continua, logout, invalidada, sesionNormal, administrador;
+        String principal;
+        final HashMap<String,Object> atributos = new HashMap<>();
         int status;
         final HashMap<String,String> headers = new HashMap<>();
         final StringWriter body = new StringWriter();
@@ -71,7 +117,7 @@ class RedireccionSesionTest {
         HttpSession sesion() {
             return (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{HttpSession.class},
                     (p,m,a) -> {
-                        if (m.getName().equals("getAttribute")) return null;
+                        if (m.getName().equals("getAttribute")) return atributos.get(a[0]);
                         if (m.getName().equals("invalidate")) { invalidada=true; return null; }
                         throw new AssertionError(m.getName());
                     });
@@ -83,17 +129,18 @@ class RedireccionSesionTest {
                         case "getSession" -> {
                             assertNotNull(a);
                             assertEquals(false, a[0], "El filtro no debe crear una sesion");
-                            yield qr ? sesion() : null;
+                            yield qr || sesionNormal ? sesion() : null;
                         }
                         case "getContextPath" -> "/tec";
                         case "getRequestURI" -> "/tec" + ruta;
+                        case "getRequestURL" -> new StringBuffer("https://tribunal.local/tec" + ruta);
                         case "getServletPath" -> ruta;
                         case "getDispatcherType" -> jakarta.servlet.DispatcherType.REQUEST;
                         case "getMethod" -> metodo;
                         case "getContentType" -> null;
                         case "isSecure" -> true;
-                        case "getUserPrincipal" -> null;
-                        case "isUserInRole" -> qr;
+                        case "getUserPrincipal" -> principal == null ? null : (java.security.Principal) () -> principal;
+                        case "isUserInRole" -> qr || administrador && "SITEC-Administrador".equals(a[0]);
                         case "getHeader" -> ajax && "Faces-Request".equals(a[0]) ? "partial/ajax" : null;
                         case "logout" -> { logout=true; yield null; }
                         default -> throw new AssertionError("Operacion inesperada: " + m.getName());

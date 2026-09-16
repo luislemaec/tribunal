@@ -513,8 +513,8 @@
                                  responsiveLayout="scroll" scrollable="true" scrollHeight="230"
                                  styleClass="ui-datatable-sm tabla-asignar-admin-compacta">
                         <p:ajax event="rowSelect" listener="#{iglesiaController.seleccionarCandidatoAdministrador}"
-                                process="@this"
-                                update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
+                                 process="@this"
+                                 update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
                         <p:column selectionMode="single" style="width:3rem" exportable="false"/>
                         <p:column headerText="#{msg['iglesias.admin.columna.cedula']}"
                                   filterBy="#{vinculo.persona.documento}" filterMatchMode="contains" style="width:12rem">
@@ -530,13 +530,43 @@
                     <p:outputPanel id="datosAdministrador" layout="block" styleClass="px-3 pb-2">
                         <ui:fragment rendered="#{iglesiaController.candidatoAdministrador ne null}">
                             <div class="formgrid grid">
-                                <div class="field col-12 mb-2">
+                                 <div class="field col-12 mb-2">
                                     <div class="flex flex-wrap align-items-center gap-x-3 gap-y-1 surface-50 border-round p-2 text-sm">
                                         <span class="text-500">#{msg['iglesias.admin.dialogo.seleccionado']}</span>
                                         <span class="font-semibold text-800">#{iglesiaController.candidatoAdministrador.persona.nombres}</span>
                                         <span class="text-600">#{iglesiaController.candidatoAdministrador.persona.documento}</span>
                                     </div>
-                                </div>
+                                 </div>
+                                <p:outputPanel id="diagnosticoAdministrador" layout="block">
+                                    <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}">
+                                        <div class="border-left-3 border-red-500 surface-50 border-round p-3 mb-2">
+                                            <div class="flex align-items-center gap-2 text-red-700 font-semibold text-sm">
+                                                <i class="pi pi-exclamation-triangle"/>
+                                                <span>#{msg['iglesias.admin.duplicado.titulo']}</span>
+                                            </div>
+                                            <p class="text-700 text-sm mt-2 mb-1">#{msg['iglesias.admin.duplicado.descripcion']}</p>
+                                            <ul class="m-0 pl-3 text-700 text-sm">
+                                                <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.personasDuplicadas}" var="personaDuplicada">
+                                                    <li>#{personaDuplicada}</li>
+                                                </ui:repeat>
+                                            </ul>
+                                        </div>
+                                    </ui:fragment>
+                                    <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion}">
+                                        <div class="border-left-3 border-orange-500 surface-50 border-round p-3 mb-2">
+                                            <div class="flex align-items-center gap-2 text-orange-700 font-semibold text-sm">
+                                                <i class="pi pi-exclamation-triangle"/>
+                                                <span>#{msg['iglesias.admin.reasignacion.titulo']}</span>
+                                            </div>
+                                            <p class="text-700 text-sm mt-2 mb-1">#{msg['iglesias.admin.reasignacion.descripcion']}</p>
+                                            <ul class="m-0 pl-3 text-700 text-sm">
+                                                <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.iglesiasAsociadas}" var="iglesiaAsociada">
+                                                    <li>#{iglesiaAsociada}</li>
+                                                </ui:repeat>
+                                            </ul>
+                                        </div>
+                                    </ui:fragment>
+                                </p:outputPanel>
                                 <div class="field col-12 md:col-6 mb-0">
                                     <label for="correoAdministrador" class="text-700 font-medium text-sm">
                                         #{msg['iglesias.admin.label.correo']} <span class="text-red-500">*</span>
@@ -558,14 +588,19 @@
                                          type="button" onclick="PF('dlgAsignarAdministrador').hide()"
                                          styleClass="ui-button-outlined ui-button-secondary"/>
                         <p:commandButton id="btnConfirmarAdministrador"
-                                         value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
-                                         title="#{iglesiaController.puedeAsignarAdministradores ? null : msg['iglesias.admin.error.fase.no.permite']}"
-                                         disabled="#{iglesiaController.candidatoAdministrador eq null or not iglesiaController.puedeAsignarAdministradores}"
-                                         action="#{iglesiaController.asignarAdministrador}"
+                                          value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
+                                          title="#{iglesiaController.puedeAsignarAdministradores ? null : msg['iglesias.admin.error.fase.no.permite']}"
+                                          disabled="#{iglesiaController.candidatoAdministrador eq null or not iglesiaController.puedeAsignarAdministradores or (iglesiaController.diagnosticoAdministrador ne null and not iglesiaController.diagnosticoAdministrador.puedeConfirmar)}"
+                                          action="#{iglesiaController.asignarAdministrador}"
                                          process="@this :frmDlgAdministradorIglesia:datosAdministrador"
-                                         update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
-                                         oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
-                                         styleClass="ui-button-success"/>
+                                          update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
+                                          oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
+                                          styleClass="ui-button-success">
+                            <p:confirm rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion and not iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}"
+                                       header="#{msg['iglesias.admin.reasignacion.confirmar.titulo']}"
+                                       message="#{msg['iglesias.admin.reasignacion.confirmar.descripcion']} #{iglesiaController.diagnosticoAdministrador.iglesiasAsociadasTexto}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
                     </div>
                 </f:facet>
             </p:dialog>

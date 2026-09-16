@@ -21,6 +21,7 @@ import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
+import ec.com.antenasur.dto.DiagnosticoAsignacionAdministradorDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.ResultadoProvisionUsuarioDTO;
@@ -126,6 +127,10 @@ public class IglesiaController implements Serializable {
     @Setter
     @Getter
     private IglesiaPersonaDTO candidatoAdministrador;
+
+    @Setter
+    @Getter
+    private DiagnosticoAsignacionAdministradorDTO diagnosticoAdministrador;
 
     @Setter
     @Getter
@@ -352,20 +357,34 @@ public class IglesiaController implements Serializable {
         candidatosAdministrador = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaAdministradorSeleccionada.getId());
         administradorActual = usuarioService.obtenerAdminDeIglesia(iglesiaAdministradorSeleccionada.getId());
         candidatoAdministrador = null;
+        diagnosticoAdministrador = null;
         correoAdministrador = null;
         PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }
 
     public void seleccionarCandidatoAdministrador() {
         correoAdministrador = null;
+        diagnosticoAdministrador = null;
         if (candidatoAdministrador != null && candidatoAdministrador.getPersona() != null
                 && candidatoAdministrador.getPersona().getId() != null) {
-            log.info("Candidato IglesiaAdmin seleccionado. iglesiaId={}, iglesiaPersonaId={}, personaId={}",
-                    iglesiaAdministradorSeleccionada != null ? iglesiaAdministradorSeleccionada.getId() : null,
-                    candidatoAdministrador.getId(), candidatoAdministrador.getPersona().getId());
-            var usuario = usuarioService.obtenerUsuarioPorPersonaIncluyendoInactivos(
-                    candidatoAdministrador.getPersona().getId());
-            correoAdministrador = usuario != null ? usuario.getCorreo() : null;
+            try {
+                Integer iglesiaId = iglesiaAdministradorSeleccionada != null
+                        ? iglesiaAdministradorSeleccionada.getId() : null;
+                log.info("Candidato IglesiaAdmin seleccionado. iglesiaId={}, iglesiaPersonaId={}, personaId={}",
+                        iglesiaId, candidatoAdministrador.getId(), candidatoAdministrador.getPersona().getId());
+                diagnosticoAdministrador = asignacionAdministradorIglesiaService.previsualizarAsignacion(
+                        iglesiaId, candidatoAdministrador.getId());
+                var usuario = usuarioService.obtenerUsuarioPorPersonaIncluyendoInactivos(
+                        candidatoAdministrador.getPersona().getId());
+                correoAdministrador = usuario != null ? usuario.getCorreo() : null;
+            } catch (NegocioException e) {
+                rechazarConMensaje(JsfUtil.getMessage(e.getMessage()));
+                candidatoAdministrador = null;
+            } catch (Exception e) {
+                log.error("No fue posible revisar el candidato a administrador de iglesia", e);
+                rechazarConMensaje(JsfUtil.getMessage("iglesias.admin.mensaje.error"));
+                candidatoAdministrador = null;
+            }
         }
     }
 
@@ -888,11 +907,10 @@ public class IglesiaController implements Serializable {
     }
 
     private Integer obtenerIglesiaAsignadaIdActual() {
-        if (loginBean == null || loginBean.getUsuario() == null
-                || loginBean.getUsuario().getId() == null) {
+        if (loginBean == null || loginBean.getUsuario() == null) {
             return null;
         }
-        var usuarioActual = usuarioService.obtenerDTOPorId(loginBean.getUsuario().getId());
+        var usuarioActual = usuarioService.obtenerContextoIglesiaUsuarioAutenticado();
         return usuarioActual != null ? usuarioActual.getIglesiaId() : null;
     }
 

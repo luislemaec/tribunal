@@ -20,9 +20,9 @@ import ec.com.antenasur.model.tec.Proceso;
 import ec.com.antenasur.service.AbstractService;
 
 @Stateless
-@DeclareRoles({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal",
     "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
-@RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+@RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
     "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
 public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFacade> {
 
@@ -44,7 +44,7 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
 
     /** Operaciones normales de bitácora: requieren una identidad Elytron. */
     @Override
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public Proceso create(Proceso entity) {
         return super.create(entity);
@@ -60,6 +60,17 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
         String usuario = normalizarUsuarioIntentado(usuarioIntentado);
         String ipNormalizada = normalizarIp(ip);
         procesoFacade.registrarLoginFallidoPreautenticacion(usuario, ipNormalizada);
+    }
+
+    /**
+     * Canal público y acotado para la recuperación de clave. La actividad es
+     * fija y el usuario proviene de una solicitud previamente validada por la
+     * capa de usuarios; nunca recibe correo, token ni texto libre.
+     */
+    @PermitAll
+    public void registrarSolicitudRecuperacionClavePreautenticacion(String usuarioValidado, String ip) {
+        String usuario = usuarioValidado == null ? "<anonimo>" : normalizarUsuarioIntentado(usuarioValidado);
+        procesoFacade.registrarSolicitudRecuperacionClavePreautenticacion(usuario, normalizarIp(ip));
     }
 
     public List<Proceso> getProcesoPorUsuario(String usuario) {
@@ -81,7 +92,7 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
      * Devuelve actividades bajo el alcance del principal EJB. Administrador
      * puede consultar todo; los demás roles solo sus propios registros.
      */
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public List<ActividadAuditoriaDTO> buscarAuditoria(FiltroActividadAuditoriaDTO filtro,
             int first, int pageSize) {
@@ -92,21 +103,21 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
         return resultado;
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public int contarAuditoria(FiltroActividadAuditoriaDTO filtro) {
         return procesoFacade.contarAuditoria(filtro, resolverUsuarioAlcance());
     }
 
     /** Solo Administrador recibe el catálogo global de usuarios para el filtro. */
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public List<String> listarUsuariosAuditoria() {
         if (!sessionContext.isCallerInRole("SITEC-Administrador")) return List.of();
         return procesoFacade.listarUsuariosConActividad();
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public List<Proceso> listarAuditoriaParaReporte(FiltroActividadAuditoriaDTO filtro) {
         int total = contarAuditoria(filtro);

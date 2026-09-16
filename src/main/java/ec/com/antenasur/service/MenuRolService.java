@@ -15,7 +15,41 @@ import ec.com.antenasur.model.MenuRol;
 import ec.com.antenasur.model.Rol;
 
 @Stateless
+@jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
 public class MenuRolService extends AbstractService<MenuRol, Integer, MenuRolFacade> {
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public MenuRol create(MenuRol entity) { return getFacade().create(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public MenuRol edit(MenuRol entity) { return getFacade().edit(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public MenuRol delete(MenuRol entity) { return getFacade().delete(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public void remove(MenuRol entity) { getFacade().remove(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public MenuRol find(Integer id) { return getFacade().find(id); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<MenuRol> findAll() { return getFacade().findAll(); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<MenuRol> findRange(int[] range) { return getFacade().findRange(range); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public int count() { return getFacade().count(); }
+
 
     @Inject
     private MenuRolFacade menuRolFacade;

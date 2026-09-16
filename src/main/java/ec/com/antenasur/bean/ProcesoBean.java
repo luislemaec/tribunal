@@ -60,6 +60,16 @@ public class ProcesoBean {
         }
     }
 
+    /** Registra una solicitud pública de recuperación sin datos sensibles. */
+    public void registraSolicitudRecuperacionClave(String usuarioValidado) {
+        try {
+            procesoService.registrarSolicitudRecuperacionClavePreautenticacion(
+                    usuarioValidado, JsfUtil.getIPAddress());
+        } catch (Exception e) {
+            LOG.error("No se pudo registrar la solicitud de recuperación de clave", e);
+        }
+    }
+
     public List<Proceso> getTodoProceso() {
         return procesoService.findAll();
     }

@@ -357,7 +357,7 @@ public class DashboardController implements Serializable {
     }
 
     private Integer obtenerIglesiaAsignadaIdActual() {
-        UsuarioDTO usuarioActual = obtenerUsuarioActual();
+        UsuarioDTO usuarioActual = usuarioService.obtenerContextoIglesiaUsuarioAutenticado();
         return usuarioActual != null ? usuarioActual.getIglesiaId() : null;
     }
 
@@ -366,7 +366,9 @@ public class DashboardController implements Serializable {
                 || loginBean.getUsuario().getId() == null) {
             return null;
         }
-        return usuarioService.obtenerDTOPorId(loginBean.getUsuario().getId());
+        // El contexto se valid\u00f3 y qued\u00f3 aplanado al autenticar. Para perfiles
+        // globales y Presidente de Mesa no se requiere una segunda consulta.
+        return loginBean.getUsuario();
     }
 
     private boolean esUsuarioIglesiaAdmin() {

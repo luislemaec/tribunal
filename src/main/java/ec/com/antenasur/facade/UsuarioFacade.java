@@ -76,7 +76,8 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
     public Usuario findByUsuarioName(String username) {
         // Intento 1: con LEFT JOIN FETCH para evitar segunda query a Persona.
         try {
-            String sql = SQL + "LEFT JOIN FETCH u.personsa p"
+            String sql = SQL + "LEFT JOIN FETCH u.personsa p "
+                    + "LEFT JOIN FETCH u.iglesia i"
                     + " where u.username = :username and u.estado=true";
             TypedQuery<Usuario> query = super.getEntityManager().createQuery(sql, Usuario.class);
             query.setParameter("username", username);
@@ -240,8 +241,30 @@ public class UsuarioFacade extends AbstractFacade<Usuario, Integer> {
             List<Usuario> resultados = query.getResultList();
             return resultados.isEmpty() ? null : resultados.get(0);
         } catch (Exception e) {
+            // El valor recibido es un secreto; se registra la causa técnica
+            // sin incluir el hash ni el token presentado por el usuario.
+            log.error("No fue posible validar un enlace de recuperación de clave", e);
             return null;
         }
+    }
+
+    /** Revalida bajo bloqueo; conserva los listeners y la auditoria Envers de la entidad. */
+    public boolean consumirTokenRecuperacion(Integer usuarioId, String hash, String claveBcrypt) {
+        if (usuarioId == null || hash == null || hash.isBlank()) return false;
+        Usuario usuario = getEntityManager().find(Usuario.class, usuarioId, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (usuario == null) return false;
+        getEntityManager().refresh(usuario, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (!Boolean.TRUE.equals(usuario.getEstado()) || usuario.getPersonsa() == null
+                || !Boolean.TRUE.equals(usuario.getPersonsa().getEstado())
+                || !hash.equals(usuario.getLink()) || usuario.getUsuarioFechaExpira() == null
+                || !usuario.getUsuarioFechaExpira().toInstant().isAfter(java.time.Instant.now())) return false;
+        usuario.setContrasenia(claveBcrypt);
+        usuario.setContraseniaTemp(null);
+        usuario.setPermanente(true);
+        usuario.setLink(null);
+        usuario.setUsuarioFechaExpira(null);
+        edit(usuario);
+        return true;
     }
 
     public Usuario findUsuarioByPeople(int persona_id) {

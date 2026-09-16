@@ -11,6 +11,10 @@ import java.time.Instant;
 import java.util.Base64;
 
 import jakarta.ejb.Stateless;
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.SessionContext;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.AuthDataDTO;
@@ -21,6 +25,7 @@ import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.PersonaFacade;
 import ec.com.antenasur.facade.RolUsuarioFacade;
+import ec.com.antenasur.facade.RolFacade;
 import ec.com.antenasur.facade.UsuarioFacade;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
@@ -29,10 +34,46 @@ import ec.com.antenasur.model.Rol;
 import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.exception.NegocioException;
+import ec.com.antenasur.security.qr.ConfiguracionQr;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal",
+    "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
 public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFacade> {
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public Usuario create(Usuario entity) { return getFacade().create(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public Usuario edit(Usuario entity) { return getFacade().edit(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public Usuario delete(Usuario entity) { return getFacade().delete(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public void remove(Usuario entity) { getFacade().remove(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public Usuario find(Integer id) { return getFacade().find(id); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<Usuario> findAll() { return getFacade().findAll(); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<Usuario> findRange(int[] range) { return getFacade().findRange(range); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public int count() { return getFacade().count(); }
+
 
     private static final SecureRandom RECUPERACION_RANDOM = new SecureRandom();
     private static final Duration VIGENCIA_RECUPERACION = Duration.ofMinutes(30);
@@ -42,6 +83,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
     @Inject
     private RolUsuarioFacade rolUsuarioFacade;
+
+    @Inject
+    private RolFacade rolFacade;
 
     @Inject
     private PersonaFacade personaFacade;
@@ -55,39 +99,55 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     @Inject
     private PasswordService passwordService;
 
+    @Resource
+    private SessionContext sessionContext;
+
     @Override
     protected UsuarioFacade getFacade() {
         return usuarioFacade;
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public Usuario getUsuarioByRuc(String docuId) {
         return usuarioFacade.getUsuarioByRuc(docuId);
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public Usuario findByUsuarioName(String username, String contrasenia) {
         return usuarioFacade.findByUsuarioName(username, contrasenia);
     }
 
+    /**
+     * Consulta administrativa por nombre de usuario. Los flujos de un
+     * IglesiaAdmin deben usar {@link #obtenerUsuarioIglesiaAdminAutenticado()}
+     * para no aceptar un nombre suministrado por el cliente.
+     */
+    @RolesAllowed("SITEC-Administrador")
     public Usuario findByUsuarioName(String username) {
         return usuarioFacade.findByUsuarioName(username);
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public Usuario findUsuarioByRucOrMail(String username, String correo) {
         return usuarioFacade.findUsuarioByRucOrMail(username, correo);
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public Usuario findUsuarioByPeople(int persona_id) {
         return usuarioFacade.findUsuarioByPeople(persona_id);
     }
 
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public Usuario findUsuarioPorPersonaIncluyendoInactivos(Integer personaId) {
         return usuarioFacade.findByPersonaIdIncluyendoInactivos(personaId);
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public Usuario findUsuariobyUsuarioName(String username) {
         return usuarioFacade.findUsuariobyUsuarioName(username);
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public List<Usuario> findAllActiveUsuario() {
         return usuarioFacade.findAllActiveUsuario();
     }
@@ -105,6 +165,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return el {@link RolUsuario} creado, con usuario y persona persistidos;
      *         null si la entrada es inválida
      */
+    @RolesAllowed("SITEC-Administrador")
     public RolUsuario crearUsuarioConRol(Usuario usuario, Persona persona, Rol rol) {
         if (usuario == null || persona == null || rol == null) {
             return null;
@@ -159,6 +220,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @param rol rol a asignar
      * @return UsuarioDTO persistido, o null si hubo error
      */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO crearUsuarioDesdeDTO(UsuarioDTO dto, Rol rol) {
         validarDatosCreacion(dto, rol);
         dto.setUsername(dto.getUsername().trim());
@@ -224,7 +286,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         return UsuarioDTO.fromEntity(usuarioPersistido);
     }
 
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public Usuario asegurarUsuarioConRol(Persona persona, Rol rol) {
+        rol = resolverRolDerivado(rol, "SITEC-Presidente-mesa");
         if (persona == null || persona.getDocumento() == null || persona.getDocumento().isBlank() || rol == null) {
             throw new NegocioException("No se pudo crear el usuario porque faltan datos de la persona o del rol.");
         }
@@ -257,6 +321,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * solicitado. Conserva los demas roles legitimos de la cuenta y solo
      * reactiva la relacion requerida cuando estaba dada de baja.
      */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public ResultadoProvisionUsuarioDTO provisionarUsuarioExistenteConRol(
             Persona persona, String correo, Rol rol) {
         return provisionarUsuarioExistenteConRol(persona, correo, rol, null);
@@ -267,8 +332,39 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * SITEC-IglesiaAdmin. La validacion de disponibilidad se mantiene en este
      * servicio para que no dependa de la vista.
      */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public ResultadoProvisionUsuarioDTO provisionarUsuarioExistenteConRol(
             Persona persona, String correo, Rol rol, Integer iglesiaId) {
+        rol = resolverRolDerivado(rol, iglesiaId == null ? "SITEC-Tribunal" : "SITEC-IglesiaAdmin");
+        return provisionarUsuarioExistenteConRol(persona, correo, rol, iglesiaId, false);
+    }
+
+    /**
+     * Operación acotada para la pantalla de iglesias. Tras validar y
+     * regularizar los vínculos de la persona, permite mover su única
+     * asignación IglesiaAdmin a la iglesia destino. No habilita la
+     * reasignación en los flujos genéricos de administración de usuarios.
+     */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public ResultadoProvisionUsuarioDTO provisionarAdministradorIglesiaExclusivo(
+            Persona persona, String correo, Rol rol, Integer iglesiaId) {
+        rol = resolverRolDerivado(rol, "SITEC-IglesiaAdmin");
+        return provisionarUsuarioExistenteConRol(persona, correo, rol, iglesiaId, true);
+    }
+
+    private Rol resolverRolDerivado(Rol solicitado, String nombreEsperado) {
+        Rol persistido = solicitado == null || solicitado.getId() == null
+                ? null : rolFacade.find(solicitado.getId());
+        if (persistido == null || !Boolean.TRUE.equals(persistido.getEstado())
+                || !nombreEsperado.equals(persistido.getNombre())) {
+            throw new NegocioException(Constantes.getMensaje("usuarios.seguridad.rol.no.permitido"));
+        }
+        return persistido;
+    }
+
+    private ResultadoProvisionUsuarioDTO provisionarUsuarioExistenteConRol(
+            Persona persona, String correo, Rol rol, Integer iglesiaId,
+            boolean permitirReasignacionIglesia) {
         if (persona == null || persona.getId() == null || persona.getDocumento() == null
                 || persona.getDocumento().isBlank() || rol == null || rol.getId() == null) {
             throw new NegocioException("usuarios.mensaje.datos.incompletos");
@@ -310,7 +406,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         if (iglesia != null) {
             Integer iglesiaActualId = usuario.getIglesia() != null ? usuario.getIglesia().getId() : null;
             if (iglesiaActualId != null && !iglesiaActualId.equals(iglesia.getId())) {
-                throw new NegocioException("iglesias.admin.error.usuario.otra.iglesia");
+                if (!permitirReasignacionIglesia) {
+                    throw new NegocioException("iglesias.admin.error.usuario.otra.iglesia");
+                }
             }
             usuario.setIglesia(iglesia);
             usuario = usuarioFacade.edit(usuario);
@@ -322,7 +420,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * Retira exclusivamente el rol indicado. La cuenta solo se da de baja si
      * ya no conserva ningun otro rol activo.
      */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public boolean retirarRolDePersonaSiNoTieneOtrosRoles(Persona persona, Rol rol) {
+        rol = resolverRolDerivado(rol, "SITEC-Tribunal");
         if (persona == null || persona.getId() == null || rol == null || rol.getId() == null) {
             return false;
         }
@@ -353,6 +453,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return UsuarioDTO con los datos posteriores a la operación, o null si
      *         el id es inválido
      */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO actualizarUsuarioDesdeDTO(UsuarioDTO dto, RolUsuario rolUsuarioActual, Rol nuevoRol) {
         if (dto == null || dto.getId() == null || rolUsuarioActual == null || nuevoRol == null) {
             throw new NegocioException("No se pudo determinar el usuario y rol a actualizar.");
@@ -402,6 +503,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * Devuelve el {@link UsuarioDTO} del IglesiaAdmin asignado a la iglesia
      * indicada, o {@code null} si la iglesia aún no tiene admin.
      */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public UsuarioDTO obtenerAdminDeIglesia(Integer iglesiaId) {
         if (iglesiaId == null) {
             return null;
@@ -420,6 +522,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return DTO del admin previo (en su nuevo estado, sin iglesia), o
      *         {@code null} si la iglesia no tenía admin.
      */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public UsuarioDTO removerAdminDeIglesia(Integer iglesiaId) {
         if (iglesiaId == null) {
             return null;
@@ -447,14 +550,45 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     }
 
     /** Devuelve el DTO de un usuario por id, o null si no existe. */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO obtenerDTOPorId(Integer id) {
         if (id == null) {
             return null;
         }
-        return UsuarioDTO.fromEntity(usuarioFacade.find(id));
+        // El contexto de sesi\u00f3n necesita la iglesia asignada. La b\u00fasqueda gen\u00e9rica
+        // no inicializa esta relaci\u00f3n de forma expl\u00edcita y pod\u00eda hacer que un
+        // SITEC-IglesiaAdmin pareciera no tener iglesia aunque tb_usuario.igl_id exista.
+        return UsuarioDTO.fromEntity(usuarioFacade.findByIdIncluyendoInactivos(id));
+    }
+
+    /**
+     * Recupera solamente el contexto propio de un administrador de iglesia.
+     * El usuario se deriva del principal Elytron, por lo que el cliente no
+     * puede sustituir un identificador para consultar otra asignaci\u00f3n.
+     */
+    @RolesAllowed("SITEC-IglesiaAdmin")
+    public UsuarioDTO obtenerContextoIglesiaUsuarioAutenticado() {
+        return UsuarioDTO.fromEntity(obtenerUsuarioIglesiaAdminAutenticado());
+    }
+
+    /**
+     * Devuelve la cuenta activa del IglesiaAdmin que invoca el EJB. No recibe
+     * username ni id, por lo que no permite consultar cuentas ajenas.
+     */
+    @RolesAllowed("SITEC-IglesiaAdmin")
+    public Usuario obtenerUsuarioIglesiaAdminAutenticado() {
+        if (sessionContext == null || sessionContext.getCallerPrincipal() == null) {
+            return null;
+        }
+        String username = sessionContext.getCallerPrincipal().getName();
+        if (username == null || username.isBlank()) {
+            return null;
+        }
+        return usuarioFacade.findByUsuarioName(username);
     }
 
     /** Consulta puntual usada al preparar asignaciones; incluye cuentas dadas de baja. */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public UsuarioDTO obtenerUsuarioPorPersonaIncluyendoInactivos(Integer personaId) {
         if (personaId == null) {
             return null;
@@ -466,6 +600,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * Borra (soft-delete) un usuario por id. Devuelve el DTO en su estado
      * post-borrado, o null si no existía.
      */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO eliminarPorId(Integer id) {
         if (id == null) {
             return null;
@@ -487,6 +622,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * administrador. No se inserta ningún registro ni se restauran roles
      * distintos al seleccionado.
      */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO reactivarPorId(Integer usuarioId, Integer rolUsuarioId, Integer iglesiaId) {
         if (usuarioId == null || rolUsuarioId == null) {
             throw new NegocioException("No se pudo determinar el usuario y rol a reactivar.");
@@ -527,6 +663,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * mapeados a DTO. Se apoya en {@code RolUsuarioService} pero retorna
      * directamente DTOs para que el controller no toque entidades.
      */
+    @RolesAllowed("SITEC-Administrador")
     public List<UsuarioDTO> listarDTOPorRoles(List<Rol> roles) {
         List<UsuarioDTO> resultado = new ArrayList<>();
         if (roles == null || roles.isEmpty()) {
@@ -548,6 +685,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
         return resultado;
     }
 
+    @RolesAllowed("SITEC-Administrador")
     public boolean actualizarUsuarioConRol(Usuario usuarioActualizado,
             RolUsuario rolUsuarioActual, Rol nuevoRol) {
         if (usuarioActualizado == null || usuarioActualizado.getId() == null
@@ -607,6 +745,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * Restablece una cuenta activa a la cédula de su titular. La cuenta queda
      * obligada a definir una contraseña propia en el siguiente inicio de sesión.
      */
+    @RolesAllowed("SITEC-Administrador")
     public UsuarioDTO restablecerContraseniaACedula(Integer usuarioId) {
         if (usuarioId == null) {
             throw new NegocioException("No fue posible determinar el usuario.");
@@ -714,6 +853,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
      * @return AuthDataDTO con usuario y roles; nunca null
      */
     /** Inicia una recuperación con token opaco; la contraseña vigente no se modifica. */
+    @jakarta.annotation.security.PermitAll
     public SolicitudRecuperacionClave iniciarRecuperacionClave(String username, String correo) {
         if (username == null || username.isBlank() || correo == null || correo.isBlank()) return null;
         Usuario usuario = usuarioFacade.findUsuarioByRucOrMail(username.trim(), correo.trim());
@@ -728,22 +868,23 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     }
 
     /** Consume un enlace de recuperación válido y registra la nueva clave BCrypt. */
+    @jakarta.annotation.security.PermitAll
     public boolean restablecerConToken(String token, String claveNueva) {
         if (token == null || token.isBlank() || claveNueva == null || claveNueva.isBlank()) return false;
         Usuario usuario = usuarioFacade.findUsuarioPorHashRecuperacion(hashTokenRecuperacion(token));
         if (usuario == null) return false;
-        usuario.setContrasenia(passwordService.hashBcrypt(claveNueva));
-        usuario.setContraseniaTemp(null);
-        usuario.setPermanente(true);
-        usuario.setLink(null);
-        usuario.setUsuarioFechaExpira(null);
-        usuarioFacade.edit(usuario);
-        return true;
+        return usuarioFacade.consumirTokenRecuperacion(usuario.getId(), hashTokenRecuperacion(token),
+                passwordService.hashBcrypt(claveNueva));
     }
 
     /** Verifica la clave vigente antes de permitir un cambio dentro de una sesión autenticada. */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public UsuarioDTO cambiarContraseniaAutenticada(Integer usuarioId, String username,
             String claveActual, String claveNueva) {
+        if (sessionContext == null || sessionContext.getCallerPrincipal() == null
+                || sessionContext.isCallerInRole(ConfiguracionQr.MARCADOR)
+                || sessionContext.getCallerPrincipal().getName().startsWith(ConfiguracionQr.PREFIJO)
+                || !sessionContext.getCallerPrincipal().getName().equals(username)) return null;
         if (usuarioId == null || username == null || username.isBlank()
                 || claveActual == null || claveNueva == null) return null;
         Usuario usuario = usuarioFacade.find(usuarioId);
@@ -774,9 +915,30 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
     public record SolicitudRecuperacionClave(Usuario usuario, String token) {
     }
 
+    /**
+     * Construye el contexto de la identidad que Elytron acaba de autenticar.
+     * Es una lectura necesaria para todos los perfiles TEC, pero no admite
+     * consultar el contexto de otro usuario mediante un parámetro manipulado.
+     */
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
+        "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public AuthDataDTO cargarContextoUsuarioAutenticado(String userName, String prefijoRoles) {
         AuthDataDTO data = new AuthDataDTO();
         if (userName == null || userName.isEmpty()) {
+            return data;
+        }
+        if (sessionContext == null || sessionContext.getCallerPrincipal() == null) {
+            return data;
+        }
+        String principal = sessionContext.getCallerPrincipal().getName();
+        boolean identidadNormal = userName.equals(principal);
+        // El canje QR usa una identidad efímera TECQR:<usuario>. Solo se
+        // acepta para su propio usuario y con ambos roles que acreditan el
+        // alcance de mesa; no abre la lectura de contexto a otros principales.
+        boolean identidadQrValida = (ConfiguracionQr.PREFIJO + userName).equals(principal)
+                && sessionContext.isCallerInRole(ConfiguracionQr.MARCADOR)
+                && sessionContext.isCallerInRole(ConfiguracionQr.ROL);
+        if (!identidadNormal && !identidadQrValida) {
             return data;
         }
 

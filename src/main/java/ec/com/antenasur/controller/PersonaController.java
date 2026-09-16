@@ -362,7 +362,12 @@ public class PersonaController implements Serializable {
         iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
         // Por defecto habilitado para padrón: el admin puede desmarcarlo
         iglesiaPersonaSeleccionado.setHabilitadoPadron(Boolean.TRUE);
-        if (!restringidoAIglesia) {
+        if (restringidoAIglesia && iglesiaSeleccionado != null
+                && iglesiaSeleccionado.getId() != null) {
+            // El valor del formulario procede del contexto autenticado, no de
+            // un parámetro enviado por el navegador.
+            iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
+        } else {
             this.iglesiaSeleccionado = new IglesiaDTO();
         }
         this.personaSeleccionado = new PersonaDTO();
@@ -381,6 +386,12 @@ public class PersonaController implements Serializable {
             return;
         }
         iglesiaPersonaSeleccionado = miembro;
+        if (restringidoAIglesia && iglesiaSeleccionado != null
+                && iglesiaSeleccionado.getId() != null) {
+            // Mantiene el único campo Iglesia alineado al alcance persistido
+            // del usuario; el servicio valida también la relación original.
+            iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
+        }
         limpiarEstadoRegularizacion();
         PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }

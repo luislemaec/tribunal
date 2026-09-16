@@ -13,6 +13,7 @@ import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.Persona;
@@ -131,6 +132,29 @@ public class PersonaFacade extends AbstractFacade<Persona, Integer> {
             query.setParameter("personaId", personaId);
         }
         return query.getSingleResult() > 0;
+    }
+
+    /**
+     * Lista las filas de persona activas que comparten una cédula. La variante
+     * con bloqueo se usa por operaciones que deben impedir que una duplicidad
+     * aparezca entre la validación y la reasignación.
+     */
+    public List<Persona> listarActivasPorDocumento(String documento, boolean bloquear) {
+        if (documento == null || documento.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        TypedQuery<Persona> query = super.getEntityManager().createQuery(
+                "SELECT p FROM Persona p WHERE p.estado = TRUE "
+                + "AND TRIM(p.documento) = :documento ORDER BY p.id", Persona.class);
+        query.setParameter("documento", documento.trim());
+        if (bloquear) {
+            query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+        }
+        return query.getResultList();
+    }
+
+    public List<Persona> listarActivasPorDocumento(String documento) {
+        return listarActivasPorDocumento(documento, false);
     }
 
 }

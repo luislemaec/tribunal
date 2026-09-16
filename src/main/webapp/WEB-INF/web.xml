@@ -100,6 +100,21 @@
         <role-name>TEC-QR</role-name>
     </security-role>
     <security-role>
+        <role-name>SITEC-Administrador</role-name>
+    </security-role>
+    <security-role>
+        <role-name>SITEC-Tecnico</role-name>
+    </security-role>
+    <security-role>
+        <role-name>SITEC-Analista</role-name>
+    </security-role>
+    <security-role>
+        <role-name>SITEC-Tribunal</role-name>
+    </security-role>
+    <security-role>
+        <role-name>SITEC-IglesiaAdmin</role-name>
+    </security-role>
+    <security-role>
         <role-name>SITEC-Presidente-mesa</role-name>
     </security-role>
     <session-config>

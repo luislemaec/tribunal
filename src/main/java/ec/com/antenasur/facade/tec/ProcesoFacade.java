@@ -28,9 +28,9 @@ import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
  * @author Usuario
  */
 @Stateless
-@DeclareRoles({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal",
     "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
-@RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+@RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
     "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
 public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
 
@@ -40,7 +40,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
      * forma explícita para que Elytron evalúe los roles SITEC reales.
      */
     @Override
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Analista", "SITEC-Tribunal",
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
     public Proceso create(Proceso entity) {
         return super.create(entity);
@@ -59,6 +59,21 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
                 .setParameter("actividad", "LOGIN | MÓDULO: ACCESO; RESULTADO: FALLIDO; DETALLE: Credenciales rechazadas")
                 .setParameter("ip", ip)
                 .setParameter("usuario", usuarioIntentado)
+                .executeUpdate();
+    }
+
+    /**
+     * Registra una solicitud pública de recuperación con valores funcionales
+     * fijos. No admite contenido, acción o resultado controlados por cliente.
+     */
+    @PermitAll
+    public void registrarSolicitudRecuperacionClavePreautenticacion(String usuario, String ip) {
+        super.getEntityManager().createNativeQuery("INSERT INTO tec.procesos "
+                + "(actividad, ip, estado, f_crea, u_crea) "
+                + "VALUES (:actividad, :ip, TRUE, CURRENT_TIMESTAMP, :usuario)")
+                .setParameter("actividad", "RECUPERACION_CLAVE | MÓDULO: ACCESO; RESULTADO: SOLICITADO; DETALLE: Solicitud de recuperación de clave")
+                .setParameter("ip", ip)
+                .setParameter("usuario", usuario)
                 .executeUpdate();
     }
 

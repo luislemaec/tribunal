@@ -20,9 +20,12 @@
 
     <h:body styleClass="login-body">
         <div class="login-topbar">
-            <h:link outcome="/dashboard" class="logo">
-                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
-            </h:link>
+            <h:form id="frmCancelarCambioSuperior">
+                <p:commandLink action="#{loginBean.cancelarCambioClaveObligatorio}"
+                               ajax="false" immediate="true" process="@this" styleClass="logo">
+                    <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+                </p:commandLink>
+            </h:form>
         </div>
         <h:form id="frmCambioContrasenia">
             <p:growl id="growlCambioClave" life="4000" />
@@ -63,7 +66,9 @@
                                              action="#{cambioClaveController.cambiarClave()}"
                                              ajax="false" styleClass="ui-button-info"/>
                             <p:divider/>
-                            <h:outputLink value="#{request.contextPath}/index.html">#{msg['form.cambioClave.btn.back']}</h:outputLink>
+                            <p:commandLink value="#{msg['form.cambioClave.btn.back']}"
+                                           action="#{loginBean.cancelarCambioClaveObligatorio}"
+                                           ajax="false" immediate="true" process="@this"/>
                         </div>
                     </div>
 

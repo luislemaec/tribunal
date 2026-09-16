@@ -33,7 +33,7 @@ import ec.com.antenasur.facade.RolFacade;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
-@DeclareRoles({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
+@DeclareRoles({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
 public class TribunalService extends AbstractService<Tribunal, Integer, TribunalFacade> {
 
     private static final Integer CARGO_PADRE_AUTORIDADES_TRIBUNAL = 2;
@@ -64,23 +64,23 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         return tribunalFacade;
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
     public List<Tribunal> getRegistrosActivos() {
         return tribunalFacade.getRegistrosActivos();
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public TribunalDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;
         return TribunalDTO.fromEntity(tribunalFacade.find(id));
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
     public List<TribunalDTO> listarDTOsActivos() {
         return mapearLista(tribunalFacade.getRegistrosActivos());
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin"})
     public List<TribunalDTO> listarDTOsActivosPorProceso(Integer procesoId) {
         ProcesoElectoral proceso = procesoId != null ? procesoElectoralFacade.find(procesoId) : null;
         if (proceso == null) {
@@ -89,7 +89,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
         return mapearLista(tribunalFacade.getRegistrosActivosPorProceso(proceso));
     }
 
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public List<TribunalDTO> listarDTOs() {
         return mapearLista(tribunalFacade.findAll());
     }
@@ -207,7 +207,7 @@ public class TribunalService extends AbstractService<Tribunal, Integer, Tribunal
      * Devuelve la lista de autoridades vigentes; si faltan cargos, agrega
      * placeholders (TribunalDTO sin id) por cada cargo que no esté asignado.
      */
-    @RolesAllowed({"SITEC-Administrador", "SITEC-Tecnico", "SITEC-Tribunal"})
+    @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
     public List<TribunalDTO> listarAutoridadesConPlaceholders(Integer procesoId, Integer cargoPadreId) {
         List<TribunalDTO> resultado = new ArrayList<>();
         ProcesoElectoral proceso = (procesoId != null) ? procesoElectoralFacade.find(procesoId) : null;

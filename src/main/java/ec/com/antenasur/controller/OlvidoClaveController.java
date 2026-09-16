@@ -77,7 +77,10 @@ public class OlvidoClaveController implements Serializable {
                 usuario = solicitud.usuario();
                 sendMailRecoveryPassword(solicitud.token());
             }
-            procesoBean.registraActividad("RECUPERA CLAVE OLVIDADO");
+            // El nombre procede exclusivamente de una solicitud validada; no
+            // se registra el correo, token ni valores libres del formulario.
+            procesoBean.registraSolicitudRecuperacionClave(
+                    solicitud != null && solicitud.usuario() != null ? solicitud.usuario().getUsername() : null);
             JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
@@ -90,7 +93,7 @@ public class OlvidoClaveController implements Serializable {
             HashMap<String, String> parametros = correoService.construirParametrosBase();
             parametros.put("nombreApellido", usuario.getPersonsa().getNombres());
             parametros.put("nombreUsuario", usuario.getUsername());
-            parametros.put("enlaceRecuperacion", JsfUtil.getStartPage() + "/restablecerClave.jsf?token="
+            parametros.put("enlaceRecuperacion", JsfUtil.getRecoveryPublicBaseUrl() + "/restablecerClave.jsf?token="
                     + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8));
 
             List<String> destinatarios = new ArrayList<>();

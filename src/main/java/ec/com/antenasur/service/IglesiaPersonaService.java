@@ -23,11 +23,13 @@ import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.facade.IglesiaFacade;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.PersonaFacade;
+import ec.com.antenasur.facade.UsuarioFacade;
 import ec.com.antenasur.service.tec.CronogramaService;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Persona;
+import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
@@ -37,6 +39,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     private static final String ROL_TRIBUNAL = "SITEC-" + Constantes.getRolTribunal();
     private static final String ROL_ADMINISTRADOR = "SITEC-" + Constantes.getRolAdministrador();
+    private static final String ROL_IGLESIA_ADMIN = "SITEC-" + Constantes.getRolIglesiaAdmin();
 
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
@@ -46,6 +49,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
     @Inject
     private IglesiaFacade iglesiaFacade;
+
+    @Inject
+    private UsuarioFacade usuarioFacade;
 
     @Inject
     private CronogramaService cronogramaService;
@@ -114,6 +120,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
                 || iglesiaPersona.getIglesia() == null) {
             return null;
         }
+        IglesiaPersona vinculoActual = iglesiaPersona.getId() != null
+                ? iglesiaPersonaFacade.find(iglesiaPersona.getId()) : null;
+        validarAlcanceIglesiaAdmin(iglesiaPersona.getIglesia(), vinculoActual);
         Persona persona = iglesiaPersona.getPersona();
         String documento = normalizarDocumento(persona.getDocumento());
         validarDocumentoDisponibleParaPersona(documento, persona.getId());
@@ -220,6 +229,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (dto.getId() != null && ip == null) {
             return null;
         }
+        validarAlcanceIglesiaAdmin(iglesia, ip);
         Persona persona = resolverPersona(dto, ip, documento);
         if (persona == null) {
             return null;
@@ -369,6 +379,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (iglesia == null || persona == null) {
             return null;
         }
+        validarAlcanceIglesiaAdmin(iglesia, null);
         String documento = normalizarDocumento(persona.getDocumento());
         validarDocumentoDisponibleParaPersona(documento, persona.getId());
         List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
@@ -458,6 +469,31 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         return sessionContext != null && sessionContext.isCallerInRole(ROL_TRIBUNAL);
     }
 
+    /**
+     * Para IglesiaAdmin el alcance procede exclusivamente del principal
+     * Elytron y de su asignación persistida. El DTO nunca decide la iglesia
+     * que puede administrar el usuario.
+     */
+    private void validarAlcanceIglesiaAdmin(Iglesia iglesiaDestino, IglesiaPersona vinculoActual) {
+        if (sessionContext == null || !sessionContext.isCallerInRole(ROL_IGLESIA_ADMIN)) {
+            return;
+        }
+        if (sessionContext.getCallerPrincipal() == null
+                || sessionContext.getCallerPrincipal().getName() == null) {
+            throw new IglesiaPersonaException("form.personas.error.iglesia.no.autorizada");
+        }
+        Usuario usuarioActual = usuarioFacade.findByUsuarioName(sessionContext.getCallerPrincipal().getName());
+        Integer iglesiaAsignadaId = usuarioActual != null && usuarioActual.getIglesia() != null
+                ? usuarioActual.getIglesia().getId() : null;
+        Integer iglesiaDestinoId = iglesiaDestino != null ? iglesiaDestino.getId() : null;
+        Integer iglesiaActualId = vinculoActual != null && vinculoActual.getIglesia() != null
+                ? vinculoActual.getIglesia().getId() : null;
+        if (iglesiaAsignadaId == null || !iglesiaAsignadaId.equals(iglesiaDestinoId)
+                || (vinculoActual != null && !iglesiaAsignadaId.equals(iglesiaActualId))) {
+            throw new IglesiaPersonaException("form.personas.error.iglesia.no.autorizada");
+        }
+    }
+
     private boolean esCallerAdministradorOTribunal() {
         return sessionContext != null
                 && (sessionContext.isCallerInRole(ROL_ADMINISTRADOR)
@@ -532,6 +568,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
         if (ip == null) {
             return null;
         }
+        validarAlcanceIglesiaAdmin(ip.getIglesia(), ip);
         String documento = ip.getPersona() != null ? ip.getPersona().getDocumento() : null;
         if (documento != null && contarIglesiasDistintas(
                 iglesiaPersonaFacade.listarActivasPorDocumento(documento, true)) > 1) {

@@ -14,7 +14,41 @@ import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
 
 @Stateless
+@jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
 public class RolUsuarioService extends AbstractService<RolUsuario, Integer, RolUsuarioFacade> {
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public RolUsuario create(RolUsuario entity) { return getFacade().create(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public RolUsuario edit(RolUsuario entity) { return getFacade().edit(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public RolUsuario delete(RolUsuario entity) { return getFacade().delete(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public void remove(RolUsuario entity) { getFacade().remove(entity); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public RolUsuario find(Integer id) { return getFacade().find(id); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<RolUsuario> findAll() { return getFacade().findAll(); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public List<RolUsuario> findRange(int[] range) { return getFacade().findRange(range); }
+
+    @Override
+    @jakarta.annotation.security.RolesAllowed("SITEC-Administrador")
+    public int count() { return getFacade().count(); }
+
 
     @Inject
     private RolUsuarioFacade rolUsuarioFacade;

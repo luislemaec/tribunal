@@ -1,7 +1,6 @@
 package ec.com.antenasur.facade.tec;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import jakarta.ejb.Stateless;
@@ -38,11 +37,10 @@ public class CronogramaFaseFacade extends AbstractFacade<CronogramaFase, Integer
         try {
             String hql = "SELECT f FROM CronogramaFase f"
                     + " WHERE f.proceso.id = :pid"
-                    + " AND :ahora BETWEEN f.fechaInicio AND f.fechaFin"
+                    + " AND CURRENT_TIMESTAMP BETWEEN f.fechaInicio AND f.fechaFin"
                     + " ORDER BY f.orden ASC, f.id ASC";
             TypedQuery<CronogramaFase> q = super.getEntityManager().createQuery(hql, CronogramaFase.class);
             q.setParameter("pid", procesoId);
-            q.setParameter("ahora", new Date());
             q.setMaxResults(1);
             List<CronogramaFase> r = q.getResultList();
             return (r != null && !r.isEmpty()) ? r.get(0) : null;
@@ -62,11 +60,10 @@ public class CronogramaFaseFacade extends AbstractFacade<CronogramaFase, Integer
         try {
             String hql = "FROM CronogramaFase f"
                     + " WHERE f.proceso.id = :pid"
-                    + " AND :ahora BETWEEN f.fechaInicio AND f.fechaFin"
+                    + " AND CURRENT_TIMESTAMP BETWEEN f.fechaInicio AND f.fechaFin"
                     + " ORDER BY f.orden ASC, f.id ASC";
             TypedQuery<CronogramaFase> q = super.getEntityManager().createQuery(hql, CronogramaFase.class);
             q.setParameter("pid", procesoId);
-            q.setParameter("ahora", new Date());
             return q.getResultList();
         } catch (Exception e) {
             return Collections.emptyList();
@@ -148,11 +145,10 @@ public class CronogramaFaseFacade extends AbstractFacade<CronogramaFase, Integer
             String hql = "SELECT COUNT(f) FROM CronogramaFase f"
                     + " WHERE f.proceso.id = :pid"
                     + " AND f.fase = :fase"
-                    + " AND :ahora BETWEEN f.fechaInicio AND f.fechaFin";
+                    + " AND CURRENT_TIMESTAMP BETWEEN f.fechaInicio AND f.fechaFin";
             TypedQuery<Long> q = super.getEntityManager().createQuery(hql, Long.class);
             q.setParameter("pid", procesoId);
             q.setParameter("fase", fase);
-            q.setParameter("ahora", new Date());
             Long count = q.getSingleResult();
             return count != null && count > 0;
         } catch (Exception e) {
