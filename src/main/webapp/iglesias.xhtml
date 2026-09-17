@@ -396,7 +396,7 @@
                         </f:facet>
                         <span class="iglesias-admin">
                             <p:tag rendered="#{iglesia.tieneAdministrador}"
-                                   value="#{msg['iglesias.admin.estado.con']}" severity="success" icon="pi pi-user-check"
+                                   value="#{msg['iglesias.admin.estado.con']}" severity="success" icon="pi pi-user"
                                    styleClass="tec-status"/>
                             <h:outputText rendered="#{iglesia.tieneAdministrador and not empty iglesia.administradorNombre}"
                                           value="#{iglesia.administradorNombre}" styleClass="iglesias-admin__nombre"/>
@@ -893,7 +893,7 @@
                     <p:column headerText="#{msg['form.iglesias.docs.col.estado']}" styleClass="tec-col-fit">
                         <p:tag severity="#{doc.estado ? 'success' : 'secondary'}"
                                value="#{doc.estado ? msg['form.iglesias.tag.vigente'] : msg['form.iglesias.tag.archivado']}"
-                               icon="#{doc.estado ? 'pi pi-check' : 'pi pi-archive'}"
+                               icon="#{doc.estado ? 'pi pi-check' : 'pi pi-inbox'}"
                                styleClass="tec-status"/>
                     </p:column>
 

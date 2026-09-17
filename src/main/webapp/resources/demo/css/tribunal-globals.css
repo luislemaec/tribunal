@@ -273,6 +273,8 @@ body .ui-fluid .tec-filter-actions .ui-button { flex:0 0 auto; width:auto; }
 .tec-table-heading h3 { margin:0; color:#0f172a; font-size:.95rem; font-weight:700; }
 .tec-table-heading__aside { display:inline-flex; align-items:center; gap:.35rem; color:#64748b; font-size:.78rem; white-space:nowrap; }
 body .ui-datatable.tec-table table { table-layout:auto; }
+/* PrimeFaces sincroniza las columnas de las tablas con scroll asumiendo table-layout:fixed. */
+body .ui-datatable.tec-table.ui-datatable-scrollable table { table-layout:fixed; }
 body .ui-datatable.tec-table thead th { border-right:0 none; border-left:0 none; background:#f8fafc; vertical-align:top; }
 body .ui-datatable.tec-table thead th > .ui-column-title { color:#475569; font-size:.72rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
 body .ui-datatable.tec-table thead th .ui-column-filter { margin-top:.35rem; font-size:.8rem; }
@@ -320,11 +322,13 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 .tec-empty__title { color:#334155; font-size:.95rem; font-weight:600; }
 .tec-empty__text { max-width:26rem; color:#64748b; font-size:.82rem; }
 
-/* Diálogos sin width fijo */
-.tec-dialog.ui-dialog { width:min(40rem, calc(100vw - 2rem)); }
-.tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)); }
-.tec-dialog--md.ui-dialog { width:min(56rem, calc(100vw - 2rem)); }
-.tec-dialog--lg.ui-dialog { width:min(72rem, calc(100vw - 2rem)); }
+/* Diálogos sin width fijo.
+   PrimeFaces fija width:auto en línea al mostrar el diálogo, así que estas
+   reglas necesitan !important para imponerse. */
+.tec-dialog.ui-dialog { width:min(40rem, calc(100vw - 2rem)) !important; }
+.tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)) !important; }
+.tec-dialog--md.ui-dialog { width:min(56rem, calc(100vw - 2rem)) !important; }
+.tec-dialog--lg.ui-dialog { width:min(72rem, calc(100vw - 2rem)) !important; }
 .tec-dialog.ui-dialog .ui-dialog-content { padding-top:1rem; }
 
 @media (max-width:1199.98px) {
