@@ -18,226 +18,195 @@
         <!-- ======================================================
              ENCABEZADO
              ====================================================== -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
-                        <i class="pi pi-building text-white" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.iglesias.header']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.iglesias.subheader']}</p>
-                    </div>
-                </div>
+        <div class="tec-page-header">
+            <div class="tec-page-header__icon" aria-hidden="true">
+                <i class="pi pi-building"/>
+            </div>
+            <div class="min-w-0">
+                <h2>#{msg['form.iglesias.header']}</h2>
+                <p>#{msg['form.iglesias.subheader']}</p>
             </div>
         </div>
 
         <!-- ======================================================
-             TARJETAS DE RESUMEN (KPI)
+             RESUMEN: indicadores + progreso de la fase activa.
+             Los formularios frmStats y frmProgreso se conservan porque
+             el controlador los actualiza por id.
              ====================================================== -->
-        <h:form id="frmStats">
-            <p:outputPanel rendered="#{not iglesiaController.restringidoAIglesia}" layout="block">
-            <div class="grid mb-2">
-
-                <!-- Total iglesias -->
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid #3b82f6">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
-                                <i class="pi pi-building text-white"></i>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.total']}</span>
-                                <span class="block text-900 font-bold text-2xl">
-                                    <h:outputText value="#{iglesiaController.totalIglesiasIndicador}"/>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Provincias -->
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid #8b5cf6">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
-                                <i class="pi pi-map-marker text-white"></i>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.iglesias.kpi.provincias']}</span>
-                                <span class="block text-900 font-bold text-2xl">
-                                    <h:outputText value="#{iglesiaController.totalProvinciasIndicador}"/>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            </p:outputPanel>
-        </h:form>
-
-        <!-- ======================================================
-             BARRA DE PROGRESO — FASE ACTIVA
-             ====================================================== -->
-        <h:form id="frmProgreso">
-            <p:outputPanel rendered="#{not iglesiaController.restringidoAIglesia and iglesiaController.faseVigente ne null}" styleClass="mb-2" layout="block">
-                <div class="surface-card shadow-1 border-round-lg p-3"
-                     style="border-left:4px solid #6366f1">
-                    <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
-                        <div class="flex align-items-center gap-2">
-                            <i class="pi pi-chart-line text-primary"></i>
-                            <span class="font-semibold text-900">#{msg['form.iglesias.progress.title']} —
-                                <span class="text-primary">
-                                    <h:outputText value="#{iglesiaController.faseVigente.titulo}"/>
-                                </span>
+        <div class="#{iglesiaController.restringidoAIglesia ? '' : 'surface-card border-round-lg tec-card iglesias-resumen'}">
+            <h:form id="frmStats">
+                <h:panelGroup layout="block" styleClass="grid" rendered="#{not iglesiaController.restringidoAIglesia}">
+                    <div class="col-6 md:col-3">
+                        <div class="iglesias-kpi">
+                            <span class="iglesias-kpi__icon" aria-hidden="true"><i class="pi pi-building"/></span>
+                            <span class="min-w-0">
+                                <span class="iglesias-kpi__label">#{msg['form.iglesias.kpi.total']}</span>
+                                <h:outputText value="#{iglesiaController.totalIglesiasIndicador}"
+                                              styleClass="iglesias-kpi__value"/>
                             </span>
                         </div>
-                        <div class="flex align-items-center gap-2 mt-2 md:mt-0">
-                            <span class="text-500 text-sm">
-                                <h:outputText value="#{iglesiaController.progresoRegistro[1]}"/>
-                                <span> / </span>
-                                <h:outputText value="#{iglesiaController.progresoRegistro[0]}"/>
-                                #{msg['form.iglesias.progress.iglesias']}
+                    </div>
+                    <div class="col-6 md:col-3">
+                        <div class="iglesias-kpi">
+                            <span class="iglesias-kpi__icon" aria-hidden="true"><i class="pi pi-map-marker"/></span>
+                            <span class="min-w-0">
+                                <span class="iglesias-kpi__label">#{msg['form.iglesias.kpi.provincias']}</span>
+                                <h:outputText value="#{iglesiaController.totalProvinciasIndicador}"
+                                              styleClass="iglesias-kpi__value"/>
                             </span>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+
+            <h:form id="frmProgreso">
+                <p:outputPanel rendered="#{not iglesiaController.restringidoAIglesia and iglesiaController.faseVigente ne null}"
+                               layout="block" styleClass="iglesias-progreso">
+                    <div class="iglesias-progreso__head">
+                        <span class="iglesias-progreso__titulo">
+                            <i class="pi pi-chart-line" aria-hidden="true"/>
+                            #{msg['form.iglesias.progress.title']} —
+                            <h:outputText value="#{iglesiaController.faseVigente.titulo}"
+                                          styleClass="iglesias-progreso__fase"/>
+                        </span>
+                        <span class="iglesias-progreso__conteo">
+                            <h:outputText value="#{iglesiaController.progresoRegistro[1]}"/>
+                            /
+                            <h:outputText value="#{iglesiaController.progresoRegistro[0]}"/>
+                            #{msg['form.iglesias.progress.iglesias']}
                             <p:tag value="#{iglesiaController.progresoRegistro[2]}%"
                                    severity="#{iglesiaController.progresoRegistro[2] ge 100 ? 'success' :
-                                               iglesiaController.progresoRegistro[2] ge 50  ? 'info'    : 'warning'}"/>
-                        </div>
+                                               iglesiaController.progresoRegistro[2] ge 50  ? 'info'    : 'warning'}"
+                                   styleClass="tec-status"/>
+                        </span>
                     </div>
                     <p:progressBar value="#{iglesiaController.progresoRegistro[2]}"
-                                   styleClass="#{iglesiaController.progresoRegistro[2] ge 100 ? 'progress-green' :
-                                                iglesiaController.progresoRegistro[2] ge 50  ? 'progress-blue'  : 'progress-orange'}"
-                                   style="height:0.75rem;border-radius:0.5rem"/>
-                    <div class="flex justify-content-between mt-1">
-                        <small class="text-500">
-                            Inicio: <h:outputText value="#{iglesiaController.faseVigente.fechaInicio}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                    </h:outputText>
-                        </small>
-                        <small class="text-500">
-                            Fin: <h:outputText value="#{iglesiaController.faseVigente.fechaFin}">
-                                     <f:convertDateTime pattern="dd/MM/yyyy"/>
-                                 </h:outputText>
+                                   displayOnly="true"
+                                   styleClass="iglesias-barra #{iglesiaController.progresoRegistro[2] ge 100 ? 'iglesias-barra--completa' :
+                                                iglesiaController.progresoRegistro[2] ge 50  ? 'iglesias-barra--media' : 'iglesias-barra--baja'}"/>
+                    <div class="iglesias-progreso__fechas">
+                        <span>
+                            Inicio:
+                            <h:outputText value="#{iglesiaController.faseVigente.fechaInicio}">
+                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                            </h:outputText>
+                        </span>
+                        <span>
+                            Fin:
+                            <h:outputText value="#{iglesiaController.faseVigente.fechaFin}">
+                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                            </h:outputText>
                             <h:outputText rendered="#{iglesiaController.faseVigente.diasRestantes gt 0}"
                                           value=" · #{iglesiaController.faseVigente.diasRestantes} #{msg['form.iglesias.progress.dias.restantes']}"
-                                          styleClass="text-orange-500 font-medium"/>
-                        </small>
+                                          styleClass="iglesias-progreso__dias"/>
+                        </span>
                     </div>
-                </div>
-            </p:outputPanel>
-        </h:form>
+                </p:outputPanel>
+            </h:form>
+        </div>
 
         <!-- ======================================================
-             FILTROS GEOGRÁFICOS (colapsable)
+             LISTADO: filtros geográficos + tabla en una sola tarjeta
              ====================================================== -->
-        <h:form id="frmFiltros" rendered="#{not iglesiaController.restringidoAIglesia}">
-            <p:panel toggleable="true" collapsed="false"
-                     styleClass="mb-2 shadow-1 border-round-lg">
-                <f:facet name="header">
-                    <div class="flex align-items-center gap-2">
-                        <i class="pi pi-filter text-primary"></i>
-                        <span class="font-semibold text-900">#{msg['form.iglesias.filters.title']}</span>
+        <div class="surface-card border-round-lg tec-card">
+
+            <h:form id="frmFiltros" rendered="#{not iglesiaController.restringidoAIglesia}">
+                <div class="tec-filters ui-fluid">
+                    <div class="iglesias-filtros__head">
+                        <span class="tec-field-label">
+                            <i class="pi pi-filter" aria-hidden="true"/> #{msg['form.iglesias.filters.title']}
+                        </span>
                         <p:tag rendered="#{iglesiaController.provinciaFiltroId ne null or iglesiaController.comunidadFiltro ne null}"
                                value="#{msg['form.iglesias.filters.activo']}" severity="info" icon="pi pi-check-circle"
-                               styleClass="ml-1"/>
+                               styleClass="tec-status"/>
                     </div>
-                </f:facet>
-                <div class="formgrid grid pt-1">
-                    <div class="field col-12 md:col-4">
-                        <label for="provinciaSel" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.provincia']}</label>
-                        <p:selectOneMenu id="provinciaSel" value="#{iglesiaController.provinciaFiltroId}"
-                                         filter="true" filterMatchMode="contains"
-                                         placeholder="#{msg['form.iglesias.filters.placeholder.provincia']}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.provincias}" var="prov"
-                                           itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesFiltro()}"
-                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="canton" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.canton']}</label>
-                        <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains"
-                                         placeholder="#{msg['form.iglesias.filters.placeholder.canton']}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.cantonesFiltro}" var="canton"
-                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneParroquias()}"
-                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="parroquia" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.parroquia']}</label>
-                        <p:selectOneMenu id="parroquia" value="#{iglesiaController.parroquiaSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains"
-                                         placeholder="#{msg['form.iglesias.filters.placeholder.parroquia']}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"
-                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorParroquia()}"
-                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6">
-                        <label for="comunidad" class="text-700 font-medium text-sm">#{msg['form.iglesias.filters.label.comunidad']}</label>
-                        <p:selectOneMenu id="comunidad" value="#{iglesiaController.comunidadFiltro}"
-                                         filter="true" filterMatchMode="contains"
-                                         placeholder="#{msg['form.iglesias.filters.placeholder.comunidad']}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.comunidadesFiltro}" var="comunidad"
-                                           itemLabel="#{comunidad}" itemValue="#{comunidad}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorComunidad()}"
-                                    process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-3">
-                        <label for="estadoAdministrador" class="text-700 font-medium text-sm">#{msg['iglesias.admin.filtro.label']}</label>
-                        <p:selectOneMenu id="estadoAdministrador" value="#{iglesiaController.estadoAdministradorFiltro}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.todas']}" itemValue="TODAS"/>
-                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.con']}" itemValue="CON_ADMIN"/>
-                            <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.sin']}" itemValue="SIN_ADMIN"/>
-                            <p:ajax event="change" listener="#{iglesiaController.cambiarFiltroEstadoAdministrador}"
-                                    process="@this" update=":frmIglesias:tblIglesia"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-3 flex align-items-end">
-                        <p:commandButton value="#{msg['form.iglesias.filters.btn.clear']}" icon="pi pi-times-circle"
-                                         styleClass="ui-button-outlined w-full"
-                                         actionListener="#{iglesiaController.cancelarIglesia}"
-                                         process="@this" update=":frmFiltros :frmIglesias"/>
+                    <div class="formgrid grid">
+                        <div class="field col-12 md:col-4 xl:col-2">
+                            <label for="provinciaSel" class="tec-field-label">#{msg['form.iglesias.filters.label.provincia']}</label>
+                            <p:selectOneMenu id="provinciaSel" value="#{iglesiaController.provinciaFiltroId}"
+                                             filter="true" filterMatchMode="contains"
+                                             placeholder="#{msg['form.iglesias.filters.placeholder.provincia']}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.provincias}" var="prov"
+                                               itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesFiltro()}"
+                                        process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-4 xl:col-2">
+                            <label for="canton" class="tec-field-label">#{msg['form.iglesias.filters.label.canton']}</label>
+                            <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
+                                             filter="true" filterMatchMode="contains"
+                                             placeholder="#{msg['form.iglesias.filters.placeholder.canton']}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.cantonesFiltro}" var="canton"
+                                               itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneParroquias()}"
+                                        process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-4 xl:col-2">
+                            <label for="parroquia" class="tec-field-label">#{msg['form.iglesias.filters.label.parroquia']}</label>
+                            <p:selectOneMenu id="parroquia" value="#{iglesiaController.parroquiaSeleccionado.id}"
+                                             filter="true" filterMatchMode="contains"
+                                             placeholder="#{msg['form.iglesias.filters.placeholder.parroquia']}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.parroquias}" var="parroquia"
+                                               itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorParroquia()}"
+                                        process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 xl:col-3">
+                            <label for="comunidad" class="tec-field-label">#{msg['form.iglesias.filters.label.comunidad']}</label>
+                            <p:selectOneMenu id="comunidad" value="#{iglesiaController.comunidadFiltro}"
+                                             filter="true" filterMatchMode="contains"
+                                             placeholder="#{msg['form.iglesias.filters.placeholder.comunidad']}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.comunidadesFiltro}" var="comunidad"
+                                               itemLabel="#{comunidad}" itemValue="#{comunidad}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneIglesiasPorComunidad()}"
+                                        process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 sm:col-7 md:col-3 xl:col-2">
+                            <label for="estadoAdministrador" class="tec-field-label">#{msg['iglesias.admin.filtro.label']}</label>
+                            <p:selectOneMenu id="estadoAdministrador" value="#{iglesiaController.estadoAdministradorFiltro}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.todas']}" itemValue="TODAS"/>
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.con']}" itemValue="CON_ADMIN"/>
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.sin']}" itemValue="SIN_ADMIN"/>
+                                <p:ajax event="change" listener="#{iglesiaController.cambiarFiltroEstadoAdministrador}"
+                                        process="@this" update=":frmIglesias:tblIglesia"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 sm:col-5 md:col-3 xl:col-1 tec-filter-actions-cell">
+                            <div class="tec-filter-actions">
+                                <p:commandButton value="#{msg['form.iglesias.filters.btn.clear']}" icon="pi pi-times-circle"
+                                                 styleClass="tec-btn ui-button-outlined"
+                                                 actionListener="#{iglesiaController.cancelarIglesia}"
+                                                 process="@this" update=":frmFiltros :frmIglesias"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </p:panel>
-        </h:form>
+            </h:form>
 
-        <!-- ======================================================
-             TABLA PRINCIPAL DE IGLESIAS
-             ====================================================== -->
-        <h:form id="frmIglesias">
-            <div class="surface-card shadow-1 border-round-lg p-3">
+            <h:form id="frmIglesias">
 
-                <!-- Mensajes -->
+                <!-- Avisos -->
                 <ui:fragment rendered="#{iglesiaController.restringidoAIglesia and iglesiaController.tieneIglesiaAsignada}">
-                    <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3"
-                         style="background:#eff6ff; border-left:4px solid #2563eb">
-                        <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
-                        <span class="text-700 text-sm">
+                    <div class="callout callout--info iglesias-aviso mb-3">
+                        <i class="pi pi-info-circle" aria-hidden="true"/>
+                        <span>
                             <b>#{msg['form.iglesias.banner.iglesia.admin.titulo']}</b>
                             #{msg['form.iglesias.banner.iglesia.admin.detalle']}
                             <b>'#{iglesiaController.nombreIglesiaAsignada}'</b>.
@@ -246,32 +215,30 @@
                 </ui:fragment>
 
                 <ui:fragment rendered="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
-                    <div class="flex align-items-center gap-2 border-round-lg p-3 mb-3 surface-100"
-                         style="border-left:4px solid #f97316">
-                        <i class="pi pi-exclamation-triangle text-orange-500 flex-shrink-0"/>
-                        <span class="text-700 text-sm">#{msg['form.iglesias.mensaje.sin.asignacion']}</span>
+                    <div class="callout callout--warning iglesias-aviso mb-3">
+                        <i class="pi pi-exclamation-triangle" aria-hidden="true"/>
+                        <span>#{msg['form.iglesias.mensaje.sin.asignacion']}</span>
                     </div>
                 </ui:fragment>
 
-                <!-- Banner de bloqueo de fase -->
-                <p:outputPanel rendered="#{not iglesiaController.puedeRegistrarIglesia}" styleClass="mb-3" layout="block">
-                    <div class="flex align-items-center gap-2 surface-100 border-round-lg p-3">
-                        <i class="pi pi-lock text-orange-500 text-xl flex-shrink-0"/>
-                        <span class="text-700 text-sm">
-                            #{msg['form.iglesias.banner.fase.bloqueada']}
-                            <h:outputText rendered="#{iglesiaController.faseVigente ne null}"
-                                          value=" #{msg['form.iglesias.banner.fase.vigente']} #{iglesiaController.faseVigente.titulo}."/>
-                            <h:outputText rendered="#{iglesiaController.faseVigente eq null}"
-                                          value=" #{msg['form.iglesias.banner.fase.ninguna']}"/>
-                        </span>
-                    </div>
+                <!-- Bloqueo por fase -->
+                <p:outputPanel rendered="#{not iglesiaController.puedeRegistrarIglesia}" layout="block"
+                               styleClass="callout callout--neutral iglesias-aviso mb-3">
+                    <i class="pi pi-lock" aria-hidden="true"/>
+                    <span>
+                        #{msg['form.iglesias.banner.fase.bloqueada']}
+                        <h:outputText rendered="#{iglesiaController.faseVigente ne null}"
+                                      value=" #{msg['form.iglesias.banner.fase.vigente']} #{iglesiaController.faseVigente.titulo}."/>
+                        <h:outputText rendered="#{iglesiaController.faseVigente eq null}"
+                                      value=" #{msg['form.iglesias.banner.fase.ninguna']}"/>
+                    </span>
                 </p:outputPanel>
 
-                <!-- TOOLBAR (flex) -->
-                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <div class="flex align-items-center gap-2 flex-wrap">
+                <!-- Acciones -->
+                <div class="iglesias-toolbar">
+                    <div class="iglesias-toolbar__grupo">
                         <p:commandButton value="#{msg['form.iglesias.btn.new']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn ui-button-success"
                                          rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          actionListener="#{iglesiaController.nuevaIglesia}"
@@ -280,10 +247,11 @@
                             <p:resetInput target=":frmDlgIglesia"/>
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.new.tooltip']}"/>
                         </p:commandButton>
+                        <h:panelGroup styleClass="tec-toolbar-sep" rendered="#{not iglesiaController.restringidoAIglesia}"/>
                         <p:commandButton id="btnEliminarLista"
                                          value="#{iglesiaController.getMensajeBotonEliminar()}"
                                          icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
+                                         styleClass="tec-btn ui-button-danger"
                                          rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{!iglesiaController.existeIglesiasSeleccionadas()}"
                                          actionListener="#{iglesiaController.eliminarIglesiaSeleccionadas}"
@@ -293,286 +261,320 @@
                                        icon="pi pi-exclamation-triangle"/>
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.delete.tooltip']}"/>
                         </p:commandButton>
+                        <h:panelGroup styleClass="tec-toolbar-sep" rendered="#{not iglesiaController.restringidoAIglesia}"/>
                         <p:commandButton icon="pi pi-refresh"
                                          title="#{msg['form.iglesias.btn.refresh']}"
+                                         ariaLabel="#{msg['form.iglesias.btn.refresh']}"
                                          styleClass="ui-button-rounded ui-button-outlined ui-button-secondary"
                                          actionListener="#{iglesiaController.cancelarIglesia}"
                                          process="@this" update="@form">
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.refresh.tooltip']}"/>
                         </p:commandButton>
                     </div>
-                    <div class="flex align-items-center gap-2 flex-wrap">
+                    <div class="iglesias-toolbar__grupo">
                         <p:commandButton value="#{msg['form.iglesias.btn.export.pdf']}" icon="pi pi-file-pdf"
-                                         styleClass="ui-button-outlined ui-button-warning" ajax="false"
+                                         styleClass="tec-btn ui-button-outlined ui-button-warning" ajax="false"
                                          rendered="false"
                                          disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
                             <p:dataExporter type="pdf" target="tblIglesia" fileName="iglesias"
                                             pageOnly="false"/>
                         </p:commandButton>
                         <p:commandButton value="#{msg['form.iglesias.btn.export.excel']}" icon="pi pi-file-excel"
-                                         styleClass="ui-button-outlined ui-button-success"
+                                         styleClass="tec-btn ui-button-outlined ui-button-success"
                                          disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}"
                                          actionListener="#{iglesiaController.exportarExcel}"
                                          ajax="false"/>
                     </div>
                 </div>
 
-                <!-- DATATABLE -->
+                <!-- Tabla -->
                 <p:dataTable id="tblIglesia" widgetVar="wdTblIglesia" var="iglesia"
                              value="#{iglesiaController.listaIglesias}"
                              selection="#{iglesiaController.listaIglesiasSeleccionadas}"
                              rowKey="#{iglesia.id}"
                              paginator="true" rows="10" rowsPerPageTemplate="10,25,50,100"
-                             paginatorPosition="bottom"
+                             pageLinks="5" paginatorPosition="bottom"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} iglesias"
                              emptyMessage="#{msg['form.iglesias.list.empty']}"
-                             reflow="true" size="small" showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm"
+                             reflow="true" size="small"
+                             styleClass="tec-table iglesias-table"
                              globalFilter="#{globalFilter}"
                              filteredValue="#{iglesiaController.listaIglesiasFiltrada}">
 
                     <f:facet name="header">
-                        <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-2">
-                            <span class="text-lg text-900 font-bold">#{msg['form.iglesias.list.header']}</span>
-                            <span class="p-input-icon-left">
-                                <i class="pi pi-search"></i>
+                        <div class="tec-table-heading iglesias-table__head">
+                            <h3>#{msg['form.iglesias.list.header']}</h3>
+                            <div class="tec-search-input iglesias-busqueda">
+                                <i class="pi pi-search" aria-hidden="true"/>
                                 <p:inputText id="globalFilter" placeholder="#{msg['form.iglesias.placeholder.search']}"
+                                             ariaLabel="#{msg['form.iglesias.placeholder.search']}"
                                              onkeyup="PF('wdTblIglesia').filter()"
-                                             styleClass="w-full md:w-18rem"/>
-                            </span>
+                                             onkeydown="PrimeFaces.utils.blockEnterKey(event)"/>
+                            </div>
                         </div>
+                    </f:facet>
+
+                    <f:facet name="emptyMessage">
+                        <span class="tec-empty">
+                            <i class="pi pi-building" aria-hidden="true"/>
+                            <span class="tec-empty__text">#{msg['form.iglesias.list.empty']}</span>
+                        </span>
                     </f:facet>
 
                     <p:ajax event="rowSelectCheckbox" update=":frmIglesias:btnEliminarLista"/>
                     <p:ajax event="rowUnselectCheckbox" update=":frmIglesias:btnEliminarLista"/>
                     <p:ajax event="toggleSelect" update=":frmIglesias:btnEliminarLista"/>
 
-                    <p:column selectionMode="multiple" exportable="false"
+                    <p:column selectionMode="multiple" exportable="false" ariaHeaderText="Seleccionar"
                               rendered="#{not iglesiaController.restringidoAIglesia}"
-                              styleClass="text-center" style="width:3rem"/>
+                              styleClass="tec-col-fit iglesias-col-sel"/>
 
-                    <!-- RUC con badge genérico -->
+                    <!-- RUC; los genéricos (00…) se muestran como etiqueta -->
                     <p:column headerText="#{msg['form.iglesias.table.header.ruc']}" sortBy="#{iglesia.documento}"
                               filterBy="#{iglesia.documento}" filterMatchMode="contains"
-                              style="width:10rem">
+                              styleClass="tec-col-fit iglesias-col-ruc">
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.documento}"/>
                         </f:facet>
                         <p:tag rendered="#{not empty iglesia.documento and iglesia.documento.startsWith('00')}"
-                               value="#{msg['form.iglesias.tag.generico']}" icon="pi pi-tag" severity="warning"/>
+                               value="#{msg['form.iglesias.tag.generico']}" icon="pi pi-tag" severity="warning"
+                               styleClass="tec-status"/>
                         <h:outputText rendered="#{not empty iglesia.documento and not iglesia.documento.startsWith('00')}"
-                                      value="#{iglesia.documento}" styleClass="text-sm text-900"
-                                      style="font-family:monospace"/>
-                        <h:outputText rendered="#{empty iglesia.documento}" value="—" styleClass="text-400"/>
+                                      value="#{iglesia.documento}" styleClass="tec-mono"/>
+                        <h:outputText rendered="#{empty iglesia.documento}" value="—" styleClass="tec-muted"/>
                     </p:column>
 
                     <!-- Nombre con avatar de iniciales -->
                     <p:column headerText="#{msg['form.iglesias.table.header.nombre']}" sortBy="#{iglesia.nombre}"
-                              filterBy="#{iglesia.nombre}" filterMatchMode="contains">
+                              filterBy="#{iglesia.nombre}" filterMatchMode="contains"
+                              styleClass="tec-col-primary">
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.nombre}"/>
                         </f:facet>
-                        <div class="flex align-items-center gap-2">
-                            <div class="flex-shrink-0 flex justify-content-center align-items-center border-circle text-white text-sm font-bold"
-                                 style="width:2rem;height:2rem;background:#6366f1">
+                        <span class="iglesias-nombre">
+                            <span class="iglesias-avatar" aria-hidden="true">
                                 #{not empty iglesia.nombre ? iglesia.nombre.substring(0,1) : '?'}
-                            </div>
-                            <div class="flex flex-column">
-                                <span class="font-semibold text-900 text-sm">#{iglesia.nombre}</span>
-                                <small class="text-500">#{iglesia.comunidad}</small>
-                            </div>
-                        </div>
+                            </span>
+                            <span class="iglesias-nombre__texto">
+                                <h:outputText value="#{iglesia.nombre}" styleClass="iglesias-nombre__titulo"/>
+                                <h:outputText rendered="#{not empty iglesia.comunidad}" value="#{iglesia.comunidad}"
+                                              styleClass="iglesias-nombre__meta"/>
+                            </span>
+                        </span>
                     </p:column>
 
-                    <!-- Ubicación (provincia + cantón + parroquia apilados) -->
+                    <!-- Ubicación: provincia, cantón y parroquia apilados -->
                     <p:column headerText="#{msg['form.iglesias.table.header.ubicacion']}" sortBy="#{iglesia.provinciaNombre}"
                               filterBy="#{iglesia.provinciaNombre}" filterMatchMode="contains"
-                              style="width:15rem">
+                              styleClass="iglesias-col-ubicacion">
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.provinciaNombre} / #{iglesia.cantonNombre} / #{iglesia.ubicacionNombre}"/>
                         </f:facet>
-                        <div class="flex flex-column line-height-3">
-                            <small class="text-500 text-xs">
-                                <i class="pi pi-map-marker mr-1"/>
+                        <span class="iglesias-ubicacion">
+                            <span class="iglesias-ubicacion__provincia">
+                                <i class="pi pi-map-marker" aria-hidden="true"/>
                                 <h:outputText value="#{iglesia.provinciaNombre}"/>
-                            </small>
-                            <span class="text-800 text-sm font-medium">#{iglesia.cantonNombre}</span>
-                            <small class="text-600 text-xs">#{iglesia.ubicacionNombre}</small>
-                        </div>
+                            </span>
+                            <h:outputText value="#{iglesia.cantonNombre}" styleClass="iglesias-ubicacion__canton"/>
+                            <h:outputText value="#{iglesia.ubicacionNombre}" styleClass="iglesias-ubicacion__parroquia"/>
+                        </span>
                     </p:column>
 
                     <p:column headerText="#{msg['form.iglesias.table.header.administrador']}"
                               sortBy="#{iglesia.tieneAdministrador}" filterBy="#{iglesia.tieneAdministrador}"
-                              styleClass="text-center" style="width:12rem">
-                        <p:tag rendered="#{iglesia.tieneAdministrador}"
-                               value="#{msg['iglesias.admin.estado.con']}" severity="success" icon="pi pi-user-check"/>
-                        <small rendered="#{iglesia.tieneAdministrador and not empty iglesia.administradorNombre}"
-                               class="block text-500 text-xs mt-1">#{iglesia.administradorNombre}</small>
-                        <p:tag rendered="#{not iglesia.tieneAdministrador}"
-                               value="#{msg['iglesias.admin.estado.sin']}" severity="warning" icon="pi pi-user-minus"/>
+                              filterMatchMode="exact"
+                              styleClass="tec-col-fit iglesias-col-admin">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('wdTblIglesia').filter()"
+                                             autoWidth="false" styleClass="iglesias-filtro-estado"
+                                             panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.filtro.todas']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.estado.con']}" itemValue="true"/>
+                                <f:selectItem itemLabel="#{msg['iglesias.admin.estado.sin']}" itemValue="false"/>
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <span class="iglesias-admin">
+                            <p:tag rendered="#{iglesia.tieneAdministrador}"
+                                   value="#{msg['iglesias.admin.estado.con']}" severity="success" icon="pi pi-user-check"
+                                   styleClass="tec-status"/>
+                            <h:outputText rendered="#{iglesia.tieneAdministrador and not empty iglesia.administradorNombre}"
+                                          value="#{iglesia.administradorNombre}" styleClass="iglesias-admin__nombre"/>
+                            <p:tag rendered="#{not iglesia.tieneAdministrador}"
+                                   value="#{msg['iglesias.admin.estado.sin']}" severity="warning" icon="pi pi-user-minus"
+                                   styleClass="tec-status"/>
+                        </span>
                     </p:column>
 
                     <!-- Acciones -->
                     <p:column headerText="#{msg['form.iglesias.table.header.acciones']}" exportable="false"
-                              styleClass="text-center" style="width:11rem">
-                        <div class="flex justify-content-center align-items-center gap-1 flex-wrap">
+                              selectRow="false" styleClass="tec-col-actions">
+                        <span class="tec-acciones">
                             <!-- action (no actionListener) para garantizar el orden tras f:setPropertyActionListener -->
                             <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.edit.title'] : msg['form.iglesias.btn.disabled.title']}"
-                                         disabled="#{not iglesiaController.puedeRegistrarIglesia}"
-                                         action="#{iglesiaController.editarIglesiaFila}"
-                                         oncomplete="if (!args.validationFailed) PF('dlgIglesia').show()"
-                                         process="@this" update=":frmDlgIglesia">
-                            <f:setPropertyActionListener value="#{iglesia}"
-                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
+                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.edit.title'] : msg['form.iglesias.btn.disabled.title']}"
+                                             ariaLabel="#{msg['form.iglesias.btn.edit.title']}"
+                                             disabled="#{not iglesiaController.puedeRegistrarIglesia}"
+                                             action="#{iglesiaController.editarIglesiaFila}"
+                                             oncomplete="if (!args.validationFailed) PF('dlgIglesia').show()"
+                                             process="@this" update=":frmDlgIglesia">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
                             </p:commandButton>
 
                             <p:commandButton icon="#{iglesia.tieneAdministrador ? 'pi pi-user-edit' : 'pi pi-user-plus'}"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-secondary"
-                                         title="#{iglesiaController.puedeAsignarAdministradores ? (iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']) : msg['iglesias.admin.error.fase.no.permite']}"
-                                         rendered="#{iglesiaController.puedeGestionarAdministradores}"
-                                         disabled="#{not iglesiaController.puedeAsignarAdministradores}"
-                                         action="#{iglesiaController.prepararAsignacionAdministrador}"
-                                         process="@this" update=":frmDlgAdministradorIglesia :frmGlobal:growlGlobal"
-                                         oncomplete="if (args.dialogReady) PF('dlgAsignarAdministrador').show()">
-                            <f:setPropertyActionListener value="#{iglesia}"
-                                                         target="#{iglesiaController.iglesiaAdministradorSeleccionada}"/>
+                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             title="#{iglesiaController.puedeAsignarAdministradores ? (iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']) : msg['iglesias.admin.error.fase.no.permite']}"
+                                             ariaLabel="#{iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']}"
+                                             rendered="#{iglesiaController.puedeGestionarAdministradores}"
+                                             disabled="#{not iglesiaController.puedeAsignarAdministradores}"
+                                             action="#{iglesiaController.prepararAsignacionAdministrador}"
+                                             process="@this" update=":frmDlgAdministradorIglesia :frmGlobal:growlGlobal"
+                                             oncomplete="if (args.dialogReady) PF('dlgAsignarAdministrador').show()">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaAdministradorSeleccionada}"/>
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
-                                         rendered="#{not iglesiaController.restringidoAIglesia}"
-                                         disabled="#{not iglesiaController.puedeRegistrarIglesia}"
-                                         action="#{iglesiaController.eliminarIglesiaFila}"
-                                         process="@this" update=":frmIglesias :frmProgreso :frmStats">
-                            <f:setPropertyActionListener value="#{iglesia}"
-                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
-                            <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
-                                       message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
-                                       icon="pi pi-exclamation-triangle"/>
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
+                                             ariaLabel="#{msg['form.iglesias.btn.delete.title']}"
+                                             rendered="#{not iglesiaController.restringidoAIglesia}"
+                                             disabled="#{not iglesiaController.puedeRegistrarIglesia}"
+                                             action="#{iglesiaController.eliminarIglesiaFila}"
+                                             process="@this" update=":frmIglesias :frmProgreso :frmStats">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
+                                <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
+                                           message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-folder-open"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-success"
-                                         title="#{msg['form.iglesias.btn.docs.title']}"
-                                         rendered="#{iglesia.tieneDocumentos}"
-                                         action="#{iglesiaController.cargaArchivosListaMiembros()}"
-                                         process="@this"
-                                         oncomplete="if (!args.validationFailed) PF('pndHistory').show()"
-                                         update=":frmDocs">
-                            <f:setPropertyActionListener value="#{iglesia}"
-                                                         target="#{iglesiaController.iglesiaSeleccionado}"/>
+                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             title="#{msg['form.iglesias.btn.docs.title']}"
+                                             ariaLabel="#{msg['form.iglesias.btn.docs.title']}"
+                                             rendered="#{iglesia.tieneDocumentos}"
+                                             action="#{iglesiaController.cargaArchivosListaMiembros()}"
+                                             process="@this"
+                                             oncomplete="if (!args.validationFailed) PF('pndHistory').show()"
+                                             update=":frmDocs">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
                             </p:commandButton>
-                        </div>
+                        </span>
                     </p:column>
 
                 </p:dataTable>
+            </h:form>
+        </div>
 
-            </div>
-        </h:form>
-
+        <!-- ======================================================
+             DIÁLOGO: ASIGNAR / REASIGNAR ADMINISTRADOR
+             ====================================================== -->
         <h:form id="frmDlgAdministradorIglesia">
             <p:dialog widgetVar="dlgAsignarAdministrador" modal="true" responsive="true"
-                      closable="true" closeOnEscape="true" width="760" style="max-width:95vw;max-height:90vh"
+                      fitViewport="true" closable="true" closeOnEscape="true"
                       header="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.dialogo.titulo']}"
-                      contentStyle="padding:0;overflow:hidden">
-                <p:outputPanel id="pnlAsignarAdmin" layout="block">
-                    <div class="flex align-items-center gap-2 surface-100 px-3 py-2">
-                        <i class="pi pi-building text-primary"/>
-                        <div>
-                            <span class="block text-500 text-sm">#{msg['iglesias.admin.dialogo.iglesia']}</span>
-                            <span class="font-semibold text-900">#{iglesiaController.iglesiaAdministradorSeleccionada.nombre}</span>
-                        </div>
+                      styleClass="tec-dialog tec-dialog--md">
+                <p:outputPanel id="pnlAsignarAdmin" layout="block" styleClass="tec-form">
+                    <div class="iglesias-dialog-contexto">
+                        <i class="pi pi-building" aria-hidden="true"/>
+                        <span class="min-w-0">
+                            <span class="iglesias-dialog-contexto__label">#{msg['iglesias.admin.dialogo.iglesia']}</span>
+                            <span class="iglesias-dialog-contexto__valor">#{iglesiaController.iglesiaAdministradorSeleccionada.nombre}</span>
+                        </span>
                     </div>
 
                     <p:messages id="messagesAdministrador" globalOnly="false" showDetail="false"
-                                closable="true" styleClass="mx-3 mt-2"/>
+                                closable="true" styleClass="mb-2"/>
 
-                    <p:outputPanel id="administradorActual" layout="block" styleClass="px-3 pt-2">
+                    <p:outputPanel id="administradorActual" layout="block">
                         <ui:fragment rendered="#{iglesiaController.administradorActual ne null}">
-                            <div class="surface-50 border-round p-2">
-                                <span class="block text-500 text-xs font-medium mb-1">#{msg['iglesias.admin.dialogo.actual']}</span>
-                                <div class="flex flex-wrap align-items-center gap-x-3 gap-y-1 text-sm">
-                                    <span class="font-semibold text-800">#{iglesiaController.administradorActual.personaNombres}</span>
-                                    <span class="text-600">#{iglesiaController.administradorActual.personaDocumento}</span>
-                                    <span class="text-500">#{empty iglesiaController.administradorActual.correo ? '—' : iglesiaController.administradorActual.correo}</span>
-                                </div>
+                            <div class="iglesias-persona">
+                                <span class="iglesias-persona__label">#{msg['iglesias.admin.dialogo.actual']}</span>
+                                <span class="iglesias-persona__datos">
+                                    <b>#{iglesiaController.administradorActual.personaNombres}</b>
+                                    <span class="tec-mono">#{iglesiaController.administradorActual.personaDocumento}</span>
+                                    <span class="tec-muted">#{empty iglesiaController.administradorActual.correo ? '—' : iglesiaController.administradorActual.correo}</span>
+                                </span>
                             </div>
                         </ui:fragment>
                     </p:outputPanel>
 
-                    <div class="px-3 pt-2">
                     <p:dataTable id="tblCandidatosAdministrador"
                                  value="#{iglesiaController.candidatosAdministrador}" var="vinculo"
                                  selection="#{iglesiaController.candidatoAdministrador}" rowKey="#{vinculo.id}"
                                  selectionMode="single" paginator="true" paginatorPosition="top" rows="6"
                                  emptyMessage="#{msg['iglesias.admin.lista.vacia']}"
                                  responsiveLayout="scroll" scrollable="true" scrollHeight="230"
-                                 styleClass="ui-datatable-sm tabla-asignar-admin-compacta">
+                                 size="small"
+                                 styleClass="tec-table tabla-asignar-admin-compacta">
                         <p:ajax event="rowSelect" listener="#{iglesiaController.seleccionarCandidatoAdministrador}"
-                                 process="@this"
-                                 update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
-                        <p:column selectionMode="single" style="width:3rem" exportable="false"/>
+                                process="@this"
+                                update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
+                        <p:column selectionMode="single" exportable="false" ariaHeaderText="Seleccionar"
+                                  styleClass="tec-col-fit"/>
                         <p:column headerText="#{msg['iglesias.admin.columna.cedula']}"
-                                  filterBy="#{vinculo.persona.documento}" filterMatchMode="contains" style="width:12rem">
-                            <h:outputText value="#{vinculo.persona.documento}"/>
+                                  filterBy="#{vinculo.persona.documento}" filterMatchMode="contains"
+                                  styleClass="tec-col-fit iglesias-col-ruc">
+                            <h:outputText value="#{vinculo.persona.documento}" styleClass="tec-mono"/>
                         </p:column>
                         <p:column headerText="#{msg['iglesias.admin.columna.nombres']}"
                                   filterBy="#{vinculo.persona.nombres}" filterMatchMode="contains">
                             <h:outputText value="#{vinculo.persona.nombres}"/>
                         </p:column>
                     </p:dataTable>
-                    </div>
 
-                    <p:outputPanel id="datosAdministrador" layout="block" styleClass="px-3 pb-2">
+                    <p:outputPanel id="datosAdministrador" layout="block">
                         <ui:fragment rendered="#{iglesiaController.candidatoAdministrador ne null}">
-                            <div class="formgrid grid">
-                                 <div class="field col-12 mb-2">
-                                    <div class="flex flex-wrap align-items-center gap-x-3 gap-y-1 surface-50 border-round p-2 text-sm">
-                                        <span class="text-500">#{msg['iglesias.admin.dialogo.seleccionado']}</span>
-                                        <span class="font-semibold text-800">#{iglesiaController.candidatoAdministrador.persona.nombres}</span>
-                                        <span class="text-600">#{iglesiaController.candidatoAdministrador.persona.documento}</span>
+                            <div class="iglesias-persona iglesias-persona--seleccion">
+                                <span class="iglesias-persona__label">#{msg['iglesias.admin.dialogo.seleccionado']}</span>
+                                <span class="iglesias-persona__datos">
+                                    <b>#{iglesiaController.candidatoAdministrador.persona.nombres}</b>
+                                    <span class="tec-mono">#{iglesiaController.candidatoAdministrador.persona.documento}</span>
+                                </span>
+                            </div>
+
+                            <p:outputPanel id="diagnosticoAdministrador" layout="block">
+                                <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}">
+                                    <div class="callout callout--danger iglesias-diagnostico">
+                                        <span class="iglesias-diagnostico__titulo">
+                                            <i class="pi pi-exclamation-triangle" aria-hidden="true"/>
+                                            #{msg['iglesias.admin.duplicado.titulo']}
+                                        </span>
+                                        <p>#{msg['iglesias.admin.duplicado.descripcion']}</p>
+                                        <ul>
+                                            <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.personasDuplicadas}" var="personaDuplicada">
+                                                <li>#{personaDuplicada}</li>
+                                            </ui:repeat>
+                                        </ul>
                                     </div>
-                                 </div>
-                                <p:outputPanel id="diagnosticoAdministrador" layout="block">
-                                    <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}">
-                                        <div class="border-left-3 border-red-500 surface-50 border-round p-3 mb-2">
-                                            <div class="flex align-items-center gap-2 text-red-700 font-semibold text-sm">
-                                                <i class="pi pi-exclamation-triangle"/>
-                                                <span>#{msg['iglesias.admin.duplicado.titulo']}</span>
-                                            </div>
-                                            <p class="text-700 text-sm mt-2 mb-1">#{msg['iglesias.admin.duplicado.descripcion']}</p>
-                                            <ul class="m-0 pl-3 text-700 text-sm">
-                                                <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.personasDuplicadas}" var="personaDuplicada">
-                                                    <li>#{personaDuplicada}</li>
-                                                </ui:repeat>
-                                            </ul>
-                                        </div>
-                                    </ui:fragment>
-                                    <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion}">
-                                        <div class="border-left-3 border-orange-500 surface-50 border-round p-3 mb-2">
-                                            <div class="flex align-items-center gap-2 text-orange-700 font-semibold text-sm">
-                                                <i class="pi pi-exclamation-triangle"/>
-                                                <span>#{msg['iglesias.admin.reasignacion.titulo']}</span>
-                                            </div>
-                                            <p class="text-700 text-sm mt-2 mb-1">#{msg['iglesias.admin.reasignacion.descripcion']}</p>
-                                            <ul class="m-0 pl-3 text-700 text-sm">
-                                                <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.iglesiasAsociadas}" var="iglesiaAsociada">
-                                                    <li>#{iglesiaAsociada}</li>
-                                                </ui:repeat>
-                                            </ul>
-                                        </div>
-                                    </ui:fragment>
-                                </p:outputPanel>
-                                <div class="field col-12 md:col-6 mb-0">
-                                    <label for="correoAdministrador" class="text-700 font-medium text-sm">
-                                        #{msg['iglesias.admin.label.correo']} <span class="text-red-500">*</span>
+                                </ui:fragment>
+                                <ui:fragment rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion}">
+                                    <div class="callout callout--warning iglesias-diagnostico">
+                                        <span class="iglesias-diagnostico__titulo">
+                                            <i class="pi pi-exclamation-triangle" aria-hidden="true"/>
+                                            #{msg['iglesias.admin.reasignacion.titulo']}
+                                        </span>
+                                        <p>#{msg['iglesias.admin.reasignacion.descripcion']}</p>
+                                        <ul>
+                                            <ui:repeat value="#{iglesiaController.diagnosticoAdministrador.iglesiasAsociadas}" var="iglesiaAsociada">
+                                                <li>#{iglesiaAsociada}</li>
+                                            </ui:repeat>
+                                        </ul>
+                                    </div>
+                                </ui:fragment>
+                            </p:outputPanel>
+
+                            <div class="formgrid grid ui-fluid">
+                                <div class="field col-12 md:col-7 mb-0">
+                                    <label for="correoAdministrador" class="tec-field-label">
+                                        #{msg['iglesias.admin.label.correo']} <span class="tec-requerido">*</span>
                                     </label>
                                     <p:inputText id="correoAdministrador" value="#{iglesiaController.correoAdministrador}"
-                                                 required="true" maxlength="150" type="email" styleClass="w-full"
+                                                 required="true" maxlength="150" type="email"
                                                  validatorMessage="#{msg['usuarios.mensaje.correo.invalido']}">
                                         <f:validateRegex pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
                                     </p:inputText>
@@ -583,19 +585,19 @@
                     </p:outputPanel>
                 </p:outputPanel>
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          type="button" onclick="PF('dlgAsignarAdministrador').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"/>
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                         <p:commandButton id="btnConfirmarAdministrador"
-                                          value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
-                                          title="#{iglesiaController.puedeAsignarAdministradores ? null : msg['iglesias.admin.error.fase.no.permite']}"
-                                          disabled="#{iglesiaController.candidatoAdministrador eq null or not iglesiaController.puedeAsignarAdministradores or (iglesiaController.diagnosticoAdministrador ne null and not iglesiaController.diagnosticoAdministrador.puedeConfirmar)}"
-                                          action="#{iglesiaController.asignarAdministrador}"
+                                         value="#{iglesiaController.administradorActual ne null ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.confirmar']}" icon="pi pi-check"
+                                         title="#{iglesiaController.puedeAsignarAdministradores ? null : msg['iglesias.admin.error.fase.no.permite']}"
+                                         disabled="#{iglesiaController.candidatoAdministrador eq null or not iglesiaController.puedeAsignarAdministradores or (iglesiaController.diagnosticoAdministrador ne null and not iglesiaController.diagnosticoAdministrador.puedeConfirmar)}"
+                                         action="#{iglesiaController.asignarAdministrador}"
                                          process="@this :frmDlgAdministradorIglesia:datosAdministrador"
-                                          update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
-                                          oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
-                                          styleClass="ui-button-success">
+                                         update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
+                                         oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
+                                         styleClass="tec-btn ui-button-success">
                             <p:confirm rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion and not iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}"
                                        header="#{msg['iglesias.admin.reasignacion.confirmar.titulo']}"
                                        message="#{msg['iglesias.admin.reasignacion.confirmar.descripcion']} #{iglesiaController.diagnosticoAdministrador.iglesiasAsociadasTexto}"
@@ -614,167 +616,167 @@
         <h:form id="frmDlgIglesia">
             <p:dialog widgetVar="dlgIglesia"
                       header="#{iglesiaController.iglesiaSeleccionado.id eq null ? msg['form.iglesias.dialog.title.new'] : msg['form.iglesias.dialog.title.edit']}"
-                      modal="true" responsive="true" closable="true" closeOnEscape="true"
-                      width="840" style="max-width:96vw"
-                      contentStyle="overflow-y:auto;max-height:75vh">
+                      modal="true" responsive="true" fitViewport="true"
+                      closable="true" closeOnEscape="true"
+                      styleClass="tec-dialog tec-dialog--md">
 
-                <!-- Sección: Identificación -->
-                <div class="flex align-items-center gap-2 mb-2">
-                    <i class="pi pi-id-card text-primary"></i>
-                    <span class="font-semibold text-700 text-sm uppercase">#{msg['form.iglesias.dialog.section.identificacion']}</span>
-                </div>
+                <div class="tec-form ui-fluid">
+                    <!-- Sección: Identificación -->
+                    <div class="iglesias-seccion">
+                        <i class="pi pi-id-card" aria-hidden="true"/>
+                        <span>#{msg['form.iglesias.dialog.section.identificacion']}</span>
+                    </div>
 
-                <div class="formgrid grid">
+                    <div class="formgrid grid">
 
-                    <!-- Toggle RUC -->
-                    <div class="field col-12">
-                        <label class="font-medium text-700 block mb-2 text-sm">#{msg['form.iglesias.dialog.tieneRuc.question']}</label>
-                        <p:outputPanel id="tieneRucPanel" layout="block">
-                            <p:commandButton id="btnConRuc"
-                                             value="#{msg['form.iglesias.dialog.tieneRuc.yes']}"
-                                             icon="pi pi-check"
-                                             styleClass="mr-2 #{iglesiaController.tieneRuc ? 'ui-button-success' : 'ui-button-outlined ui-button-secondary'}"
-                                             disabled="#{not iglesiaController.rucToggleHabilitado}"
-                                             actionListener="#{iglesiaController.seleccionarConRuc}"
-                                             process="@this" update="tieneRucPanel rucPanel">
-                                <p:tooltip for="@parent"
-                                           rendered="#{not iglesiaController.rucToggleHabilitado}"
-                                           value="#{msg['form.iglesias.dialog.tieneRuc.locked']}"/>
-                            </p:commandButton>
-                            <p:commandButton id="btnSinRuc"
-                                             value="#{msg['form.iglesias.dialog.tieneRuc.no']}"
-                                             icon="pi pi-ban"
-                                             styleClass="#{not iglesiaController.tieneRuc ? 'ui-button-warning' : 'ui-button-outlined ui-button-secondary'}"
-                                             disabled="#{not iglesiaController.rucToggleHabilitado}"
-                                             actionListener="#{iglesiaController.seleccionarSinRuc}"
-                                             process="@this" update="tieneRucPanel rucPanel">
-                                <p:tooltip for="@parent"
-                                           rendered="#{not iglesiaController.rucToggleHabilitado}"
-                                           value="#{msg['form.iglesias.dialog.tieneRuc.locked']}"/>
-                            </p:commandButton>
+                        <!-- ¿Tiene RUC? -->
+                        <div class="field col-12">
+                            <label class="tec-field-label">#{msg['form.iglesias.dialog.tieneRuc.question']}</label>
+                            <p:outputPanel id="tieneRucPanel" layout="block" styleClass="iglesias-ruc-opciones">
+                                <p:commandButton id="btnConRuc"
+                                                 value="#{msg['form.iglesias.dialog.tieneRuc.yes']}"
+                                                 icon="pi pi-check"
+                                                 styleClass="tec-btn #{iglesiaController.tieneRuc ? 'ui-button-success' : 'ui-button-outlined ui-button-secondary'}"
+                                                 disabled="#{not iglesiaController.rucToggleHabilitado}"
+                                                 actionListener="#{iglesiaController.seleccionarConRuc}"
+                                                 process="@this" update="tieneRucPanel rucPanel">
+                                    <p:tooltip for="@parent"
+                                               rendered="#{not iglesiaController.rucToggleHabilitado}"
+                                               value="#{msg['form.iglesias.dialog.tieneRuc.locked']}"/>
+                                </p:commandButton>
+                                <p:commandButton id="btnSinRuc"
+                                                 value="#{msg['form.iglesias.dialog.tieneRuc.no']}"
+                                                 icon="pi pi-ban"
+                                                 styleClass="tec-btn #{not iglesiaController.tieneRuc ? 'ui-button-warning' : 'ui-button-outlined ui-button-secondary'}"
+                                                 disabled="#{not iglesiaController.rucToggleHabilitado}"
+                                                 actionListener="#{iglesiaController.seleccionarSinRuc}"
+                                                 process="@this" update="tieneRucPanel rucPanel">
+                                    <p:tooltip for="@parent"
+                                               rendered="#{not iglesiaController.rucToggleHabilitado}"
+                                               value="#{msg['form.iglesias.dialog.tieneRuc.locked']}"/>
+                                </p:commandButton>
+                            </p:outputPanel>
+                        </div>
+
+                        <!-- RUC -->
+                        <p:outputPanel id="rucPanel" layout="block" styleClass="field col-12 md:col-5">
+                            <label for="ruc" class="tec-field-label">
+                                #{msg['form.iglesias.label.ruc']}
+                                <h:outputText rendered="#{iglesiaController.tieneRuc}"
+                                              value=" *" styleClass="tec-requerido"/>
+                            </label>
+                            <p:inputText id="ruc"
+                                         rendered="#{iglesiaController.tieneRuc}"
+                                         value="#{iglesiaController.iglesiaSeleccionado.documento}"
+                                         required="true" maxlength="13">
+                                <p:keyFilter mask="num"/>
+                                <p:ajax event="change" update="@form"
+                                        listener="#{iglesiaController.buscaIglesiaPorDocumento}"
+                                        process="@this"/>
+                                <f:validateLength minimum="13" maximum="13"/>
+                            </p:inputText>
+                            <p:inputText id="rucGenerico"
+                                         rendered="#{not iglesiaController.tieneRuc}"
+                                         value="#{iglesiaController.iglesiaSeleccionado.documento}"
+                                         readonly="true"/>
+                            <small class="iglesias-ayuda">
+                                <h:outputText rendered="#{iglesiaController.tieneRuc}"
+                                              value="#{msg['form.iglesias.label.ruc.hint']}"/>
+                                <h:outputText rendered="#{not iglesiaController.tieneRuc}"
+                                              value="#{msg['form.iglesias.label.ruc.generic.hint']}"
+                                              styleClass="iglesias-ayuda--aviso"/>
+                            </small>
                         </p:outputPanel>
+
+                        <!-- Nombre -->
+                        <div class="field col-12 md:col-7">
+                            <label for="nombres" class="tec-field-label">
+                                #{msg['form.iglesias.label.nombre']} <span class="tec-requerido">*</span>
+                            </label>
+                            <p:inputText id="nombres" value="#{iglesiaController.iglesiaSeleccionado.nombre}"
+                                         required="true" maxlength="255"
+                                         onkeyup="value = value.toUpperCase()"/>
+                        </div>
+
+                        <!-- Comunidad -->
+                        <div class="field col-12">
+                            <label for="comunidad" class="tec-field-label">#{msg['form.iglesias.label.comunidad']}</label>
+                            <p:inputText id="comunidad" value="#{iglesiaController.iglesiaSeleccionado.comunidad}"
+                                         maxlength="255" onkeyup="value = value.toUpperCase()"/>
+                        </div>
+
                     </div>
 
-                    <!-- RUC (col-5) -->
-                    <p:outputPanel id="rucPanel" layout="block" styleClass="field col-12 md:col-5">
-                        <label for="ruc" class="font-medium text-700 text-sm">
-                            #{msg['form.iglesias.label.ruc']}
-                            <h:outputText rendered="#{iglesiaController.tieneRuc}"
-                                          value=" *" styleClass="text-red-500"/>
-                        </label>
-                        <p:inputText id="ruc"
-                                     rendered="#{iglesiaController.tieneRuc}"
-                                     value="#{iglesiaController.iglesiaSeleccionado.documento}"
-                                     required="true" maxlength="13"
-                                     styleClass="w-full">
-                            <p:keyFilter mask="num"/>
-                            <p:ajax event="change" update="@form"
-                                    listener="#{iglesiaController.buscaIglesiaPorDocumento}"
-                                    process="@this"/>
-                            <f:validateLength minimum="13" maximum="13"/>
-                        </p:inputText>
-                        <p:inputText id="rucGenerico"
-                                     rendered="#{not iglesiaController.tieneRuc}"
-                                     value="#{iglesiaController.iglesiaSeleccionado.documento}"
-                                     readonly="true" styleClass="w-full"/>
-                        <small class="text-500">
-                            <h:outputText rendered="#{iglesiaController.tieneRuc}"
-                                          value="#{msg['form.iglesias.label.ruc.hint']}"/>
-                            <h:outputText rendered="#{not iglesiaController.tieneRuc}"
-                                          value="#{msg['form.iglesias.label.ruc.generic.hint']}"
-                                          styleClass="text-orange-500 font-medium"/>
-                        </small>
-                    </p:outputPanel>
+                    <p:divider styleClass="my-2"/>
 
-                    <!-- Nombre (col-7) -->
-                    <div class="field col-12 md:col-7">
-                        <label for="nombres" class="font-medium text-700 text-sm">
-                            #{msg['form.iglesias.label.nombre']} <span class="text-red-500">*</span>
-                        </label>
-                        <p:inputText id="nombres" value="#{iglesiaController.iglesiaSeleccionado.nombre}"
-                                     required="true" maxlength="255"
-                                     onkeyup="value = value.toUpperCase()" styleClass="w-full"/>
+                    <!-- Sección: Ubicación geográfica -->
+                    <div class="iglesias-seccion">
+                        <i class="pi pi-map-marker" aria-hidden="true"/>
+                        <span>#{msg['form.iglesias.dialog.section.ubicacion']}</span>
                     </div>
 
-                    <!-- Comunidad (col-8) -->
-                    <div class="field col-12 md:col-8">
-                        <label for="comunidad" class="font-medium text-700 text-sm">#{msg['form.iglesias.label.comunidad']}</label>
-                        <p:inputText id="comunidad" value="#{iglesiaController.iglesiaSeleccionado.comunidad}"
-                                     maxlength="255" onkeyup="value = value.toUpperCase()"
-                                     styleClass="w-full"/>
+                    <div class="formgrid grid">
+
+                        <!-- Provincia (estado exclusivo del diálogo).
+                             NO usar filter="true" — bug PrimeFaces 11 concatena etiquetas tras update AJAX. -->
+                        <div class="field col-12 md:col-4 mb-0">
+                            <label for="provinciaDlg" class="tec-field-label">
+                                #{msg['form.iglesias.label.provincia']} <span class="tec-requerido">*</span>
+                            </label>
+                            <p:selectOneMenu id="provinciaDlg" value="#{iglesiaController.provinciaDialogoId}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.provincia']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.provincias}" var="prov"
+                                               itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesDialogo()}"
+                                        process="@this" update="cantonSel parroquiaSel"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <!-- Cantón (estado exclusivo del diálogo) -->
+                        <div class="field col-12 md:col-4 mb-0">
+                            <label for="cantonSel" class="tec-field-label">
+                                #{msg['form.iglesias.label.canton']} <span class="tec-requerido">*</span>
+                            </label>
+                            <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonDialogoId}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.canton']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.cantonesDialogo}" var="canton"
+                                               itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                <p:ajax event="change" listener="#{iglesiaController.obtieneParroquiasEnDialogo()}"
+                                        process="@this" update="parroquiaSel"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <!-- Parroquia (estado exclusivo del diálogo) -->
+                        <div class="field col-12 md:col-4 mb-0">
+                            <label for="parroquiaSel" class="tec-field-label">
+                                #{msg['form.iglesias.label.parroquia']} <span class="tec-requerido">*</span>
+                            </label>
+                            <p:selectOneMenu id="parroquiaSel"
+                                             value="#{iglesiaController.iglesiaSeleccionado.ubicacionId}"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.parroquia']}"
+                                              itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{iglesiaController.parroquiasDialogo}" var="parroquia"
+                                               itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                            </p:selectOneMenu>
+                        </div>
+
                     </div>
-
-                </div>
-
-                <p:divider styleClass="my-2"/>
-
-                <!-- Sección: Ubicación geográfica -->
-                <div class="flex align-items-center gap-2 mb-2">
-                    <i class="pi pi-map-marker text-primary"></i>
-                    <span class="font-semibold text-700 text-sm uppercase">#{msg['form.iglesias.dialog.section.ubicacion']}</span>
-                </div>
-
-                <div class="formgrid grid">
-
-                    <!-- Provincia (estado exclusivo del diálogo).
-                         NO usar filter="true" — bug PrimeFaces 11 concatena etiquetas tras update AJAX. -->
-                    <div class="field col-12 md:col-4">
-                        <label for="provinciaDlg" class="font-medium text-700 text-sm">
-                            #{msg['form.iglesias.label.provincia']} <span class="text-red-500">*</span>
-                        </label>
-                        <p:selectOneMenu id="provinciaDlg" value="#{iglesiaController.provinciaDialogoId}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.provincia']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.provincias}" var="prov"
-                                           itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesDialogo()}"
-                                    process="@this" update="cantonSel parroquiaSel"/>
-                        </p:selectOneMenu>
-                    </div>
-
-                    <!-- Cantón (estado exclusivo del diálogo) -->
-                    <div class="field col-12 md:col-4">
-                        <label for="cantonSel" class="font-medium text-700 text-sm">
-                            #{msg['form.iglesias.label.canton']} <span class="text-red-500">*</span>
-                        </label>
-                        <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonDialogoId}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.canton']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.cantonesDialogo}" var="canton"
-                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{iglesiaController.obtieneParroquiasEnDialogo()}"
-                                    process="@this" update="parroquiaSel"/>
-                        </p:selectOneMenu>
-                    </div>
-
-                    <!-- Parroquia (estado exclusivo del diálogo) -->
-                    <div class="field col-12 md:col-4">
-                        <label for="parroquiaSel" class="font-medium text-700 text-sm">
-                            #{msg['form.iglesias.label.parroquia']} <span class="text-red-500">*</span>
-                        </label>
-                        <p:selectOneMenu id="parroquiaSel"
-                                         value="#{iglesiaController.iglesiaSeleccionado.ubicacionId}"
-                                         styleClass="w-full">
-                            <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.parroquia']}"
-                                          itemValue="#{null}" noSelectionOption="true"/>
-                            <f:selectItems value="#{iglesiaController.parroquiasDialogo}" var="parroquia"
-                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                        </p:selectOneMenu>
-                    </div>
-
                 </div>
 
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2 w-full mt-1">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          actionListener="#{iglesiaController.cancelarIglesia}"
                                          oncomplete="PF('dlgIglesia').hide()"
                                          process="@this" update=":frmIglesias"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn ui-button-success"
                                          actionListener="#{iglesiaController.actualizarIglesia}"
                                          oncomplete="if (!args.validationFailed) PF('dlgIglesia').hide()"
                                          process="@form" update="@form :frmIglesias :frmProgreso :frmStats"/>
@@ -788,62 +790,56 @@
              ====================================================== -->
         <h:form id="frmDetalle">
             <p:dialog widgetVar="dlgDetalle" header="#{msg['form.iglesias.dialog.title.detail']}"
-                      modal="true" closable="true" responsive="true" width="600"
-                      style="max-width:96vw" contentStyle="overflow-y:auto;max-height:80vh"
-                      dynamic="true" appendTo="@(body)">
+                      modal="true" closable="true" responsive="true" fitViewport="true"
+                      dynamic="true" appendTo="@(body)"
+                      styleClass="tec-dialog">
                 <p:outputPanel rendered="#{iglesiaController.iglesiaSeleccionado ne null}">
 
-                    <!-- Tarjeta de encabezado -->
-                    <div class="flex align-items-center gap-3 mb-3 p-3 border-round-lg surface-100">
-                        <div class="flex justify-content-center align-items-center border-circle text-white font-bold text-xl flex-shrink-0"
-                             style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                    <div class="iglesias-detalle__cabecera">
+                        <span class="iglesias-avatar iglesias-avatar--lg" aria-hidden="true">
                             #{not empty iglesiaController.iglesiaSeleccionado.nombre ? iglesiaController.iglesiaSeleccionado.nombre.substring(0,1) : '?'}
-                        </div>
-                        <div class="flex-1">
-                            <span class="block font-bold text-900 text-lg">#{iglesiaController.iglesiaSeleccionado.nombre}</span>
-                            <small class="text-500">#{iglesiaController.iglesiaSeleccionado.comunidad}</small>
-                        </div>
+                        </span>
+                        <span class="iglesias-nombre__texto">
+                            <span class="iglesias-detalle__nombre">#{iglesiaController.iglesiaSeleccionado.nombre}</span>
+                            <span class="iglesias-nombre__meta">#{iglesiaController.iglesiaSeleccionado.comunidad}</span>
+                        </span>
                     </div>
 
-                    <!-- Datos de identificación -->
                     <div class="grid">
-                        <div class="col-12 md:col-6 mb-2">
-                            <span class="block text-500 text-xs font-medium uppercase mb-1">#{msg['form.iglesias.table.header.ruc']}</span>
+                        <div class="col-12 sm:col-6">
+                            <span class="iglesias-dato__label">#{msg['form.iglesias.table.header.ruc']}</span>
                             <p:tag rendered="#{not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00')}"
-                                   value="#{msg['form.iglesias.tag.generico']}" icon="pi pi-tag" severity="warning"/>
-                            <span rendered="#{not (not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00'))}"
-                                  class="text-900 font-medium" style="font-family:monospace">
-                                <h:outputText value="#{iglesiaController.iglesiaSeleccionado.documento}"/>
-                            </span>
+                                   value="#{msg['form.iglesias.tag.generico']}" icon="pi pi-tag" severity="warning"
+                                   styleClass="tec-status"/>
+                            <h:outputText rendered="#{not (not empty iglesiaController.iglesiaSeleccionado.documento and iglesiaController.iglesiaSeleccionado.documento.startsWith('00'))}"
+                                          value="#{iglesiaController.iglesiaSeleccionado.documento}" styleClass="tec-mono"/>
                         </div>
-                        <div class="col-12 md:col-6 mb-2">
-                            <span class="block text-500 text-xs font-medium uppercase mb-1">#{msg['form.iglesias.label.miembros']}</span>
-                            <span class="text-900 font-medium">
-                                <h:outputText value="#{iglesiaController.iglesiaSeleccionado.totalMiembros}"/>
-                            </span>
+                        <div class="col-12 sm:col-6">
+                            <span class="iglesias-dato__label">#{msg['form.iglesias.label.miembros']}</span>
+                            <h:outputText value="#{iglesiaController.iglesiaSeleccionado.totalMiembros}"
+                                          styleClass="iglesias-dato__valor"/>
                         </div>
                     </div>
 
                     <p:divider styleClass="my-2"/>
 
-                    <!-- Ubicación en forma de breadcrumb -->
-                    <span class="block text-500 text-xs font-medium uppercase mb-2">#{msg['form.iglesias.label.ubicacion']}</span>
-                    <div class="flex flex-wrap align-items-center gap-1">
+                    <span class="iglesias-dato__label">#{msg['form.iglesias.label.ubicacion']}</span>
+                    <div class="iglesias-ruta">
                         <p:tag value="#{iglesiaController.iglesiaSeleccionado.provinciaNombre}"
-                               icon="pi pi-map" severity="info"/>
-                        <i class="pi pi-chevron-right text-300 text-xs"/>
+                               icon="pi pi-map" severity="info" styleClass="tec-status"/>
+                        <i class="pi pi-chevron-right" aria-hidden="true"/>
                         <p:tag value="#{iglesiaController.iglesiaSeleccionado.cantonNombre}"
-                               icon="pi pi-map-marker" severity="info"/>
-                        <i class="pi pi-chevron-right text-300 text-xs"/>
+                               icon="pi pi-map-marker" severity="info" styleClass="tec-status"/>
+                        <i class="pi pi-chevron-right" aria-hidden="true"/>
                         <p:tag value="#{iglesiaController.iglesiaSeleccionado.ubicacionNombre}"
-                               icon="pi pi-home" severity="secondary"/>
+                               icon="pi pi-home" severity="secondary" styleClass="tec-status"/>
                     </div>
 
                 </p:outputPanel>
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          onclick="PF('dlgDetalle').hide()" type="button"/>
                     </div>
                 </f:facet>
@@ -856,57 +852,62 @@
         <h:form id="frmDocs">
             <p:dialog header="#{msg['form.iglesias.dialog.docs.title']} — #{iglesiaController.iglesiaSeleccionado.nombre}"
                       id="pndHistory" widgetVar="pndHistory"
-                      closable="true" modal="true" responsive="true"
-                      width="900" style="max-width:96vw"
-                      contentStyle="overflow-y:auto;max-height:75vh"
-                      dynamic="true" appendTo="@(body)">
+                      closable="true" modal="true" responsive="true" fitViewport="true"
+                      dynamic="true" appendTo="@(body)"
+                      styleClass="tec-dialog tec-dialog--lg">
 
                 <p:dataTable var="doc" value="#{iglesiaController.documentos}"
                              widgetVar="docTable" id="docTable"
                              emptyMessage="#{msg['form.iglesias.dialog.docs.empty']}"
                              reflow="true" rows="5" paginator="true" paginatorPosition="bottom"
+                             pageLinks="5"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} documentos"
                              rowsPerPageTemplate="5,10,15"
-                             showGridlines="true" size="small">
+                             size="small"
+                             styleClass="tec-table tec-table--static">
 
-                    <p:column headerText="" exportable="false" style="width:4rem">
+                    <p:column headerText="#{msg['form.iglesias.docs.btn.download']}" exportable="false"
+                              styleClass="tec-col-fit iglesias-col-descarga">
                         <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
                                          styleClass="ui-button-rounded ui-button-text ui-button-#{doc.extension.contains('pdf')?'danger':'success'}"
-                                         title="#{msg['form.iglesias.docs.btn.download']}">
+                                         title="#{msg['form.iglesias.docs.btn.download']}"
+                                         ariaLabel="#{msg['form.iglesias.docs.btn.download']}">
                             <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
                             <p:fileDownload value="#{documentoBean.file}"/>
                         </p:commandButton>
                     </p:column>
 
-                    <p:column headerText="#{msg['form.iglesias.docs.col.nombre']}">
-                        <div class="flex align-items-center gap-2">
-                            <i class="pi #{doc.extension.contains('pdf') ? 'pi-file-pdf text-red-500' : 'pi-file-excel text-green-500'} text-lg flex-shrink-0"/>
-                            <h:outputText value="#{doc.nombre}" styleClass="text-900 text-sm"/>
-                        </div>
+                    <p:column headerText="#{msg['form.iglesias.docs.col.nombre']}" styleClass="tec-col-primary">
+                        <span class="iglesias-doc">
+                            <i class="pi #{doc.extension.contains('pdf') ? 'pi-file-pdf iglesias-doc__icon--pdf' : 'pi-file-excel iglesias-doc__icon--excel'}"
+                               aria-hidden="true"/>
+                            <h:outputText value="#{doc.nombre}" styleClass="iglesias-doc__nombre"/>
+                        </span>
                     </p:column>
 
-                    <p:column headerText="#{msg['form.iglesias.docs.col.codigo']}" style="width:10rem">
-                        <h:outputText value="#{doc.codigo}" styleClass="text-sm" style="font-family:monospace"/>
+                    <p:column headerText="#{msg['form.iglesias.docs.col.codigo']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{doc.codigo}" styleClass="tec-mono"/>
                     </p:column>
 
-                    <p:column headerText="#{msg['form.iglesias.docs.col.estado']}" style="width:8rem" styleClass="text-center">
+                    <p:column headerText="#{msg['form.iglesias.docs.col.estado']}" styleClass="tec-col-fit">
                         <p:tag severity="#{doc.estado ? 'success' : 'secondary'}"
                                value="#{doc.estado ? msg['form.iglesias.tag.vigente'] : msg['form.iglesias.tag.archivado']}"
-                               icon="#{doc.estado ? 'pi pi-check' : 'pi pi-archive'}"/>
+                               icon="#{doc.estado ? 'pi pi-check' : 'pi pi-archive'}"
+                               styleClass="tec-status"/>
                     </p:column>
 
-                    <p:column headerText="#{msg['form.iglesias.docs.col.fecha']}" style="width:10rem">
-                        <h:outputText value="#{doc.fechaCrea}">
+                    <p:column headerText="#{msg['form.iglesias.docs.col.fecha']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{doc.fechaCrea}" styleClass="iglesias-fecha">
                             <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                         </h:outputText>
                     </p:column>
                 </p:dataTable>
 
                 <f:facet name="footer">
-                    <div class="flex justify-content-end flex-wrap gap-2 w-full">
+                    <div class="tec-filter-actions">
                         <p:commandButton value="Cerrar" icon="pi pi-times" type="button"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          onclick="PF('pndHistory').hide()"/>
                     </div>
                 </f:facet>

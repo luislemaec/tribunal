@@ -246,7 +246,8 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
 .tec-filters .field { margin-bottom:.75rem; }
 .tec-filters .ui-outputlabel,
 .tec-form .ui-outputlabel,
-.tec-filters .tec-field-label { display:block; margin-bottom:.3rem; color:#475569; font-size:.78rem; font-weight:600; }
+.tec-filters .tec-field-label,
+.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:#475569; font-size:.78rem; font-weight:600; }
 .tec-range { display:flex; align-items:center; gap:.375rem; }
 .tec-range > .ui-calendar { flex:1 1 0; min-width:0; }
 .tec-range__sep { flex:0 0 auto; color:#94a3b8; }
@@ -294,8 +295,14 @@ body .ui-datatable.tec-table .ui-paginator { display:flex; flex-wrap:wrap; align
 body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:auto; color:#64748b; font-size:.8rem; }
 .tec-col-fit { width:1%; }
 .tec-col-actions { width:1%; text-align:right; white-space:nowrap; }
+/* Acciones por fila: separación fija entre botones */
+.tec-acciones { display:inline-flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:.375rem; vertical-align:middle; }
+body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
+/* Separador vertical entre grupos de acciones de una barra */
+.tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.5rem; margin:0 .25rem; background:#e2e8f0; }
 .tec-mono { color:#334155; font-family:monospace; font-size:.82rem; }
 .tec-muted { color:#94a3b8; }
+.tec-requerido { color:#dc2626; }
 .tec-table td .tec-muted { font-size:.8rem; }
 .tec-chip { display:inline-block; padding:.15rem .5rem; border-radius:999px; background:#f1f5f9; color:#475569; font-size:.72rem; font-weight:600; line-height:1.4; white-space:nowrap; }
 
@@ -316,6 +323,7 @@ body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:
 /* Diálogos sin width fijo */
 .tec-dialog.ui-dialog { width:min(40rem, calc(100vw - 2rem)); }
 .tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)); }
+.tec-dialog--md.ui-dialog { width:min(56rem, calc(100vw - 2rem)); }
 .tec-dialog--lg.ui-dialog { width:min(72rem, calc(100vw - 2rem)); }
 .tec-dialog.ui-dialog .ui-dialog-content { padding-top:1rem; }
 
@@ -332,6 +340,7 @@ body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:
     .tec-table.ui-datatable-reflow td.tec-col-primary { order:-1; padding-bottom:.35rem !important; }
     .tec-table.ui-datatable-reflow td.tec-col-primary > .ui-column-title { display:none; }
     .tec-table.ui-datatable-reflow td.tec-col-actions { text-align:left; }
+    .tec-table.ui-datatable-reflow .tec-acciones { flex-wrap:wrap; justify-content:flex-start; }
     .tec-table.ui-datatable-reflow .tec-chip { max-width:none; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-datatable-empty-message > td { justify-content:center; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-state-highlight > td:first-child { box-shadow:none; }
@@ -342,6 +351,7 @@ body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:
     .tec-page-header__aside { margin-left:0; }
     .tec-card { padding:.875rem; }
     .tec-filter-actions { justify-content:stretch; }
+    .tec-toolbar-sep { display:none; }
     body .ui-fluid .tec-filter-actions .ui-button { flex:1 1 calc(50% - .25rem); }
     body .ui-fluid .tec-filter-actions .tec-btn--primary { flex-basis:100%; }
     body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .25rem; text-align:center; }
@@ -412,6 +422,12 @@ body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:
 .personas-fase__dates { color:#64748b; font-size:.76rem; }
 .personas-fase .ui-tag { align-self:flex-start; margin-top:.25rem; }
 .personas-fase--vacia { align-items:center; justify-content:center; border-style:dashed; background:#f8fafc; color:#94a3b8; font-size:.78rem; }
+.personas-fase--vacia > .pi { font-size:.8rem; }
+.personas-fase__label > .pi { margin-right:.2rem; font-size:.72rem; }
+.personas-fase--activa .personas-fase__label > .pi { color:#16a34a; }
+.personas-fase--bloqueada .personas-fase__label > .pi { color:#d97706; }
+.personas-fase--cerrada .personas-fase__label > .pi { color:#94a3b8; }
+.personas-fase--proxima .personas-fase__label > .pi { color:#2563eb; }
 .personas-fase--actual { border-width:1px 1px 1px 4px; }
 .personas-fase--activa { border-left-color:#16a34a; background:#f0fdf4; }
 .personas-fase--bloqueada { border-left-color:#d97706; background:#fffbeb; }
@@ -423,8 +439,13 @@ body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:
 .personas-resumen .kpi-card { box-shadow:none; border:1px solid #eef2f7; padding:.625rem .75rem; }
 .personas-resumen .kpi-card .label { font-size:.72rem; }
 .personas-resumen .kpi-card .value { font-size:1.35rem; line-height:1.2; }
+.personas-kpi { display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:.625rem; }
+.personas-kpi__icon { display:flex; grid-row:span 2; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; border-radius:.5rem; font-size:.95rem; }
+.personas-kpi__icon--total { background:#eff6ff; color:#2563eb; }
+.personas-kpi__icon--actualizados { background:#ecfdf5; color:#16a34a; }
+.personas-kpi__icon--pendientes { background:#fff7ed; color:#ea580c; }
 .personas-progreso { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:.75rem 0 .35rem; color:#64748b; font-size:.8rem; }
-.personas-progreso__acciones { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem; }
+.personas-progreso__acciones { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
 body .personas-barra.ui-progressbar { height:.5rem; border-radius:999px; }
 body .personas-barra.ui-progressbar .ui-progressbar-label { display:none !important; }
 
@@ -445,6 +466,8 @@ body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu {
 body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:6.5rem; }
 .personas-filtro-estado .ui-selectonemenu-label { font-size:.8rem; text-transform:none; letter-spacing:normal; }
 .personas-busqueda-rapida { max-width:26rem; }
+.personas-filtros__titulo { margin-bottom:.5rem !important; }
+.personas-filtros__titulo > .pi { color:#2563eb; }
 
 /* Diálogos */
 .personas-dialog-busqueda__fila { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.5rem; margin-bottom:1rem; }
@@ -461,6 +484,8 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 .personas-switch { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.625rem 0 0; border-top:1px solid #eef2f7; }
 .personas-switch__texto { display:flex; flex:1 1 auto; flex-direction:column; gap:.1rem; min-width:0; }
 .tec-form .personas-switch__titulo.ui-outputlabel { margin:0; color:#1e293b; font-size:.85rem; }
+.personas-switch__encabezado { display:flex; align-items:center; gap:.4rem; }
+.personas-switch__encabezado > .pi { color:#2563eb; font-size:.85rem; }
 .personas-switch__ayuda { color:#64748b; font-size:.75rem; }
 .personas-switch__control { display:flex; flex:0 0 auto; align-items:center; gap:.5rem; }
 .personas-switch__estado { min-width:1.5rem; color:#475569; font-size:.8rem; font-weight:600; text-align:right; }
@@ -471,7 +496,7 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
     body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { min-width:5.5rem; }
     body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:0; }
     .personas-table td .tec-status { white-space:normal; }
-    .personas-table td.tec-col-actions { min-width:4.6rem; white-space:normal; }
+    .personas-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 2.357rem + .375rem); }
 }
 @media (max-width:640px) {
     /* Casilla de selección en la esquina de la tarjeta, junto al nombre. */
@@ -479,10 +504,117 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel > .ui-column-title { display:none; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-nombre { padding-right:2.5rem !important; }
     .personas-busqueda-rapida { max-width:none; }
+    .personas-table.ui-datatable-reflow .tec-acciones { width:auto; }
 }
 @media (max-width:576px) {
     .personas-toolbar,
     .personas-toolbar__grupo { width:100%; align-items:stretch; }
     body .personas-toolbar__grupo .ui-button { flex:1 1 calc(50% - .25rem); }
     .personas-aviso__aside { margin-left:0; }
+    .personas-kpi { display:block; }
+    .personas-kpi__icon { display:none; }
+}
+
+/* ==========================================================================
+ * Iglesias (iglesias-*): solo iglesias.xhtml.
+ * ========================================================================== */
+.iglesias-resumen { margin-bottom:1rem; }
+.iglesias-kpi { display:flex; align-items:center; gap:.75rem; padding:.625rem .75rem; border:1px solid #eef2f7; border-radius:.5rem; }
+.iglesias-kpi__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.25rem; height:2.25rem; border-radius:.5rem; background:#f1f5f9; color:#475569; }
+.iglesias-kpi__label { display:block; color:#64748b; font-size:.72rem; font-weight:600; text-transform:uppercase; }
+.iglesias-kpi__value { display:block; color:#0f172a; font-size:1.35rem; font-weight:700; line-height:1.2; }
+.iglesias-progreso { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #eef2f7; }
+.iglesias-progreso__head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.4rem; font-size:.85rem; }
+.iglesias-progreso__titulo { display:inline-flex; flex-wrap:wrap; align-items:center; gap:.35rem; color:#1e293b; font-weight:600; }
+.iglesias-progreso__titulo > .pi { color:#475569; }
+.iglesias-progreso__fase { color:#1d4ed8; }
+.iglesias-progreso__conteo { display:inline-flex; align-items:center; gap:.35rem; color:#64748b; font-size:.8rem; }
+body .iglesias-barra.ui-progressbar { height:.5rem; border-radius:999px; }
+body .iglesias-barra.ui-progressbar .ui-progressbar-label { display:none !important; }
+body .iglesias-barra--completa.ui-progressbar .ui-progressbar-value { background:#16a34a; }
+body .iglesias-barra--media.ui-progressbar .ui-progressbar-value { background:#2563eb; }
+body .iglesias-barra--baja.ui-progressbar .ui-progressbar-value { background:#d97706; }
+.iglesias-progreso__fechas { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.25rem .75rem; margin-top:.35rem; color:#64748b; font-size:.75rem; }
+.iglesias-progreso__dias { color:#b45309; font-weight:600; }
+
+.iglesias-filtros__head { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+.iglesias-filtros__head .tec-field-label { margin:0; }
+.iglesias-aviso { display:flex; align-items:flex-start; gap:.5rem; font-size:.875rem; }
+.iglesias-aviso > .pi { margin:.15rem 0 0; }
+.iglesias-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:1rem 0 .25rem; }
+.iglesias-toolbar__grupo { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.iglesias-table__head { margin:0; }
+.iglesias-busqueda { flex:0 1 18rem; min-width:0; }
+
+.iglesias-col-sel { text-align:center; }
+.iglesias-col-ruc { white-space:nowrap; }
+.iglesias-nombre { display:flex; align-items:center; gap:.625rem; min-width:0; }
+.iglesias-avatar { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:2rem; height:2rem; border-radius:50%; background:#eef2ff; color:#4338ca; font-size:.85rem; font-weight:700; }
+.iglesias-avatar--lg { width:2.75rem; height:2.75rem; font-size:1.1rem; }
+.iglesias-nombre__texto { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
+.iglesias-nombre__titulo { color:#0f172a; font-size:.875rem; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
+.iglesias-nombre__meta { color:#64748b; font-size:.76rem; overflow-wrap:anywhere; }
+.iglesias-col-ubicacion { min-width:10rem; }
+.iglesias-ubicacion { display:flex; flex-direction:column; gap:.05rem; line-height:1.35; }
+.iglesias-ubicacion__provincia { display:inline-flex; align-items:center; gap:.3rem; color:#64748b; font-size:.72rem; }
+.iglesias-ubicacion__provincia > .pi { font-size:.7rem; }
+.iglesias-ubicacion__canton { color:#1e293b; font-size:.82rem; font-weight:500; }
+.iglesias-ubicacion__parroquia { color:#64748b; font-size:.76rem; }
+.iglesias-admin { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
+.iglesias-admin__nombre { max-width:14rem; color:#64748b; font-size:.72rem; overflow-wrap:anywhere; }
+body .ui-datatable.tec-table thead th .iglesias-filtro-estado.ui-selectonemenu { display:block; width:100%; min-width:8rem; margin-top:.35rem; }
+.iglesias-filtro-estado .ui-selectonemenu-label { font-size:.8rem; text-transform:none; letter-spacing:normal; }
+
+/* Diálogos */
+.iglesias-seccion { display:flex; align-items:center; gap:.5rem; margin-bottom:.625rem; color:#475569; font-size:.75rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+.iglesias-seccion > .pi { color:#64748b; }
+.iglesias-ruc-opciones { display:flex; flex-wrap:wrap; gap:.5rem; }
+body .ui-fluid .iglesias-ruc-opciones .ui-button { width:auto; }
+.iglesias-ayuda { display:block; margin-top:.3rem; color:#64748b; font-size:.75rem; }
+.iglesias-ayuda--aviso { color:#b45309; font-weight:600; }
+.iglesias-dialog-contexto { display:flex; align-items:center; gap:.625rem; margin-bottom:.75rem; padding:.5rem .75rem; border-radius:.5rem; background:#f8fafc; }
+.iglesias-dialog-contexto > .pi { color:#475569; }
+.iglesias-dialog-contexto__label { display:block; color:#64748b; font-size:.72rem; }
+.iglesias-dialog-contexto__valor { display:block; color:#0f172a; font-weight:600; overflow-wrap:anywhere; }
+.iglesias-persona { display:flex; flex-direction:column; gap:.15rem; margin:0 0 .75rem; padding:.5rem .75rem; border:1px solid #eef2f7; border-radius:.5rem; font-size:.82rem; }
+.iglesias-persona--seleccion { margin-top:.75rem; border-color:#bfdbfe; background:#eff6ff; }
+.iglesias-persona__label { color:#64748b; font-size:.72rem; font-weight:600; }
+.iglesias-persona__datos { display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem .75rem; color:#1e293b; overflow-wrap:anywhere; }
+.iglesias-diagnostico { margin-bottom:.75rem; font-size:.82rem; }
+.iglesias-diagnostico__titulo { display:flex; align-items:center; gap:.4rem; font-weight:700; }
+.iglesias-diagnostico__titulo > .pi { margin:0; }
+.iglesias-diagnostico p { margin:.35rem 0; }
+.iglesias-diagnostico ul { margin:0; padding-left:1.1rem; }
+.iglesias-detalle__cabecera { display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; }
+.iglesias-detalle__nombre { color:#0f172a; font-size:1rem; font-weight:700; overflow-wrap:anywhere; }
+.iglesias-dato__label { display:block; margin-bottom:.25rem; color:#64748b; font-size:.72rem; font-weight:600; text-transform:uppercase; }
+.iglesias-dato__valor { color:#0f172a; font-weight:600; }
+.iglesias-ruta { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; }
+.iglesias-ruta > .pi { color:#cbd5e1; font-size:.65rem; }
+.iglesias-doc { display:flex; align-items:center; gap:.5rem; min-width:0; }
+.iglesias-doc > .pi { flex:0 0 auto; font-size:1rem; }
+.iglesias-doc__icon--pdf { color:#dc2626; }
+.iglesias-doc__icon--excel { color:#16a34a; }
+.iglesias-doc__nombre { color:#1e293b; font-size:.85rem; overflow-wrap:anywhere; }
+.iglesias-fecha { white-space:nowrap; font-size:.8rem; }
+
+/* Tablet: el filtro de estado y la columna de acciones ceden ancho. */
+@media (max-width:991.98px) {
+    body .ui-datatable.tec-table thead th .iglesias-filtro-estado.ui-selectonemenu { min-width:6rem; }
+    .iglesias-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 2.357rem + .375rem); }
+    .iglesias-table td .tec-status { white-space:normal; }
+}
+@media (max-width:640px) {
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.iglesias-col-sel { position:absolute; top:.55rem; right:.25rem; left:auto; width:auto !important; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.iglesias-col-sel > .ui-column-title { display:none; }
+    .iglesias-table.ui-datatable-reflow .ui-datatable-data > tr > td.tec-col-primary { padding-right:2.5rem !important; }
+    .iglesias-table__head { flex-wrap:wrap; }
+    .iglesias-busqueda { flex-basis:100%; }
+    .iglesias-table.ui-datatable-reflow .tec-acciones { width:auto; }
+    .iglesias-admin__nombre { max-width:none; }
+}
+@media (max-width:576px) {
+    .iglesias-toolbar,
+    .iglesias-toolbar__grupo { width:100%; align-items:stretch; }
+    body .iglesias-toolbar__grupo .tec-btn.ui-button { flex:1 1 calc(50% - 1.5rem); }
 }

@@ -101,6 +101,7 @@
                             <h:panelGroup layout="block"
                                           rendered="#{personaController.faseAnterior eq null}"
                                           styleClass="personas-fase personas-fase--vacia">
+                                <i class="pi pi-minus" aria-hidden="true"/>
                                 Sin fase anterior
                             </h:panelGroup>
                             <h:panelGroup layout="block"
@@ -134,7 +135,13 @@
                                           styleClass="personas-fase personas-fase--actual #{personaController.faseActualizacionMiembros.vigente
                                                       ? (personaController.puedeEditarPadron ? 'personas-fase--activa' : 'personas-fase--bloqueada')
                                                       : (personaController.faseActualizacionMiembros.pasada ? 'personas-fase--cerrada' : 'personas-fase--proxima')}">
-                                <span class="personas-fase__label">Fase actual — este módulo</span>
+                                <span class="personas-fase__label">
+                                    <i class="pi #{personaController.faseActualizacionMiembros.vigente
+                                                   ? (personaController.puedeEditarPadron ? 'pi-check-circle' : 'pi-exclamation-triangle')
+                                                   : (personaController.faseActualizacionMiembros.pasada ? 'pi-check-circle' : 'pi-clock')}"
+                                       aria-hidden="true"/>
+                                    Fase actual — este módulo
+                                </span>
                                 <h:outputText value="#{personaController.faseActualizacionMiembros.titulo}"
                                               styleClass="personas-fase__title"/>
                                 <span class="personas-fase__dates">
@@ -162,6 +169,7 @@
                             <h:panelGroup layout="block"
                                           rendered="#{personaController.faseSiguiente eq null}"
                                           styleClass="personas-fase personas-fase--vacia">
+                                <i class="pi pi-minus" aria-hidden="true"/>
                                 Sin fase siguiente
                             </h:panelGroup>
                             <h:panelGroup layout="block"
@@ -202,19 +210,22 @@
                         <div class="personas-resumen">
                             <div class="grid">
                                 <div class="col-4">
-                                    <div class="kpi-card">
+                                    <div class="kpi-card personas-kpi">
+                                        <span class="personas-kpi__icon personas-kpi__icon--total" aria-hidden="true"><i class="pi pi-users"/></span>
                                         <span class="label">Total miembros</span>
                                         <h:outputText value="#{personaController.totalMiembros}" styleClass="value"/>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="kpi-card">
+                                    <div class="kpi-card personas-kpi">
+                                        <span class="personas-kpi__icon personas-kpi__icon--actualizados" aria-hidden="true"><i class="pi pi-check-circle"/></span>
                                         <span class="label">Actualizados</span>
                                         <h:outputText value="#{personaController.miembrosActualizados}" styleClass="value"/>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="kpi-card">
+                                    <div class="kpi-card personas-kpi">
+                                        <span class="personas-kpi__icon personas-kpi__icon--pendientes" aria-hidden="true"><i class="pi pi-clock"/></span>
                                         <span class="label">Pendientes</span>
                                         <h:outputText value="#{personaController.miembrosPendientes}" styleClass="value"/>
                                     </div>
@@ -234,7 +245,7 @@
                                                      title="#{personaController.puedeGenerarActaActualizacion ? msg['actaActualizacion.ayuda.generar'] : msg['actaActualizacion.ayuda.incompleta']}"
                                                      actionListener="#{personaController.generarActaActualizacionIglesia}"
                                                      process="@this" update="panelResumenMiembros"
-                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-help"
                                                      disabled="#{not personaController.puedeGenerarActaActualizacion}"/>
                                     <p:commandButton rendered="#{personaController.restringidoAIglesia and personaController.actaActualizacionDisponible}"
                                                      value="#{msg['actaActualizacion.boton.descargar']}" icon="pi pi-download"
@@ -247,7 +258,7 @@
                                                      ajax="false"
                                                      title="Descargar acta PDF de actualización"
                                                      actionListener="#{personaController.generarActaActualizacion}"
-                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-help"
                                                      disabled="#{personaController.totalMiembros eq 0}"/>
                                 </span>
                             </div>
@@ -262,6 +273,9 @@
                 <!-- Filtros geográficos (solo administrador global) -->
                 <ui:fragment rendered="#{not personaController.restringidoAIglesia}">
                     <div class="tec-filters ui-fluid">
+                        <span class="tec-field-label personas-filtros__titulo">
+                            <i class="pi pi-filter" aria-hidden="true"/> Filtrar por ubicación e iglesia
+                        </span>
                         <div class="formgrid grid">
                             <div class="field col-12 md:col-6 xl:col-3">
                                 <p:outputLabel for="canton" value="Cantón"/>
@@ -313,7 +327,7 @@
                 <div class="personas-toolbar">
                     <div class="personas-toolbar__grupo">
                         <p:commandButton value="Nuevo" icon="pi pi-plus"
-                                         styleClass="tec-btn tec-btn--primary"
+                                         styleClass="tec-btn ui-button-success"
                                          disabled="#{not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.nuevaPersona}"
                                          update="outPnlPersonas"
@@ -322,10 +336,11 @@
                                        value="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
                         </p:commandButton>
 
+                        <span class="tec-toolbar-sep" aria-hidden="true"/>
                         <p:commandButton id="btnEliminaRegistros"
                                          value="#{personaController.mensajeBotonEliminar}"
                                          icon="pi pi-trash"
-                                         styleClass="tec-btn ui-button-outlined ui-button-danger"
+                                         styleClass="tec-btn ui-button-danger"
                                          disabled="#{!personaController.existeIglesiaPersonasSeleccionadas() or not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.eliminarIglesiaPersonaSeleccionadas}"
                                          process="@this tblPersonas"
@@ -339,11 +354,13 @@
                         <!-- Consulta secundaria: no modifica el listado ni los datos de miembros. -->
                         <p:commandButton id="btnBuscarPersona" value="#{msg['form.personas.busqueda.accion']}"
                                          icon="pi pi-search"
-                                         styleClass="tec-btn ui-button-flat ui-button-secondary"
+                                         styleClass="tec-btn ui-button-text ui-button-secondary"
                                          actionListener="#{personaController.prepararBusquedaPersonas}"
                                          process="@this"
                                          update=":frmPersonas:panelBusquedaPersona"
                                          oncomplete="PF('dlgBuscarPersonas').show()"/>
+
+                        <span class="tec-toolbar-sep" aria-hidden="true"/>
 
                         <!-- Importar desde Excel (deshabilitado: se conserva para reactivarlo) -->
                         <p:fileUpload mode="simple" skinSimple="true" label="Importar"
@@ -361,20 +378,20 @@
                                       styleClass="ui-button-raised ui-button-info"/>
 
                         <p:commandButton value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
-                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-success"
                                          ajax="false"
                                          actionListener="#{personaController.exportarExcel}"
                                          disabled="#{empty personaController.listaIglesiaPersona}"/>
 
                         <p:commandButton value="#{msg['form.personas.inconsistencias.reporte.boton']}"
                                          icon="pi pi-exclamation-triangle"
-                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-warning"
                                          ajax="false"
                                          rendered="#{personaController.puedeGenerarReporteInconsistencias}"
                                          actionListener="#{personaController.exportarInconsistenciasExcel}"/>
 
                         <p:commandButton value="Descargar" icon="pi pi-download"
-                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          rendered="#{personaController.file ne null}">
                             <p:fileDownload value="#{personaController.fileDown}"/>
                         </p:commandButton>
@@ -490,9 +507,10 @@
                                    value="#{msg['form.personas.inconsistencia.con']}"
                                    severity="danger" icon="pi pi-exclamation-triangle"
                                    styleClass="tec-status"/>
-                            <h:outputText rendered="#{not iglPers.tieneInconsistencia}"
-                                          value="#{msg['form.personas.inconsistencia.sin']}"
-                                          styleClass="tec-muted"/>
+                            <p:tag rendered="#{not iglPers.tieneInconsistencia}"
+                                   value="#{msg['form.personas.inconsistencia.sin']}"
+                                   severity="success" icon="pi pi-check-circle"
+                                   styleClass="tec-status"/>
                         </p:outputPanel>
                         <p:tooltip for="panelInconsistencia"
                                    rendered="#{iglPers.tieneInconsistencia}"
@@ -563,39 +581,41 @@
                     <p:column headerText="#{msg['form.personas.table.header.acciones']}"
                               exportable="false" selectRow="false"
                               styleClass="tec-col-actions">
-                        <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-flat ui-button-secondary"
-                                         title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
-                                         ariaLabel="Editar miembro"
-                                         disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
-                                         actionListener="#{personaController.prepararEdicion(iglPers)}"
-                                         update=":frmPersonas:outPnlPersonas"
-                                         oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
-                                         process="@this"/>
-                        <p:commandButton icon="pi pi-sync"
-                                         styleClass="ui-button-rounded ui-button-flat ui-button-warning"
-                                         title="#{msg['form.personas.regularizacion.accion']}"
-                                         ariaLabel="#{msg['form.personas.regularizacion.accion']}"
-                                         rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
-                                         disabled="#{not personaController.puedeEditarPadron}"
-                                         actionListener="#{personaController.prepararRegularizacion(iglPers)}"
-                                         process="@this" partialSubmit="true"
-                                         update=":frmPersonas:panelDialogRegularizacion"
-                                         oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
-                        <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-flat ui-button-danger"
-                                         title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
-                                         ariaLabel="Eliminar miembro"
-                                         disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
-                                         action="#{personaController.eliminarIglesiaPersonaSeleccionada}"
-                                         process="@this" partialSubmit="true"
-                                         update=":frmGlobal:growlGlobal :frmPersonas:btnEliminaRegistros">
-                            <f:setPropertyActionListener value="#{iglPers}"
-                                                         target="#{personaController.iglesiaPersonaSeleccionado}"/>
-                            <p:confirm header="Confirmar eliminación"
-                                       message="¿Está seguro de eliminar este miembro? El registro será dado de baja."
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
+                        <span class="tec-acciones">
+                            <p:commandButton icon="pi pi-pencil"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
+                                             ariaLabel="Editar miembro"
+                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
+                                             actionListener="#{personaController.prepararEdicion(iglPers)}"
+                                             update=":frmPersonas:outPnlPersonas"
+                                             oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
+                                             process="@this"/>
+                            <p:commandButton icon="pi pi-wrench"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-help"
+                                             title="#{msg['form.personas.regularizacion.accion']}"
+                                             ariaLabel="#{msg['form.personas.regularizacion.accion']}"
+                                             rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
+                                             disabled="#{not personaController.puedeEditarPadron}"
+                                             actionListener="#{personaController.prepararRegularizacion(iglPers)}"
+                                             process="@this" partialSubmit="true"
+                                             update=":frmPersonas:panelDialogRegularizacion"
+                                             oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
+                                             ariaLabel="Eliminar miembro"
+                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
+                                             action="#{personaController.eliminarIglesiaPersonaSeleccionada}"
+                                             process="@this" partialSubmit="true"
+                                             update=":frmGlobal:growlGlobal :frmPersonas:btnEliminaRegistros">
+                                <f:setPropertyActionListener value="#{iglPers}"
+                                                             target="#{personaController.iglesiaPersonaSeleccionado}"/>
+                                <p:confirm header="Confirmar eliminación"
+                                           message="¿Está seguro de eliminar este miembro? El registro será dado de baja."
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </span>
                     </p:column>
 
                 </p:dataTable>
@@ -629,7 +649,7 @@
                         </div>
                         <p:commandButton id="btnEjecutarBusquedaPersona"
                                          value="#{msg['form.personas.busqueda.accion']}" icon="pi pi-search"
-                                         styleClass="tec-btn tec-btn--primary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          actionListener="#{personaController.buscarPersonasParaConsulta}"
                                          process="@this criterioBusquedaPersona"
                                          update="panelBusquedaPersona :frmGlobal:growlGlobal"/>
@@ -684,7 +704,7 @@
                 </p:outputPanel>
                 <f:facet name="footer">
                     <p:commandButton value="Cancelar" type="button" icon="pi pi-times"
-                                     styleClass="ui-button-flat ui-button-plain"
+                                     styleClass="ui-button-text ui-button-secondary"
                                      onclick="PF('dlgBuscarPersonas').hide()"/>
                 </f:facet>
             </p:dialog>
@@ -773,15 +793,23 @@
                             <div class="field col-12 mb-0">
                                 <div class="personas-switch">
                                     <div class="personas-switch__texto">
-                                        <p:outputLabel for="habilitadoPadron"
-                                                       value="Habilitado para padrón electoral"
-                                                       styleClass="personas-switch__titulo"/>
+                                        <span class="personas-switch__encabezado">
+                                            <i class="pi pi-id-card" aria-hidden="true"/>
+                                            <p:outputLabel for="habilitadoPadron"
+                                                           value="Habilitado para padrón electoral"
+                                                           styleClass="personas-switch__titulo"/>
+                                        </span>
                                         <span class="personas-switch__ayuda">Solo miembros que participarán en el padrón.</span>
                                     </div>
                                     <div class="personas-switch__control">
                                         <p:outputPanel id="estadoHabilitadoPadron" layout="inline"
                                                        styleClass="personas-switch__estado">
-                                            <h:outputText value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron ? 'Sí' : 'No'}"/>
+                                            <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="Habilitado" severity="success"
+                                                   icon="pi pi-check-circle" styleClass="tec-status"/>
+                                            <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
+                                                   value="No habilitado" severity="secondary"
+                                                   icon="pi pi-ban" styleClass="tec-status"/>
                                         </p:outputPanel>
                                         <p:toggleSwitch id="habilitadoPadron"
                                                         value="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}">
