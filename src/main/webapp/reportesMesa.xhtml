@@ -119,47 +119,29 @@
 						update=":frmReportesMesa:panelPrincipal :frmGlobal:growlGlobal" />
 					<p:dataTable id="tablaDocumentosMesas"
 						value="#{reporteMesaController.resumenesDocumentales}" var="fila"
-						paginator="true" rows="12"
+						paginator="true" rows="10"
 						first="#{reporteMesaController.primeraFilaDocumental}"
-						rowsPerPageTemplate="12,25,50" reflow="true"
-						styleClass="ui-datatable-sm"
+						rowsPerPageTemplate="10,25,50" reflow="true" size="small" pageLinks="5"
+						paginatorPosition="bottom"
+						paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+						currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} mesas"
+						styleClass="tec-table mesas-table ui-datatable-striped"
 						emptyMessage="#{msg['reportesMesa.documentos.empty']}">
-						<p:column headerText="#{msg['reportesMesa.filtro.recinto']}"
-							sortBy="#{fila.recinto}">#{fila.recinto}</p:column>
 						<p:column headerText="#{msg['reportesMesa.filtro.mesa']}"
-							sortBy="#{fila.mesa}">#{fila.mesa}</p:column>
-						<p:column headerText="#{msg['reportesMesa.ubicacion']}"
-							sortBy="#{fila.canton}">#{fila.canton} - #{fila.parroquia}</p:column>
+							sortBy="#{fila.mesa}" styleClass="tec-col-fit mesas-col-mesa">
+							<span class="mesas-numero">#{fila.mesa}</span>
+						</p:column>
+						<p:column headerText="#{msg['reportesMesa.filtro.recinto']}"
+							sortBy="#{fila.recinto}" styleClass="tec-col-primary">
+							<span class="mesas-lugar">
+								<span class="mesas-lugar__recinto">#{fila.recinto}</span>
+								<span class="mesas-lugar__ubicacion">#{fila.canton} · #{fila.parroquia}</span>
+							</span>
+						</p:column>
 						<p:column headerText="#{msg['reportesMesa.documento.estado']}"
 							styleClass="tec-col-fit">
 							<p:tag value="#{fila.resumenDocumental}"
 								severity="#{fila.severidadEstadoDocumental}" styleClass="tec-status" />
-						</p:column>
-						<p:column headerText="#{msg['reportesMesa.documentos.columna']}"
-							exportable="false">
-							<!-- Nombre del documento primero; el estado va en el color y el tooltip. -->
-							<span class="mesas-docs">
-								<span class="mesas-doc mesas-doc--#{fila.estados['PADRON_MESA'].estado.toLowerCase()}"
-									title="#{msg['reportesMesa.documento.padron.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['PADRON_MESA'].estado)]}#{empty fila.estados['PADRON_MESA'].motivoBloqueo ? '' : ' — '.concat(fila.estados['PADRON_MESA'].motivoBloqueo)}">
-									<i class="pi pi-users" aria-hidden="true" />#{msg['reportesMesa.documento.padron.corto']}
-								</span>
-								<span class="mesas-doc mesas-doc--#{fila.estados['DESIGNACION_MJRV'].estado.toLowerCase()}"
-									title="#{msg['reportesMesa.documento.mjrv.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['DESIGNACION_MJRV'].estado)]}#{empty fila.estados['DESIGNACION_MJRV'].motivoBloqueo ? '' : ' — '.concat(fila.estados['DESIGNACION_MJRV'].motivoBloqueo)}">
-									<i class="pi pi-id-card" aria-hidden="true" />#{msg['reportesMesa.documento.mjrv.corto']}
-								</span>
-								<span class="mesas-doc mesas-doc--#{fila.estados['ACTA_PARCIAL'].estado.toLowerCase()}"
-									title="#{msg['reportesMesa.documento.acta.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_PARCIAL'].estado)]}#{empty fila.estados['ACTA_PARCIAL'].motivoBloqueo ? '' : ' — '.concat(fila.estados['ACTA_PARCIAL'].motivoBloqueo)}">
-									<i class="pi pi-file-pdf" aria-hidden="true" />#{msg['reportesMesa.documento.acta.corto']}
-								</span>
-								<span class="mesas-doc mesas-doc--#{fila.estados['ACTA_FISICA_ESCRUTINIO'].estado.toLowerCase()}"
-									title="#{msg['reportesMesa.documento.actaFisica.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].estado)]}#{empty fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo ? '' : ' — '.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo)}">
-									<i class="pi pi-image" aria-hidden="true" />#{msg['reportesMesa.documento.actaFisica.corto']}
-								</span>
-								<span class="mesas-doc mesas-doc--#{fila.estados['CERTIFICADOS_VOTACION'].estado.toLowerCase()}"
-									title="#{msg['reportesMesa.documento.certificados.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['CERTIFICADOS_VOTACION'].estado)]}#{empty fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo ? '' : ' — '.concat(fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo)}">
-									<i class="pi pi-verified" aria-hidden="true" />#{msg['reportesMesa.documento.certificados.corto']}
-								</span>
-							</span>
 						</p:column>
 						<p:column headerText="#{msg['reportesMesa.acciones']}"
 							exportable="false" styleClass="tec-col-actions">
