@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.IglesiaAsignacionDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
+import ec.com.antenasur.dto.IglesiaHistorialDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.GeograpFacade;
 import ec.com.antenasur.facade.IglesiaFacade;
@@ -38,6 +40,9 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 
 	@Inject
 	private UsuarioFacade usuarioFacade;
+
+	@Inject
+	private ec.com.antenasur.facade.IglesiaPersonaFacade iglesiaPersonaFacade;
 
 	@Override
 	protected IglesiaFacade getFacade() {
@@ -131,12 +136,16 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		}
 		List<Integer> ids = iglesias.stream().map(IglesiaDTO::getId).filter(java.util.Objects::nonNull).toList();
 		Map<Integer, Usuario> admins = construirMapaAdmins(ids);
+		// Dos consultas agregadas para toda la lista, no una por iglesia.
+		Map<Integer, Integer> miembros = iglesiaPersonaFacade.contarMiembrosActivosPorIglesias(ids);
 		for (IglesiaDTO iglesia : iglesias) {
 			Usuario admin = iglesia != null ? admins.get(iglesia.getId()) : null;
 			if (iglesia != null) {
 				iglesia.setTieneAdministrador(admin != null);
 				iglesia.setAdministradorNombre(
 						admin != null && admin.getPersonsa() != null ? admin.getPersonsa().getNombres() : null);
+				Integer total = miembros.get(iglesia.getId());
+				iglesia.setMiembrosActivos(total == null ? 0 : total);
 			}
 		}
 	}
@@ -411,6 +420,106 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 			}
 		}
 		return mapa;
+	}
+
+	/**
+	 * Historial de cambios de una iglesia a partir de las revisiones de Envers.
+	 *
+	 * <p>Cada fila del historial es una revisión con el valor que cada campo
+	 * auditado tenía en ese momento; los campos que difieren de la revisión
+	 * anterior se marcan para que la vista los resalte y muestre el valor previo.
+	 * Las revisiones se devuelven de la más reciente a la más antigua.
+	 *
+	 * <p>Las iglesias cargadas por la migración de datos no tienen revisión de
+	 * alta: su primera revisión no tiene contra qué compararse y se presenta como
+	 * registro auditado con los valores vigentes en ese momento.
+	 */
+	public List<IglesiaHistorialDTO> obtenerHistorial(Integer iglesiaId) {
+		List<Object[]> filas = iglesiaFacade.listarRevisionesAuditoria(iglesiaId);
+		List<IglesiaHistorialDTO> resultado = new ArrayList<>(filas.size());
+		Object[] previa = null;
+		for (Object[] fila : filas) {
+			int tipo = fila[1] == null ? 1 : ((Number) fila[1]).intValue();
+			Boolean estado = (Boolean) fila[ESTADO];
+			IglesiaHistorialDTO h = new IglesiaHistorialDTO();
+			h.setRevision(fila[0] == null ? null : ((Number) fila[0]).intValue());
+			h.setFecha((Date) fila[2]);
+			h.setUsuario((String) fila[USUARIO]);
+			asignarValores(h, fila);
+			if (tipo == 0) {
+				h.setAccion(IglesiaHistorialDTO.ACCION_CREA);
+			} else if (tipo == 2) {
+				h.setAccion(IglesiaHistorialDTO.ACCION_ELIMINA);
+			} else {
+				boolean cambioEstado = previa != null && !Objects.equals(previa[ESTADO], estado);
+				if (cambioEstado) {
+					h.setAccion(Boolean.FALSE.equals(estado) ? IglesiaHistorialDTO.ACCION_DESACTIVA
+							: IglesiaHistorialDTO.ACCION_REACTIVA);
+				} else if (previa == null) {
+					// Primera revisión de un registro cargado por migración: no hay
+					// revisión previa contra la cual comparar.
+					h.setAccion(IglesiaHistorialDTO.ACCION_BASE);
+				} else {
+					h.setAccion(IglesiaHistorialDTO.ACCION_ACTUALIZA);
+				}
+				marcarCambios(h, previa, fila);
+			}
+			resultado.add(h);
+			previa = fila;
+		}
+		Collections.reverse(resultado);
+		return resultado;
+	}
+
+	/** Índices de los campos auditados en la consulta de revisiones. */
+	private static final int NOMBRE = 3;
+	private static final int COMUNIDAD = 4;
+	private static final int DOCUMENTO = 5;
+	private static final int PARROQUIA = 6;
+	/** Índice del estado (alta/baja lógica) en la consulta de revisiones. */
+	private static final int ESTADO = 7;
+	/** Índice del usuario de la revisión en la consulta de revisiones. */
+	private static final int USUARIO = 8;
+	/** Cantón y provincia derivados de la parroquia de la revisión. */
+	private static final int CANTON = 9;
+	private static final int PROVINCIA = 10;
+
+	private static void asignarValores(IglesiaHistorialDTO h, Object[] fila) {
+		h.setNombre(texto(fila[NOMBRE]));
+		h.setComunidad(texto(fila[COMUNIDAD]));
+		h.setDocumento(texto(fila[DOCUMENTO]));
+		h.setParroquia(texto(fila[PARROQUIA]));
+		h.setCanton(texto(fila[CANTON]));
+		h.setProvincia(texto(fila[PROVINCIA]));
+	}
+
+	/** Campos cuyo valor difiere entre la revisión anterior y la actual. */
+	private static void marcarCambios(IglesiaHistorialDTO h, Object[] previa, Object[] fila) {
+		if (previa == null) {
+			return;
+		}
+		marcarCambio(h, previa, fila, NOMBRE, IglesiaHistorialDTO.CAMPO_NOMBRE);
+		marcarCambio(h, previa, fila, COMUNIDAD, IglesiaHistorialDTO.CAMPO_COMUNIDAD);
+		marcarCambio(h, previa, fila, DOCUMENTO, IglesiaHistorialDTO.CAMPO_DOCUMENTO);
+		marcarCambio(h, previa, fila, PARROQUIA, IglesiaHistorialDTO.CAMPO_PARROQUIA);
+	}
+
+	private static void marcarCambio(IglesiaHistorialDTO h, Object[] previa, Object[] fila, int indice, String campo) {
+		if (Objects.equals(previa[indice], fila[indice])) {
+			return;
+		}
+		h.getCambiados().add(campo);
+		String anterior = texto(previa[indice]);
+		switch (campo) {
+		case IglesiaHistorialDTO.CAMPO_NOMBRE -> h.setNombreAnterior(anterior);
+		case IglesiaHistorialDTO.CAMPO_COMUNIDAD -> h.setComunidadAnterior(anterior);
+		case IglesiaHistorialDTO.CAMPO_DOCUMENTO -> h.setDocumentoAnterior(anterior);
+		default -> h.setParroquiaAnterior(anterior);
+		}
+	}
+
+	private static String texto(Object valor) {
+		return valor == null ? null : valor.toString();
 	}
 
 	// ----- helpers privados -----

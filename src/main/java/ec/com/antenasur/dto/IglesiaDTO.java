@@ -1,6 +1,10 @@
 package ec.com.antenasur.dto;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 import ec.com.antenasur.model.Iglesia;
 import lombok.AllArgsConstructor;
@@ -45,6 +49,47 @@ public class IglesiaDTO implements Serializable {
     private Boolean tieneAdministrador;
     /** Nombre del administrador activo, cuando existe. */
     private String administradorNombre;
+    /** Fecha real de registro (f_crea). */
+    private Date fechaCrea;
+    /** Fecha de la última modificación (f_actualiza); null si nunca se modificó. */
+    private Date fechaActualiza;
+    /** Usuario que registró la iglesia (u_crea). */
+    private String usuarioCrea;
+    /** Usuario de la última modificación (u_actualiza); null si nunca se modificó. */
+    private String usuarioActualiza;
+    /**
+     * Miembros activos de la iglesia. Lo calcula el servicio con una consulta
+     * agregada para toda la lista; nunca se consulta desde el getter.
+     */
+    private int miembrosActivos;
+
+    /**
+     * Cantidad de miembros por debajo del mínimo configurado
+     * ({@code tec.iglesias.miembros.minimo}): la vista lo señala para revisión,
+     * sin bloquear ninguna operación.
+     */
+    public boolean isMiembrosBajoMinimo() {
+        return miembrosActivos < ec.com.antenasur.util.Constantes.getMinimoMiembrosIglesia();
+    }
+
+    /** Primer día desde el cual se identifica visualmente una iglesia como "Nueva". */
+    public static final LocalDate INICIO_IDENTIFICADOR_NUEVA = LocalDate.of(2026, 9, 16);
+    /** Meses que la marca "Nueva" se mantiene desde la fecha real de registro. */
+    public static final int MESES_VIGENCIA_NUEVA = 3;
+
+    /**
+     * true si se registró desde {@link #INICIO_IDENTIFICADOR_NUEVA} y aún no
+     * transcurren {@link #MESES_VIGENCIA_NUEVA} meses desde su registro. Se
+     * calcula con la fecha actual; no consulta la base de datos.
+     */
+    public boolean isNueva() {
+        if (fechaCrea == null) {
+            return false;
+        }
+        LocalDateTime registro = LocalDateTime.ofInstant(fechaCrea.toInstant(), ZoneId.systemDefault());
+        return !registro.toLocalDate().isBefore(INICIO_IDENTIFICADOR_NUEVA)
+                && LocalDateTime.now().isBefore(registro.plusMonths(MESES_VIGENCIA_NUEVA));
+    }
 
     public static IglesiaDTO fromEntity(Iglesia i) {
         if (i == null) {
@@ -58,6 +103,10 @@ public class IglesiaDTO implements Serializable {
         dto.setDocumento(i.getDocumento());
         dto.setTieneDocumentos(i.getTieneDocumentos());
         dto.setVersion(i.getVersion());
+        dto.setFechaCrea(i.getFechaCrea());
+        dto.setFechaActualiza(i.getFechaActualiza());
+        dto.setUsuarioCrea(i.getUsuarioCrea());
+        dto.setUsuarioActualiza(i.getUsuarioActualiza());
         if (i.getUbicacion() != null) {
             dto.setUbicacionId(i.getUbicacion().getId());
             dto.setUbicacionNombre(i.getUbicacion().getName());

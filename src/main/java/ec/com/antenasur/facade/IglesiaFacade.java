@@ -272,6 +272,36 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 		return resultado != null ? resultado : 0L;
 	}
 
+	/**
+	 * Revisiones Envers de una iglesia (tabla {@code tb_iglesia_aud} unida a
+	 * {@code tec.tec_auditoria}) en orden cronológico, en una sola consulta. Consulta
+	 * nativa para incluir bajas y no depender del filtro de estado. Columnas:
+	 * rev, revtype, fecha, nombre, comunidad, documento, parroquia, estado,
+	 * usuario, cantón y provincia.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Object[]> listarRevisionesAuditoria(Integer iglesiaId) {
+		if (iglesiaId == null) {
+			return Collections.emptyList();
+		}
+		// La fecha y el usuario de cada revisión viven en la entidad de revisión
+		// (tec.tec_auditoria, poblada por el listener de auditoría). Las columnas
+		// f_crea/f_actualiza/u_crea/u_actualiza de la tabla _AUD son herencia del
+		// baseline y Envers nunca las escribe, por lo que no se consultan.
+		// El cantón y la provincia no se auditan: se derivan del árbol geográfico
+		// vigente a partir de la parroquia registrada en cada revisión.
+		String sql = "SELECT a.rev, a.revtype, COALESCE(r.audit_date, r.create_date),"
+				+ " a.igl_nombre, a.igl_comunidad_barrio, a.igl_documento, g.gelo_name,"
+				+ " a.estado, COALESCE(r.update_user, r.create_user), gc.gelo_name, gp.gelo_name"
+				+ " FROM public.tb_iglesia_aud a"
+				+ " LEFT JOIN tec.tec_auditoria r ON r.aud_id = a.rev"
+				+ " LEFT JOIN public.tb_geograp g ON g.gelo_id = a.gelo_id"
+				+ " LEFT JOIN public.tb_geograp gc ON gc.gelo_id = g.gelo_parent_id"
+				+ " LEFT JOIN public.tb_geograp gp ON gp.gelo_id = gc.gelo_parent_id"
+				+ " WHERE a.igl_id = :id ORDER BY a.rev";
+		return getEntityManager().createNativeQuery(sql).setParameter("id", iglesiaId).getResultList();
+	}
+
 	public Iglesia getIglesiaPorNombreNombreComunidadYUbicacion(Iglesia iglesiaTmp) {
 		try {
 			String sql = HQL_CON_CANTON + " WHERE ub = :ubicacion"

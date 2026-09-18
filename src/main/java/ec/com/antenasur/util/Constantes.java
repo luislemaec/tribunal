@@ -180,6 +180,28 @@ public class Constantes {
         return lugar != null && !lugar.isBlank() ? lugar : INSTITUCION;
     }
 
+    /**
+     * Mínimo de miembros activos esperado en una iglesia. Por debajo de este
+     * valor la gestión de iglesias marca el registro para que el administrador
+     * lo revise; nunca bloquea ni elimina nada de forma automática.
+     *
+     * <p>Se configura como el resto de parámetros del sistema: propiedad JVM
+     * {@code tec.iglesias.miembros.minimo} o la misma clave en
+     * {@code messages_es.properties}. Si no está definida o no es un número
+     * válido, se usa 2 (se alerta sobre iglesias con 0 o 1 miembro).
+     */
+    public static int getMinimoMiembrosIglesia() {
+        String valor = loadFromMessages("tec.iglesias.miembros.minimo");
+        if (valor != null) {
+            try {
+                return Integer.parseInt(valor.trim());
+            } catch (NumberFormatException e) {
+                // Configuración inválida: se mantiene el valor por defecto.
+            }
+        }
+        return 2;
+    }
+
     public static String getMensaje(String clave, Object... argumentos) {
         String mensaje = loadFromMessages(clave);
         if (mensaje == null) {

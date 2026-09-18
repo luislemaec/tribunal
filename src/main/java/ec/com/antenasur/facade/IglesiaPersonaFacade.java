@@ -146,6 +146,35 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 		}
 	}
 
+	/**
+	 * Miembros activos por iglesia, en una sola consulta agregada para toda la
+	 * lista. Evita el N+1 de contar por iglesia y permite que la tabla muestre el
+	 * dato sin consultas desde los getters.
+	 *
+	 * @return mapa iglesiaId → miembros activos; las iglesias sin miembros no
+	 *         aparecen en el mapa.
+	 */
+	public Map<Integer, Integer> contarMiembrosActivosPorIglesias(List<Integer> iglesiaIds) {
+		Map<Integer, Integer> resultado = new HashMap<>();
+		if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+			return resultado;
+		}
+		try {
+			String jpql = "SELECT i.id, COUNT(ip.id)" + " FROM IglesiaPersona ip" + " JOIN ip.iglesia i"
+					+ " JOIN ip.persona p" + " WHERE i.id IN :iglesiaIds" + "   AND ip.estado = TRUE"
+					+ "   AND p.estado = TRUE" + " GROUP BY i.id";
+			List<Object[]> filas = super.getEntityManager().createQuery(jpql, Object[].class)
+					.setParameter("iglesiaIds", iglesiaIds).getResultList();
+			for (Object[] fila : filas) {
+				Number total = (Number) fila[1];
+				resultado.put((Integer) fila[0], total != null ? total.intValue() : 0);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return resultado;
+	}
+
 	public Map<Integer, Integer> contarPersonasHabilitadasPadronPorIglesias(List<Integer> iglesiaIds) {
 		Map<Integer, Integer> resultado = new HashMap<>();
 		if (iglesiaIds == null || iglesiaIds.isEmpty()) {

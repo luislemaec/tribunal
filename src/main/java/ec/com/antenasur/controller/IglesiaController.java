@@ -58,6 +58,9 @@ public class IglesiaController implements Serializable {
     private IglesiaService iglesiaService;
 
     @Inject
+    private ec.com.antenasur.service.IglesiaBajaService iglesiaBajaService;
+
+    @Inject
     private UsuarioService usuarioService;
 
     @Inject
@@ -79,6 +82,18 @@ public class IglesiaController implements Serializable {
     @Setter
     @Getter
     private IglesiaDTO iglesiaSeleccionado;
+
+    /** Revisiones de auditoría de la iglesia mostrada en el diálogo de historial. */
+    @Getter
+    private List<ec.com.antenasur.dto.IglesiaHistorialDTO> historialIglesia = Collections.emptyList();
+
+    /** Iglesias eliminadas; se llena solo al abrir el panel y se libera al cerrarlo. */
+    @Getter
+    private List<ec.com.antenasur.dto.IglesiaEliminadaDTO> iglesiasEliminadas = Collections.emptyList();
+
+    @Setter
+    @Getter
+    private ec.com.antenasur.dto.IglesiaEliminadaDTO iglesiaEliminadaSeleccionada;
 
     // â”€â”€ Provincias (cargadas al inicio, compartidas entre filtro y diálogo) â”€â”€
     @Setter
@@ -343,6 +358,108 @@ public class IglesiaController implements Serializable {
                 || loginBean.getRoles().contains("SITEC-Tribunal"));
     }
 
+    /**
+     * La trazabilidad del registro (fechas de creación/actualización e historial
+     * de auditoría) es información de control interno: solo la ve el
+     * administrador del sistema.
+     */
+    public boolean isPuedeVerAuditoria() {
+        return loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Administrador");
+    }
+
+    /**
+     * Las iglesias eliminadas y su restauración son competencia del Tribunal y
+     * del administrador. La vista usa este indicador para mostrar la opción; la
+     * autorización real la aplica {@link IglesiaBajaService}.
+     */
+    public boolean isPuedeGestionarEliminadas() {
+        return loginBean != null && loginBean.getRoles() != null
+                && (loginBean.getRoles().contains("SITEC-Administrador")
+                || loginBean.getRoles().contains("SITEC-Tribunal"));
+    }
+
+    // ── Iglesias eliminadas: se consultan solo al abrir el panel ─────────────
+
+    /**
+     * Carga las iglesias eliminadas. Se invoca desde el botón «Ver eliminadas»:
+     * ni esta lista ni sus miembros se consultan durante la carga inicial de la
+     * pantalla.
+     */
+    public void abrirEliminadas() {
+        iglesiasEliminadas = Collections.emptyList();
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage("No tiene permisos para consultar iglesias eliminadas.");
+            return;
+        }
+        try {
+            iglesiasEliminadas = iglesiaBajaService.listarEliminadas();
+        } catch (Exception e) {
+            log.error("Error al listar iglesias eliminadas", e);
+            JsfUtil.addErrorMessage("No se pudo cargar la lista de iglesias eliminadas.");
+        }
+    }
+
+    /** Libera la lista al cerrar el panel para no retenerla en la sesión. */
+    public void cerrarEliminadas() {
+        iglesiasEliminadas = Collections.emptyList();
+        iglesiaEliminadaSeleccionada = null;
+    }
+
+    /** Restaura la iglesia seleccionada junto con lo que su eliminación desactivó. */
+    public void restaurarIglesia() {
+        if (iglesiaEliminadaSeleccionada == null || iglesiaEliminadaSeleccionada.getId() == null) {
+            return;
+        }
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage("No tiene permisos para restaurar iglesias.");
+            return;
+        }
+        try {
+            ec.com.antenasur.service.IglesiaBajaService.Resultado resultado = iglesiaBajaService
+                    .restaurar(iglesiaEliminadaSeleccionada.getId());
+            JsfUtil.addInfoMessage("Iglesia restaurada: " + resultado.iglesia() + ". Se reactivaron "
+                    + resultado.membresias() + " miembro(s), " + resultado.personas() + " persona(s) y "
+                    + resultado.usuarios() + " usuario(s).");
+            iglesiaEliminadaSeleccionada = null;
+            abrirEliminadas();
+            refrescarLista();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error al restaurar iglesia id={}", iglesiaEliminadaSeleccionada.getId(), e);
+            JsfUtil.addErrorMessage("No se pudo restaurar la iglesia; no se realizó ningún cambio.");
+        }
+    }
+
+    /**
+     * Sincroniza una iglesia eliminada cuyos miembros quedaron activos (bajas
+     * anteriores a la eliminación en cascada lógica).
+     */
+    public void regularizarIglesiaEliminada() {
+        if (iglesiaEliminadaSeleccionada == null || iglesiaEliminadaSeleccionada.getId() == null) {
+            return;
+        }
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage("No tiene permisos para regularizar iglesias eliminadas.");
+            return;
+        }
+        try {
+            ec.com.antenasur.service.IglesiaBajaService.Resultado resultado = iglesiaBajaService
+                    .regularizar(iglesiaEliminadaSeleccionada.getId());
+            JsfUtil.addInfoMessage("Iglesia regularizada: " + resultado.iglesia() + ". Quedaron inactivos "
+                    + resultado.membresias() + " miembro(s), " + resultado.personas() + " persona(s) sin otra iglesia y "
+                    + resultado.usuarios() + " usuario(s).");
+            iglesiaEliminadaSeleccionada = null;
+            abrirEliminadas();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error al regularizar iglesia id={}", iglesiaEliminadaSeleccionada.getId(), e);
+            JsfUtil.addErrorMessage("No se pudo regularizar la iglesia; no se realizó ningún cambio.");
+        }
+    }
+
     public void prepararAsignacionAdministrador() {
         administradorActual = null;
         if (!isPuedeGestionarAdministradores() || iglesiaAdministradorSeleccionada == null
@@ -596,15 +713,26 @@ public class IglesiaController implements Serializable {
             return;
         }
         try {
-            iglesiaService.eliminarPorId(iglesiaSeleccionado.getId());
-            JsfUtil.addInfoMessage("Iglesia eliminada: " + iglesiaSeleccionado.getNombre());
+            ec.com.antenasur.service.IglesiaBajaService.Resultado resultado = iglesiaBajaService.eliminar(iglesiaSeleccionado.getId());
+            JsfUtil.addInfoMessage(describirBaja(resultado));
             iglesiaSeleccionado = null;
             refrescarLista();
             PrimeFaces.current().ajax().update("frmIglesias", "frmProgreso", "frmStats", "msgs");
+        } catch (NegocioException e) {
+            // Regla de negocio (compromisos electorales, estado inconsistente):
+            // el mensaje explica al usuario qué revisar.
+            JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
             log.error("Error al eliminar iglesia id={}", iglesiaSeleccionado.getId(), e);
-            JsfUtil.addErrorMessage("No se pudo eliminar la iglesia. Intente nuevamente.");
+            JsfUtil.addErrorMessage("No se pudo eliminar la iglesia; no se realizó ningún cambio.");
         }
+    }
+
+    /** Resumen de lo que la baja o la restauración dejó en cada estado. */
+    private String describirBaja(ec.com.antenasur.service.IglesiaBajaService.Resultado resultado) {
+        return "Iglesia eliminada: " + resultado.iglesia() + ". Quedaron inactivos "
+                + resultado.membresias() + " miembro(s), " + resultado.personas() + " persona(s) sin otra iglesia y "
+                + resultado.usuarios() + " usuario(s).";
     }
 
     public boolean existeIglesiasSeleccionadas() {
@@ -629,17 +757,29 @@ public class IglesiaController implements Serializable {
             return;
         }
         if (listaIglesiasSeleccionadas != null) {
+            // Cada iglesia se elimina en su propia transacción atómica: si una no
+            // puede eliminarse (por ejemplo, tiene miembros en el proceso
+            // electoral) se revierte solo esa y se informa el motivo, sin dejar
+            // ninguna a medio eliminar.
             int eliminadas = 0;
+            List<String> rechazos = new ArrayList<>();
             for (IglesiaDTO item : listaIglesiasSeleccionadas) {
                 try {
-                    if (iglesiaService.eliminarPorId(item.getId()) != null) {
-                        eliminadas++;
-                    }
+                    iglesiaBajaService.eliminar(item.getId());
+                    eliminadas++;
+                } catch (NegocioException e) {
+                    rechazos.add(item.getNombre() + ": " + e.getMessage());
                 } catch (Exception e) {
                     log.error("Error al eliminar iglesia id={} en eliminación masiva", item.getId(), e);
+                    rechazos.add(item.getNombre() + ": error inesperado; no se realizó ningún cambio.");
                 }
             }
-            JsfUtil.addInfoMessage(eliminadas + " iglesia(s) eliminada(s)");
+            if (eliminadas > 0) {
+                JsfUtil.addInfoMessage(eliminadas + " iglesia(s) eliminada(s) con sus miembros.");
+            }
+            for (String rechazo : rechazos) {
+                JsfUtil.addErrorMessage(rechazo);
+            }
             listaIglesiasSeleccionadas = null;
         }
         refrescarLista();
@@ -800,6 +940,32 @@ public class IglesiaController implements Serializable {
 
     public int getTotalProvinciasIndicador() {
         return restringidoAIglesia || provincias == null ? 0 : provincias.size();
+    }
+
+    /**
+     * Historial de cambios desde la columna Acciones. Reutiliza la auditoría
+     * Envers existente; se carga solo al abrir el diálogo (una consulta) y con la
+     * misma validación de pertenencia que el resto de acciones por fila.
+     */
+    public void verHistorialIglesiaFila() {
+        historialIglesia = Collections.emptyList();
+        if (!isPuedeVerAuditoria()) {
+            // El botón no se renderiza para otros roles; se valida igualmente en
+            // el servidor para no depender solo de la vista.
+            rechazarAccesoIglesia();
+            return;
+        }
+        if (iglesiaSeleccionado == null || iglesiaSeleccionado.getId() == null
+                || !esIglesiaPermitida(iglesiaSeleccionado.getId())) {
+            rechazarAccesoIglesia();
+            return;
+        }
+        try {
+            historialIglesia = iglesiaService.obtenerHistorial(iglesiaSeleccionado.getId());
+        } catch (Exception e) {
+            log.error("Error al obtener historial de iglesia id={}", iglesiaSeleccionado.getId(), e);
+            JsfUtil.addErrorMessage("No se pudo cargar el historial de cambios.");
+        }
     }
 
     public void cargaArchivosListaMiembros() {

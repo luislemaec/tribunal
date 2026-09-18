@@ -261,6 +261,17 @@
                                        icon="pi pi-exclamation-triangle"/>
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.delete.tooltip']}"/>
                         </p:commandButton>
+                        <h:panelGroup styleClass="tec-toolbar-sep"
+                                      rendered="#{iglesiaController.puedeGestionarEliminadas}"/>
+                        <!-- Las iglesias eliminadas se consultan aquí, no en la carga inicial -->
+                        <p:commandButton value="#{msg['form.iglesias.btn.eliminadas']}" icon="pi pi-inbox"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         rendered="#{iglesiaController.puedeGestionarEliminadas}"
+                                         action="#{iglesiaController.abrirEliminadas}"
+                                         process="@this" update=":frmEliminadas :frmGlobal:growlGlobal"
+                                         oncomplete="PF('dlgEliminadas').show()">
+                            <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.eliminadas.tooltip']}"/>
+                        </p:commandButton>
                         <h:panelGroup styleClass="tec-toolbar-sep" rendered="#{not iglesiaController.restringidoAIglesia}"/>
                         <p:commandButton icon="pi pi-refresh"
                                          title="#{msg['form.iglesias.btn.refresh']}"
@@ -357,7 +368,12 @@
                                 #{not empty iglesia.nombre ? iglesia.nombre.substring(0,1) : '?'}
                             </span>
                             <span class="iglesias-nombre__texto">
-                                <h:outputText value="#{iglesia.nombre}" styleClass="iglesias-nombre__titulo"/>
+                                <span>
+                                    <h:outputText value="#{iglesia.nombre}" styleClass="iglesias-nombre__titulo"/>
+                                    <p:tag rendered="#{iglesia.nueva}" value="#{msg['form.iglesias.tag.nueva']}"
+                                           icon="pi pi-star" severity="success"
+                                           styleClass="tec-status iglesias-nueva"/>
+                                </span>
                                 <h:outputText rendered="#{not empty iglesia.comunidad}" value="#{iglesia.comunidad}"
                                               styleClass="iglesias-nombre__meta"/>
                             </span>
@@ -378,6 +394,54 @@
                             </span>
                             <h:outputText value="#{iglesia.cantonNombre}" styleClass="iglesias-ubicacion__canton"/>
                             <h:outputText value="#{iglesia.ubicacionNombre}" styleClass="iglesias-ubicacion__parroquia"/>
+                        </span>
+                    </p:column>
+
+                    <!-- Fechas reales de registro y última modificación (f_crea / f_actualiza);
+                         trazabilidad interna: solo visible para SITEC-Administrador -->
+                    <p:column headerText="#{msg['form.iglesias.table.header.fechas']}"
+                              sortBy="#{iglesia.fechaCrea}" styleClass="tec-col-fit iglesias-col-fechas"
+                              rendered="#{iglesiaController.puedeVerAuditoria}">
+                        <f:facet name="export">
+                            <h:outputText value="#{iglesia.fechaCrea} / #{iglesia.fechaActualiza}"/>
+                        </f:facet>
+                        <span class="iglesias-fechas">
+                            <span class="iglesias-fechas__item"
+                                  title="#{msg['form.iglesias.table.header.fecha.registro']}">
+                                <i class="pi pi-calendar-plus iglesias-fechas__icono" aria-hidden="true"/>
+                                <h:outputText rendered="#{not empty iglesia.fechaCrea}" value="#{iglesia.fechaCrea}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglesia.fechaCrea}" value="—" styleClass="tec-muted"/>
+                            </span>
+                            <span class="iglesias-fechas__item"
+                                  title="#{msg['form.iglesias.table.header.fecha.actualiza']}">
+                                <i class="pi pi-refresh iglesias-fechas__icono iglesias-fechas__icono--actualiza"
+                                   aria-hidden="true"/>
+                                <h:outputText rendered="#{not empty iglesia.fechaActualiza}"
+                                              value="#{iglesia.fechaActualiza}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglesia.fechaActualiza}" value="—"
+                                              styleClass="tec-muted"/>
+                            </span>
+                        </span>
+                    </p:column>
+
+                    <!-- Miembros activos: viene precalculado en el DTO con una consulta
+                         agregada para toda la lista; el tag marca las iglesias a revisar -->
+                    <p:column headerText="#{msg['form.iglesias.table.header.miembros']}"
+                              sortBy="#{iglesia.miembrosActivos}" styleClass="tec-col-fit iglesias-col-miembros">
+                        <f:facet name="export">
+                            <h:outputText value="#{iglesia.miembrosActivos}"/>
+                        </f:facet>
+                        <span class="iglesias-miembros">
+                            <h:outputText value="#{iglesia.miembrosActivos}"
+                                          styleClass="iglesias-miembros__total#{iglesia.miembrosBajoMinimo ? ' iglesias-miembros__total--alerta' : ''}"/>
+                            <p:tag rendered="#{iglesia.miembrosBajoMinimo}"
+                                   value="#{msg['form.iglesias.tag.revisar']}" icon="pi pi-exclamation-triangle"
+                                   severity="warning" styleClass="tec-status"
+                                   title="#{msg['form.iglesias.tag.revisar.title']}"/>
                         </span>
                     </p:column>
 
@@ -449,6 +513,18 @@
                                 <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
                                            message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
                                            icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-history"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             title="#{msg['form.iglesias.btn.historial.title']}"
+                                             ariaLabel="#{msg['form.iglesias.btn.historial.title']}"
+                                             rendered="#{iglesiaController.puedeVerAuditoria}"
+                                             action="#{iglesiaController.verHistorialIglesiaFila}"
+                                             process="@this" update=":frmHistorial :frmGlobal:growlGlobal"
+                                             oncomplete="PF('dlgHistorial').show()">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-folder-open"
@@ -835,6 +911,41 @@
                                icon="pi pi-home" severity="secondary" styleClass="tec-status"/>
                     </div>
 
+                    <p:divider styleClass="my-2"/>
+
+                    <!-- Trazabilidad del registro (f_crea/u_crea y f_actualiza/u_actualiza);
+                         el detalle de qué cambió está en el historial de revisiones -->
+                    <div class="grid formgrid">
+                        <div class="col-12 sm:col-6">
+                            <span class="iglesias-dato__label">#{msg['form.iglesias.label.registrado']}</span>
+                            <span class="iglesias-dato__valor">
+                                <h:outputText rendered="#{not empty iglesiaController.iglesiaSeleccionado.fechaCrea}"
+                                              value="#{iglesiaController.iglesiaSeleccionado.fechaCrea}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglesiaController.iglesiaSeleccionado.fechaCrea}"
+                                              value="—" styleClass="tec-muted"/>
+                                <h:outputText rendered="#{not empty iglesiaController.iglesiaSeleccionado.usuarioCrea}"
+                                              value=" · #{iglesiaController.iglesiaSeleccionado.usuarioCrea}"
+                                              styleClass="iglesias-nombre__meta"/>
+                            </span>
+                        </div>
+                        <div class="col-12 sm:col-6">
+                            <span class="iglesias-dato__label">#{msg['form.iglesias.label.actualizado']}</span>
+                            <span class="iglesias-dato__valor">
+                                <h:outputText rendered="#{not empty iglesiaController.iglesiaSeleccionado.fechaActualiza}"
+                                              value="#{iglesiaController.iglesiaSeleccionado.fechaActualiza}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglesiaController.iglesiaSeleccionado.fechaActualiza}"
+                                              value="—" styleClass="tec-muted"/>
+                                <h:outputText rendered="#{not empty iglesiaController.iglesiaSeleccionado.usuarioActualiza}"
+                                              value=" · #{iglesiaController.iglesiaSeleccionado.usuarioActualiza}"
+                                              styleClass="iglesias-nombre__meta"/>
+                            </span>
+                        </div>
+                    </div>
+
                 </p:outputPanel>
                 <f:facet name="footer">
                     <div class="tec-filter-actions">
@@ -909,6 +1020,197 @@
                         <p:commandButton value="Cerrar" icon="pi pi-times" type="button"
                                          styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          onclick="PF('pndHistory').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+        </h:form>
+
+        <!-- ======================================================
+             DIÁLOGO: HISTORIAL DE CAMBIOS (auditoría Envers existente)
+             ====================================================== -->
+        <h:form id="frmHistorial">
+            <p:dialog header="#{msg['form.iglesias.hist.title']} — #{iglesiaController.iglesiaSeleccionado.nombre}"
+                      widgetVar="dlgHistorial" closable="true" modal="true" responsive="true" fitViewport="true"
+                      dynamic="true" appendTo="@(body)"
+                      styleClass="tec-dialog tec-dialog--lg">
+
+                <p:dataTable var="h" value="#{iglesiaController.historialIglesia}"
+                             emptyMessage="#{msg['form.iglesias.hist.empty']}"
+                             reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
+                             styleClass="tec-table tec-table--static">
+                    <p:column headerText="#{msg['form.iglesias.hist.col.fecha']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{h.fecha}" styleClass="iglesias-fecha">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.usuario']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{empty h.usuario ? '—' : h.usuario}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.accion']}" styleClass="tec-col-fit">
+                        <p:tag value="#{msg['form.iglesias.hist.accion.'.concat(h.accion)]}"
+                               severity="#{h.accion eq 'CREA' ? 'success' : (h.accion eq 'DESACTIVA' or h.accion eq 'ELIMINA' ? 'danger' : 'info')}"
+                               styleClass="tec-status"/>
+                    </p:column>
+                    <!-- Un campo auditado por columna: se muestra el valor de esa revisión y
+                         se resalta (con el valor anterior en el tooltip) si cambió -->
+                    <p:column headerText="#{msg['form.iglesias.hist.col.nombre']}"
+                              styleClass="iglesias-hist__col">
+                        <span class="iglesias-hist__valor #{h.cambio('nombre') ? 'iglesias-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('nombre') ? msg['form.iglesias.hist.anterior'].concat(' ').concat(empty h.nombreAnterior ? '—' : h.nombreAnterior) : ''}">
+                            #{empty h.nombre ? '—' : h.nombre}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.comunidad']}"
+                              styleClass="iglesias-hist__col">
+                        <span class="iglesias-hist__valor #{h.cambio('comunidad') ? 'iglesias-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('comunidad') ? msg['form.iglesias.hist.anterior'].concat(' ').concat(empty h.comunidadAnterior ? '—' : h.comunidadAnterior) : ''}">
+                            #{empty h.comunidad ? '—' : h.comunidad}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.documento']}"
+                              styleClass="tec-col-fit iglesias-hist__col">
+                        <span class="iglesias-hist__valor tec-mono #{h.cambio('documento') ? 'iglesias-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('documento') ? msg['form.iglesias.hist.anterior'].concat(' ').concat(empty h.documentoAnterior ? '—' : h.documentoAnterior) : ''}">
+                            #{empty h.documento ? '—' : h.documento}
+                        </span>
+                    </p:column>
+                    <!-- Provincia y cantón no se auditan: se derivan de la parroquia de la revisión -->
+                    <p:column headerText="#{msg['form.iglesias.hist.col.provincia']}"
+                              styleClass="iglesias-hist__col iglesias-hist__col--geo">
+                        <h:outputText value="#{empty h.provincia ? '—' : h.provincia}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.canton']}"
+                              styleClass="iglesias-hist__col iglesias-hist__col--geo">
+                        <h:outputText value="#{empty h.canton ? '—' : h.canton}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['form.iglesias.hist.col.parroquia']}"
+                              styleClass="iglesias-hist__col iglesias-hist__col--geo">
+                        <span class="iglesias-hist__valor #{h.cambio('parroquia') ? 'iglesias-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('parroquia') ? msg['form.iglesias.hist.anterior'].concat(' ').concat(empty h.parroquiaAnterior ? '—' : h.parroquiaAnterior) : ''}">
+                            #{empty h.parroquia ? '—' : h.parroquia}
+                        </span>
+                    </p:column>
+                </p:dataTable>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgHistorial').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+        </h:form>
+
+        <!-- ======================================================
+             DIÁLOGO: IGLESIAS ELIMINADAS (carga bajo demanda)
+             ====================================================== -->
+        <h:form id="frmEliminadas">
+            <p:dialog header="#{msg['form.iglesias.eliminadas.title']}" widgetVar="dlgEliminadas"
+                      closable="true" modal="true" responsive="true" fitViewport="true"
+                      dynamic="true" appendTo="@(body)" styleClass="tec-dialog tec-dialog--lg">
+                <!-- Al cerrar se liberan los datos: no quedan retenidos en la vista -->
+                <p:ajax event="close" listener="#{iglesiaController.cerrarEliminadas}"
+                        process="@this" update="@form"/>
+
+                <p:messages id="msgsEliminadas" globalOnly="false" showDetail="false"
+                            closable="true" styleClass="mb-2"/>
+
+                <p:dataTable var="eliminada" value="#{iglesiaController.iglesiasEliminadas}"
+                             id="tblEliminadas" widgetVar="wdTblEliminadas"
+                             emptyMessage="#{msg['form.iglesias.eliminadas.empty']}"
+                             reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
+                             styleClass="tec-table tec-table--static">
+
+                    <p:column headerText="#{msg['form.iglesias.table.header.ruc']}"
+                              styleClass="tec-col-fit iglesias-col-ruc">
+                        <h:outputText value="#{empty eliminada.documento ? '—' : eliminada.documento}"
+                                      styleClass="tec-mono"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.iglesias.table.header.nombre']}" styleClass="tec-col-primary">
+                        <span class="iglesias-nombre__texto">
+                            <h:outputText value="#{eliminada.nombre}" styleClass="iglesias-nombre__titulo"/>
+                            <h:outputText rendered="#{not empty eliminada.comunidad}" value="#{eliminada.comunidad}"
+                                          styleClass="iglesias-nombre__meta"/>
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.iglesias.table.header.ubicacion']}"
+                              styleClass="iglesias-col-ubicacion">
+                        <span class="iglesias-ubicacion">
+                            <span class="iglesias-ubicacion__provincia">
+                                <i class="pi pi-map-marker" aria-hidden="true"/>
+                                <h:outputText value="#{eliminada.provinciaNombre}"/>
+                            </span>
+                            <h:outputText value="#{eliminada.cantonNombre}" styleClass="iglesias-ubicacion__canton"/>
+                            <h:outputText value="#{eliminada.ubicacionNombre}" styleClass="iglesias-ubicacion__parroquia"/>
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.iglesias.eliminadas.col.baja']}" styleClass="tec-col-fit">
+                        <span class="iglesias-fechas__item">
+                            <i class="pi pi-calendar-times iglesias-fechas__icono" aria-hidden="true"/>
+                            <h:outputText rendered="#{not empty eliminada.fechaBaja}" value="#{eliminada.fechaBaja}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                            <h:outputText rendered="#{empty eliminada.fechaBaja}" value="—" styleClass="tec-muted"/>
+                        </span>
+                        <h:outputText rendered="#{not empty eliminada.usuarioBaja}" value="#{eliminada.usuarioBaja}"
+                                      styleClass="iglesias-nombre__meta"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.iglesias.eliminadas.col.estado']}" styleClass="tec-col-fit">
+                        <p:tag rendered="#{eliminada.requiereRegularizacion}"
+                               value="#{eliminada.membresiasColgadas} #{msg['form.iglesias.eliminadas.colgadas']}"
+                               icon="pi pi-exclamation-triangle" severity="warning" styleClass="tec-status"/>
+                        <p:tag rendered="#{not eliminada.requiereRegularizacion}"
+                               value="#{msg['form.iglesias.eliminadas.coherente']}" icon="pi pi-check"
+                               severity="success" styleClass="tec-status"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.iglesias.table.header.acciones']}"
+                              styleClass="tec-col-actions">
+                        <span class="tec-acciones">
+                            <p:commandButton icon="pi pi-replay"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             title="#{msg['form.iglesias.eliminadas.btn.restaurar']}"
+                                             ariaLabel="#{msg['form.iglesias.eliminadas.btn.restaurar']}"
+                                             disabled="#{not eliminada.restaurable}"
+                                             action="#{iglesiaController.restaurarIglesia}"
+                                             process="@this"
+                                             update="@form :frmIglesias :frmStats :frmGlobal:growlGlobal">
+                                <f:setPropertyActionListener value="#{eliminada}"
+                                                             target="#{iglesiaController.iglesiaEliminadaSeleccionada}"/>
+                                <p:confirm header="#{msg['form.iglesias.eliminadas.confirm.header']}"
+                                           message="#{msg['form.iglesias.eliminadas.confirm.restaurar']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-sync"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             title="#{msg['form.iglesias.eliminadas.btn.regularizar']}"
+                                             ariaLabel="#{msg['form.iglesias.eliminadas.btn.regularizar']}"
+                                             rendered="#{eliminada.requiereRegularizacion}"
+                                             action="#{iglesiaController.regularizarIglesiaEliminada}"
+                                             process="@this" update="@form :frmGlobal:growlGlobal">
+                                <f:setPropertyActionListener value="#{eliminada}"
+                                                             target="#{iglesiaController.iglesiaEliminadaSeleccionada}"/>
+                                <p:confirm header="#{msg['form.iglesias.eliminadas.confirm.header']}"
+                                           message="#{msg['form.iglesias.eliminadas.confirm.regularizar']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </span>
+                    </p:column>
+                </p:dataTable>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgEliminadas').hide()"/>
                     </div>
                 </f:facet>
             </p:dialog>

@@ -27,6 +27,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Filter;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 /**
  * The persistent class for the tb_user database table.
@@ -68,6 +69,12 @@ public class Iglesia extends EntidadAuditable implements Serializable {
 
     @Setter
     @Getter
+    /**
+     * Dato informativo heredado de la importación inicial: no se captura ni se
+     * edita en ningún formulario (solo se muestra en el detalle y se exporta),
+     * por lo que no aporta al historial de cambios.
+     */
+    @NotAudited
     @Column(name = "igl_total_miembros")
     private Integer totalMiembros;
 
@@ -89,6 +96,7 @@ public class Iglesia extends EntidadAuditable implements Serializable {
      */
     @Setter
     @Getter
+    @NotAudited
     @Version
     @Column(name = "igl_version", nullable = false)
     @ColumnDefault("0")
