@@ -40,7 +40,19 @@
         </h:link>
 
         <a id="topbar-profile-menu-button" href="#">
-            <span>#{loginBean.usuario.username}</span>
+            <span class="topbar-perfil">
+                <span class="topbar-perfil__nombre">
+                    #{empty loginBean.usuario.personaNombres ? loginBean.usuario.username : loginBean.usuario.personaNombres}
+                </span>
+                <span class="topbar-perfil__roles">
+                    <!-- El prefijo 'SITEC-' es interno del dominio de seguridad; no se muestra. -->
+                    <ui:repeat value="#{loginBean.roles}" var="rol">
+                        <span class="topbar-perfil__rol topbar-perfil__rol--#{(rol.startsWith('SITEC-') ? rol.substring(6) : rol).toLowerCase()}">
+                            #{(rol.startsWith('SITEC-') ? rol.substring(6) : rol).replace('-', ' ')}
+                        </span>
+                    </ui:repeat>
+                </span>
+            </span>
             <span class="topbar-profile-icon" aria-hidden="true">
                 <i class="pi pi-user"/>
             </span>
@@ -58,10 +70,6 @@
                 </h:form>
             </li>
         </ul>
-
-        <a href="#" id="right-panel-button">
-            <i class="pi pi-angle-double-left"/>
-        </a>
     </div>
 
 </ui:composition>

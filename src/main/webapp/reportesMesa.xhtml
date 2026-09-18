@@ -131,152 +131,179 @@
 						<p:column headerText="#{msg['reportesMesa.ubicacion']}"
 							sortBy="#{fila.canton}">#{fila.canton} - #{fila.parroquia}</p:column>
 						<p:column headerText="#{msg['reportesMesa.documento.estado']}"
-							style="width:12rem">
+							styleClass="tec-col-fit">
 							<p:tag value="#{fila.resumenDocumental}"
-								severity="#{fila.severidadEstadoDocumental}" />
+								severity="#{fila.severidadEstadoDocumental}" styleClass="tec-status" />
+						</p:column>
+						<p:column headerText="#{msg['reportesMesa.documentos.columna']}"
+							exportable="false">
+							<!-- Nombre del documento primero; el estado va en el color y el tooltip. -->
+							<span class="mesas-docs">
+								<span class="mesas-doc mesas-doc--#{fila.estados['PADRON_MESA'].estado.toLowerCase()}"
+									title="#{msg['reportesMesa.documento.padron.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['PADRON_MESA'].estado)]}#{empty fila.estados['PADRON_MESA'].motivoBloqueo ? '' : ' — '.concat(fila.estados['PADRON_MESA'].motivoBloqueo)}">
+									<i class="pi pi-users" aria-hidden="true" />#{msg['reportesMesa.documento.padron.corto']}
+								</span>
+								<span class="mesas-doc mesas-doc--#{fila.estados['DESIGNACION_MJRV'].estado.toLowerCase()}"
+									title="#{msg['reportesMesa.documento.mjrv.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['DESIGNACION_MJRV'].estado)]}#{empty fila.estados['DESIGNACION_MJRV'].motivoBloqueo ? '' : ' — '.concat(fila.estados['DESIGNACION_MJRV'].motivoBloqueo)}">
+									<i class="pi pi-id-card" aria-hidden="true" />#{msg['reportesMesa.documento.mjrv.corto']}
+								</span>
+								<span class="mesas-doc mesas-doc--#{fila.estados['ACTA_PARCIAL'].estado.toLowerCase()}"
+									title="#{msg['reportesMesa.documento.acta.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_PARCIAL'].estado)]}#{empty fila.estados['ACTA_PARCIAL'].motivoBloqueo ? '' : ' — '.concat(fila.estados['ACTA_PARCIAL'].motivoBloqueo)}">
+									<i class="pi pi-file-pdf" aria-hidden="true" />#{msg['reportesMesa.documento.acta.corto']}
+								</span>
+								<span class="mesas-doc mesas-doc--#{fila.estados['ACTA_FISICA_ESCRUTINIO'].estado.toLowerCase()}"
+									title="#{msg['reportesMesa.documento.actaFisica.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].estado)]}#{empty fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo ? '' : ' — '.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo)}">
+									<i class="pi pi-image" aria-hidden="true" />#{msg['reportesMesa.documento.actaFisica.corto']}
+								</span>
+								<span class="mesas-doc mesas-doc--#{fila.estados['CERTIFICADOS_VOTACION'].estado.toLowerCase()}"
+									title="#{msg['reportesMesa.documento.certificados.corto']} · #{msg['reportesMesa.accion.estado.'.concat(fila.estados['CERTIFICADOS_VOTACION'].estado)]}#{empty fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo ? '' : ' — '.concat(fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo)}">
+									<i class="pi pi-verified" aria-hidden="true" />#{msg['reportesMesa.documento.certificados.corto']}
+								</span>
+							</span>
 						</p:column>
 						<p:column headerText="#{msg['reportesMesa.acciones']}"
-							exportable="false" style="width:7rem" styleClass="text-center">
-							<p:commandButton id="accionesMesa" icon="pi pi-ellipsis-v"
-								type="button" title="#{msg['reportesMesa.acciones']}"
-								styleClass="ui-button-rounded ui-button-text" />
-							<p:tieredMenu overlay="true" trigger="accionesMesa" my="left top"
-								at="left bottom" style="width:18rem">
-								<p:submenu
-									label="#{msg['reportesMesa.documento.padron']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['PADRON_MESA'].estado)]}"
-									icon="pi pi-users">
+							exportable="false" styleClass="tec-col-actions">
+							<span class="tec-acciones">
+								<p:commandButton icon="pi pi-bolt"
+									title="#{msg['reportesMesa.generar.todos.ayuda']}"
+									ariaLabel="#{msg['reportesMesa.generar.todos']}"
+									styleClass="ui-button-rounded ui-button-text"
+									disabled="#{not (fila.estados['PADRON_MESA'].puedeGenerar or fila.estados['ACTA_PARCIAL'].puedeGenerar or fila.estados['CERTIFICADOS_VOTACION'].puedeGenerar)}"
+									action="#{reporteMesaController.generarDocumentosMesa(fila.mesaId, fila.recintoId)}"
+									process="@this"
+									update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+									<p:confirm header="#{msg['reportesMesa.generar.todos.confirmar.titulo']}"
+										message="#{msg['reportesMesa.generar.todos.confirmar']}"
+										icon="pi pi-exclamation-triangle" />
+								</p:commandButton>
+								<p:commandButton icon="pi pi-download" ajax="false"
+									title="#{msg['reportesMesa.descargar.todos.ayuda']}"
+									ariaLabel="#{msg['reportesMesa.descargar.todos']}"
+									styleClass="ui-button-rounded ui-button-text"
+									disabled="#{not (fila.estados['PADRON_MESA'].puedeVisualizar or fila.estados['ACTA_PARCIAL'].puedeVisualizar or fila.estados['CERTIFICADOS_VOTACION'].puedeVisualizar or fila.estados['ACTA_FISICA_ESCRUTINIO'].puedeVisualizar)}">
+									<p:fileDownload
+										value="#{reporteMesaController.descargarDocumentosMesa(fila.mesaId, fila.recintoId, fila.mesa)}" />
+								</p:commandButton>
+								<p:commandButton id="accionesMesa" icon="pi pi-ellipsis-v"
+									type="button" title="#{msg['reportesMesa.accion.documentos.mesa']}"
+									ariaLabel="#{msg['reportesMesa.accion.documentos.mesa']}"
+									styleClass="ui-button-rounded ui-button-text" />
+							</span>
+							<p:tieredMenu overlay="true" trigger="accionesMesa" my="right top"
+								at="right bottom" styleClass="mesas-menu">
+								<p:submenu label="#{msg['reportesMesa.documento.padron.corto']}" icon="pi pi-users">
+									<p:menuitem value="#{fila.estados['PADRON_MESA'].motivoBloqueo}"
+										title="#{fila.estados['PADRON_MESA'].motivoBloqueo}" icon="pi pi-lock"
+										disabled="true"
+										rendered="#{not empty fila.estados['PADRON_MESA'].motivoBloqueo}" />
 									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
-										icon="pi pi-file"
+										icon="pi pi-file-plus"
 										rendered="#{fila.estados['PADRON_MESA'].puedeGenerar}"
 										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA', false)}"
 										process="@this"
-										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
-									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
-										icon="pi pi-file"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal" />
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar.nueva']}"
+										icon="pi pi-sync" title="#{msg['reportesMesa.accion.regenerar.ayuda']}"
 										rendered="#{fila.estados['PADRON_MESA'].puedeRegenerar}"
 										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA', true)}"
 										process="@this"
 										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
-										<p:confirm
-											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+										<p:confirm header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
 											message="#{msg['reportesMesa.confirmar.regenerar']}"
 											icon="pi pi-exclamation-triangle" />
 									</p:menuitem>
-									<p:menuitem
-										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
+									<p:menuitem value="#{msg['reportesMesa.accion.descargar.pdf']}"
 										icon="pi pi-download" ajax="false"
 										rendered="#{fila.estados['PADRON_MESA'].puedeVisualizar}">
 										<p:fileDownload
 											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'PADRON_MESA')}" />
 									</p:menuitem>
-									<p:menuitem
-										value="#{fila.estados['PADRON_MESA'].motivoBloqueo}"
-										title="#{fila.estados['PADRON_MESA'].motivoBloqueo}"
-										icon="pi pi-info-circle" disabled="true"
-										rendered="#{not empty fila.estados['PADRON_MESA'].motivoBloqueo}" />
 								</p:submenu>
-								<p:submenu
-									label="#{msg['reportesMesa.documento.acta']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_PARCIAL'].estado)]}"
-									icon="pi pi-file-pdf">
-									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
-										icon="pi pi-file"
-										rendered="#{fila.estados['ACTA_PARCIAL'].puedeGenerar}"
-										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', false)}"
-										process="@this"
-										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
-									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
-										icon="pi pi-file"
-										rendered="#{fila.estados['ACTA_PARCIAL'].puedeRegenerar}"
-										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', true)}"
-										process="@this"
-										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
-										<p:confirm
-											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
-											message="#{msg['reportesMesa.confirmar.regenerar']}"
-											icon="pi pi-exclamation-triangle" />
-									</p:menuitem>
-									<p:menuitem
-										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
-										icon="pi pi-download" ajax="false"
-										rendered="#{fila.estados['ACTA_PARCIAL'].puedeVisualizar}">
-										<p:fileDownload
-											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL')}" />
-									</p:menuitem>
-									<p:menuitem
-										value="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}"
-										title="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}"
-										icon="pi pi-info-circle" disabled="true"
-										rendered="#{not empty fila.estados['ACTA_PARCIAL'].motivoBloqueo}" />
-								</p:submenu>
-								<p:submenu
-									label="#{msg['reportesMesa.documento.certificados']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['CERTIFICADOS_VOTACION'].estado)]}"
-									icon="pi pi-verified">
-									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
-										icon="pi pi-file"
-										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeGenerar}"
-										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', false)}"
-										process="@this"
-										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal"></p:menuitem>
-									<p:menuitem value="#{msg['reportesMesa.accion.regenerar']}"
-										icon="pi pi-file"
-										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeRegenerar}"
-										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', true)}"
-										process="@this"
-										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
-										<p:confirm
-											header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
-											message="#{msg['reportesMesa.confirmar.regenerar']}"
-											icon="pi pi-exclamation-triangle" />
-									</p:menuitem>
-									<p:menuitem
-										value="#{msg['reportesMesa.accion.visualizar']} / #{msg['reportesMesa.accion.descargar']}"
-										icon="pi pi-download" ajax="false"
-										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeVisualizar}">
-										<p:fileDownload
-											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION')}" />
-									</p:menuitem>
-									<p:menuitem
-										value="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}"
-										title="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}"
-										icon="pi pi-info-circle" disabled="true"
-										rendered="#{not empty fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}" />
-								</p:submenu>
-								<p:submenu
-									label="#{msg['reportesMesa.documento.actaFisica']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['ACTA_FISICA_ESCRUTINIO'].estado)]}"
-									icon="pi pi-image">
-									<p:menuitem value="#{msg['reportesMesa.accion.visualizar']}"
-										icon="pi pi-eye"
-										rendered="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].puedeVisualizar}"
-										action="#{reporteMesaController.visualizarActaFisica(fila.mesaId, fila.recintoId)}"
-										process="@this"
-										update=":frmReportesMesa:dlgActaFisica :frmGlobal:growlGlobal"
-										oncomplete="if (args.documentoDisponible) PF('dlgActaFisica').show()" />
-									<p:menuitem
-										value="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}"
-										title="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}"
-										icon="pi pi-info-circle" disabled="true"
-										rendered="#{not empty fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}" />
-								</p:submenu>
-								<p:submenu
-									label="#{msg['reportesMesa.documento.mjrv']} - #{msg['reportesMesa.accion.estado.'.concat(fila.estados['DESIGNACION_MJRV'].estado)]}"
-									icon="pi pi-id-card">
-									<p:menuitem value="#{msg['reportesMesa.accion.visualizar']}"
+								<p:submenu label="#{msg['reportesMesa.documento.mjrv.corto']}" icon="pi pi-id-card">
+									<p:menuitem value="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}"
+										title="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}" icon="pi pi-lock"
+										disabled="true"
+										rendered="#{not empty fila.estados['DESIGNACION_MJRV'].motivoBloqueo}" />
+									<p:menuitem value="#{msg['reportesMesa.accion.ver.miembros']}"
 										icon="pi pi-eye"
 										rendered="#{fila.estados['DESIGNACION_MJRV'].puedeVisualizar}"
 										action="#{reporteMesaController.visualizarJunta(fila.mesaId, fila.recintoId)}"
 										process="@this"
 										update=":frmReportesMesa:dlgJunta :frmGlobal:growlGlobal"
 										oncomplete="if (args.documentoDisponible) PF('dlgJunta').show()" />
-									<p:menuitem
-										value="#{msg['reportesMesa.accion.gestionar.mjrv']}"
+									<p:menuitem value="#{msg['reportesMesa.accion.gestionar.mjrv']}"
 										icon="pi pi-external-link" outcome="/mjrv" />
-									<p:menuitem
-										value="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}"
-										title="#{fila.estados['DESIGNACION_MJRV'].motivoBloqueo}"
-										icon="pi pi-info-circle" disabled="true"
-										rendered="#{not empty fila.estados['DESIGNACION_MJRV'].motivoBloqueo}" />
 								</p:submenu>
-							</p:tieredMenu>
+								<p:submenu label="#{msg['reportesMesa.documento.acta.corto']}" icon="pi pi-file-pdf">
+									<p:menuitem value="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}"
+										title="#{fila.estados['ACTA_PARCIAL'].motivoBloqueo}" icon="pi pi-lock"
+										disabled="true"
+										rendered="#{not empty fila.estados['ACTA_PARCIAL'].motivoBloqueo}" />
+									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
+										icon="pi pi-file-plus"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeGenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', false)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal" />
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar.nueva']}"
+										icon="pi pi-sync" title="#{msg['reportesMesa.accion.regenerar.ayuda']}"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeRegenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL', true)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+										<p:confirm header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+											message="#{msg['reportesMesa.confirmar.regenerar']}"
+											icon="pi pi-exclamation-triangle" />
+									</p:menuitem>
+									<p:menuitem value="#{msg['reportesMesa.accion.descargar.pdf']}"
+										icon="pi pi-download" ajax="false"
+										rendered="#{fila.estados['ACTA_PARCIAL'].puedeVisualizar}">
+										<p:fileDownload
+											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'ACTA_PARCIAL')}" />
+									</p:menuitem>
+								</p:submenu>
+								<p:submenu label="#{msg['reportesMesa.documento.actaFisica.corto']}" icon="pi pi-image">
+									<p:menuitem value="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}"
+										title="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}" icon="pi pi-lock"
+										disabled="true"
+										rendered="#{not empty fila.estados['ACTA_FISICA_ESCRUTINIO'].motivoBloqueo}" />
+									<p:menuitem value="#{msg['reportesMesa.accion.ver.imagen']}"
+										icon="pi pi-eye"
+										rendered="#{fila.estados['ACTA_FISICA_ESCRUTINIO'].puedeVisualizar}"
+										action="#{reporteMesaController.visualizarActaFisica(fila.mesaId, fila.recintoId)}"
+										process="@this"
+										update=":frmReportesMesa:dlgActaFisica :frmGlobal:growlGlobal"
+										oncomplete="if (args.documentoDisponible) PF('dlgActaFisica').show()" />
+								</p:submenu>
+								<p:submenu label="#{msg['reportesMesa.documento.certificados.corto']}" icon="pi pi-verified">
+									<p:menuitem value="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}"
+										title="#{fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}" icon="pi pi-lock"
+										disabled="true"
+										rendered="#{not empty fila.estados['CERTIFICADOS_VOTACION'].motivoBloqueo}" />
+									<p:menuitem value="#{msg['reportesMesa.accion.generar']}"
+										icon="pi pi-file-plus"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeGenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', false)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal" />
+									<p:menuitem value="#{msg['reportesMesa.accion.regenerar.nueva']}"
+										icon="pi pi-sync" title="#{msg['reportesMesa.accion.regenerar.ayuda']}"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeRegenerar}"
+										action="#{reporteMesaController.generarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION', true)}"
+										process="@this"
+										update=":frmReportesMesa:tablaDocumentosMesas :frmGlobal:growlGlobal">
+										<p:confirm header="#{msg['reportesMesa.confirmar.regenerar.titulo']}"
+											message="#{msg['reportesMesa.confirmar.regenerar']}"
+											icon="pi pi-exclamation-triangle" />
+									</p:menuitem>
+									<p:menuitem value="#{msg['reportesMesa.accion.descargar.pdf']}"
+										icon="pi pi-download" ajax="false"
+										rendered="#{fila.estados['CERTIFICADOS_VOTACION'].puedeVisualizar}">
+										<p:fileDownload
+											value="#{reporteMesaController.descargarDocumentoMesa(fila.mesaId, fila.recintoId, 'CERTIFICADOS_VOTACION')}" />
+									</p:menuitem>
+								</p:submenu>
+</p:tieredMenu>
 						</p:column>
 					</p:dataTable>
 					<div

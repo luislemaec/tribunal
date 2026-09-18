@@ -754,15 +754,21 @@ public class JsfUtil implements Serializable {
                 + mesText(fecha.get(Calendar.MONTH) + 1) + " " + fecha.get(Calendar.YEAR);
     }
 
+    /**
+     * IP real del cliente para la auditoría.
+     *
+     * <p>No se lee X-Forwarded-For desde la aplicación: esa cabecera la envía el
+     * cliente y sería falsificable si alguien alcanza el servidor sin pasar por el
+     * proxy. Undertow ya la resuelve cuando el http-listener tiene
+     * {@code proxy-address-forwarding="true"}, así que {@code getRemoteAddr()}
+     * devuelve la IP del cliente y, además, entrega una sola dirección en lugar de
+     * la cadena "cliente, proxy1, proxy2". Es el mismo criterio que usa
+     * {@code AccesoActaServlet} para el control de intentos del acceso QR.
+     */
     public static String getIPAddress() {
-
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext()
                 .getRequest();
-        String ipAddress = request.getHeader("X-FORWARDED-FOR");
-        if (ipAddress == null) {
-            ipAddress = request.getRemoteAddr();
-        }
-        return ipAddress;
+        return request.getRemoteAddr();
     }
 
     public static String getDate(Date date) {

@@ -55,7 +55,7 @@
     </context-param>
     <context-param>
         <param-name>com.sun.faces.defaultResourceMaxAge</param-name>
-        <param-value>86400000</param-value>
+        <param-value>3600000</param-value>
     </context-param>
     <context-param>
         <param-name>resteasy.servlet.mapping.prefix</param-name>

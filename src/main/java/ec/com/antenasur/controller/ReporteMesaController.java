@@ -1,6 +1,14 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import ec.com.antenasur.util.RepositorioDocumentos;
+import org.primefaces.model.DefaultStreamedContent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +25,7 @@ import ec.com.antenasur.dto.ProcesoElectoralDTO;
 import ec.com.antenasur.dto.RecintoDTO;
 import ec.com.antenasur.dto.ReporteMesaDTO;
 import ec.com.antenasur.dto.MesaDocumentosDTO;
+import ec.com.antenasur.dto.EstadoDocumentoMesaDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
 import ec.com.antenasur.dto.OpcionPadronDTO;
 import ec.com.antenasur.enums.TipoDocumentoMesa;
@@ -183,6 +192,162 @@ public class ReporteMesaController implements Serializable {
 			log.error("ERROR GENERAR DOCUMENTO DE MESA", e);
 			JsfUtil.addErrorMessage(Constantes.getMensaje("reportesMesa.error.almacenar"));
 		}
+	}
+
+	/**
+	 * Genera de una sola acción los documentos que faltan en la mesa.
+	 *
+	 * <p>No cambia ninguna regla: recorre solo los tipos generables y delega en el
+	 * mismo {@code generarDocumentoMesa} del servicio que usa la acción individual,
+	 * que revalida dependencias y permisos. Los documentos que ya existen no se
+	 * regeneran (no se crean versiones nuevas ni se altera el QR) y los bloqueados
+	 * se omiten conservando su motivo.
+	 */
+	public void generarDocumentosMesa(Integer mesa, Integer recinto) {
+		List<String> generados = new ArrayList<>();
+		List<String> existentes = new ArrayList<>();
+		List<String> omitidos = new ArrayList<>();
+		for (TipoDocumentoMesa tipo : TipoDocumentoMesa.values()) {
+			if (!tipo.isDocumentoGenerable()) {
+				continue;
+			}
+			EstadoDocumentoMesaDTO estado = estadoDocumental(mesa, tipo);
+			if (estado == null) {
+				continue;
+			}
+			String nombre = nombreCorto(tipo);
+			if (estado.isPuedeVisualizar() || estado.isPuedeRegenerar()) {
+				existentes.add(nombre);
+				continue;
+			}
+			if (!estado.isPuedeGenerar()) {
+				omitidos.add(motivoOmision(nombre, estado.getMotivoBloqueo()));
+				continue;
+			}
+			try {
+				DocumentoDTO documento = reporteMesaService.generarDocumentoMesa(tipo, false, procesoId, recinto, mesa,
+						personaId(), presidenteRestringido);
+				procesoBean.okActivityRegister("GENERA " + tipo.name(), documento.getCodigo());
+				generados.add(nombre);
+			} catch (NegocioException e) {
+				omitidos.add(motivoOmision(nombre, e.getMessage()));
+			} catch (Exception e) {
+				log.error("ERROR GENERAR DOCUMENTOS DE MESA {}", mesa, e);
+				omitidos.add(motivoOmision(nombre, Constantes.getMensaje("reportesMesa.error.almacenar")));
+			}
+		}
+		actualizarResumenDocumental(mesa);
+		informarGeneracionConjunta(generados, existentes, omitidos);
+	}
+
+	/** Estado ya calculado por el servicio de disponibilidad para esa mesa y tipo. */
+	private EstadoDocumentoMesaDTO estadoDocumental(Integer mesa, TipoDocumentoMesa tipo) {
+		for (MesaDocumentosDTO fila : resumenesDocumentales) {
+			if (fila.getMesaId() != null && fila.getMesaId().equals(mesa)) {
+				return fila.getEstados().get(tipo.name());
+			}
+		}
+		return null;
+	}
+
+	private String nombreCorto(TipoDocumentoMesa tipo) {
+		return switch (tipo) {
+		case PADRON_MESA -> Constantes.getMensaje("reportesMesa.documento.padron.corto");
+		case ACTA_PARCIAL -> Constantes.getMensaje("reportesMesa.documento.acta.corto");
+		case CERTIFICADOS_VOTACION -> Constantes.getMensaje("reportesMesa.documento.certificados.corto");
+		case ACTA_FISICA_ESCRUTINIO -> Constantes.getMensaje("reportesMesa.documento.actaFisica.corto");
+		case DESIGNACION_MJRV -> Constantes.getMensaje("reportesMesa.documento.mjrv.corto");
+		};
+	}
+
+	private String motivoOmision(String nombre, String motivo) {
+		return motivo == null || motivo.isBlank() ? nombre : nombre + ": " + motivo;
+	}
+
+	private void informarGeneracionConjunta(List<String> generados, List<String> existentes, List<String> omitidos) {
+		if (!generados.isEmpty()) {
+			JsfUtil.addSuccessMessage(Constantes.getMensaje("reportesMesa.generar.todos.generados",
+					String.join(", ", generados)));
+		}
+		if (!existentes.isEmpty()) {
+			JsfUtil.addInfoMessage(Constantes.getMensaje("reportesMesa.generar.todos.existentes",
+					String.join(", ", existentes)));
+		}
+		if (!omitidos.isEmpty()) {
+			JsfUtil.addWarningMessage(Constantes.getMensaje("reportesMesa.generar.todos.omitidos",
+					String.join(" | ", omitidos)));
+		}
+		if (generados.isEmpty() && existentes.isEmpty() && omitidos.isEmpty()) {
+			JsfUtil.addInfoMessage(Constantes.getMensaje("reportesMesa.generar.todos.sin.documentos"));
+		}
+	}
+
+	/**
+	 * Descarga en un ZIP los documentos vigentes de la mesa.
+	 *
+	 * <p>Cada archivo se resuelve con el mismo {@code obtenerDocumentoActivo} de la
+	 * descarga individual, que valida dependencias, acceso y disponibilidad. Un
+	 * documento bloqueado o inexistente simplemente no se incluye: no se fuerza
+	 * ninguna regla ni se generan documentos.
+	 */
+	public StreamedContent descargarDocumentosMesa(Integer mesa, Integer recinto, String nombreMesa) {
+		List<String> incluidos = new ArrayList<>();
+		ByteArrayOutputStream salida = new ByteArrayOutputStream();
+		try (ZipOutputStream zip = new ZipOutputStream(salida, StandardCharsets.UTF_8)) {
+			for (TipoDocumentoMesa tipo : TipoDocumentoMesa.values()) {
+				if (!tipo.isDocumentoConsultable()) {
+					continue;
+				}
+				try {
+					DocumentoDTO documento = reporteMesaService.obtenerDocumentoActivo(tipo, procesoId, recinto, mesa,
+							personaId(), presidenteRestringido);
+					byte[] contenido;
+					try (InputStream entrada = RepositorioDocumentos.abrirLectura(documento.getPath())) {
+						contenido = entrada.readAllBytes();
+					}
+					zip.putNextEntry(new ZipEntry(nombreEnZip(tipo, documento)));
+					zip.write(contenido);
+					zip.closeEntry();
+					incluidos.add(nombreCorto(tipo));
+				} catch (NegocioException e) {
+					log.debug("Documento {} no disponible para la mesa {}: {}", tipo, mesa, e.getMessage());
+				}
+			}
+		} catch (Exception e) {
+			log.error("ERROR AL EMPAQUETAR DOCUMENTOS DE LA MESA {}", mesa, e);
+			JsfUtil.addErrorMessage(Constantes.getMensaje("reportesMesa.descargar.todos.error"));
+			return null;
+		}
+		if (incluidos.isEmpty()) {
+			JsfUtil.addWarningMessage(Constantes.getMensaje("reportesMesa.descargar.todos.sin.documentos"));
+			return null;
+		}
+		procesoBean.okActivityRegister("DESCARGA DOCUMENTOS DE MESA " + (nombreMesa == null ? mesa : nombreMesa),
+				String.join(", ", incluidos));
+		byte[] paquete = salida.toByteArray();
+		return DefaultStreamedContent.builder().contentType("application/zip")
+				.name(nombrePaquete(nombreMesa)).contentLength((long) paquete.length)
+				.stream(() -> new ByteArrayInputStream(paquete)).build();
+	}
+
+	/** Nombre legible dentro del ZIP, conservando la extensión real del archivo. */
+	private String nombreEnZip(TipoDocumentoMesa tipo, DocumentoDTO documento) {
+		String base = nombreCorto(tipo).replace(' ', '-');
+		String extension = documento.getExtension() == null ? "" : documento.getExtension().trim();
+		if (!extension.isEmpty() && !extension.startsWith(".")) {
+			extension = "." + extension;
+		}
+		if (extension.isEmpty() && documento.getNombre() != null && documento.getNombre().contains(".")) {
+			extension = documento.getNombre().substring(documento.getNombre().lastIndexOf('.'));
+		}
+		String codigo = documento.getCodigo() == null || documento.getCodigo().isBlank() ? ""
+				: "-" + documento.getCodigo();
+		return (base + codigo + extension).replaceAll("[\\\\/:*?\"<>|]", "_");
+	}
+
+	private String nombrePaquete(String nombreMesa) {
+		String mesa = nombreMesa == null || nombreMesa.isBlank() ? "mesa" : nombreMesa.trim().replace(' ', '-');
+		return ("documentos-" + mesa + ".zip").replaceAll("[\\\\/:*?\"<>|]", "_");
 	}
 
 	public StreamedContent descargarDocumentoMesa(Integer mesa, Integer recinto, String tipo) {

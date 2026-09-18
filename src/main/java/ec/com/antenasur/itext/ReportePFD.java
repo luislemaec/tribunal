@@ -64,23 +64,32 @@ public class ReportePFD {
     private static final BaseColor COLOR_TOTAL = new BaseColor(235, 241, 247);
     private static final float[] ANCHOS_ACTA_PARCIAL = new float[]{50, 18, 32};
     private static final int MAX_LISTAS_ACTA_PARCIAL = 9;
-    private static ByteArrayOutputStream baos;
+    /**
+     * Documento PDF que está construyendo el hilo actual.
+     *
+     * <p>Antes estos datos eran campos estáticos, compartidos por toda la
+     * aplicación: si dos usuarios exportaban a la vez, el segundo sobrescribía el
+     * documento del primero y el PDF salía mezclado o vacío. Cada petición usa
+     * ahora su propio estado, y se libera al descargar o guardar el archivo.
+     */
+    private static final class DocumentoEnCurso {
+        private ByteArrayOutputStream salida;
+        private Document documento;
+        private PdfWriter escritor;
+        private PdfPTable tabla;
+        private String codigo;
+    }
 
-    private static Document document;
+    private static final ThreadLocal<DocumentoEnCurso> EN_CURSO = ThreadLocal.withInitial(DocumentoEnCurso::new);
 
-    private static PdfWriter writer;
+    private static DocumentoEnCurso actual() {
+        return EN_CURSO.get();
+    }
 
-    private static String PATH_LOGO;
-
-    private static PdfPTable table;
-
-    private static XMLWorkerHelper worker;
-
-    private static InputStream inputStream;
-
-    private static Font fuente;
-
-    private static String codigoDocumentoActual;
+    /** Libera el documento del hilo para no retenerlo en el pool de peticiones. */
+    private static void liberar() {
+        EN_CURSO.remove();
+    }
 
     /** Certificados institucionales a doble cara, sin modificar el padron. */
     public static byte[] generarCertificadosVotacion(ReporteMesaDTO reporte,
@@ -93,25 +102,16 @@ public class ReportePFD {
         }
     }
 
-    private static void inicializa() {
-        try {
-            worker = XMLWorkerHelper.getInstance();
-            /*Agrega Banner cabecera al documento*/
-            PATH_LOGO = Constantes.getPathLogo();
-        } catch (Exception e) {
-            LOG.error("ERROR AL INICIALIZAR VALORES" + e);
-        }
-    }
-
     public static void nuevoPDF(String nombreReporte) {
         try {
-            inicializa();
-            codigoDocumentoActual = nombreReporte;
-            baos = new ByteArrayOutputStream();
+            liberar();
+            DocumentoEnCurso enCurso = actual();
+            enCurso.codigo = nombreReporte;
+            enCurso.salida = new ByteArrayOutputStream();
             PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4(
-                    baos, nombreReporte, nombreReporte, LocalDateTime.now());
-            document = contexto.documento();
-            writer = contexto.writer();
+                    enCurso.salida, nombreReporte, nombreReporte, LocalDateTime.now());
+            enCurso.documento = contexto.documento();
+            enCurso.escritor = contexto.writer();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,13 +119,14 @@ public class ReportePFD {
 
     public static void nuevoPDFHorizontal(String nombreReporte) {
         try {
-            inicializa();
-            codigoDocumentoActual = nombreReporte;
-            baos = new ByteArrayOutputStream();
+            liberar();
+            DocumentoEnCurso enCurso = actual();
+            enCurso.codigo = nombreReporte;
+            enCurso.salida = new ByteArrayOutputStream();
             PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4Horizontal(
-                    baos, nombreReporte, nombreReporte, LocalDateTime.now());
-            document = contexto.documento();
-            writer = contexto.writer();
+                    enCurso.salida, nombreReporte, nombreReporte, LocalDateTime.now());
+            enCurso.documento = contexto.documento();
+            enCurso.escritor = contexto.writer();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -134,10 +135,10 @@ public class ReportePFD {
     public static void creaTablaCabecera(int numColumns, float[] columWidth, String tableTitle,
             String[] listColumNames, Font fuente) {
         try {
-            table = new PdfPTable(numColumns);
-            table.setWidthPercentage(100);
-            table.setSpacingBefore(8f);
-            table.setSpacingAfter(10f);
+            actual().tabla = new PdfPTable(numColumns);
+            actual().tabla.setWidthPercentage(100);
+            actual().tabla.setSpacingBefore(8f);
+            actual().tabla.setSpacingAfter(10f);
             addTableToDocument(numColumns, columWidth, tableTitle, listColumNames, fuente);
 
         } catch (Exception e) {
@@ -158,7 +159,7 @@ public class ReportePFD {
         cell.setBackgroundColor(COLOR_INSTITUCIONAL);
         cell.setBorderColor(COLOR_INSTITUCIONAL);
         cell.setColspan(numColumns);
-        table.addCell(cell);
+        actual().tabla.addCell(cell);
     }
 
     public static void setMetadataDocument(Document document, String nombreReporte) {
@@ -592,7 +593,7 @@ public class ReportePFD {
     public static void addTableToDocument(int numColumns, float[] columWidth, String tableTitle,
             String[] listColumNames, Font fuente) {
         try {
-            table.setTotalWidth(columWidth);
+            actual().tabla.setTotalWidth(columWidth);
             addTableHeader(numColumns, tableTitle, fuente);
 
             Font fuenteEncabezado = FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL);
@@ -606,9 +607,9 @@ public class ReportePFD {
                 header.setPaddingRight(5f);
                 header.setHorizontalAlignment(Element.ALIGN_CENTER);
                 header.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                table.addCell(header);
+                actual().tabla.addCell(header);
             }
-            table.setHeaderRows(2);
+            actual().tabla.setHeaderRows(2);
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -623,10 +624,10 @@ public class ReportePFD {
                     celda.setBorderColor(COLOR_BORDE_TABLA);
                     celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
                     celda.setHorizontalAlignment(esNumero(medio[i]) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
-                    table.addCell(celda);
+                    actual().tabla.addCell(celda);
                 }
             }
-            document.add(table);
+            actual().documento.add(actual().tabla);
         } catch (Exception e) {
             LOG.error("ERROR AL CREAR CONTENIDO DE TABLA" + e);
         }
@@ -654,7 +655,7 @@ public class ReportePFD {
             Paragraph paragraph = new Paragraph(string, FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK));
             paragraph.setSpacingAfter(6f);
             paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
-            document.add(paragraph);
+            actual().documento.add(paragraph);
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -667,14 +668,14 @@ public class ReportePFD {
                     FontFactory.getFont("arial", 11, Font.BOLD, COLOR_INSTITUCIONAL));
             paragraph.setSpacingBefore(10f);
             paragraph.setSpacingAfter(6f);
-            document.add(paragraph);
+            actual().documento.add(paragraph);
         } catch (DocumentException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public static String getCodigoDocumentoActual() {
-        return codigoDocumentoActual != null ? codigoDocumentoActual : "";
+        return actual().codigo != null ? actual().codigo : "";
     }
 
     public static void descargarPDF(ByteArrayOutputStream baos, String nombreReporte) {
@@ -709,7 +710,7 @@ public class ReportePFD {
             response.setDateHeader("Expires", 0);
 
             try {
-                baos.writeTo(out);
+                actual().salida.writeTo(out);
                 out.flush();
             } catch (IOException ex) {
                 ex.getStackTrace();
@@ -720,6 +721,8 @@ public class ReportePFD {
         } catch (Exception e) {
             e.getStackTrace();
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            liberar();
         }
     }
 
@@ -733,19 +736,26 @@ public class ReportePFD {
     }
 
     public static String guardarDocumentosActasEObligatorio(String nombreDocumento) throws IOException {
-        if (baos == null || baos.size() == 0) {
+        DocumentoEnCurso enCurso = actual();
+        if (enCurso.salida == null || enCurso.salida.size() == 0) {
             throw new IOException("No existe contenido PDF generado para guardar.");
         }
-        Path path = RepositorioDocumentos.escribirAtomico(
-                "actas-escrutinio", nombreDocumento + ".pdf", baos.toByteArray());
-        return path.toString();
+        try {
+            Path path = RepositorioDocumentos.escribirAtomico(
+                    "actas-escrutinio", nombreDocumento + ".pdf", enCurso.salida.toByteArray());
+            return path.toString();
+        } finally {
+            // Último paso del flujo del acta: el contenido ya está en disco.
+            liberar();
+        }
     }
 
     public static String calcularHashSha256Actual() throws IOException {
-        if (baos == null || baos.size() == 0) {
+        DocumentoEnCurso enCurso = actual();
+        if (enCurso.salida == null || enCurso.salida.size() == 0) {
             throw new IOException("No existe contenido PDF generado para calcular hash.");
         }
-        return calcularSha256(baos.toByteArray());
+        return calcularSha256(enCurso.salida.toByteArray());
     }
 
     public static String calcularSha256(byte[] contenido) throws IOException {
@@ -788,7 +798,7 @@ public class ReportePFD {
             celdaQr.setHorizontalAlignment(Element.ALIGN_RIGHT);
             tabla.addCell(celdaQr);
 
-            document.add(tabla);
+            actual().documento.add(tabla);
         } catch (Exception e) {
             LOG.error("ERROR AL AGREGAR CODIGO QR AL PDF", e);
         }
@@ -803,8 +813,8 @@ public class ReportePFD {
             Paragraph parrafo = new Paragraph(finalParagraph,
                     FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
-            document.add(parrafo);
-            document.close();
+            actual().documento.add(parrafo);
+            actual().documento.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -812,8 +822,8 @@ public class ReportePFD {
 
     public static void cerrarDocumento() {
         try {
-            if (document != null && document.isOpen()) {
-                document.close();
+            if (actual().documento != null && actual().documento.isOpen()) {
+                actual().documento.close();
             }
         } catch (Exception e) {
             LOG.error("ERROR AL CERRAR DOCUMENTO PDF", e);
@@ -825,7 +835,7 @@ public class ReportePFD {
             Paragraph parrafo = new Paragraph("\n",
                     FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
-            document.add(parrafo);
+            actual().documento.add(parrafo);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -836,7 +846,7 @@ public class ReportePFD {
             Paragraph parrafo = new Paragraph("\n" + observacion,
                     FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.RED));
             parrafo.setAlignment(Element.ALIGN_LEFT);
-            document.add(parrafo);
+            actual().documento.add(parrafo);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -845,8 +855,9 @@ public class ReportePFD {
     public static void agregaHTML(String texto, String css, FontProvider fontProvider) {
         try {
             InputStream inputStreamCss = new ByteArrayInputStream(css.getBytes(("UTF-8")));
-            inputStream = new ByteArrayInputStream(texto.getBytes(("UTF-8")));
-            worker.parseXHtml(writer, document, inputStream, inputStreamCss, Charset.forName("UTF-8"), fontProvider);
+            InputStream entrada = new ByteArrayInputStream(texto.getBytes(("UTF-8")));
+            XMLWorkerHelper.getInstance().parseXHtml(actual().escritor, actual().documento, entrada,
+                    inputStreamCss, Charset.forName("UTF-8"), fontProvider);
         } catch (IOException ex) {
             Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
         }

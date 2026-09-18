@@ -745,8 +745,12 @@
                                 <p:selectOneRadio id="sexo"
                                                   value="#{personaController.iglesiaPersonaSeleccionado.persona.sexo}"
                                                   layout="lineDirection">
-                                    <f:selectItem itemLabel="Masculino" itemValue="M"/>
-                                    <f:selectItem itemLabel="Femenino" itemValue="F"/>
+                                    <!-- itemEscaped=false permite mostrar la etiqueta larga en pantallas
+                                         grandes y la abreviada (M/F) en móvil, sin duplicar el componente. -->
+                                    <f:selectItem itemEscaped="false" itemValue="M"
+                                                  itemLabel="&lt;span class='personas-sexo--largo'&gt;Masculino&lt;/span&gt;&lt;span class='personas-sexo--corto'&gt;M&lt;/span&gt;"/>
+                                    <f:selectItem itemEscaped="false" itemValue="F"
+                                                  itemLabel="&lt;span class='personas-sexo--largo'&gt;Femenino&lt;/span&gt;&lt;span class='personas-sexo--corto'&gt;F&lt;/span&gt;"/>
                                 </p:selectOneRadio>
                             </div>
 

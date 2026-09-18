@@ -72,6 +72,77 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     font-size: 1rem;
 }
 
+/* Perfil del topbar: nombre y rol(es) del usuario.
+   La barra mide siempre 60px: el contenido nunca la estira, y en pantallas
+   estrechas se reduce el tamaño de letra en lugar de crecer o partirse. */
+.layout-wrapper .layout-topbar #topbar-profile-menu-button {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    height: 60px;
+    max-width: 40vw;
+    padding: 0 1rem;
+    overflow: hidden;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .15rem;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__nombre {
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    color: #ffffff;
+    font-size: clamp(.72rem, .9vw, 1rem);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__roles {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: .25rem;
+    margin: 0;
+    max-width: 100%;
+}
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol {
+    margin: 0;
+    padding: .05rem .4rem;
+    border-radius: .25rem;
+    background: rgba(255, 255, 255, .2);
+    color: #ffffff;
+    font-size: clamp(.6rem, .68vw, .76rem);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: .02em;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+/* Un color por rol; el prefijo SITEC- se retira en la vista. */
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--administrador { background: #fde68a; color: #78350f; }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--analista { background: #bfdbfe; color: #1e3a8a; }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--iglesiaadmin { background: #bbf7d0; color: #14532d; }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--presidente-mesa { background: #ddd6fe; color: #4c1d95; }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tecnico { background: #e2e8f0; color: #334155; }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tribunal { background: #fecdd3; color: #881337; }
+
+@media (max-width: 640px) {
+    .layout-wrapper .layout-topbar #topbar-profile-menu-button { padding: 0 .5rem; }
+    .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__nombre { max-width: 8rem; }
+    .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__roles { display: none; }
+}
+
 .layout-wrapper .layout-sidebar .menu-search-empty {
     display: flex;
     align-items: center;
@@ -482,7 +553,9 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 .personas-estados { display:flex; flex-direction:column; align-items:flex-start; gap:.25rem; }
 .personas-dialog-miembro .tec-form .field { margin-bottom:.75rem; }
 .personas-dialog-miembro .tec-form .personas-aviso { flex-wrap:nowrap; align-items:flex-start; padding:.5rem .75rem; font-size:.8rem; }
-.personas-dialog-miembro .ui-selectoneradio { display:flex; flex-wrap:wrap; align-items:center; gap:.25rem .75rem; min-height:2.25rem; }
+/* Sexo: una sola fila; etiqueta larga en pantallas grandes y abreviada en móvil. */
+.personas-dialog-miembro .ui-selectoneradio { display:flex; flex-wrap:nowrap; align-items:center; gap:.75rem; min-height:2.4rem; }
+.personas-sexo--corto { display:none; }
 .personas-dialog-miembro .ui-selectoneradio > div { display:inline-flex; align-items:center; }
 .personas-dialog-miembro .ui-selectoneradio label { margin:0 0 0 .4rem; padding:0; }
 .personas-switch { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.625rem 0 0; border-top:1px solid #eef2f7; }
@@ -517,6 +590,8 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
     .personas-aviso__aside { margin-left:0; }
     .personas-kpi { display:block; }
     .personas-kpi__icon { display:none; }
+    .personas-sexo--largo { display:none; }
+    .personas-sexo--corto { display:inline; }
 }
 
 /* ==========================================================================
@@ -621,4 +696,21 @@ body .ui-fluid .iglesias-ruc-opciones .ui-button { width:auto; }
     .iglesias-toolbar,
     .iglesias-toolbar__grupo { width:100%; align-items:stretch; }
     body .iglesias-toolbar__grupo .tec-btn.ui-button { flex:1 1 calc(50% - 1.5rem); }
+}
+
+/* ==========================================================================
+ * Reportes de mesa (mesas-*): solo reportesMesa.xhtml.
+ * ========================================================================== */
+.mesas-docs { display:flex; flex-wrap:wrap; gap:.25rem; }
+.mesas-doc { display:inline-flex; align-items:center; gap:.25rem; padding:.1rem .45rem; border:1px solid transparent; border-radius:.35rem; font-size:.7rem; font-weight:600; line-height:1.5; white-space:nowrap; }
+.mesas-doc > .pi { font-size:.7rem; }
+/* El estado se distingue por color; el nombre del documento nunca lo incluye. */
+.mesas-doc--visualizar { border-color:#bbf7d0; background:#ecfdf5; color:#047857; }
+.mesas-doc--generar { border-color:#e2e8f0; background:#f8fafc; color:#475569; }
+.mesas-doc--pendiente { border-color:#fde68a; background:#fffbeb; color:#b45309; }
+.mesas-doc--bloqueado { border-color:#fecaca; background:#fef2f2; color:#b91c1c; }
+.mesas-menu.ui-tieredmenu { width:15rem; }
+@media (max-width:640px) {
+    .mesas-docs { gap:.2rem; }
+    .mesas-doc { font-size:.66rem; }
 }
