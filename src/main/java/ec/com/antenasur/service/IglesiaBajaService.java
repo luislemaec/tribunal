@@ -3,6 +3,7 @@ package ec.com.antenasur.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,8 +63,20 @@ public class IglesiaBajaService {
 	@Inject
 	private UsuarioFacade usuarioFacade;
 
-	/** Resultado de una baja o restauración, para informar al usuario. */
-	public record Resultado(String iglesia, int membresias, int personas, int usuarios) {
+	/**
+	 * Resultado de una baja o restauración. {@code omitidos} describe las
+	 * membresías que no pudieron reactivarse por la regla de una sola iglesia
+	 * activa por persona; está vacío en las bajas.
+	 */
+	public record Resultado(String iglesia, int membresias, int personas, int usuarios, List<String> omitidos) {
+
+		public Resultado(String iglesia, int membresias, int personas, int usuarios) {
+			this(iglesia, membresias, personas, usuarios, List.of());
+		}
+
+		public boolean tieneOmitidos() {
+			return !omitidos.isEmpty();
+		}
 	}
 
 	// =====================================================================
@@ -213,11 +226,23 @@ public class IglesiaBajaService {
 					+ " por lo que no es posible restaurar las relaciones de forma selectiva.");
 		}
 
-		List<IglesiaPersona> membresias = bajaFacade.membresiasPorIds(bajaFacade
-				.idsDesactivadosDesdeRevision("public.tb_iglesia_persona_aud", "igpe_id", iglesiaId, revision));
+		List<Integer> idsDesactivados = bajaFacade.idsDesactivadosDesdeRevision("public.tb_iglesia_persona_aud",
+				"igpe_id", iglesiaId, revision);
+		List<IglesiaPersona> membresias = bajaFacade.membresiasPorIds(idsDesactivados);
+
+		// La base impone «una sola iglesia activa por persona» (trigger
+		// fn_validar_iglesia_activa_persona, por documento). Los conflictos se
+		// detectan en bloque ANTES de escribir: así la restauración nunca provoca
+		// la excepción del trigger ni deja la transacción a medias, y la iglesia
+		// actual de una persona trasladada no se toca.
+		Map<Integer, String> conflictos = detectarConflictos(idsDesactivados);
+
 		int membresiasRestauradas = 0;
 		List<Integer> personaIds = new ArrayList<>(membresias.size());
 		for (IglesiaPersona membresia : membresias) {
+			if (conflictos.containsKey(membresia.getId())) {
+				continue;
+			}
 			if (membresia.getPersona() != null && membresia.getPersona().getId() != null) {
 				personaIds.add(membresia.getPersona().getId());
 			}
@@ -254,9 +279,31 @@ public class IglesiaBajaService {
 
 		iglesia.setEstado(true);
 		iglesiaFacade.edit(iglesia);
-		log.info("Iglesia id={} restaurada desde la revisión {}: {} membresías, {} personas y {} usuarios", iglesiaId,
-				revision, membresiasRestauradas, personasRestauradas, usuariosRestaurados);
-		return new Resultado(iglesia.getNombre(), membresiasRestauradas, personasRestauradas, usuariosRestaurados);
+		log.info("Iglesia id={} restaurada desde la revisión {}: {} membresías, {} personas y {} usuarios;"
+				+ " {} membresía(s) omitida(s) por pertenencia activa a otra iglesia", iglesiaId, revision,
+				membresiasRestauradas, personasRestauradas, usuariosRestaurados, conflictos.size());
+		return new Resultado(iglesia.getNombre(), membresiasRestauradas, personasRestauradas, usuariosRestaurados,
+				List.copyOf(conflictos.values()));
+	}
+
+	/**
+	 * Membresías que no pueden reactivarse, con el motivo ya redactado para el
+	 * usuario. Una sola consulta para todo el conjunto: sin N+1 y sin depender de
+	 * que falle el trigger.
+	 */
+	private Map<Integer, String> detectarConflictos(List<Integer> igpeIds) {
+		Map<Integer, String> conflictos = new LinkedHashMap<>();
+		for (Object[] fila : bajaFacade.membresiasEnConflicto(igpeIds)) {
+			Integer igpeId = ((Number) fila[0]).intValue();
+			String documento = (String) fila[1];
+			String nombre = (String) fila[2];
+			String iglesiaEnConflicto = (String) fila[3];
+			String motivo = iglesiaEnConflicto != null
+					? nombre + " (" + documento + "): ya pertenece a " + iglesiaEnConflicto
+					: nombre + " (" + documento + "): el documento está duplicado en otro miembro de esta iglesia";
+			conflictos.put(igpeId, motivo);
+		}
+		return conflictos;
 	}
 
 	// =====================================================================

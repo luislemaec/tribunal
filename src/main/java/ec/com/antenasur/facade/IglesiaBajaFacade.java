@@ -245,6 +245,55 @@ public class IglesiaBajaFacade {
 		return ids;
 	}
 
+	/**
+	 * De un conjunto de membresías a reactivar, las que chocarían con la regla
+	 * «una sola iglesia activa por persona» que aplica el trigger
+	 * {@code fn_validar_iglesia_activa_persona}.
+	 *
+	 * <p>La regla se evalúa por documento (no por {@code pers_id}), igual que el
+	 * trigger, y considera dos fuentes de conflicto:
+	 * <ul>
+	 * <li><b>externo</b>: el documento ya tiene una membresía activa en otra
+	 * iglesia (por ejemplo, la persona fue trasladada después de la baja);</li>
+	 * <li><b>interno</b>: dos membresías del propio conjunto comparten documento
+	 * —dato histórico duplicado—, de las que solo una puede quedar activa.</li>
+	 * </ul>
+	 *
+	 * <p>Se resuelve en una consulta previa a cualquier escritura, de modo que la
+	 * restauración nunca provoque la excepción del trigger.
+	 *
+	 * @return filas [igpe_id, documento, nombre de la persona, iglesia en
+	 *         conflicto o null si el conflicto es interno]
+	 */
+	public List<Object[]> membresiasEnConflicto(List<Integer> igpeIds) {
+		if (igpeIds == null || igpeIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		String sql = "WITH candidatas AS ("
+				+ "   SELECT ip.igpe_id, NULLIF(BTRIM(p.pers_documento), '') AS doc, p.pers_nombre"
+				+ "     FROM public.tb_iglesia_persona ip"
+				+ "     JOIN public.tb_persona p ON p.pers_id = ip.pers_id"
+				+ "    WHERE ip.igpe_id IN (:ids))"
+				+ " SELECT c.igpe_id, c.doc, c.pers_nombre, ext.nombre_iglesia FROM candidatas c"
+				// Conflicto externo: el documento ya está activo fuera del conjunto.
+				+ " LEFT JOIN LATERAL ("
+				+ "   SELECT i.igl_nombre AS nombre_iglesia FROM public.tb_iglesia_persona o"
+				+ "     JOIN public.tb_persona po ON po.pers_id = o.pers_id"
+				+ "     LEFT JOIN public.tb_iglesia i ON i.igl_id = o.igl_id"
+				+ "    WHERE o.estado = TRUE AND BTRIM(po.pers_documento) = c.doc"
+				+ "      AND o.igpe_id NOT IN (:ids)"
+				+ "    LIMIT 1) ext ON TRUE"
+				+ " WHERE c.doc IS NOT NULL"
+				+ "   AND (ext.nombre_iglesia IS NOT NULL"
+				// Conflicto interno: otra candidata con el mismo documento se
+				// reactivará antes (se conserva la de menor igpe_id).
+				+ "        OR EXISTS (SELECT 1 FROM candidatas d"
+				+ "                    WHERE d.doc = c.doc AND d.igpe_id < c.igpe_id))";
+		@SuppressWarnings("unchecked")
+		List<Object[]> filas = emSinFiltro().createNativeQuery(sql).setParameter("ids", igpeIds).getResultList();
+		return filas;
+	}
+
 	/** Membresías por id, sin filtro de estado (para reactivarlas). */
 	public List<IglesiaPersona> membresiasPorIds(List<Integer> ids) {
 		if (ids == null || ids.isEmpty()) {

@@ -421,6 +421,11 @@ public class IglesiaController implements Serializable {
             JsfUtil.addInfoMessage("Iglesia restaurada: " + resultado.iglesia() + ". Se reactivaron "
                     + resultado.membresias() + " miembro(s), " + resultado.personas() + " persona(s) y "
                     + resultado.usuarios() + " usuario(s).");
+            if (resultado.tieneOmitidos()) {
+                // Cada persona solo puede pertenecer a una iglesia activa: estos
+                // miembros se dejaron como estaban, sin tocar su iglesia actual.
+                JsfUtil.addWarningMessage(describirOmitidos(resultado.omitidos()));
+            }
             iglesiaEliminadaSeleccionada = null;
             abrirEliminadas();
             refrescarLista();
@@ -430,6 +435,29 @@ public class IglesiaController implements Serializable {
             log.error("Error al restaurar iglesia id={}", iglesiaEliminadaSeleccionada.getId(), e);
             JsfUtil.addErrorMessage("No se pudo restaurar la iglesia; no se realizó ningún cambio.");
         }
+    }
+
+    /**
+     * Mensaje de los miembros que no se pudieron reactivar. Se detallan los
+     * primeros casos y se resume el resto para no saturar la pantalla; el
+     * detalle completo queda en el log del servidor.
+     */
+    private String describirOmitidos(List<String> omitidos) {
+        StringBuilder mensaje = new StringBuilder();
+        mensaje.append(omitidos.size()).append(" miembro(s) no se restauraron porque cada persona solo puede")
+                .append(" pertenecer a una iglesia activa: ");
+        int detallados = Math.min(omitidos.size(), 3);
+        for (int i = 0; i < detallados; i++) {
+            if (i > 0) {
+                mensaje.append("; ");
+            }
+            mensaje.append(omitidos.get(i));
+        }
+        if (omitidos.size() > detallados) {
+            mensaje.append(" y ").append(omitidos.size() - detallados).append(" más");
+        }
+        mensaje.append(". Revise esos registros en Personas; la iglesia actual de cada uno no fue modificada.");
+        return mensaje.toString();
     }
 
     /**
