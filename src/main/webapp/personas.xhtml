@@ -390,6 +390,16 @@
                                          rendered="#{personaController.puedeGenerarReporteInconsistencias}"
                                          actionListener="#{personaController.exportarInconsistenciasExcel}"/>
 
+                        <!-- Las personas eliminadas se consultan aquí, no en la carga inicial -->
+                        <p:commandButton value="#{msg['form.personas.btn.eliminadas']}" icon="pi pi-inbox"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         rendered="#{personaController.puedeGestionarEliminadas}"
+                                         action="#{personaController.abrirEliminadas}"
+                                         process="@this" update=":frmPersonasEliminadas :frmGlobal:growlGlobal"
+                                         oncomplete="PF('dlgPersonasEliminadas').show()">
+                            <p:tooltip for="@parent" value="#{msg['form.personas.btn.eliminadas.tooltip']}"/>
+                        </p:commandButton>
+
                         <p:commandButton value="Descargar" icon="pi pi-download"
                                          styleClass="tec-btn ui-button-outlined ui-button-info"
                                          rendered="#{personaController.file ne null}">
@@ -466,7 +476,13 @@
                             <h:outputText value="#{iglPers.persona.nombres} | #{iglPers.persona.sexo}"/>
                         </f:facet>
                         <span class="personas-nombre">
-                            <h:outputText value="#{iglPers.persona.nombres}" styleClass="personas-nombre__texto"/>
+                            <span>
+                                <h:outputText value="#{iglPers.persona.nombres}" styleClass="personas-nombre__texto"/>
+                                <!-- Misma vigencia que Iglesias: constantes compartidas en IglesiaDTO -->
+                                <p:tag rendered="#{iglPers.persona.nuevo}" value="#{msg['form.personas.tag.nuevo']}"
+                                       icon="pi pi-star" severity="success"
+                                       styleClass="tec-status personas-nuevo"/>
+                            </span>
                             <!-- La iglesia solo aporta cuando el listado mezcla iglesias (filtro por cantón o parroquia). -->
                             <ui:fragment rendered="#{iglPers.persona.sexo eq 'M' or iglPers.persona.sexo eq 'F'
                                                     or (personaController.iglesiaSeleccionado.id eq null and not empty iglPers.iglesia.nombre)}">
@@ -578,6 +594,40 @@
                         </span>
                     </p:column>
 
+                    <!-- Fechas reales de registro y última modificación de la persona
+                         (f_crea / f_actualiza); trazabilidad interna: solo SITEC-Administrador -->
+                    <p:column headerText="#{msg['form.personas.table.header.fechas']}"
+                              sortBy="#{iglPers.persona.fechaCrea}"
+                              styleClass="tec-col-fit personas-col-fechas"
+                              rendered="#{personaController.puedeVerAuditoria}">
+                        <f:facet name="export">
+                            <h:outputText value="#{iglPers.persona.fechaCrea} / #{iglPers.persona.fechaActualiza}"/>
+                        </f:facet>
+                        <span class="personas-fechas">
+                            <span class="personas-fechas__item"
+                                  title="#{msg['form.personas.table.header.fecha.registro']}">
+                                <i class="pi pi-calendar-plus personas-fechas__icono" aria-hidden="true"/>
+                                <h:outputText rendered="#{not empty iglPers.persona.fechaCrea}"
+                                              value="#{iglPers.persona.fechaCrea}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglPers.persona.fechaCrea}" value="—"
+                                              styleClass="tec-muted"/>
+                            </span>
+                            <span class="personas-fechas__item"
+                                  title="#{msg['form.personas.table.header.fecha.actualiza']}">
+                                <i class="pi pi-refresh personas-fechas__icono personas-fechas__icono--actualiza"
+                                   aria-hidden="true"/>
+                                <h:outputText rendered="#{not empty iglPers.persona.fechaActualiza}"
+                                              value="#{iglPers.persona.fechaActualiza}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </h:outputText>
+                                <h:outputText rendered="#{empty iglPers.persona.fechaActualiza}" value="—"
+                                              styleClass="tec-muted"/>
+                            </span>
+                        </span>
+                    </p:column>
+
                     <p:column headerText="#{msg['form.personas.table.header.acciones']}"
                               exportable="false" selectRow="false"
                               styleClass="tec-col-actions">
@@ -601,6 +651,15 @@
                                              process="@this" partialSubmit="true"
                                              update=":frmPersonas:panelDialogRegularizacion"
                                              oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
+                            <p:commandButton icon="pi pi-history"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             title="#{msg['form.personas.btn.historial.title']}"
+                                             ariaLabel="#{msg['form.personas.btn.historial.title']}"
+                                             rendered="#{personaController.puedeVerAuditoria}"
+                                             action="#{personaController.verHistorialPersonaFila(iglPers)}"
+                                             process="@this" partialSubmit="true"
+                                             update=":frmPersonasHistorial :frmGlobal:growlGlobal"
+                                             oncomplete="PF('dlgPersonaHistorial').show()"/>
                             <p:commandButton icon="pi pi-trash"
                                              styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                              title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
@@ -893,6 +952,199 @@
                 </f:facet>
             </p:dialog>
 
+        </h:form>
+
+        <!-- ======================================================
+             DIÁLOGO: HISTORIAL DE CAMBIOS (auditoría Envers existente)
+             Solo los campos que efectivamente cambiaron en cada revisión.
+             ====================================================== -->
+        <h:form id="frmPersonasHistorial">
+            <p:dialog header="#{msg['form.personas.hist.title']} — #{personaController.personaHistorialSeleccionada.nombres}"
+                      widgetVar="dlgPersonaHistorial" closable="true" modal="true" responsive="true"
+                      fitViewport="true" dynamic="true" appendTo="@(body)"
+                      styleClass="tec-dialog tec-dialog--lg">
+                <!-- Al cerrar se libera el historial: no queda retenido en la vista -->
+                <p:ajax event="close" listener="#{personaController.cerrarHistorial}"
+                        process="@this" update="@form"/>
+
+                <p:outputPanel layout="block" styleClass="tec-muted mb-2">
+                    <h:outputText value="#{msg['form.personas.hist.subtitulo']}"/>
+                </p:outputPanel>
+
+                <p:dataTable var="h" value="#{personaController.historialPersona}"
+                             emptyMessage="#{msg['form.personas.hist.empty']}"
+                             reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
+                             styleClass="tec-table tec-table--static">
+                    <p:column headerText="#{msg['form.personas.hist.col.fecha']}" styleClass="tec-col-fit">
+                        <h:outputText rendered="#{not empty h.fecha}" value="#{h.fecha}"
+                                      styleClass="personas-fecha">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                        <h:outputText rendered="#{empty h.fecha}" value="—" styleClass="tec-muted"/>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.usuario']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{empty h.usuario ? '—' : h.usuario}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.accion']}" styleClass="tec-col-fit">
+                        <p:tag value="#{msg['form.personas.hist.accion.'.concat(h.accion)]}"
+                               severity="#{h.accion eq 'CREA' ? 'success' : (h.accion eq 'DESACTIVA' or h.accion eq 'ELIMINA' ? 'danger' : 'info')}"
+                               styleClass="tec-status"/>
+                    </p:column>
+                    <!-- Un campo auditado por columna: se muestra el valor de esa revisión y
+                         se resalta (con el valor anterior en el tooltip) si cambió -->
+                    <p:column headerText="#{msg['form.personas.hist.col.nombres']}"
+                              styleClass="personas-hist__col">
+                        <span class="personas-hist__valor #{h.cambio('nombres') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('nombres') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.nombresAnterior ? '—' : h.nombresAnterior) : ''}">
+                            #{empty h.nombres ? '—' : h.nombres}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.apellidos']}"
+                              styleClass="personas-hist__col">
+                        <span class="personas-hist__valor #{h.cambio('apellidos') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('apellidos') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.apellidosAnterior ? '—' : h.apellidosAnterior) : ''}">
+                            #{empty h.apellidos ? '—' : h.apellidos}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.documento']}"
+                              styleClass="tec-col-fit personas-hist__col">
+                        <span class="personas-hist__valor tec-mono #{h.cambio('documento') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('documento') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.documentoAnterior ? '—' : h.documentoAnterior) : ''}">
+                            #{empty h.documento ? '—' : h.documento}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.tratamiento']}"
+                              styleClass="personas-hist__col">
+                        <span class="personas-hist__valor #{h.cambio('tratamiento') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('tratamiento') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.tratamientoAnterior ? '—' : h.tratamientoAnterior) : ''}">
+                            #{empty h.tratamiento ? '—' : h.tratamiento}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.sexo']}"
+                              styleClass="tec-col-fit personas-hist__col">
+                        <span class="personas-hist__valor #{h.cambio('sexo') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('sexo') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.sexoAnterior ? '—' : h.sexoAnterior) : ''}">
+                            #{empty h.sexo ? '—' : h.sexo}
+                        </span>
+                    </p:column>
+                    <p:column headerText="#{msg['form.personas.hist.col.estado']}"
+                              styleClass="tec-col-fit personas-hist__col">
+                        <span class="personas-hist__valor #{h.cambio('estado') ? 'personas-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('estado') ? msg['form.personas.hist.anterior'].concat(' ').concat(empty h.estadoAnterior ? '—' : h.estadoAnterior) : ''}">
+                            #{empty h.estado ? '—' : h.estado}
+                        </span>
+                    </p:column>
+                </p:dataTable>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgPersonaHistorial').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+        </h:form>
+
+        <!-- ======================================================
+             DIÁLOGO: PERSONAS ELIMINADAS (carga bajo demanda)
+             ====================================================== -->
+        <h:form id="frmPersonasEliminadas">
+            <p:dialog header="#{msg['form.personas.eliminadas.title']}" widgetVar="dlgPersonasEliminadas"
+                      closable="true" modal="true" responsive="true" fitViewport="true"
+                      dynamic="true" appendTo="@(body)" styleClass="tec-dialog tec-dialog--lg">
+                <!-- Al cerrar se liberan los datos: no quedan retenidos en la vista -->
+                <p:ajax event="close" listener="#{personaController.cerrarEliminadas}"
+                        process="@this" update="@form"/>
+
+                <p:messages id="msgsPersonasEliminadas" globalOnly="false" showDetail="false"
+                            closable="true" styleClass="mb-2"/>
+
+                <p:dataTable var="eliminada" value="#{personaController.personasEliminadas}"
+                             id="tblPersonasEliminadas" widgetVar="wdTblPersonasEliminadas"
+                             emptyMessage="#{msg['form.personas.eliminadas.empty']}"
+                             reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
+                             styleClass="tec-table tec-table--static">
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.documento']}"
+                              styleClass="tec-col-fit">
+                        <h:outputText value="#{empty eliminada.documento ? '—' : eliminada.documento}"
+                                      styleClass="tec-mono"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.nombres']}"
+                              styleClass="tec-col-primary personas-eliminadas__col-nombre">
+                        <span class="personas-nombre">
+                            <h:outputText value="#{eliminada.nombres}" styleClass="personas-nombre__texto"/>
+                            <span class="personas-nombre__meta">
+                                <h:outputText rendered="#{eliminada.sexo eq 'M'}" value="Masculino"
+                                              styleClass="personas-nombre__sexo"/>
+                                <h:outputText rendered="#{eliminada.sexo eq 'F'}" value="Femenino"
+                                              styleClass="personas-nombre__sexo"/>
+                            </span>
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.iglesia']}"
+                              styleClass="personas-eliminadas__col-iglesia">
+                        <h:outputText value="#{empty eliminada.iglesiaNombre ? '—' : eliminada.iglesiaNombre}"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.baja']}" styleClass="tec-col-fit">
+                        <span class="personas-fechas__item">
+                            <i class="pi pi-calendar-times personas-fechas__icono" aria-hidden="true"/>
+                            <h:outputText rendered="#{not empty eliminada.fechaBaja}" value="#{eliminada.fechaBaja}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                            <h:outputText rendered="#{empty eliminada.fechaBaja}" value="—" styleClass="tec-muted"/>
+                        </span>
+                        <h:outputText rendered="#{not empty eliminada.usuarioBaja}" value="#{eliminada.usuarioBaja}"
+                                      styleClass="personas-nombre__meta"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.estado']}"
+                              styleClass="personas-eliminadas__col-situacion">
+                        <p:tag rendered="#{eliminada.bloqueada}" value="#{eliminada.motivoBloqueo}"
+                               icon="pi pi-exclamation-triangle" severity="warning" styleClass="tec-status"/>
+                        <p:tag rendered="#{not eliminada.bloqueada and empty eliminada.revisionBaja}"
+                               value="#{msg['form.personas.eliminadas.sin.revision']}"
+                               icon="pi pi-question-circle" severity="secondary" styleClass="tec-status"/>
+                        <p:tag rendered="#{eliminada.restaurable}"
+                               value="#{msg['form.personas.eliminadas.restaurable']}" icon="pi pi-check"
+                               severity="success" styleClass="tec-status"/>
+                    </p:column>
+
+                    <p:column headerText="#{msg['form.personas.eliminadas.col.acciones']}"
+                              styleClass="tec-col-actions">
+                        <span class="tec-acciones">
+                            <p:commandButton icon="pi pi-replay"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             title="#{msg['form.personas.eliminadas.btn.restaurar']}"
+                                             ariaLabel="#{msg['form.personas.eliminadas.btn.restaurar']}"
+                                             disabled="#{not eliminada.restaurable}"
+                                             action="#{personaController.restaurarPersona}"
+                                             process="@this"
+                                             update="@form :frmPersonas :frmGlobal:growlGlobal">
+                                <f:setPropertyActionListener value="#{eliminada}"
+                                                             target="#{personaController.personaEliminadaSeleccionada}"/>
+                                <p:confirm header="#{msg['form.personas.eliminadas.confirm.header']}"
+                                           message="#{msg['form.personas.eliminadas.confirm.restaurar']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </span>
+                    </p:column>
+                </p:dataTable>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgPersonasEliminadas').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
         </h:form>
 
     </ui:define>

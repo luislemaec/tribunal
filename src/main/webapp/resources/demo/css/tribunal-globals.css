@@ -679,20 +679,39 @@ body .ui-fluid .iglesias-ruc-opciones .ui-button { width:auto; }
 .iglesias-doc__icon--pdf { color:#dc2626; }
 .iglesias-doc__icon--excel { color:#16a34a; }
 .iglesias-doc__nombre { color:#1e293b; font-size:.85rem; overflow-wrap:anywhere; }
-.iglesias-fecha { white-space:nowrap; font-size:.8rem; }
-/* "Nueva" usa el verde del tema, el mismo del botón Nueva iglesia */
-body .ui-tag.ui-tag-success.iglesias-nueva { margin-left:.4rem; vertical-align:middle; background:#f1f8e9; color:#33691e; border:1px solid #c5e1a5; }
-body .ui-tag.ui-tag-success.iglesias-nueva .ui-tag-icon { color:#689f38; }
+.iglesias-fecha,
+.personas-fecha { white-space:nowrap; font-size:.8rem; }
+/* "Nueva"/"Nuevo" usa el verde del tema, el mismo del botón Nueva iglesia */
+body .ui-tag.ui-tag-success.iglesias-nueva,
+body .ui-tag.ui-tag-success.personas-nuevo { margin-left:.4rem; vertical-align:middle; background:#f1f8e9; color:#33691e; border:1px solid #c5e1a5; }
+body .ui-tag.ui-tag-success.iglesias-nueva .ui-tag-icon,
+body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
 /* Registro y última actualización en una sola columna, cada fecha con su ícono */
-.iglesias-fechas { display:flex; flex-direction:column; gap:.2rem; }
-.iglesias-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:#475569; font-size:.75rem; }
-.iglesias-fechas__icono { color:#94a3b8; font-size:.75rem; }
-.iglesias-fechas__icono--actualiza { color:#0ea5e9; }
+.iglesias-fechas,
+.personas-fechas { display:flex; flex-direction:column; gap:.2rem; }
+.iglesias-fechas__item,
+.personas-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:#475569; font-size:.75rem; }
+.iglesias-fechas__icono,
+.personas-fechas__icono { color:#94a3b8; font-size:.75rem; }
+.iglesias-fechas__icono--actualiza,
+.personas-fechas__icono--actualiza { color:#0ea5e9; }
 /* Historial: una columna por campo auditado; se resalta lo que cambió en la revisión */
-.iglesias-hist__col { font-size:.82rem; }
+.iglesias-hist__col,
+.personas-hist__col { font-size:.82rem; }
 .iglesias-hist__col--geo { color:#475569; font-size:.78rem; }
-.iglesias-hist__valor { display:inline-block; overflow-wrap:anywhere; }
-.iglesias-hist__valor--cambio { padding:.05rem .35rem; border-radius:.25rem; background:#ecfdf5; color:#047857; font-weight:600; cursor:help; }
+.iglesias-hist__valor,
+.personas-hist__valor { display:inline-block; overflow-wrap:anywhere; }
+.iglesias-hist__valor--cambio,
+.personas-hist__valor--cambio { padding:.05rem .35rem; border-radius:.25rem; background:#ecfdf5; color:#047857; font-weight:600; cursor:help; }
+
+/* Personas eliminadas: el motivo de bloqueo es una frase larga y .tec-status
+   impone white-space:nowrap, así que sin un ancho propio esa columna no podía
+   encogerse, desbordaba el diálogo y dejaba el resto en una letra por línea. */
+.personas-eliminadas__col-nombre { min-width:12rem; }
+.personas-eliminadas__col-iglesia { min-width:9rem; }
+.personas-eliminadas__col-situacion { width:28%; min-width:14rem; }
+.personas-eliminadas__col-situacion .tec-status.ui-tag { display:inline-flex; align-items:flex-start; gap:.3rem; max-width:100%; text-align:left; white-space:normal; line-height:1.35; }
+.personas-eliminadas__col-situacion .tec-status.ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.15rem; }
 
 /* Tablet: el filtro de estado y la columna de acciones ceden ancho. */
 @media (max-width:991.98px) {

@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +34,8 @@ import ec.com.antenasur.dto.EstadoActaActualizacionDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.dto.PersonaEliminadaDTO;
+import ec.com.antenasur.dto.PersonaHistorialDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.itext.ReporteXLSX;
@@ -43,6 +46,7 @@ import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.service.GeograpService;
 import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.service.PersonaBajaService;
 import ec.com.antenasur.service.PersonaService;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.service.tec.CronogramaService;
@@ -73,6 +77,9 @@ public class PersonaController implements Serializable {
 
     @Inject
     private PersonaService personaService;
+
+    @Inject
+    private PersonaBajaService personaBajaService;
 
     @Inject
     private IglesiaService iglesiaService;
@@ -109,6 +116,23 @@ public class PersonaController implements Serializable {
     @Setter
     @Getter
     private IglesiaPersonaDTO iglesiaPersonaSeleccionado;
+
+    /** Persona cuyo historial se muestra en el diálogo; solo para el encabezado. */
+    @Setter
+    @Getter
+    private PersonaDTO personaHistorialSeleccionada;
+
+    /** Revisiones de auditoría de la persona mostrada en el diálogo de historial. */
+    @Getter
+    private List<PersonaHistorialDTO> historialPersona = Collections.emptyList();
+
+    /** Personas eliminadas; se llena solo al abrir el panel y se libera al cerrarlo. */
+    @Getter
+    private List<PersonaEliminadaDTO> personasEliminadas = Collections.emptyList();
+
+    @Setter
+    @Getter
+    private PersonaEliminadaDTO personaEliminadaSeleccionada;
 
     /**
      * Filtros geográficos como ids planos (igual que
@@ -770,6 +794,141 @@ public class PersonaController implements Serializable {
         Integer iglesiaAsignadaId = iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null;
         Integer iglesiaMiembroId = miembro.getIglesia() != null ? miembro.getIglesia().getId() : null;
         return iglesiaAsignadaId != null && iglesiaAsignadaId.equals(iglesiaMiembroId);
+    }
+
+    // ── Auditoría de personas: mismos roles y criterios que Iglesias ─────────
+
+    /**
+     * La trazabilidad del registro (fechas de creación/actualización e historial
+     * de auditoría) es información de control interno: solo la ve el
+     * administrador del sistema. Mismo criterio que
+     * {@code IglesiaController.isPuedeVerAuditoria()}.
+     */
+    public boolean isPuedeVerAuditoria() {
+        return loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Administrador");
+    }
+
+    /**
+     * Las personas eliminadas y su restauración son competencia del Tribunal y
+     * del administrador. La vista usa este indicador para mostrar la opción; la
+     * autorización real la aplica {@link PersonaBajaService}.
+     */
+    public boolean isPuedeGestionarEliminadas() {
+        return loginBean != null && loginBean.getRoles() != null
+                && (loginBean.getRoles().contains("SITEC-Administrador")
+                || loginBean.getRoles().contains("SITEC-Tribunal"));
+    }
+
+    /**
+     * Historial de cambios desde la columna Acciones. Se carga solo al abrir el
+     * diálogo (una consulta) y con la misma validación de pertenencia que el
+     * resto de acciones por fila.
+     */
+    public void verHistorialPersonaFila(IglesiaPersonaDTO miembro) {
+        historialPersona = Collections.emptyList();
+        personaHistorialSeleccionada = null;
+        if (!isPuedeVerAuditoria()) {
+            // El botón no se renderiza para otros roles; se valida igualmente en
+            // el servidor para no depender solo de la vista.
+            JsfUtil.addErrorMessage(mensaje("form.personas.hist.error.permiso"));
+            return;
+        }
+        if (miembro == null || miembro.getPersona() == null || miembro.getPersona().getId() == null
+                || !puedeEliminarMiembro(miembro)) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.hist.error.acceso"));
+            return;
+        }
+        try {
+            personaHistorialSeleccionada = miembro.getPersona();
+            historialPersona = personaService.obtenerHistorial(miembro.getPersona().getId());
+        } catch (Exception e) {
+            log.error("Error al obtener historial de persona id={}", miembro.getPersona().getId(), e);
+            personaHistorialSeleccionada = null;
+            JsfUtil.addErrorMessage(mensaje("form.personas.hist.error.carga"));
+        }
+    }
+
+    /** Libera el historial al cerrar el diálogo para no retenerlo en la vista. */
+    public void cerrarHistorial() {
+        historialPersona = Collections.emptyList();
+        personaHistorialSeleccionada = null;
+    }
+
+    /**
+     * Carga las personas eliminadas. Se invoca desde el botón «Ver eliminadas»:
+     * esta lista no se consulta durante la carga inicial de la pantalla.
+     */
+    public void abrirEliminadas() {
+        personasEliminadas = Collections.emptyList();
+        personaEliminadaSeleccionada = null;
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.permiso"));
+            return;
+        }
+        try {
+            personasEliminadas = personaBajaService.listarEliminadas();
+        } catch (Exception e) {
+            log.error("Error al listar personas eliminadas", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.carga"));
+        }
+    }
+
+    /** Libera la lista al cerrar el panel para no retenerla en la vista. */
+    public void cerrarEliminadas() {
+        personasEliminadas = Collections.emptyList();
+        personaEliminadaSeleccionada = null;
+    }
+
+    /** Restaura la persona seleccionada junto con lo que su baja desactivó. */
+    public void restaurarPersona() {
+        if (personaEliminadaSeleccionada == null || personaEliminadaSeleccionada.getId() == null) {
+            return;
+        }
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.permiso"));
+            return;
+        }
+        Integer personaId = personaEliminadaSeleccionada.getId();
+        try {
+            PersonaBajaService.Resultado resultado = personaBajaService.restaurar(personaId);
+            JsfUtil.addInfoMessage(mensaje("form.personas.eliminadas.exito",
+                    resultado.persona(), resultado.membresias()));
+            if (resultado.tieneOmitidas()) {
+                // Cada persona solo puede pertenecer a una iglesia activa: esas
+                // membresías se dejaron como estaban y el operador debe resolverlas.
+                JsfUtil.addWarningMessage(describirOmitidas(resultado.omitidas()));
+            }
+            personaEliminadaSeleccionada = null;
+            abrirEliminadas();
+            // El botón declara el update de :frmPersonas; aquí solo se recarga el modelo.
+            refrescarListadoMiembrosActual();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error al restaurar persona id={}", personaId, e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.restaurar"));
+        }
+    }
+
+    /**
+     * Mensaje de las membresías que no se pudieron reactivar. Se detallan los
+     * primeros casos y se resume el resto para no saturar la pantalla.
+     */
+    private String describirOmitidas(List<String> omitidas) {
+        int detalladas = Math.min(omitidas.size(), 3);
+        StringBuilder detalle = new StringBuilder();
+        for (int i = 0; i < detalladas; i++) {
+            if (i > 0) {
+                detalle.append("; ");
+            }
+            detalle.append(omitidas.get(i));
+        }
+        if (omitidas.size() > detalladas) {
+            detalle.append(mensaje("form.personas.eliminadas.omitidas.resto",
+                    omitidas.size() - detalladas));
+        }
+        return mensaje("form.personas.eliminadas.omitidas", omitidas.size(), detalle.toString());
     }
 
     /**

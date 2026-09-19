@@ -150,4 +150,28 @@ public class PersonaFacade extends AbstractFacade<Persona, Integer> {
 		return listarActivasPorDocumento(documento, false);
 	}
 
+	/**
+	 * Revisiones Envers de una persona (tabla {@code tb_persona_aud} unida a
+	 * {@code tec.tec_auditoria}) en orden cronológico, en una sola consulta.
+	 * Columnas: rev, revtype, fecha, nombres, apellidos, documento, tratamiento,
+	 * sexo, estado y usuario.
+	 *
+	 * <p>La fecha y el usuario viven en la entidad de revisión
+	 * ({@code tec.tec_auditoria}); las columnas f_crea/f_actualiza de la tabla
+	 * _AUD son herencia del baseline y Envers nunca las escribe.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Object[]> listarRevisionesAuditoria(Integer personaId) {
+		if (personaId == null) {
+			return java.util.Collections.emptyList();
+		}
+		String sql = "SELECT a.rev, a.revtype, COALESCE(r.audit_date, r.create_date),"
+				+ " a.pers_nombre, a.pers_apellido, a.pers_documento, a.pers_tratamiento, a.pers_sexo,"
+				+ " a.estado, COALESCE(r.update_user, r.create_user)"
+				+ " FROM public.tb_persona_aud a"
+				+ " LEFT JOIN tec.tec_auditoria r ON r.aud_id = a.rev"
+				+ " WHERE a.pers_id = :id ORDER BY a.rev";
+		return super.getEntityManager().createNativeQuery(sql).setParameter("id", personaId).getResultList();
+	}
+
 }
