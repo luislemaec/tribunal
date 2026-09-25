@@ -199,7 +199,10 @@ public class ReporteMesaService {
 		reporte.setProceso(ProcesoElectoralDTO.fromEntity(proceso));
 		ec.com.antenasur.model.tec.CronogramaFase faseSufragio = cronogramaFacade.getFasePorTipo(procesoId,
 				FaseElectoral.SUFRAGIO);
-		reporte.setFechaSufragio(faseSufragio != null ? faseSufragio.getFechaInicio() : null);
+		// Solo se toma la fecha de una fase vigente, con el mismo criterio que la
+		// emisión de certificados: una fase desactivada no fija la fecha del acta.
+		reporte.setFechaSufragio(faseSufragio != null && Boolean.TRUE.equals(faseSufragio.getEstado())
+				? faseSufragio.getFechaInicio() : null);
 		MesaDTO mesaDto = MesaDTO.fromEntity(mesa);
 		reporte.setMesa(mesaDto);
 		reporte.setRecinto(RecintoDTO.fromEntity(mesa.getRecinto()));

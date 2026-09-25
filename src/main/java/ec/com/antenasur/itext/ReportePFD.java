@@ -60,10 +60,13 @@ public class ReportePFD {
     private static final BaseColor COLOR_INSTITUCIONAL = new BaseColor(24, 82, 133);
     private static final BaseColor COLOR_CABECERA_TABLA = new BaseColor(232, 240, 248);
     private static final BaseColor COLOR_BORDE_TABLA = new BaseColor(210, 220, 230);
+    private static final BaseColor COLOR_TEXTO_SECUNDARIO = new BaseColor(90, 100, 110);
     private static final BaseColor COLOR_SUBTOTAL = new BaseColor(246, 248, 250);
     private static final BaseColor COLOR_TOTAL = new BaseColor(235, 241, 247);
     private static final float[] ANCHOS_ACTA_PARCIAL = new float[]{50, 18, 32};
     private static final int MAX_LISTAS_ACTA_PARCIAL = 9;
+    /** Los documentos del acta se redactan en español, con independencia del servidor. */
+    private static final java.util.Locale LOCALE_ES = new java.util.Locale("es", "EC");
     /**
      * Documento PDF que está construyendo el hilo actual.
      *
@@ -212,7 +215,7 @@ public class ReportePFD {
         try {
             contexto = PdfInstitucional.crearA4ActaParcial(salida,
                     Constantes.getMensaje("reportesMesa.acta.titulo"),
-                    reporte.getProceso().getNombre(), fechaGeneracion);
+                    reporte.getProceso().getNombre(), fechaGeneracion, codigoBarras);
         } catch (Exception e) {
             throw new DocumentException(e);
         }
@@ -221,7 +224,6 @@ public class ReportePFD {
             agregarInformacionActaParcial(pdf, reporte);
             agregarResultadosActaParcial(pdf, reporte, accesoQr != null);
             agregarFirmasJrv(pdf, reporte, accesoQr);
-            agregarIdentificacionActaParcial(pdf, contexto.writer(), codigoBarras);
         } finally {
             pdf.close();
         }
@@ -239,24 +241,87 @@ public class ReportePFD {
         return contenido;
     }
 
+    /**
+     * Encabezado del acta: título centrado y los datos generales en una sola
+     * línea continua, sin tabla, para que el formulario gane espacio de llenado
+     * y la lectura sea inmediata.
+     */
     private static void agregarInformacionActaParcial(Document pdf, ReporteMesaDTO reporte)
             throws DocumentException {
-        PdfPTable informacion = new PdfPTable(4);
-        informacion.setWidthPercentage(100);
-        informacion.setWidths(new float[]{14, 58, 10, 18});
-        informacion.setSpacingAfter(8f);
-        agregarDatoActa(informacion, Constantes.getMensaje("reportesMesa.filtro.recinto"),
-                reporte.getRecinto() != null ? reporte.getRecinto().getNombre() : "", false);
-        agregarDatoActa(informacion, Constantes.getMensaje("reportesMesa.filtro.mesa"),
-                reporte.getMesa().getNombre(), true);
-        agregarDatoActaConExtension(informacion,
-                Constantes.getMensaje("reportesMesa.acta.ubicacion.geografica"),
-                ubicacionGeografica(reporte), 3, false);
-        agregarDatoActa(informacion, Constantes.getMensaje("reportesMesa.acta.fecha.sufragio"),
-                reporte.getFechaSufragio() != null
-                        ? new SimpleDateFormat("dd/MM/yyyy").format(reporte.getFechaSufragio()) : "", false);
-        agregarCeldaInformacionVacia(informacion, 2);
-        pdf.add(informacion);
+        Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.titulo"),
+                FontFactory.getFont("arial", 15, Font.BOLD, COLOR_INSTITUCIONAL));
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        titulo.setSpacingAfter(3f);
+        pdf.add(titulo);
+
+        Paragraph proceso = new Paragraph(texto(reporte.getProceso().getNombre()),
+                FontFactory.getFont("arial", 9, Font.NORMAL, COLOR_TEXTO_SECUNDARIO));
+        proceso.setAlignment(Element.ALIGN_CENTER);
+        proceso.setSpacingAfter(9f);
+        pdf.add(proceso);
+
+        pdf.add(construirIntroduccionActa(reporte));
+    }
+
+    /**
+     * Comparecencia formal del acta: un solo párrafo justificado con los datos
+     * de la mesa en negrita y un espacio subrayado para anotar la hora de inicio
+     * del escrutinio.
+     */
+    private static Paragraph construirIntroduccionActa(ReporteMesaDTO reporte) {
+        Font normal = FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK);
+        Font destacado = FontFactory.getFont("arial", 9, Font.BOLD, BaseColor.BLACK);
+        // La fecha del acta es la del sufragio, tomada de la fase SUFRAGIO del
+        // cronograma del proceso (ReporteMesaService la carga en el DTO). Si esa
+        // fase no está configurada se dejan espacios para completarla a mano, en
+        // lugar de imprimir una fecha que no corresponde al sufragio.
+        Date fecha = reporte.getFechaSufragio();
+        String[] valores = {
+            reporte.getRecinto() != null ? texto(reporte.getRecinto().getProvinciaNombre()) : "",
+            reporte.getRecinto() != null ? texto(reporte.getRecinto().getCantonNombre()) : "",
+            reporte.getRecinto() != null ? texto(reporte.getRecinto().getUbicacionNombre()) : "",
+            reporte.getRecinto() != null ? texto(reporte.getRecinto().getNombre()) : "",
+            texto(reporte.getMesa().getNombre()),
+            fecha != null ? new SimpleDateFormat("d", LOCALE_ES).format(fecha) : "______",
+            fecha != null ? new SimpleDateFormat("MMMM", LOCALE_ES).format(fecha) : "____________",
+            fecha != null ? new SimpleDateFormat("yyyy", LOCALE_ES).format(fecha) : "________"
+        };
+
+        Paragraph introduccion = new Paragraph();
+        introduccion.setAlignment(Element.ALIGN_JUSTIFIED);
+        introduccion.setLeading(13f);
+        introduccion.setSpacingAfter(10f);
+        agregarTextoConValores(introduccion,
+                Constantes.getMensaje("reportesMesa.acta.intro.inicio"), valores, normal, destacado);
+        // Espacio para anotar a mano la hora de inicio.
+        Chunk espacioHora = new Chunk("                ", normal);
+        espacioHora.setUnderline(0.6f, -2f);
+        introduccion.add(new Chunk(" ", normal));
+        introduccion.add(espacioHora);
+        introduccion.add(new Chunk(" " + Constantes.getMensaje("reportesMesa.acta.intro.fin"), normal));
+        return introduccion;
+    }
+
+    /**
+     * Añade un texto con marcadores {@code {0}}…{@code {n}} al párrafo, poniendo
+     * en negrita los valores y dejando el resto en redonda. Evita depender del
+     * orden de concatenación y mantiene el texto en el archivo de mensajes.
+     */
+    private static void agregarTextoConValores(Paragraph destino, String patron, String[] valores,
+            Font normal, Font destacado) {
+        java.util.regex.Matcher marcador = java.util.regex.Pattern.compile("\\{(\\d+)\\}").matcher(patron);
+        int desde = 0;
+        while (marcador.find()) {
+            if (marcador.start() > desde) {
+                destino.add(new Chunk(patron.substring(desde, marcador.start()), normal));
+            }
+            int indice = Integer.parseInt(marcador.group(1));
+            destino.add(new Chunk(indice < valores.length ? valores[indice] : "", destacado));
+            desde = marcador.end();
+        }
+        if (desde < patron.length()) {
+            destino.add(new Chunk(patron.substring(desde), normal));
+        }
     }
 
     private static String ubicacionGeografica(ReporteMesaDTO reporte) {
@@ -289,15 +354,15 @@ public class ReportePFD {
         for (EscrutinioDTO item : reporte.getEscrutinios()) {
             if (esListaOCandidato(item)) {
                 agregarFilaManual(resultados, item.getCategoriaNombre(), Font.NORMAL, alturaCasilla,
-                        BaseColor.WHITE, false);
+                        null, false);
             }
         }
         agregarFilaManual(resultados, Constantes.getMensaje("reportesMesa.acta.subtotal.validos"), Font.BOLD,
                 alturaCasilla, COLOR_SUBTOTAL, false);
         agregarFilaManual(resultados, Constantes.getMensaje("reportesMesa.acta.votos.nulos"), Font.NORMAL,
-                alturaCasilla, BaseColor.WHITE, false);
+                alturaCasilla, null, false);
         agregarFilaManual(resultados, Constantes.getMensaje("reportesMesa.acta.votos.blancos"), Font.NORMAL,
-                alturaCasilla, BaseColor.WHITE, false);
+                alturaCasilla, null, false);
         agregarFilaManual(resultados, Constantes.getMensaje("reportesMesa.acta.total.votos"), Font.BOLD,
                 alturaCasilla, COLOR_TOTAL, true);
         pdf.add(resultados);
@@ -310,11 +375,17 @@ public class ReportePFD {
         return "LISTA".equalsIgnoreCase(tipo) || "LEGACY".equalsIgnoreCase(tipo);
     }
 
+    /**
+     * Altura de las casillas de llenado manual. Al trasladar el código de barras
+     * al encabezado de la plantilla, el formulario recuperó espacio vertical que
+     * se destina a la escritura, manteniendo el acta en una sola hoja.
+     */
     private static float alturaCasillaActaParcial(int cantidadListas) {
-        if (cantidadListas <= 3) return 31f;
+        if (cantidadListas <= 3) return 34f;
         if (cantidadListas <= 5) return 28f;
-        if (cantidadListas <= 8) return 24f;
-        return 20f;
+        if (cantidadListas <= 7) return 24f;
+        if (cantidadListas <= 8) return 22f;
+        return 18f;
     }
 
     private static void agregarPapeletasRestantes(Document pdf, float alturaCasilla) throws DocumentException {
@@ -326,68 +397,60 @@ public class ReportePFD {
         agregarFilaManual(control, Constantes.getMensaje("reportesMesa.acta.papeletas.restantes"), Font.BOLD,
                 alturaCasilla, COLOR_SUBTOTAL, false);
         pdf.add(control);
-        agregarHoraFinEscrutinio(pdf);
+        // La hora de finalización se consigna en la fórmula de cierre, junto a
+        // las firmas: no se repite aquí.
         agregarObservacionActaParcial(pdf);
     }
 
-    private static void agregarHoraFinEscrutinio(Document pdf) throws DocumentException {
-        PdfPTable horaFin = new PdfPTable(new float[]{35, 65});
-        horaFin.setWidthPercentage(100);
-        horaFin.setSpacingBefore(8f);
-        horaFin.setSpacingAfter(8f);
-        PdfPCell etiqueta = new PdfPCell(new Phrase(Constantes.getMensaje("reportesMesa.acta.hora.fin") + ":",
-                FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL)));
-        etiqueta.setBorder(PdfPCell.NO_BORDER);
-        etiqueta.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        etiqueta.setPadding(4f);
-        horaFin.addCell(etiqueta);
-        PdfPCell espacio = new PdfPCell();
-        espacio.setMinimumHeight(20f);
-        espacio.setBorder(PdfPCell.BOTTOM);
-        espacio.setBorderColor(COLOR_INSTITUCIONAL);
-        espacio.setBorderWidthBottom(0.7f);
-        horaFin.addCell(espacio);
-        pdf.add(horaFin);
-    }
-
+    /**
+     * «Observaciones:» con la primera línea a continuación del texto y dos
+     * líneas completas debajo.
+     */
     private static void agregarObservacionActaParcial(Document pdf) throws DocumentException {
-        Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.observacion"),
-                FontFactory.getFont("arial", 9, Font.BOLD, COLOR_INSTITUCIONAL));
-        titulo.setSpacingAfter(3f);
-        pdf.add(titulo);
+        String etiqueta = Constantes.getMensaje("reportesMesa.acta.observacion") + ":";
+        PdfPTable primera = crearLineaConEtiqueta(etiqueta, 18f);
+        primera.setSpacingAfter(0f);
+        pdf.add(primera);
+
         PdfPTable lineas = new PdfPTable(1);
         lineas.setWidthPercentage(100);
-        lineas.setSpacingAfter(9f);
-        for (int indice = 0; indice < 3; indice++) {
-            PdfPCell linea = new PdfPCell();
-            linea.setMinimumHeight(18f);
-            linea.setBorder(PdfPCell.BOTTOM);
-            linea.setBorderColor(COLOR_BORDE_TABLA);
-            linea.setBorderWidthBottom(0.6f);
-            lineas.addCell(linea);
+        lineas.setSpacingAfter(8f);
+        for (int indice = 0; indice < 2; indice++) {
+            lineas.addCell(crearCeldaLinea(18f));
         }
         pdf.add(lineas);
     }
 
-    private static void agregarIdentificacionActaParcial(Document pdf, PdfWriter writer,
-            String codigoBarras) throws DocumentException {
-        Barcode128 codigo = new Barcode128();
-        codigo.setCodeType(Barcode.CODE128);
-        codigo.setCode(codigoBarras);
-        codigo.setBarHeight(24f);
-        codigo.setX(0.9f);
-        codigo.setFont(null);
-        Image imagen = codigo.createImageWithBarcode(writer.getDirectContent(), BaseColor.BLACK, BaseColor.BLACK);
-        imagen.scaleToFit(170f, 30f);
-        PdfPTable identificacion = new PdfPTable(1);
-        identificacion.setWidthPercentage(100);
-        identificacion.setSpacingBefore(12f);
-        PdfPCell barras = new PdfPCell(imagen, false);
-        barras.setBorder(PdfPCell.NO_BORDER);
-        barras.setHorizontalAlignment(Element.ALIGN_CENTER);
-        barras.setPaddingTop(3f);
-        identificacion.addCell(barras);
-        pdf.add(identificacion);
+    /**
+     * Fila con una etiqueta y, justo después de los dos puntos, la línea de
+     * llenado hasta el margen derecho. El ancho de la etiqueta se calcula con su
+     * propia fuente, de modo que la línea arranca exactamente donde termina el
+     * texto, sin tabulaciones ni espacios de relleno.
+     */
+    private static PdfPTable crearLineaConEtiqueta(String etiqueta, float altura) throws DocumentException {
+        Font fuente = FontFactory.getFont("arial", 8.5f, Font.BOLD, COLOR_INSTITUCIONAL);
+        float anchoEtiqueta = new Chunk(etiqueta, fuente).getWidthPoint() + 6f;
+        PdfPTable fila = new PdfPTable(2);
+        fila.setWidthPercentage(100);
+        fila.setTotalWidth(new float[]{anchoEtiqueta, PlantillaA4.ANCHO_UTIL - anchoEtiqueta});
+        PdfPCell celdaEtiqueta = new PdfPCell(new Phrase(etiqueta, fuente));
+        celdaEtiqueta.setBorder(PdfPCell.NO_BORDER);
+        celdaEtiqueta.setVerticalAlignment(Element.ALIGN_BOTTOM);
+        celdaEtiqueta.setPaddingBottom(3f);
+        celdaEtiqueta.setPaddingLeft(0f);
+        fila.addCell(celdaEtiqueta);
+        fila.addCell(crearCeldaLinea(altura));
+        return fila;
+    }
+
+    /** Celda vacía con borde inferior: una línea para escribir a mano. */
+    private static PdfPCell crearCeldaLinea(float altura) {
+        PdfPCell linea = new PdfPCell();
+        linea.setMinimumHeight(altura);
+        linea.setBorder(PdfPCell.BOTTOM);
+        linea.setBorderColor(COLOR_BORDE_TABLA);
+        linea.setBorderWidthBottom(0.6f);
+        return linea;
     }
 
     private static void agregarFilaManual(PdfPTable tabla, String etiqueta, int estilo, float altura,
@@ -405,8 +468,11 @@ public class ReportePFD {
         PdfPCell celda = new PdfPCell(contenido);
         celda.setMinimumHeight(altura);
         celda.setBorderColor(COLOR_BORDE_TABLA);
-        celda.setBackgroundColor(fondo);
-        celda.setPadding(5f);
+        if (fondo != null) celda.setBackgroundColor(fondo);
+        celda.setPaddingLeft(5f);
+        celda.setPaddingRight(5f);
+        celda.setPaddingTop(rellenoVertical(altura));
+        celda.setPaddingBottom(rellenoVertical(altura));
         celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
         celda.setHorizontalAlignment(alineacion);
         if (bordeSuperiorMarcado) celda.setBorderWidthTop(1.4f);
@@ -418,22 +484,44 @@ public class ReportePFD {
         PdfPCell celda = new PdfPCell();
         celda.setMinimumHeight(altura);
         celda.setBorderColor(COLOR_BORDE_TABLA);
-        celda.setBackgroundColor(fondo);
-        celda.setPadding(4f);
+        if (fondo != null) celda.setBackgroundColor(fondo);
+        celda.setPaddingLeft(4f);
+        celda.setPaddingRight(4f);
+        celda.setPaddingTop(rellenoVertical(altura));
+        celda.setPaddingBottom(rellenoVertical(altura));
         if (bordeSuperiorMarcado) celda.setBorderWidthTop(1.4f);
         return celda;
     }
 
+    /**
+     * Relleno vertical de las casillas. El texto de 8 pt más 5 pt de relleno
+     * arriba y abajo fija una altura real de unos 20 pt: por debajo de ese valor
+     * la altura mínima solicitada no tenía efecto. Con muchas listas se reduce el
+     * relleno para que el acta siga cabiendo en una hoja sin recortar filas.
+     */
+    private static float rellenoVertical(float altura) {
+        return altura >= 24f ? 5f : 2.5f;
+    }
+
     private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr) throws DocumentException {
-        Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.firmas.titulo"),
-                FontFactory.getFont("arial", 10, Font.BOLD, COLOR_INSTITUCIONAL));
-        titulo.setSpacingAfter(4f);
-        pdf.add(titulo);
+        // Fórmula de cierre del acta, en lugar de un rótulo de sección: da fe de
+        // lo actuado e incorpora la hora de suscripción que se completa a mano.
+        Font normal = FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK);
+        Paragraph cierre = new Paragraph();
+        cierre.setAlignment(Element.ALIGN_JUSTIFIED);
+        cierre.setLeading(13f);
+        cierre.setSpacingAfter(4f);
+        cierre.add(new Chunk(Constantes.getMensaje("reportesMesa.acta.firmas.cierre.inicio") + " ", normal));
+        Chunk espacioHora = new Chunk("                ", normal);
+        espacioHora.setUnderline(0.6f, -2f);
+        cierre.add(espacioHora);
+        cierre.add(new Chunk(" " + Constantes.getMensaje("reportesMesa.acta.firmas.cierre.fin"), normal));
+        pdf.add(cierre);
 
         PdfPTable firmas = new PdfPTable(accesoQr == null ? 2 : 3);
         firmas.setWidthPercentage(100);
         firmas.setWidths(accesoQr == null ? new float[]{50, 50} : new float[]{40, 40, 20});
-        firmas.setSpacingBefore(10f);
+        firmas.setSpacingBefore(6f);
         int firmantesAgregados = 0;
         for (MiembroJRVDTO miembro : reporte.getMiembrosJrv()) {
             if (!esFirmanteActaParcial(miembro)) {
@@ -447,7 +535,7 @@ public class ReportePFD {
                 }
             }
             Paragraph contenido = new Paragraph();
-            contenido.add(new Chunk("\n\n________________________\n",
+            contenido.add(new Chunk("\n________________________\n",
                     FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
             contenido.add(new Chunk(nombre.trim() + "\n",
                     FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
@@ -456,7 +544,7 @@ public class ReportePFD {
             PdfPCell celda = new PdfPCell(contenido);
             celda.setBorder(PdfPCell.NO_BORDER);
             celda.setHorizontalAlignment(Element.ALIGN_CENTER);
-            celda.setMinimumHeight(68f);
+            celda.setMinimumHeight(56f);
             celda.setVerticalAlignment(Element.ALIGN_BOTTOM);
             celda.setPadding(4f);
             firmas.addCell(celda);
@@ -474,10 +562,6 @@ public class ReportePFD {
             PdfPCell celdaQr = new PdfPCell();
             celdaQr.setBorder(PdfPCell.NO_BORDER);
             celdaQr.addElement(qr);
-            Paragraph aviso = new Paragraph(Constantes.getMensaje("actaQr.pdf.acceso"),
-                    FontFactory.getFont("arial", 7, Font.NORMAL, BaseColor.BLACK));
-            aviso.setAlignment(Element.ALIGN_CENTER);
-            celdaQr.addElement(aviso);
             firmas.addCell(celdaQr);
         }
         pdf.add(firmas);
@@ -817,6 +901,21 @@ public class ReportePFD {
             actual().documento.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Cierra el documento en curso y devuelve su contenido, liberando el hilo.
+     * Permite obtener el PDF sin pasar por la descarga HTTP (verificaciones de
+     * maquetación, pruebas y generación en segundo plano).
+     */
+    public static byte[] cerrarYObtener() {
+        try {
+            DocumentoEnCurso enCurso = actual();
+            cerrarDocumento();
+            return enCurso.salida == null ? new byte[0] : enCurso.salida.toByteArray();
+        } finally {
+            liberar();
         }
     }
 

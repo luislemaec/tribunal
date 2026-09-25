@@ -42,7 +42,9 @@ public class PdfAccesoQrCheck {
             try {
                 assertEquals(1, reader.getNumberOfPages(), "Acta con " + listas + " listas");
                 String texto = PdfTextExtractor.getTextFromPage(reader, 1);
-                assertTrue(texto.contains("Acceso del Presidente"));
+                // El QR se imprime sin leyenda; lo esencial es que el token no
+                // quede visible como texto en el documento.
+                assertTrue(texto.contains("ACTA PARCIAL"));
                 assertFalse(texto.contains(token));
             } finally { reader.close(); }
             if (salida != null) {

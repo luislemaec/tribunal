@@ -27,9 +27,11 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.Barcode128;
+import com.itextpdf.text.pdf.BarcodeQRCode;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfGState;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import ec.com.antenasur.dto.CertificadoVotacionDTO;
@@ -43,15 +45,31 @@ final class CertificadosVotacionPDF {
     private static final BaseColor AZUL = new BaseColor(24, 82, 133);
     private static final BaseColor BORDE = new BaseColor(210, 220, 230);
     private static final BaseColor TEXTO = new BaseColor(30, 36, 42);
-    private final Image logo;
+    private static final BaseColor SUAVE = new BaseColor(105, 118, 132);
+    private static final BaseColor CELESTE = new BaseColor(223, 235, 246);
+    private final byte[] logoTec;
+    private final byte[] onda;
+    private final byte[] silueta;
     private final BaseFont regular;
     private final BaseFont negrita;
 
     record Recursos(byte[] logo, byte[] regular, byte[] negrita) {
         static Recursos delProyecto() throws IOException {
-            return new Recursos(leer("/resources/img/logo_consejo_417x150.png"),
+            return new Recursos(grafico("cert-logo.png"),
                     leer("/resources/fonts/Montserrat-Regular.ttf"),
                     leer("/resources/fonts/Montserrat-Bold.ttf"));
+        }
+
+        /**
+         * Elementos gráficos de la identidad del certificado (logotipo TEC,
+         * onda institucional y silueta), incorporados al classpath para que
+         * estén disponibles también fuera de una petición web.
+         */
+        static byte[] grafico(String nombre) throws IOException {
+            try (InputStream entrada = CertificadosVotacionPDF.class.getResourceAsStream("/img/" + nombre)) {
+                if (entrada == null) throw new IOException("Recurso institucional no disponible: " + nombre);
+                return entrada.readAllBytes();
+            }
         }
 
         private static byte[] leer(String ruta) throws IOException {
@@ -66,7 +84,9 @@ final class CertificadosVotacionPDF {
     }
 
     private CertificadosVotacionPDF(Recursos recursos) throws IOException, DocumentException {
-        logo = Image.getInstance(recursos.logo());
+        logoTec = recursos.logo();
+        onda = Recursos.grafico("cert-onda.png");
+        silueta = Recursos.grafico("cert-silueta.png");
         regular = BaseFont.createFont("Montserrat-Regular.ttf", BaseFont.IDENTITY_H,
                 BaseFont.EMBEDDED, true, recursos.regular(), null);
         negrita = BaseFont.createFont("Montserrat-Bold.ttf", BaseFont.IDENTITY_H,
@@ -113,7 +133,12 @@ final class CertificadosVotacionPDF {
                 }
                 pdf.newPage();
                 for (int posicion = 0; posicion < cantidad; posicion++) {
-                    reverso(escritor.getDirectContent(), x(posicion, true), y(posicion));
+                    // El reverso lleva el código de barras de su titular, por lo
+                    // que se recalcula el mismo identificador del frente.
+                    CertificadoVotacionDTO persona = personas.get(inicio + posicion);
+                    reverso(escritor.getDirectContent(), reporte, persona,
+                            codigo(reporte.getProceso().getId(), reporte.getMesa().getId(), persona.personaId()),
+                            x(posicion, true), y(posicion));
                 }
             }
         } finally {
@@ -157,82 +182,223 @@ final class CertificadosVotacionPDF {
         cb.setColorStroke(BORDE);
         cb.rectangle(x + 3, y + 3, ANCHO - 6, ALTO - 6);
         cb.stroke();
+        // Banda superior en azul claro: identidad institucional discreta, sin
+        // bordes gruesos ni recuadros añadidos.
+        cb.setColorFill(CELESTE);
+        cb.rectangle(x + 3, y + ALTO - 6, ANCHO - 6, 3f);
+        cb.fill();
+        cb.setColorStroke(CELESTE);
+        cb.setLineWidth(0.3f);
+        for (int curva = 0; curva < 4; curva++) {
+            cb.moveTo(x + ANCHO - 60, y + ALTO - 7 - curva * 2);
+            cb.curveTo(x + ANCHO - 28, y + ALTO - 7 - curva * 2,
+                    x + ANCHO - 20, y + ALTO - 24 - curva * 2,
+                    x + ANCHO - 5, y + ALTO - 24 - curva * 2);
+            cb.stroke();
+        }
         cb.restoreState();
     }
 
     private void frente(PdfContentByte cb, ReporteMesaDTO reporte, CertificadoVotacionDTO persona,
             String fecha, String codigo, float x, float y) throws DocumentException {
         marco(cb, x, y);
-        Image imagen = Image.getInstance(logo);
-        imagen.scaleToFit(45, 22);
-        imagen.setAbsolutePosition(x + 7, y + ALTO - 27);
+        silueta(cb, x, y);
+        onda(cb, x, y);
+        encabezado(cb, reporte, fecha, x, y);
+        datosVotante(cb, reporte, persona, fecha, x, y);
+        validacionQr(cb, codigo, x, y);
+    }
+
+    /**
+     * Silueta institucional atenuada en el costado derecho, detrás de todo el
+     * contenido, como marca de agua del certificado.
+     */
+    private void silueta(PdfContentByte cb, float x, float y) throws DocumentException {
+        try {
+            Image imagen = Image.getInstance(silueta);
+            imagen.scaleToFit(52, 42);
+            imagen.setAbsolutePosition(x + ANCHO - imagen.getScaledWidth() - 6,
+                    y + (ALTO - imagen.getScaledHeight()) / 2 - 4);
+            PdfGState transparencia = new PdfGState();
+            transparencia.setFillOpacity(0.12f);
+            cb.saveState();
+            cb.setGState(transparencia);
+            cb.addImage(imagen);
+            cb.restoreState();
+        } catch (Exception e) {
+            throw new DocumentException(e);
+        }
+    }
+
+    /** Onda institucional del pie, con el lema de transparencia. */
+    private void onda(PdfContentByte cb, float x, float y) throws DocumentException {
+        try {
+            Image imagen = Image.getInstance(onda);
+            imagen.scaleAbsolute(ANCHO - 6, (ANCHO - 6) * imagen.getHeight() / imagen.getWidth());
+            imagen.setAbsolutePosition(x + 3, y + 3.5f);
+            cb.saveState();
+            cb.rectangle(x + 3, y + 3, ANCHO - 6, 9f);
+            cb.clip();
+            cb.newPath();
+            cb.addImage(imagen);
+            cb.restoreState();
+        } catch (Exception e) {
+            throw new DocumentException(e);
+        }
+    }
+
+    /** Logotipo, identificación institucional, título y proceso electoral. */
+    private void encabezado(PdfContentByte cb, ReporteMesaDTO reporte, String fecha, float x, float y)
+            throws DocumentException {
+        Image imagen;
+        try {
+            imagen = Image.getInstance(logoTec);
+        } catch (IOException e) {
+            throw new DocumentException(e);
+        }
+        // scaleToFit conserva la proporción original del logotipo.
+        imagen.scaleToFit(30, 12);
+        imagen.setAbsolutePosition(x + 9, y + ALTO - 19);
         cb.addImage(imagen);
-        centrar(cb, mensaje("titulo"), x + 132, y + ALTO - 15, 7.6f, true, AZUL);
-        centrar(cb, fecha, x + 132, y + ALTO - 25, 7, false, TEXTO);
         cb.saveState();
-        cb.setColorStroke(AZUL);
-        cb.setLineWidth(0.7f);
-        cb.moveTo(x + 7, y + ALTO - 31);
-        cb.lineTo(x + ANCHO - 7, y + ALTO - 31);
+        cb.setColorStroke(BORDE);
+        cb.moveTo(x + 42, y + ALTO - 20);
+        cb.lineTo(x + 42, y + ALTO - 8);
         cb.stroke();
         cb.restoreState();
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(mensaje("tribunal"), fuente(5f, true, AZUL)), x + 45, y + ALTO - 12, 0);
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(mensaje("organizacion"), fuente(5f, true, AZUL)), x + 45, y + ALTO - 18, 0);
 
-        String[][] campos = {
-            {"provincia", persona.provincia()}, {"canton", persona.canton()},
-            {"parroquia", persona.parroquia()}, {"iglesia", persona.iglesia()},
-            {"comunidad", persona.comunidad()}, {"recinto", reporte.getRecinto().getNombre()},
-            {"mesa", reporte.getMesa().getNombre()}, {"documento", persona.documento()},
-            {"nombres", (texto(persona.nombres()) + " " + texto(persona.apellidos())).trim()}
-        };
-        boolean cabe = false;
-        for (int decimas = 70; decimas >= 60; decimas -= 2) {
-            float tamano = decimas / 10f;
-            Phrase datos = new Phrase();
-            for (int i = 0; i < campos.length; i++) {
-                if (i > 0) datos.add(new Chunk("\n", fuente(tamano, false, TEXTO)));
-                datos.add(new Chunk(mensaje(campos[i][0]) + ": ", fuente(tamano, true, TEXTO)));
-                datos.add(new Chunk(texto(campos[i][1]), fuente(tamano, false, TEXTO)));
-            }
+        centrar(cb, mensaje("titulo"), x + ANCHO / 2, y + ALTO - 31, 9.4f, true, AZUL);
+        String proceso = reporte.getProceso() != null ? texto(reporte.getProceso().getNombre()) : "";
+        String subtitulo = proceso.isEmpty() ? fecha : proceso.toUpperCase(Locale.ROOT);
+        ajustarYCentrar(cb, subtitulo, x + ANCHO / 2, y + ALTO - 38, ANCHO - 24, 5.6f, SUAVE);
+        centrar(cb, mensaje("certifica"), x + ANCHO / 2, y + 96, 4.7f, false, SUAVE);
+
+    }
+
+    /** Anverso: identidad, recinto, fecha real de sufragio y consulta QR. */
+    private void datosVotante(PdfContentByte cb, ReporteMesaDTO reporte, CertificadoVotacionDTO persona,
+            String fecha, float x, float y) throws DocumentException {
+        String nombre = (texto(persona.nombres()) + " " + texto(persona.apellidos())).trim();
+        var recinto = reporte.getRecinto();
+        fila(cb, "nombres", nombre, x, y + 91, 13, true);
+        fila(cb, "documento", texto(persona.documento()), x, y + 78, 7, true);
+        fila(cb, "provincia", recinto == null ? "" : texto(recinto.getProvinciaNombre()), x, y + 71, 7, false);
+        fila(cb, "canton", recinto == null ? "" : texto(recinto.getCantonNombre()), x, y + 64, 7, false);
+        fila(cb, "parroquia", recinto == null ? "" : texto(recinto.getUbicacionNombre()), x, y + 57, 7, false);
+        fila(cb, "recinto", recinto == null ? "" : texto(recinto.getNombre()), x, y + 50, 13, false);
+        campo(cb, mensaje("mesa"), texto(reporte.getMesa().getNombre()), x + 62, y + 34, 43, 7, 5f, true);
+        campo(cb, mensaje("fecha"), fecha, x + 110, y + 34, 91, 7, 5f, true);
+    }
+
+    private void fila(PdfContentByte cb, String clave, String dato, float x, float techo,
+            float alto, boolean destacado) throws DocumentException {
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(mensaje(clave).toUpperCase(Locale.ROOT) + ":", fuente(4.8f, true, AZUL)),
+                x + 12, techo - 5.6f, 0);
+        valor(cb, dato.isEmpty() ? mensaje("sin.dato") : dato, x + 62, techo,
+                ANCHO - 74, alto, 5f, destacado);
+    }
+
+    private void campo(PdfContentByte cb, String etiqueta, String contenido, float x, float y,
+            float ancho, float alto, float tamano, boolean destacado) throws DocumentException {
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(etiqueta.toUpperCase(Locale.ROOT), fuente(4.7f, true, AZUL)), x, y, 0);
+        valor(cb, contenido, x, y - 3, ancho, alto, tamano, destacado);
+    }
+
+    /**
+     * Consulta en línea del certificado. Conserva exactamente el payload
+     * existente; no equivale a una firma digital. La única firma del documento
+     * es la de la junta, en el reverso.
+     */
+    private void validacionQr(PdfContentByte cb, String codigo, float x, float y) throws DocumentException {
+        cb.saveState();
+        cb.setColorFill(BaseColor.WHITE);
+        cb.rectangle(x + 8, y + 9, 36, 34);
+        cb.fill();
+        cb.restoreState();
+        Image qr = new BarcodeQRCode(mensaje("verificacion.url") + codigo, 240, 240, null).getImage();
+        qr.scaleAbsolute(32f, 32f);
+        qr.setAbsolutePosition(x + 10, y + 10);
+        cb.addImage(qr);
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(mensaje("consulta"), fuente(4f, true, AZUL)), x + 44, y + 20, 0);
+    }
+
+    private void valor(PdfContentByte cb, String contenido, float x, float techo, float ancho,
+            float alto, float tamano, boolean destacado) throws DocumentException {
+        if (contenido == null || contenido.isEmpty()) {
+            return;
+        }
+        // Se reduce el cuerpo solo lo necesario; el dato puede ocupar varias
+        // líneas dentro del alto reservado antes que volverse ilegible.
+        for (float cuerpo = tamano; cuerpo >= 4.8f; cuerpo -= 0.2f) {
+            Phrase texto = new Phrase(contenido, fuente(cuerpo, destacado, TEXTO));
             ColumnText columna = new ColumnText(cb);
-            columna.setSimpleColumn(datos, x + 8, y + 32, x + ANCHO - 8, y + ALTO - 34,
-                    tamano + 0.6f, Element.ALIGN_LEFT);
+            columna.setSimpleColumn(texto, x, techo - alto, x + ancho, techo,
+                    cuerpo + 0.8f, Element.ALIGN_LEFT);
             if (!ColumnText.hasMoreText(columna.go(true))) {
-                columna.setText(datos);
-                columna.setYLine(y + ALTO - 34);
+                columna.setText(texto);
+                columna.setYLine(techo);
                 columna.go();
-                cabe = true;
-                break;
+                return;
             }
         }
-        if (!cabe) throw new DocumentException("Los datos exceden el area legible del certificado");
+        throw new DocumentException("Los datos exceden el area legible del certificado");
+    }
+
+    /** Texto centrado que se reduce hasta caber en el ancho indicado. */
+    private void ajustarYCentrar(PdfContentByte cb, String contenido, float centro, float y,
+            float ancho, float tamano, BaseColor color) {
+        float cuerpo = tamano;
+        while (cuerpo > 4f && new Chunk(contenido, fuente(cuerpo, false, color)).getWidthPoint() > ancho) {
+            cuerpo -= 0.2f;
+        }
+        centrar(cb, contenido, centro, y, cuerpo, false, color);
+    }
+
+    private void linea(PdfContentByte cb, float desde, float y, float hasta, BaseColor color, float grosor) {
+        cb.saveState();
+        cb.setColorStroke(color);
+        cb.setLineWidth(grosor);
+        cb.moveTo(desde, y);
+        cb.lineTo(hasta, y);
+        cb.stroke();
+        cb.restoreState();
+    }
+
+    /** Reverso: datos completos, acreditacion manual y Code 128 sin reducir modulos. */
+    private void reverso(PdfContentByte cb, ReporteMesaDTO reporte, CertificadoVotacionDTO persona,
+            String codigo, float x, float y) throws DocumentException {
+        marco(cb, x, y);
+        centrar(cb, mensaje("detalle"), x + ANCHO / 2, y + ALTO - 13, 6.3f, true, AZUL);
+        // La ubicación electoral (provincia, cantón y parroquia del recinto) ya
+        // consta en el anverso: aquí solo se detalla la pertenencia del votante.
+        campo(cb, mensaje("iglesia"), texto(persona.iglesia()), x + 10, y + 115,
+                ANCHO - 20, 14, 5.8f, false);
+        campo(cb, mensaje("comunidad"), texto(persona.comunidad()), x + 10, y + 92,
+                ANCHO - 20, 14, 5.8f, false);
+        valor(cb, mensaje("acredita"), x + 10, y + 62, ANCHO - 20, 16, 5.4f, false);
+        linea(cb, x + 40, y + 34, x + ANCHO - 40, AZUL, 0.5f);
+        centrar(cb, mensaje("firma"), x + ANCHO / 2, y + 28, 5.1f, true, AZUL);
 
         Barcode128 barras = new Barcode128();
         barras.setCode(codigo);
         barras.setFont(null);
         barras.setX(0.7f);
-        barras.setBarHeight(17f);
+        barras.setBarHeight(15f);
         Image imagenBarras = barras.createImageWithBarcode(cb, BaseColor.BLACK, BaseColor.BLACK);
-        // No escalar: conserva modulo de 0,7 pt y zonas silenciosas mayores a 10 modulos.
-        imagenBarras.setAbsolutePosition(x + (ANCHO - imagenBarras.getScaledWidth()) / 2, y + 12);
+        if (imagenBarras.getScaledWidth() + 14 > ANCHO - 6)
+            throw new DocumentException("Codigo de barras excede el ancho imprimible");
+        // Quiet zones blancas de al menos 10 modulos por extremo.
+        imagenBarras.setAbsolutePosition(x + (ANCHO - imagenBarras.getScaledWidth()) / 2, y + 10);
         cb.addImage(imagenBarras);
-        centrar(cb, codigo, x + ANCHO / 2, y + 6, 4.8f, false, TEXTO);
     }
 
-    private void reverso(PdfContentByte cb, float x, float y) throws DocumentException {
-        marco(cb, x, y);
-        ColumnText texto = new ColumnText(cb);
-        texto.setSimpleColumn(new Phrase(mensaje("acredita"), fuente(9, false, TEXTO)),
-                x + 20, y + 76, x + ANCHO - 20, y + 112, 12, Element.ALIGN_CENTER);
-        if (ColumnText.hasMoreText(texto.go())) throw new DocumentException("Texto del reverso excedido");
-        cb.saveState();
-        cb.setColorStroke(AZUL);
-        cb.setLineWidth(0.5f);
-        cb.moveTo(x + 32, y + 35);
-        cb.lineTo(x + ANCHO - 32, y + 35);
-        cb.stroke();
-        cb.restoreState();
-        centrar(cb, mensaje("firma"), x + ANCHO / 2, y + 23, 7.5f, true, AZUL);
-    }
 
     private void centrar(PdfContentByte cb, String texto, float x, float y,
             float tamano, boolean bold, BaseColor color) {

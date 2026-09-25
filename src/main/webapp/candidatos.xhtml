@@ -356,7 +356,7 @@
                         <div class="formgrid grid"><div class="field col-12">
                             <label for="cedulaBuscar" class="font-medium text-700 text-sm">#{msg['form.candidatos.search.placeholder']}</label>
                             <div class="flex gap-2">
-                                <p:inputText id="cedulaBuscar" value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true" styleClass="mask-cedula flex-1"><p:keyFilter for="cedulaBuscar" mask="num"/></p:inputText>
+                                <p:inputText id="cedulaBuscar" value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true" styleClass="mask-cedula flex-1"/>
                                 <p:commandButton icon="pi pi-search" styleClass="ui-button-info" action="#{candidatoController.buscaPersona}"
                                                  update=":frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmGlobal:growlGlobal"
                                                  process=":frmCandidatos:outPnlAsignaCandidatoBusca @this"/>

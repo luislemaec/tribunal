@@ -23,16 +23,20 @@ public class CertificadosVotacionPdfCheck {
         ReporteMesaDTO reporte = new ReporteMesaDTO();
         ProcesoElectoralDTO proceso = new ProcesoElectoralDTO();
         proceso.setId(7);
+        proceso.setNombre("Elecciones generales de prueba 2027");
         reporte.setProceso(proceso);
         RecintoDTO recinto = new RecintoDTO();
         recinto.setNombre("Unidad Educativa de Prueba");
+        recinto.setProvinciaNombre("Chimborazo");
+        recinto.setCantonNombre("Riobamba");
+        recinto.setUbicacionNombre("Parroquia electoral de prueba");
         reporte.setRecinto(recinto);
         MesaDTO mesa = new MesaDTO();
         mesa.setId(12);
         mesa.setNombre("12");
         reporte.setMesa(mesa);
         var recursos = new CertificadosVotacionPDF.Recursos(
-                Files.readAllBytes(Path.of("src/main/webapp/resources/img/logo_consejo_417x150.png")),
+                Files.readAllBytes(Path.of("src/main/resources/img/cert-logo.png")),
                 Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Regular.ttf")),
                 Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Bold.ttf")));
         var fecha = new SimpleDateFormat("yyyy-MM-dd").parse("2027-02-21");
@@ -45,6 +49,7 @@ public class CertificadosVotacionPdfCheck {
         }
         for (int cantidad : new int[]{1, 10, 11, 21}) {
             byte[] pdf = CertificadosVotacionPDF.generar(reporte, personas.subList(0, cantidad), fecha, recursos);
+            if (args.length > 0) Files.write(Path.of(args[0]), pdf);
             PdfReader lector = new PdfReader(pdf);
             comprobar(lector.getNumberOfPages() == 2 * ((cantidad + 9) / 10), "Pares frente/reverso");
             var preferencias = lector.getCatalog().getAsDict(PdfName.VIEWERPREFERENCES);
@@ -64,10 +69,10 @@ public class CertificadosVotacionPdfCheck {
                     comprobar(!texto.contains("PRESIDENTA/E") && !texto.contains("Este documento"), "Frente sin texto del reverso");
                     for (int fila = 1; fila <= esperados; fila++) {
                         int persona = inicio + fila;
-                        comprobar(Pattern.compile("C\\u00e9dula: SN-" + persona + "(?:\\s|$)")
+                        comprobar(Pattern.compile("C\\u00c9DULA:\\s+SN-" + persona + "(?:\\s|$)")
                                 .matcher(texto).find(), "Persona completa en la pagina correspondiente");
                         String codigo = CertificadosVotacionPDF.codigo(7, 12, persona);
-                        comprobar(texto.contains(codigo) && codigos.add(codigo), "Codigo unico por certificado");
+                        comprobar(codigos.add(codigo), "Codigo unico por certificado");
                     }
                     var fuentes = lector.getPageN(pagina).getAsDict(PdfName.RESOURCES).getAsDict(PdfName.FONT);
                     String nombres = fuentes.getKeys().stream().map(k -> fuentes.getAsDict(k)
@@ -77,6 +82,10 @@ public class CertificadosVotacionPdfCheck {
                     comprobar(texto.split("PRESIDENTA/E", -1).length - 1 == esperados, "Firmas completas");
                     comprobar(texto.split("Este documento acredita", -1).length - 1 == esperados, "Texto reverso");
                     comprobar(!texto.contains("CERTIFICADO DE VOTACI") && !texto.contains("SN-"), "Reverso sin datos frontales");
+                    comprobar(texto.contains("Riobamba"), "Ubicacion del recinto, no de la iglesia");
+                    comprobar(texto.contains("Iglesia Evangelica"), "Conserva informacion de iglesia");
+                    for (int fila = 1; fila <= esperados; fila++)
+                        comprobar(texto.contains(CertificadosVotacionPDF.codigo(7, 12, inicio + fila)), "Codigo visible en reverso");
                 }
                 String contenido = new String(lector.getPageContent(pagina), StandardCharsets.ISO_8859_1);
                 var rectangulos = Pattern.compile("([\\d.]+) ([\\d.]+) ([\\d.]+) ([\\d.]+) re").matcher(contenido);
@@ -113,9 +122,9 @@ public class CertificadosVotacionPdfCheck {
         var png = javax.imageio.ImageIO.read(imagen.toFile());
         float escala = 300f / 72;
         for (int i = 0; i < 10; i++) {
-            int y = Math.round((842 - CertificadosVotacionPDF.y(i) - 20) * escala);
-            int izquierda = Math.round((CertificadosVotacionPDF.x(i, false) + 8) * escala);
-            int derecha = Math.round((CertificadosVotacionPDF.x(i, false)
+            int y = Math.round((842 - CertificadosVotacionPDF.y(i) - 18) * escala);
+            int izquierda = Math.round((CertificadosVotacionPDF.x(i, true) + 8) * escala);
+            int derecha = Math.round((CertificadosVotacionPDF.x(i, true)
                     + CertificadosVotacionPDF.ANCHO - 8) * escala);
             List<Integer> anchos = new ArrayList<>();
             boolean negroAnterior = false;
