@@ -84,6 +84,12 @@ public class DashboardController implements Serializable {
     @Inject
     private DocumentoService documentoService;
 
+    @Inject
+    private ec.com.antenasur.service.tec.DashboardResumenService resumenService;
+
+    @Inject
+    private ec.com.antenasur.security.menu.AutorizacionMenuService autorizacionMenuService;
+
     @Setter
     @Getter
     private float porcentajeMesasEscrutadas;
@@ -166,6 +172,21 @@ public class DashboardController implements Serializable {
 
     @Getter
     private String recintosAsignados;
+
+    /** Resumen gerencial del proceso activo (Administrador y Tribunal). */
+    @Getter
+    private ec.com.antenasur.dto.ResumenDashboardDTO resumen = new ec.com.antenasur.dto.ResumenDashboardDTO();
+
+    /** Páginas del menú habilitadas para el usuario; filtra los accesos rápidos. */
+    private final List<String> paginasPermitidas = new ArrayList<>();
+
+    private final List<Indicador> avances = new ArrayList<>();
+
+    private final List<Indicador> estadosEscrutinio = new ArrayList<>();
+
+    /** Configuración Chart.js (JSON) del gráfico de electores por cantón. */
+    @Getter
+    private String electoresPorCanton = "{}";
 
     @Getter
     private final List<String> alertasIglesia = new ArrayList<>();
@@ -280,11 +301,138 @@ public class DashboardController implements Serializable {
         }
     }
 
+    /**
+     * Panel gerencial de Administrador y Tribunal: un único resumen agregado del
+     * proceso activo, más las páginas que el menú del usuario habilita para los
+     * accesos rápidos.
+     */
     private void cargarIndicadoresGlobales() {
-        totalPersonas = mesaBean.totalVotantes();
-        totalIglesias = iglesiaService.count();
-        totalMesas = mesaBean.totalMesas();
-        totalRecintos = recintoBean.totalRecintos();
+        resumen = resumenService.consultar();
+        totalIglesias = (int) resumen.getTotalIglesias();
+        totalMesas = (int) resumen.getTotalMesas();
+        totalRecintos = (int) resumen.getTotalRecintos();
+        // Electores del padrón del proceso; el indicador anterior sumaba los
+        // votos registrados en las mesas, que es otra magnitud.
+        totalPersonas = (int) resumen.getTotalElectores();
+        cargarPaginasPermitidas();
+        cargarGraficoElectores();
+    }
+
+    /** Páginas del menú del usuario: los accesos rápidos no ofrecen otras. */
+    private void cargarPaginasPermitidas() {
+        paginasPermitidas.clear();
+        try {
+            paginasPermitidas.addAll(autorizacionMenuService.paginasActuales());
+        } catch (Exception e) {
+            log.warn("No se pudieron resolver las páginas permitidas del usuario", e);
+        }
+    }
+
+    /** ¿El usuario tiene habilitada esta página en su menú? */
+    public boolean permite(String pagina) {
+        return ec.com.antenasur.security.menu.PaginasMenu.permite(paginasPermitidas, pagina);
+    }
+
+    /** Barras de avance del proceso, ya resueltas a texto y porcentaje. */
+    public List<Indicador> getAvances() {
+        if (avances.isEmpty() && !resumen.isSinProceso()) {
+            avances.add(avance("dashboard.avance.juntas", resumen.getPorcentajeJuntas(),
+                    resumen.getMesasConJuntaCompleta()));
+            avances.add(avance("dashboard.avance.escrutinio", resumen.getPorcentajeEscrutinio(),
+                    resumen.getMesasCerradas()));
+            avances.add(avance("dashboard.avance.padrones", resumen.getPorcentajePadrones(),
+                    resumen.getPadronesGenerados()));
+            avances.add(avance("dashboard.avance.actas", resumen.getPorcentajeActasParciales(),
+                    resumen.getActasParcialesGeneradas()));
+        }
+        return avances;
+    }
+
+    private Indicador avance(String clave, int porcentaje, long parte) {
+        return new Indicador(JsfUtil.getMessage(clave), porcentaje,
+                JsfUtil.getMessage("dashboard.avance.detalle", parte, resumen.getTotalMesas()), null);
+    }
+
+    /** Mesas por estado de escrutinio, con la severidad que usa la vista. */
+    public List<Indicador> getEstadosEscrutinio() {
+        if (estadosEscrutinio.isEmpty()) {
+            resumen.getMesasPorEstado().forEach((estado, cantidad) -> estadosEscrutinio
+                    .add(new Indicador(etiquetaEstado(estado), 0, null, severidadEstado(estado), cantidad)));
+        }
+        return estadosEscrutinio;
+    }
+
+    private String etiquetaEstado(String estado) {
+        String clave = "escrutinio.estado." + estado;
+        String etiqueta = JsfUtil.getMessage(clave);
+        return etiqueta == null || etiqueta.equals(clave) ? estado : etiqueta;
+    }
+
+    private String severidadEstado(String estado) {
+        return switch (estado) {
+            case "CERRADO" -> "success";
+            case "OBSERVADO", "ANULADO" -> "danger";
+            case "PENDIENTE" -> "secondary";
+            default -> "warning";
+        };
+    }
+
+    /** Valor ya resuelto para la vista: sin consultas ni formato en los getters. */
+    @lombok.Value
+    public static class Indicador implements Serializable {
+        private static final long serialVersionUID = 1L;
+        String etiqueta;
+        int porcentaje;
+        String detalle;
+        String severidad;
+        long cantidad;
+
+        Indicador(String etiqueta, int porcentaje, String detalle, String severidad) {
+            this(etiqueta, porcentaje, detalle, severidad, 0);
+        }
+
+        Indicador(String etiqueta, int porcentaje, String detalle, String severidad, long cantidad) {
+            this.etiqueta = etiqueta;
+            this.porcentaje = porcentaje;
+            this.detalle = detalle;
+            this.severidad = severidad;
+            this.cantidad = cantidad;
+        }
+    }
+
+    /**
+     * Configuración Chart.js del gráfico de electores por cantón.
+     *
+     * <p>PrimeFaces 15 ya no incluye {@code org.primefaces.model.charts.*}: el
+     * componente {@code p:chart} recibe la configuración como JSON, igual que en
+     * la pantalla pública de resultados.
+     */
+    private void cargarGraficoElectores() {
+        var porCanton = resumen.getElectoresPorCanton();
+        if (porCanton.isEmpty()) {
+            electoresPorCanton = "{}";
+            return;
+        }
+        StringBuilder etiquetas = new StringBuilder();
+        StringBuilder valores = new StringBuilder();
+        porCanton.forEach((canton, electores) -> {
+            if (etiquetas.length() > 0) {
+                etiquetas.append(',');
+                valores.append(',');
+            }
+            etiquetas.append('"').append(escaparJson(canton)).append('"');
+            valores.append(electores);
+        });
+        electoresPorCanton = "{\"type\":\"bar\",\"data\":{\"labels\":[" + etiquetas + "],"
+                + "\"datasets\":[{\"label\":\"" + escaparJson(JsfUtil.getMessage("dashboard.grafico.electores"))
+                + "\",\"data\":[" + valores + "],\"backgroundColor\":\"rgba(24,82,133,.85)\","
+                + "\"borderRadius\":4}]},"
+                + "\"options\":{\"maintainAspectRatio\":false,\"plugins\":{\"legend\":{\"display\":false}},"
+                + "\"scales\":{\"y\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0}}}}}";
+    }
+
+    private static String escaparJson(String valor) {
+        return valor == null ? "" : valor.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private void cargarDashboardIglesia() {

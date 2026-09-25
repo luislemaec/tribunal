@@ -365,6 +365,36 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         }
     }
 
+    /**
+     * Electores del padrón del proceso agrupados por cantón, en una sola
+     * consulta agregada. El total general es la suma de sus valores, de modo que
+     * el panel gerencial no necesita un COUNT aparte.
+     *
+     * @return mapa cantón → electores, ordenado de mayor a menor.
+     */
+    public java.util.LinkedHashMap<String, Long> contarElectoresPorCanton(Integer procesoId) {
+        java.util.LinkedHashMap<String, Long> resultado = new java.util.LinkedHashMap<>();
+        if (procesoId == null) {
+            return resultado;
+        }
+        try {
+            String sql = "SELECT canton.name, COUNT(p.id) FROM Padron p"
+                    + " JOIN p.mesa m JOIN m.recinto r"
+                    + " JOIN r.ubicacion parroquia JOIN parroquia.geograp canton"
+                    + " JOIN p.proceso pro"
+                    + " WHERE pro.id = :procesoId AND " + ACTIVOS
+                    + " GROUP BY canton.name ORDER BY COUNT(p.id) DESC";
+            List<Object[]> filas = super.getEntityManager().createQuery(sql, Object[].class)
+                    .setParameter("procesoId", procesoId).getResultList();
+            for (Object[] fila : filas) {
+                resultado.put(fila[0] == null ? "" : fila[0].toString(), ((Number) fila[1]).longValue());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return resultado;
+    }
+
     public long contarMesasPorProceso(Integer procesoId) {
         if (procesoId == null) {
             return 0L;

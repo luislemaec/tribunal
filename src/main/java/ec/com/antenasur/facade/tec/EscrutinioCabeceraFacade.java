@@ -52,6 +52,32 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         return total != null ? total : 0L;
     }
 
+    /**
+     * Mesas del proceso agrupadas por estado de escrutinio, en una sola consulta
+     * agregada. Alimenta los indicadores gerenciales del panel sin recorrer las
+     * cabeceras ni lanzar un COUNT por estado.
+     *
+     * @return mapa estado → número de mesas; los estados sin mesas no aparecen.
+     */
+    public java.util.Map<EstadoEscrutinio, Long> contarPorEstadoProceso(Integer procesoId) {
+        java.util.Map<EstadoEscrutinio, Long> resultado = new java.util.EnumMap<>(EstadoEscrutinio.class);
+        if (procesoId == null) {
+            return resultado;
+        }
+        String sql = "SELECT e.estadoEscrutinio, COUNT(e.id) FROM EscrutinioCabecera e"
+                + " JOIN e.proceso pro"
+                + " WHERE pro.id = :procesoId AND e.estado = TRUE"
+                + " GROUP BY e.estadoEscrutinio";
+        List<Object[]> filas = super.getEntityManager().createQuery(sql, Object[].class)
+                .setParameter("procesoId", procesoId).getResultList();
+        for (Object[] fila : filas) {
+            if (fila[0] != null) {
+                resultado.put((EstadoEscrutinio) fila[0], ((Number) fila[1]).longValue());
+            }
+        }
+        return resultado;
+    }
+
     public List<EscrutinioCabecera> listarCerradasPorProceso(Integer procesoId) {
         if (procesoId == null) {
             return java.util.Collections.emptyList();

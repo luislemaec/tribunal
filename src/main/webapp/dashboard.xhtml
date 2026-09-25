@@ -34,14 +34,19 @@
 
             <!-- Accesos rápidos: SpeedDial flotante (ligero, sin queries). -->
             <h:form id="frmSpeedDial">
+                <!-- Accesos rápidos: solo a los módulos habilitados en el menú
+                     del usuario; Tribunal, por ejemplo, no tiene Escrutinios. -->
                 <p:speedDial rendered="#{not dashboardController.dashboardRestringido}"
                              type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/iglesias"    icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-success"/>
-                    <p:menuitem outcome="/recintos"    icon="pi pi-map-marker"  title="#{msg['form.dashboard.shortcut.recintos']}"     styleClass="ui-button-info"/>
-                    <p:menuitem outcome="/mesas"       icon="pi pi-list"        title="#{msg['form.dashboard.shortcut.mesas']}"        styleClass="ui-button-warning"/>
-                    <p:menuitem outcome="/escrutinios" icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-help"/>
+                    <p:menuitem outcome="/iglesias"     icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-success" rendered="#{dashboardController.permite('iglesias')}"/>
+                    <p:menuitem outcome="/personas"     icon="pi pi-users"       title="#{msg['form.dashboard.shortcut.personas']}"     styleClass="ui-button-info"    rendered="#{dashboardController.permite('personas')}"/>
+                    <p:menuitem outcome="/padron"       icon="pi pi-id-card"     title="#{msg['form.dashboard.shortcut.padron']}"       styleClass="ui-button-info"    rendered="#{dashboardController.permite('padron')}"/>
+                    <p:menuitem outcome="/recintos"     icon="pi pi-map-marker"  title="#{msg['form.dashboard.shortcut.recintos']}"     styleClass="ui-button-info"    rendered="#{dashboardController.permite('recintos')}"/>
+                    <p:menuitem outcome="/mjrv"         icon="pi pi-sitemap"     title="#{msg['form.dashboard.shortcut.mjrv']}"         styleClass="ui-button-warning" rendered="#{dashboardController.permite('mjrv')}"/>
+                    <p:menuitem outcome="/reportesMesa" icon="pi pi-folder-open" title="#{msg['form.dashboard.shortcut.reportesMesa']}" styleClass="ui-button-warning" rendered="#{dashboardController.permite('reportesMesa')}"/>
+                    <p:menuitem outcome="/escrutinios"  icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-help"    rendered="#{dashboardController.permite('escrutinios')}"/>
                 </p:speedDial>
                 <p:speedDial rendered="#{dashboardController.restringidoAIglesia and dashboardController.tieneIglesiaAsignada}"
                              type="quarter-circle" radius="120" direction="up-left"
@@ -66,69 +71,161 @@
 
             <!-- KPIs — DashboardController (queries livianas COUNT/SUM). -->
             <ui:fragment rendered="#{not dashboardController.dashboardRestringido}">
-            <div class="grid">
 
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #3b82f6">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#3b82f6,#60a5fa);flex-shrink:0">
-                                <i class="pi pi-map-marker text-white"/>
+                <!-- Proceso activo y fase vigente del cronograma -->
+                <div class="grid">
+                    <div class="col-12">
+                        <div class="surface-card shadow-1 border-round-lg p-3 flex flex-wrap align-items-center gap-3">
+                            <i class="pi pi-calendar text-primary text-xl"/>
+                            <div class="flex-grow-1 min-w-0">
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.proceso.activo']}</span>
+                                <span class="block text-900 font-bold text-lg white-space-normal">
+                                    #{dashboardController.resumen.sinProceso ? msg['dashboard.proceso.sin'] : dashboardController.resumen.procesoNombre}
+                                </span>
                             </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.recintos']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalRecintos}</span>
+                            <p:tag rendered="#{not empty dashboardController.resumen.faseVigente}"
+                                   value="#{msg['dashboard.proceso.fase']}: #{dashboardController.resumen.faseVigente}"
+                                   icon="pi pi-flag" severity="info" styleClass="tec-status"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen general -->
+                <div class="grid mt-1">
+                    <div class="col-12 sm:col-6 lg:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid #3b82f6">
+                            <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.recintos']}</span>
+                            <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalRecintos}</span>
+                            <span class="block text-500 text-xs mt-1">
+                                <i class="pi pi-list mr-1"/>#{msg['form.dashboard.kpi.mesas']}: #{dashboardController.resumen.totalMesas}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 sm:col-6 lg:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid #22c55e">
+                            <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.electores']}</span>
+                            <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalElectores}</span>
+                            <span class="block text-500 text-xs mt-1">
+                                <i class="pi pi-users mr-1"/>#{msg['form.dashboard.kpi.electores.ayuda']}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 sm:col-6 lg:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid #8b5cf6">
+                            <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.iglesias']}</span>
+                            <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalIglesias}</span>
+                            <span class="block text-500 text-xs mt-1">
+                                <i class="pi pi-building mr-1"/>#{msg['form.dashboard.summary']}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 sm:col-6 lg:col-3">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid #f59e0b">
+                            <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.avance.escrutinio']}</span>
+                            <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.porcentajeEscrutinio}%</span>
+                            <span class="block text-500 text-xs mt-1">
+                                <i class="pi pi-check-circle mr-1"/>#{dashboardController.resumen.mesasCerradas} / #{dashboardController.resumen.totalMesas}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <p:divider align="left" type="solid">
+                    <span class="p-tag"><i class="pi pi-chart-line mr-2"/>#{msg['dashboard.seccion.avance']}</span>
+                </p:divider>
+
+                <!-- Avance del proceso -->
+                <div class="grid">
+                    <div class="col-12 lg:col-6">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <ui:repeat var="avance" value="#{dashboardController.avances}">
+                                <div class="mb-3">
+                                    <div class="flex justify-content-between align-items-center mb-1 gap-2">
+                                        <span class="text-700 text-sm">#{avance.etiqueta}</span>
+                                        <span class="text-900 font-semibold text-sm">#{avance.porcentaje}%</span>
+                                    </div>
+                                    <p:progressBar value="#{avance.porcentaje}" displayOnly="true"/>
+                                    <span class="block text-500 text-xs mt-1">#{avance.detalle}</span>
+                                </div>
+                            </ui:repeat>
+                        </div>
+                    </div>
+                    <div class="col-12 lg:col-6">
+                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                            <span class="block text-700 font-semibold text-sm mb-2">#{msg['dashboard.escrutinio.estados']}</span>
+                            <div class="flex flex-wrap gap-2">
+                                <ui:repeat var="estado" value="#{dashboardController.estadosEscrutinio}">
+                                    <p:tag value="#{estado.etiqueta}: #{estado.cantidad}" severity="#{estado.severidad}"
+                                           styleClass="tec-status"/>
+                                </ui:repeat>
+                            </div>
+                            <p:divider/>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="text-500 text-xs">
+                                    <i class="pi pi-id-card mr-1"/>#{msg['dashboard.documentos.certificados']}:
+                                    <b class="text-900">#{dashboardController.resumen.certificadosGenerados}</b>
+                                </span>
+                                <span class="text-500 text-xs">
+                                    <i class="pi pi-file-pdf mr-1"/>#{msg['dashboard.documentos.actasFisicas']}:
+                                    <b class="text-900">#{dashboardController.resumen.actasFisicasCargadas}</b>
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #f59e0b">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f59e0b,#fbbf24);flex-shrink:0">
-                                <i class="pi pi-list text-white"/>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.mesas']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalMesas}</span>
+                <p:divider align="left" type="solid">
+                    <span class="p-tag"><i class="pi pi-exclamation-triangle mr-2"/>#{msg['dashboard.seccion.atencion']}</span>
+                </p:divider>
+
+                <!-- Requiere atención: pendientes derivados de los mismos indicadores -->
+                <div class="grid">
+                    <div class="col-12">
+                        <div class="surface-card shadow-1 border-round-lg p-3">
+                            <ui:fragment rendered="#{empty dashboardController.resumen.alertas}">
+                                <span class="text-600 text-sm">
+                                    <i class="pi pi-check-circle text-green-500 mr-2"/>#{msg['dashboard.atencion.sinPendientes']}
+                                </span>
+                            </ui:fragment>
+                            <div class="grid">
+                                <ui:repeat var="alerta" value="#{dashboardController.resumen.alertas}">
+                                    <div class="col-12 md:col-6 xl:col-4">
+                                        <div class="flex align-items-center gap-2 p-2 border-round surface-hover">
+                                            <p:tag value="#{alerta.cantidad gt 0 ? alerta.cantidad : '!'}"
+                                                   severity="#{alerta.severidad}" styleClass="tec-status"/>
+                                            <span class="text-700 text-sm flex-grow-1 min-w-0">#{alerta.texto}</span>
+                                            <p:link outcome="/#{alerta.pagina}"
+                                                    rendered="#{dashboardController.permite(alerta.pagina)}"
+                                                    styleClass="text-primary">
+                                                <i class="pi pi-arrow-right"/>
+                                            </p:link>
+                                        </div>
+                                    </div>
+                                </ui:repeat>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #22c55e">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
-                                <i class="pi pi-users text-white"/>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.personas']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalPersonas}</span>
-                            </div>
+                <p:divider align="left" type="solid">
+                    <span class="p-tag"><i class="pi pi-chart-bar mr-2"/>#{msg['dashboard.seccion.distribucion']}</span>
+                </p:divider>
+
+                <!-- Distribución de electores por cantón -->
+                <div class="grid">
+                    <div class="col-12">
+                        <div class="surface-card shadow-1 border-round-lg p-3">
+                            <ui:fragment rendered="#{empty dashboardController.resumen.electoresPorCanton}">
+                                <span class="text-600 text-sm">
+                                    <i class="pi pi-info-circle mr-2"/>#{msg['dashboard.grafico.sin']}
+                                </span>
+                            </ui:fragment>
+                            <p:chart value="#{dashboardController.electoresPorCanton}"
+                                     rendered="#{not empty dashboardController.resumen.electoresPorCanton}"
+                                     style="width:100%;height:16rem" canvasStyle="width:100%;height:16rem"/>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #8b5cf6">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa);flex-shrink:0">
-                                <i class="pi pi-building text-white"/>
-                            </div>
-                            <div>
-                                <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.iglesias']}</span>
-                                <span class="block text-900 font-bold text-2xl">#{dashboardController.totalIglesias}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
             </ui:fragment>
 
             <ui:fragment rendered="#{dashboardController.restringidoAPresidenteMesa}">
