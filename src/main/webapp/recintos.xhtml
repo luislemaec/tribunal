@@ -99,7 +99,7 @@
                                            itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{recintoController.cambiarCanton()}"
                                     process="@this" partialSubmit="true"
-                                    update="parroquia tblRecintos resumenRecintos pnlMesasRecinto"/>
+                                    update="parroquia :frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-4">
@@ -112,14 +112,18 @@
                                            itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{recintoController.cambiarParroquia()}"
                                     process="@this" partialSubmit="true"
-                                    update="tblRecintos resumenRecintos pnlMesasRecinto"/>
+                                    update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"/>
                         </p:selectOneMenu>
                     </div>
                 </div>
             </div>
 
-            <div class="grid">
-                <div class="col-12 xl:col-7">
+            <!-- Recintos y sus mesas en dos pestañas: al elegir un recinto la
+                 pantalla salta a Mesas con el contexto ya cargado. -->
+            <p:tabView id="tabsRecintos" widgetVar="wdTabsRecintos"
+                       activeIndex="#{mesaController.pestanaActiva}" dynamic="false">
+                <p:ajax event="tabChange" process="@this"/>
+                <p:tab title="#{msg['recintos.seccion.listado']}" titleStyleClass="p-2">
                     <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
                             <div>
@@ -134,28 +138,33 @@
                                                  styleClass="ui-button-primary"
                                                  actionListener="#{recintoController.nuevaRecinto}"
                                                  process="@this" partialSubmit="true"
-                                                 update="outPnlRecintos"
+                                                 update=":frmRecintos:dlgRecinto"
                                                  oncomplete="if (!args.validationFailed) PF('dlgRecinto').show()">
-                                    <p:resetInput target="outPnlRecintos"/>
+                                    <p:resetInput target=":frmRecintos:outPnlRecintos"/>
                                 </p:commandButton>
                             </div>
                         </div>
 
+                        <!-- Selección con un clic en cualquier parte de la fila,
+                             igual que la pestaña Mesas de MJRV. -->
                         <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto"
                                      value="#{recintoController.listaRecintos}" reflow="true"
                                      rowIndexVar="indiceFilaRecinto"
                                      rowKey="#{recinto.id}" multiViewState="true"
-                                     rowStyleClass="#{mesaController.recintoSeleccionado.id eq recinto.id ? 'bg-teal-50' : ''}"
-                                     paginator="true" rows="10" rowSelectMode="add"
+                                     selectionMode="single" selection="#{mesaController.recintoSeleccionado}"
+                                     rowStyleClass="#{mesaController.recintoSeleccionado.id eq recinto.id ? 'fila-seleccionada' : ''}"
+                                     paginator="true" rows="10"
                                      rowsPerPageTemplate="10,25,50"
                                      paginatorPosition="bottom"
                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                      currentPageReportTemplate="#{msg['recintos.paginador.reporte']}"
                                      emptyMessage="#{msg['recintos.empty.listado']}"
                                      showGridlines="true"
-                                     styleClass="ui-datatable-striped ui-datatable-sm">
+                                     styleClass="ui-datatable-striped ui-datatable-sm tec-table-seleccionable">
 
-                       
+                            <p:ajax event="rowSelect" listener="#{mesaController.seleccionarRecintoDesdeTabla}"
+                                    process="@this"
+                                    update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"/>
 
                             <p:column headerText="#{msg['recintos.tabla.codigo']}"
                                       sortBy="#{recinto.id}" filterBy="#{recinto.id}"
@@ -188,21 +197,14 @@
                                       styleClass="text-center" style="width:7rem">
                                 <p:tag value="#{msg['recintos.estado.activo']}" severity="success" icon="pi pi-check-circle"/>
                             </p:column>
+                            <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
                             <p:column headerText="#{msg['recintos.tabla.acciones']}" exportable="false"
-                                      styleClass="text-center" style="width:9rem">
+                                      styleClass="text-center" style="width:7rem" selectRow="false">
                                 <div class="flex justify-content-center gap-1">
-                                    <p:commandButton icon="pi pi-check"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-info"
-                                                     title="#{msg['recintos.tooltip.seleccionar']}"
-                                                     action="#{mesaController.seleccionarRecinto(recinto)}"
-                                                     process="@this" partialSubmit="true"
-                                                     update=":frmRecintos:tblRecintos :frmRecintos:resumenRecintos :frmRecintos:pnlMesasRecinto">
-                                        <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
-                                    </p:commandButton>
                                     <p:commandButton icon="pi pi-pencil"
                                                      styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                                      title="#{msg['recintos.tooltip.editar']}"
-                                                     update=":frmRecintos:outPnlRecintos"
+                                                     update=":frmRecintos:dlgRecinto"
                                                      oncomplete="if (!args.validationFailed) PF('dlgRecinto').show()"
                                                      process="@this" partialSubmit="true"
                                                      action="#{recintoController.prepararEdicion(recinto, indiceFilaRecinto)}">
@@ -211,10 +213,9 @@
                                     <p:commandButton icon="pi pi-trash"
                                                      styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                      title="#{msg['recintos.tooltip.eliminar']}"
-                                                     actionListener="#{recintoController.eliminarRecintoSeleccionado}"
+                                                     action="#{recintoController.eliminarRecinto(recinto)}"
                                                      process="@this" partialSubmit="true"
-                                                     update=":frmRecintos:tblRecintos :frmRecintos:resumenRecintos :frmRecintos:pnlMesasRecinto">
-                                        <f:setPropertyActionListener value="#{recinto}" target="#{recintoController.recintoSeleccionado}"/>
+                                                     update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos">
                                         <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
                                                    message="#{msg['recintos.confirmacion.eliminar']}"
                                                    icon="pi pi-exclamation-triangle"/>
@@ -223,9 +224,9 @@
                             </p:column>
                         </p:dataTable>
                     </div>
-                </div>
+                </p:tab>
 
-                <div class="col-12 xl:col-5">
+                <p:tab title="#{msg['recintos.mesas.seccion.listado']}" titleStyleClass="p-2">
                     <p:outputPanel id="pnlMesasRecinto">
                         <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                             <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
@@ -244,9 +245,11 @@
                                 <p:commandButton id="btnNuevaMesa"
                                                  value="#{msg['recintos.mesas.boton.nuevo']}" icon="pi pi-plus"
                                                  actionListener="#{mesaController.nuevaMesaParaRecinto}"
-                                                 process="@this" partialSubmit="true" update="outPnlMesa"
+                                                 process="@this" partialSubmit="true" update=":frmRecintos:dlgMesa"
                                                  disabled="#{empty mesaController.recintoSeleccionado.id}"
-                                                 oncomplete="if (!args.validationFailed) PF('dlgMesa').show()"/>
+                                                 oncomplete="if (!args.validationFailed) PF('dlgMesa').show()">
+                                    <p:resetInput target=":frmRecintos:outPnlMesa"/>
+                                </p:commandButton>
                             </div>
 
                             <p:dataTable id="tblMesasRecinto" widgetVar="wdTablaMesasRecinto" var="mesa"
@@ -257,7 +260,7 @@
                                          paginatorPosition="bottom"
                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                          currentPageReportTemplate="#{msg['recintos.mesas.paginador.reporte']}"
-                                         emptyMessage="#{msg['recintos.mesas.empty.listado']}"
+                                         emptyMessage="#{empty mesaController.recintoSeleccionado.id ? msg['recintos.mesas.empty.sin.seleccion'] : msg['recintos.mesas.empty.listado']}"
                                          showGridlines="true"
                                          styleClass="ui-datatable-striped ui-datatable-sm">
 
@@ -288,7 +291,7 @@
                                         <p:commandButton icon="pi pi-pencil"
                                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                                          title="#{msg['recintos.mesas.tooltip.editar']}"
-                                                         update=":frmRecintos:outPnlMesa"
+                                                         update=":frmRecintos:dlgMesa"
                                                          oncomplete="if (!args.validationFailed) PF('dlgMesa').show()"
                                                          process="@this" partialSubmit="true">
                                             <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>
@@ -299,7 +302,7 @@
                                                          title="#{msg['recintos.mesas.tooltip.eliminar']}"
                                                          action="#{mesaController.eliminarMesa(mesa)}"
                                                          process="@this" partialSubmit="true"
-                                                         update=":frmRecintos:tblMesasRecinto :frmRecintos:tblRecintos :frmRecintos:resumenRecintos">
+                                                         update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos">
                                             <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
                                                        message="#{msg['recintos.mesas.confirmacion.eliminar']}"
                                                        icon="pi pi-exclamation-triangle"/>
@@ -309,10 +312,10 @@
                             </p:dataTable>
                         </div>
                     </p:outputPanel>
-                </div>
-            </div>
+                </p:tab>
+            </p:tabView>
 
-            <p:dialog header="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.dialog.titulo.nuevo'] : msg['recintos.dialog.titulo.editar']}"
+            <p:dialog id="dlgRecinto" header="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.dialog.titulo.nuevo'] : msg['recintos.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgRecinto"
                       responsive="true" width="520"
@@ -340,14 +343,14 @@
                                     #{msg['recintos.label.canton']} <span class="text-red-500">*</span>
                                 </label>
                                 <p:selectOneMenu id="cantonSel"
-                                                 value="#{recintoController.cantonSeleccionado.id}"
+                                                 value="#{recintoController.cantonEdicionId}"
                                                  filter="true" filterMatchMode="startsWith"
                                                  required="true" styleClass="w-full"
                                                  requiredMessage="#{msg['recintos.validacion.canton.requerido']}">
                                     <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
                                     <f:selectItems value="#{recintoController.cantones}" var="canton"
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                                    <p:ajax event="change" listener="#{recintoController.obtieneParroquias()}"
+                                    <p:ajax event="change" listener="#{recintoController.cambiarCantonEdicion}"
                                             process="@this" partialSubmit="true"
                                             update=":frmRecintos:parroquiaSel"/>
                                 </p:selectOneMenu>
@@ -362,7 +365,7 @@
                                                  required="true" styleClass="w-full"
                                                  requiredMessage="#{msg['recintos.validacion.parroquia.requerido']}">
                                     <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
-                                    <f:selectItems value="#{recintoController.parroquias}" var="parroquia"
+                                    <f:selectItems value="#{recintoController.parroquiasEdicion}" var="parroquia"
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                 </p:selectOneMenu>
                             </div>
@@ -393,7 +396,7 @@
                 </f:facet>
             </p:dialog>
 
-            <p:dialog header="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.dialog.titulo.nuevo'] : msg['recintos.mesas.dialog.titulo.editar']}"
+            <p:dialog id="dlgMesa" header="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.dialog.titulo.nuevo'] : msg['recintos.mesas.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgMesa"
                       responsive="true" width="520"
@@ -447,7 +450,7 @@
                                          style="width:auto;flex:0 0 auto"
                                          styleClass="ui-button-success"
                                          actionListener="#{mesaController.guardarMesaSeleccionado}"
-                                         update="outPnlMesa tblMesasRecinto resumenRecintos tblRecintos"
+                                         update="outPnlMesa :frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"
                                          process="outPnlMesa @this" partialSubmit="true"
                                          oncomplete="if (!args.validationFailed) PF('dlgMesa').hide()">
                             <p:confirm header="#{msg['recintos.confirmacion.titulo']}"

@@ -115,7 +115,7 @@
                                  paginator="true" rows="12" first="#{jrvController.primeraFilaMesa}"
                                  rowsPerPageTemplate="12,25,50" reflow="true" styleClass="ui-datatable-sm mjrv-mesas-table"
                                  selectionMode="single" selection="#{jrvController.mesaSeleccionada}" rowKey="#{mesa.id}"
-                                 rowStyleClass="#{mesa.id eq jrvController.mesaSeleccionada.id ? 'mesa-seleccionada' : ''}"
+                                 rowStyleClass="#{mesa.id eq jrvController.mesaSeleccionada.id ? 'fila-seleccionada' : ''}"
                                  emptyMessage="#{msg['mjrv.empty.mesas']}">
                         <p:ajax event="rowSelect" listener="#{jrvController.seleccionarMesaDesdeTabla}"
                                 process="@this"

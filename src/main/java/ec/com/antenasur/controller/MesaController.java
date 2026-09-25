@@ -13,6 +13,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.component.datatable.DataTable;
 
 import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.GeograpBean;
@@ -68,6 +70,10 @@ public class MesaController implements Serializable {
     @Setter
     @Getter
     private RecintoDTO recintoSeleccionado;
+
+    @Getter
+    @Setter
+    private int pestanaActiva;
 
     @Setter
     @Getter
@@ -151,19 +157,41 @@ public class MesaController implements Serializable {
     }
 
     public void seleccionarRecinto(RecintoDTO recinto) {
+        this.mesaSeleccionado = null;
+        this.listaMesasSeleccionados = new ArrayList<>();
         this.recintoSeleccionado = recinto;
         recargarListaMesasActual();
-        if (listaMesas == null || listaMesas.isEmpty()) {
-            JsfUtil.addInfoMessageFromBundle("recintos.mesas.mensaje.sin.registros");
-            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+    }
+
+    public void seleccionarRecintoDesdeTabla(SelectEvent<RecintoDTO> event) {
+        RecintoDTO recinto = event.getObject();
+        if (recinto == null || recinto.getId() == null) {
+            liberarRecintoSeleccionado();
+            return;
+        }
+        seleccionarRecinto(recinto);
+        pestanaActiva = 1;
+        reiniciarTablaMesas();
+    }
+
+    private void reiniciarTablaMesas() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context != null && context.getViewRoot() != null) {
+            var componente = context.getViewRoot().findComponent("frmRecintos:tabsRecintos:tblMesasRecinto");
+            if (componente instanceof DataTable tabla) {
+                tabla.reset();
+                tabla.resetMultiViewState();
+            }
         }
     }
 
     public void liberarRecintoSeleccionado() {
+        this.pestanaActiva = 0;
         this.recintoSeleccionado = new RecintoDTO();
         this.mesaSeleccionado = null;
         this.listaMesas = new ArrayList<>();
         this.listaMesasSeleccionados = new ArrayList<>();
+        reiniciarTablaMesas();
     }
 
     public boolean existeMesasSeleccionados() {
@@ -376,10 +404,10 @@ public class MesaController implements Serializable {
         if (recintoSeleccionado != null && recintoSeleccionado.getId() != null) {
             List<RecintoDTO> listaRecintosTmp = new ArrayList<>();
             listaRecintosTmp.add(recintoSeleccionado);
-            listaMesas = mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintosTmp));
+            listaMesas = new ArrayList<>(mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintosTmp)));
             return;
         }
-        listaMesas = mesaService.listarDTOs();
+        listaMesas = esVistaRecintos() ? new ArrayList<>() : new ArrayList<>(mesaService.listarDTOs());
     }
 
     private void actualizarTotalesPorRecinto() {

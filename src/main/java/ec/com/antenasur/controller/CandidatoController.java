@@ -65,6 +65,13 @@ public class CandidatoController implements Serializable {
     private ListaDTO listaEdicion;
     @Getter
     private LazyDataModel<ListaDTO> listas;
+    /**
+     * Primera fila visible de la tabla de listas. Se enlaza con el atributo
+     * {@code first} para que editar, dar de baja o reactivar no devuelva al
+     * usuario a la primera página.
+     */
+    @Setter @Getter
+    private int primeraFilaLista;
     @Setter @Getter
     private String filtroLista;
     @Setter @Getter
@@ -99,15 +106,32 @@ public class CandidatoController implements Serializable {
         }
     }
 
+    /**
+     * Selecciona la lista cuyos candidatos se administran en el panel derecho.
+     *
+     * <p>Las listas dadas de baja también pueden seleccionarse, pero solo para
+     * consulta: la vista deshabilita las acciones sobre sus candidatos y el
+     * servicio sigue rechazando cualquier cambio, de modo que la regla de
+     * negocio no varía.
+     */
     public void seleccionarLista(ListaDTO lista) {
-        if (lista == null || lista.getId() == null || !Boolean.TRUE.equals(lista.getEstado())) {
-            JsfUtil.addWarningMessage("Seleccione una lista activa para administrar sus candidatos.");
+        if (lista == null || lista.getId() == null) {
             return;
         }
         listaSeleccionado = copiarLista(lista);
         candidatoSeleccionado = null;
         cedulaBuscar = null;
         obtieneCandidatosPorListaSeleccionada();
+    }
+
+    /** Selección con un clic sobre cualquier parte de la fila. */
+    public void seleccionarListaDesdeTabla(org.primefaces.event.SelectEvent<ListaDTO> evento) {
+        seleccionarLista(evento != null ? evento.getObject() : null);
+    }
+
+    /** La lista en el panel derecho admite cambios solo si está activa. */
+    public boolean isListaSeleccionadaActiva() {
+        return listaSeleccionado != null && Boolean.TRUE.equals(listaSeleccionado.getEstado());
     }
 
     public void obtieneCandidatosPorListaSeleccionada() {
@@ -362,6 +386,14 @@ public class CandidatoController implements Serializable {
         listas = new LazyDataModel<>() {
             private static final long serialVersionUID = 1L;
 
+            /**
+             * Filas de la página cargada, indexadas por su identificador. Permite
+             * resolver la fila seleccionada sin volver a consultar mientras siga
+             * visible; si el usuario cambia de página o de filtro, se recupera
+             * por id contra el servicio.
+             */
+            private final Map<String, ListaDTO> paginaActual = new java.util.LinkedHashMap<>();
+
             @Override
             public List<ListaDTO> load(int first, int pageSize, Map<String, SortMeta> sortBy,
                     Map<String, FilterMeta> filterBy) {
@@ -371,12 +403,46 @@ public class CandidatoController implements Serializable {
                 boolean ascendente = orden == null || orden.getOrder() != SortOrder.DESCENDING;
                 List<ListaDTO> pagina = listaService.buscarPaginado(filtroLista,
                         incluirListasInactivas, first, pageSize, campo, ascendente);
+                paginaActual.clear();
+                for (ListaDTO lista : pagina) {
+                    if (lista != null && lista.getId() != null) {
+                        paginaActual.put(String.valueOf(lista.getId()), lista);
+                    }
+                }
                 return pagina;
             }
 
             @Override
             public int count(Map<String, FilterMeta> filterBy) {
                 return listaService.contar(filtroLista, incluirListasInactivas);
+            }
+
+            /**
+             * Identificador real de la lista electoral. PrimeFaces lo usa para la
+             * selección por fila; sin él el modelo lanza
+             * {@code UnsupportedOperationException}. Nunca se usa el índice de
+             * fila, que cambia con la paginación, el orden y los filtros.
+             */
+            @Override
+            public String getRowKey(ListaDTO lista) {
+                return lista == null || lista.getId() == null ? null : String.valueOf(lista.getId());
+            }
+
+            /** Recupera la fila seleccionada aunque ya no esté en la página visible. */
+            @Override
+            public ListaDTO getRowData(String rowKey) {
+                if (rowKey == null || rowKey.isBlank()) {
+                    return null;
+                }
+                ListaDTO enPagina = paginaActual.get(rowKey);
+                if (enPagina != null) {
+                    return enPagina;
+                }
+                try {
+                    return listaService.obtenerDTOPorId(Integer.valueOf(rowKey));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
             }
         };
     }

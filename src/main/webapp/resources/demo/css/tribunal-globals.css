@@ -268,34 +268,47 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     padding: .3rem .45rem;
 }
 
-/* MJRV: selección de mesa visible, legible y limitada a esta tabla. */
-.mjrv-mesas-table .ui-datatable-data > tr {
+/* Selección por fila: resalta la fila activa en las tablas maestro-detalle
+ * (MJRV y Candidatos comparten el mismo comportamiento y aspecto). */
+.mjrv-mesas-table .ui-datatable-data, .tec-table-seleccionable .ui-datatable-data > tr {
     transition: background-color .15s ease, box-shadow .15s ease;
 }
 
-.mjrv-mesas-table .ui-datatable-data > tr:not(.mesa-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td {
+.mjrv-mesas-table .ui-datatable-data > tr:not(.fila-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td,
+.tec-table-seleccionable .ui-datatable-data > tr:not(.fila-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td {
     background: #eef6f8 !important;
     color: #1e293b !important;
+    cursor: pointer;
 }
 
-.mjrv-mesas-table .ui-datatable-data > tr.mesa-seleccionada > td,
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td,
 .mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td,
-.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td {
+.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td,
+.tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td,
+.tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td,
+.tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td {
     background: #d7eef7 !important;
     color: #0f172a !important;
     font-weight: 600;
 }
 
-.mjrv-mesas-table .ui-datatable-data > tr.mesa-seleccionada > td:first-child,
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td:first-child,
 .mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
-.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td:first-child {
+.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td:first-child,
+.tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td:first-child,
+.tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td:first-child,
+.tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td:first-child {
     box-shadow: inset 4px 0 0 #0f766e;
 }
 
-.mjrv-mesas-table .ui-datatable-data > tr.mesa-seleccionada > td .ui-column-title,
-.mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td .ui-column-title,
-.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td .ui-column-title {
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td .ui-column-title,
+.tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td .ui-column-title {
     color: #0f172a !important;
+}
+
+/* Fila de un registro dado de baja: se puede consultar, pero se distingue. */
+.tec-table-seleccionable .ui-datatable-data > tr.fila-inactiva > td {
+    color: #6b7280;
 }
 
 /* ==========================================================================

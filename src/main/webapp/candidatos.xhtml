@@ -35,10 +35,10 @@
                     <div class="surface-card shadow-1 border-round-lg p-3">
                         <div class="flex align-items-center justify-content-between gap-2 mb-3">
                             <div>
-                                <span class="block text-900 font-semibold text-lg">Listas electorales</span>
-                                <small class="text-500">Seleccione una lista para administrar sus candidatos.</small>
+                                <span class="block text-900 font-semibold text-lg">#{msg['form.candidatos.listas.title']}</span>
+                                <small class="text-500">#{msg['form.candidatos.listas.hint']}</small>
                             </div>
-                            <p:commandButton value="Nueva lista" icon="pi pi-plus"
+                            <p:commandButton value="#{msg['form.candidatos.lista.new']}" icon="pi pi-plus"
                                              styleClass="ui-button-success"
                                              action="#{candidatoController.prepararNuevaLista}"
                                              process="@this" update=":frmCandidatos:dlgListaContenido"
@@ -51,7 +51,7 @@
                             <span class="p-input-icon-left flex-1">
                                 <i class="pi pi-search"></i>
                                 <p:inputText id="filtroLista" value="#{candidatoController.filtroLista}"
-                                             placeholder="Buscar nombre, slogan o número" styleClass="w-full">
+                                             placeholder="#{msg['form.candidatos.listas.search']}" styleClass="w-full">
                                     <p:ajax event="keyup" delay="400" process="@this" update=":frmCandidatos:tblListas"/>
                                 </p:inputText>
                             </span>
@@ -59,39 +59,43 @@
                                 <p:selectBooleanCheckbox id="verBajas" value="#{candidatoController.incluirListasInactivas}">
                                     <p:ajax process="@this" update=":frmCandidatos:tblListas"/>
                                 </p:selectBooleanCheckbox>
-                                <label for="verBajas" class="text-sm text-700">Ver dadas de baja</label>
+                                <label for="verBajas" class="text-sm text-700">#{msg['form.candidatos.listas.showInactive']}</label>
                             </div>
                         </div>
 
+                        <!-- Selección con un clic en cualquier parte de la fila, como
+                             en la pestaña Mesas de MJRV. -->
                         <p:dataTable id="tblListas" widgetVar="wdTblListas" var="lista"
                                      value="#{candidatoController.listas}" lazy="true" rowKey="#{lista.id}"
                                      paginator="true" rows="8" rowsPerPageTemplate="8,15,25"
+                                     first="#{candidatoController.primeraFilaLista}"
                                      paginatorPosition="bottom"
                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
                                      currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
-                                     emptyMessage="No hay listas que coincidan con la búsqueda."
-                                     styleClass="ui-datatable-sm ui-datatable-striped" reflow="true">
-                            <p:column headerText="Lista" sortBy="#{lista.nombre}">
+                                     emptyMessage="#{msg['form.candidatos.listas.empty']}"
+                                     selectionMode="single" selection="#{candidatoController.listaSeleccionado}"
+                                     rowStyleClass="#{lista.id eq candidatoController.listaSeleccionado.id ? 'fila-seleccionada' : ''} #{lista.estado ? '' : 'fila-inactiva'}"
+                                     styleClass="ui-datatable-sm ui-datatable-striped tec-table-seleccionable" reflow="true">
+                            <p:ajax event="rowSelect" listener="#{candidatoController.seleccionarListaDesdeTabla}"
+                                    process="@this" update=":frmCandidatos:tblListas :frmCandidatos:panelDetalle"/>
+                            <p:column headerText="#{msg['form.candidatos.table.header.lista']}" sortBy="#{lista.nombre}">
                                 <div class="flex flex-column gap-1">
                                     <span class="font-semibold text-900">#{lista.nombre}</span>
                                     <small class="text-500">#{lista.slogan}</small>
                                 </div>
                             </p:column>
-                            <p:column headerText="N.º" sortBy="#{lista.numero}" style="width:4.5rem" styleClass="text-center">
+                            <p:column headerText="#{msg['form.candidatos.table.header.numero']}" sortBy="#{lista.numero}" style="width:4.5rem" styleClass="text-center">
                                 <p:badge value="#{lista.numero}" severity="warning"/>
                             </p:column>
-                            <p:column headerText="Estado" style="width:6.5rem" styleClass="text-center">
-                                <p:tag value="#{lista.estado ? 'Activa' : 'Baja'}"
+                            <p:column headerText="#{msg['form.candidatos.table.header.estado']}" style="width:6.5rem" styleClass="text-center">
+                                <p:tag value="#{lista.estado ? msg['form.candidatos.estado.activa'] : msg['form.candidatos.estado.baja']}"
                                        severity="#{lista.estado ? 'success' : 'secondary'}"/>
                             </p:column>
-                            <p:column exportable="false" style="width:9rem" styleClass="text-center">
+                            <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
+                            <p:column exportable="false" style="width:7rem" styleClass="text-center"
+                                      selectRow="false">
                                 <div class="flex align-items-center justify-content-center gap-1">
-                                    <p:commandButton icon="pi pi-users" title="Administrar candidatos"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-info"
-                                                     rendered="#{lista.estado}"
-                                                     action="#{candidatoController.seleccionarLista(lista)}"
-                                                     process="@this" update=":frmCandidatos:panelDetalle"/>
-                                    <p:commandButton icon="pi pi-pencil" title="Editar lista"
+                                    <p:commandButton icon="pi pi-pencil" title="#{msg['form.candidatos.lista.edit']}" ariaLabel="#{msg['form.candidatos.lista.edit']}"
                                                      styleClass="ui-button-rounded ui-button-text ui-button-warning"
                                                      rendered="#{lista.estado}"
                                                      action="#{candidatoController.prepararEdicionLista(lista)}"
@@ -99,7 +103,7 @@
                                                      oncomplete="PF('dlgLista').show()">
                                         <p:resetInput target=":frmCandidatos:dlgListaContenido"/>
                                     </p:commandButton>
-                                    <p:commandButton icon="pi pi-power-off" title="Dar de baja lista"
+                                    <p:commandButton icon="pi pi-power-off" title="#{msg['form.candidatos.lista.disable']}" ariaLabel="#{msg['form.candidatos.lista.disable']}"
                                                      styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                      rendered="#{lista.estado}"
                                                      action="#{candidatoController.desactivarLista(lista)}"
@@ -108,7 +112,7 @@
                                                    message="¿Desea dar de baja esta lista? No será posible si tiene candidatos activos."
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
-                                    <p:commandButton icon="pi pi-refresh" title="Reactivar lista"
+                                    <p:commandButton icon="pi pi-refresh" title="#{msg['form.candidatos.lista.enable']}" ariaLabel="#{msg['form.candidatos.lista.enable']}"
                                                      styleClass="ui-button-rounded ui-button-text ui-button-success"
                                                      rendered="#{not lista.estado}"
                                                      action="#{candidatoController.reactivarLista(lista)}"
@@ -135,8 +139,21 @@
                                         </div>
                                         <small class="text-500">#{candidatoController.listaSeleccionado.slogan}</small>
                                     </div>
-                                    <p:tag value="Candidaturas del proceso activo" severity="info"/>
+                                    <p:tag value="#{candidatoController.listaSeleccionadaActiva
+                                                    ? msg['form.candidatos.detalle.proceso']
+                                                    : msg['form.candidatos.detalle.soloLectura']}"
+                                           icon="#{candidatoController.listaSeleccionadaActiva ? 'pi pi-check-circle' : 'pi pi-lock'}"
+                                           severity="#{candidatoController.listaSeleccionadaActiva ? 'info' : 'secondary'}"/>
                                 </div>
+
+                                <!-- Lista dada de baja: consulta sin acciones; la regla de
+                                     negocio la sigue aplicando el servicio. -->
+                                <ui:fragment rendered="#{not candidatoController.listaSeleccionadaActiva}">
+                                    <div class="flex align-items-center gap-2 mb-3 p-2 border-round surface-hover">
+                                        <i class="pi pi-info-circle text-orange-500"/>
+                                        <span class="text-700 text-sm">#{msg['form.candidatos.detalle.bajaAviso']}</span>
+                                    </div>
+                                </ui:fragment>
 
                                 <p:dataTable id="tblCandidatos" widgetVar="wdTblCandidatos" var="candidato"
                                              value="#{candidatoController.candidatos}" reflow="true"
@@ -144,19 +161,19 @@
                                              paginatorPosition="bottom"
                                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
                                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
-                                             emptyMessage="No hay cargos configurados para el proceso activo."
+                                             emptyMessage="#{msg['form.candidatos.detalle.empty']}"
                                              styleClass="ui-datatable-striped ui-datatable-sm">
                                     <f:facet name="header">
                                         <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-2">
-                                            <span class="font-semibold text-700">Candidaturas por cargo</span>
+                                            <span class="font-semibold text-700">#{msg['form.candidatos.detalle.titulo']}</span>
                                             <span class="p-input-icon-left">
                                                 <i class="pi pi-search"></i>
                                                 <p:inputText id="globalFilter" onkeyup="PF('wdTblCandidatos').filter()"
-                                                             placeholder="Filtrar candidaturas" styleClass="w-full md:w-16rem"/>
+                                                             placeholder="#{msg['form.candidatos.detalle.filtro']}" styleClass="w-full md:w-16rem"/>
                                             </span>
                                         </div>
                                     </f:facet>
-                                    <p:column headerText="Cargo" sortBy="#{candidato.cargoNombre}"
+                                    <p:column headerText="#{msg['form.candidatos.table.header.cargo']}" sortBy="#{candidato.cargoNombre}"
                                               filterBy="#{candidato.cargoNombre}" filterMatchMode="contains">
                                         <p:chip label="#{candidato.cargoNombre}" icon="pi pi-briefcase"/>
                                     </p:column>
@@ -167,7 +184,7 @@
                                                       rendered="#{candidato.iglesiaPersona.persona ne null}"
                                                       styleClass="text-sm font-medium text-700"/>
                                     </p:column>
-                                    <p:column headerText="Candidato" filterBy="#{candidato.iglesiaPersona.persona.nombres}"
+                                    <p:column headerText="#{msg['form.candidatos.table.header.candidato']}" filterBy="#{candidato.iglesiaPersona.persona.nombres}"
                                               style="min-width:13rem">
                                         <p:outputPanel layout="block"
                                                        styleClass="flex align-items-center justify-content-between gap-2"
@@ -175,16 +192,20 @@
                                             <div class="flex flex-column">
                                                 <span class="text-sm font-medium text-900">#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}</span>
                                             </div>
-                                            <p:commandButton icon="pi pi-user-edit" title="Reasignar candidato"
+                                            <p:commandButton icon="pi pi-user-edit"
+                                                             title="#{msg['form.candidatos.candidato.reassign']}"
+                                                             ariaLabel="#{msg['form.candidatos.candidato.reassign']}"
                                                              styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                             rendered="#{candidatoController.listaSeleccionadaActiva}"
                                                              action="#{candidatoController.prepararAsignacionCandidato(candidato)}"
                                                              process="@this"
                                                              update=":frmCandidatos:outPnlCandidatoContexto :frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmGlobal:growlGlobal"
                                                              oncomplete="PF('dlgAsignaCandidato').show()"/>
                                         </p:outputPanel>
-                                        <p:commandButton value="Asignar" icon="pi pi-user-plus"
+                                        <p:commandButton value="#{msg['form.candidatos.candidato.assign']}"
+                                                         icon="pi pi-user-plus"
                                                          styleClass="ui-button-sm ui-button-success"
-                                                         rendered="#{candidato.iglesiaPersona.persona eq null}"
+                                                         rendered="#{candidato.iglesiaPersona.persona eq null and candidatoController.listaSeleccionadaActiva}"
                                                          action="#{candidatoController.prepararAsignacionCandidato(candidato)}"
                                                          process="@this"
                                                          update=":frmCandidatos:outPnlCandidatoContexto :frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmGlobal:growlGlobal"
@@ -197,8 +218,9 @@
                                                       rendered="#{candidato.iglesiaPersona.iglesia ne null}"
                                                       styleClass="text-sm text-700"/>
                                     </p:column>
-                                    <p:column headerText="Acciones" exportable="false" style="width:5rem" styleClass="text-center">
-                                        <p:commandButton icon="pi pi-trash" title="Dar de baja candidato"
+                                    <p:column headerText="#{msg['form.candidatos.table.header.acciones']}" exportable="false" style="width:5rem"
+                                              styleClass="text-center" rendered="#{candidatoController.listaSeleccionadaActiva}">
+                                        <p:commandButton icon="pi pi-trash" title="#{msg['form.candidatos.candidato.disable']}" ariaLabel="#{msg['form.candidatos.candidato.disable']}"
                                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                          rendered="#{candidato.iglesiaPersona.persona ne null}"
                                                          process="@this" update=":frmCandidatos:tblCandidatos :frmGlobal:growlGlobal"
@@ -222,9 +244,9 @@
                                                     <span class="block text-900 font-semibold">#{msg['form.candidatos.acta.title']}</span>
                                                     <small class="block text-500 mt-1">#{candidatoController.estadoActa.detalle}</small>
                                                     <div class="flex align-items-center flex-wrap gap-2 mt-2">
-                                                        <p:tag value="#{candidatoController.estadoActa.totalCandidatos}/#{candidatoController.estadoActa.totalCargos} candidatos"
+                                                        <p:tag value="#{candidatoController.estadoActa.totalCandidatos}/#{candidatoController.estadoActa.totalCargos} #{msg['form.candidatos.acta.candidatos']}"
                                                                severity="#{candidatoController.estadoActa.listaCompleta ? 'success' : 'warning'}"/>
-                                                        <p:tag value="#{candidatoController.estadoActa.totalAutoridades} autoridades"
+                                                        <p:tag value="#{candidatoController.estadoActa.totalAutoridades} #{msg['form.candidatos.acta.autoridades']}"
                                                                severity="#{candidatoController.estadoActa.autoridadesDisponibles ? 'info' : 'danger'}"/>
                                                         <p:tag value="#{msg['form.candidatos.acta.signed']}" severity="success"
                                                                rendered="#{not empty candidatoController.estadoActa.actaFirmadaId}"/>
@@ -237,7 +259,7 @@
                                                                  action="#{candidatoController.generarActaInscripcion}"
                                                                  process="@this"
                                                                  update=":frmCandidatos:panelActaInscripcion :frmGlobal:growlGlobal"
-                                                                 disabled="#{not candidatoController.estadoActa.puedeGenerar}"
+                                                                 disabled="#{not candidatoController.estadoActa.puedeGenerar or not candidatoController.listaSeleccionadaActiva}"
                                                                  title="#{candidatoController.estadoActa.detalle}"/>
                                                 <p:fileUpload mode="advanced" auto="true" skinSimple="true"
                                                               listener="#{candidatoController.cargarActaFirmada}"
@@ -249,7 +271,7 @@
                                                               uploadLabel="#{msg['btn.save']}" cancelLabel="#{msg['btn.cancel']}"
                                                               accept=".pdf,application/pdf"
                                                               validateContentType="true"
-                                                              disabled="#{empty candidatoController.estadoActa.actaGeneradaId or not empty candidatoController.estadoActa.actaFirmadaId}"
+                                                              disabled="#{empty candidatoController.estadoActa.actaGeneradaId or not empty candidatoController.estadoActa.actaFirmadaId or not candidatoController.listaSeleccionadaActiva}"
                                                               update=":frmCandidatos:panelActaInscripcion :frmGlobal:growlGlobal">
                                                     <p:validateFile sizeLimit="10485760" fileLimit="1"
                                                                     contentType="application/pdf"

@@ -51,6 +51,13 @@ public class RecintoController implements Serializable {
     @Getter
     private RecintoDTO recintoSeleccionado;
 
+    @Getter
+    @Setter
+    private Integer cantonEdicionId;
+
+    @Getter
+    private List<Geograp> parroquiasEdicion = new ArrayList<>();
+
     @Setter
     @Getter
     private List<Geograp> cantones, parroquias;
@@ -82,7 +89,8 @@ public class RecintoController implements Serializable {
 
     public void inicializaRecintoSeleccionado() {
         this.recintoSeleccionado = new RecintoDTO();
-        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null
+                && !OPCION_TODOS.equals(parroquiaSeleccionado.getId())) {
             this.recintoSeleccionado.setUbicacionId(parroquiaSeleccionado.getId());
         }
     }
@@ -91,6 +99,24 @@ public class RecintoController implements Serializable {
         indiceFilaEdicion = null;
         recintoFilaEdicion = null;
         inicializaRecintoSeleccionado();
+        cantonEdicionId = cantonSeleccionado == null || OPCION_TODOS.equals(cantonSeleccionado.getId())
+                ? null : cantonSeleccionado.getId();
+        cargarParroquiasEdicion();
+    }
+
+    public void cambiarCantonEdicion() {
+        recintoSeleccionado.setUbicacionId(null);
+        cargarParroquiasEdicion();
+    }
+
+    private void cargarParroquiasEdicion() {
+        parroquiasEdicion = cantonEdicionId == null ? new ArrayList<>()
+                : new ArrayList<>(geograpBean.getByFatherId(cantonEdicionId));
+    }
+
+    public void eliminarRecinto(RecintoDTO recinto) {
+        recintoSeleccionado = recinto;
+        eliminarRecintoSeleccionado();
     }
 
     public void cambiarCanton() {
@@ -141,16 +167,16 @@ public class RecintoController implements Serializable {
         if (cantonSeleccionado.getId() != null && OPCION_TODOS.equals(cantonSeleccionado.getId())) {
             parroquias = obtenerTodasParroquias();
             listaRecintos = recintoService.listarDTOs();
-            JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
+            if (listaRecintos != null && !listaRecintos.isEmpty()) {
+                JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
+            }
             return;
         }
         if (cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpBean.getById(cantonSeleccionado.getId());
             parroquias = geograpBean.getByFatherId(cantonSeleccionado.getId());
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquias);
-            if (listaRecintos == null || listaRecintos.isEmpty()) {
-                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros.filtro", cantonSeleccionado.getName());
-            } else {
+            if (listaRecintos != null && !listaRecintos.isEmpty()) {
                 JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
             }
         } else {
@@ -168,9 +194,7 @@ public class RecintoController implements Serializable {
             listaRecintos = parroquiasFiltro.isEmpty()
                     ? recintoService.listarDTOs()
                     : recintoService.listarDTOsPorParroquias(parroquiasFiltro);
-            if (listaRecintos == null || listaRecintos.isEmpty()) {
-                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros");
-            } else {
+            if (listaRecintos != null && !listaRecintos.isEmpty()) {
                 JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
             }
             return;
@@ -180,9 +204,7 @@ public class RecintoController implements Serializable {
             List<Geograp> parroquiasTmp = new ArrayList<>();
             parroquiasTmp.add(parroquiaSeleccionado);
             listaRecintos = recintoService.listarDTOsPorParroquias(parroquiasTmp);
-            if (listaRecintos == null || listaRecintos.isEmpty()) {
-                JsfUtil.addWarningMessageFromBundle("recintos.mensaje.sin.registros.filtro", parroquiaSeleccionado.getName());
-            } else {
+            if (listaRecintos != null && !listaRecintos.isEmpty()) {
                 JsfUtil.addInfoMessageFromBundle("recintos.mensaje.registros.encontrados", listaRecintos.size());
             }
         } else {
@@ -213,13 +235,13 @@ public class RecintoController implements Serializable {
                     }
                     actualizarFilaEditada();
                     if (recintoPermaneceSeleccionado) {
-                        PrimeFaces.current().ajax().update("frmRecintos:infoRecintoSeleccionado");
+                        PrimeFaces.current().ajax().update("frmRecintos:tabsRecintos:infoRecintoSeleccionado");
                     }
                 } else {
                     recintoSeleccionado = persistido;
                     recargarListaRecintosActual();
                     PrimeFaces.current().ajax().update(
-                            "frmRecintos:tblRecintos",
+                            "frmRecintos:tabsRecintos:tblRecintos",
                             "frmRecintos:resumenRecintos");
                 }
             } else {
@@ -280,7 +302,8 @@ public class RecintoController implements Serializable {
         this.recintoFilaEdicion = recinto;
         this.recintoSeleccionado = copiarRecinto(recinto);
         this.indiceFilaEdicion = indiceFila;
-        cagraDatosRecintoSeleccionado();
+        this.cantonEdicionId = recinto == null ? null : recinto.getCantonId();
+        cargarParroquiasEdicion();
     }
 
     private void liberarContextoRecintoMesa() {
@@ -327,7 +350,7 @@ public class RecintoController implements Serializable {
 
     private void actualizarFilaEditada() {
         if (indiceFilaEdicion != null && indiceFilaEdicion >= 0) {
-            String prefijoFila = "frmRecintos:tblRecintos:" + indiceFilaEdicion + ":";
+            String prefijoFila = "frmRecintos:tabsRecintos:tblRecintos:" + indiceFilaEdicion + ":";
             FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add(
                     prefijoFila + "nombreRecintoFila");
             FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add(
