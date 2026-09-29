@@ -259,6 +259,24 @@ public class ActaEController implements Serializable {
     @Getter
     private String busquedaEscrutinio;
 
+    /** Filtro del listado por situación de la mesa (sin datos, sin acta física, validada...). */
+    @Setter
+    @Getter
+    private ActaEGerencialDTO.Situacion situacionFiltro;
+
+    /**
+     * Imagen del acta física para el visor, leída solo cuando el usuario pide verla: no se
+     * carga al seleccionar la mesa, porque puede pesar varios megabytes.
+     */
+    private byte[] contenidoActaFisica;
+
+    /**
+     * La mesa se abrió en modo consulta (revisor sin permiso de operación, es decir
+     * Tribunal): se cargó sin crear la cabecera ni preparar el conteo.
+     */
+    @Getter
+    private boolean mesaSoloLectura;
+
     @Getter
     private int totalMesasGerencial;
 
@@ -606,13 +624,45 @@ public class ActaEController implements Serializable {
         Map<Integer, Long> sufragantes = padronService.contarSufragantesPorMesas(mesaIds, procesoId);
         Map<Integer, List<Documentos>> actas = documentoBean.getDocumentosPorEntidadesYTipoDoc(
                 mesaIds, Constantes.ACTA_ESCRUTINIO);
+        // Acta física vigente de todas las mesas: una consulta más en total, no una por mesa.
+        Map<Integer, Documentos> actasFisicas = isUsuarioRevisorActas()
+                ? actaFisicaEscrutinioService.obtenerVigentesPorMesas(mesaIds, procesoId)
+                : new HashMap<>();
         for (MesaDTO mesa : mesas) {
             if (mesa == null || mesa.getId() == null) {
                 continue;
             }
-            filasEscrutinioProceso.add(construirFilaGerencial(mesa, procesoId, cabeceras, sufragantes, actas));
+            ActaEGerencialDTO fila = construirFilaGerencial(mesa, procesoId, cabeceras, sufragantes, actas);
+            Documentos fisica = actasFisicas.get(mesa.getId());
+            fila.setActaFisicaEstado(fisica != null
+                    ? (fisica.getEstadoRevision() != null ? fisica.getEstadoRevision()
+                            : ActaFisicaEscrutinioService.PENDIENTE_REVISION)
+                    : null);
+            filasEscrutinioProceso.add(fila);
         }
         aplicarFiltrosEscrutinio();
+    }
+
+    /**
+     * Refleja en memoria el acta física recién cargada, sin volver a consultar el listado.
+     */
+    private void actualizarActaFisicaEnListado(Integer mesaId, Documentos fisica) {
+        if (mesaId == null || filasEscrutinioProceso == null) {
+            return;
+        }
+        for (ActaEGerencialDTO fila : filasEscrutinioProceso) {
+            if (mesaId.equals(fila.getMesaId())) {
+                fila.setActaFisicaEstado(fisica == null ? null
+                        : (fisica.getEstadoRevision() != null ? fisica.getEstadoRevision()
+                                : ActaFisicaEscrutinioService.PENDIENTE_REVISION));
+            }
+        }
+        aplicarFiltrosEscrutinio();
+    }
+
+    /** Situaciones que se ofrecen en el filtro del listado, en el orden del flujo. */
+    public ActaEGerencialDTO.Situacion[] getSituacionesEscrutinio() {
+        return ActaEGerencialDTO.Situacion.values();
     }
 
     /**
@@ -632,6 +682,9 @@ public class ActaEController implements Serializable {
                 continue;
             }
             if (estadoFiltro != null && !estadoFiltro.equals(fila.getEstadoEscrutinio())) {
+                continue;
+            }
+            if (situacionFiltro != null && situacionFiltro != fila.getSituacion()) {
                 continue;
             }
             if (!texto.isEmpty() && !contieneTexto(fila.getRecinto(), texto)
@@ -662,6 +715,7 @@ public class ActaEController implements Serializable {
         recintoSeleccionado = new RecintoDTO();
         mesaSeleccionado = new MesaDTO();
         estadoFiltro = null;
+        situacionFiltro = null;
         busquedaEscrutinio = null;
         procesoConsultaId = procesoActivo != null ? procesoActivo.getId() : null;
         // Recupera la provincia operativa y sus cantones, no deja la geografía vacía.
@@ -761,7 +815,10 @@ public class ActaEController implements Serializable {
 
     public void cargarActaFisica() {
         try {
-            if (!mesaSeleccionadaValida() || !isMesaCerrada() || !puedeGestionarMesa(mesaSeleccionado.getId())) {
+            // Presidente (su mesa), operadores y revisores. El servicio vuelve a validar
+            // autoría, mesa cerrada y que el acta vigente no esté ya validada.
+            if (!mesaSeleccionadaValida() || !isMesaCerrada()
+                    || !(isUsuarioRevisorActas() || puedeGestionarMesa(mesaSeleccionado.getId()))) {
                 log.warn("ACTA_FISICA causa=CONTEXTO_VISTA_NO_AUTORIZADO");
                 JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.autorizada");
                 return;
@@ -775,6 +832,13 @@ public class ActaEController implements Serializable {
                     archivoActaFisica.getFileName(),
                     archivoActaFisica.getContentType(), archivoActaFisica.getContent());
             archivoActaFisica = null;
+            contenidoActaFisica = null;
+            actualizarActaFisicaEnListado(mesaSeleccionado.getId(), actaFisica);
+            if (usuarioConsultaGerencial) {
+                // La situación de la mesa cambió: se refresca su fila sin volver a consultar.
+                org.primefaces.PrimeFaces.current().ajax().update(
+                        "frmActaE:tabActaE:tblConsultaGerencial", "frmActaE:tabActaE:pnlResumenGerencial");
+            }
             JsfUtil.addSuccessMessageFromBundle("actaE.actaFisica.cargada");
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -1298,6 +1362,8 @@ public class ActaEController implements Serializable {
         listaCamposActaE = new ArrayList<>();
         documentosActa = new ArrayList<>();
         actaFisica = null;
+        contenidoActaFisica = null;
+        mesaSoloLectura = false;
         mesaSeleccionado = new MesaDTO();
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;
@@ -1508,7 +1574,9 @@ public class ActaEController implements Serializable {
         if (fila == null || fila.getMesaId() == null) {
             return;
         }
-        if (!isPuedeOperarActa()) {
+        boolean opera = isPuedeOperarActa();
+        boolean revisa = isUsuarioRevisorActas();
+        if (!opera && !revisa) {
             JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
             return;
         }
@@ -1524,7 +1592,143 @@ public class ActaEController implements Serializable {
         }
         mesaSeleccionado = mesa;
         recintoSeleccionado = mesa.getRecinto() != null ? mesa.getRecinto() : new RecintoDTO();
-        cargaDatosMesaSeleccionada();
+        contenidoActaFisica = null;
+        if (opera) {
+            // Operador (Administrador): flujo de siempre, que prepara el acta para registrar.
+            mesaSoloLectura = false;
+            cargaDatosMesaSeleccionada();
+        } else {
+            // Revisor sin operación (Tribunal): consulta, sin crear cabecera ni conteo.
+            cargarMesaSoloLectura();
+        }
+        // Los demás tabs trabajan sobre la mesa elegida: se abre su resumen.
+        tabActivoActaE = indiceTab(TAB_RESUMEN);
+    }
+
+    /**
+     * Acción rápida del listado: abre la mesa directamente en el tab «Acta física» y, si
+     * ya tiene acta, la muestra en el visor. Así Tribunal y Administrador cargan la que
+     * falta o revisan la existente sin pasar por el resto de tabs.
+     */
+    public void abrirActaFisicaMesa(ActaEGerencialDTO fila) {
+        gestionarEscrutinioMesa(fila);
+        if (!isPuedeConsultarMesa()) {
+            return;
+        }
+        tabActivoActaE = indiceTab(TAB_ACTA_FISICA);
+        if (actaFisica != null) {
+            verActaFisica();
+        }
+    }
+
+    private static final String TAB_MESAS = "mesas";
+    private static final String TAB_RESUMEN = "resumen";
+    private static final String TAB_OPERACION = "operacion";
+    private static final String TAB_ACTA_FISICA = "actaFisica";
+
+    /**
+     * Índice de un tab entre los que están visibles. PrimeFaces cuenta solo los tabs
+     * renderizados, y cuáles lo están depende del rol y de la mesa elegida; este orden
+     * y estas condiciones son exactamente los de actaE.xhtml.
+     */
+    private int indiceTab(String clave) {
+        List<String> visibles = new ArrayList<>();
+        if (usuarioConsultaGerencial) {
+            visibles.add(TAB_MESAS);
+        }
+        if (isPuedeConsultarMesa()) {
+            visibles.add(TAB_RESUMEN);
+        }
+        if (isPuedeOperarMesaSeleccionada()) {
+            // Apertura, Conteo y Cierre.
+            visibles.add(TAB_OPERACION);
+            visibles.add(TAB_OPERACION);
+            visibles.add(TAB_OPERACION);
+        }
+        if (isPuedeConsultarMesa()) {
+            visibles.add(TAB_ACTA_FISICA);
+        }
+        int indice = visibles.indexOf(clave);
+        return indice < 0 ? 0 : indice;
+    }
+
+    /**
+     * Carga una mesa para consulta, sin escribir nada. A diferencia de
+     * {@link #cargaDatosMesaSeleccionada()}, que usa obtenerOCrearCabeceraDTO y
+     * prepararActaPorMesaDTO y por tanto crea la cabecera y los registros de conteo si
+     * no existen, aquí solo se leen los que ya hay: un revisor que abre una mesa sin
+     * datos no debe generarlos.
+     */
+    private void cargarMesaSoloLectura() {
+        mesaSoloLectura = true;
+        cargarTotalSufragantes();
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        EscrutinioCabeceraDTO cabecera = escrutinioService.buscarCabeceraDTO(mesaSeleccionado.getId(), procesoId);
+        escrutinioCabecera = cabecera != null ? cabecera : new EscrutinioCabeceraDTO();
+        List<EscrutinioDTO> registrados = escrutinioService.listarDTOsPorMesaYProceso(mesaSeleccionado.getId(), procesoId);
+        listaCamposActaE = registrados != null ? new ArrayList<>(registrados) : new ArrayList<>();
+        observacionApertura = escrutinioCabecera.getObservacionApertura() != null
+                ? escrutinioCabecera.getObservacionApertura() : "";
+        cargarDocumentosActa();
+    }
+
+    /** Hay una mesa elegida y el usuario puede verla, como operador o como revisor. */
+    public boolean isPuedeConsultarMesa() {
+        return mesaSeleccionadaValida() && (isPuedeOperarActa() || isUsuarioRevisorActas());
+    }
+
+    /** Apertura, conteo y cierre: solo quien opera, nunca en modo consulta. */
+    public boolean isPuedeOperarMesaSeleccionada() {
+        return mesaSeleccionadaValida() && isPuedeOperarActa() && !mesaSoloLectura;
+    }
+
+    /**
+     * Carga o reemplazo del acta física: mesa cerrada, usuario que opera la mesa o
+     * revisor, y acta vigente no validada. El servicio vuelve a comprobarlo todo.
+     */
+    public boolean isPuedeCargarActaFisica() {
+        return isMesaCerrada() && (isPuedeOperarActa() || isUsuarioRevisorActas())
+                && (actaFisica == null || !ActaFisicaEscrutinioService.VALIDADA.equals(actaFisica.getEstadoRevision()));
+    }
+
+    /**
+     * Lee la imagen del acta física para el visor, reutilizando la misma descarga
+     * autorizada que usa reportesMesa (DocumentoBean#obtenerArchivo). Se invoca bajo
+     * demanda, al pulsar «Ver acta física».
+     */
+    public void verActaFisica() {
+        contenidoActaFisica = null;
+        if (actaFisica == null || !isPuedeConsultarMesa()) {
+            JsfUtil.addWarningMessageFromBundle("actaE.actaFisica.no.disponible");
+            return;
+        }
+        try {
+            var archivo = documentoBean.obtenerArchivo(actaFisica);
+            if (archivo == null) {
+                JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.disponible");
+                return;
+            }
+            try (var contenido = archivo.getStream().get()) {
+                contenidoActaFisica = contenido.readAllBytes();
+            }
+        } catch (Exception e) {
+            log.error("ACTA_FISICA causa=VISOR; excepcion={}",
+                    ec.com.antenasur.security.qr.DiagnosticoQr.tipoExcepcion(e));
+            JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.disponible");
+        }
+    }
+
+    public boolean isActaFisicaEnVisor() {
+        return contenidoActaFisica != null;
+    }
+
+    public org.primefaces.model.StreamedContent getImagenActaFisica() {
+        if (contenidoActaFisica == null) {
+            return null;
+        }
+        byte[] contenido = contenidoActaFisica;
+        return org.primefaces.model.DefaultStreamedContent.builder().contentType("image/jpeg")
+                .stream(() -> new java.io.ByteArrayInputStream(contenido)).build();
     }
 
     private void calcularResumenGerencial() {
@@ -1580,13 +1784,26 @@ public class ActaEController implements Serializable {
     private void limpiarSeleccionMesa() {
         listaCamposActaE = new ArrayList<>();
         documentosActa = new ArrayList<>();
+        contenidoActaFisica = null;
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;
         observacionApertura = "";
     }
 
+    /**
+     * Revisores de actas: Administrador y Tribunal. Ven el listado de todas las mesas y
+     * visualizan y cargan el acta física, pero Tribunal no abre, cuenta ni cierra mesas
+     * (eso sigue en {@link #tieneRolOperacionActa()} y en el presidente de mesa). Es el
+     * mismo criterio que AccesoDocumentoMesaService#esRevisor aplica en el servidor.
+     */
+    public boolean isUsuarioRevisorActas() {
+        return !accesoRestringidoPresidenteMesa
+                && (tieneRol("SITEC-Administrador") || tieneRol("SITEC-Tribunal"));
+    }
+
     private boolean tieneRolConsultaGerencial() {
         return tieneRol("SITEC-Administrador")
+                || tieneRol("SITEC-Tribunal")
                 || tieneRol("SITEC-Gerencial")
                 || tieneRol("SITEC-Supervisor")
                 || tieneRol("SITEC-SuperAdministrador")

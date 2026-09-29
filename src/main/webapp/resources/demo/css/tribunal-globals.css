@@ -806,3 +806,128 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
     .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-contexto,
     .actae-tabla-gerencial th.actae-col-contexto { display: none; }
 }
+
+/* ==========================================================================
+ * Visor del acta física de escrutinio (reportesMesa.xhtml y actaE.xhtml).
+ * Movido desde el <style> en línea de reportesMesa para compartirlo. Las variables
+ * estaban escritas var(- -x), con un espacio entre guiones: sintaxis inválida que el
+ * navegador descartaba; aquí van corregidas como var(--x).
+ * ========================================================================== */
+.acta-fisica-dialog .ui-dialog-content {
+	max-height: calc(100vh - 9rem);
+	overflow-y: auto;
+	padding: 1rem 1.25rem;
+}
+
+.acta-fisica-contenido {
+	margin: 0;
+}
+
+.acta-fisica-panel {
+	height: 100%;
+	border: 1px solid var(--surface-border);
+	border-radius: 6px;
+	background: var(--surface-card);
+	padding: 1rem;
+}
+
+.acta-fisica-panel-cabecera {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: .75rem;
+	margin-bottom: .875rem;
+}
+
+.acta-fisica-panel-titulo {
+	color: var(--text-color);
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.acta-fisica-panel-subtitulo {
+	color: var(--text-color-secondary);
+	font-size: .8125rem;
+	line-height: 1.35;
+	margin-top: .2rem;
+}
+
+.acta-fisica-herramientas {
+	flex-shrink: 0;
+}
+
+.acta-fisica-visor {
+	background: #eef2f7;
+	border: 1px solid var(--surface-border);
+	border-radius: 4px;
+}
+
+.acta-fisica-visor img {
+	background: #ffffff;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, .18);
+}
+
+.acta-fisica-totales {
+	margin: .875rem 0 0;
+	padding: .625rem .75rem;
+	border-top: 1px solid var(--surface-border);
+	background: var(--surface-ground);
+}
+
+.acta-fisica-totales .col-6 {
+	padding-top: .25rem;
+	padding-bottom: .25rem;
+}
+
+.acta-fisica-totales .col-6:nth-last-child(-n+2) {
+	border-top: 1px solid var(--surface-border);
+	margin-top: .25rem;
+	padding-top: .55rem;
+}
+
+@media ( max-width : 991px) {
+	.acta-fisica-dialog {
+		width: 94vw !important;
+	}
+	.acta-fisica-visor {
+		height: 38vh !important;
+	}
+	.acta-fisica-visor img {
+		max-height: 36vh !important;
+	}
+}
+
+@media ( max-width : 575px) {
+	.acta-fisica-dialog {
+		width: 96vw !important;
+	}
+	.acta-fisica-dialog .ui-dialog-content {
+		max-height: calc(100vh - 7.25rem);
+		padding: .625rem;
+	}
+	.acta-fisica-panel {
+		padding: .75rem;
+	}
+	.acta-fisica-panel-cabecera {
+		flex-wrap: wrap;
+		align-items: flex-start;
+	}
+	.acta-fisica-herramientas {
+		width: 100%;
+		justify-content: flex-end;
+	}
+	.acta-fisica-visor {
+		height: 32vh !important;
+	}
+	.acta-fisica-visor img {
+		max-height: 30vh !important;
+	}
+}
+
+/* Listado de escrutinios (actaE) más denso: fuente y relleno algo menores para ver más
+   mesas por pantalla sin bajar de un tamaño cómodo de lectura. Las etiquetas p:tag se
+   compactan en proporción para que la columna Situación no ensanche la fila. */
+.actae-tabla-densa .ui-datatable-data > tr > td { font-size: .8125rem; padding-top: .35rem; padding-bottom: .35rem; }
+.actae-tabla-densa thead > tr > th { font-size: .75rem; }
+.actae-tabla-densa .ui-tag { font-size: .72rem; padding: .15rem .45rem; }
+.actae-tabla-densa small { font-size: .72rem; }

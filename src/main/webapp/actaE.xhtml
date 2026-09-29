@@ -49,6 +49,18 @@
                 </div>
             </p:outputPanel>
 
+            <!-- Gestor de actas en tabs. «Mesas» es el primero y solo lo ven los revisores
+                 (Administrador y Tribunal); al elegir una mesa, los demás trabajan sobre
+                 ella. Cada tab aplica los permisos de siempre: Apertura, Conteo y Cierre
+                 solo para quien opera la mesa. El orden y las condiciones de visibilidad
+                 coinciden con ActaEController#indiceTab, que calcula el tab activo. -->
+            <p:tabView id="tabActaE" widgetVar="wdTabActaE" dynamic="false" cache="true"
+                       activeIndex="#{actaEController.tabActivoActaE}"
+                       rendered="#{actaEController.usuarioConsultaGerencial or actaEController.puedeConsultarMesa}"
+                       styleClass="mb-3">
+                <p:ajax event="tabChange" process="@this" update="@none"/>
+
+                <p:tab title="#{msg['actaE.tab.mesas']}" rendered="#{actaEController.usuarioConsultaGerencial}">
             <p:outputPanel id="pnlConsultaGerencial" rendered="#{actaEController.usuarioConsultaGerencial}" layout="block">
                 <!-- Resumen compacto del escrutinio: una sola tarjeta con las cifras de
                      control y el avance. Reutiliza los contadores que ya calcula el
@@ -82,7 +94,7 @@
                      refiltran en memoria sobre el listado ya cargado. -->
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                     <div class="formgrid grid align-items-end">
-                        <div class="field col-12 md:col-4 lg:col-3 mb-0">
+                        <div class="field col-12 md:col-4 lg:col-2 mb-0">
                             <p:outputLabel for="canton" styleClass="font-medium text-700 text-sm"
                                            value="#{msg['actaE.filtro.canton']}"/>
                             <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}"
@@ -92,10 +104,10 @@
                                                itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                 <p:ajax event="change" listener="#{actaEController.cargaParroquiasPorCanton}"
                                         process="@this"
-                                        update=":frmActaE:parroquia :frmActaE:tblConsultaGerencial :frmActaE:pnlResumenGerencial"/>
+                                        update=":frmActaE:tabActaE:parroquia :frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field col-12 md:col-4 lg:col-3 mb-0">
+                        <div class="field col-12 md:col-4 lg:col-2 mb-0">
                             <p:outputLabel for="parroquia" styleClass="font-medium text-700 text-sm"
                                            value="#{msg['actaE.filtro.parroquia']}"/>
                             <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}"
@@ -105,10 +117,24 @@
                                                itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                 <p:ajax event="change" listener="#{actaEController.cambiarParroquiaEscrutinio}"
                                         process="@this"
-                                        update=":frmActaE:tblConsultaGerencial :frmActaE:pnlResumenGerencial"/>
+                                        update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field col-12 md:col-4 lg:col-4 mb-0">
+                        <!-- Situación de la mesa: permite trabajar por estado (p. ej. solo las
+                             cerradas sin acta física). Filtra en memoria, sin consultar. -->
+                        <div class="field col-12 md:col-4 lg:col-3 mb-0">
+                            <p:outputLabel for="situacionFiltro" styleClass="font-medium text-700 text-sm"
+                                           value="#{msg['actaE.filtro.situacion']}"/>
+                            <p:selectOneMenu id="situacionFiltro" value="#{actaEController.situacionFiltro}" styleClass="w-full">
+                                <f:selectItem itemLabel="#{msg['actaE.filtro.todas']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{actaEController.situacionesEscrutinio}" var="sit"
+                                               itemLabel="#{msg['actaE.situacion.'.concat(sit.name())]}" itemValue="#{sit}"/>
+                                <p:ajax event="change" listener="#{actaEController.buscarEnListadoEscrutinios}"
+                                        process="@this"
+                                        update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-8 lg:col-3 mb-0">
                             <p:outputLabel for="busquedaEscrutinio" styleClass="font-medium text-700 text-sm"
                                            value="#{msg['actaE.buscar']}"/>
                             <p:inputText id="busquedaEscrutinio" value="#{actaEController.busquedaEscrutinio}"
@@ -116,7 +142,7 @@
                                          placeholder="#{msg['actaE.buscar.placeholder']}">
                                 <p:ajax event="keyup" delay="400" listener="#{actaEController.buscarEnListadoEscrutinios}"
                                         process="@this"
-                                        update=":frmActaE:tblConsultaGerencial :frmActaE:pnlResumenGerencial"/>
+                                        update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             </p:inputText>
                         </div>
                         <div class="field col-12 lg:col-2 flex align-items-end gap-2 mb-0">
@@ -125,13 +151,13 @@
                                              styleClass="ui-button-outlined ui-button-secondary"
                                              actionListener="#{actaEController.limpiarFiltrosGerenciales}"
                                              process="@this"
-                                             update=":frmActaE:canton :frmActaE:parroquia :frmActaE:busquedaEscrutinio :frmActaE:tblConsultaGerencial :frmActaE:pnlResumenGerencial"/>
+                                             update=":frmActaE:tabActaE:canton :frmActaE:tabActaE:parroquia :frmActaE:tabActaE:situacionFiltro :frmActaE:tabActaE:busquedaEscrutinio :frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             <p:commandButton icon="pi pi-refresh" title="#{msg['actaE.boton.actualizar']}"
                                              ariaLabel="#{msg['actaE.boton.actualizar']}"
                                              styleClass="ui-button-outlined"
                                              actionListener="#{actaEController.consultarEscrutiniosGerenciales}"
                                              process="@this"
-                                             update=":frmActaE:tblConsultaGerencial :frmActaE:pnlResumenGerencial"
+                                             update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"
                                              onstart="PF('statusDialog').show()" oncomplete="PF('statusDialog').hide()"/>
                         </div>
                     </div>
@@ -149,8 +175,8 @@
                     <p:dataTable id="tblConsultaGerencial" var="item"
                                  value="#{actaEController.listaConsultaGerencial}"
                                  reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                                 tableStyle="min-width:72rem"
-                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm actae-tabla-gerencial"
+                                 tableStyle="min-width:62rem"
+                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm actae-tabla-gerencial actae-tabla-densa"
                                  emptyMessage="#{msg['actaE.mensaje.sinResultados']}">
                         <!-- Orden por prioridad: primero identifica la mesa y su estado, que
                              es también lo primero que se ve en el reflow móvil. Sin columnas
@@ -163,18 +189,23 @@
                                   style="width:6.5rem">
                             <h:outputText value="#{item.mesa}"/>
                         </p:column>
-                        <p:column headerText="#{msg['actaE.tabla.estado']}" sortBy="#{item.estadoEscrutinio}"
-                                  styleClass="text-center" style="width:9.5rem">
-                            <p:tag value="#{item.estadoEscrutinio}" severity="#{item.estadoSeverity}"
-                                   icon="#{item.estadoIcono}"/>
+                        <!-- Situación real de la mesa: escrutinio y, una vez cerrada, acta
+                             física y su revisión. El tooltip explica la situación y conserva
+                             el estado exacto del escrutinio, que la situación agrupa. -->
+                        <p:column headerText="#{msg['actaE.tabla.situacion']}" sortBy="#{item.situacion}"
+                                  styleClass="text-center" style="width:12rem">
+                            <h:panelGroup layout="block">
+                                <p:tag value="#{msg[item.situacionClave]}" severity="#{item.situacionSeverity}"
+                                       icon="#{item.situacionIcono}"/>
+                                <p:tooltip for="@parent" position="top"
+                                           value="#{msg[item.situacionAyudaClave]} · #{msg['actaE.tabla.estado']}: #{item.estadoEscrutinio}"/>
+                            </h:panelGroup>
                         </p:column>
-                        <p:column headerText="#{msg['actaE.tabla.canton']}" sortBy="#{item.canton}"
-                                  styleClass="actae-col-contexto" style="min-width:8.5rem">
-                            <h:outputText value="#{item.canton}" styleClass="text-700"/>
-                        </p:column>
-                        <p:column headerText="#{msg['actaE.tabla.parroquia']}" sortBy="#{item.parroquia}"
-                                  styleClass="actae-col-contexto" style="min-width:9.5rem">
-                            <h:outputText value="#{item.parroquia}" styleClass="text-700"/>
+                        <!-- Cantón y parroquia en una sola columna compacta. -->
+                        <p:column headerText="#{msg['actaE.tabla.ubicacion']}" sortBy="#{item.canton}"
+                                  styleClass="actae-col-contexto" style="min-width:10rem">
+                            <span class="block text-700">#{item.canton}</span>
+                            <small class="block text-500">#{item.parroquia}</small>
                         </p:column>
                         <p:column headerText="#{msg['actaE.tabla.sufragantes']}"
                                   styleClass="text-right actae-col-num" style="width:6.5rem">
@@ -189,15 +220,31 @@
                              Continuar o Ver acta) y solo se muestra a quien ya tiene permiso
                              de operación; los demás conservan la descarga del acta. -->
                         <p:column headerText="#{msg['actaE.tabla.acciones']}" exportable="false"
-                                  styleClass="text-center" style="width:12rem">
+                                  styleClass="text-center" style="width:13rem">
                             <div class="flex align-items-center justify-content-center gap-1">
-                                <p:commandButton value="#{msg[item.accionClave]}" icon="#{item.accionIcono}"
+                                <!-- Quien opera ve Iniciar, Continuar o Ver acta; el revisor que
+                                     no opera (Tribunal) abre la mesa en consulta. -->
+                                <p:commandButton value="#{actaEController.puedeOperarActa ? msg[item.accionClave] : msg['actaE.accion.consultar']}"
+                                                 icon="#{actaEController.puedeOperarActa ? item.accionIcono : 'pi pi-search'}"
                                                  styleClass="ui-button-sm ui-button-outlined"
-                                                 rendered="#{actaEController.puedeOperarActa}"
+                                                 rendered="#{actaEController.puedeOperarActa or actaEController.usuarioRevisorActas}"
                                                  actionListener="#{actaEController.gestionarEscrutinioMesa(item)}"
                                                  process="@this"
                                                  update=":frmActaE"
                                                  onstart="PF('statusDialog').show()" oncomplete="PF('statusDialog').hide()"/>
+                                <!-- Acta física en un clic: verla si existe, cargarla si la mesa
+                                     está cerrada y falta. Lleva directo al tab «Acta física». -->
+                                <p:commandButton icon="#{item.tieneActaFisica ? 'pi pi-image' : 'pi pi-upload'}"
+                                                 styleClass="ui-button-rounded ui-button-text #{item.tieneActaFisica ? 'ui-button-info' : 'ui-button-warning'}"
+                                                 ariaLabel="#{item.tieneActaFisica ? msg['actaE.accion.ver.actaFisica'] : msg['actaE.accion.cargar.actaFisica']}"
+                                                 rendered="#{actaEController.usuarioRevisorActas and (item.tieneActaFisica or item.situacion eq 'CERRADA_SIN_ACTA_FISICA')}"
+                                                 actionListener="#{actaEController.abrirActaFisicaMesa(item)}"
+                                                 process="@this"
+                                                 update=":frmActaE"
+                                                 onstart="PF('statusDialog').show()" oncomplete="PF('statusDialog').hide()">
+                                    <p:tooltip for="@parent" position="top"
+                                               value="#{item.tieneActaFisica ? msg['actaE.accion.ver.actaFisica'] : msg['actaE.accion.cargar.actaFisica']}"/>
+                                </p:commandButton>
                                 <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
                                                  styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                  title="#{msg['actaE.documentos.descargar']}"
@@ -210,46 +257,28 @@
                         </p:column>
                     </p:dataTable>
                     </div>
-                </div>
-            </p:outputPanel>
-
-            <p:outputPanel id="pnlResumen" layout="block" styleClass="grid mb-3"
-                           rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['actaE.resumen.proceso']}</div>
-                        <div class="font-semibold text-900 mt-1">#{actaEController.procesoActivoNombre}</div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['actaE.resumen.mesa']}</div>
-                        <div class="font-semibold text-900 mt-1">#{actaEController.mesaSeleccionado.nombre}</div>
-                        <small class="block text-500">#{actaEController.mesaSeleccionado.recinto.nombre}</small>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</div>
-                        <div class="text-900 font-bold text-2xl mt-1">#{actaEController.totalSufragantesAsignados}</div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                        <div class="text-500 text-sm">#{msg['actaE.resumen.estado']}</div>
-                        <p:tag value="#{actaEController.estadoMesaTexto}"
-                               severity="#{actaEController.estadoMesaSeverity}"
-                               icon="pi pi-flag" styleClass="mt-1"/>
+                    <!-- Simbología de la columna Situación -->
+                    <div class="flex flex-wrap align-items-center column-gap-3 row-gap-2 mt-3 pt-2 border-top-1 surface-border text-xs text-600">
+                        <span class="font-medium text-700">#{msg['actaE.simbologia.titulo']}</span>
+                        <ui:repeat value="#{actaEController.situacionesEscrutinio}" var="sit">
+                            <span class="flex align-items-center gap-1">
+                                <i class="#{sit.icono} text-#{sit.severity eq 'danger' ? 'red-500' : sit.severity eq 'warning' ? 'orange-500' : sit.severity eq 'success' ? 'green-600' : sit.severity eq 'info' ? 'blue-500' : '500'}" aria-hidden="true"></i>#{msg['actaE.situacion.'.concat(sit.name())]}
+                            </span>
+                        </ui:repeat>
                     </div>
                 </div>
             </p:outputPanel>
+                </p:tab>
 
-            <p:tabView id="tabActaE" dynamic="false" cache="true"
-                       activeIndex="#{actaEController.tabActivoActaE}"
-                       rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}"
-                       styleClass="mb-3">
-                <p:ajax event="tabChange" process="@this" update="@none"/>
-                <p:tab title="#{msg['actaE.tab.resumen']}">
+                <!-- El resumen de la mesa vive solo aquí: antes se repetía en un bloque de
+                     cuatro tarjetas sobre los tabs con los mismos datos. -->
+                <p:tab title="#{msg['actaE.tab.resumen']}" rendered="#{actaEController.puedeConsultarMesa}">
+                    <p:outputPanel rendered="#{actaEController.mesaSoloLectura}" layout="block"
+                                   styleClass="border-round-lg p-3 mb-3"
+                                   style="background:#eff6ff;border-left:4px solid #2563eb">
+                        <i class="pi pi-eye mr-2" style="color:#2563eb"/>
+                        <span class="text-700 text-sm">#{msg['actaE.mensaje.solo.lectura']}</span>
+                    </p:outputPanel>
                     <div class="surface-card shadow-1 border-round-lg p-3">
                         <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div class="font-semibold text-800">
@@ -288,7 +317,7 @@
                     </div>
                 </p:tab>
 
-                <p:tab title="#{msg['actaE.tab.apertura']}">
+                <p:tab title="#{msg['actaE.tab.apertura']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
             <p:outputPanel id="pnlApertura" layout="block"
                            rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
@@ -323,7 +352,7 @@
             </p:outputPanel>
 
                 </p:tab>
-                <p:tab title="#{msg['actaE.tab.conteo']}">
+                <p:tab title="#{msg['actaE.tab.conteo']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
             <p:outputPanel id="pnlConteo" layout="block"
                            rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa and not empty actaEController.listaCamposActaE}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
@@ -367,7 +396,7 @@
             </p:outputPanel>
 
                 </p:tab>
-                <p:tab title="#{msg['actaE.tab.cierre']}">
+                <p:tab title="#{msg['actaE.tab.cierre']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
             <p:outputPanel id="pnlCierre" layout="block"
                            rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
                 <div class="surface-card shadow-1 border-round-lg p-3">
@@ -462,9 +491,150 @@
             </p:outputPanel>
 
                 </p:tab>
-                <p:tab title="#{msg['actaE.tab.actas']}">
+
+                <!-- Acta física: vista de trabajo dividida, en la etapa en que el acta existe
+                     (se carga con la mesa cerrada). Izquierda: la imagen, con el visor de
+                     reportesMesa (zoom y rotación) y la carga o el reemplazo. Derecha: los
+                     votos registrados en el conteo, en solo lectura, para cotejarlos. En
+                     pantallas estrechas los paneles se apilan. -->
+                <p:tab title="#{msg['actaE.tab.actaFisica']}" rendered="#{actaEController.puedeConsultarMesa}">
+                    <p:outputPanel id="pnlActaFisica" layout="block">
+                        <p:outputPanel rendered="#{not actaEController.mesaCerrada}" layout="block"
+                                       styleClass="border-round-lg p-3"
+                                       style="background:#fff7ed;border-left:4px solid #f97316">
+                            <i class="pi pi-info-circle mr-2" style="color:#f97316"/>
+                            <span class="text-700 text-sm">#{msg['actaE.actaFisica.requiere.cierre']}</span>
+                        </p:outputPanel>
+
+                        <h:panelGroup layout="block" styleClass="grid acta-fisica-contenido"
+                                      rendered="#{actaEController.mesaCerrada}">
+                            <div class="col-12 lg:col-7">
+                                <div class="acta-fisica-panel">
+                                    <div class="acta-fisica-panel-cabecera">
+                                        <div>
+                                            <div class="acta-fisica-panel-titulo">#{msg['actaE.actaFisica.titulo']}</div>
+                                            <div class="acta-fisica-panel-subtitulo">#{msg['actaE.actaFisica.descripcion']}</div>
+                                        </div>
+                                        <p:tag value="#{empty actaEController.actaFisica ? msg['actaE.actaFisica.pendiente'] : msg['actaE.situacion.revision.'.concat(empty actaEController.actaFisica.estadoRevision ? 'PENDIENTE_REVISION' : actaEController.actaFisica.estadoRevision)]}"
+                                               severity="#{empty actaEController.actaFisica ? 'warning' : (actaEController.actaFisica.estadoRevision eq 'VALIDADA' ? 'success' : 'info')}"/>
+                                    </div>
+
+                                    <!-- Sin acta cargada -->
+                                    <h:panelGroup layout="block" rendered="#{empty actaEController.actaFisica}"
+                                                  styleClass="text-center text-500 py-4">
+                                        <i class="pi pi-image" style="font-size:2rem"></i>
+                                        <div class="mt-2 text-sm">#{msg['actaE.actaFisica.sin.cargar']}</div>
+                                    </h:panelGroup>
+
+                                    <!-- Acta cargada: la imagen se lee bajo demanda -->
+                                    <h:panelGroup layout="block"
+                                                  rendered="#{not empty actaEController.actaFisica and not actaEController.actaFisicaEnVisor}"
+                                                  styleClass="flex align-items-center justify-content-between gap-2 flex-wrap">
+                                        <span class="flex align-items-center gap-2 text-700 text-sm">
+                                            <i class="pi pi-image text-primary"/>#{actaEController.actaFisica.nombre}
+                                        </span>
+                                        <p:commandButton value="#{msg['actaE.accion.ver.actaFisica']}" icon="pi pi-eye"
+                                                         styleClass="ui-button-sm"
+                                                         actionListener="#{actaEController.verActaFisica}"
+                                                         process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" rendered="#{actaEController.actaFisicaEnVisor}">
+                                        <div class="flex justify-content-end gap-1 acta-fisica-herramientas mb-2">
+                                            <p:commandButton type="button" icon="pi pi-search-plus" styleClass="ui-button-text ui-button-rounded"
+                                                             onclick="ajustarImagenActa(0.15, 0)" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.mas']}"/>
+                                            <p:commandButton type="button" icon="pi pi-search-minus" styleClass="ui-button-text ui-button-rounded"
+                                                             onclick="ajustarImagenActa(-0.15, 0)" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.menos']}"/>
+                                            <p:commandButton type="button" icon="pi pi-replay" styleClass="ui-button-text ui-button-rounded"
+                                                             onclick="ajustarImagenActa(0, 90)" ariaLabel="#{msg['reportesMesa.actaFisica.rotar']}"/>
+                                            <p:commandButton type="button" icon="pi pi-undo" styleClass="ui-button-text ui-button-rounded"
+                                                             onclick="restablecerImagenActa()" ariaLabel="#{msg['reportesMesa.actaFisica.restablecer']}"/>
+                                            <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
+                                                             styleClass="ui-button-text ui-button-rounded"
+                                                             ariaLabel="#{msg['actaE.documentos.descargar']}">
+                                                <f:setPropertyActionListener value="#{actaEController.actaFisica}" target="#{documentoBean.documento}"/>
+                                                <p:fileDownload value="#{documentoBean.file}"/>
+                                            </p:commandButton>
+                                        </div>
+                                        <div id="visorActaFisica" class="acta-fisica-visor overflow-auto" style="height:60vh">
+                                            <div id="lienzoActaFisica" class="flex justify-content-center align-items-center"
+                                                 style="min-width:100%;min-height:100%">
+                                                <p:graphicImage id="imagenActaFisica" value="#{actaEController.imagenActaFisica}"
+                                                                stream="false" cache="false"
+                                                                alt="#{msg['actaE.actaFisica.titulo']}"
+                                                                style="max-width:100%;max-height:58vh;object-fit:contain;transform-origin:center"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex align-items-center gap-2 mt-2">
+                                            <i class="pi pi-search-minus text-500"/>
+                                            <input id="controlZoomActaFisica" type="range" min="50" max="300" value="100"
+                                                   class="flex-1" oninput="establecerZoom(this.value)"
+                                                   aria-label="#{msg['reportesMesa.actaFisica.control.zoom']}"/>
+                                            <i class="pi pi-search-plus text-500"/>
+                                        </div>
+                                    </h:panelGroup>
+
+                                    <!-- Carga o reemplazo: presidente (su mesa), operador o revisor,
+                                         mesa cerrada y acta no validada. El servidor lo revalida. -->
+                                    <h:panelGroup layout="block" rendered="#{actaEController.puedeCargarActaFisica}"
+                                                  styleClass="border-top-1 surface-border pt-3 mt-3">
+                                        <div class="flex align-items-end gap-2 flex-wrap">
+                                            <div class="flex-1" style="min-width:14rem">
+                                                <label for="archivoActaFisica" class="block font-medium text-700 text-sm mb-2">
+                                                    #{empty actaEController.actaFisica ? msg['actaE.actaFisica.archivo'] : msg['actaE.actaFisica.reemplazar']}
+                                                </label>
+                                                <p:fileUpload id="archivoActaFisica" mode="simple" skinSimple="true"
+                                                              value="#{actaEController.archivoActaFisica}" accept="image/jpeg,.jpg,.jpeg"
+                                                              chooseLabel="#{msg['actaE.actaFisica.seleccionar']}"
+                                                              onchange="previsualizarActaFisica(this)"/>
+                                                <img id="vistaPreviaActaFisica" alt="#{msg['actaE.actaFisica.vistaPrevia']}"
+                                                     class="mt-2 border-round border-1 border-200 hidden" style="max-height:12rem;max-width:100%"/>
+                                            </div>
+                                            <p:commandButton value="#{msg['actaE.actaFisica.cargar']}" icon="pi pi-upload"
+                                                             styleClass="ui-button-primary" process="archivoActaFisica @this"
+                                                             actionListener="#{actaEController.cargarActaFisica}"
+                                                             update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
+                                        </div>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+
+                            <!-- Votos registrados en el conteo, solo lectura, para cotejar -->
+                            <div class="col-12 lg:col-5">
+                                <div class="acta-fisica-panel">
+                                    <div class="acta-fisica-panel-cabecera">
+                                        <div>
+                                            <div class="acta-fisica-panel-titulo">#{msg['actaE.actaFisica.registrados']}</div>
+                                            <div class="acta-fisica-panel-subtitulo">#{msg['actaE.actaFisica.registrados.ayuda']}</div>
+                                        </div>
+                                    </div>
+                                    <p:dataTable value="#{actaEController.listaCamposActaE}" var="registrado"
+                                                 styleClass="ui-datatable-sm acta-fisica-tabla"
+                                                 emptyMessage="#{msg['actaE.empty.categorias']}">
+                                        <p:column headerText="#{msg['actaE.tabla.categoria']}">
+                                            #{registrado.categoriaNombre}
+                                        </p:column>
+                                        <p:column headerText="#{msg['actaE.tabla.votos']}" styleClass="text-right actae-col-num" style="width:7rem">
+                                            <h:outputText value="#{registrado.totalVotos}"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                    <div class="grid acta-fisica-totales">
+                                        <div class="col-6 text-500 text-sm">#{msg['actaE.total.registrado']}</div>
+                                        <div class="col-6 text-right font-semibold">#{actaEController.totalVotosRegistrados}</div>
+                                        <div class="col-6 text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</div>
+                                        <div class="col-6 text-right font-semibold">#{actaEController.totalSufragantesAsignados}</div>
+                                        <div class="col-6 text-500 text-sm">#{msg['actaE.diferencia']}</div>
+                                        <div class="col-6 text-right font-semibold">#{actaEController.diferenciaConteo}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                </p:tab>
+
+                <p:tab title="#{msg['actaE.tab.actas']}" rendered="#{actaEController.puedeConsultarMesa}">
                 <p:outputPanel id="pnlDocumentosActa" layout="block"
-                           rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
+                           rendered="#{actaEController.puedeConsultarMesa}">
                 <div class="surface-card shadow-1 border-round-lg p-3 mt-3">
                     <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                         <div class="font-semibold text-800">
@@ -524,52 +694,13 @@
                         </p:column>
                     </p:dataTable>
 
-                    <p:outputPanel id="pnlActaFisica" layout="block" rendered="#{actaEController.mesaCerrada}"
-                                   styleClass="mt-3">
-                        <div class="border-1 border-200 border-round-lg p-3">
-                            <div class="flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
-                                <div>
-                                    <div class="font-semibold text-800">#{msg['actaE.actaFisica.titulo']}</div>
-                                    <div class="text-500 text-sm">#{msg['actaE.actaFisica.descripcion']}</div>
-                                </div>
-                                <p:tag value="#{empty actaEController.actaFisica ? msg['actaE.actaFisica.pendiente'] : actaEController.actaFisica.estadoRevision}"
-                                       severity="#{empty actaEController.actaFisica ? 'warning' : (actaEController.actaFisica.estadoRevision eq 'VALIDADA' ? 'success' : 'info')}"/>
-                            </div>
-                            <p:outputPanel rendered="#{not empty actaEController.actaFisica}" layout="block" styleClass="mb-3">
-                                <div class="flex align-items-center gap-2 flex-wrap">
-                                    <i class="pi pi-image text-primary text-xl"/>
-                                    <span class="text-700 text-sm">#{actaEController.actaFisica.nombre}</span>
-                                    <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                                     styleClass="ui-button-rounded ui-button-text" title="#{msg['actaE.documentos.descargar']}">
-                                        <f:setPropertyActionListener value="#{actaEController.actaFisica}" target="#{documentoBean.documento}"/>
-                                        <p:fileDownload value="#{documentoBean.file}"/>
-                                    </p:commandButton>
-                                </div>
-                            </p:outputPanel>
-                            <p:outputPanel rendered="#{actaEController.puedeOperarActa and (empty actaEController.actaFisica or actaEController.actaFisica.estadoRevision ne 'VALIDADA')}"
-                                           layout="block">
-                                <div class="flex align-items-end gap-2 flex-wrap">
-                                    <div class="flex-1" style="min-width:16rem">
-                                        <label for="archivoActaFisica" class="block font-medium text-700 text-sm mb-2">#{msg['actaE.actaFisica.archivo']}</label>
-                                        <p:fileUpload id="archivoActaFisica" mode="simple" skinSimple="true"
-                                                      value="#{actaEController.archivoActaFisica}" accept="image/jpeg,.jpg,.jpeg"
-                                                      chooseLabel="#{msg['actaE.actaFisica.seleccionar']}"
-                                                      onchange="previsualizarActaFisica(this)"/>
-                                        <img id="vistaPreviaActaFisica" alt="#{msg['actaE.actaFisica.vistaPrevia']}"
-                                             class="mt-2 border-round border-1 border-200 hidden" style="max-height:12rem;max-width:100%"/>
-                                    </div>
-                                    <p:commandButton value="#{msg['actaE.actaFisica.cargar']}" icon="pi pi-upload"
-                                                     styleClass="ui-button-primary" process="archivoActaFisica @this"
-                                                     actionListener="#{actaEController.cargarActaFisica}"
-                                                     update="pnlActaFisica :frmActaE:pnlResumen"/>
-                                </div>
-                            </p:outputPanel>
-                        </div>
-                    </p:outputPanel>
                 </div>
             </p:outputPanel>
                 </p:tab>
             </p:tabView>
+
+            <!-- Visor del acta física: mismo JS que reportesMesa.xhtml. -->
+            <h:outputScript name="js/visor-acta-fisica.js" library="demo"/>
 
             <script type="text/javascript">
                 function previsualizarActaFisica(input) {

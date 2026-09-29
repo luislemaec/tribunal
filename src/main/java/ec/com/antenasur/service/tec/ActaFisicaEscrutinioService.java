@@ -58,6 +58,34 @@ public class ActaFisicaEscrutinioService {
         return tipo == null ? null : documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
     }
 
+    /**
+     * Acta física vigente de varias mesas del proceso, para el listado de escrutinios:
+     * una sola consulta en lugar de una por mesa. Solo para revisores, que son quienes
+     * ven el listado completo. Por mesa devuelve la versión activa más reciente del
+     * proceso indicado.
+     */
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public java.util.Map<Integer, Documentos> obtenerVigentesPorMesas(java.util.List<Integer> mesaIds, Integer procesoId) {
+        java.util.Map<Integer, Documentos> resultado = new java.util.HashMap<>();
+        if (!accesoDocumental.esRevisor() || mesaIds == null || mesaIds.isEmpty() || procesoId == null) {
+            return resultado;
+        }
+        TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(TIPO_DOCUMENTO);
+        if (tipo == null) {
+            return resultado;
+        }
+        // Cada lista llega ordenada por id descendente: la primera del proceso es la vigente.
+        documentoService.getDocumentosPorEntidadesYTipoDoc(mesaIds, tipo.getId()).forEach((mesaId, documentos) -> {
+            for (Documentos documento : documentos) {
+                if (documento.getProceso() != null && procesoId.equals(documento.getProceso().getId())) {
+                    resultado.put(mesaId, documento);
+                    break;
+                }
+            }
+        });
+        return resultado;
+    }
+
     @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal", "SITEC-Presidente-mesa"})
     public Documentos cargar(Integer mesaId, Integer procesoId, Integer personaId,
             String usuario, String nombreOriginal, String mime, byte[] contenido) {
@@ -75,8 +103,8 @@ public class ActaFisicaEscrutinioService {
             Integer personaId = accesoDocumental.personaAutenticadaId();
             etapa = "ARCHIVO";
             validarArchivo(nombreOriginal, mime, contenido);
-            etapa = "PRESIDENTE_MESA_CERRADA";
-            Mesa mesa = validarMesaCerradaYPresidente(mesaId, procesoId, personaId);
+            etapa = "AUTORIA_MESA_CERRADA";
+            Mesa mesa = validarMesaCerradaYAutoria(mesaId, procesoId, personaId);
             etapa = "TIPO_DOCUMENTO";
             TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(TIPO_DOCUMENTO);
             if (tipo == null) {
@@ -174,20 +202,40 @@ public class ActaFisicaEscrutinioService {
         escrutinioService.validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);
     }
 
-    private Mesa validarMesaCerradaYPresidente(Integer mesaId, Integer procesoId, Integer personaId) {
+    /**
+     * Quién puede subir el acta física y cuándo.
+     *
+     * <ul>
+     *   <li><b>Presidente de mesa</b>: solo su mesa designada, como hasta ahora.</li>
+     *   <li><b>Revisores</b> (Administrador y Tribunal): cualquier mesa. Para ellos
+     *       {@link AccesoDocumentoMesaService#mesaPermitida} devuelve {@code null}, lo que
+     *       solo ocurre si el usuario no tiene además el rol de presidente; quien lo
+     *       tenga conserva la restricción a su mesa aunque sume otros roles.</li>
+     * </ul>
+     *
+     * <p>En ambos casos la mesa debe estar CERRADA: el acta física documenta un
+     * escrutinio ya concluido. El reemplazo de un acta VALIDADA sigue bloqueado en
+     * {@link #cargar}, y cada carga registra la versión y el usuario real que la subió.</p>
+     */
+    private Mesa validarMesaCerradaYAutoria(Integer mesaId, Integer procesoId, Integer personaId) {
         accesoDocumental.validar(mesaId, procesoId);
         Integer permitida = accesoDocumental.mesaPermitida(procesoId);
-        if (permitida == null || !permitida.equals(mesaId))
+        boolean revisor = permitida == null && accesoDocumental.esRevisor();
+        if (!revisor && (permitida == null || !permitida.equals(mesaId)))
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.error.mesa.no.autorizada"));
         if (mesaId == null || procesoId == null || personaId == null) {
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.9"));
         }
         Mesa mesa = mesaFacade.find(mesaId);
         EscrutinioCabecera cabecera = escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId);
-        MiembroJRVDTO presidente = miembroJRVService.obtenerDesignacionPresidentePorPersonaProceso(personaId, procesoId);
-        if (mesa == null || cabecera == null || !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())
-                || presidente == null || presidente.getMesa() == null || !mesaId.equals(presidente.getMesa().getId())) {
+        if (mesa == null || cabecera == null || !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.10"));
+        }
+        if (!revisor) {
+            MiembroJRVDTO presidente = miembroJRVService.obtenerDesignacionPresidentePorPersonaProceso(personaId, procesoId);
+            if (presidente == null || presidente.getMesa() == null || !mesaId.equals(presidente.getMesa().getId())) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.10"));
+            }
         }
         return mesa;
     }
