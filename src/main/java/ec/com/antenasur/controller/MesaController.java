@@ -14,6 +14,7 @@ import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.SelectEvent;
+import org.primefaces.event.UnselectEvent;
 import org.primefaces.component.datatable.DataTable;
 
 import ec.com.antenasur.bean.DocumentoBean;
@@ -163,6 +164,22 @@ public class MesaController implements Serializable {
         recargarListaMesasActual();
     }
 
+    /**
+     * Selección que consume la tabla de recintos. Devuelve {@code null} mientras no
+     * hay recinto elegido para que PrimeFaces no reciba una clave de fila vacía:
+     * {@link #recintoSeleccionado} nunca es nulo porque mesas.xhtml lo enlaza a un
+     * selectOneMenu y necesita una base sobre la que escribir.
+     */
+    public RecintoDTO getRecintoSeleccionadoTabla() {
+        return recintoSeleccionado != null && recintoSeleccionado.getId() != null
+                ? recintoSeleccionado
+                : null;
+    }
+
+    public void setRecintoSeleccionadoTabla(RecintoDTO recinto) {
+        this.recintoSeleccionado = recinto != null ? recinto : new RecintoDTO();
+    }
+
     public void seleccionarRecintoDesdeTabla(SelectEvent<RecintoDTO> event) {
         RecintoDTO recinto = event.getObject();
         if (recinto == null || recinto.getId() == null) {
@@ -174,13 +191,17 @@ public class MesaController implements Serializable {
         reiniciarTablaMesas();
     }
 
+    /** Ctrl+clic sobre la fila resaltada: deja la pantalla sin contexto de recinto. */
+    public void liberarRecintoDesdeTabla(UnselectEvent<RecintoDTO> event) {
+        liberarRecintoSeleccionado();
+    }
+
     private void reiniciarTablaMesas() {
         FacesContext context = FacesContext.getCurrentInstance();
         if (context != null && context.getViewRoot() != null) {
             var componente = context.getViewRoot().findComponent("frmRecintos:tabsRecintos:tblMesasRecinto");
             if (componente instanceof DataTable tabla) {
                 tabla.reset();
-                tabla.resetMultiViewState();
             }
         }
     }

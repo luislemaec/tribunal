@@ -52,6 +52,13 @@ public class GestionPadronController implements Serializable {
             iglesiasAsignadas = new ArrayList<>();
     @Getter
     private ProcesoElectoralDTO procesoActivo;
+    /**
+     * Avance global del padrón del proceso vigente. No depende de los filtros de la
+     * pantalla: se calcula al abrir y solo se refresca cuando el padrón cambia, es
+     * decir al asignar o retirar una iglesia.
+     */
+    @Getter
+    private ec.com.antenasur.dto.AvancePadronDTO avance = new ec.com.antenasur.dto.AvancePadronDTO();
     private List<OpcionPadronDTO> provincias = List.of();
     @Getter
     private List<OpcionPadronDTO> cantones = List.of(), parroquias = List.of(),
@@ -88,6 +95,7 @@ public class GestionPadronController implements Serializable {
         } else {
             JsfUtil.addWarningMessageFromBundle("gestionPadron.error.proceso.sin.activo");
         }
+        recalcularAvance();
         provincias = service.geografia(null);
         inicializarGeografiaOperativa();
         recargarRecintos();
@@ -95,6 +103,11 @@ public class GestionPadronController implements Serializable {
         disponibles = new FilasLazy(true);
         inscritos = new FilasLazy(false);
         mesasLazy = new MesasLazy();
+    }
+
+    /** Dos consultas agregadas; solo se invoca al abrir la vista y tras cambiar el padrón. */
+    private void recalcularAvance() {
+        avance = service.avance(procesoActivo == null ? null : procesoActivo.getId());
     }
 
     private void inicializarGeografiaOperativa() {
@@ -296,6 +309,7 @@ public class GestionPadronController implements Serializable {
                     filtro.getIglesiaId());
             asignar = new ArrayList<>();
             actualizarResumen();
+            recalcularAvance();
             JsfUtil.addSuccessMessage(Constantes.getMensaje("gestionPadron.asignados", n));
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -311,6 +325,7 @@ public class GestionPadronController implements Serializable {
                     filtro.getIglesiaId());
             retirar = new ArrayList<>();
             actualizarResumen();
+            recalcularAvance();
             JsfUtil.addSuccessMessage(Constantes.getMensaje("gestionPadron.retirados", n));
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -336,7 +351,7 @@ public class GestionPadronController implements Serializable {
             FiltroPadronDTO reporte = new FiltroPadronDTO(filtro);
             reporte.setProcesoId(procesoActivo.getId());
             reporte.setIglesiaNombre(nombreIglesiaReporte);
-            byte[] contenido = service.reporte(reporte);
+            byte[] contenido = service.reporte(reporte, ambitoReporteGeneral());
             return DefaultStreamedContent.builder().name("empadronados_" + java.time.LocalDate.now() + ".xlsx")
                     .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     .stream(() -> new ByteArrayInputStream(contenido)).build();
@@ -347,6 +362,96 @@ public class GestionPadronController implements Serializable {
             JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.reporte"));
         }
         return null;
+    }
+
+    /**
+     * Reporte XLSX de los empadronados de una sola mesa, la de la fila pulsada, sin
+     * depender de la selección actual. Reutiliza el mismo servicio y filtro que el
+     * reporte general: se copia el filtro vigente y se fija la mesa, de modo que se
+     * respetan el proceso activo y los filtros geográficos ya aplicados.
+     */
+    public StreamedContent generarReporteMesa(MesaPadronDTO mesa) {
+        try {
+            if (procesoActivo == null) {
+                JsfUtil.addWarningMessageFromBundle("gestionPadron.error.proceso.sin.activo");
+                return null;
+            }
+            if (mesa == null || mesa.getId() == null) {
+                JsfUtil.addWarningMessageFromBundle("gestionPadron.error.mesa.requerida");
+                return null;
+            }
+            FiltroPadronDTO reporte = new FiltroPadronDTO(filtro);
+            reporte.setProcesoId(procesoActivo.getId());
+            reporte.setMesaId(mesa.getId());
+            reporte.setIglesiaNombre(null);
+            reporte.setBusqueda(null);
+            byte[] contenido = service.reporte(reporte, ambitoDeMesa(mesa));
+            return DefaultStreamedContent.builder().name(nombreArchivoMesa(mesa))
+                    .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .stream(() -> new ByteArrayInputStream(contenido)).build();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error exportando padron de la mesa", e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("gestionPadron.error.reporte"));
+        }
+        return null;
+    }
+
+    /** Nombre de archivo con recinto y mesa, para identificarlo sin abrirlo. */
+    private String nombreArchivoMesa(MesaPadronDTO mesa) {
+        String recinto = sanearNombreArchivo(mesa.getRecinto());
+        String nombreMesa = sanearNombreArchivo(mesa.getNombre() == null || mesa.getNombre().isBlank()
+                ? String.valueOf(mesa.getId())
+                : mesa.getNombre());
+        StringBuilder nombre = new StringBuilder("empadronados");
+        if (!recinto.isEmpty()) {
+            nombre.append('_').append(recinto);
+        }
+        return nombre.append('_').append(nombreMesa).append('_')
+                .append(java.time.LocalDate.now()).append(".xlsx").toString();
+    }
+
+    private String sanearNombreArchivo(String valor) {
+        return valor == null ? "" : valor.trim().replaceAll("[^A-Za-z0-9._-]+", "_")
+                .replaceAll("^_+|_+$", "");
+    }
+
+    /**
+     * Ámbito de un reporte de una sola mesa: los seis datos son iguales en todas las
+     * filas, así que van a la cabecera del archivo y salen de las columnas.
+     */
+    private java.util.Map<String, String> ambitoDeMesa(MesaPadronDTO mesa) {
+        java.util.LinkedHashMap<String, String> ambito = new java.util.LinkedHashMap<>();
+        ambito.put("proceso", procesoActivo == null ? "" : procesoActivo.getNombre());
+        ambito.put("provincia", nombreOpcion(provincias, filtro.getProvinciaId()));
+        ambito.put("canton", mesa.getCanton());
+        ambito.put("parroquia", mesa.getParroquia());
+        ambito.put("recinto", mesa.getRecinto());
+        ambito.put("mesa", mesa.getNombre());
+        return ambito;
+    }
+
+    /**
+     * Ámbito del reporte general de empadronados: a la cabecera van solo el proceso
+     * electoral, que es siempre el vigente, y la provincia, porque todos los recintos
+     * pertenecen a ella. Cantón, parroquia, recinto, mesa e iglesia se quedan como
+     * columnas del detalle aunque haya filtros aplicados, ya que este reporte se lee
+     * por fila.
+     */
+    private java.util.Map<String, String> ambitoReporteGeneral() {
+        java.util.LinkedHashMap<String, String> ambito = new java.util.LinkedHashMap<>();
+        ambito.put("proceso", procesoActivo == null ? "" : procesoActivo.getNombre());
+        ambito.put("provincia", nombreOpcion(provincias, filtro.getProvinciaId()));
+        return ambito;
+    }
+
+    private String nombreOpcion(List<OpcionPadronDTO> opciones, Integer id) {
+        if (opciones == null || id == null) {
+            return "";
+        }
+        return opciones.stream().filter(opcion -> id.equals(opcion.getId()))
+                .map(OpcionPadronDTO::getNombre).findFirst().orElse("");
     }
 
     private class FilasLazy extends LazyDataModel<FilaPadronDTO> {

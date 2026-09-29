@@ -47,6 +47,12 @@ public class RecintoController implements Serializable {
     @Inject
     private GeograpBean geograpBean;
 
+    /**
+     * Recinto en edición: modelo del diálogo de alta/modificación y objetivo de la
+     * eliminación. No representa la fila resaltada de la tabla; esa vive en
+     * {@code MesaController.recintoSeleccionado}, única fuente de verdad de la
+     * selección, para que editar un recinto no mueva el resaltado ni al revés.
+     */
     @Setter
     @Getter
     private RecintoDTO recintoSeleccionado;

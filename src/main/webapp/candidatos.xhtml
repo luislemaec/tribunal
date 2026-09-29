@@ -30,8 +30,15 @@
         </div>
 
         <h:form id="frmCandidatos" enctype="multipart/form-data">
-            <div class="grid align-items-start">
-                <div class="col-12 xl:col-5">
+            <!-- Listas y sus candidaturas en dos pestañas: al elegir una lista la
+                 pantalla salta a Candidatos con el contexto ya cargado. -->
+            <p:tabView id="tabsCandidatos" widgetVar="wdTabsCandidatos"
+                       activeIndex="#{candidatoController.pestanaActiva}" dynamic="false">
+                <!-- Mantiene pestanaActiva alineada con la pestaña que ve el usuario:
+                     sin esto el servidor conserva 0 y cualquier refresco del tabView
+                     devuelve la pantalla a Listas electorales. -->
+                <p:ajax event="tabChange" process="@this"/>
+                <p:tab title="#{msg['form.candidatos.listas.title']}" titleStyleClass="p-2">
                     <div class="surface-card shadow-1 border-round-lg p-3">
                         <div class="flex align-items-center justify-content-between gap-2 mb-3">
                             <div>
@@ -52,12 +59,12 @@
                                 <i class="pi pi-search"></i>
                                 <p:inputText id="filtroLista" value="#{candidatoController.filtroLista}"
                                              placeholder="#{msg['form.candidatos.listas.search']}" styleClass="w-full">
-                                    <p:ajax event="keyup" delay="400" process="@this" update=":frmCandidatos:tblListas"/>
+                                    <p:ajax event="keyup" delay="400" process="@this" update=":frmCandidatos:tabsCandidatos:tblListas"/>
                                 </p:inputText>
                             </span>
                             <div class="flex align-items-center gap-2 white-space-nowrap">
                                 <p:selectBooleanCheckbox id="verBajas" value="#{candidatoController.incluirListasInactivas}">
-                                    <p:ajax process="@this" update=":frmCandidatos:tblListas"/>
+                                    <p:ajax process="@this" update=":frmCandidatos:tabsCandidatos:tblListas"/>
                                 </p:selectBooleanCheckbox>
                                 <label for="verBajas" class="text-sm text-700">#{msg['form.candidatos.listas.showInactive']}</label>
                             </div>
@@ -74,10 +81,19 @@
                                      currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
                                      emptyMessage="#{msg['form.candidatos.listas.empty']}"
                                      selectionMode="single" selection="#{candidatoController.listaSeleccionado}"
-                                     rowStyleClass="#{lista.id eq candidatoController.listaSeleccionado.id ? 'fila-seleccionada' : ''} #{lista.estado ? '' : 'fila-inactiva'}"
+                                     rowStyleClass="#{lista.estado ? '' : 'fila-inactiva'}"
                                      styleClass="ui-datatable-sm ui-datatable-striped tec-table-seleccionable" reflow="true">
+                            <!-- Como en la tabla de mesas de padron.xhtml: el update NO incluye
+                                 esta tabla. El resaltado lo pinta PrimeFaces en cliente al
+                                 instante (ui-state-highlight, con el mismo estilo que
+                                 .fila-seleccionada en tribunal-globals.css), así que re-renderizarla
+                                 solo añadiría parpadeo y espera. El salto de pestaña va en cliente. -->
                             <p:ajax event="rowSelect" listener="#{candidatoController.seleccionarListaDesdeTabla}"
-                                    process="@this" update=":frmCandidatos:tblListas :frmCandidatos:panelDetalle"/>
+                                    process="@this" update=":frmCandidatos:tabsCandidatos:panelDetalle"
+                                    oncomplete="PF('wdTabsCandidatos').select(1)"/>
+                            <p:ajax event="rowUnselect" listener="#{candidatoController.liberarListaDesdeTabla}"
+                                    process="@this" update=":frmCandidatos:tabsCandidatos:panelDetalle"
+                                    oncomplete="PF('wdTabsCandidatos').select(0)"/>
                             <p:column headerText="#{msg['form.candidatos.table.header.lista']}" sortBy="#{lista.nombre}">
                                 <div class="flex flex-column gap-1">
                                     <span class="font-semibold text-900">#{lista.nombre}</span>
@@ -107,7 +123,7 @@
                                                      styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                      rendered="#{lista.estado}"
                                                      action="#{candidatoController.desactivarLista(lista)}"
-                                                     process="@this" update=":frmCandidatos:tblListas :frmCandidatos:panelDetalle :frmGlobal:growlGlobal">
+                                                     process="@this" update=":frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal">
                                         <p:confirm header="Confirmar baja"
                                                    message="¿Desea dar de baja esta lista? No será posible si tiene candidatos activos."
                                                    icon="pi pi-exclamation-triangle"/>
@@ -116,7 +132,7 @@
                                                      styleClass="ui-button-rounded ui-button-text ui-button-success"
                                                      rendered="#{not lista.estado}"
                                                      action="#{candidatoController.reactivarLista(lista)}"
-                                                     process="@this" update=":frmCandidatos:tblListas :frmCandidatos:panelDetalle :frmGlobal:growlGlobal">
+                                                     process="@this" update=":frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal">
                                         <p:confirm header="Confirmar reactivación"
                                                    message="¿Desea reactivar esta lista y conservar su historial?"
                                                    icon="pi pi-refresh"/>
@@ -125,9 +141,9 @@
                             </p:column>
                         </p:dataTable>
                     </div>
-                </div>
+                </p:tab>
 
-                <div class="col-12 xl:col-7">
+                <p:tab title="#{msg['form.candidatos.detalle.titulo']}" titleStyleClass="p-2">
                     <p:outputPanel id="panelDetalle" layout="block">
                         <p:outputPanel rendered="#{not empty candidatoController.listaSeleccionado}">
                             <div class="surface-card shadow-1 border-round-lg p-3">
@@ -155,27 +171,24 @@
                                     </div>
                                 </ui:fragment>
 
+                                <!-- Una candidatura por cargo: 10 filas por página bastan y el
+                                     paginador solo aparece si se supera ese tope. Sin buscador
+                                     general; los filtros por columna siguen disponibles. -->
                                 <p:dataTable id="tblCandidatos" widgetVar="wdTblCandidatos" var="candidato"
                                              value="#{candidatoController.candidatos}" reflow="true"
-                                             paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
+                                             paginator="true" rows="10" paginatorAlwaysVisible="false"
                                              paginatorPosition="bottom"
-                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                             paginatorTemplate="{CurrentPageReport} {PreviousPageLink} {PageLinks} {NextPageLink}"
                                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
                                              emptyMessage="#{msg['form.candidatos.detalle.empty']}"
-                                             styleClass="ui-datatable-striped ui-datatable-sm">
-                                    <f:facet name="header">
-                                        <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-2">
-                                            <span class="font-semibold text-700">#{msg['form.candidatos.detalle.titulo']}</span>
-                                            <span class="p-input-icon-left">
-                                                <i class="pi pi-search"></i>
-                                                <p:inputText id="globalFilter" onkeyup="PF('wdTblCandidatos').filter()"
-                                                             placeholder="#{msg['form.candidatos.detalle.filtro']}" styleClass="w-full md:w-16rem"/>
-                                            </span>
-                                        </div>
-                                    </f:facet>
+                                             styleClass="ui-datatable-sm">
                                     <p:column headerText="#{msg['form.candidatos.table.header.cargo']}" sortBy="#{candidato.cargoNombre}"
-                                              filterBy="#{candidato.cargoNombre}" filterMatchMode="contains">
-                                        <p:chip label="#{candidato.cargoNombre}" icon="pi pi-briefcase"/>
+                                              filterBy="#{candidato.cargoNombre}" filterMatchMode="contains"
+                                              style="min-width:12rem">
+                                        <div class="flex align-items-center gap-2">
+                                            <i class="pi pi-briefcase text-400 text-sm"></i>
+                                            <span class="text-sm font-medium text-900">#{candidato.cargoNombre}</span>
+                                        </div>
                                     </p:column>
                                     <p:column headerText="#{msg['form.candidatos.table.header.cedula']}"
                                               filterBy="#{candidato.iglesiaPersona.persona.documento}"
@@ -223,7 +236,7 @@
                                         <p:commandButton icon="pi pi-trash" title="#{msg['form.candidatos.candidato.disable']}" ariaLabel="#{msg['form.candidatos.candidato.disable']}"
                                                          styleClass="ui-button-rounded ui-button-text ui-button-danger"
                                                          rendered="#{candidato.iglesiaPersona.persona ne null}"
-                                                         process="@this" update=":frmCandidatos:tblCandidatos :frmGlobal:growlGlobal"
+                                                         process="@this" update=":frmCandidatos:tabsCandidatos:tblCandidatos :frmGlobal:growlGlobal"
                                                          action="#{candidatoController.eliminarCandidato(candidato)}">
                                             <p:confirm header="Confirmar baja"
                                                        message="¿Desea dar de baja este candidato? Podrá reutilizar la candidatura más adelante."
@@ -234,13 +247,15 @@
 
                                 <p:outputPanel id="panelActaInscripcion" layout="block" styleClass="mt-4">
                                     <div class="border-top-1 border-200 pt-3">
-                                        <div class="flex flex-column lg:flex-row lg:align-items-center lg:justify-content-between gap-3">
-                                            <div class="flex align-items-start gap-3">
+                                        <!-- Rejilla 8/4: el estado del acta manda sobre el ancho y las
+                                             dos acciones quedan alineadas y del mismo tamaño. -->
+                                        <div class="grid formgrid align-items-start">
+                                            <div class="col-12 lg:col-8 flex align-items-start gap-3">
                                                 <div class="flex align-items-center justify-content-center border-circle surface-100 text-primary"
-                                                     style="width:2.75rem;height:2.75rem;flex-shrink:0">
-                                                    <i class="pi pi-file-pdf text-xl"></i>
+                                                     style="width:2.5rem;height:2.5rem;flex-shrink:0">
+                                                    <i class="pi pi-file-pdf"></i>
                                                 </div>
-                                                <div>
+                                                <div class="flex-1">
                                                     <span class="block text-900 font-semibold">#{msg['form.candidatos.acta.title']}</span>
                                                     <small class="block text-500 mt-1">#{candidatoController.estadoActa.detalle}</small>
                                                     <div class="flex align-items-center flex-wrap gap-2 mt-2">
@@ -253,15 +268,16 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="flex flex-column sm:flex-row gap-2">
+                                            <div class="col-12 lg:col-4 flex flex-column gap-2 lg:align-items-end">
                                                 <p:commandButton value="#{msg['form.candidatos.acta.generate']}" icon="pi pi-file-pdf"
-                                                                 styleClass="ui-button-info"
+                                                                 styleClass="ui-button-info w-full"
                                                                  action="#{candidatoController.generarActaInscripcion}"
                                                                  process="@this"
-                                                                 update=":frmCandidatos:panelActaInscripcion :frmGlobal:growlGlobal"
+                                                                 update=":frmCandidatos:tabsCandidatos:panelActaInscripcion :frmGlobal:growlGlobal"
                                                                  disabled="#{not candidatoController.estadoActa.puedeGenerar or not candidatoController.listaSeleccionadaActiva}"
                                                                  title="#{candidatoController.estadoActa.detalle}"/>
                                                 <p:fileUpload mode="advanced" auto="true" skinSimple="true"
+                                                              styleClass="w-full tec-acta-upload"
                                                               listener="#{candidatoController.cargarActaFirmada}"
                                                               oncomplete="PF('statusDialog').hide()"
                                                               onerror="PF('statusDialog').hide()"
@@ -272,7 +288,7 @@
                                                               accept=".pdf,application/pdf"
                                                               validateContentType="true"
                                                               disabled="#{empty candidatoController.estadoActa.actaGeneradaId or not empty candidatoController.estadoActa.actaFirmadaId or not candidatoController.listaSeleccionadaActiva}"
-                                                              update=":frmCandidatos:panelActaInscripcion :frmGlobal:growlGlobal">
+                                                              update=":frmCandidatos:tabsCandidatos:panelActaInscripcion :frmGlobal:growlGlobal">
                                                     <p:validateFile sizeLimit="10485760" fileLimit="1"
                                                                     contentType="application/pdf"
                                                                     allowTypes="/(\.|\/)(pdf)$/"/>
@@ -280,30 +296,45 @@
                                             </div>
                                         </div>
 
+                                        <!-- Sin documentos aún: una línea discreta en lugar de una
+                                             tabla vacía. -->
+                                        <ui:fragment rendered="#{empty candidatoController.documentosActa}">
+                                            <div class="flex align-items-center gap-2 mt-3 text-500 text-sm">
+                                                <i class="pi pi-inbox"></i>
+                                                <span>#{msg['form.candidatos.acta.empty']}</span>
+                                            </div>
+                                        </ui:fragment>
+
                                         <p:dataTable id="tblDocumentosActa" var="doc" value="#{candidatoController.documentosActa}"
                                                      rendered="#{not empty candidatoController.documentosActa}"
-                                                     paginator="true" rows="5" paginatorPosition="bottom"
-                                                     styleClass="ui-datatable-sm ui-datatable-striped mt-3" reflow="true"
+                                                     paginator="true" rows="5" paginatorAlwaysVisible="false"
+                                                     paginatorPosition="bottom"
+                                                     paginatorTemplate="{CurrentPageReport} {PreviousPageLink} {PageLinks} {NextPageLink}"
+                                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
+                                                     styleClass="ui-datatable-sm mt-3" reflow="true"
                                                      emptyMessage="#{msg['form.candidatos.acta.empty']}">
-                                            <p:column headerText="#{msg['form.candidatos.acta.document.type']}">
+                                            <p:column headerText="#{msg['form.candidatos.acta.document.type']}"
+                                                      style="width:8.5rem">
                                                 <p:tag value="#{doc.tipoDocumento.nombre}"
                                                        severity="#{empty doc.documentoOrigen ? 'info' : 'success'}"/>
                                             </p:column>
-                                            <p:column headerText="#{msg['form.candidatos.acta.document.name']}">
+                                            <p:column headerText="#{msg['form.candidatos.acta.document.name']}"
+                                                      style="min-width:14rem">
                                                 <span class="text-sm text-900">#{doc.nombre}#{doc.extension}</span>
                                                 <small class="block text-500">#{doc.codigo}</small>
                                             </p:column>
                                             <p:column headerText="#{msg['form.candidatos.acta.document.date']}" style="width:10rem">
-                                                <h:outputText value="#{doc.fechaCrea}">
+                                                <h:outputText value="#{doc.fechaCrea}" styleClass="text-sm text-700">
                                                     <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                                                 </h:outputText>
                                             </p:column>
                                             <p:column headerText="#{msg['form.candidatos.acta.document.action']}"
-                                                      exportable="false" style="width:5rem" styleClass="text-center">
+                                                      exportable="false" style="width:4.5rem" styleClass="text-center">
                                                 <p:commandButton icon="pi pi-download" ajax="false" immediate="true"
                                                                  process="@this"
                                                                  styleClass="ui-button-rounded ui-button-text ui-button-info"
-                                                                 title="#{msg['form.candidatos.acta.download']}">
+                                                                 title="#{msg['form.candidatos.acta.download']}"
+                                                                 ariaLabel="#{msg['form.candidatos.acta.download']}">
                                                     <p:fileDownload value="#{documentoBean.obtenerArchivo(doc)}"
                                                                     contentDisposition="attachment"/>
                                                 </p:commandButton>
@@ -313,16 +344,22 @@
                                 </p:outputPanel>
                             </div>
                         </p:outputPanel>
+                        <!-- Estado vacío: sin lista elegida no hay nada que consultar -->
                         <p:outputPanel rendered="#{empty candidatoController.listaSeleccionado}">
                             <div class="surface-card shadow-1 border-round-lg p-5 text-center">
-                                <i class="pi pi-arrow-left text-primary" style="font-size:2rem"></i>
-                                <h3 class="text-900 mt-3 mb-2">Seleccione una lista electoral</h3>
-                                <p class="text-500 m-0">La información de candidatos se consulta únicamente al seleccionar una lista activa.</p>
+                                <i class="pi pi-list text-primary" style="font-size:2rem"></i>
+                                <h3 class="text-900 mt-3 mb-2">#{msg['form.candidatos.detalle.sinSeleccion.titulo']}</h3>
+                                <p class="text-500 m-0 mb-3">#{msg['form.candidatos.detalle.sinSeleccion.ayuda']}</p>
+                                <p:commandButton value="#{msg['form.candidatos.detalle.sinSeleccion.accion']}"
+                                                 icon="pi pi-arrow-left"
+                                                 styleClass="ui-button-outlined ui-button-secondary"
+                                                 type="button"
+                                                 onclick="PF('wdTabsCandidatos').select(0)"/>
                             </div>
                         </p:outputPanel>
                     </p:outputPanel>
-                </div>
-            </div>
+                </p:tab>
+            </p:tabView>
 
             <p:dialog header="Lista electoral" widgetVar="dlgLista" modal="true" responsive="true"
                       width="500" style="max-width:96vw" closeOnEscape="true"
@@ -355,7 +392,7 @@
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check" styleClass="ui-button-success"
                                          action="#{candidatoController.guardarLista}"
                                          process="@this :frmCandidatos:dlgListaContenido"
-                                         update=":frmCandidatos:dlgListaContenido :frmCandidatos:tblListas :frmCandidatos:panelDetalle :frmGlobal:growlGlobal"/>
+                                         update=":frmCandidatos:dlgListaContenido :frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal"/>
                     </div>
                 </f:facet>
             </p:dialog>
@@ -401,7 +438,7 @@
                             <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button" onclick="PF('dlgAsignaCandidato').hide()" styleClass="ui-button-outlined ui-button-secondary"/>
                             <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check" styleClass="ui-button-success"
                                              action="#{candidatoController.guardarCandidato}" process=":frmCandidatos:outPnlAsignaCandidato @this"
-                                             update=":frmCandidatos:outPnlCandidatoContexto :frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmCandidatos:tblCandidatos :frmGlobal:growlGlobal"
+                                             update=":frmCandidatos:outPnlCandidatoContexto :frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmCandidatos:tabsCandidatos:tblCandidatos :frmGlobal:growlGlobal"
                                              rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}"/>
                         </div>
                     </p:outputPanel>

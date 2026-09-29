@@ -61,27 +61,56 @@ public class ReporteXLSX {
 
     private static final int HEADER_LOGO_MAX_HEIGHT_PX = 108;
 
+    /**
+     * Columnas del detalle, en orden. Las que el ambito fija salen de la tabla. No hay
+     * columna de estado: el reporte solo trae empadronados activos, asi que el valor
+     * seria constante en todas las filas.
+     */
+    private static final String[] COLUMNAS_PADRON = {"proceso", "provincia", "canton", "parroquia", "recinto",
+        "mesa", "iglesia", "documento", "nombres"};
+
     /** Exportacion por lotes, sin estado estatico ni una matriz con todo el padron. */
     public static byte[] generarPadronGeneral(
             java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor)
             throws IOException {
+        return generarPadronGeneral(proveedor, java.util.Map.of());
+    }
+
+    /**
+     * @param ambito datos comunes a todo el padron exportado, en orden de presentacion:
+     *               clave = columna de {@link #COLUMNAS_PADRON}, valor = texto. Cada
+     *               entrada se escribe en la cabecera del archivo y su columna se omite
+     *               del detalle, para no repetir el mismo valor en todas las filas.
+     */
+    public static byte[] generarPadronGeneral(
+            java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor,
+            java.util.Map<String, String> ambito) throws IOException {
         try (InputStream logo = FacesContext.getCurrentInstance().getExternalContext()
                 .getResourceAsStream("/resources/img/logo_consejo_417x150.png")) {
-            return generarPadronGeneral(proveedor, logo);
+            return generarPadronGeneral(proveedor, ambito, logo);
         }
     }
 
     static byte[] generarPadronGeneral(
             java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor,
             InputStream logo) throws IOException {
+        return generarPadronGeneral(proveedor, java.util.Map.of(), logo);
+    }
+
+    static byte[] generarPadronGeneral(
+            java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor,
+            java.util.Map<String, String> ambito, InputStream logo) throws IOException {
+        java.util.Map<String, String> comunes = ambito == null ? java.util.Map.of() : ambito;
         XSSFWorkbook base = new XSSFWorkbook();
         Sheet detalle = base.createSheet("Padron");
         crearEncabezadoInstitucional(base, detalle, Constantes.getMensaje("gestionPadron.reporte"), logo);
+        crearCabeceraAmbito(base, detalle, comunes);
         org.apache.poi.xssf.streaming.SXSSFWorkbook libro = new org.apache.poi.xssf.streaming.SXSSFWorkbook(base, 200);
         libro.setCompressTempFiles(true);
         try (libro; ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             Sheet hoja = libro.getSheetAt(0);
-            String[] claves = {"proceso", "provincia", "canton", "parroquia", "recinto", "mesa", "iglesia", "documento", "nombres", "estado"};
+            String[] claves = java.util.Arrays.stream(COLUMNAS_PADRON)
+                    .filter(clave -> !comunes.containsKey(clave)).toArray(String[]::new);
             var cabecera = libro.createCellStyle();
             var fuente = libro.createFont(); fuente.setBold(true); fuente.setColor(IndexedColors.WHITE.index);
             cabecera.setFont(fuente); cabecera.setFillForegroundColor(IndexedColors.DARK_BLUE.index);
@@ -89,7 +118,7 @@ public class ReporteXLSX {
             Row titulos = hoja.createRow(5);
             for (int i = 0; i < claves.length; i++) {
                 Cell celda = titulos.createCell(i); celda.setCellValue(Constantes.getMensaje("gestionPadron." + claves[i]));
-                celda.setCellStyle(cabecera); hoja.setColumnWidth(i, i == 8 ? 14000 : 7000);
+                celda.setCellStyle(cabecera); hoja.setColumnWidth(i, "nombres".equals(claves[i]) ? 14000 : 7000);
             }
             hoja.createFreezePane(0, 6);
             java.util.Map<String, Long> recintos = new java.util.LinkedHashMap<>();
@@ -98,12 +127,11 @@ public class ReporteXLSX {
             int[] fila = {6};
             proveedor.accept(p -> {
                 if (fila[0] >= 1_048_576) throw new IllegalStateException(Constantes.getMensaje("gestionPadron.error.reporte.limite"));
-                String[] valores = {p.getProceso(), p.getProvincia(), p.getCanton(), p.getParroquia(), p.getRecinto(),
-                    p.getMesa(), p.getIglesia(), p.getDocumento(),
-                    ((p.getNombres() == null ? "" : p.getNombres()) + " " + (p.getApellidos() == null ? "" : p.getApellidos())).trim(),
-                    Constantes.getMensaje("gestionPadron.activo")};
                 Row row = hoja.createRow(fila[0]++);
-                for (int i = 0; i < valores.length; i++) row.createCell(i).setCellValue(valores[i] == null ? "" : valores[i]);
+                for (int i = 0; i < claves.length; i++) {
+                    String valor = valorColumna(claves[i], p);
+                    row.createCell(i).setCellValue(valor == null ? "" : valor);
+                }
                 String recinto = p.getProceso() + " / " + p.getRecinto() + " [" + p.getRecintoId() + "]";
                 recintos.merge(recinto, 1L, Long::sum);
                 mesas.merge(recinto + " / " + p.getMesa() + " [" + p.getMesaId() + "]", 1L, Long::sum);
@@ -125,6 +153,58 @@ public class ReporteXLSX {
             libro.write(salida);
             return salida.toByteArray();
         } finally { libro.dispose(); }
+    }
+
+    /** Valor de una columna del detalle para la fila indicada. */
+    private static String valorColumna(String clave, ec.com.antenasur.dto.FilaPadronDTO p) {
+        return switch (clave) {
+            case "proceso" -> p.getProceso();
+            case "provincia" -> p.getProvincia();
+            case "canton" -> p.getCanton();
+            case "parroquia" -> p.getParroquia();
+            case "recinto" -> p.getRecinto();
+            case "mesa" -> p.getMesa();
+            case "iglesia" -> p.getIglesia();
+            case "documento" -> p.getDocumento();
+            case "nombres" -> ((p.getNombres() == null ? "" : p.getNombres()) + " "
+                    + (p.getApellidos() == null ? "" : p.getApellidos())).trim();
+            default -> "";
+        };
+    }
+
+    /**
+     * Datos comunes a todo el padron exportado, bajo el encabezado institucional y
+     * sobre la tabla: dos pares etiqueta/valor por fila en las filas 3 a 5 de la hoja,
+     * que el encabezado deja libres, de modo que el detalle sigue empezando en la
+     * misma fila que antes. Arranca en la columna C porque el logo ocupa A y B.
+     */
+    private static void crearCabeceraAmbito(XSSFWorkbook workbook, Sheet sheet, java.util.Map<String, String> ambito) {
+        if (ambito == null || ambito.isEmpty()) {
+            return;
+        }
+        try {
+            XSSFCellStyle etiqueta = workbook.createCellStyle();
+            XSSFFont negrita = workbook.createFont();
+            negrita.setBold(true);
+            negrita.setColor(IndexedColors.DARK_BLUE.index);
+            etiqueta.setFont(negrita);
+            int indice = 0;
+            for (java.util.Map.Entry<String, String> dato : ambito.entrySet()) {
+                int numeroFila = 2 + indice / 2;
+                int columna = indice % 2 == 0 ? 2 : 5;
+                Row fila = sheet.getRow(numeroFila);
+                if (fila == null) {
+                    fila = sheet.createRow(numeroFila);
+                }
+                Cell celdaEtiqueta = fila.createCell(columna);
+                celdaEtiqueta.setCellValue(Constantes.getMensaje("gestionPadron." + dato.getKey()) + ":");
+                celdaEtiqueta.setCellStyle(etiqueta);
+                fila.createCell(columna + 1).setCellValue(dato.getValue() == null ? "" : dato.getValue());
+                indice++;
+            }
+        } catch (Exception ex) {
+            LOG.error("ERROR AL CREAR LA CABECERA DE AMBITO DEL EXCEL" + ex);
+        }
     }
 
     public static String getNombreUsuarioAutenticado() {

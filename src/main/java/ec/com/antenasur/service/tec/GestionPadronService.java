@@ -31,6 +31,11 @@ public class GestionPadronService {
         return mesa == null || proceso == null ? List.of() : facade.resumenIglesias(mesa, proceso, asignadas);
     }
 
+    /** Avance global del padron del proceso; vacio si todavia no hay proceso activo. */
+    public ec.com.antenasur.dto.AvancePadronDTO avance(Integer proceso) {
+        return proceso == null ? new ec.com.antenasur.dto.AvancePadronDTO() : facade.avance(proceso);
+    }
+
     public List<OpcionPadronDTO> geografia(Integer padre) { return facade.geografia(padre); }
     public List<OpcionPadronDTO> recintos(FiltroPadronDTO f) { return facade.recintos(f); }
     public List<OpcionPadronDTO> mesas(Integer recinto) { return facade.opcionesMesas(recinto); }
@@ -142,6 +147,14 @@ public class GestionPadronService {
     }
 
     public byte[] reporte(FiltroPadronDTO filtro) {
+        return reporte(filtro, java.util.Map.of());
+    }
+
+    /**
+     * @param ambito datos que el filtro deja fijos para todo el padron exportado; van a
+     *               la cabecera del archivo en lugar de repetirse en cada fila.
+     */
+    public byte[] reporte(FiltroPadronDTO filtro, java.util.Map<String, String> ambito) {
         if (filtro == null || filtro.getProcesoId() == null) {
             error("proceso.sin.activo");
         }
@@ -158,7 +171,7 @@ public class GestionPadronService {
                     lote = facade.listar(filtro, false, 0, 500, null, false, ultimo);
                     for (FilaPadronDTO fila : lote) { consumir.accept(fila); ultimo = fila.getId(); }
                 } while (lote.size() == 500);
-            });
+            }, ambito);
         } catch (java.io.IOException e) {
             throw new NegocioException(Constantes.getMensaje("gestionPadron.error.reporte"));
         }

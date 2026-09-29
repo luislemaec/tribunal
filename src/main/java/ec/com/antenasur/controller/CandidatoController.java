@@ -43,7 +43,10 @@ public class CandidatoController implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final String FORMULARIO = "frmCandidatos";
+    private static final String TABS = "tabsCandidatos";
     private static final String FORMULARIO_ABSOLUTO = ":" + FORMULARIO;
+    /** Prefijo de los componentes que viven dentro del tabView. */
+    private static final String TABS_ABSOLUTO = FORMULARIO_ABSOLUTO + ":" + TABS;
     private static final String GROWL_GLOBAL = ":frmGlobal:growlGlobal";
     private static final String TABLA_CANDIDATOS = "tblCandidatos";
     private static final String TABLA_LISTAS = "tblListas";
@@ -72,6 +75,9 @@ public class CandidatoController implements Serializable {
      */
     @Setter @Getter
     private int primeraFilaLista;
+    /** Pestaña visible: 0 listas electorales, 1 candidaturas de la lista elegida. */
+    @Setter @Getter
+    private int pestanaActiva;
     @Setter @Getter
     private String filtroLista;
     @Setter @Getter
@@ -124,9 +130,46 @@ public class CandidatoController implements Serializable {
         obtieneCandidatosPorListaSeleccionada();
     }
 
-    /** Selección con un clic sobre cualquier parte de la fila. */
+    /**
+     * Selección con un clic sobre cualquier parte de la fila. Tras elegir la
+     * lista, la vista pasa a la pestaña de candidaturas con el contexto ya
+     * cargado, sin que el usuario tenga que cambiar de pestaña a mano.
+     */
     public void seleccionarListaDesdeTabla(org.primefaces.event.SelectEvent<ListaDTO> evento) {
-        seleccionarLista(evento != null ? evento.getObject() : null);
+        ListaDTO lista = evento != null ? evento.getObject() : null;
+        if (lista == null || lista.getId() == null) {
+            return;
+        }
+        seleccionarLista(lista);
+        pestanaActiva = 1;
+        reiniciarTablaCandidatos();
+    }
+
+    /**
+     * Ctrl+clic sobre la fila resaltada: libera el contexto de la lista para que la
+     * tabla y el bean no queden desincronizados. Al dejar la lista en nulo,
+     * {@link #obtieneCandidatosPorListaSeleccionada()} vacía candidatos, acta y
+     * documentos.
+     */
+    public void liberarListaDesdeTabla(org.primefaces.event.UnselectEvent<ListaDTO> evento) {
+        listaSeleccionado = null;
+        candidatoSeleccionado = null;
+        cedulaBuscar = null;
+        pestanaActiva = 0;
+        obtieneCandidatosPorListaSeleccionada();
+        reiniciarTablaCandidatos();
+    }
+
+    /** La tabla de candidaturas no debe arrastrar página ni filtros de la lista anterior. */
+    private void reiniciarTablaCandidatos() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        if (contexto == null || contexto.getViewRoot() == null) {
+            return;
+        }
+        var componente = contexto.getViewRoot().findComponent("frmCandidatos:tabsCandidatos:tblCandidatos");
+        if (componente instanceof org.primefaces.component.datatable.DataTable tabla) {
+            tabla.reset();
+        }
     }
 
     /** La lista en el panel derecho admite cambios solo si está activa. */
@@ -289,8 +332,8 @@ public class CandidatoController implements Serializable {
                 candidatoSeleccionado = persistido;
                 obtieneCandidatosPorListaSeleccionada();
                 JsfUtil.addSuccessMessage(esEdicion ? "Candidato reasignado correctamente." : "Candidato registrado correctamente.");
-                PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":" + TABLA_CANDIDATOS, GROWL_GLOBAL);
-                PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":panelActaInscripcion");
+                PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":" + TABLA_CANDIDATOS, GROWL_GLOBAL);
+                PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":panelActaInscripcion");
                 PrimeFaces.current().executeScript("PF('dlgAsignaCandidato').hide()");
             }
         } catch (NegocioException e) {
@@ -319,8 +362,8 @@ public class CandidatoController implements Serializable {
             obtieneCandidatosPorListaSeleccionada();
             candidatoSeleccionado = null;
             JsfUtil.addInfoMessage("Candidato dado de baja correctamente.");
-            PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":" + TABLA_CANDIDATOS, GROWL_GLOBAL);
-            PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":panelActaInscripcion");
+            PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":" + TABLA_CANDIDATOS, GROWL_GLOBAL);
+            PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":panelActaInscripcion");
         } catch (Exception e) {
             log.error("ERROR AL ELIMINAR CANDIDATO", e);
             JsfUtil.addErrorMessage("No se pudo eliminar el candidato.");
@@ -336,7 +379,7 @@ public class CandidatoController implements Serializable {
             actualizarEstadoActa();
             JsfUtil.addSuccessMessage(Constantes.getMensaje(
                     "form.candidatos.acta.success.generated", documento.getNombre()));
-            PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":panelActaInscripcion", GROWL_GLOBAL);
+            PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":panelActaInscripcion", GROWL_GLOBAL);
         } catch (NegocioException e) {
             mostrarErrorValidacion(e.getMessage());
         } catch (Exception e) {
@@ -357,7 +400,7 @@ public class CandidatoController implements Serializable {
             actualizarEstadoActa();
             JsfUtil.addSuccessMessage(Constantes.getMensaje(
                     "form.candidatos.acta.success.uploaded", documento.getNombre()));
-            PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":panelActaInscripcion", GROWL_GLOBAL);
+            PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":panelActaInscripcion", GROWL_GLOBAL);
         } catch (NegocioException e) {
             mostrarErrorValidacion(e.getMessage());
         } catch (Exception e) {
@@ -448,8 +491,8 @@ public class CandidatoController implements Serializable {
     }
 
     private void actualizarListasYDetalle() {
-        PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":" + TABLA_LISTAS,
-                FORMULARIO_ABSOLUTO + ":panelDetalle", GROWL_GLOBAL);
+        PrimeFaces.current().ajax().update(TABS_ABSOLUTO + ":" + TABLA_LISTAS,
+                TABS_ABSOLUTO + ":panelDetalle", GROWL_GLOBAL);
     }
 
     private void mostrarErrorValidacion(String mensaje) {

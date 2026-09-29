@@ -759,3 +759,10 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
 .mesas-lugar__ubicacion { color:#64748b; font-size:.72rem; line-height:1.3; overflow-wrap:anywhere; }
 /* Las acciones y el resumen no deben empujar la tabla fuera de la pantalla. */
 .mesas-table td.tec-col-actions { min-width:7rem; }
+
+/* ==========================================================================
+ * Acta de inscripción (candidatos.xhtml): la carga del acta firmada debe
+ * medir lo mismo que el botón de generar, que va a ancho completo.
+ * ========================================================================== */
+.tec-acta-upload .ui-fileupload-choose { width:100%; justify-content:center; }
+.tec-acta-upload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }

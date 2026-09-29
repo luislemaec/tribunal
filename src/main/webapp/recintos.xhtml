@@ -150,8 +150,8 @@
                         <p:dataTable id="tblRecintos" widgetVar="wdTablaRecintos" var="recinto"
                                      value="#{recintoController.listaRecintos}" reflow="true"
                                      rowIndexVar="indiceFilaRecinto"
-                                     rowKey="#{recinto.id}" multiViewState="true"
-                                     selectionMode="single" selection="#{mesaController.recintoSeleccionado}"
+                                     rowKey="#{recinto.id}"
+                                     selectionMode="single" selection="#{mesaController.recintoSeleccionadoTabla}"
                                      rowStyleClass="#{mesaController.recintoSeleccionado.id eq recinto.id ? 'fila-seleccionada' : ''}"
                                      paginator="true" rows="10"
                                      rowsPerPageTemplate="10,25,50"
@@ -162,9 +162,18 @@
                                      showGridlines="true"
                                      styleClass="ui-datatable-striped ui-datatable-sm tec-table-seleccionable">
 
+                            <!-- El update nombra componentes hermanos concretos, nunca el tabView
+                                 que contiene esta tabla: reemplazar el contenedor del propio origen
+                                 del evento deja la tabla sin manejadores y bloquea los clics
+                                 siguientes. El salto de pestaña se hace en cliente con select(1). -->
                             <p:ajax event="rowSelect" listener="#{mesaController.seleccionarRecintoDesdeTabla}"
                                     process="@this"
-                                    update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"/>
+                                    update=":frmRecintos:tabsRecintos:tblRecintos :frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:resumenRecintos"
+                                    oncomplete="PF('wdTabsRecintos').select(1)"/>
+                            <p:ajax event="rowUnselect" listener="#{mesaController.liberarRecintoDesdeTabla}"
+                                    process="@this"
+                                    update=":frmRecintos:tabsRecintos:tblRecintos :frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:resumenRecintos"
+                                    oncomplete="PF('wdTabsRecintos').select(0)"/>
 
                             <p:column headerText="#{msg['recintos.tabla.codigo']}"
                                       sortBy="#{recinto.id}" filterBy="#{recinto.id}"
@@ -215,7 +224,7 @@
                                                      title="#{msg['recintos.tooltip.eliminar']}"
                                                      action="#{recintoController.eliminarRecinto(recinto)}"
                                                      process="@this" partialSubmit="true"
-                                                     update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos">
+                                                     update=":frmRecintos:tabsRecintos:tblRecintos :frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:resumenRecintos">
                                         <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
                                                    message="#{msg['recintos.confirmacion.eliminar']}"
                                                    icon="pi pi-exclamation-triangle"/>
@@ -254,7 +263,7 @@
 
                             <p:dataTable id="tblMesasRecinto" widgetVar="wdTablaMesasRecinto" var="mesa"
                                          value="#{empty mesaController.recintoSeleccionado.id ? null : mesaController.listaMesas}" reflow="true"
-                                         rowKey="#{mesa.id}" multiViewState="true"
+                                         rowKey="#{mesa.id}"
                                          paginator="true" rows="8"
                                          rowsPerPageTemplate="8,16,32"
                                          paginatorPosition="bottom"
@@ -302,7 +311,7 @@
                                                          title="#{msg['recintos.mesas.tooltip.eliminar']}"
                                                          action="#{mesaController.eliminarMesa(mesa)}"
                                                          process="@this" partialSubmit="true"
-                                                         update=":frmRecintos:tabsRecintos :frmRecintos:resumenRecintos">
+                                                         update=":frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:tabsRecintos:tblRecintos :frmRecintos:resumenRecintos">
                                             <p:confirm header="#{msg['recintos.confirmacion.titulo']}"
                                                        message="#{msg['recintos.mesas.confirmacion.eliminar']}"
                                                        icon="pi pi-exclamation-triangle"/>
@@ -450,7 +459,7 @@
                                          style="width:auto;flex:0 0 auto"
                                          styleClass="ui-button-success"
                                          actionListener="#{mesaController.guardarMesaSeleccionado}"
-                                         update="outPnlMesa :frmRecintos:tabsRecintos :frmRecintos:resumenRecintos"
+                                         update="outPnlMesa :frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:tabsRecintos:tblRecintos :frmRecintos:resumenRecintos"
                                          process="outPnlMesa @this" partialSubmit="true"
                                          oncomplete="if (!args.validationFailed) PF('dlgMesa').hide()">
                             <p:confirm header="#{msg['recintos.confirmacion.titulo']}"

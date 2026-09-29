@@ -187,6 +187,24 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
                 .setParameter("mesa", mesa).setParameter("proceso", proceso).getResultList();
     }
 
+    /**
+     * Avance global del padron del proceso con dos consultas agregadas y ningun recorrido
+     * por iglesia: la primera cuenta las iglesias habilitables, la segunda resuelve en una
+     * sola pasada las iglesias ya empadronadas y el total de personas.
+     */
+    public ec.com.antenasur.dto.AvancePadronDTO avance(Integer proceso) {
+        long totalIglesias = getEntityManager().createQuery("SELECT COUNT(DISTINCT ip.iglesia.id)"
+                + " FROM IglesiaPersona ip WHERE ip.estado = TRUE AND ip.habilitadoPadron = TRUE"
+                + " AND ip.persona.estado = TRUE AND ip.iglesia.estado = TRUE", Long.class)
+                .getSingleResult();
+        Object[] empadronado = getEntityManager().createQuery("SELECT COUNT(DISTINCT p.iglesiaPersona.iglesia.id),"
+                + " COUNT(p.id) FROM Padron p WHERE p.estado = TRUE AND p.proceso.id = :proceso", Object[].class)
+                .setParameter("proceso", proceso).getSingleResult();
+        long iglesiasAsignadas = empadronado[0] == null ? 0L : ((Number) empadronado[0]).longValue();
+        long personas = empadronado[1] == null ? 0L : ((Number) empadronado[1]).longValue();
+        return new ec.com.antenasur.dto.AvancePadronDTO(totalIglesias, iglesiasAsignadas, personas);
+    }
+
     public List<Integer> habilitadosPendientes(Integer iglesia, Integer mesa, Integer proceso) {
         return getEntityManager().createQuery("SELECT ip.id FROM IglesiaPersona ip"
                 + " WHERE ip.estado = TRUE AND ip.habilitadoPadron = TRUE AND ip.persona.estado = TRUE"
