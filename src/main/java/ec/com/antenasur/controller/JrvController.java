@@ -101,12 +101,18 @@ public class JrvController implements Serializable {
 	private List<OpcionPadronDTO> cantonesMesas = new ArrayList<>();
 	@Getter
 	private List<OpcionPadronDTO> parroquiasMesas = new ArrayList<>();
+	/** Recintos derivados de las mesas ya cargadas; no supone ninguna consulta extra. */
+	@Getter
+	private List<OpcionPadronDTO> recintosMesas = new ArrayList<>();
 	@Getter
 	@Setter
 	private Integer cantonMesaId;
 	@Getter
 	@Setter
 	private Integer parroquiaMesaId;
+	@Getter
+	@Setter
+	private Integer recintoMesaId;
 	@Getter
 	@Setter
 	private String busquedaMesa;
@@ -160,17 +166,26 @@ public class JrvController implements Serializable {
 		limpiarSeleccionMesa();
 		cantonMesaId = null;
 		parroquiaMesaId = null;
+		recintoMesaId = null;
 		busquedaMesa = null;
 		cargarMesasSeleccionables();
 		aplicarRestriccionMesaAsignada();
 	}
 
+	/** Cambiar de cantón invalida la parroquia y el recinto elegidos. */
 	public void cambiarCantonMesa() {
 		parroquiaMesaId = null;
+		recintoMesaId = null;
 		filtrarMesasSeleccionables();
 	}
 
+	/** Cambiar de parroquia invalida el recinto elegido. */
 	public void cambiarParroquiaMesa() {
+		recintoMesaId = null;
+		filtrarMesasSeleccionables();
+	}
+
+	public void cambiarRecintoMesa() {
 		filtrarMesasSeleccionables();
 	}
 
@@ -181,6 +196,7 @@ public class JrvController implements Serializable {
 	public void limpiarFiltrosMesas() {
 		cantonMesaId = null;
 		parroquiaMesaId = null;
+		recintoMesaId = null;
 		busquedaMesa = null;
 		filtrarMesasSeleccionables();
 	}
@@ -456,6 +472,7 @@ public class JrvController implements Serializable {
 			resumenMesas.clear();
 			cantonesMesas = new ArrayList<>();
 			parroquiasMesas = new ArrayList<>();
+			recintosMesas = new ArrayList<>();
 			return;
 		}
 		mesasDisponibles = new ArrayList<>(mesaService.listarDTOsActivasConUbicacion());
@@ -464,22 +481,31 @@ public class JrvController implements Serializable {
 		filtrarMesasSeleccionables();
 	}
 
+	/**
+	 * Deriva en memoria las opciones de los filtros a partir de las mesas ya cargadas,
+	 * encadenadas: la parroquia respeta el cantón elegido y el recinto respeta ambos.
+	 */
 	private void cargarOpcionesMesas() {
 		java.util.Map<Integer, String> cantones = new java.util.TreeMap<>();
 		java.util.Map<Integer, String> parroquias = new java.util.TreeMap<>();
+		java.util.Map<Integer, String> recintos = new java.util.TreeMap<>();
 		for (MesaDTO mesa : mesasDisponibles) {
 			RecintoDTO recinto = mesa.getRecinto();
 			if (recinto == null)
 				continue;
 			if (recinto.getCantonId() != null)
 				cantones.put(recinto.getCantonId(), recinto.getCantonNombre());
-			if (recinto.getUbicacionId() != null
-					&& (cantonMesaId == null || cantonMesaId.equals(recinto.getCantonId())))
+			boolean cantonCoincide = cantonMesaId == null || cantonMesaId.equals(recinto.getCantonId());
+			if (recinto.getUbicacionId() != null && cantonCoincide)
 				parroquias.put(recinto.getUbicacionId(), recinto.getUbicacionNombre());
+			boolean parroquiaCoincide = parroquiaMesaId == null || parroquiaMesaId.equals(recinto.getUbicacionId());
+			if (recinto.getId() != null && cantonCoincide && parroquiaCoincide)
+				recintos.put(recinto.getId(), recinto.getNombre());
 		}
 		cantonesMesas = cantones.entrySet().stream().map(e -> new OpcionPadronDTO(e.getKey(), e.getValue())).toList();
 		parroquiasMesas = parroquias.entrySet().stream().map(e -> new OpcionPadronDTO(e.getKey(), e.getValue()))
 				.toList();
+		recintosMesas = recintos.entrySet().stream().map(e -> new OpcionPadronDTO(e.getKey(), e.getValue())).toList();
 	}
 
 	private void filtrarMesasSeleccionables() {
@@ -497,6 +523,8 @@ public class JrvController implements Serializable {
 			if (cantonMesaId != null && !cantonMesaId.equals(recinto.getCantonId()))
 				return false;
 			if (parroquiaMesaId != null && !parroquiaMesaId.equals(recinto.getUbicacionId()))
+				return false;
+			if (recintoMesaId != null && !recintoMesaId.equals(recinto.getId()))
 				return false;
 			return texto.isEmpty() || contiene(mesa.getNombre(), texto) || contiene(recinto.getNombre(), texto)
 					|| contiene(recinto.getCantonNombre(), texto) || contiene(recinto.getUbicacionNombre(), texto);

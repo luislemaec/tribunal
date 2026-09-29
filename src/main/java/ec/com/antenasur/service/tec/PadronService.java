@@ -243,6 +243,11 @@ public class PadronService extends AbstractService<Padron, Integer, PadronFacade
         return mapearLista(padronFacade.getPadronesPorIglesiaYProceso(iglesiaId, procesoId));
     }
 
+    /** Sufragantes por mesa en una sola consulta, para listados de varias mesas. */
+    public java.util.Map<Integer, Long> contarSufragantesPorMesas(List<Integer> mesaIds, Integer procesoId) {
+        return padronFacade.contarSufragantesPorMesas(procesoId, mesaIds);
+    }
+
     public int contarSufragantesPorMesaYProceso(Integer mesaId, Integer procesoId) {
         long total = padronFacade.contarPadronPorMesaYProceso(mesaId, procesoId);
         return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;

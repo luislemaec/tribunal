@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
@@ -71,6 +72,12 @@ public class ActaEController implements Serializable {
 
     private static final Integer TAMANIO_LETRA = 0;
     private static final String FORMULARIO = "frmActaE";
+    /**
+     * Provincia operativa del módulo (Chimborazo). Es el mismo identificador de
+     * referencia geográfica que ya usaban este controlador, MesaController y
+     * RecintoController; se centraliza aquí para no repetirlo.
+     */
+    private static final int PROVINCIA_OPERATIVA_ID = 7;
 
     @Inject
     private LoginBean loginBean;
@@ -240,6 +247,18 @@ public class ActaEController implements Serializable {
     @Getter
     private List<ActaEGerencialDTO> listaConsultaGerencial;
 
+    /**
+     * Listado completo del proceso, cargado una sola vez. Los filtros de la pantalla se
+     * aplican en memoria sobre esta lista, de modo que cambiar cantón, parroquia, estado
+     * o búsqueda no vuelve a consultar la base.
+     */
+    private List<ActaEGerencialDTO> filasEscrutinioProceso = new ArrayList<>();
+
+    /** Búsqueda compacta por recinto o número de mesa, sobre el listado ya cargado. */
+    @Setter
+    @Getter
+    private String busquedaEscrutinio;
+
     @Getter
     private int totalMesasGerencial;
 
@@ -325,9 +344,14 @@ public class ActaEController implements Serializable {
             cargaDatosMesaSeleccionada();
             return;
         }
-        this.procesosElectorales = procesoElectoralService.findAll();
+        // La pantalla trabaja siempre con el proceso vigente: no hay selector de proceso,
+        // así que no se consulta el catálogo completo de procesos electorales.
+        this.procesosElectorales = new ArrayList<>();
+        if (procesoActivo != null) {
+            this.procesosElectorales.add(procesoActivo);
+        }
         this.procesoConsultaId = procesoActivo != null ? procesoActivo.getId() : null;
-        cargarProvincias();
+        cargarGeografiaOperativa();
         this.listaRecintos = new ArrayList<>();
         this.listaMesas = new ArrayList<>();
         this.listas = listaService.findAll();
@@ -336,6 +360,11 @@ public class ActaEController implements Serializable {
 
         accesoRestringidoPresidenteMesa = esPresidenteMesa();
         usuarioConsultaGerencial = !accesoRestringidoPresidenteMesa && tieneRolConsultaGerencial();
+        // El listado es el elemento principal de la pantalla: se carga al entrar, con
+        // cuatro consultas en total, para que el usuario vea las mesas y su estado.
+        if (usuarioConsultaGerencial) {
+            consultarEscrutiniosGerenciales();
+        }
         MesaDTO mesaUsuario = obtenerMesaPorUsuario();
         if (accesoRestringidoPresidenteMesa && mesaUsuario == null) {
             sinMesaAsignada = true;
@@ -355,20 +384,28 @@ public class ActaEController implements Serializable {
         }
     }
 
-    private void cargarProvincias() {
+    /**
+     * Geografía operativa del módulo: los recintos que se escrutan aquí pertenecen a una
+     * sola provincia, así que no se ofrece filtro de provincia. Se fija la provincia
+     * operativa y se cargan directamente sus cantones, de modo que el filtrado por
+     * provincia que ya existe sigue acotando la consulta sin intervención del usuario.
+     */
+    private void cargarGeografiaOperativa() {
         provincias = new ArrayList<>();
         cantones = new ArrayList<>();
         parroquias = new ArrayList<>();
         try {
-            Geograp provRef = geograpBean.getById(7);
-            if (provRef != null && provRef.getGeograp() != null) {
-                provincias = geograpBean.getByFatherId(provRef.getGeograp().getId());
+            Geograp provincia = geograpBean.getById(PROVINCIA_OPERATIVA_ID);
+            if (provincia != null) {
+                provincias.add(provincia);
+                provinciaFiltroId = provincia.getId();
+                List<Geograp> hijos = geograpBean.getByFatherId(provincia.getId());
+                if (hijos != null) {
+                    cantones = new ArrayList<>(hijos);
+                }
             }
         } catch (Exception e) {
-            log.warn("NO SE PUDO CARGAR PROVINCIAS PARA CONSULTA DE ACTAS", e);
-        }
-        if (provincias == null) {
-            provincias = new ArrayList<>();
+            log.warn("NO SE PUDO CARGAR LA GEOGRAFIA OPERATIVA PARA CONSULTA DE ACTAS", e);
         }
     }
 
@@ -424,12 +461,17 @@ public class ActaEController implements Serializable {
         }
     }
 
+    /**
+     * Cambio de cantón: recarga las parroquias de ese cantón, invalida la parroquia
+     * elegida y refiltra el listado en memoria.
+     */
     public void cargaParroquiasPorCanton() {
         try {
             limpiarSeleccionMesa();
             parroquias = new ArrayList<>();
             listaRecintos = new ArrayList<>();
             listaMesas = new ArrayList<>();
+            parroquiaSeleccionado = new Geograp();
             if (cantonSeleccionado.getId() != null) {
                 this.cantonSeleccionado = geograpBean.getById(this.cantonSeleccionado.getId());
                 this.parroquias = geograpBean.getByFatherGeograp(this.cantonSeleccionado);
@@ -437,6 +479,13 @@ public class ActaEController implements Serializable {
         } catch (Exception e) {
             log.warn("NO SE PUDO CARGAR PARROQUIAS", e);
         }
+        aplicarFiltrosEscrutinio();
+    }
+
+    /** Cambio de parroquia: solo refiltra el listado ya cargado. */
+    public void cambiarParroquiaEscrutinio() {
+        limpiarSeleccionMesa();
+        aplicarFiltrosEscrutinio();
     }
 
     public void cargaCantonesPorProvincia() {
@@ -521,7 +570,14 @@ public class ActaEController implements Serializable {
         cargarDocumentosActa();
     }
 
+    /**
+     * Carga el listado completo de escrutinios del proceso vigente con cuatro consultas
+     * en total —mesas, cabeceras, sufragantes y actas—, sin ninguna consulta por fila.
+     * Los filtros de cantón, parroquia, estado y búsqueda trabajan después en memoria
+     * sobre esta lista, así que cambiar un filtro no vuelve a consultar la base.
+     */
     public void consultarEscrutiniosGerenciales() {
+        filasEscrutinioProceso = new ArrayList<>();
         if (!usuarioConsultaGerencial) {
             listaConsultaGerencial = new ArrayList<>();
             limpiarResumenGerencial();
@@ -536,38 +592,86 @@ public class ActaEController implements Serializable {
             JsfUtil.addWarningMessageFromBundle("actaE.mensaje.sin.proceso");
             return;
         }
-        List<ActaEGerencialDTO> resultado = new ArrayList<>();
-        for (MesaDTO mesa : obtenerMesasFiltradas()) {
-            ActaEGerencialDTO fila = construirFilaGerencial(mesa, procesoId);
-            if (estadoFiltro == null || estadoFiltro.equals(fila.getEstadoEscrutinio())) {
-                resultado.add(fila);
+        List<MesaDTO> mesas = mesaService.listarDTOs();
+        if (mesas == null) {
+            mesas = new ArrayList<>();
+        }
+        List<Integer> mesaIds = new ArrayList<>();
+        for (MesaDTO mesa : mesas) {
+            if (mesa != null && mesa.getId() != null) {
+                mesaIds.add(mesa.getId());
             }
+        }
+        Map<Integer, EscrutinioCabeceraDTO> cabeceras = escrutinioService.buscarCabecerasDTOPorProceso(procesoId);
+        Map<Integer, Long> sufragantes = padronService.contarSufragantesPorMesas(mesaIds, procesoId);
+        Map<Integer, List<Documentos>> actas = documentoBean.getDocumentosPorEntidadesYTipoDoc(
+                mesaIds, Constantes.ACTA_ESCRUTINIO);
+        for (MesaDTO mesa : mesas) {
+            if (mesa == null || mesa.getId() == null) {
+                continue;
+            }
+            filasEscrutinioProceso.add(construirFilaGerencial(mesa, procesoId, cabeceras, sufragantes, actas));
+        }
+        aplicarFiltrosEscrutinio();
+    }
+
+    /**
+     * Aplica en memoria los filtros visibles: cantón, parroquia, estado y búsqueda por
+     * recinto o mesa. No consulta la base.
+     */
+    public void aplicarFiltrosEscrutinio() {
+        Integer cantonId = cantonSeleccionado != null ? cantonSeleccionado.getId() : null;
+        Integer parroquiaId = parroquiaSeleccionado != null ? parroquiaSeleccionado.getId() : null;
+        String texto = busquedaEscrutinio == null ? "" : busquedaEscrutinio.trim().toLowerCase(Locale.ROOT);
+        List<ActaEGerencialDTO> resultado = new ArrayList<>();
+        for (ActaEGerencialDTO fila : filasEscrutinioProceso) {
+            if (cantonId != null && !cantonId.equals(fila.getCantonId())) {
+                continue;
+            }
+            if (parroquiaId != null && !parroquiaId.equals(fila.getParroquiaId())) {
+                continue;
+            }
+            if (estadoFiltro != null && !estadoFiltro.equals(fila.getEstadoEscrutinio())) {
+                continue;
+            }
+            if (!texto.isEmpty() && !contieneTexto(fila.getRecinto(), texto)
+                    && !contieneTexto(fila.getMesa(), texto)) {
+                continue;
+            }
+            resultado.add(fila);
         }
         listaConsultaGerencial = resultado;
         calcularResumenGerencial();
-        if (listaConsultaGerencial.isEmpty()) {
-            JsfUtil.addInfoMessageFromBundle("actaE.mensaje.sinResultados");
-        }
+    }
+
+    private static boolean contieneTexto(String valor, String texto) {
+        return valor != null && valor.toLowerCase(Locale.ROOT).contains(texto);
+    }
+
+    /** Búsqueda y cambio de estado: solo refiltran lo ya cargado. */
+    public void buscarEnListadoEscrutinios() {
+        aplicarFiltrosEscrutinio();
     }
 
     public void limpiarFiltrosGerenciales() {
         if (!usuarioConsultaGerencial) {
             return;
         }
-        provinciaFiltroId = null;
         cantonSeleccionado = new Geograp();
         parroquiaSeleccionado = new Geograp();
         recintoSeleccionado = new RecintoDTO();
         mesaSeleccionado = new MesaDTO();
         estadoFiltro = null;
+        busquedaEscrutinio = null;
         procesoConsultaId = procesoActivo != null ? procesoActivo.getId() : null;
-        cantones = new ArrayList<>();
+        // Recupera la provincia operativa y sus cantones, no deja la geografía vacía.
+        cargarGeografiaOperativa();
         parroquias = new ArrayList<>();
         listaRecintos = new ArrayList<>();
         listaMesas = new ArrayList<>();
-        listaConsultaGerencial = new ArrayList<>();
         limpiarSeleccionMesa();
-        limpiarResumenGerencial();
+        // Sin filtros, el listado vuelve a mostrar todas las mesas ya cargadas.
+        aplicarFiltrosEscrutinio();
     }
 
     public void guardaDatosMesaSeleccionada() {
@@ -1332,7 +1436,14 @@ public class ActaEController implements Serializable {
         return resultado;
     }
 
-    private ActaEGerencialDTO construirFilaGerencial(MesaDTO mesa, Integer procesoId) {
+    /**
+     * Construye una fila del listado sin consultar: todo lo que necesita llega en los
+     * mapas precargados y en el propio MesaDTO. Sin columna de provincia ni de
+     * presidente de mesa, se evitan las dos consultas por fila que exigían.
+     */
+    private ActaEGerencialDTO construirFilaGerencial(MesaDTO mesa, Integer procesoId,
+            Map<Integer, EscrutinioCabeceraDTO> cabeceras, Map<Integer, Long> sufragantes,
+            Map<Integer, List<Documentos>> actas) {
         ActaEGerencialDTO fila = new ActaEGerencialDTO();
         fila.setMesaId(mesa.getId());
         fila.setMesa(textoNulo(mesa.getNombre()));
@@ -1340,9 +1451,10 @@ public class ActaEController implements Serializable {
         fila.setRecinto(recinto != null ? textoNulo(recinto.getNombre()) : "");
         fila.setParroquia(obtenerParroquiaNombre(mesa));
         fila.setCanton(obtenerCantonNombre(mesa));
-        fila.setProvincia(obtenerProvinciaNombre(mesa));
+        fila.setParroquiaId(obtenerParroquiaId(mesa));
+        fila.setCantonId(obtenerCantonId(mesa));
 
-        EscrutinioCabeceraDTO cabecera = escrutinioService.buscarCabeceraDTO(mesa.getId(), procesoId);
+        EscrutinioCabeceraDTO cabecera = cabeceras.get(mesa.getId());
         if (cabecera != null) {
             fila.setEstadoEscrutinio(cabecera.getEstadoEscrutinio() != null
                     ? cabecera.getEstadoEscrutinio() : EstadoEscrutinio.PENDIENTE);
@@ -1356,20 +1468,63 @@ public class ActaEController implements Serializable {
             fila.setVotosNulos(valorEntero(cabecera.getTotalVotosNulos()));
         } else {
             fila.setEstadoEscrutinio(EstadoEscrutinio.PENDIENTE);
-            fila.setSufragantesAsignados(padronService.contarSufragantesPorMesaYProceso(mesa.getId(), procesoId));
+            Long total = sufragantes.get(mesa.getId());
+            fila.setSufragantesAsignados(total == null ? 0
+                    : (total > Integer.MAX_VALUE ? Integer.MAX_VALUE : total.intValue()));
             fila.setVotosRegistrados(0);
             fila.setVotosValidos(0);
             fila.setVotosBlancos(0);
             fila.setVotosNulos(0);
         }
-        String presidente = obtenerPresidenteMesa(mesa.getId(), procesoId);
-        if (fila.getPresidenteMesa() == null || fila.getPresidenteMesa().isBlank()) {
-            fila.setPresidenteMesa(presidente);
-        }
-        Documentos actaValida = obtenerActaValidaMesa(mesa.getId(), procesoId);
+        Documentos actaValida = seleccionarActaValida(actas.get(mesa.getId()), mesa.getId(), procesoId);
         fila.setDocumentoActa(actaValida);
         fila.setActaPdfGenerada(actaValida != null);
         return fila;
+    }
+
+    /**
+     * Acta válida del proceso entre los documentos ya cargados de esa mesa. Aplica los
+     * mismos criterios que la consulta unitaria, sin volver a la base.
+     */
+    private Documentos seleccionarActaValida(List<Documentos> documentos, Integer mesaId, Integer procesoId) {
+        if (documentos == null || mesaId == null || procesoId == null) {
+            return null;
+        }
+        for (Documentos documento : documentos) {
+            if (esDocumentoDelProceso(documento, mesaId, procesoId) && esDocumentoActaValido(documento)) {
+                return documento;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Acción principal del listado: toma la mesa de la fila como contexto de trabajo,
+     * igual que hacían los combos de recinto y mesa. No amplía permisos: solo actúa si
+     * el usuario ya puede operar el acta, y respeta la restricción del presidente de
+     * mesa, que únicamente puede trabajar sobre la suya.
+     */
+    public void gestionarEscrutinioMesa(ActaEGerencialDTO fila) {
+        if (fila == null || fila.getMesaId() == null) {
+            return;
+        }
+        if (!isPuedeOperarActa()) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        if (accesoRestringidoPresidenteMesa
+                && (mesaSeleccionado == null || !fila.getMesaId().equals(mesaSeleccionado.getId()))) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        MesaDTO mesa = mesaService.obtenerDTOPorId(fila.getMesaId());
+        if (mesa == null) {
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.sinResultados");
+            return;
+        }
+        mesaSeleccionado = mesa;
+        recintoSeleccionado = mesa.getRecinto() != null ? mesa.getRecinto() : new RecintoDTO();
+        cargaDatosMesaSeleccionada();
     }
 
     private void calcularResumenGerencial() {

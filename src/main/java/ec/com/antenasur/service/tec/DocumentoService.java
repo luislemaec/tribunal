@@ -46,6 +46,18 @@ public class DocumentoService extends AbstractService<Documentos, Integer, Docum
         return documentoFacade.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }
 
+    /**
+     * Documentos de varias entidades y un tipo, en una consulta, para listados. No se
+     * expone bajo acceso QR, cuyo alcance es una sola mesa y no usa listados.
+     */
+    public java.util.Map<Integer, List<Documentos>> getDocumentosPorEntidadesYTipoDoc(
+            List<Integer> entidadIds, Integer tipoDocId) {
+        if (alcanceQr.contexto() != null) {
+            return new java.util.HashMap<>();
+        }
+        return documentoFacade.getDocumentosPorEntidadesYTipoDoc(entidadIds, tipoDocId);
+    }
+
     /** En QR no se confia en metadatos/rutas que lleguen de un objeto de la vista. */
     public Documentos autorizarDescarga(Documentos documento) {
         var qr = alcanceQr.contexto();

@@ -17,18 +17,14 @@
 
         <div class="surface-ground p-2 md:p-4">
 
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:#0f766e;flex-shrink:0">
-                        <i class="pi pi-id-card text-white" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['mjrv.titulo']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['mjrv.subtitulo']}</p>
-                    </div>
-                </div>
+        <div class="flex align-items-start gap-3 mb-3">
+            <div class="flex justify-content-center align-items-center border-round-lg mt-1"
+                 style="width:2.5rem;height:2.5rem;background:#0f766e;flex-shrink:0">
+                <i class="pi pi-id-card text-white"></i>
+            </div>
+            <div>
+                <h2 class="m-0 text-900 font-semibold text-xl">#{msg['mjrv.titulo']}</h2>
+                <p class="text-500 mt-1 mb-0 text-sm">#{msg['mjrv.subtitulo']}</p>
             </div>
         </div>
 
@@ -42,30 +38,33 @@
                 </div>
             </p:outputPanel>
 
-            <p:tabView id="tabsMJRV" dynamic="false" cache="true" styleClass="surface-card shadow-1 border-round-lg">
-                <p:tab id="tabMesas" title="#{msg['mjrv.tab.mesas']}">
-                <div class="p-3">
-                <p:outputPanel id="pnlSeleccion" layout="block">
-            <div class="mb-3">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">#{msg['mjrv.seccion.seleccion']}</span>
+            <!-- Filtros generales de la vista: viven fuera del tabView porque definen el
+                 contexto de los tres tabs. Los updates nombran los combos hijos y las
+                 tablas, nunca este panel ni el tabView, que son contenedores del propio
+                 origen del evento. El filtrado de mesas es en memoria: ningún cambio de
+                 filtro consulta la base. -->
+            <p:outputPanel id="filtrosMJRV" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mb-3">
+                <div class="flex align-items-center gap-2 mb-2">
+                    <i class="pi pi-filter text-500 text-sm"></i>
+                    <span class="font-semibold text-700 text-sm">#{msg['mjrv.seccion.seleccion']}</span>
                 </div>
                 <div class="formgrid grid align-items-end">
-                    <div class="field col-12 md:col-4">
-                        <label for="proceso" class="font-medium text-700 text-sm">#{msg['mjrv.label.proceso']}</label>
+                    <div class="field col-12 md:col-6 lg:col-3 mb-2">
+                        <p:outputLabel for="proceso" styleClass="font-medium text-700 text-sm" value="#{msg['mjrv.label.proceso']}"/>
                         <p:selectOneMenu id="proceso" value="#{jrvController.procesoSeleccionado.id}"
                                          disabled="#{jrvController.restringidoAMesaAsignada}"
                                          styleClass="w-full" filter="true" filterMatchMode="contains">
                             <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
                             <f:selectItems value="#{jrvController.procesos}" var="proceso"
                                            itemLabel="#{proceso.nombre}" itemValue="#{proceso.id}"/>
+                            <!-- Cambiar de proceso descarta la mesa: los tres tabs se refrescan. -->
                             <p:ajax event="change" listener="#{jrvController.onProcesoChange}"
-                                    process="@this" update=":frmMJRV:tabsMJRV:pnlSeleccion :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
+                                    process="@this"
+                                    update=":frmMJRV:cantonMesa :frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:busquedaMesa :frmMJRV:tabsMJRV:tblMesas :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="cantonMesa" class="font-medium text-700 text-sm">#{msg['mjrv.filtro.canton']}</label>
+                    <div class="field col-12 md:col-6 lg:col-2 mb-2">
+                        <p:outputLabel for="cantonMesa" styleClass="font-medium text-700 text-sm" value="#{msg['mjrv.filtro.canton']}"/>
                         <p:selectOneMenu id="cantonMesa" value="#{jrvController.cantonMesaId}"
                                          disabled="#{jrvController.restringidoAMesaAsignada}"
                                          styleClass="w-full" filter="true" filterMatchMode="contains">
@@ -73,11 +72,12 @@
                             <f:selectItems value="#{jrvController.cantonesMesas}" var="canton"
                                            itemLabel="#{canton.nombre}" itemValue="#{canton.id}"/>
                             <p:ajax event="change" listener="#{jrvController.cambiarCantonMesa}"
-                                    process="@this" update=":frmMJRV:tabsMJRV:parroquiaMesa :frmMJRV:tabsMJRV:tblMesas"/>
+                                    process="@this"
+                                    update=":frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:tabsMJRV:tblMesas"/>
                         </p:selectOneMenu>
                     </div>
-                    <div class="field col-12 md:col-4">
-                        <label for="parroquiaMesa" class="font-medium text-700 text-sm">#{msg['mjrv.filtro.parroquia']}</label>
+                    <div class="field col-12 md:col-6 lg:col-2 mb-2">
+                        <p:outputLabel for="parroquiaMesa" styleClass="font-medium text-700 text-sm" value="#{msg['mjrv.filtro.parroquia']}"/>
                         <p:selectOneMenu id="parroquiaMesa" value="#{jrvController.parroquiaMesaId}"
                                          disabled="#{jrvController.restringidoAMesaAsignada}"
                                          styleClass="w-full" filter="true" filterMatchMode="contains">
@@ -85,32 +85,44 @@
                             <f:selectItems value="#{jrvController.parroquiasMesas}" var="parroquia"
                                            itemLabel="#{parroquia.nombre}" itemValue="#{parroquia.id}"/>
                             <p:ajax event="change" listener="#{jrvController.cambiarParroquiaMesa}"
+                                    process="@this" update=":frmMJRV:recintoMesa :frmMJRV:tabsMJRV:tblMesas"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field col-12 md:col-6 lg:col-2 mb-2">
+                        <p:outputLabel for="recintoMesa" styleClass="font-medium text-700 text-sm" value="#{msg['mjrv.label.recinto']}"/>
+                        <p:selectOneMenu id="recintoMesa" value="#{jrvController.recintoMesaId}"
+                                         disabled="#{jrvController.restringidoAMesaAsignada}"
+                                         styleClass="w-full" filter="true" filterMatchMode="contains">
+                            <f:selectItem itemLabel="#{msg['gestionPadron.todos']}" itemValue="#{null}"/>
+                            <f:selectItems value="#{jrvController.recintosMesas}" var="recintoOpcion"
+                                           itemLabel="#{recintoOpcion.nombre}" itemValue="#{recintoOpcion.id}"/>
+                            <p:ajax event="change" listener="#{jrvController.cambiarRecintoMesa}"
                                     process="@this" update=":frmMJRV:tabsMJRV:tblMesas"/>
                         </p:selectOneMenu>
                     </div>
-                </div>
-            </div>
-
-            <p:outputPanel id="pnlSeleccionMesas" layout="block">
-                <div class="border-top-1 surface-border pt-3 mb-3">
-                    <div class="formgrid grid align-items-end">
-                        <div class="field col-12 md:col-6 lg:col-5">
-                            <label for="busquedaMesa" class="font-medium text-700 text-sm">#{msg['mjrv.buscar.mesa']}</label>
-                            <div class="flex gap-2">
-                                <p:inputText id="busquedaMesa" value="#{jrvController.busquedaMesa}" styleClass="w-full"
-                                             maxlength="100" placeholder="#{msg['mjrv.buscar.mesa.placeholder']}"/>
-                                <p:commandButton icon="pi pi-search" title="#{msg['mjrv.buscar.mesa']}"
-                                                 action="#{jrvController.buscarMesas}" process=":frmMJRV:tabsMJRV:busquedaMesa"
-                                                 update=":frmMJRV:tabsMJRV:tblMesas"/>
-                            </div>
-                        </div>
-                        <div class="field col-12 md:col-2">
+                    <div class="field col-12 lg:col-3 mb-2">
+                        <p:outputLabel for="busquedaMesa" styleClass="font-medium text-700 text-sm" value="#{msg['mjrv.buscar.mesa']}"/>
+                        <div class="flex gap-2">
+                            <p:inputText id="busquedaMesa" value="#{jrvController.busquedaMesa}" styleClass="w-full"
+                                         maxlength="100" placeholder="#{msg['mjrv.buscar.mesa.placeholder']}"/>
+                            <p:commandButton icon="pi pi-search" title="#{msg['mjrv.buscar.mesa']}"
+                                             ariaLabel="#{msg['mjrv.buscar.mesa']}"
+                                             action="#{jrvController.buscarMesas}" process=":frmMJRV:busquedaMesa"
+                                             update=":frmMJRV:tabsMJRV:tblMesas"/>
                             <p:commandButton icon="pi pi-filter-slash" title="#{msg['mjrv.filtros.limpiar']}"
-                                             styleClass="ui-button-outlined w-full"
+                                             ariaLabel="#{msg['mjrv.filtros.limpiar']}"
+                                             styleClass="ui-button-outlined ui-button-secondary"
                                              action="#{jrvController.limpiarFiltrosMesas}" process="@this"
-                                             update=":frmMJRV:tabsMJRV:pnlSeleccion"/>
+                                             update=":frmMJRV:cantonMesa :frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:busquedaMesa :frmMJRV:tabsMJRV:tblMesas"/>
                         </div>
                     </div>
+                </div>
+            </p:outputPanel>
+
+            <p:tabView id="tabsMJRV" widgetVar="wdTabsMJRV" dynamic="false" cache="true"
+                       styleClass="surface-card shadow-1 border-round-lg">
+                <p:tab id="tabMesas" title="#{msg['mjrv.tab.mesas']}">
+                <div class="p-3">
                     <p:dataTable id="tblMesas" value="#{jrvController.mesasFiltradas}" var="mesa"
                                  paginator="true" rows="12" first="#{jrvController.primeraFilaMesa}"
                                  rowsPerPageTemplate="12,25,50" reflow="true" styleClass="ui-datatable-sm mjrv-mesas-table"
@@ -120,36 +132,43 @@
                         <p:ajax event="rowSelect" listener="#{jrvController.seleccionarMesaDesdeTabla}"
                                 process="@this"
                                 update=":frmMJRV:tabsMJRV:tblMesas :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
-                        <p:column headerText="#{msg['mjrv.label.recinto']}" sortBy="#{mesa.recinto.nombre}">
-                            #{mesa.recinto.nombre}
+                        <p:column headerText="#{msg['mjrv.label.recinto']}" sortBy="#{mesa.recinto.nombre}"
+                                  style="min-width:12rem">
+                            <span class="font-medium text-900">#{mesa.recinto.nombre}</span>
                         </p:column>
-                        <p:column headerText="#{msg['mjrv.label.mesa']}" sortBy="#{mesa.nombre}">
+                        <p:column headerText="#{msg['mjrv.label.mesa']}" sortBy="#{mesa.nombre}"
+                                  style="width:7rem">
                             #{mesa.nombre}
                         </p:column>
-                        <p:column headerText="#{msg['mjrv.tabla.ubicacion']}" sortBy="#{mesa.recinto.cantonNombre}">
-                            #{mesa.recinto.cantonNombre} - #{mesa.recinto.ubicacionNombre}
+                        <p:column headerText="#{msg['mjrv.tabla.ubicacion']}" sortBy="#{mesa.recinto.cantonNombre}"
+                                  style="min-width:11rem">
+                            <span class="text-700">#{mesa.recinto.cantonNombre}</span>
+                            <small class="block text-500">#{mesa.recinto.ubicacionNombre}</small>
                         </p:column>
                         <p:column headerText="#{msg['mjrv.mesas.estado']}"
-                                  sortBy="#{jrvController.resumenMesas[mesa.id].estadoClave}">
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].estadoClave}"
+                                  styleClass="text-center" style="width:8.5rem">
                             <p:tag value="#{msg[jrvController.resumenMesas[mesa.id].estadoClave]}"
                                    severity="#{jrvController.resumenMesas[mesa.id].severidad}"/>
                         </p:column>
+                        <!-- Solo la cifra: la leyenda repetía el encabezado en cada fila.
+                             getProgreso() ya entrega asignados/requeridos. -->
                         <p:column headerText="#{msg['mjrv.mesas.miembros']}"
-                                  sortBy="#{jrvController.resumenMesas[mesa.id].miembrosAsignados}">
-                            <h:outputFormat value="#{msg['mjrv.mesas.progreso']}">
-                                <f:param value="#{jrvController.resumenMesas[mesa.id].progreso}"/>
-                            </h:outputFormat>
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].miembrosAsignados}"
+                                  styleClass="text-center mjrv-col-num" style="width:7rem">
+                            <h:outputText value="#{jrvController.resumenMesas[mesa.id].progreso}"
+                                          styleClass="font-medium text-900"/>
                         </p:column>
+                        <!-- Sin etiqueta: un cero en color de aviso ya señala la mesa sin
+                             iglesias, y el detalle sigue en el tab de Conformación. -->
                         <p:column headerText="#{msg['mjrv.mesas.iglesias']}"
-                                  sortBy="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}">
-                            <h:outputText value="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"/>
-                            <p:tag value="#{msg['mjrv.mesas.sin.iglesias.etiqueta']}" severity="warning"
-                                   rendered="#{jrvController.resumenMesas[mesa.id].sinIglesias}"/>
+                                  sortBy="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"
+                                  styleClass="text-center mjrv-col-num" style="width:7rem">
+                            <h:outputText value="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"
+                                          title="#{jrvController.resumenMesas[mesa.id].sinIglesias ? msg['mjrv.mesas.sin.iglesias.etiqueta'] : ''}"
+                                          styleClass="font-medium #{jrvController.resumenMesas[mesa.id].sinIglesias ? 'text-orange-500' : 'text-900'}"/>
                         </p:column>
                     </p:dataTable>
-                </div>
-            </p:outputPanel>
-                </p:outputPanel>
                 </div>
                 </p:tab>
 
@@ -178,6 +197,19 @@
                               rendered="#{jrvController.mesaSeleccionadaValida and jrvController.juntaCompleta}">
                     <i class="pi pi-check-circle mr-2"></i><h:outputText value="#{msg['mjrv.acta.parcial.conformada']}"/>
                 </h:panelGroup>
+                <!-- Estado vacío: sin mesa no hay junta que conformar. Va dentro de
+                     pnlResumen, que siempre se renderiza, para no condicionar el
+                     renderizado de los destinos de update. -->
+                <ui:fragment rendered="#{not jrvController.mesaSeleccionadaValida}">
+                    <div class="text-center py-4">
+                        <i class="pi pi-inbox text-400" style="font-size:1.75rem"></i>
+                        <div class="text-900 font-medium mt-2">#{msg['mjrv.empty.sin.mesa.titulo']}</div>
+                        <p class="text-500 text-sm mt-1 mb-3">#{msg['mjrv.empty.sin.mesa.ayuda']}</p>
+                        <p:commandButton value="#{msg['mjrv.boton.ir.mesas']}" icon="pi pi-arrow-left" type="button"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         onclick="PF('wdTabsMJRV').select(0)"/>
+                    </div>
+                </ui:fragment>
             </p:outputPanel>
 
             <div class="flex justify-content-end mb-3">

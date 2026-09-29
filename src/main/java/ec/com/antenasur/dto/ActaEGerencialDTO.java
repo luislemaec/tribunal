@@ -20,6 +20,9 @@ public class ActaEGerencialDTO implements Serializable {
     private String provincia;
     private String canton;
     private String parroquia;
+    /** Ids geográficos, para filtrar el listado en memoria sin volver a consultar. */
+    private Integer cantonId;
+    private Integer parroquiaId;
     private String recinto;
     private String mesa;
     private String presidenteMesa;
@@ -43,6 +46,47 @@ public class ActaEGerencialDTO implements Serializable {
             case OBSERVADO, ANULADO -> "danger";
             case ABIERTO, EN_CONTEO, CONTEO_REGISTRADO, REABIERTO -> "warning";
             default -> "secondary";
+        };
+    }
+
+    /** Icono del estado, para distinguirlo de un vistazo junto a la etiqueta. */
+    public String getEstadoIcono() {
+        if (estadoEscrutinio == null) {
+            return "pi pi-clock";
+        }
+        return switch (estadoEscrutinio) {
+            case CERRADO -> "pi pi-check-circle";
+            case OBSERVADO, ANULADO -> "pi pi-exclamation-triangle";
+            case ABIERTO, EN_CONTEO, CONTEO_REGISTRADO, REABIERTO -> "pi pi-spin pi-sync";
+            default -> "pi pi-clock";
+        };
+    }
+
+    /**
+     * Clave del rótulo de la acción principal de la fila, según el estado. Mismo patrón
+     * que ResumenMesaJrvDTO.getEstadoClave(): el DTO decide la clave y la vista la
+     * resuelve contra el bundle. No altera ninguna regla del escrutinio; solo nombra la
+     * acción que ya permite el estado.
+     */
+    public String getAccionClave() {
+        if (estadoEscrutinio == null) {
+            return "actaE.accion.iniciar";
+        }
+        return switch (estadoEscrutinio) {
+            case PENDIENTE -> "actaE.accion.iniciar";
+            case CERRADO, ANULADO -> "actaE.accion.ver";
+            default -> "actaE.accion.continuar";
+        };
+    }
+
+    public String getAccionIcono() {
+        if (estadoEscrutinio == null) {
+            return "pi pi-play";
+        }
+        return switch (estadoEscrutinio) {
+            case PENDIENTE -> "pi pi-play";
+            case CERRADO, ANULADO -> "pi pi-eye";
+            default -> "pi pi-pencil";
         };
     }
 }

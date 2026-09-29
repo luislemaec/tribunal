@@ -366,6 +366,20 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                 escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId));
     }
 
+    /**
+     * Cabeceras de todas las mesas del proceso, indexadas por mesa, en una sola
+     * consulta. Para listados que de otro modo consultarian mesa por mesa.
+     */
+    public java.util.Map<Integer, EscrutinioCabeceraDTO> buscarCabecerasDTOPorProceso(Integer procesoId) {
+        java.util.Map<Integer, EscrutinioCabeceraDTO> resultado = new java.util.HashMap<>();
+        if (procesoId == null) {
+            return resultado;
+        }
+        escrutinioCabeceraFacade.buscarPorProcesoIndexadoPorMesa(procesoId)
+                .forEach((mesaId, cabecera) -> resultado.put(mesaId, EscrutinioCabeceraDTO.fromEntity(cabecera)));
+        return resultado;
+    }
+
     /** Confirma los valores revisados contra el acta f\u00edsica, sin modificar la evidencia. */
     public EscrutinioCabeceraDTO validarResultadosFinalesDTO(Integer documentoId, Integer mesaId, Integer procesoId,
             ec.com.antenasur.dto.RevisionActaFinalDTO revision) {

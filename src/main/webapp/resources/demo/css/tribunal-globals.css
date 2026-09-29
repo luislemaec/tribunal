@@ -766,3 +766,28 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
  * ========================================================================== */
 .tec-acta-upload .ui-fileupload-choose { width:100%; justify-content:center; }
 .tec-acta-upload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }
+
+/* Tabla de mesas de MJRV: las columnas de cifras se alinean entre filas y, en
+   reflow móvil, vuelven a la izquierda junto a su etiqueta. */
+.mjrv-mesas-table td.mjrv-col-num, .mjrv-mesas-table th.mjrv-col-num { font-variant-numeric: tabular-nums; }
+.mjrv-mesas-table td, .mjrv-mesas-table th { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .mjrv-mesas-table.ui-datatable-reflow td.mjrv-col-num { text-align: left; }
+}
+
+/* Listado gerencial de escrutinios (actaE): cifras alineadas entre filas y, en
+   reflow móvil, pegadas a su etiqueta para no dejar huecos. */
+.actae-tabla-gerencial td.actae-col-num, .actae-tabla-gerencial th.actae-col-num { font-variant-numeric: tabular-nums; }
+.actae-tabla-gerencial td, .actae-tabla-gerencial th { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-num { text-align: left; }
+}
+/* Panel operativo de escrutinio: barra de avance discreta y columnas de contexto
+   geográfico que se ocultan en móvil, donde priman recinto, mesa, estado y acción. */
+.actae-avance-barra .ui-progressbar { height: .5rem; border: 0 none; background: var(--surface-200, #e9ecef); }
+.actae-avance-barra .ui-progressbar-value { background: #b45309; border: 0 none; }
+.actae-avance-barra .ui-progressbar-label { display: none; }
+@media (max-width: 640px) {
+    .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-contexto,
+    .actae-tabla-gerencial th.actae-col-contexto { display: none; }
+}

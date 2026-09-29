@@ -94,6 +94,12 @@ public class DocumentoBean implements Serializable {
         return documentoService.getDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }
 
+    /** Version en lote para listados: una consulta para todas las entidades. */
+    public java.util.Map<Integer, List<Documentos>> getDocumentosPorEntidadesYTipoDoc(
+            List<Integer> entidadIds, int tipoDocId) {
+        return documentoService.getDocumentosPorEntidadesYTipoDoc(entidadIds, tipoDocId);
+    }
+
     public boolean getTieneDocumentosPorEntidadYTipoDoc(int entidadId, int tipoDocId) {
         return documentoService.getTieneDocumentosPorEntidadYTipoDoc(entidadId, tipoDocId);
     }

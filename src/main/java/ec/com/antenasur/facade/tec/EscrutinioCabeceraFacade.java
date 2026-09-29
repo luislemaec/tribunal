@@ -36,6 +36,33 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         }
     }
 
+    /**
+     * Cabeceras activas de todas las mesas del proceso en una sola consulta, indexadas
+     * por mesa. Evita una consulta por fila al construir el listado de escrutinios.
+     */
+    public java.util.Map<Integer, EscrutinioCabecera> buscarPorProcesoIndexadoPorMesa(Integer procesoId) {
+        java.util.Map<Integer, EscrutinioCabecera> resultado = new java.util.HashMap<>();
+        if (procesoId == null) {
+            return resultado;
+        }
+        try {
+            String sql = "SELECT e FROM EscrutinioCabecera e"
+                    + " LEFT JOIN FETCH e.mesa m"
+                    + " LEFT JOIN FETCH m.recinto r"
+                    + " WHERE e.proceso.id = :procesoId AND e.estado = TRUE";
+            for (EscrutinioCabecera cabecera : super.getEntityManager()
+                    .createQuery(sql, EscrutinioCabecera.class)
+                    .setParameter("procesoId", procesoId).getResultList()) {
+                if (cabecera.getMesa() != null && cabecera.getMesa().getId() != null) {
+                    resultado.put(cabecera.getMesa().getId(), cabecera);
+                }
+            }
+        } catch (Exception e) {
+            return resultado;
+        }
+        return resultado;
+    }
+
     public long contarCerradasPorProceso(Integer procesoId) {
         if (procesoId == null) {
             return 0L;

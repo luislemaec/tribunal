@@ -11,6 +11,7 @@ import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.Mesa;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -106,6 +107,39 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         query.setParameter("mesaId", mesaId);
         query.setParameter("procesoId", procesoId);
         return query.getResultList();
+    }
+
+    /**
+     * Documentos de varias entidades y un tipo, en una sola consulta y agrupados por
+     * entidad. Pensado para listados que antes consultaban documento por documento.
+     * Cada lista llega ordenada por id descendente, igual que la consulta unitaria.
+     */
+    public java.util.Map<Integer, List<Documentos>> getDocumentosPorEntidadesYTipoDoc(
+            List<Integer> entidadIds, Integer tipoDocId) {
+        java.util.Map<Integer, List<Documentos>> resultado = new java.util.HashMap<>();
+        if (entidadIds == null || entidadIds.isEmpty() || tipoDocId == null) {
+            return resultado;
+        }
+        try {
+            String sql = HQL
+                    + " LEFT JOIN FETCH d.tipoDocumento tp"
+                    + " LEFT JOIN FETCH d.documentoOrigen origen"
+                    + " WHERE d.entidadId IN :entidadIds"
+                    + " AND tp.id=:tipoDocId"
+                    + " AND d.estado = TRUE"
+                    + " ORDER BY d.id DESC";
+            TypedQuery<Documentos> query = super.getEntityManager().createQuery(sql, Documentos.class);
+            query.setParameter("entidadIds", entidadIds);
+            query.setParameter("tipoDocId", tipoDocId);
+            for (Documentos documento : query.getResultList()) {
+                if (documento.getEntidadId() != null) {
+                    resultado.computeIfAbsent(documento.getEntidadId(), clave -> new ArrayList<>()).add(documento);
+                }
+            }
+        } catch (Exception e) {
+            return resultado;
+        }
+        return resultado;
     }
 
     public List<Documentos> getDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
