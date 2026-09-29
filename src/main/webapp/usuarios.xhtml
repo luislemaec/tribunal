@@ -20,18 +20,14 @@
         <!-- ======================================================
              ENCABEZADO
              ====================================================== -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
-                        <i class="pi pi-shield text-white" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.usuarios.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Administración de cuentas de acceso, roles y asignaciones por iglesia</p>
-                    </div>
-                </div>
+        <div class="flex align-items-start gap-3 mb-3">
+            <div class="flex justify-content-center align-items-center border-round-lg mt-1"
+                 style="width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
+                <i class="pi pi-shield text-white"></i>
+            </div>
+            <div>
+                <h2 class="m-0 text-900 font-semibold text-xl">#{msg['form.usuarios.title']}</h2>
+                <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.usuarios.subtitulo']}</p>
             </div>
         </div>
 
@@ -48,7 +44,7 @@
                 <!-- Mensajes del sistema -->
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <span class="text-lg text-900 font-bold">Usuarios registrados</span>
+                    <span class="text-900 font-semibold">#{msg['form.usuarios.seccion.registrados']}</span>
                     <p:commandButton value="#{msg['form.usuarios.btn.new']}" icon="pi pi-plus"
                                      styleClass="ui-button-success"
                                      actionListener="#{usuarioControlador.crearNuevoUsuario}"
@@ -117,7 +113,7 @@
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <!-- Acceso: username (bold) + correo apilados -->
-                    <p:column headerText="Acceso" style="min-width:13rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.acceso']}" style="min-width:13rem">
                         <f:facet name="export">
                             <h:outputText value="#{rolUs.usuario.username} — #{rolUs.usuario.correo}"/>
                         </f:facet>
@@ -162,14 +158,33 @@
                     </p:column>
 
                     <p:column headerText="#{msg['form.usuarios.table.header.estado']}"
-                              styleClass="text-center" style="width:9rem">
-                        <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
-                               severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"/>
+                              styleClass="text-center" style="width:11rem">
+                        <!-- Dos indicadores independientes: la vigencia de la cuenta y si el
+                             usuario ya definió su propia contraseña (usu_permanente).
+                             El tooltip va en p:tooltip anclado al bloque contenedor:
+                             p:tag no expone el atributo title, así que un title en el tag
+                             no llegaba a renderizarse. -->
+                        <div class="flex flex-column align-items-center gap-1">
+                            <h:panelGroup layout="block">
+                                <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
+                                       severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"
+                                       icon="#{rolUs.usuario.estado ? 'pi pi-check-circle' : 'pi pi-ban'}"/>
+                                <p:tooltip for="@parent" position="top"
+                                           value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active.hint'] : msg['form.usuarios.status.inactive.hint']}"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" rendered="#{rolUs.usuario.estado}">
+                                <p:tag value="#{rolUs.usuario.permanente ? msg['form.usuarios.status.clave.cambiada'] : msg['form.usuarios.status.clave.pendiente']}"
+                                       severity="#{rolUs.usuario.permanente ? 'info' : 'warning'}"
+                                       icon="#{rolUs.usuario.permanente ? 'pi pi-lock' : 'pi pi-lock-open'}"/>
+                                <p:tooltip for="@parent" position="bottom"
+                                           value="#{rolUs.usuario.permanente ? msg['form.usuarios.status.clave.cambiada.hint'] : msg['form.usuarios.status.clave.pendiente.hint']}"/>
+                            </h:panelGroup>
+                        </div>
                     </p:column>
 
                     <!-- Acciones -->
-                    <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:10rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.acciones']}" exportable="false"
+                              styleClass="text-center" style="width:13rem">
 
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="ui-button-rounded ui-button-text ui-button-warning"
@@ -201,6 +216,20 @@
                                          process="@this" update="tblUsuarios">
                             <p:confirm header="#{msg['form.usuarios.confirm.reset.password.header']}"
                                        message="#{msg['form.usuarios.confirm.reset.password.message']}"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+
+                        <!-- Alterna usu_permanente: exime del cambio obligatorio de
+                             contraseña o vuelve a exigirlo. Reversible. -->
+                        <p:commandButton icon="#{rolUs.usuario.permanente ? 'pi pi-lock-open' : 'pi pi-lock'}"
+                                         styleClass="ui-button-rounded ui-button-text #{rolUs.usuario.permanente ? 'ui-button-warning' : 'ui-button-info'}"
+                                         title="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
+                                         ariaLabel="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
+                                         rendered="#{rolUs.usuario.estado}"
+                                         action="#{usuarioControlador.alternarPermanente(rolUs.usuario)}"
+                                         process="@this" update="tblUsuarios">
+                            <p:confirm header="#{msg['form.usuarios.confirm.permanente.header']}"
+                                       message="#{rolUs.usuario.permanente ? msg['form.usuarios.confirm.permanente.revertir'] : msg['form.usuarios.confirm.permanente.activar']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
 
@@ -271,11 +300,16 @@
                                 <label for="rolUs" class="font-medium text-700 text-sm">
                                     #{msg['form.usuarios.label.username']} <span class="text-red-500">*</span>
                                 </label>
+                                <!-- Editable también en modificación: es la identidad con la
+                                     que autentica Elytron. El servicio comprueba que el
+                                     nombre no esté ocupado por otra cuenta antes de guardar. -->
                                 <p:inputText id="rolUs"
                                              value="#{usuarioControlador.usuarioSeleccionado.username}"
                                              required="true"
-                                             disabled="#{not usuarioControlador.esUsuarioNuevo}"
+                                             requiredMessage="#{msg['form.usuarios.msg.username.requerido']}"
+                                             maxlength="255"
                                              styleClass="w-full"/>
+                                <small class="text-500 block mt-1">#{msg['form.usuarios.hint.username']}</small>
                             </div>
 
                             <div class="field col-12 md:col-6">

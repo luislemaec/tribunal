@@ -226,8 +226,7 @@ public class UsuarioControlador implements Serializable {
         }
         try {
             UsuarioDTO restablecido = usuarioService.restablecerContraseniaACedula(usuario.getId());
-            JsfUtil.addSuccessMessage("La contraseña de " + restablecido.getUsername()
-                    + " fue restablecida a su cédula. Deberá cambiarla al ingresar.");
+            JsfUtil.addSuccessMessageFromBundle("form.usuarios.msg.reset.exito", restablecido.getUsername());
         } catch (ec.com.antenasur.exception.NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
@@ -305,6 +304,7 @@ public class UsuarioControlador implements Serializable {
                 JsfUtil.addSuccessMessage(reactivado
                         ? "Usuario reactivado correctamente."
                         : "Usuario registrado correctamente.");
+                advertirSiNombreAccesoNoEsLaCedula(creado);
                 if (!reactivado) {
                     try {
                         enviarCorreoCreacionUser();
@@ -324,6 +324,7 @@ public class UsuarioControlador implements Serializable {
                 this.usuarioSeleccionado = actualizado;
                 cargarCatalogos();
                 JsfUtil.addInfoMessage(actualizado.getUsername() + ", ACTUALIZADO");
+                advertirSiNombreAccesoNoEsLaCedula(actualizado);
             }
         } catch (ec.com.antenasur.exception.NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -331,6 +332,42 @@ public class UsuarioControlador implements Serializable {
         } catch (Exception e) {
             JsfUtil.addErrorMessage("No fue posible guardar el usuario.");
             FacesContext.getCurrentInstance().validationFailed();
+        }
+    }
+
+    /**
+     * Alterna el estado permanente de la cuenta: exime del cambio obligatorio de
+     * contraseña o vuelve a exigirlo. Es reversible, de modo que un clic por error se
+     * deshace pulsando de nuevo.
+     */
+    public void alternarPermanente(UsuarioDTO usuario) {
+        if (usuario == null || usuario.getId() == null) {
+            JsfUtil.addWarningMessage("No fue posible determinar el usuario.");
+            return;
+        }
+        boolean nuevoValor = !Boolean.TRUE.equals(usuario.getPermanente());
+        try {
+            UsuarioDTO actualizado = usuarioService.establecerPermanente(usuario.getId(), nuevoValor);
+            JsfUtil.addSuccessMessageFromBundle(nuevoValor
+                    ? "form.usuarios.msg.permanente.activado"
+                    : "form.usuarios.msg.permanente.revertido", actualizado.getUsername());
+            cargarCatalogos();
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            JsfUtil.addErrorMessageFromBundle("form.usuarios.msg.permanente.error");
+        }
+    }
+
+    /**
+     * Aviso no bloqueante: el nombre de acceso guardado no es el documento de la persona.
+     * El guardado ya se realizó; solo se advierte de la consecuencia práctica, porque el
+     * restablecimiento deja como contraseña el nombre de acceso y no la cédula.
+     */
+    private void advertirSiNombreAccesoNoEsLaCedula(UsuarioDTO guardado) {
+        if (guardado != null && Boolean.TRUE.equals(guardado.getUsuarioDistintoCedula())) {
+            JsfUtil.addWarningMessageFromBundle("form.usuarios.msg.username.distinto.cedula",
+                    guardado.getUsername(), guardado.getPersonaDocumento());
         }
     }
 

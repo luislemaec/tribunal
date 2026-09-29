@@ -37,6 +37,12 @@ public class UsuarioDTO implements Serializable {
     private Boolean tienePasswordTemporal;
     /** Indica que la operación reutilizó una cuenta eliminada lógicamente. */
     private Boolean reactivado;
+    /**
+     * Aviso informativo, no bloqueante: el nombre de acceso guardado no coincide con el
+     * documento de la persona. La contraseña de restablecimiento se deriva del nombre de
+     * acceso, así que en esos casos no será la cédula.
+     */
+    private Boolean usuarioDistintoCedula;
 
     private Integer personaId;
     private String personaDocumento;

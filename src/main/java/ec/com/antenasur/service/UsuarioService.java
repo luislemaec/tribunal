@@ -305,7 +305,10 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		nuevo.setIglesia(iglesia);
 		nuevo.setEstado(true);
 		nuevo.setPermanente(false);
-		nuevo.setContrasenia(passwordService.hashBcrypt(personaPersistida.getDocumento()));
+		// La clave inicial es el nombre de acceso, igual que en el restablecimiento:
+		// usu_nombre es el valor con el que Elytron autentica. Derivarla del documento
+		// impedia el primer ingreso cuando usu_nombre no coincidia con la cedula.
+		nuevo.setContrasenia(passwordService.hashBcrypt(nuevo.getUsername().trim()));
 		Usuario usuarioPersistido = usuarioFacade.create(nuevo);
 
 		RolUsuario relacion = new RolUsuario();
@@ -320,7 +323,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 			vinculo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
 			iglesiaPersonaFacade.create(vinculo);
 		}
-		return UsuarioDTO.fromEntity(usuarioPersistido);
+		UsuarioDTO creado = UsuarioDTO.fromEntity(usuarioPersistido);
+		creado.setUsuarioDistintoCedula(nombreAccesoDistintoDelDocumento(usuarioPersistido));
+		return creado;
 	}
 
 	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
@@ -514,13 +519,29 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 				&& Boolean.TRUE.equals(relacionDestino.getEstado())) {
 			throw new NegocioException("El usuario ya tiene asignado el rol seleccionado.");
 		}
+		String nombreAcceso = dto.getUsername() == null ? null : dto.getUsername().trim();
+		boolean usernameCambio = nombreAcceso != null && !nombreAcceso.isBlank()
+				&& !nombreAcceso.equals(actual.getUsername());
+		if (usernameCambio) {
+			// usu_nombre es la identidad de acceso y tiene restriccion unica que
+			// incluye las cuentas dadas de baja: se comprueba antes de escribir para
+			// devolver un mensaje claro en lugar de un fallo de integridad.
+			Usuario ocupado = usuarioFacade.findByUsuarioNameIncluyendoInactivos(nombreAcceso);
+			if (ocupado != null && !ocupado.getId().equals(actual.getId())) {
+				throw new NegocioException(
+						"El nombre de usuario " + nombreAcceso + " ya está asignado a otra cuenta.");
+			}
+		}
 		boolean correoCambio = !java.util.Objects.equals(actual.getCorreo(), dto.getCorreo());
 		boolean iglesiaCambio = !java.util.Objects.equals(
 				actual.getIglesia() != null ? actual.getIglesia().getId() : null,
 				iglesia != null ? iglesia.getId() : null);
+		if (usernameCambio) {
+			actual.setUsername(nombreAcceso);
+		}
 		actual.setCorreo(dto.getCorreo());
 		actual.setIglesia(iglesia);
-		if (correoCambio || iglesiaCambio) {
+		if (usernameCambio || correoCambio || iglesiaCambio) {
 			usuarioFacade.edit(actual);
 		}
 
@@ -534,7 +555,48 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 				rolUsuarioFacade.edit(relacionActual);
 			}
 		}
-		return UsuarioDTO.fromEntity(actual);
+		UsuarioDTO resultado = UsuarioDTO.fromEntity(actual);
+		resultado.setUsuarioDistintoCedula(nombreAccesoDistintoDelDocumento(actual));
+		return resultado;
+	}
+
+	/**
+	 * Marca o desmarca la cuenta como permanente, es decir exenta del cambio obligatorio
+	 * de contraseña en el siguiente ingreso.
+	 *
+	 * <p>No toca la contraseña ni sus marcas derivadas: solo cambia
+	 * {@code usu_permanente}, que es lo que consulta el login para decidir si redirige a
+	 * la pantalla de cambio. Al volver a exigir el cambio se conserva la clave vigente,
+	 * de modo que el usuario entra con ella y el sistema le pide cambiarla.</p>
+	 *
+	 * @param permanente true exime del cambio obligatorio; false vuelve a exigirlo
+	 */
+	public UsuarioDTO establecerPermanente(Integer usuarioId, boolean permanente) {
+		if (usuarioId == null) {
+			throw new NegocioException("No fue posible determinar el usuario.");
+		}
+		Usuario usuario = usuarioFacade.find(usuarioId);
+		if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado())) {
+			throw new NegocioException("El usuario ya no está activo o no existe.");
+		}
+		if (Boolean.valueOf(permanente).equals(usuario.getPermanente())) {
+			return UsuarioDTO.fromEntity(usuario);
+		}
+		usuario.setPermanente(permanente);
+		return UsuarioDTO.fromEntity(usuarioFacade.edit(usuario));
+	}
+
+	/**
+	 * Señal informativa para la interfaz: el nombre de acceso no coincide con el documento
+	 * de la persona. No impide guardar; solo permite advertir que, en ese caso, el
+	 * restablecimiento dejará como contraseña el nombre de acceso y no la cédula.
+	 */
+	private boolean nombreAccesoDistintoDelDocumento(Usuario usuario) {
+		if (usuario == null || usuario.getUsername() == null || usuario.getPersonsa() == null
+				|| usuario.getPersonsa().getDocumento() == null) {
+			return false;
+		}
+		return !usuario.getUsername().trim().equals(usuario.getPersonsa().getDocumento().trim());
 	}
 
 	/**
@@ -796,17 +858,32 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 	 */
 	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
 	@ec.com.antenasur.security.menu.AccesoPagina({ "usuarios" })
+	/**
+	 * Restablece la contraseña al propio nombre de usuario (la cédula, en la práctica).
+	 *
+	 * <p>La clave se deriva de {@code usu_nombre} y no del documento de la persona,
+	 * porque {@code usu_nombre} es el valor con el que Elytron autentica
+	 * ({@code SELECT usu_clave FROM tb_usuario WHERE usu_nombre = ?}). Derivarla del
+	 * documento hacía que, cuando ambos valores no coincidían, el ingreso
+	 * «usuario / usuario» fallara con credenciales inválidas.</p>
+	 *
+	 * <p>Se guarda el hash BCrypt en Modular Crypt Format, el mismo formato que espera
+	 * el {@code modular-crypt-mapper} del realm, y se deja {@code usu_permanente} en
+	 * falso para que el siguiente ingreso obligue a cambiar la contraseña.</p>
+	 */
 	public UsuarioDTO restablecerContraseniaACedula(Integer usuarioId) {
 		if (usuarioId == null) {
 			throw new NegocioException("No fue posible determinar el usuario.");
 		}
 		Usuario usuario = usuarioFacade.find(usuarioId);
-		if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado()) || usuario.getPersonsa() == null
-				|| usuario.getPersonsa().getDocumento() == null || usuario.getPersonsa().getDocumento().isBlank()) {
-			throw new NegocioException("El usuario no tiene una cédula válida para restablecer la contraseña.");
+		if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado())) {
+			throw new NegocioException("El usuario ya no está activo o no existe.");
 		}
-		String cedula = usuario.getPersonsa().getDocumento().trim();
-		usuario.setContrasenia(passwordService.hashBcrypt(cedula));
+		if (usuario.getUsername() == null || usuario.getUsername().isBlank()) {
+			throw new NegocioException("El usuario no tiene un nombre de acceso válido para restablecer la contraseña.");
+		}
+		String nombreAcceso = usuario.getUsername().trim();
+		usuario.setContrasenia(passwordService.hashBcrypt(nombreAcceso));
 		usuario.setContraseniaTemp(null);
 		usuario.setPermanente(false);
 		usuario.setLink(null);
