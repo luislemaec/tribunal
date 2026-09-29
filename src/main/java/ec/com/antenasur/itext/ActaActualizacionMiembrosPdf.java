@@ -10,10 +10,8 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.BarcodeQRCode;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 
@@ -21,7 +19,13 @@ import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.util.Constantes;
 
-/** Genera el acta institucional de actualizacion de miembros de una iglesia. */
+/**
+ * Genera el acta institucional de actualización de miembros de una iglesia.
+ *
+ * <p>El encabezado sigue el diseño del Acta Parcial de Escrutinio: plantilla
+ * institucional con un código de barras único por acta en la cabecera, sin la línea
+ * técnica de código y fecha. El título se imprime en el cuerpo.</p>
+ */
 public final class ActaActualizacionMiembrosPdf {
 
     private static final BaseColor AZUL_INSTITUCIONAL = new BaseColor(24, 82, 133);
@@ -29,25 +33,28 @@ public final class ActaActualizacionMiembrosPdf {
     private ActaActualizacionMiembrosPdf() {
     }
 
+    /**
+     * @param codigoBarras identificador opaco y único del acta; se imprime como código
+     *                     de barras y no contiene datos de la iglesia, del proceso ni
+     *                     de las personas.
+     */
     public static byte[] generar(IglesiaDTO iglesia, String procesoNombre,
             List<IglesiaPersonaDTO> miembros, String presidenteTribunal,
             String secretarioTribunal, String administradorIglesia,
-            LocalDateTime fechaGeneracion, String codigoDocumento, String payloadQr) {
+            LocalDateTime fechaGeneracion, String codigoBarras) {
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
-            PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4(salida, codigoDocumento,
-                    Constantes.getMensaje("actaActualizacion.pdf.titulo"), fechaGeneracion);
+            PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4ConCodigoBarras(salida,
+                    Constantes.getMensaje("actaActualizacion.pdf.titulo"), fechaGeneracion, codigoBarras);
             Document documento = contexto.documento();
             try {
                 Font titulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, AZUL_INSTITUCIONAL);
                 Font subtitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.BLACK);
                 Font normal = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
-                Font pequeno = FontFactory.getFont(FontFactory.HELVETICA, 7, BaseColor.DARK_GRAY);
 
                 agregarTitulo(documento, titulo, subtitulo);
                 agregarDatos(documento, iglesia, procesoNombre, miembros.size(), fechaGeneracion, subtitulo, normal);
                 agregarMiembros(documento, miembros, subtitulo, normal);
                 agregarFirmas(documento, presidenteTribunal, secretarioTribunal, administradorIglesia, normal);
-                agregarVerificacion(documento, codigoDocumento, payloadQr, pequeno);
             } finally {
                 documento.close();
             }
@@ -80,10 +87,16 @@ public final class ActaActualizacionMiembrosPdf {
         agregarDato(datos, Constantes.getMensaje("actaActualizacion.pdf.totalMiembros"),
                 String.valueOf(totalMiembros), etiqueta, valor);
         agregarDato(datos, Constantes.getMensaje("actaActualizacion.pdf.fecha"),
-                fechaGeneracion.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")), etiqueta, valor);
+                fechaGeneracion.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), etiqueta, valor);
         documento.add(datos);
     }
 
+    /**
+     * Tabla de miembros. La cabecera se repite en cada página, así que el acta se lee
+     * igual con pocas o con muchas personas. La habilitación sale de
+     * {@code igpe_habilitado_padron}: un valor nulo se muestra como «No», igual que lo
+     * trata el padrón, que solo incorpora a quien está habilitado explícitamente.
+     */
     private static void agregarMiembros(Document documento, List<IglesiaPersonaDTO> miembros,
             Font cabecera, Font normal) throws Exception {
         Paragraph seccion = new Paragraph(Constantes.getMensaje("actaActualizacion.pdf.miembros"), cabecera);
@@ -91,32 +104,44 @@ public final class ActaActualizacionMiembrosPdf {
         seccion.setSpacingAfter(6f);
         documento.add(seccion);
 
-        PdfPTable tabla = new PdfPTable(new float[]{0.45f, 1.3f, 3.5f, 0.85f});
+        PdfPTable tabla = new PdfPTable(new float[]{0.45f, 1.3f, 3.2f, 0.75f, 1.2f});
         tabla.setWidthPercentage(100);
         tabla.setHeaderRows(1);
         agregarCabecera(tabla, Constantes.getMensaje("actaActualizacion.pdf.col.numero"), cabecera);
         agregarCabecera(tabla, Constantes.getMensaje("actaActualizacion.pdf.col.documento"), cabecera);
         agregarCabecera(tabla, Constantes.getMensaje("actaActualizacion.pdf.col.nombre"), cabecera);
         agregarCabecera(tabla, Constantes.getMensaje("actaActualizacion.pdf.col.sexo"), cabecera);
+        agregarCabecera(tabla, Constantes.getMensaje("actaActualizacion.pdf.col.habilitado"), cabecera);
+        String si = Constantes.getMensaje("actaActualizacion.pdf.si");
+        String no = Constantes.getMensaje("actaActualizacion.pdf.no");
         int numero = 1;
         for (IglesiaPersonaDTO miembro : miembros) {
+            boolean conPersona = miembro != null && miembro.getPersona() != null;
             agregarCelda(tabla, String.valueOf(numero++), normal, Element.ALIGN_CENTER);
-            agregarCelda(tabla, miembro != null && miembro.getPersona() != null
-                    ? miembro.getPersona().getDocumento() : "", normal, Element.ALIGN_LEFT);
-            agregarCelda(tabla, miembro != null && miembro.getPersona() != null
-                    ? miembro.getPersona().getNombres() : "", normal, Element.ALIGN_LEFT);
-            agregarCelda(tabla, miembro != null && miembro.getPersona() != null
-                    ? miembro.getPersona().getSexo() : "", normal, Element.ALIGN_CENTER);
+            agregarCelda(tabla, conPersona ? miembro.getPersona().getDocumento() : "", normal, Element.ALIGN_LEFT);
+            agregarCelda(tabla, conPersona ? miembro.getPersona().getNombres() : "", normal, Element.ALIGN_LEFT);
+            agregarCelda(tabla, conPersona ? miembro.getPersona().getSexo() : "", normal, Element.ALIGN_CENTER);
+            agregarCelda(tabla, miembro != null && Boolean.TRUE.equals(miembro.getHabilitadoPadron()) ? si : no,
+                    normal, Element.ALIGN_CENTER);
         }
         documento.add(tabla);
     }
 
+    /**
+     * Firmas. El bloque completo se mantiene unido para que, con muchos miembros, no
+     * quede el título en una página y las firmas en la siguiente.
+     */
     private static void agregarFirmas(Document documento, String presidenteTribunal,
             String secretarioTribunal, String administradorIglesia, Font normal) throws Exception {
-        Paragraph seccion = new Paragraph(Constantes.getMensaje("actaActualizacion.pdf.firmas"), normal);
-        seccion.setSpacingBefore(18f);
-        seccion.setSpacingAfter(8f);
-        documento.add(seccion);
+        PdfPTable bloque = new PdfPTable(1);
+        bloque.setWidthPercentage(100);
+        bloque.setSpacingBefore(18f);
+        bloque.setKeepTogether(true);
+
+        PdfPCell titulo = new PdfPCell(new Phrase(Constantes.getMensaje("actaActualizacion.pdf.firmas"), normal));
+        titulo.setBorder(PdfPCell.NO_BORDER);
+        titulo.setPaddingBottom(8f);
+        bloque.addCell(titulo);
 
         PdfPTable firmas = new PdfPTable(3);
         firmas.setWidthPercentage(100);
@@ -127,27 +152,12 @@ public final class ActaActualizacionMiembrosPdf {
                 Constantes.getMensaje("actaActualizacion.pdf.firma.secretario"), normal));
         firmas.addCell(celdaFirma(administradorIglesia,
                 Constantes.getMensaje("actaActualizacion.pdf.firma.administrador"), normal));
-        documento.add(firmas);
-    }
+        PdfPCell contenedor = new PdfPCell(firmas);
+        contenedor.setBorder(PdfPCell.NO_BORDER);
+        contenedor.setPadding(0f);
+        bloque.addCell(contenedor);
 
-    private static void agregarVerificacion(Document documento, String codigo, String payloadQr,
-            Font pequeno) throws Exception {
-        PdfPTable verificacion = new PdfPTable(new float[]{3.8f, 1f});
-        verificacion.setWidthPercentage(100);
-        verificacion.setSpacingBefore(14f);
-        PdfPCell texto = new PdfPCell(new Phrase(
-                Constantes.getMensaje("actaActualizacion.pdf.verificacion", codigo), pequeno));
-        texto.setBorder(PdfPCell.NO_BORDER);
-        texto.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        verificacion.addCell(texto);
-        BarcodeQRCode qr = new BarcodeQRCode(payloadQr, 115, 115, null);
-        Image imagenQr = qr.getImage();
-        imagenQr.scaleToFit(76f, 76f);
-        PdfPCell qrCelda = new PdfPCell(imagenQr, false);
-        qrCelda.setBorder(PdfPCell.NO_BORDER);
-        qrCelda.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        verificacion.addCell(qrCelda);
-        documento.add(verificacion);
+        documento.add(bloque);
     }
 
     private static PdfPCell celdaFirma(String nombre, String cargo, Font fuente) {
@@ -171,6 +181,7 @@ public final class ActaActualizacionMiembrosPdf {
         PdfPCell celda = new PdfPCell(new Phrase(texto(texto), fuente));
         celda.setBackgroundColor(new BaseColor(232, 240, 247));
         celda.setHorizontalAlignment(Element.ALIGN_CENTER);
+        celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
         celda.setPadding(5f);
         tabla.addCell(celda);
     }

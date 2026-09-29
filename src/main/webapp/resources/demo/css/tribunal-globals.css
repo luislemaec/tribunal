@@ -266,6 +266,21 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
 .tabla-asignar-admin-compacta .ui-column-filter {
     font-size: .8rem;
     padding: .3rem .45rem;
+    /* El filtro ocupa su celda sin desbordarla, sea cual sea el ancho de la columna. */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Con scrollable, cabecera y cuerpo son tablas distintas: el layout fijo hace que
+   ambas respeten los mismos anchos declarados en cada p:column y queden alineadas. */
+.tabla-asignar-admin-compacta table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Nombres largos parten en varias líneas en lugar de ensanchar la tabla. */
+.tabla-asignar-admin-compacta td.tabla-asignar-admin__nombre {
+    overflow-wrap: anywhere;
 }
 
 /* Selección por fila: resalta la fila activa en las tablas maestro-detalle

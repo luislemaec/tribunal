@@ -738,6 +738,22 @@ public class PersonaController implements Serializable {
                 && estadoActaActualizacion.isPuedeGenerar();
     }
 
+    /**
+     * Ayuda del botón «Generar acta» con la causa concreta cuando está deshabilitado:
+     * no alcanzar el mínimo de miembros registrados o no tenerlos todos actualizados.
+     * La regla la decide el servicio; aquí solo se explica.
+     */
+    public String getAyudaActaActualizacion() {
+        if (isPuedeGenerarActaActualizacion()) {
+            return JsfUtil.getMessage("actaActualizacion.ayuda.generar");
+        }
+        int minimo = Constantes.getMinimoMiembrosActaActualizacion();
+        if (estadoActaActualizacion != null && estadoActaActualizacion.getTotalMiembros() < minimo) {
+            return JsfUtil.getMessage("actaActualizacion.error.minimo", minimo);
+        }
+        return JsfUtil.getMessage("actaActualizacion.ayuda.incompleta");
+    }
+
     public boolean isActaActualizacionDisponible() {
         return estadoActaActualizacion != null && estadoActaActualizacion.getDocumentoId() != null;
     }

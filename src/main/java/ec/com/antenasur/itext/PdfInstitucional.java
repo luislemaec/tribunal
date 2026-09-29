@@ -68,29 +68,34 @@ public final class PdfInstitucional {
     }
 
     /**
-     * Formulario manual de acta parcial: mismo lienzo institucional que el resto
-     * de documentos A4; en lugar del código lleva el proceso electoral como dato
-     * de encabezado.
+     * Documento A4 con encabezado limpio: la plantilla institucional y un código de
+     * barras en la cabecera, sobre el bloque «DOCUMENTO OFICIAL», sin la línea técnica
+     * de título, código y fecha. Para actas que llevan su propio título en el cuerpo.
      */
-    /**
-     * Formulario manual de acta parcial sobre la plantilla institucional. El
-     * código de barras se imprime en el encabezado, sobre el bloque «DOCUMENTO
-     * OFICIAL», para no restar espacio al formulario, que debe caber en una
-     * sola hoja.
-     */
-    public static Contexto crearA4ActaParcial(OutputStream salida, String titulo,
-            String procesoElectoral, LocalDateTime fechaGeneracion, String codigoBarras) throws Exception {
+    public static Contexto crearA4ConCodigoBarras(OutputStream salida, String titulo,
+            LocalDateTime fechaGeneracion, String codigoBarras) throws Exception {
         LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
         Document documento = new Document(PageSize.A4, MARGEN_IZQUIERDO, MARGEN_DERECHO,
                 MARGEN_SUPERIOR, MARGEN_INFERIOR);
         PdfWriter writer = PdfWriter.getInstance(documento, salida);
-        // El acta lleva su propio título centrado y el proceso electoral en el
-        // cuerpo, así que el encabezado solo aporta la plantilla y el código de
-        // barras; repetirlos arriba sería redundante.
+        // El acta lleva su propio título en el cuerpo, así que el encabezado solo
+        // aporta la plantilla y el código de barras; repetirlos arriba sería
+        // redundante.
         writer.setPageEvent(new PlantillaA4.Fondo(null, null, null, fecha, codigoBarras));
         documento.open();
         aplicarMetadata(documento, titulo);
         return new Contexto(documento, writer, fecha);
+    }
+
+    /**
+     * Formulario manual de acta parcial sobre la plantilla institucional. El
+     * código de barras se imprime en el encabezado para no restar espacio al
+     * formulario, que debe caber en una sola hoja; el proceso electoral va en el
+     * cuerpo del acta.
+     */
+    public static Contexto crearA4ActaParcial(OutputStream salida, String titulo,
+            String procesoElectoral, LocalDateTime fechaGeneracion, String codigoBarras) throws Exception {
+        return crearA4ConCodigoBarras(salida, titulo, fechaGeneracion, codigoBarras);
     }
 
     public static void aplicarMetadata(Document documento, String titulo) {

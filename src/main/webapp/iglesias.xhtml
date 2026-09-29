@@ -177,7 +177,11 @@
                                         process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field col-12 sm:col-7 md:col-3 xl:col-2">
+                        <!-- Filtrar por administrador revelaría el dato de la columna oculta:
+                             sigue el mismo permiso. Oculto conserva su valor por defecto
+                             (TODAS), así que no filtra nada. -->
+                        <h:panelGroup layout="block" styleClass="field col-12 sm:col-7 md:col-3 xl:col-2"
+                                      rendered="#{iglesiaController.puedeVerMiembrosYAdministrador}">
                             <label for="estadoAdministrador" class="tec-field-label">#{msg['iglesias.admin.filtro.label']}</label>
                             <p:selectOneMenu id="estadoAdministrador" value="#{iglesiaController.estadoAdministradorFiltro}"
                                              autoWidth="false" panelStyleClass="tec-select-panel">
@@ -187,7 +191,7 @@
                                 <p:ajax event="change" listener="#{iglesiaController.cambiarFiltroEstadoAdministrador}"
                                         process="@this" update=":frmIglesias:tblIglesia"/>
                             </p:selectOneMenu>
-                        </div>
+                        </h:panelGroup>
                         <div class="field col-12 sm:col-5 md:col-3 xl:col-1 tec-filter-actions-cell">
                             <div class="tec-filter-actions">
                                 <p:commandButton value="#{msg['form.iglesias.filters.btn.clear']}" icon="pi pi-times-circle"
@@ -429,8 +433,11 @@
                     </p:column>
 
                     <!-- Miembros activos: viene precalculado en el DTO con una consulta
-                         agregada para toda la lista; el tag marca las iglesias a revisar -->
+                         agregada para toda la lista; el tag marca las iglesias a revisar.
+                         Solo Administrador, Tribunal y Técnico. Con rendered=false la columna
+                         no llega al HTML ni al exportador PDF. -->
                     <p:column headerText="#{msg['form.iglesias.table.header.miembros']}"
+                              rendered="#{iglesiaController.puedeVerMiembrosYAdministrador}"
                               sortBy="#{iglesia.miembrosActivos}" styleClass="tec-col-fit iglesias-col-miembros">
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.miembrosActivos}"/>
@@ -445,7 +452,9 @@
                         </span>
                     </p:column>
 
+                    <!-- Mismo permiso que Miembros: Administrador, Tribunal y Técnico. -->
                     <p:column headerText="#{msg['form.iglesias.table.header.administrador']}"
+                              rendered="#{iglesiaController.puedeVerMiembrosYAdministrador}"
                               sortBy="#{iglesia.tieneAdministrador}" filterBy="#{iglesia.tieneAdministrador}"
                               filterMatchMode="exact"
                               styleClass="tec-col-fit iglesias-col-admin">
@@ -590,15 +599,20 @@
                         <p:ajax event="rowSelect" listener="#{iglesiaController.seleccionarCandidatoAdministrador}"
                                 process="@this"
                                 update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
+                        <!-- Anchos explícitos: con scrollable, PrimeFaces pinta cabecera y cuerpo
+                             en tablas separadas, y el width:1% de tec-col-fit dejaba Cédula y
+                             su filtro comprimidos y desalineados. Selección y Cédula son fijas;
+                             Nombre toma todo el espacio restante, que es el dato prioritario. -->
                         <p:column selectionMode="single" exportable="false" ariaHeaderText="Seleccionar"
-                                  styleClass="tec-col-fit"/>
+                                  styleClass="text-center" style="width:3rem"/>
                         <p:column headerText="#{msg['iglesias.admin.columna.cedula']}"
                                   filterBy="#{vinculo.persona.documento}" filterMatchMode="contains"
-                                  styleClass="tec-col-fit iglesias-col-ruc">
+                                  styleClass="iglesias-col-ruc" style="width:9.5rem">
                             <h:outputText value="#{vinculo.persona.documento}" styleClass="tec-mono"/>
                         </p:column>
                         <p:column headerText="#{msg['iglesias.admin.columna.nombres']}"
-                                  filterBy="#{vinculo.persona.nombres}" filterMatchMode="contains">
+                                  filterBy="#{vinculo.persona.nombres}" filterMatchMode="contains"
+                                  styleClass="tabla-asignar-admin__nombre">
                             <h:outputText value="#{vinculo.persona.nombres}"/>
                         </p:column>
                     </p:dataTable>

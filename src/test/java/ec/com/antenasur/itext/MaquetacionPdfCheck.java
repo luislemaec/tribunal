@@ -196,10 +196,11 @@ public class MaquetacionPdfCheck {
         for (int i = 0; i < miembros; i++) {
             lista.add(membresia(i));
         }
+        // El acta ya no lleva QR: el último argumento es el identificador que se imprime
+        // como código de barras en la cabecera (formato real: «AM» + 10 caracteres).
         return ActaActualizacionMiembrosPdf.generar(iglesia, "PROCESO ELECTORAL DE PRUEBA 2026", lista,
                 "PRESIDENTE DEL TRIBUNAL DE PRUEBA", "SECRETARIO DEL TRIBUNAL DE PRUEBA",
-                "ADMINISTRADOR DE PRUEBA", LocalDateTime.now(), "AM-PRUEBA-001",
-                "https://tribunal.conpociiech.org/verificacion/AM-PRUEBA-001");
+                "ADMINISTRADOR DE PRUEBA", LocalDateTime.now(), "AM7K2QX9PD4F");
     }
 
     private byte[] actaParcial(int listas) throws Exception {

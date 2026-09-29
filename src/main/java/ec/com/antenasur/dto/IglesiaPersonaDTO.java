@@ -33,9 +33,10 @@ public class IglesiaPersonaDTO implements Serializable {
 
     /**
      * Indica si este miembro está habilitado para el padrón electoral.
-     * {@code null} en registros anteriores a la migración DDL se convierte
-     * a {@code true} en {@link #fromEntity(IglesiaPersona)} para mantener
-     * retrocompatibilidad: todos los miembros previos quedan habilitados.
+     * {@link #fromEntity(IglesiaPersona)} solo lo marca como habilitado cuando la
+     * entidad vale {@code TRUE}: un {@code null} se convierte en {@code false}, igual
+     * que lo tratan las consultas del padrón ({@code habilitadoPadron = TRUE}), para
+     * que la pantalla y los documentos coincidan con quién entra realmente al padrón.
      */
     private Boolean habilitadoPadron;
 

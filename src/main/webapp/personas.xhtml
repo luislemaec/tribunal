@@ -242,7 +242,7 @@
                                     <p:commandButton id="btnGenerarActaActualizacion"
                                                      rendered="#{personaController.restringidoAIglesia}"
                                                      value="#{msg['actaActualizacion.boton.generar']}" icon="pi pi-file-pdf"
-                                                     title="#{personaController.puedeGenerarActaActualizacion ? msg['actaActualizacion.ayuda.generar'] : msg['actaActualizacion.ayuda.incompleta']}"
+                                                     title="#{personaController.ayudaActaActualizacion}"
                                                      actionListener="#{personaController.generarActaActualizacionIglesia}"
                                                      process="@this" update="panelResumenMiembros"
                                                      styleClass="tec-btn ui-button-outlined ui-button-help"

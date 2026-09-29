@@ -82,15 +82,20 @@ public class IglesiaPersona extends EntidadAuditable implements Serializable {
      * electoral de la iglesia. Un miembro puede pertenecer a la iglesia sin
      * necesariamente estar incluido en el padrón.
      *
-     * <p>Columna: {@code igpe_habilitado_padron}. Valor por defecto en BD:
-     * {@code TRUE} (retrocompatibilidad con registros anteriores a la migración).
-     * Null en BD se interpreta como {@code true} en la capa DTO.
+     * <p>Columna: {@code igpe_habilitado_padron}, definida en la migración Flyway
+     * {@code V1__baseline_inicial.sql}. El esquema solo cambia por migraciones.</p>
      *
-     * <p>DDL requerido (ejecutar una sola vez):
-     * <pre>
-     * ALTER TABLE public.tb_iglesia_persona
-     *   ADD COLUMN IF NOT EXISTS igpe_habilitado_padron BOOLEAN DEFAULT TRUE;
-     * </pre>
+     * <p><b>Solo {@code TRUE} habilita.</b> {@code FALSE} y {@code NULL} significan
+     * «no habilitado» en todo el sistema: las consultas del padrón filtran por
+     * {@code habilitadoPadron = TRUE} e {@link ec.com.antenasur.dto.IglesiaPersonaDTO}
+     * convierte un nulo en {@code false}.</p>
+     *
+     * <p>La columna declara {@code DEFAULT TRUE}, pero ese valor por defecto no se
+     * aplica a los registros creados desde la aplicación: Hibernate incluye la
+     * columna en cada {@code INSERT}, de modo que una entidad guardada sin fijar el
+     * valor queda en {@code NULL}. Por eso los flujos de alta lo fijan siempre
+     * explícitamente. Los datos iniciales ({@code V2__datos_iniciales.sql}) se
+     * cargan en {@code FALSE}.</p>
      */
     @Setter
     @Getter

@@ -5,12 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.DeclareRoles;
@@ -46,7 +42,9 @@ public class ActaActualizacionMiembrosService {
 
     private static final int CARGO_PRESIDENTE_TRIBUNAL = 3;
     private static final int CARGO_SECRETARIO_TRIBUNAL = 5;
-    private static final String PROPIEDAD_SECRETO_QR = "tec.documentos.qr.secret";
+    /** Base 32 de Crockford: sin I, L, O ni U para evitar confusiones al leer el código. */
+    private static final String ALFABETO_CODIGO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    private static final java.security.SecureRandom GENERADOR_CODIGO = new java.security.SecureRandom();
 
     @Inject private UsuarioService usuarioService;
     @Inject private IglesiaService iglesiaService;
@@ -61,8 +59,8 @@ public class ActaActualizacionMiembrosService {
 
     public EstadoActaActualizacionDTO evaluarParaUsuarioActual(Integer iglesiaId) {
         ContextoActa contexto = cargarContexto(iglesiaId, false);
-        boolean puedeGenerar = contexto.progreso()[0] > 0
-                && contexto.progreso()[0] == contexto.progreso()[1]
+        boolean puedeGenerar = alcanzaMinimo(contexto.progreso())
+                && estaCompleta(contexto.progreso())
                 && contexto.proceso() != null;
         Integer documentoId = null;
         if (puedeGenerar) {
@@ -95,16 +93,13 @@ public class ActaActualizacionMiembrosService {
 
         Firmantes firmantes = resolverFirmantes(contexto.proceso().getId(), contexto.usuario());
         LocalDateTime fechaGeneracion = LocalDateTime.now();
-        String codigo = "ACTA-ACTUALIZACION-P" + contexto.proceso().getId() + "-I"
-                + contexto.iglesia().getId() + "-"
-                + fechaGeneracion.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
-                + "-" + UUID.randomUUID().toString().substring(0, 8);
-        String payloadQr = construirPayloadQr(codigo, contexto.iglesia().getId(), contexto.proceso().getId(),
-                fechaGeneracion, contexto.hashContexto());
+        // Mismo identificador para el código de barras del PDF y para el registro del
+        // documento, de modo que el papel impreso se puede localizar en el sistema.
+        String codigo = generarCodigoActa();
         byte[] contenido = ActaActualizacionMiembrosPdf.generar(
                 IglesiaDTO.fromEntity(contexto.iglesia()), contexto.proceso().getNombre(), contexto.miembros(),
                 firmantes.presidenteTribunal(), firmantes.secretarioTribunal(),
-                firmantes.administradorIglesia(), fechaGeneracion, codigo, payloadQr);
+                firmantes.administradorIglesia(), fechaGeneracion, codigo);
 
         String nombreArchivo = "acta-actualizacion-iglesia-" + contexto.iglesia().getId() + "-"
                 + fechaGeneracion.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".pdf";
@@ -170,10 +165,29 @@ public class ActaActualizacionMiembrosService {
         return usuario;
     }
 
+    /**
+     * Regla del acta, aplicada también en el servidor al generar: al menos el mínimo
+     * configurado de miembros registrados y todos ellos actualizados. El botón usa la
+     * misma regla, así que la interfaz no puede ofrecer lo que el servidor rechazaría.
+     */
     private void validarActualizacionCompleta(int[] progreso) {
-        if (progreso == null || progreso.length < 2 || progreso[0] <= 0 || progreso[0] != progreso[1]) {
+        if (!alcanzaMinimo(progreso)) {
+            throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.minimo",
+                    Constantes.getMinimoMiembrosActaActualizacion()));
+        }
+        if (!estaCompleta(progreso)) {
             throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.incompleta"));
         }
+    }
+
+    /** progreso = {total de miembros, miembros actualizados}. */
+    private boolean alcanzaMinimo(int[] progreso) {
+        return progreso != null && progreso.length >= 2
+                && progreso[0] >= Constantes.getMinimoMiembrosActaActualizacion();
+    }
+
+    private boolean estaCompleta(int[] progreso) {
+        return progreso != null && progreso.length >= 2 && progreso[0] > 0 && progreso[0] == progreso[1];
     }
 
     private TipoDocumento obtenerTipo() {
@@ -231,37 +245,22 @@ public class ActaActualizacionMiembrosService {
         }
     }
 
-    private String construirPayloadQr(String codigo, Integer iglesiaId, Integer procesoId,
-            LocalDateTime fecha, String hashContexto) {
-        String secreto = obtenerSecretoQr();
-        String payload = "v=1|a=" + codigo + "|i=" + iglesiaId + "|p=" + procesoId
-                + "|t=" + fecha.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "|h=" + hashContexto;
-        String codificado = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-        return codificado + "." + firmar(codificado, secreto);
-    }
-
-    private String obtenerSecretoQr() {
-        String secreto = System.getProperty(PROPIEDAD_SECRETO_QR);
-        if (secreto == null || secreto.isBlank()) {
-            secreto = System.getenv("TEC_DOCUMENTOS_QR_SECRET");
+    /**
+     * Identificador único y opaco del acta para el código de barras: prefijo «AM» (acta
+     * de miembros) más 10 caracteres aleatorios de un generador criptográfico, en base
+     * 32 de Crockford —sin I, L, O ni U, que se confunden al leerlos—. Son 50 bits de
+     * entropía: la colisión es despreciable para el volumen de actas, y el código no
+     * se puede adivinar ni revela iglesia, proceso, fecha o personas.
+     *
+     * <p>Doce caracteres es también el límite para que el Code 128 quepa en el ancho
+     * reservado en la cabecera sin reducirse, lo que conserva la legibilidad.</p>
+     */
+    private String generarCodigoActa() {
+        StringBuilder codigo = new StringBuilder("AM");
+        for (int i = 0; i < 10; i++) {
+            codigo.append(ALFABETO_CODIGO.charAt(GENERADOR_CODIGO.nextInt(ALFABETO_CODIGO.length())));
         }
-        if (secreto == null || secreto.isBlank()) {
-            throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.qr.secreto"));
-        }
-        return secreto;
-    }
-
-    private String firmar(String contenido, String secreto) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secreto.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            return Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(mac.doFinal(contenido.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) {
-            throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.qr.secreto"));
-        }
+        return codigo.toString();
     }
 
     private Path escribirArchivo(byte[] contenido, String nombreArchivo) {

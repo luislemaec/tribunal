@@ -202,6 +202,24 @@ public class Constantes {
         return 2;
     }
 
+    /**
+     * Número mínimo de miembros registrados para generar el acta de actualización de
+     * miembros, además de que todos estén actualizados. Configurable con
+     * {@code tec.acta.actualizacion.miembros.minimo}; es independiente del mínimo que
+     * usa el aviso de revisión del listado de iglesias.
+     */
+    public static int getMinimoMiembrosActaActualizacion() {
+        String valor = loadFromMessages("tec.acta.actualizacion.miembros.minimo");
+        if (valor != null) {
+            try {
+                return Integer.parseInt(valor.trim());
+            } catch (NumberFormatException e) {
+                // Configuración inválida: se mantiene el valor por defecto.
+            }
+        }
+        return 3;
+    }
+
     public static String getMensaje(String clave, Object... argumentos) {
         String mensaje = loadFromMessages(clave);
         if (mensaje == null) {

@@ -352,10 +352,36 @@ public class IglesiaController implements Serializable {
         }
     }
 
+    /**
+     * Comprueba si el usuario autenticado tiene alguno de los roles indicados, con los
+     * roles que la sesión cargó de Elytron. Punto único para los indicadores de
+     * visibilidad de esta pantalla.
+     */
+    private boolean tieneAlgunRol(String... roles) {
+        if (loginBean == null || loginBean.getRoles() == null) {
+            return false;
+        }
+        for (String rol : roles) {
+            if (loginBean.getRoles().contains(rol)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isPuedeGestionarAdministradores() {
-        return loginBean != null && loginBean.getRoles() != null
-                && (loginBean.getRoles().contains("SITEC-Administrador")
-                || loginBean.getRoles().contains("SITEC-Tribunal"));
+        return tieneAlgunRol("SITEC-Administrador", "SITEC-Tribunal");
+    }
+
+    /**
+     * El número de miembros y el administrador de cada iglesia son información de
+     * gestión: solo la ven Administrador, Tribunal y Técnico. Controla tanto las
+     * columnas del listado como la columna de miembros del Excel exportado, para que
+     * el dato no se obtenga por otra vía. El rol SITEC-Tecnico es el registrado en
+     * tb_rol.
+     */
+    public boolean isPuedeVerMiembrosYAdministrador() {
+        return tieneAlgunRol("SITEC-Administrador", "SITEC-Tribunal", "SITEC-Tecnico");
     }
 
     /**
@@ -364,8 +390,7 @@ public class IglesiaController implements Serializable {
      * administrador del sistema.
      */
     public boolean isPuedeVerAuditoria() {
-        return loginBean != null && loginBean.getRoles() != null
-                && loginBean.getRoles().contains("SITEC-Administrador");
+        return tieneAlgunRol("SITEC-Administrador");
     }
 
     /**
@@ -374,9 +399,7 @@ public class IglesiaController implements Serializable {
      * autorización real la aplica {@link IglesiaBajaService}.
      */
     public boolean isPuedeGestionarEliminadas() {
-        return loginBean != null && loginBean.getRoles() != null
-                && (loginBean.getRoles().contains("SITEC-Administrador")
-                || loginBean.getRoles().contains("SITEC-Tribunal"));
+        return tieneAlgunRol("SITEC-Administrador", "SITEC-Tribunal");
     }
 
     // ── Iglesias eliminadas: se consultan solo al abrir el panel ─────────────
@@ -1029,11 +1052,17 @@ public class IglesiaController implements Serializable {
             ReporteXLSX.nuevoExcel("Listado de Iglesias");
             ReporteXLSX.creaEspacioInformativo(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado());
 
-            String[] columnas = {
-                "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
-                "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS"
-            };
-            int[] anchos = { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500 };
+            // La columna de miembros sigue el mismo permiso que en el listado: sin él,
+            // ocultarla en pantalla no serviría porque el Excel la seguiría entregando.
+            boolean incluirMiembros = isPuedeVerMiembrosYAdministrador();
+            String[] columnas = incluirMiembros
+                    ? new String[] { "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
+                        "PROVINCIA", "CANTÓN", "PARROQUIA", "TOTAL MIEMBROS" }
+                    : new String[] { "N°", "RUC / CÓDIGO", "NOMBRE", "COMUNIDAD / BARRIO",
+                        "PROVINCIA", "CANTÓN", "PARROQUIA" };
+            int[] anchos = incluirMiembros
+                    ? new int[] { 2000, 5000, 9000, 7000, 5500, 5500, 5500, 4500 }
+                    : new int[] { 2000, 5000, 9000, 7000, 5500, 5500, 5500 };
             ReporteXLSX.creaCabeceraTabla(columnas, anchos);
 
             String[][] datos = new String[lista.size()][columnas.length];
@@ -1046,7 +1075,9 @@ public class IglesiaController implements Serializable {
                 datos[i][4] = ig.getProvinciaNombre() != null ? ig.getProvinciaNombre() : "";
                 datos[i][5] = ig.getCantonNombre() != null ? ig.getCantonNombre() : "";
                 datos[i][6] = ig.getUbicacionNombre() != null ? ig.getUbicacionNombre() : "";
-                datos[i][7] = ig.getTotalMiembros() != null ? String.valueOf(ig.getTotalMiembros()) : "";
+                if (incluirMiembros) {
+                    datos[i][7] = ig.getTotalMiembros() != null ? String.valueOf(ig.getTotalMiembros()) : "";
+                }
             }
 
             ReporteXLSX.creaContenidoTabla(datos, columnas);
