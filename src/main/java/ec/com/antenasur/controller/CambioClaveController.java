@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.PlantillaCorreoBean;
 import ec.com.antenasur.dto.UsuarioDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.model.tec.PlantillaCorreo;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.service.tec.CorreoService;
@@ -70,14 +71,14 @@ public class CambioClaveController implements Serializable {
     public void cambiarClave() throws RuntimeException, IOException, ServletException {
         try {
             if (usuario == null || usuario.getId() == null) {
-                JsfUtil.addWarningMessage("No fue posible validar la sesión del usuario");
+                JsfUtil.addWarningMessageFromBundle("form.cambioClave.msg.sesion.invalida");
                 return;
             }
             if (claveTemporal == null || clave1 == null || clave2 == null) {
                 return;
             }
             if (!clave1.equals(clave2)) {
-                JsfUtil.addErrorMessage("Las contraseñas no coinciden");
+                JsfUtil.addErrorMessageFromBundle("form.cambioClave.msg.passwords.differ");
                 return;
             }
             if (!JsfUtil.validarContrasenia(clave1)) {
@@ -87,16 +88,20 @@ public class CambioClaveController implements Serializable {
             usuario = usuarioService.cambiarContraseniaAutenticada(usuario.getId(), usuario.getUsername(),
                     claveTemporal, clave1);
             if (usuario == null) {
-                JsfUtil.addErrorMessage("La contraseña actual no es correcta");
+                JsfUtil.addErrorMessageFromBundle("form.cambioClave.msg.actual.incorrecta");
                 return;
             }
 
             enviarCorreoCambioClave();
             loginBean.passwordChangued();
             JsfUtil.redirect("/claveActualizada.jsf");
+        } catch (NegocioException e) {
+            // Reglas de negocio con mensaje propio, como reutilizar la clave vigente.
+            JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
+            // Nunca se registra el valor de las claves: solo la traza del fallo.
             LOG.error("Error al cambiar la contraseña", e);
-            JsfUtil.addErrorMessage("No fue posible cambiar la contraseña");
+            JsfUtil.addErrorMessageFromBundle("form.cambioClave.msg.error");
         }
     }
 

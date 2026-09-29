@@ -931,6 +931,10 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		Usuario usuario = usuarioFacade.findUsuarioPorHashRecuperacion(hashTokenRecuperacion(token));
 		if (usuario == null)
 			return false;
+		// Misma regla que en el cambio autenticado: no se admite volver a fijar la
+		// clave que ya esta vigente.
+		if (passwordService.verifyBcrypt(claveNueva, usuario.getContrasenia()))
+			throw new NegocioException(Constantes.getMensaje("form.cambioClave.msg.reutilizada"));
 		return usuarioFacade.consumirTokenRecuperacion(usuario.getId(), hashTokenRecuperacion(token),
 				passwordService.hashBcrypt(claveNueva));
 	}
@@ -953,6 +957,10 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		if (usuario == null || !Boolean.TRUE.equals(usuario.getEstado()) || !username.equals(usuario.getUsername())
 				|| !passwordService.verifyBcrypt(claveActual, usuario.getContrasenia()))
 			return null;
+		// La nueva clave no puede ser la que ya está vigente: si no, el cambio
+		// obligatorio se resolveria repitiendo la misma credencial.
+		if (passwordService.verifyBcrypt(claveNueva, usuario.getContrasenia()))
+			throw new NegocioException(Constantes.getMensaje("form.cambioClave.msg.reutilizada"));
 		usuario.setContrasenia(passwordService.hashBcrypt(claveNueva));
 		usuario.setContraseniaTemp(null);
 		usuario.setPermanente(true);

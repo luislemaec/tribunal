@@ -7,6 +7,7 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -37,12 +38,18 @@ public class RestablecerClaveController implements Serializable {
     public void restablecer() throws IOException {
         if (token == null || token.isBlank() || clave1 == null || clave2 == null) return;
         if (!clave1.equals(clave2)) {
-            JsfUtil.addErrorMessage("Las contraseñas no coinciden");
+            JsfUtil.addErrorMessageFromBundle("form.cambioClave.msg.passwords.differ");
             return;
         }
         if (!JsfUtil.validarContrasenia(clave1)) return;
-        if (!usuarioService.restablecerConToken(token, clave1)) {
-            JsfUtil.addErrorMessage("El enlace de recuperación no es válido o ha expirado");
+        try {
+            if (!usuarioService.restablecerConToken(token, clave1)) {
+                JsfUtil.addErrorMessageFromBundle("form.restablecerClave.msg.enlace.invalido");
+                return;
+            }
+        } catch (NegocioException e) {
+            // Regla de negocio con mensaje propio: no repetir la clave vigente.
+            JsfUtil.addErrorMessage(e.getMessage());
             return;
         }
         JsfUtil.redirect("/claveActualizada.jsf");

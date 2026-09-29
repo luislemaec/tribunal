@@ -84,7 +84,7 @@ public class OlvidoClaveController implements Serializable {
             JsfUtil.redirect("/recuperaClaveCorrecto.jsf");
         } catch (Exception e) {
             LOG.error("ERROR AL RECUPERAR CONTRASEÃƒ‘A", e);
-            JsfUtil.addErrorMessage("Problemas al restablecer la contrasenia");
+            JsfUtil.addErrorMessageFromBundle("form.olvidoClave.msg.error");
         }
     }
 

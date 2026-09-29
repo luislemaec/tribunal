@@ -887,24 +887,34 @@ public class JsfUtil implements Serializable {
         }
     }
 
+    /**
+     * Política de contraseñas del sistema, única fuente de verdad del servidor: de 8 a
+     * 16 caracteres sin espacios, con al menos un dígito, una mayúscula y una minúscula.
+     * No exige carácter especial, pero lo admite en cualquier posición.
+     *
+     * <p>Los lookaheads usan {@code .*} y no {@code \w*}: con {@code \w*} un símbolo
+     * situado antes del primer dígito o letra hacía fallar la comprobación, de modo que
+     * contraseñas que sí cumplían la política —por ejemplo {@code P@ssword1}— se
+     * rechazaban. La exigencia es la misma; solo se dejan de rechazar contraseñas
+     * válidas.</p>
+     */
+    private static final Pattern PATRON_CONTRASENIA = Pattern.compile("^(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])\\S{8,16}$");
+
+    /** Comprueba la política sin producir mensajes; para validar sin efectos de UI. */
+    public static boolean cumplePoliticaContrasenia(final String clave) {
+        return clave != null && PATRON_CONTRASENIA.matcher(clave).matches();
+    }
+
+    /**
+     * Validación de servidor de la política de contraseñas. Es la definitiva: cualquier
+     * ayuda visual del navegador es solo orientativa.
+     */
     public static boolean validarContrasenia(final String clave) {
-        boolean resultado = false;
-        Integer cadenaPass = clave.length();
-        if (cadenaPass > 7) {
-            Pattern pat = Pattern.compile("^(?=\\w*\\d)(?=\\w*[A-Z])(?=\\w*[a-z])\\S{8,16}$");
-            Matcher mat = pat.matcher(clave);
-            if (mat.matches()) {
-                resultado = true;
-            } else {
-                resultado = false;
-                JsfUtil.addInfoMessage(
-                        "Debe tener al menos un dígito, una minúscula, una mayúscula y un mínimo 8 caracteres");
-            }
-        } else {
-            resultado = false;
-            JsfUtil.addErrorMessage("Por favor ingresar mínimo 8 caracteres en el ingreso de la contraseña");
+        if (cumplePoliticaContrasenia(clave)) {
+            return true;
         }
-        return resultado;
+        JsfUtil.addErrorMessageFromBundle("msg.password.politic");
+        return false;
     }
 
     /**

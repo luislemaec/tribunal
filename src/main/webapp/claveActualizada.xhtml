@@ -1,11 +1,40 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:p="http://primefaces.org/ui">
-    <h:head><title>#{msg['app.sistema']} - Contraseña actualizada</title></h:head>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+        </f:facet>
+        <link rel="shortcut icon" href="#{request.contextPath}/resources/img/favicon.ico" />
+        <title>#{msg['app.sistema']} - #{msg['form.claveActualizada.title']}</title>
+    </h:head>
+    <!--
+      Página pública de confirmación: se muestra después de cerrar la sesión, tanto al
+      cambiar la clave estando autenticado como al restablecerla con un enlace. No hereda
+      de WEB-INF/template.xhtml a propósito, porque en este punto ya no hay sesión que
+      alimente el menú; conserva la identidad visual de login.xhtml.
+    -->
     <h:body styleClass="login-body">
-        <div class="grid"><div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8"><div class="card text-center">
-            <h3>Contraseña actualizada</h3><p>La contraseña se actualizó correctamente. Ya puede iniciar sesión.</p>
-            <h:outputLink value="#{request.contextPath}/index.html">Ir al inicio de sesión</h:outputLink>
-        </div></div></div>
+        <div class="login-topbar">
+            <h:link outcome="/login" class="logo">
+                <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"/>
+            </h:link>
+        </div>
+        <div class="grid">
+            <div class="col-12 md:col-6 lg:col-4 md:col-offset-3 lg:col-offset-4 mt-8">
+                <div class="card text-center">
+                    <i class="pi pi-check-circle text-green-600" style="font-size:2.5rem"></i>
+                    <h5 class="mt-3 mb-2"><b>#{msg['form.claveActualizada.title']}</b></h5>
+                    <p class="text-600 mt-0 mb-4">#{msg['form.claveActualizada.detalle']}</p>
+                    <p:button value="#{msg['form.claveActualizada.btn.login']}" icon="pi pi-sign-in"
+                              outcome="/login" styleClass="ui-button-info"/>
+                </div>
+            </div>
+        </div>
         <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
         <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
     </h:body>

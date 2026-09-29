@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="jakarta.faces.core">
     <h:head>
@@ -39,26 +40,39 @@
                                          style="width: 100%"/>
 
                         <div class="col-12 ui-fluid">
-                            <p:password styleClass=" w-full mt-2" id="claveAnterior" required="true"
+                            <p:outputLabel for="claveAnterior" styleClass="block text-700 font-medium text-sm mt-3 mb-1"
+                                           value="#{msg['form.cambioClave.label.password.old']}"/>
+                            <p:password styleClass="w-full" id="claveAnterior" required="true"
                                         value="#{cambioClaveController.claveTemporal}"
                                         validatorMessage="#{msg['msg.passwordOld.validator']}"
                                         requiredMessage="#{msg['msg.password.required']}"
                                         toggleMask="true"
                                         placeholder="#{msg['form.cambioClave.label.password.old']}"/>
 
-                            <p:password styleClass=" w-full my-3" id="password" required="true"
+                            <p:outputLabel for="password" styleClass="block text-700 font-medium text-sm mt-3 mb-1"
+                                           value="#{msg['form.cambioClave.label.password.new']}"/>
+                            <p:password styleClass="w-full" id="password" required="true"
                                         value="#{cambioClaveController.clave1}"
                                         validatorMessage="#{msg['msg.password.validator']}"
                                         requiredMessage="#{msg['msg.password.required']}"
                                         toggleMask="true"
                                         placeholder="#{msg['form.cambioClave.placeholder.password.new']}"/>
 
-                            <p:password styleClass=" w-full" id="password2" required="true"
+                            <p:outputLabel for="password2" styleClass="block text-700 font-medium text-sm mt-3 mb-1"
+                                           value="#{msg['form.cambioClave.label.password.confirm']}"/>
+                            <p:password styleClass="w-full" id="password2" required="true"
                                         value="#{cambioClaveController.clave2}"
                                         validatorMessage="#{msg['msg.password.validator']}"
                                         requiredMessage="#{msg['msg.password.required']}"
                                         toggleMask="true"
                                         placeholder="#{msg['form.cambioClave.placeholder.password.confirm']}"/>
+
+                            <!-- Requisitos reales de la política, con marca en tiempo real.
+                                 La validación definitiva sigue siendo la del servidor. -->
+                            <ui:include src="/WEB-INF/requisitosClave.xhtml">
+                                <ui:param name="campoClave" value="frmCambioContrasenia:password"/>
+                                <ui:param name="idBloque" value="requisitosCambioClave"/>
+                            </ui:include>
                         </div>
 
                         <div align='center'>

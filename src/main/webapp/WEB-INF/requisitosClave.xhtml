@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets">
+
+    <!--
+      Requisitos de contraseña, compartidos por cambioClave.xhtml y restablecerClave.xhtml.
+      El orden y el texto reflejan exactamente la política que aplica el servidor en
+      JsfUtil.cumplePoliticaContrasenia: 8 a 16 caracteres, sin espacios, con mayúscula,
+      minúscula y número. Los símbolos son opcionales.
+
+      La marca en tiempo real es solo una ayuda del navegador: la validación definitiva
+      es la del servidor, que se ejecuta igualmente al enviar el formulario.
+
+      Parámetros:
+        campoClave  id de cliente del input de contraseña que se vigila
+        idBloque    id del bloque de requisitos, único dentro de la página
+    -->
+    <div id="#{idBloque}" class="tec-clave-requisitos mt-3">
+        <span class="block text-700 font-medium text-sm mb-2">#{msg['form.password.requisitos.titulo']}</span>
+        <ul class="list-none p-0 m-0 text-sm">
+            <li data-regla="longitud" class="flex align-items-center gap-2 mb-1">
+                <i class="pi pi-circle text-400" aria-hidden="true"></i>
+                <span>#{msg['form.password.requisito.longitud']}</span>
+            </li>
+            <li data-regla="mayuscula" class="flex align-items-center gap-2 mb-1">
+                <i class="pi pi-circle text-400" aria-hidden="true"></i>
+                <span>#{msg['form.password.requisito.mayuscula']}</span>
+            </li>
+            <li data-regla="minuscula" class="flex align-items-center gap-2 mb-1">
+                <i class="pi pi-circle text-400" aria-hidden="true"></i>
+                <span>#{msg['form.password.requisito.minuscula']}</span>
+            </li>
+            <li data-regla="numero" class="flex align-items-center gap-2 mb-1">
+                <i class="pi pi-circle text-400" aria-hidden="true"></i>
+                <span>#{msg['form.password.requisito.numero']}</span>
+            </li>
+            <li data-regla="sinEspacios" class="flex align-items-center gap-2 mb-1">
+                <i class="pi pi-circle text-400" aria-hidden="true"></i>
+                <span>#{msg['form.password.requisito.sinEspacios']}</span>
+            </li>
+        </ul>
+        <small class="block text-500 mt-2">#{msg['form.password.requisito.especialOpcional']}</small>
+    </div>
+
+    <h:outputScript target="body">
+        (function () {
+            var idCampo = '#{campoClave}';
+            var idBloque = '#{idBloque}';
+            var reglas = {
+                longitud: function (v) { return v.length >= 8 &amp;&amp; v.length &lt;= 16; },
+                mayuscula: function (v) { return /[A-Z]/.test(v); },
+                minuscula: function (v) { return /[a-z]/.test(v); },
+                numero: function (v) { return /\d/.test(v); },
+                sinEspacios: function (v) { return v.length > 0 &amp;&amp; !/\s/.test(v); }
+            };
+
+            function pintar() {
+                var campo = document.getElementById(idCampo);
+                var bloque = document.getElementById(idBloque);
+                if (!campo || !bloque) { return; }
+                var valor = campo.value || '';
+                Object.keys(reglas).forEach(function (nombre) {
+                    var item = bloque.querySelector('[data-regla="' + nombre + '"]');
+                    if (!item) { return; }
+                    var icono = item.querySelector('i');
+                    var cumple = reglas[nombre](valor);
+                    item.classList.toggle('cumplido', cumple);
+                    if (icono) {
+                        icono.className = cumple ? 'pi pi-check-circle text-green-600' : 'pi pi-circle text-400';
+                    }
+                });
+            }
+
+            function enlazar() {
+                var campo = document.getElementById(idCampo);
+                if (!campo || campo.dataset.requisitosEnlazados === '1') { return; }
+                campo.dataset.requisitosEnlazados = '1';
+                campo.addEventListener('input', pintar);
+                campo.addEventListener('keyup', pintar);
+                pintar();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', enlazar);
+            } else {
+                enlazar();
+            }
+        })();
+    </h:outputScript>
+
+</ui:composition>
