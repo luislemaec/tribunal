@@ -30,6 +30,14 @@ public class RevisionActaFinalDTO implements Serializable {
 		return getValidos() + getBlancos() + getNulos();
 	}
 
+	/**
+	 * Papeletas no utilizadas/restantes registradas en el conteo (categoría «PAPELETAS
+	 * RESTANTES»). No forman parte del total de votos: el acta las consigna aparte.
+	 */
+	public long getPapeletasRestantes() {
+		return sumar("PAPELETAS");
+	}
+
 	public Long getDiferenciaValidos() {
 		return validosDeclarados == null ? null : validosDeclarados.longValue() - getValidos();
 	}

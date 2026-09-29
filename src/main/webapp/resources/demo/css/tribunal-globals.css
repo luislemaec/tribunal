@@ -885,6 +885,63 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
 	padding-top: .55rem;
 }
 
+/* Votos registrados con la forma del acta impresa (subtotal y total sombreados). */
+.acta-comparacion {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: .875rem;
+}
+
+.acta-comparacion th, .acta-comparacion td {
+	padding: .35rem .6rem;
+	border: 1px solid var(--surface-border);
+	text-align: left;
+}
+
+.acta-comparacion th {
+	background: var(--surface-ground);
+	font-size: .75rem;
+	font-weight: 600;
+	letter-spacing: .02em;
+}
+
+.acta-comparacion .acta-comparacion__num {
+	width: 7.5rem;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.acta-comparacion__subtotal td {
+	background: #eef2f7;
+	font-weight: 600;
+}
+
+.acta-comparacion__total td {
+	background: #dfe6ef;
+	font-weight: 700;
+}
+
+/* Controles del sistema: separados del contenido del acta. */
+.acta-comparacion-controles {
+	display: flex;
+	flex-direction: column;
+	gap: .4rem;
+	margin-top: 1rem;
+	padding: .625rem .75rem;
+	border: 1px dashed var(--surface-border);
+	border-radius: 4px;
+	background: var(--surface-ground);
+	font-size: .875rem;
+}
+
+.acta-comparacion-controles__titulo {
+	font-size: .75rem;
+	font-weight: 600;
+	color: var(--text-color-secondary);
+	text-transform: uppercase;
+	letter-spacing: .03em;
+}
+
 @media ( max-width : 991px) {
 	.acta-fisica-dialog {
 		width: 94vw !important;

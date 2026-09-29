@@ -608,23 +608,91 @@
                                             <div class="acta-fisica-panel-subtitulo">#{msg['actaE.actaFisica.registrados.ayuda']}</div>
                                         </div>
                                     </div>
-                                    <p:dataTable value="#{actaEController.listaCamposActaE}" var="registrado"
-                                                 styleClass="ui-datatable-sm acta-fisica-tabla"
-                                                 emptyMessage="#{msg['actaE.empty.categorias']}">
-                                        <p:column headerText="#{msg['actaE.tabla.categoria']}">
-                                            #{registrado.categoriaNombre}
-                                        </p:column>
-                                        <p:column headerText="#{msg['actaE.tabla.votos']}" styleClass="text-right actae-col-num" style="width:7rem">
-                                            <h:outputText value="#{registrado.totalVotos}"/>
-                                        </p:column>
-                                    </p:dataTable>
-                                    <div class="grid acta-fisica-totales">
-                                        <div class="col-6 text-500 text-sm">#{msg['actaE.total.registrado']}</div>
-                                        <div class="col-6 text-right font-semibold">#{actaEController.totalVotosRegistrados}</div>
-                                        <div class="col-6 text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</div>
-                                        <div class="col-6 text-right font-semibold">#{actaEController.totalSufragantesAsignados}</div>
-                                        <div class="col-6 text-500 text-sm">#{msg['actaE.diferencia']}</div>
-                                        <div class="col-6 text-right font-semibold">#{actaEController.diferenciaConteo}</div>
+                                    <!-- Misma estructura y mismos rótulos que el acta impresa
+                                         (claves reportesMesa.acta.*), para leerla fila por fila
+                                         junto a la imagen. Solo números: el sistema no guarda la
+                                         columna «en letras». -->
+                                    <table class="acta-comparacion">
+                                        <thead>
+                                            <tr>
+                                                <th>#{msg['reportesMesa.acta.columna.lista']}</th>
+                                                <th class="acta-comparacion__num">#{msg['reportesMesa.acta.columna.numeros']}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <ui:repeat value="#{actaEController.filasListasActa}" var="fila">
+                                                <tr>
+                                                    <td>#{fila.categoriaNombre}</td>
+                                                    <td class="acta-comparacion__num">#{empty fila.totalVotos ? 0 : fila.totalVotos}</td>
+                                                </tr>
+                                            </ui:repeat>
+                                            <tr class="acta-comparacion__subtotal">
+                                                <td>#{msg['reportesMesa.acta.subtotal.validos']}</td>
+                                                <td class="acta-comparacion__num">#{actaEController.comparacionActa.validos}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>#{msg['reportesMesa.acta.votos.nulos']}</td>
+                                                <td class="acta-comparacion__num">#{actaEController.comparacionActa.nulos}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>#{msg['reportesMesa.acta.votos.blancos']}</td>
+                                                <td class="acta-comparacion__num">#{actaEController.comparacionActa.blancos}</td>
+                                            </tr>
+                                            <tr class="acta-comparacion__total">
+                                                <td>#{msg['reportesMesa.acta.total.votos']}</td>
+                                                <td class="acta-comparacion__num">#{actaEController.comparacionActa.total}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- Papeletas: en el acta van en una tabla aparte, fuera del
+                                         total de votos. -->
+                                    <table class="acta-comparacion mt-2">
+                                        <tbody>
+                                            <tr class="acta-comparacion__subtotal">
+                                                <td>#{msg['reportesMesa.acta.papeletas.restantes']}</td>
+                                                <td class="acta-comparacion__num">
+                                                    <h:outputText value="#{actaEController.comparacionActa.papeletasRestantes}"
+                                                                  rendered="#{actaEController.papeletasRegistradas}"/>
+                                                    <h:outputText value="—" title="#{msg['actaE.comparacion.papeletas.sin.registro']}"
+                                                                  rendered="#{not actaEController.papeletasRegistradas}"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- Categorías que no son ninguna fila del acta: se muestran
+                                         para no ocultar datos; normalmente no hay ninguna. -->
+                                    <h:panelGroup layout="block" rendered="#{not empty actaEController.otrosRegistrosActa}" styleClass="mt-2">
+                                        <small class="block text-500 mb-1">#{msg['actaE.comparacion.otros']}</small>
+                                        <table class="acta-comparacion">
+                                            <tbody>
+                                                <ui:repeat value="#{actaEController.otrosRegistrosActa}" var="otro">
+                                                    <tr>
+                                                        <td>#{otro.categoriaNombre}</td>
+                                                        <td class="acta-comparacion__num">#{empty otro.totalVotos ? 0 : otro.totalVotos}</td>
+                                                    </tr>
+                                                </ui:repeat>
+                                            </tbody>
+                                        </table>
+                                    </h:panelGroup>
+
+                                    <!-- Controles de consistencia: datos del sistema, no del acta. -->
+                                    <div class="acta-comparacion-controles">
+                                        <span class="acta-comparacion-controles__titulo">#{msg['actaE.comparacion.controles']}</span>
+                                        <div class="flex justify-content-between">
+                                            <span>#{msg['actaE.resumen.sufragantes']}</span>
+                                            <span class="font-semibold actae-col-num">#{actaEController.totalSufragantesAsignados}</span>
+                                        </div>
+                                        <div class="flex justify-content-between">
+                                            <span>#{msg['actaE.comparacion.votos.mas.papeletas']}</span>
+                                            <span class="font-semibold actae-col-num">#{actaEController.totalVotosRegistrados}</span>
+                                        </div>
+                                        <div class="flex justify-content-between align-items-center">
+                                            <span>#{msg['actaE.diferencia']}</span>
+                                            <p:tag value="#{actaEController.diferenciaConteo}"
+                                                   severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

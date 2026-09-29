@@ -1722,6 +1722,57 @@ public class ActaEController implements Serializable {
         return contenidoActaFisica != null;
     }
 
+    // ── Votos registrados con la estructura del acta física ──────────────────────
+    // Para cotejar fila por fila con la imagen: listas, subtotal de válidos, nulos,
+    // blancos, total de votos y, aparte, papeletas no utilizadas. La clasificación y los
+    // totales son los de RevisionActaFinalDTO, los mismos con los que el Tribunal valida
+    // después el acta; aquí no se calcula nada propio ni se altera el conteo.
+
+    /** Totales oficiales del acta calculados sobre los votos registrados de la mesa. */
+    public ec.com.antenasur.dto.RevisionActaFinalDTO getComparacionActa() {
+        ec.com.antenasur.dto.RevisionActaFinalDTO comparacion = new ec.com.antenasur.dto.RevisionActaFinalDTO();
+        comparacion.setResultados(listaCamposActaE != null ? listaCamposActaE : new ArrayList<>());
+        return comparacion;
+    }
+
+    /** Filas CANDIDATO / LISTA, en el orden de la categoría, que es el del acta impresa. */
+    public List<EscrutinioDTO> getFilasListasActa() {
+        return filtrarPorClase("LISTA");
+    }
+
+    /** Hay una categoría «PAPELETAS RESTANTES» en el conteo de esta mesa. */
+    public boolean isPapeletasRegistradas() {
+        return !filtrarPorClase("PAPELETAS").isEmpty();
+    }
+
+    /**
+     * Categorías registradas que no encajan en ninguna fila del acta. Se muestran aparte
+     * para no ocultar ningún dato; en un proceso bien configurado la lista está vacía.
+     */
+    public List<EscrutinioDTO> getOtrosRegistrosActa() {
+        List<EscrutinioDTO> otros = new ArrayList<>();
+        if (listaCamposActaE != null) {
+            for (EscrutinioDTO item : listaCamposActaE) {
+                if (item != null && ec.com.antenasur.dto.RevisionActaFinalDTO.clasificar(item) == null) {
+                    otros.add(item);
+                }
+            }
+        }
+        return otros;
+    }
+
+    private List<EscrutinioDTO> filtrarPorClase(String clase) {
+        List<EscrutinioDTO> filas = new ArrayList<>();
+        if (listaCamposActaE != null) {
+            for (EscrutinioDTO item : listaCamposActaE) {
+                if (item != null && clase.equals(ec.com.antenasur.dto.RevisionActaFinalDTO.clasificar(item))) {
+                    filas.add(item);
+                }
+            }
+        }
+        return filas;
+    }
+
     public org.primefaces.model.StreamedContent getImagenActaFisica() {
         if (contenidoActaFisica == null) {
             return null;
