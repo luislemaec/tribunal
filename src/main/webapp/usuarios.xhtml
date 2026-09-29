@@ -55,10 +55,17 @@
                     </p:commandButton>
                 </div>
 
+                <!-- Filtros en una sola rejilla: los campos primero y la celda de acciones
+                     al final. La barra de botones usa .tec-filter-actions, la clase del TEC
+                     que ya emplean iglesias.xhtml y personas.xhtml: PrimeFaces declara
+                     `.ui-fluid .ui-button { width:100% }`, y dentro de este panel ui-fluid
+                     esa regla estiraba Buscar y Limpiar al ancho completo. La clase la
+                     neutraliza con mayor especificidad y en móvil reparte el ancho. -->
                 <p:outputPanel id="pnlBusquedaUsuarios" styleClass="ui-fluid mb-3">
                     <div class="formgrid grid align-items-end">
-                        <div class="field col-12 md:col-3">
-                            <label for="filtroRol" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.rol']}</label>
+                        <div class="field col-12 md:col-6 lg:col-3 mb-2">
+                            <p:outputLabel for="filtroRol" styleClass="font-medium text-700 text-sm"
+                                           value="#{msg['form.usuarios.filter.rol']}"/>
                             <p:selectOneMenu id="filtroRol" value="#{usuarioControlador.filtroUsuarios.rolId}"
                                              filter="true" filterMatchMode="contains">
                                 <f:selectItem itemLabel="#{msg['form.usuarios.filter.rol.todos']}" itemValue="#{null}" noSelectionOption="true"/>
@@ -66,34 +73,50 @@
                                                itemLabel="#{rol.nombre}" itemValue="#{rol.id}"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field col-12 md:col-2">
-                            <label for="filtroUsername" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.username']}</label>
+                        <div class="field col-12 md:col-6 lg:col-3 mb-2">
+                            <p:outputLabel for="filtroUsername" styleClass="font-medium text-700 text-sm"
+                                           value="#{msg['form.usuarios.filter.username']}"/>
                             <p:inputText id="filtroUsername" value="#{usuarioControlador.filtroUsuarios.username}"
                                          maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.username']}"/>
                         </div>
-                        <div class="field col-12 md:col-2">
-                            <label for="filtroNombres" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.nombres']}</label>
+                        <div class="field col-12 md:col-6 lg:col-3 mb-2">
+                            <p:outputLabel for="filtroNombres" styleClass="font-medium text-700 text-sm"
+                                           value="#{msg['form.usuarios.filter.nombres']}"/>
                             <p:inputText id="filtroNombres" value="#{usuarioControlador.filtroUsuarios.nombres}"
                                          maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.nombres']}"/>
                         </div>
-                        <div class="field col-12 md:col-3">
-                            <label for="filtroIglesia" class="font-medium text-700 text-sm">#{msg['form.usuarios.filter.iglesia']}</label>
+                        <div class="field col-12 md:col-6 lg:col-3 mb-2">
+                            <p:outputLabel for="filtroIglesia" styleClass="font-medium text-700 text-sm"
+                                           value="#{msg['form.usuarios.filter.iglesia']}"/>
                             <p:inputText id="filtroIglesia" value="#{usuarioControlador.filtroUsuarios.iglesiaNombre}"
                                          maxlength="255" placeholder="#{msg['form.usuarios.filter.placeholder.iglesia']}"/>
                         </div>
-                        <div class="field col-12 md:col-2 flex align-items-end mb-3">
+
+                        <div class="field col-12 md:col-6 lg:col-8 mb-2 flex align-items-center">
                             <p:selectBooleanCheckbox id="soloDadosBaja"
                                                      value="#{usuarioControlador.filtroUsuarios.soloDadosBaja}"
                                                      itemLabel="#{msg['form.usuarios.filter.dados.baja']}"/>
                         </div>
-                        <div class="field col-12 flex justify-content-end gap-2 mb-0">
-                            <p:commandButton value="#{msg['form.usuarios.btn.search']}" icon="pi pi-search"
-                                             action="#{usuarioControlador.buscarUsuarios}"
-                                             process="pnlBusquedaUsuarios" update="tblUsuarios"/>
-                            <p:commandButton value="#{msg['form.usuarios.btn.clear']}" icon="pi pi-filter-slash"
-                                             styleClass="ui-button-outlined ui-button-secondary"
-                                             action="#{usuarioControlador.limpiarBusquedaUsuarios}"
-                                             process="@this" update="pnlBusquedaUsuarios tblUsuarios"/>
+
+                        <!-- Grupo único de acciones del formulario, dentro de la misma
+                             rejilla que los filtros y alineado a su base.
+                             Buscar solo marca la búsqueda y reinicia la página: la consulta
+                             la hace el LazyDataModel al repintar la tabla. Limpiar desmarca
+                             la búsqueda, así que el modelo devuelve vacío sin consultar.
+                             resetValues descarta valores locales que hubieran quedado en
+                             los campos antes de repintarlos con el filtro limpio. -->
+                        <div class="field col-12 md:col-6 lg:col-4 mb-2 tec-filter-actions-cell">
+                            <div class="tec-filter-actions">
+                                <p:commandButton value="#{msg['form.usuarios.btn.search']}" icon="pi pi-search"
+                                                 styleClass="tec-btn"
+                                                 action="#{usuarioControlador.buscarUsuarios}"
+                                                 process="pnlBusquedaUsuarios" update="tblUsuarios"/>
+                                <p:commandButton value="#{msg['form.usuarios.btn.clear']}" icon="pi pi-filter-slash"
+                                                 styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                                 action="#{usuarioControlador.limpiarBusquedaUsuarios}"
+                                                 process="@this" resetValues="true"
+                                                 update="pnlBusquedaUsuarios tblUsuarios"/>
+                            </div>
                         </div>
                     </div>
                 </p:outputPanel>
@@ -157,94 +180,113 @@
                                       value="—" styleClass="text-400"/>
                     </p:column>
 
+                    <!-- Estado de la cuenta: el modelo solo distingue activo (usu_estado =
+                         true) y dado de baja (false). No existe estado de bloqueo. La
+                         situación de la contraseña no se repite aquí: la muestra el botón de
+                         candado de Acciones y la explica la simbología. -->
                     <p:column headerText="#{msg['form.usuarios.table.header.estado']}"
+                              styleClass="text-center" style="width:9rem">
+                        <h:panelGroup layout="block">
+                            <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
+                                   severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"
+                                   icon="#{rolUs.usuario.estado ? 'pi pi-check-circle' : 'pi pi-ban'}"/>
+                            <p:tooltip for="@parent" position="top"
+                                       value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active.hint'] : msg['form.usuarios.status.inactive.hint']}"/>
+                        </h:panelGroup>
+                    </p:column>
+
+                    <!-- Acciones. Todas redondas de solo icono, separadas con gap y en este
+                         orden: normal (editar) → sensibles que tocan credenciales y piden
+                         confirmación (restablecer, candado) → destructiva al final (baja).
+                         Reactivar es la única acción de una cuenta dada de baja. El texto
+                         de cada una va en p:tooltip y en ariaLabel; se omite title para no
+                         mostrar dos tooltips superpuestos. -->
+                    <p:column headerText="#{msg['form.usuarios.table.header.acciones']}" exportable="false"
                               styleClass="text-center" style="width:11rem">
-                        <!-- Dos indicadores independientes: la vigencia de la cuenta y si el
-                             usuario ya definió su propia contraseña (usu_permanente).
-                             El tooltip va en p:tooltip anclado al bloque contenedor:
-                             p:tag no expone el atributo title, así que un title en el tag
-                             no llegaba a renderizarse. -->
-                        <div class="flex flex-column align-items-center gap-1">
-                            <h:panelGroup layout="block">
-                                <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
-                                       severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"
-                                       icon="#{rolUs.usuario.estado ? 'pi pi-check-circle' : 'pi pi-ban'}"/>
+                        <div class="flex align-items-center justify-content-center gap-1">
+
+                            <p:commandButton icon="pi pi-pencil"
+                                             styleClass="ui-button-rounded ui-button-text"
+                                             ariaLabel="#{msg['form.usuarios.btn.edit.title']}"
+                                             rendered="#{rolUs.usuario.estado}"
+                                             update=":frmUsuarios:outPnlUsuario"
+                                             oncomplete="PF('dlgUsuario').show()"
+                                             process="@this"
+                                             action="#{usuarioControlador.cargarParaEdicion(rolUs)}">
+                                <p:resetInput target=":frmUsuarios:outPnlUsuario"/>
+                                <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.edit.title']}"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-key"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             ariaLabel="#{msg['form.usuarios.btn.reset.password']}"
+                                             rendered="#{rolUs.usuario.estado}"
+                                             action="#{usuarioControlador.restablecerContraseniaACedula(rolUs.usuario)}"
+                                             process="@this" update=":frmUsuarios:tblUsuarios">
+                                <p:confirm header="#{msg['form.usuarios.confirm.reset.password.header']}"
+                                           message="#{msg['form.usuarios.confirm.reset.password.message']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                                <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.reset.password']}"/>
+                            </p:commandButton>
+
+                            <!-- Alterna usu_permanente. Icono y color expresan el riesgo de la
+                                 acción disponible en cada fila:
+                                 · clave inicial (permanente = false) → Eximir: candado abierto
+                                   en ámbar, porque relaja la seguridad al dejar la clave actual;
+                                 · exento (permanente = true) → Volver a exigir: candado cerrado
+                                   en azul, porque la refuerza obligando a renovarla. -->
+                            <p:commandButton icon="#{rolUs.usuario.permanente ? 'pi pi-lock' : 'pi pi-lock-open'}"
+                                             styleClass="ui-button-rounded ui-button-text #{rolUs.usuario.permanente ? 'ui-button-info' : 'ui-button-warning'}"
+                                             ariaLabel="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
+                                             rendered="#{rolUs.usuario.estado}"
+                                             action="#{usuarioControlador.alternarPermanente(rolUs.usuario)}"
+                                             process="@this" update=":frmUsuarios:tblUsuarios">
+                                <p:confirm header="#{msg['form.usuarios.confirm.permanente.header']}"
+                                           message="#{rolUs.usuario.permanente ? msg['form.usuarios.confirm.permanente.revertir'] : msg['form.usuarios.confirm.permanente.activar']}"
+                                           icon="pi pi-exclamation-triangle"/>
                                 <p:tooltip for="@parent" position="top"
-                                           value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active.hint'] : msg['form.usuarios.status.inactive.hint']}"/>
-                            </h:panelGroup>
-                            <h:panelGroup layout="block" rendered="#{rolUs.usuario.estado}">
-                                <p:tag value="#{rolUs.usuario.permanente ? msg['form.usuarios.status.clave.cambiada'] : msg['form.usuarios.status.clave.pendiente']}"
-                                       severity="#{rolUs.usuario.permanente ? 'info' : 'warning'}"
-                                       icon="#{rolUs.usuario.permanente ? 'pi pi-lock' : 'pi pi-lock-open'}"/>
-                                <p:tooltip for="@parent" position="bottom"
-                                           value="#{rolUs.usuario.permanente ? msg['form.usuarios.status.clave.cambiada.hint'] : msg['form.usuarios.status.clave.pendiente.hint']}"/>
-                            </h:panelGroup>
+                                           value="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             ariaLabel="#{msg['form.usuarios.btn.delete']}"
+                                             rendered="#{rolUs.usuario.estado}"
+                                             action="#{usuarioControlador.eliminarUsuario(rolUs.usuario)}"
+                                             process="@this" update=":frmUsuarios:tblUsuarios">
+                                <p:confirm header="#{msg['form.usuarios.confirm.delete.header']}"
+                                           message="#{msg['form.usuarios.confirm.delete.message']}"
+                                           icon="pi pi-exclamation-triangle"/>
+                                <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.delete']}"/>
+                            </p:commandButton>
+
+                            <p:commandButton icon="pi pi-refresh"
+                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             ariaLabel="#{msg['form.usuarios.btn.restore']}"
+                                             rendered="#{not rolUs.usuario.estado}"
+                                             action="#{usuarioControlador.prepararReactivacion(rolUs)}"
+                                             process="@this" update=":frmUsuarios:outPnlReactivarUsuario"
+                                             oncomplete="PF('dlgReactivarUsuario').show()">
+                                <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.restore']}"/>
+                            </p:commandButton>
+
                         </div>
                     </p:column>
 
-                    <!-- Acciones -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.acciones']}" exportable="false"
-                              styleClass="text-center" style="width:13rem">
-
-                        <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
-                                         title="#{msg['form.usuarios.btn.edit.title']}"
-                                         rendered="#{rolUs.usuario.estado}"
-                                         update="frmUsuarios:outPnlUsuario"
-                                         oncomplete="PF('dlgUsuario').show()"
-                                         process="@this"
-                                         action="#{usuarioControlador.cargarParaEdicion(rolUs)}">
-                            <p:resetInput target="frmUsuarios:outPnlUsuario"/>
-                        </p:commandButton>
-
-                        <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                         title="#{msg['form.usuarios.confirm.delete.header']}"
-                                         rendered="#{rolUs.usuario.estado}"
-                                         action="#{usuarioControlador.eliminarUsuario(rolUs.usuario)}"
-                                         process="@this" update="tblUsuarios">
-                            <p:confirm header="#{msg['form.usuarios.confirm.delete.header']}"
-                                       message="#{msg['form.usuarios.confirm.delete.message']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-
-                        <p:commandButton icon="pi pi-key"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-secondary"
-                                         title="#{msg['form.usuarios.btn.reset.password']}"
-                                         rendered="#{rolUs.usuario.estado}"
-                                         action="#{usuarioControlador.restablecerContraseniaACedula(rolUs.usuario)}"
-                                         process="@this" update="tblUsuarios">
-                            <p:confirm header="#{msg['form.usuarios.confirm.reset.password.header']}"
-                                       message="#{msg['form.usuarios.confirm.reset.password.message']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-
-                        <!-- Alterna usu_permanente: exime del cambio obligatorio de
-                             contraseña o vuelve a exigirlo. Reversible. -->
-                        <p:commandButton icon="#{rolUs.usuario.permanente ? 'pi pi-lock-open' : 'pi pi-lock'}"
-                                         styleClass="ui-button-rounded ui-button-text #{rolUs.usuario.permanente ? 'ui-button-warning' : 'ui-button-info'}"
-                                         title="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
-                                         ariaLabel="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
-                                         rendered="#{rolUs.usuario.estado}"
-                                         action="#{usuarioControlador.alternarPermanente(rolUs.usuario)}"
-                                         process="@this" update="tblUsuarios">
-                            <p:confirm header="#{msg['form.usuarios.confirm.permanente.header']}"
-                                       message="#{rolUs.usuario.permanente ? msg['form.usuarios.confirm.permanente.revertir'] : msg['form.usuarios.confirm.permanente.activar']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-
-                        <p:commandButton icon="pi pi-refresh"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-success"
-                                         title="#{msg['form.usuarios.btn.restore']}"
-                                         rendered="#{not rolUs.usuario.estado}"
-                                         action="#{usuarioControlador.prepararReactivacion(rolUs)}"
-                                         process="@this" update="outPnlReactivarUsuario"
-                                         oncomplete="PF('dlgReactivarUsuario').show()">
-                        </p:commandButton>
-
-                    </p:column>
-
                 </p:dataTable>
+
+                <!-- Simbología de las acciones, con los mismos iconos y colores de los
+                     botones. Los textos son los de los propios botones, sacados del
+                     código; no describe acciones que no existan. -->
+                <div class="flex flex-wrap align-items-center column-gap-4 row-gap-2 mt-3 pt-3 border-top-1 surface-border text-sm text-600">
+                    <span class="font-medium text-700">#{msg['form.usuarios.simbologia.titulo']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-pencil text-primary" aria-hidden="true"></i>#{msg['form.usuarios.btn.edit.title']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-key text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.reset.password']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-lock-open text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.activar']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-lock text-blue-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.revertir']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-trash text-red-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.delete']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-refresh text-green-600" aria-hidden="true"></i>#{msg['form.usuarios.btn.restore']}</span>
+                </div>
 
             </div><!-- /surface-card -->
 

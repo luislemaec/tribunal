@@ -14,6 +14,10 @@
             <meta name="apple-mobile-web-app-capable" content="yes" />
         </f:facet>
         <title><ui:insert name="title">#{msg['app.sistema.nombre.completo']}</ui:insert></title>
+        <!-- Icono del aplicativo. Faltaba aquí: todas las páginas internas heredan de
+             esta plantilla y, sin él, el navegador pedía /favicon.ico en la raíz y el
+             icono desaparecía al salir del login. -->
+        <ui:include src="/WEB-INF/favicon.xhtml"/>
 
         <!-- ============================================================
              Polyfills jQuery (necesarios con PrimeFaces 15 / jQuery 3.7+).

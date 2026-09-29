@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets">
+
+    <!--
+      Icono del aplicativo: única definición, incluida por WEB-INF/template.xhtml y por
+      las páginas independientes (login, credenciales, errores y consultas públicas).
+
+      Se resuelve como recurso JSF (#{resource['biblioteca:nombre']}), de modo que el
+      ResourceHandler construye la URL completa —incluido el contextPath y el sufijo del
+      mapeo de Faces— y funciona igual desplegado como ROOT.war (/) o con otro contexto.
+      No se escribe ninguna ruta física ni #{request.contextPath} a mano.
+
+      Debe declararse en todas las páginas: si falta, el navegador pide /favicon.ico en la
+      raíz del sitio, que no existe, y el icono desaparece al navegar.
+    -->
+    <link rel="icon" type="image/x-icon" href="#{resource['img:favicon.ico']}"/>
+
+</ui:composition>

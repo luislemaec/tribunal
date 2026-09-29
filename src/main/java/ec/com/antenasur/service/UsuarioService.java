@@ -571,6 +571,14 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 	 *
 	 * @param permanente true exime del cambio obligatorio; false vuelve a exigirlo
 	 */
+	// Mismas dos capas que el resto de la administración de usuarios (actualizar,
+	// dar de baja, reactivar, restablecer contraseña): @RolesAllowed para la capa
+	// EJB y @AccesoPagina("usuarios") para el mínimo privilegio real, que limita la
+	// operación a quien tiene autorizada esta página en su menú. Sin anotación, el
+	// subsistema EJB (default-missing-method-permissions-deny-access=true) denegaba
+	// la invocación con WFLYEJB0364.
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
+	@ec.com.antenasur.security.menu.AccesoPagina({ "usuarios" })
 	public UsuarioDTO establecerPermanente(Integer usuarioId, boolean permanente) {
 		if (usuarioId == null) {
 			throw new NegocioException("No fue posible determinar el usuario.");
@@ -853,12 +861,6 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 	}
 
 	/**
-	 * Restablece una cuenta activa a la cédula de su titular. La cuenta queda
-	 * obligada a definir una contraseña propia en el siguiente inicio de sesión.
-	 */
-	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
-	@ec.com.antenasur.security.menu.AccesoPagina({ "usuarios" })
-	/**
 	 * Restablece la contraseña al propio nombre de usuario (la cédula, en la práctica).
 	 *
 	 * <p>La clave se deriva de {@code usu_nombre} y no del documento de la persona,
@@ -871,6 +873,8 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 	 * el {@code modular-crypt-mapper} del realm, y se deja {@code usu_permanente} en
 	 * falso para que el siguiente ingreso obligue a cambiar la contraseña.</p>
 	 */
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
+	@ec.com.antenasur.security.menu.AccesoPagina({ "usuarios" })
 	public UsuarioDTO restablecerContraseniaACedula(Integer usuarioId) {
 		if (usuarioId == null) {
 			throw new NegocioException("No fue posible determinar el usuario.");
