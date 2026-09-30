@@ -3,7 +3,6 @@ package ec.com.antenasur.controller;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -519,41 +518,6 @@ public class ActaEController implements Serializable {
         aplicarFiltrosEscrutinio();
     }
 
-    public void cargaCantonesPorProvincia() {
-        if (!usuarioConsultaGerencial) {
-            return;
-        }
-        limpiarSeleccionMesa();
-        cantonSeleccionado = new Geograp();
-        parroquiaSeleccionado = new Geograp();
-        cantones = new ArrayList<>();
-        parroquias = new ArrayList<>();
-        listaRecintos = new ArrayList<>();
-        listaMesas = new ArrayList<>();
-        if (provinciaFiltroId != null) {
-            List<Geograp> hijos = geograpBean.getByFatherId(provinciaFiltroId);
-            cantones = hijos != null ? hijos : new ArrayList<>();
-        }
-    }
-
-    public void cargaRecintosPorParroquias() {
-        try {
-            limpiarSeleccionMesa();
-            listaRecintos = new ArrayList<>();
-            listaMesas = new ArrayList<>();
-            List<Geograp> litaParroquiasTmp = new ArrayList<>();
-            if (this.parroquiaSeleccionado != null && this.parroquiaSeleccionado.getId() != null) {
-                this.parroquiaSeleccionado = geograpBean.getById(this.parroquiaSeleccionado.getId());
-                litaParroquiasTmp.add(this.parroquiaSeleccionado);
-                this.listaRecintos = recintoService.listarDTOsPorParroquias(litaParroquiasTmp);
-            } else if (this.parroquias != null && !this.parroquias.isEmpty()) {
-                this.listaRecintos = recintoService.listarDTOsPorParroquias(this.parroquias);
-            }
-        } catch (Exception e) {
-            log.warn("NO SE PUDO CARGAR RECINTOS", e);
-        }
-    }
-
     public void cargaMesasPorRecintos() {
         limpiarSeleccionMesa();
         listaMesas = new ArrayList<>();
@@ -808,10 +772,6 @@ public class ActaEController implements Serializable {
         limpiarSeleccionMesa();
         // Sin filtros, el listado vuelve a mostrar todas las mesas ya cargadas.
         aplicarFiltrosEscrutinio();
-    }
-
-    public void guardaDatosMesaSeleccionada() {
-        cerrarMesa();
     }
 
     public void registrarApertura() {
@@ -1185,10 +1145,6 @@ public class ActaEController implements Serializable {
         return isMesaCerrada() && getDocumentoActaValido() == null;
     }
 
-    public boolean isActaPdfDisponible() {
-        return getDocumentoActaValido() != null;
-    }
-
     public boolean isActaPdfRegistradaNoDisponible() {
         return isMesaCerrada() && documentosActa != null && !documentosActa.isEmpty() && getDocumentoActaValido() == null;
     }
@@ -1223,19 +1179,34 @@ public class ActaEController implements Serializable {
         }
     }
 
-    public boolean existeArchivoDocumento(Documentos documento) {
-        if (documento == null || documento.getPath() == null || documento.getPath().isBlank()) {
-            return false;
-        }
-        return RepositorioDocumentos.estaDisponible(documento.getPath());
-    }
-
+    /** Votos emitidos más papeletas no utilizadas: todo lo registrado en el conteo. */
     public int getTotalVotosRegistrados() {
         return escrutinioService.calcularTotalVotos(listaCamposActaE);
     }
 
+    /** Votos emitidos (válidos, nulos y blancos), sin las papeletas no utilizadas. */
+    public int getVotosEmitidos() {
+        return getTotalVotosRegistrados() - getPapeletasNoUtilizadas();
+    }
+
+    public int getPapeletasNoUtilizadas() {
+        int papeletas = 0;
+        if (listaCamposActaE != null) {
+            for (EscrutinioDTO item : listaCamposActaE) {
+                if (item != null && item.getTotalVotos() != null
+                        && EscrutinioService.esCategoriaPapeletas(item.getCategoriaNombre())) {
+                    papeletas += item.getTotalVotos();
+                }
+            }
+        }
+        return papeletas;
+    }
+
+    /** Cuadre de papeletas (0 = cuadra); mismo cálculo que guarda EscrutinioService. */
     public int getDiferenciaConteo() {
-        return (totalSufragantesAsignados != null ? totalSufragantesAsignados : 0) - getTotalVotosRegistrados();
+        return EscrutinioService.calcularCuadrePapeletas(
+                totalSufragantesAsignados != null ? totalSufragantesAsignados : 0,
+                getVotosEmitidos(), getPapeletasNoUtilizadas());
     }
 
     public boolean isMesaSeleccionadaValida() {
@@ -1325,10 +1296,6 @@ public class ActaEController implements Serializable {
             return "warning";
         }
         return "secondary";
-    }
-
-    public String getProcesoActivoNombre() {
-        return procesoActivo != null ? procesoActivo.getNombre() : "";
     }
 
     private boolean validarOperacionConteo(boolean cierreFinal) {
@@ -1557,47 +1524,6 @@ public class ActaEController implements Serializable {
         contenido.append(";fecha=").append(JsfUtil.getFechaStringYYYYMMddHHmm(new Date()));
         contenido.append(";usuario=").append(loginBean != null ? loginBean.getUserName() : "");
         return contenido.toString();
-    }
-
-    private List<MesaDTO> obtenerMesasFiltradas() {
-        if (!usuarioConsultaGerencial) {
-            return Collections.emptyList();
-        }
-        List<MesaDTO> mesas = mesaService.listarDTOs();
-        List<MesaDTO> resultado = new ArrayList<>();
-        if (mesas == null) {
-            return resultado;
-        }
-        Integer mesaIdFiltro = mesaSeleccionado != null ? mesaSeleccionado.getId() : null;
-        Integer recintoIdFiltro = recintoSeleccionado != null ? recintoSeleccionado.getId() : null;
-        Integer parroquiaIdFiltro = parroquiaSeleccionado != null ? parroquiaSeleccionado.getId() : null;
-        Integer cantonIdFiltro = cantonSeleccionado != null ? cantonSeleccionado.getId() : null;
-        Map<Integer, Geograp> cacheCantones = new HashMap<>();
-        for (MesaDTO mesa : mesas) {
-            if (mesa == null || mesa.getId() == null) {
-                continue;
-            }
-            if (mesaIdFiltro != null && !mesaIdFiltro.equals(mesa.getId())) {
-                continue;
-            }
-            RecintoDTO recinto = mesa.getRecinto();
-            if (recintoIdFiltro != null && (recinto == null || !recintoIdFiltro.equals(recinto.getId()))) {
-                continue;
-            }
-            Integer parroquiaIdMesa = obtenerParroquiaId(mesa);
-            if (parroquiaIdFiltro != null && !parroquiaIdFiltro.equals(parroquiaIdMesa)) {
-                continue;
-            }
-            Integer cantonIdMesa = obtenerCantonId(mesa);
-            if (cantonIdFiltro != null && !cantonIdFiltro.equals(cantonIdMesa)) {
-                continue;
-            }
-            if (provinciaFiltroId != null && !provinciaFiltroId.equals(obtenerProvinciaId(cantonIdMesa, cacheCantones))) {
-                continue;
-            }
-            resultado.add(mesa);
-        }
-        return resultado;
     }
 
     /**
@@ -2276,23 +2202,6 @@ public class ActaEController implements Serializable {
         return loginBean != null && loginBean.getRoles() != null && loginBean.getRoles().contains(rol);
     }
 
-    private Documentos obtenerActaValidaMesa(Integer mesaId, Integer procesoId) {
-        if (mesaId == null || procesoId == null) {
-            return null;
-        }
-        List<Documentos> documentos = documentoBean.getDocumentosPorEntidadYTipoDoc(mesaId, Constantes.ACTA_ESCRUTINIO);
-        if (documentos == null) {
-            return null;
-        }
-        for (int i = documentos.size() - 1; i >= 0; i--) {
-            Documentos documento = documentos.get(i);
-            if (esDocumentoDelProceso(documento, mesaId, procesoId) && esDocumentoActaValido(documento)) {
-                return documento;
-            }
-        }
-        return null;
-    }
-
     private boolean esDocumentoDelProceso(Documentos documento, Integer mesaId, Integer procesoId) {
         if (documento == null || mesaId == null || procesoId == null) {
             return false;
@@ -2301,21 +2210,6 @@ public class ActaEController implements Serializable {
         String codigo = documento.getCodigo() != null ? documento.getCodigo() : "";
         String nombre = documento.getNombre() != null ? documento.getNombre() : "";
         return codigo.startsWith(prefijo) || nombre.startsWith(prefijo);
-    }
-
-    private String obtenerPresidenteMesa(Integer mesaId, Integer procesoId) {
-        List<MiembroJRVDTO> miembros = miembroJRVService.listarDTOsPorMesaProceso(mesaId, procesoId);
-        if (miembros == null) {
-            return "";
-        }
-        for (MiembroJRVDTO miembro : miembros) {
-            if (miembro != null && esCargoPresidenteMesa(miembro.getCargoNombre())
-                    && miembro.getIglesiaPersona() != null
-                    && miembro.getIglesiaPersona().getPersona() != null) {
-                return nombreCompletoPersona(miembro.getIglesiaPersona().getPersona());
-            }
-        }
-        return "";
     }
 
     private Integer obtenerParroquiaId(MesaDTO mesa) {
@@ -2338,16 +2232,6 @@ public class ActaEController implements Serializable {
         return mesa.getCantonId();
     }
 
-    private Integer obtenerProvinciaId(Integer cantonId, Map<Integer, Geograp> cacheCantones) {
-        Geograp canton = obtenerCanton(cantonId, cacheCantones);
-        return canton != null && canton.getGeograp() != null ? canton.getGeograp().getId() : null;
-    }
-
-    private String obtenerProvinciaNombre(MesaDTO mesa) {
-        Geograp canton = obtenerCanton(obtenerCantonId(mesa), new HashMap<>());
-        return canton != null && canton.getGeograp() != null ? textoNulo(canton.getGeograp().getName()) : "";
-    }
-
     private String obtenerCantonNombre(MesaDTO mesa) {
         if (mesa == null) {
             return "";
@@ -2366,18 +2250,6 @@ public class ActaEController implements Serializable {
             return textoNulo(mesa.getRecinto().getUbicacionNombre());
         }
         return textoNulo(mesa.getUbicacionNombre());
-    }
-
-    private Geograp obtenerCanton(Integer cantonId, Map<Integer, Geograp> cacheCantones) {
-        if (cantonId == null) {
-            return null;
-        }
-        if (cacheCantones.containsKey(cantonId)) {
-            return cacheCantones.get(cantonId);
-        }
-        Geograp canton = geograpBean.getById(cantonId);
-        cacheCantones.put(cantonId, canton);
-        return canton;
     }
 
     private int valorEntero(Integer valor) {

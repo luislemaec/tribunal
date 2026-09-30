@@ -187,10 +187,10 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
             }
         }
         cabecera.setFechaInicioConteo(cabecera.getFechaInicioConteo() != null ? cabecera.getFechaInicioConteo() : new Date());
-        actualizarTotalesCabecera(cabecera, actaItems, totalSufragantes != null ? totalSufragantes : cabecera.getTotalSufragantes());
-        int totalRegistrado = cabecera.getTotalVotosRegistrados() != null ? cabecera.getTotalVotosRegistrados() : 0;
-        int totalMesa = cabecera.getTotalSufragantes() != null ? cabecera.getTotalSufragantes() : 0;
-        cabecera.setEstadoEscrutinio(totalRegistrado == totalMesa
+        int diferencia = actualizarTotalesCabecera(cabecera, actaItems,
+                totalSufragantes != null ? totalSufragantes : cabecera.getTotalSufragantes());
+        // Conteo registrado = cuadre de papeletas en cero (ver actualizarTotalesCabecera).
+        cabecera.setEstadoEscrutinio(diferencia == 0
                 ? EstadoEscrutinio.CONTEO_REGISTRADO : EstadoEscrutinio.EN_CONTEO);
         return escrutinioCabeceraFacade.edit(cabecera);
     }
@@ -595,15 +595,59 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return escrutinioCabeceraFacade.create(nuevo);
     }
 
-    private void actualizarTotalesCabecera(EscrutinioCabecera cabecera, List<Escrutinio> items, Integer totalSufragantes) {
+    /**
+     * Categoría de papeletas no utilizadas/restantes (se acepta la errata «PAPELTAS»).
+     * Criterio único para separarlas de los votos emitidos en la cabecera, el cuadre y
+     * la pantalla de escrutinio.
+     */
+    public static boolean esCategoriaPapeletas(String nombreCategoria) {
+        String categoria = nombreCategoria != null ? nombreCategoria.trim().toUpperCase(java.util.Locale.ROOT) : "";
+        return categoria.contains("PAPELETA") || categoria.contains("PAPELTA");
+    }
+
+    /**
+     * Cuadre de papeletas de la mesa: sufragantes del padrón menos votos emitidos
+     * (válidos, nulos y blancos) menos papeletas no utilizadas. Cero significa que todas
+     * las papeletas están justificadas; la abstención queda en las papeletas no
+     * utilizadas y no cuenta como descuadre.
+     */
+    public static int calcularCuadrePapeletas(int sufragantes, int votosEmitidos, int papeletasNoUtilizadas) {
+        return sufragantes - votosEmitidos - papeletasNoUtilizadas;
+    }
+
+    /** Cuadre de papeletas de una mesa ya registrada (lo usa el dashboard del presidente). */
+    public int calcularCuadrePapeletas(Integer mesaId, Integer procesoId, int sufragantes) {
+        int votosEmitidos = 0;
+        int papeletas = 0;
+        if (mesaId != null && procesoId != null) {
+            for (Escrutinio item : escrutinioFacade.listarPorMesaProceso(mesaId, procesoId)) {
+                int votos = item.getTotalVotos() != null ? item.getTotalVotos() : 0;
+                if (esCategoriaPapeletas(item.getCategoria() != null ? item.getCategoria().getNombre() : null)) {
+                    papeletas += votos;
+                } else {
+                    votosEmitidos += votos;
+                }
+            }
+        }
+        return calcularCuadrePapeletas(sufragantes, votosEmitidos, papeletas);
+    }
+
+    /**
+     * Recalcula los totales de la cabecera (votos emitidos, sin papeletas no utilizadas)
+     * y devuelve el cuadre de papeletas, que también deja anotado en la observación del
+     * conteo cuando no es cero.
+     */
+    private int actualizarTotalesCabecera(EscrutinioCabecera cabecera, List<Escrutinio> items, Integer totalSufragantes) {
         int total = 0;
         int blancos = 0;
         int nulos = 0;
+        int papeletas = 0;
         for (Escrutinio item : items) {
             int votos = item.getTotalVotos() != null ? item.getTotalVotos() : 0;
             String categoria = item.getCategoria() != null && item.getCategoria().getNombre() != null
                     ? item.getCategoria().getNombre().trim().toUpperCase() : "";
-            if (categoria.contains("PAPELETA") || categoria.contains("PAPELTA")) {
+            if (esCategoriaPapeletas(categoria)) {
+                papeletas += votos;
                 continue;
             }
             total += votos;
@@ -618,9 +662,10 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         cabecera.setTotalVotosBlancos(blancos);
         cabecera.setTotalVotosNulos(nulos);
         cabecera.setTotalVotosValidos(total - blancos - nulos);
-        int diferencia = cabecera.getTotalSufragantes() - total;
+        int diferencia = calcularCuadrePapeletas(cabecera.getTotalSufragantes(), total, papeletas);
         cabecera.setObservacionConteo(diferencia == 0 ? "" : Math.abs(diferencia)
-                + (diferencia > 0 ? " VOTOS FALTANTES" : " VOTOS EXCEDENTES"));
+                + (diferencia > 0 ? " PAPELETAS SIN JUSTIFICAR" : " PAPELETAS EXCEDENTES"));
+        return diferencia;
     }
 
     private void validarCambioEstado(EscrutinioCabecera cabecera, EstadoEscrutinio estadoNuevo, String motivo) {
