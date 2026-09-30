@@ -1,0 +1,13 @@
+/* Estilos propios de dashboard.xhtml. Se carga solo en esa vista, después de tribunal-globals.css;
+   lo compartido entre pantallas vive en tribunal-globals.css. */
+
+/* SpeedDial del dashboard: posición flotante (no choca con scrollTop) */
+.ui-speeddial { position: fixed !important; right: 1.5rem !important; bottom: 5rem !important; z-index: 999; }
+
+.dashboard-speeddial.ui-button {
+    background: var(--primary-color) !important; border-color: var(--primary-color) !important;
+    width: 3rem !important; height: 3rem !important;
+    box-shadow: 0 6px 14px rgba(0,0,0,.18) !important;
+}
+
+.dashboard-speeddial.ui-button:hover { background: var(--primary-700) !important; }

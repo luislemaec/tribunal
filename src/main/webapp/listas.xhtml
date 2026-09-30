@@ -22,8 +22,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#a855f7,#7c3aed);flex-shrink:0">
-                        <i class="pi pi-flag text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-flag" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.listas.title']}</h2>
@@ -41,7 +41,7 @@
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.listas.btn.new']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{listaController.nuevo}"
                                          update="outPnlListas" oncomplete="PF('dlgListas').show()">
                             <p:resetInput target="outPnlListas"/>
@@ -49,7 +49,7 @@
                         <p:commandButton id="btnEliminaRegistros"
                                          value="#{listaController.mensajeBotonEliminar}"
                                          icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
+                                         styleClass="tec-btn ui-button-danger"
                                          actionListener="#{listaController.eliminarSeleccionados}"
                                          disabled="#{!listaController.existeSeleccionados()}"
                                          update="@this tblListas">
@@ -64,7 +64,7 @@
                                       chooseIcon="pi pi-download"
                                       disabled="#{listaController.listaSeleccionado.id eq null}"/>
                         <p:commandButton value="#{msg['form.listas.btn.export']}" icon="pi pi-upload"
-                                         styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info" ajax="false"
                                          disabled="#{empty listaController.listas}">
                             <p:dataExporter type="pdf" target="tblListas" fileName="Listas"/>
                         </p:commandButton>
@@ -112,8 +112,9 @@
 
                     <p:column headerText="Acciones" exportable="false"
                               styleClass="text-center" style="width:7rem">
+                      <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         styleClass="rounded-button ui-button-flat ui-button-secondary"
                                          title="#{msg['form.listas.btn.edit.title']}"
                                          update=":frmListas:outPnlListas"
                                          oncomplete="PF('dlgListas').show()"
@@ -124,7 +125,7 @@
                             <p:resetInput target=":frmListas:outPnlListas"/>
                         </p:commandButton>
                         <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                          title="#{msg['form.listas.btn.delete.title']}"
                                          actionListener="#{listaController.eliminarSeleccionado}"
                                          process="@this" update="tblListas">
@@ -134,6 +135,7 @@
                                        message="#{msg['form.listas.confirm.delete.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                      </span>
                     </p:column>
                 </p:dataTable>
 
@@ -193,10 +195,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgListas').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{listaController.guardarSeleccionado}"
                                          update="outPnlListas tblListas"
                                          process="outPnlListas @this"

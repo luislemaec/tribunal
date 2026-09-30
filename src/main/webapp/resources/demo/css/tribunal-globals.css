@@ -1,36 +1,47 @@
-/* tribunal-globals.css — overrides finos sobre las libs Tier 1 */
+/* tribunal-globals.css — overrides finos sobre las libs Tier 1.
+   Solo lo compartido por varias pantallas: componentes tec-* (botones, acciones, tablas,
+   filtros, diálogos, estados), avisos (callout), ajustes de PrimeFaces, del layout y de las
+   librerías de la plantilla. Lo propio de una pantalla va en resources/css/<pantalla>.css,
+   cargado con <h:outputStylesheet library="css" name="..."/> en esa vista; lo compartido
+   por dos pantallas concretas, en un archivo común (p. ej. acta-fisica.css).
+   Colores: solo variables del tema (--primary-*, --surface-*, --text-color*, paleta). */
 
-/* NProgress: usar color primario Ecuador */
-#nprogress .bar      { background: #f59e0b !important; height: 3px; }
-#nprogress .peg      { box-shadow: 0 0 10px #f59e0b, 0 0 5px #f59e0b !important; }
+/* NProgress: la barra se dibuja sobre el topbar, que usa el color primario del tema;
+   por eso toma el color de texto sobre primario (claro u oscuro según el tema). */
+#nprogress .bar { background: var(--primary-color-text) !important; height: 3px; }
+
+#nprogress .peg { box-shadow: 0 0 10px var(--primary-color-text), 0 0 5px var(--primary-color-text) !important; }
 
 /* p:growl (PF 11) — presentación profesional */
-.ui-growl            { top: 70px !important; right: 20px !important; }
+.ui-growl { top: 70px !important; right: 20px !important; }
+
 .ui-growl-item-container {
     border-radius: 10px !important;
     box-shadow: 0 8px 22px rgba(0,0,0,.18) !important;
     margin-bottom: .75rem !important;
 }
-.ui-growl-item-container.ui-growl-info    { border-left: 5px solid #2563eb !important; }
-.ui-growl-item-container.ui-growl-success { border-left: 5px solid #16a34a !important; }
-.ui-growl-item-container.ui-growl-warn    { border-left: 5px solid #d97706 !important; }
+
+.ui-growl-item-container.ui-growl-info { border-left: 5px solid var(--blue-600) !important; }
+
+.ui-growl-item-container.ui-growl-success { border-left: 5px solid var(--green-600) !important; }
+
+.ui-growl-item-container.ui-growl-warn { border-left: 5px solid var(--orange-600) !important; }
+
 .ui-growl-item-container.ui-growl-error,
-.ui-growl-item-container.ui-growl-fatal   { border-left: 5px solid #dc2626 !important; }
+.ui-growl-item-container.ui-growl-fatal { border-left: 5px solid var(--red-600) !important; }
+
 .ui-growl-title {
     font-weight: 700 !important;
     font-size: .95rem !important;
 }
+
 .ui-growl-message p {
     font-size: .85rem !important;
     margin-top: .25rem !important;
 }
 
-/* SweetAlert2: alinear con tema Ecuador */
-.swal2-popup         { border-radius: 12px !important; font-family: inherit !important; }
-.swal2-title         { font-size: 1.1rem !important; }
-
 /* Inputmask placeholder más sutil */
-input[data-inputmask]::placeholder { color: #cbd5e1; }
+input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 /* Buscador del menu principal en topbar */
 .layout-wrapper .layout-topbar .topbar-search-form {
@@ -52,7 +63,7 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     width: 2rem;
     height: 2rem;
     transform: translateY(-50%);
-    color: #64748b !important;
+    color: var(--text-color-secondary) !important;
 }
 
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-profile-icon {
@@ -98,7 +109,8 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     max-width: 100%;
     margin: 0;
     overflow: hidden;
-    color: #ffffff;
+    /* Sin color propio: hereda el que el layout da al perfil en cada tema
+       (#topbar-profile-menu-button span: blanco u oscuro según el fondo del topbar). */
     font-size: clamp(.72rem, .9vw, 1rem);
     font-weight: 600;
     text-overflow: ellipsis;
@@ -119,7 +131,7 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     padding: .05rem .4rem;
     border-radius: .25rem;
     background: rgba(255, 255, 255, .2);
-    color: #ffffff;
+    /* Texto: el del layout para el perfil en cada tema (ver .topbar-perfil__nombre). */
     font-size: clamp(.6rem, .68vw, .76rem);
     font-weight: 700;
     overflow: hidden;
@@ -129,13 +141,19 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     white-space: nowrap;
 }
 
-/* Un color por rol; el prefijo SITEC- se retira en la vista. */
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--administrador { background: #fde68a; color: #78350f; }
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--analista { background: #bfdbfe; color: #1e3a8a; }
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--iglesiaadmin { background: #bbf7d0; color: #14532d; }
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--presidente-mesa { background: #ddd6fe; color: #4c1d95; }
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tecnico { background: #e2e8f0; color: #334155; }
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tribunal { background: #fecdd3; color: #881337; }
+/* Un color por rol (identificación rápida); el prefijo SITEC- se retira en la vista.
+   Fondo claro y texto oscuro de la paleta del tema: legibles sobre cualquier topbar. */
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--administrador { background: var(--yellow-100); color: var(--yellow-800); }
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--analista { background: var(--blue-100); color: var(--blue-800); }
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--iglesiaadmin { background: var(--green-100); color: var(--green-800); }
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--presidente-mesa { background: var(--purple-100); color: var(--purple-800); }
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tecnico { background: var(--bluegray-100); color: var(--bluegray-700); }
+
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tribunal { background: var(--pink-100); color: var(--pink-800); }
 
 @media (max-width: 640px) {
     .layout-wrapper .layout-topbar #topbar-profile-menu-button { padding: 0 .5rem; }
@@ -150,59 +168,31 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     margin: .75rem 1rem;
     padding: .75rem;
     border-radius: .5rem;
-    background: #f8fafc;
-    color: #64748b;
+    background: var(--surface-50);
+    color: var(--text-color-secondary);
     font-size: .9rem;
     line-height: 1.25;
 }
 
 .layout-wrapper .layout-sidebar .menu-search-empty i {
-    color: #2563eb;
+    color: var(--primary-700);
 }
 
 /* ScrollTop flotante con color Ecuador */
 .custom-scroll-top.ui-scrolltop {
-    background: #f59e0b !important;
-    color: #fff !important;
+    background: var(--primary-color) !important;
+    color: var(--primary-color-text) !important;
     box-shadow: 0 4px 12px rgba(0,0,0,.18) !important;
     width: 2.5rem !important; height: 2.5rem !important;
     right: 1.5rem !important; bottom: 1.5rem !important;
 }
-.custom-scroll-top.ui-scrolltop:hover { background: #d97706 !important; }
 
-/* Chip flotante de ambiente (DESARROLLO/PRUEBAS).
-   Discreto en la esquina inferior izquierda, no invade la cabecera. */
-.ambiente-chip {
-    position: fixed;
-    left: 1rem;
-    bottom: 1rem;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1f2937;
-    padding: .35rem .75rem;
-    border-radius: 999px;
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    box-shadow: 0 4px 12px rgba(217,119,6,.35);
-    z-index: 999;
-    user-select: none;
-    opacity: .92;
-    transition: opacity .15s ease;
-}
-.ambiente-chip:hover { opacity: 1; }
+.custom-scroll-top.ui-scrolltop:hover { background: var(--orange-600) !important; }
 
 /* BlockUI: contenido centrado con texto blanco sobre overlay oscuro */
 .ui-blockui-content { text-align: center; padding: 1.5rem; }
-.ui-blockui { background: rgba(15, 23, 42, 0.55) !important; }
 
-/* SpeedDial del dashboard: posición flotante (no choca con scrollTop) */
-.ui-speeddial { position: fixed !important; right: 1.5rem !important; bottom: 5rem !important; z-index: 999; }
-.dashboard-speeddial.ui-button {
-    background: #2563eb !important; border-color: #2563eb !important;
-    width: 3rem !important; height: 3rem !important;
-    box-shadow: 0 6px 14px rgba(37,99,235,.35) !important;
-}
-.dashboard-speeddial.ui-button:hover { background: #1d4ed8 !important; }
+.ui-blockui { background: rgba(15, 23, 42, 0.55) !important; }
 
 /* ============================================================
  * Patrones reutilizables del sistema (callouts, page header, KPI)
@@ -210,38 +200,17 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
  * ============================================================ */
 
 /* Cabecera de página (título + subtítulo + tag opcional) */
-.page-header             { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-.page-header h3          { color:#1e3a8a; margin:0; }
-.page-header .subtitle   { color:#6b7280; margin:.25rem 0 0; }
-
-/* KPI cards en grilla superior */
-.kpi-card                { background:#fff; border-radius:.5rem; box-shadow:0 1px 2px rgba(0,0,0,.06); padding:1rem; }
-.kpi-card .label         { display:block; color:#6b7280; font-weight:500; font-size:.85rem; }
-.kpi-card .value         { display:block; color:#111827; font-weight:700; font-size:1.5rem; }
-.kpi-card .value--ellip  { font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* Callouts informativos (paneles laterales con borde de color) */
-.callout                 { padding:.75rem 1rem; border-radius:.5rem; border-left:3px solid; }
-.callout i               { margin-right:.5rem; }
-.callout--info           { background:#dbeafe; border-color:#2563eb; color:#1e40af; }
-.callout--warning        { background:#fef3c7; border-color:#d97706; color:#92400e; }
-.callout--success        { background:#f0fdf4; border-color:#16a34a; color:#166534; }
-.callout--neutral        { background:#f8fafc; border-color:#94a3b8; color:#475569; }
-.callout--danger         { background:#fee2e2; border-color:#dc2626; color:#991b1b; }
+.callout { padding:.75rem 1rem; border-radius:.5rem; border-left:3px solid; }
 
-/* Empty state genérico */
-.empty-state             { padding:2.5rem 1rem; text-align:center; border-radius:.5rem; background:#f8fafc; border:2px dashed #cbd5e1; }
-.empty-state i.icon-lg   { font-size:3rem; color:#94a3b8; }
-.empty-state h4          { margin:.75rem 0 .5rem; color:#374151; }
-.empty-state p           { color:#6b7280; margin-bottom:.75rem; }
+.callout i { margin-right:.5rem; }
 
-/* Toolbar transparente embebido en card */
-.toolbar-flat.ui-toolbar { background:transparent; border:0; padding:0; }
+.callout--info { background:var(--blue-100); border-color:var(--blue-600); color:var(--blue-800); }
 
-/* Divider con tag inline */
-.divider-tag             { padding:.25rem .6rem; border-radius:.25rem; font-size:.8rem; }
-.divider-tag--info       { background:#dbeafe; color:#1e40af; }
-.divider-tag--warning    { background:#fef3c7; color:#92400e; }
+.callout--warning { background:var(--orange-100); border-color:var(--orange-600); color:var(--orange-800); }
+
+.callout--neutral { background:var(--surface-50); border-color:var(--text-color-secondary); color:var(--text-color-secondary); }
 
 /* Tooltips: tipografía coherente */
 .ui-tooltip .ui-tooltip-text {
@@ -249,81 +218,28 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
     padding: .35rem .6rem !important;
     border-radius: 6px !important;
 }
-
-/* Tablas operativas compactas: preservan lectura y reducen altura por fila. */
-.tabla-asignar-admin-compacta .ui-datatable-data > tr > td {
-    padding-top: .42rem !important;
-    padding-bottom: .42rem !important;
-    font-size: .875rem;
-}
-
-.tabla-asignar-admin-compacta thead > tr > th {
-    padding-top: .5rem !important;
-    padding-bottom: .5rem !important;
-    font-size: .8rem;
-}
-
-.tabla-asignar-admin-compacta .ui-column-filter {
-    font-size: .8rem;
-    padding: .3rem .45rem;
-    /* El filtro ocupa su celda sin desbordarla, sea cual sea el ancho de la columna. */
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Con scrollable, cabecera y cuerpo son tablas distintas: el layout fijo hace que
-   ambas respeten los mismos anchos declarados en cada p:column y queden alineadas. */
-.tabla-asignar-admin-compacta table {
-    table-layout: fixed;
-    width: 100%;
-}
-
-/* Nombres largos parten en varias líneas en lugar de ensanchar la tabla. */
-.tabla-asignar-admin-compacta td.tabla-asignar-admin__nombre {
-    overflow-wrap: anywhere;
-}
-
-/* Selección por fila: resalta la fila activa en las tablas maestro-detalle
- * (MJRV y Candidatos comparten el mismo comportamiento y aspecto). */
-.mjrv-mesas-table .ui-datatable-data, .tec-table-seleccionable .ui-datatable-data > tr {
+.tec-table-seleccionable .ui-datatable-data > tr {
     transition: background-color .15s ease, box-shadow .15s ease;
 }
-
-.mjrv-mesas-table .ui-datatable-data > tr:not(.fila-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td,
 .tec-table-seleccionable .ui-datatable-data > tr:not(.fila-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td {
-    background: #eef6f8 !important;
-    color: #1e293b !important;
+    background: var(--primary-50) !important;
+    color: var(--text-color) !important;
     cursor: pointer;
 }
-
-.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td,
-.mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td,
-.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td,
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td,
 .tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td,
 .tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td {
-    background: #d7eef7 !important;
-    color: #0f172a !important;
+    background: var(--primary-100) !important;
+    color: var(--text-color) !important;
     font-weight: 600;
 }
-
-.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td:first-child,
-.mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
-.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td:first-child,
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td:first-child,
 .tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td:first-child,
 .tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td:first-child {
-    box-shadow: inset 4px 0 0 #0f766e;
+    box-shadow: inset 4px 0 0 var(--primary-color);
 }
-
-.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td .ui-column-title,
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td .ui-column-title {
-    color: #0f172a !important;
-}
-
-/* Fila de un registro dado de baja: se puede consultar, pero se distingue. */
-.tec-table-seleccionable .ui-datatable-data > tr.fila-inactiva > td {
-    color: #6b7280;
+    color: var(--text-color) !important;
 }
 
 /* ==========================================================================
@@ -334,121 +250,156 @@ input[data-inputmask]::placeholder { color: #cbd5e1; }
 
 /* Encabezado de página */
 .tec-page-header { display:flex; align-items:center; gap:.875rem; margin-bottom:1rem; }
-.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:#f1f5f9; color:#334155; font-size:1.2rem; }
-.tec-page-header h2 { margin:0; color:#0f172a; font-size:1.35rem; line-height:1.25; }
-.tec-page-header p { margin:.15rem 0 0; color:#64748b; font-size:.875rem; }
+
+.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:var(--surface-100); color:var(--text-color); font-size:1.2rem; }
+
+.tec-page-header h2 { margin:0; color:var(--text-color); font-size:1.35rem; line-height:1.25; }
+
+.tec-page-header p { margin:.15rem 0 0; color:var(--text-color-secondary); font-size:.875rem; }
+
 .tec-page-header__aside { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:.375rem; margin-left:auto; }
 
 /* Tarjeta y filtros */
-.tec-card { padding:1rem 1.25rem; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(15, 23, 42, .05); }
-.tec-filters { border-bottom:1px solid #eef2f7; }
+.tec-card { padding:1rem 1.25rem; border:1px solid var(--surface-border); box-shadow:0 1px 2px rgba(15, 23, 42, .05); }
+
+.tec-filters { border-bottom:1px solid var(--surface-100); }
+
 .tec-filters .field { margin-bottom:.75rem; }
+
 .tec-filters .ui-outputlabel,
 .tec-form .ui-outputlabel,
 .tec-filters .tec-field-label,
-.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:#475569; font-size:.78rem; font-weight:600; }
-.tec-range { display:flex; align-items:center; gap:.375rem; }
-.tec-range > .ui-calendar { flex:1 1 0; min-width:0; }
-.tec-range__sep { flex:0 0 auto; color:#94a3b8; }
-/* El tema cuelga el botón del calendario fuera del campo (right:-2.357rem); aquí queda dentro. */
-.tec-filters .tec-range .ui-calendar.ui-trigger-calendar { display:flex; }
-.tec-filters .tec-range .ui-trigger-calendar input.hasDatepicker { flex:1 1 auto; width:auto; min-width:0; }
-.tec-filters .tec-range .ui-calendar.ui-trigger-calendar .ui-datepicker-trigger.ui-button { position:relative; right:auto; flex:0 0 2.357rem; border:1px solid #ced4da; border-left:0 none; background:#f8fafc; color:#475569; }
-.tec-filters .tec-range .ui-calendar.ui-trigger-calendar .ui-datepicker-trigger.ui-button.ui-state-hover { background:#eef2f7; color:#1e293b; }
-.tec-filters .tec-range .ui-calendar.ui-trigger-calendar .ui-datepicker-trigger .ui-icon,
-.tec-filters .tec-range .ui-calendar.ui-trigger-calendar .ui-datepicker-trigger .ui-icon::before { color:inherit; }
+.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:.78rem; font-weight:600; }
+
 .tec-search-input { position:relative; display:block; }
-.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.75rem; transform:translateY(-50%); color:#94a3b8; font-size:.85rem; pointer-events:none; }
+
+.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.75rem; transform:translateY(-50%); color:var(--text-color-secondary); font-size:.85rem; pointer-events:none; }
+
 .tec-search-input .ui-inputfield { width:100%; padding-left:2.1rem; }
+
 .tec-filter-actions-cell { display:flex; align-items:flex-end; }
+
 .tec-filter-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.5rem; width:100%; }
+
 body .ui-fluid .tec-filter-actions .ui-button { flex:0 0 auto; width:auto; }
+
 .tec-btn.ui-button { font-size:.85rem; }
+
 .tec-select-panel.ui-selectonemenu-panel { max-width:min(26rem, calc(100vw - 2rem)); }
+
 .tec-select-panel .ui-selectonemenu-item { white-space:normal; }
 
 /* Tabla */
 .tec-table-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin:1rem 0 .5rem; }
-.tec-table-heading h3 { margin:0; color:#0f172a; font-size:.95rem; font-weight:700; }
-.tec-table-heading__aside { display:inline-flex; align-items:center; gap:.35rem; color:#64748b; font-size:.78rem; white-space:nowrap; }
+
+.tec-table-heading h3 { margin:0; color:var(--text-color); font-size:.95rem; font-weight:700; }
+
 body .ui-datatable.tec-table table { table-layout:auto; }
+
 /* PrimeFaces sincroniza las columnas de las tablas con scroll asumiendo table-layout:fixed. */
 body .ui-datatable.tec-table.ui-datatable-scrollable table { table-layout:fixed; }
-body .ui-datatable.tec-table thead th { border-right:0 none; border-left:0 none; background:#f8fafc; vertical-align:top; }
-body .ui-datatable.tec-table thead th > .ui-column-title { color:#475569; font-size:.72rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+
+body .ui-datatable.tec-table thead th { border-right:0 none; border-left:0 none; background:var(--surface-50); vertical-align:top; }
+
+body .ui-datatable.tec-table thead th > .ui-column-title { color:var(--text-color-secondary); font-size:.72rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+
 body .ui-datatable.tec-table thead th .ui-column-filter { margin-top:.35rem; font-size:.8rem; }
+
 body .ui-datatable.tec-table .ui-datatable-header { padding:.5rem 0 .75rem; border:0 none; background:transparent; }
+
 .tec-table .ui-datatable-data > tr { cursor:pointer; transition:background-color .15s ease; }
+
 body .ui-datatable.tec-table .ui-datatable-data > tr > td { border-right:0 none; border-left:0 none; vertical-align:middle; }
-.tec-table .ui-datatable-data > tr:hover > td { background:#f8fafc !important; }
+
+.tec-table .ui-datatable-data > tr:hover > td { background:var(--surface-50) !important; }
+
 .tec-table .ui-datatable-data > tr.ui-state-highlight > td,
-.tec-table .ui-datatable-data > tr.p-highlight > td { background:#eff6ff !important; color:#0f172a !important; }
+.tec-table .ui-datatable-data > tr.p-highlight > td { background:var(--primary-50) !important; color:var(--text-color) !important; }
+
 .tec-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
-.tec-table .ui-datatable-data > tr.p-highlight > td:first-child { box-shadow:inset 3px 0 0 #2563eb; }
+.tec-table .ui-datatable-data > tr.p-highlight > td:first-child { box-shadow:inset 3px 0 0 var(--primary-color); }
+
 /* El tema pinta la fila completa (azul sólido / gris); se alinea con el fondo de las celdas. */
-body .ui-datatable.tec-table .ui-datatable-data > tr.ui-state-hover { background:#f8fafc; color:inherit; }
+body .ui-datatable.tec-table .ui-datatable-data > tr.ui-state-hover { background:var(--surface-50); color:inherit; }
+
 body .ui-datatable.tec-table .ui-datatable-data > tr.ui-state-highlight,
-body .ui-datatable.tec-table .ui-datatable-data > tr.p-highlight { background:#eff6ff; color:#0f172a; }
+body .ui-datatable.tec-table .ui-datatable-data > tr.p-highlight { background:var(--primary-50); color:var(--text-color); }
+
 .tec-table .ui-datatable-data > tr.ui-datatable-empty-message { cursor:default; }
+
 .tec-table--static .ui-datatable-data > tr { cursor:default; }
-.tec-table .ui-datatable-data > tr.ui-datatable-empty-message > td { background:#fff !important; }
+
+.tec-table .ui-datatable-data > tr.ui-datatable-empty-message > td { background:var(--surface-card) !important; }
+
 body .ui-datatable.tec-table .ui-paginator { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.25rem; padding:.625rem 0 0; border:0 none; background:transparent; }
-body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:auto; color:#64748b; font-size:.8rem; }
+
+body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:auto; color:var(--text-color-secondary); font-size:.8rem; }
+
 .tec-col-fit { width:1%; }
+
 .tec-col-actions { width:1%; text-align:right; white-space:nowrap; }
+
 /* Acciones por fila: separación fija entre botones */
 .tec-acciones { display:inline-flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:.375rem; vertical-align:middle; }
+
 body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
+
 /* Separador vertical entre grupos de acciones de una barra */
-.tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.5rem; margin:0 .25rem; background:#e2e8f0; }
-.tec-mono { color:#334155; font-family:monospace; font-size:.82rem; }
-.tec-muted { color:#94a3b8; }
-.tec-requerido { color:#dc2626; }
+.tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.5rem; margin:0 .25rem; background:var(--surface-200); }
+
+.tec-mono { color:var(--text-color); font-family:monospace; font-size:.82rem; }
+
+.tec-muted { color:var(--text-color-secondary); }
+
 .tec-table td .tec-muted { font-size:.8rem; }
-.tec-chip { display:inline-block; padding:.15rem .5rem; border-radius:999px; background:#f1f5f9; color:#475569; font-size:.72rem; font-weight:600; line-height:1.4; white-space:nowrap; }
 
 /* Estados discretos (el tema pinta p:tag con colores sólidos) */
-.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:#f1f5f9; color:#475569; font-size:.7rem; font-weight:600; line-height:1.4; white-space:nowrap; }
-.tec-status.ui-tag.ui-tag-success { background:#ecfdf5; color:#047857; }
-.tec-status.ui-tag.ui-tag-danger { background:#fef2f2; color:#b91c1c; }
-.tec-status.ui-tag.ui-tag-warning { background:#fffbeb; color:#b45309; }
-.tec-status.ui-tag.ui-tag-info { background:#eff6ff; color:#1d4ed8; }
+.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:.7rem; font-weight:600; line-height:1.4; white-space:nowrap; }
+
+.tec-status.ui-tag.ui-tag-success { background:var(--green-50); color:var(--green-700); }
+
+.tec-status.ui-tag.ui-tag-danger { background:var(--red-50); color:var(--red-700); }
+
+.tec-status.ui-tag.ui-tag-warning { background:var(--orange-50); color:var(--orange-700); }
+
+.tec-status.ui-tag.ui-tag-info { background:var(--blue-50); color:var(--blue-700); }
+
 .tec-status.ui-tag .ui-tag-icon { font-size:.7rem; }
 
 /* Estado vacío */
 .tec-empty { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:2rem 1rem; text-align:center; }
-.tec-empty > .pi { margin-bottom:.35rem; color:#94a3b8; font-size:1.75rem; }
-.tec-empty__title { color:#334155; font-size:.95rem; font-weight:600; }
-.tec-empty__text { max-width:26rem; color:#64748b; font-size:.82rem; }
+
+.tec-empty > .pi { margin-bottom:.35rem; color:var(--text-color-secondary); font-size:1.75rem; }
+
+.tec-empty__title { color:var(--text-color); font-size:.95rem; font-weight:600; }
+
+.tec-empty__text { max-width:26rem; color:var(--text-color-secondary); font-size:.82rem; }
 
 /* Diálogos sin width fijo.
    PrimeFaces fija width:auto en línea al mostrar el diálogo, así que estas
    reglas necesitan !important para imponerse. */
 .tec-dialog.ui-dialog { width:min(40rem, calc(100vw - 2rem)) !important; }
-.tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)) !important; }
-.tec-dialog--md.ui-dialog { width:min(56rem, calc(100vw - 2rem)) !important; }
+
 .tec-dialog--lg.ui-dialog { width:min(72rem, calc(100vw - 2rem)) !important; }
+
 .tec-dialog.ui-dialog .ui-dialog-content { padding-top:1rem; }
 
-@media (max-width:1199.98px) {
-    .tec-table .tec-chip { max-width:8rem; white-space:normal; }
-}
 /* Móvil: PrimeFaces pasa la tabla a tarjetas (reflow) por debajo de 640px.
    La celda marcada con tec-col-primary encabeza la tarjeta. */
 @media (max-width:640px) {
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.625rem .25rem; border-bottom:1px solid #eef2f7; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.625rem .25rem; border-bottom:1px solid var(--surface-100); }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td { display:flex !important; align-items:center; gap:.5rem; width:100% !important; padding:.2rem .5rem !important; border:0 none !important; background:transparent !important; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 6.5rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:#64748b; font-size:.72rem; font-weight:600; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 6.5rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:var(--text-color-secondary); font-size:.72rem; font-weight:600; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > :not(.ui-column-title) { min-width:0; }
     .tec-table.ui-datatable-reflow td.tec-col-primary { order:-1; padding-bottom:.35rem !important; }
     .tec-table.ui-datatable-reflow td.tec-col-primary > .ui-column-title { display:none; }
     .tec-table.ui-datatable-reflow td.tec-col-actions { text-align:left; }
     .tec-table.ui-datatable-reflow .tec-acciones { flex-wrap:wrap; justify-content:flex-start; }
-    .tec-table.ui-datatable-reflow .tec-chip { max-width:none; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-datatable-empty-message > td { justify-content:center; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-state-highlight > td:first-child { box-shadow:none; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-state-highlight { box-shadow:inset 3px 0 0 #2563eb; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-state-highlight { box-shadow:inset 3px 0 0 var(--primary-color); }
 }
+
 @media (max-width:576px) {
     .tec-page-header { flex-wrap:wrap; }
     .tec-page-header__aside { margin-left:0; }
@@ -456,580 +407,8 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
     .tec-filter-actions { justify-content:stretch; }
     .tec-toolbar-sep { display:none; }
     body .ui-fluid .tec-filter-actions .ui-button { flex:1 1 calc(50% - .25rem); }
-    body .ui-fluid .tec-filter-actions .tec-btn--primary { flex-basis:100%; }
     body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .25rem; text-align:center; }
     body .ui-datatable.tec-table .ui-paginator .ui-paginator-first,
-    body .ui-datatable.tec-table .ui-paginator .ui-paginator-last { display:none; }
+body .ui-datatable.tec-table .ui-paginator .ui-paginator-last { display:none; }
     body .ui-datatable.tec-table .ui-paginator .ui-paginator-rpp-options { margin:0; }
-}
-@media (max-width:420px) {
-    .tec-range { flex-wrap:wrap; }
-    .tec-range > .ui-calendar { flex-basis:100%; }
-    .tec-range__sep { display:none; }
-}
-
-/* ==========================================================================
- * Bitácora de actividades (audit-*): solo procesos.xhtml.
- * ========================================================================== */
-.audit-col-fecha,
-.audit-col-ver { width:1%; white-space:nowrap; }
-.audit-col-usuario,
-.audit-col-modulo { width:1%; }
-.audit-when { display:inline-flex; flex-direction:column; line-height:1.3; }
-.audit-when__date { color:#334155; font-size:.82rem; font-weight:600; }
-.audit-when__time { color:#64748b; font-size:.76rem; }
-.audit-col-usuario .tec-mono { display:inline-block; max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
-.audit-activity { display:flex; flex-direction:column; gap:.15rem; min-width:0; }
-.audit-activity__head { display:flex; flex-wrap:wrap; align-items:center; gap:.25rem .5rem; }
-.audit-activity__title { color:#0f172a; font-size:.9rem; font-weight:600; line-height:1.35; }
-.audit-activity__meta { display:-webkit-box; overflow:hidden; color:#64748b; font-size:.78rem; line-height:1.4; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; }
-.audit-detail-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding-bottom:.875rem; border-bottom:1px solid #eef2f7; }
-.audit-detail-header__eyebrow { color:#64748b; font-size:.72rem; font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
-.audit-detail-header h3 { margin:.2rem 0 0; color:#0f172a; font-size:1.1rem; line-height:1.3; }
-.audit-detail-list { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.75rem 1.25rem; margin:.875rem 0 0; }
-.audit-detail-list > div { min-width:0; }
-.audit-detail-list__full { grid-column:1 / -1; }
-.audit-detail-list dt { margin-bottom:.15rem; color:#64748b; font-size:.72rem; font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
-.audit-detail-list dd { margin:0; color:#1e293b; font-size:.9rem; overflow-wrap:anywhere; }
-.audit-detail-tech { margin-top:1rem; padding-top:.875rem; border-top:1px dashed #e2e8f0; }
-.audit-detail-tech h4 { margin:0; color:#475569; font-size:.8rem; font-weight:700; }
-.audit-detail-tech dd { color:#475569; font-size:.82rem; }
-.audit-code { display:block; padding:.6rem .7rem; border-radius:.4rem; background:#f8fafc; color:#475569; font-family:monospace; font-size:.76rem; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
-/* Escritorio: el encabezado de "Ver detalle" solo existe para lectores de pantalla. */
-@media (min-width:641px) {
-    .audit-table th.audit-col-ver .ui-column-title { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-}
-@media (max-width:991.98px) {
-    .audit-col-usuario .tec-mono { max-width:8rem; }
-}
-@media (max-width:640px) {
-    .tec-table.ui-datatable-reflow .audit-col-usuario .tec-mono { max-width:none; white-space:normal; overflow-wrap:anywhere; }
-}
-@media (max-width:576px) {
-    .audit-detail-list { grid-template-columns:minmax(0, 1fr); }
-}
-
-/* ==========================================================================
- * Miembros del padrón (personas-*): solo personas.xhtml.
- * ========================================================================== */
-.personas-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; font-size:.875rem; }
-.personas-aviso__aside { margin-left:auto; }
-
-/* Cronograma: fase anterior / actual / siguiente */
-.personas-fases { margin-bottom:1rem; }
-.personas-fases__head { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem .5rem; margin-bottom:.75rem; color:#0f172a; font-size:.9rem; font-weight:600; }
-.personas-fases__vigente { color:#64748b; font-size:.82rem; font-weight:400; }
-.personas-fase { display:flex; flex-direction:column; gap:.2rem; height:100%; padding:.75rem .875rem; border:1px solid #e2e8f0; border-radius:.5rem; background:#fff; }
-.personas-fase__label { color:#64748b; font-size:.68rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-.personas-fase__title { color:#1e293b; font-size:.875rem; font-weight:600; line-height:1.35; }
-.personas-fase__dates { color:#64748b; font-size:.76rem; }
-.personas-fase .ui-tag { align-self:flex-start; margin-top:.25rem; }
-.personas-fase--vacia { align-items:center; justify-content:center; border-style:dashed; background:#f8fafc; color:#94a3b8; font-size:.78rem; }
-.personas-fase--vacia > .pi { font-size:.8rem; }
-.personas-fase__label > .pi { margin-right:.2rem; font-size:.72rem; }
-.personas-fase--activa .personas-fase__label > .pi { color:#16a34a; }
-.personas-fase--bloqueada .personas-fase__label > .pi { color:#d97706; }
-.personas-fase--cerrada .personas-fase__label > .pi { color:#94a3b8; }
-.personas-fase--proxima .personas-fase__label > .pi { color:#2563eb; }
-.personas-fase--actual { border-width:1px 1px 1px 4px; }
-.personas-fase--activa { border-left-color:#16a34a; background:#f0fdf4; }
-.personas-fase--bloqueada { border-left-color:#d97706; background:#fffbeb; }
-.personas-fase--cerrada { border-left-color:#94a3b8; }
-.personas-fase--proxima { border-left-color:#2563eb; background:#eff6ff; }
-
-/* Resumen de actualización */
-.personas-resumen { margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid #eef2f7; }
-.personas-resumen .kpi-card { box-shadow:none; border:1px solid #eef2f7; padding:.625rem .75rem; }
-.personas-resumen .kpi-card .label { font-size:.72rem; }
-.personas-resumen .kpi-card .value { font-size:1.35rem; line-height:1.2; }
-.personas-kpi { display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:.625rem; }
-.personas-kpi__icon { display:flex; grid-row:span 2; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; border-radius:.5rem; font-size:.95rem; }
-.personas-kpi__icon--total { background:#eff6ff; color:#2563eb; }
-.personas-kpi__icon--actualizados { background:#ecfdf5; color:#16a34a; }
-.personas-kpi__icon--pendientes { background:#fff7ed; color:#ea580c; }
-.personas-progreso { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:.75rem 0 .35rem; color:#64748b; font-size:.8rem; }
-.personas-progreso__acciones { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
-body .personas-barra.ui-progressbar { height:.5rem; border-radius:999px; }
-body .personas-barra.ui-progressbar .ui-progressbar-label { display:none !important; }
-
-/* Barra de acciones */
-.personas-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:1rem 0 .25rem; }
-.personas-toolbar__grupo { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
-
-/* Tabla de miembros */
-.personas-col-sel { text-align:center; }
-.personas-col-cedula { white-space:nowrap; }
-.personas-nombre { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
-.personas-nombre__texto { color:#0f172a; font-size:.875rem; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
-.personas-nombre__meta { color:#64748b; font-size:.76rem; overflow-wrap:anywhere; }
-.personas-nombre__sexo + .personas-nombre__iglesia::before { content:" · "; }
-.personas-revision { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
-.personas-revision__fecha { color:#64748b; font-size:.72rem; white-space:nowrap; }
-body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { display:block; width:100%; min-width:7rem; margin-top:.35rem; }
-body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:6.5rem; }
-.personas-filtro-estado .ui-selectonemenu-label { font-size:.8rem; text-transform:none; letter-spacing:normal; }
-.personas-busqueda-rapida { max-width:26rem; }
-.personas-filtros__titulo { margin-bottom:.5rem !important; }
-.personas-filtros__titulo > .pi { color:#2563eb; }
-
-/* Diálogos */
-.personas-dialog-busqueda__fila { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.5rem; margin-bottom:1rem; }
-.personas-dialog-busqueda__criterio { flex:1 1 18rem; min-width:0; }
-.personas-ubicacion { display:flex; flex-direction:column; gap:.1rem; font-size:.8rem; }
-.personas-ubicacion dt { display:inline; color:#64748b; }
-.personas-ubicacion dd { display:inline; margin:0; color:#334155; }
-.personas-estados { display:flex; flex-direction:column; align-items:flex-start; gap:.25rem; }
-.personas-dialog-miembro .tec-form .field { margin-bottom:.75rem; }
-.personas-dialog-miembro .tec-form .personas-aviso { flex-wrap:nowrap; align-items:flex-start; padding:.5rem .75rem; font-size:.8rem; }
-/* Sexo: una sola fila; etiqueta larga en pantallas grandes y abreviada en móvil. */
-.personas-dialog-miembro .ui-selectoneradio { display:flex; flex-wrap:nowrap; align-items:center; gap:.75rem; min-height:2.4rem; }
-.personas-sexo--corto { display:none; }
-.personas-dialog-miembro .ui-selectoneradio > div { display:inline-flex; align-items:center; }
-.personas-dialog-miembro .ui-selectoneradio label { margin:0 0 0 .4rem; padding:0; }
-.personas-switch { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.625rem 0 0; border-top:1px solid #eef2f7; }
-.personas-switch__texto { display:flex; flex:1 1 auto; flex-direction:column; gap:.1rem; min-width:0; }
-.tec-form .personas-switch__titulo.ui-outputlabel { margin:0; color:#1e293b; font-size:.85rem; }
-.personas-switch__encabezado { display:flex; align-items:center; gap:.4rem; }
-.personas-switch__encabezado > .pi { color:#2563eb; font-size:.85rem; }
-.personas-switch__ayuda { color:#64748b; font-size:.75rem; }
-.personas-switch__control { display:flex; flex:0 0 auto; align-items:center; gap:.5rem; }
-.personas-switch__estado { min-width:1.5rem; color:#475569; font-size:.8rem; font-weight:600; text-align:right; }
-.personas-regularizacion__persona { display:block; color:#0f172a; font-weight:700; }
-
-/* Tablet: las columnas de estado ceden ancho a los nombres. */
-@media (max-width:991.98px) {
-    body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { min-width:5.5rem; }
-    body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:0; }
-    .personas-table td .tec-status { white-space:normal; }
-    .personas-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 2.357rem + .375rem); }
-}
-@media (max-width:640px) {
-    /* Casilla de selección en la esquina de la tarjeta, junto al nombre. */
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel { position:absolute; top:.55rem; right:.25rem; left:auto; width:auto !important; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel > .ui-column-title { display:none; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-nombre { padding-right:2.5rem !important; }
-    .personas-busqueda-rapida { max-width:none; }
-    .personas-table.ui-datatable-reflow .tec-acciones { width:auto; }
-}
-@media (max-width:576px) {
-    .personas-toolbar,
-    .personas-toolbar__grupo { width:100%; align-items:stretch; }
-    body .personas-toolbar__grupo .ui-button { flex:1 1 calc(50% - .25rem); }
-    .personas-aviso__aside { margin-left:0; }
-    .personas-kpi { display:block; }
-    .personas-kpi__icon { display:none; }
-    .personas-sexo--largo { display:none; }
-    .personas-sexo--corto { display:inline; }
-}
-
-/* ==========================================================================
- * Iglesias (iglesias-*): solo iglesias.xhtml.
- * ========================================================================== */
-.iglesias-resumen { margin-bottom:1rem; }
-.iglesias-kpi { display:flex; align-items:center; gap:.75rem; padding:.625rem .75rem; border:1px solid #eef2f7; border-radius:.5rem; }
-.iglesias-kpi__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.25rem; height:2.25rem; border-radius:.5rem; background:#f1f5f9; color:#475569; }
-.iglesias-kpi__label { display:block; color:#64748b; font-size:.72rem; font-weight:600; text-transform:uppercase; }
-.iglesias-kpi__value { display:block; color:#0f172a; font-size:1.35rem; font-weight:700; line-height:1.2; }
-.iglesias-progreso { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #eef2f7; }
-.iglesias-progreso__head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.4rem; font-size:.85rem; }
-.iglesias-progreso__titulo { display:inline-flex; flex-wrap:wrap; align-items:center; gap:.35rem; color:#1e293b; font-weight:600; }
-.iglesias-progreso__titulo > .pi { color:#475569; }
-.iglesias-progreso__fase { color:#1d4ed8; }
-.iglesias-progreso__conteo { display:inline-flex; align-items:center; gap:.35rem; color:#64748b; font-size:.8rem; }
-body .iglesias-barra.ui-progressbar { height:.5rem; border-radius:999px; }
-body .iglesias-barra.ui-progressbar .ui-progressbar-label { display:none !important; }
-body .iglesias-barra--completa.ui-progressbar .ui-progressbar-value { background:#16a34a; }
-body .iglesias-barra--media.ui-progressbar .ui-progressbar-value { background:#2563eb; }
-body .iglesias-barra--baja.ui-progressbar .ui-progressbar-value { background:#d97706; }
-.iglesias-progreso__fechas { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.25rem .75rem; margin-top:.35rem; color:#64748b; font-size:.75rem; }
-.iglesias-progreso__dias { color:#b45309; font-weight:600; }
-
-.iglesias-filtros__head { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-bottom:.5rem; }
-.iglesias-filtros__head .tec-field-label { margin:0; }
-.iglesias-aviso { display:flex; align-items:flex-start; gap:.5rem; font-size:.875rem; }
-.iglesias-aviso > .pi { margin:.15rem 0 0; }
-.iglesias-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:1rem 0 .25rem; }
-.iglesias-toolbar__grupo { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
-.iglesias-table__head { margin:0; }
-.iglesias-busqueda { flex:0 1 18rem; min-width:0; }
-
-.iglesias-col-sel { text-align:center; }
-.iglesias-col-ruc { white-space:nowrap; }
-.iglesias-nombre { display:flex; align-items:center; gap:.625rem; min-width:0; }
-.iglesias-avatar { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:2rem; height:2rem; border-radius:50%; background:#eef2ff; color:#4338ca; font-size:.85rem; font-weight:700; }
-.iglesias-avatar--lg { width:2.75rem; height:2.75rem; font-size:1.1rem; }
-.iglesias-nombre__texto { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
-.iglesias-nombre__titulo { color:#0f172a; font-size:.875rem; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
-.iglesias-nombre__meta { color:#64748b; font-size:.76rem; overflow-wrap:anywhere; }
-.iglesias-col-ubicacion { min-width:10rem; }
-.iglesias-ubicacion { display:flex; flex-direction:column; gap:.05rem; line-height:1.35; }
-.iglesias-ubicacion__provincia { display:inline-flex; align-items:center; gap:.3rem; color:#64748b; font-size:.72rem; }
-.iglesias-ubicacion__provincia > .pi { font-size:.7rem; }
-.iglesias-ubicacion__canton { color:#1e293b; font-size:.82rem; font-weight:500; }
-.iglesias-ubicacion__parroquia { color:#64748b; font-size:.76rem; }
-/* Miembros activos: el total y, si está bajo el mínimo, la marca de revisión */
-.iglesias-miembros { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
-.iglesias-miembros__total { color:#0f172a; font-size:.9rem; font-weight:600; }
-.iglesias-miembros__total--alerta { color:#b45309; }
-.iglesias-admin { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
-.iglesias-admin__nombre { max-width:14rem; color:#64748b; font-size:.72rem; overflow-wrap:anywhere; }
-body .ui-datatable.tec-table thead th .iglesias-filtro-estado.ui-selectonemenu { display:block; width:100%; min-width:8rem; margin-top:.35rem; }
-.iglesias-filtro-estado .ui-selectonemenu-label { font-size:.8rem; text-transform:none; letter-spacing:normal; }
-
-/* Diálogos */
-.iglesias-seccion { display:flex; align-items:center; gap:.5rem; margin-bottom:.625rem; color:#475569; font-size:.75rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
-.iglesias-seccion > .pi { color:#64748b; }
-.iglesias-ruc-opciones { display:flex; flex-wrap:wrap; gap:.5rem; }
-body .ui-fluid .iglesias-ruc-opciones .ui-button { width:auto; }
-.iglesias-ayuda { display:block; margin-top:.3rem; color:#64748b; font-size:.75rem; }
-.iglesias-ayuda--aviso { color:#b45309; font-weight:600; }
-.iglesias-dialog-contexto { display:flex; align-items:center; gap:.625rem; margin-bottom:.75rem; padding:.5rem .75rem; border-radius:.5rem; background:#f8fafc; }
-.iglesias-dialog-contexto > .pi { color:#475569; }
-.iglesias-dialog-contexto__label { display:block; color:#64748b; font-size:.72rem; }
-.iglesias-dialog-contexto__valor { display:block; color:#0f172a; font-weight:600; overflow-wrap:anywhere; }
-.iglesias-persona { display:flex; flex-direction:column; gap:.15rem; margin:0 0 .75rem; padding:.5rem .75rem; border:1px solid #eef2f7; border-radius:.5rem; font-size:.82rem; }
-.iglesias-persona--seleccion { margin-top:.75rem; border-color:#bfdbfe; background:#eff6ff; }
-.iglesias-persona__label { color:#64748b; font-size:.72rem; font-weight:600; }
-.iglesias-persona__datos { display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem .75rem; color:#1e293b; overflow-wrap:anywhere; }
-.iglesias-diagnostico { margin-bottom:.75rem; font-size:.82rem; }
-.iglesias-diagnostico__titulo { display:flex; align-items:center; gap:.4rem; font-weight:700; }
-.iglesias-diagnostico__titulo > .pi { margin:0; }
-.iglesias-diagnostico p { margin:.35rem 0; }
-.iglesias-diagnostico ul { margin:0; padding-left:1.1rem; }
-.iglesias-detalle__cabecera { display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; }
-.iglesias-detalle__nombre { color:#0f172a; font-size:1rem; font-weight:700; overflow-wrap:anywhere; }
-.iglesias-dato__label { display:block; margin-bottom:.25rem; color:#64748b; font-size:.72rem; font-weight:600; text-transform:uppercase; }
-.iglesias-dato__valor { color:#0f172a; font-weight:600; }
-.iglesias-ruta { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; }
-.iglesias-ruta > .pi { color:#cbd5e1; font-size:.65rem; }
-.iglesias-doc { display:flex; align-items:center; gap:.5rem; min-width:0; }
-.iglesias-doc > .pi { flex:0 0 auto; font-size:1rem; }
-.iglesias-doc__icon--pdf { color:#dc2626; }
-.iglesias-doc__icon--excel { color:#16a34a; }
-.iglesias-doc__nombre { color:#1e293b; font-size:.85rem; overflow-wrap:anywhere; }
-.iglesias-fecha,
-.personas-fecha { white-space:nowrap; font-size:.8rem; }
-/* "Nueva"/"Nuevo" usa el verde del tema, el mismo del botón Nueva iglesia */
-body .ui-tag.ui-tag-success.iglesias-nueva,
-body .ui-tag.ui-tag-success.personas-nuevo { margin-left:.4rem; vertical-align:middle; background:#f1f8e9; color:#33691e; border:1px solid #c5e1a5; }
-body .ui-tag.ui-tag-success.iglesias-nueva .ui-tag-icon,
-body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
-/* Registro y última actualización en una sola columna, cada fecha con su ícono */
-.iglesias-fechas,
-.personas-fechas { display:flex; flex-direction:column; gap:.2rem; }
-.iglesias-fechas__item,
-.personas-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:#475569; font-size:.75rem; }
-.iglesias-fechas__icono,
-.personas-fechas__icono { color:#94a3b8; font-size:.75rem; }
-.iglesias-fechas__icono--actualiza,
-.personas-fechas__icono--actualiza { color:#0ea5e9; }
-/* Historial: una columna por campo auditado; se resalta lo que cambió en la revisión */
-.iglesias-hist__col,
-.personas-hist__col { font-size:.82rem; }
-.iglesias-hist__col--geo { color:#475569; font-size:.78rem; }
-.iglesias-hist__valor,
-.personas-hist__valor { display:inline-block; overflow-wrap:anywhere; }
-.iglesias-hist__valor--cambio,
-.personas-hist__valor--cambio { padding:.05rem .35rem; border-radius:.25rem; background:#ecfdf5; color:#047857; font-weight:600; cursor:help; }
-
-/* Personas eliminadas: el motivo de bloqueo es una frase larga y .tec-status
-   impone white-space:nowrap, así que sin un ancho propio esa columna no podía
-   encogerse, desbordaba el diálogo y dejaba el resto en una letra por línea. */
-.personas-eliminadas__col-nombre { min-width:12rem; }
-.personas-eliminadas__col-iglesia { min-width:9rem; }
-.personas-eliminadas__col-situacion { width:28%; min-width:14rem; }
-.personas-eliminadas__col-situacion .tec-status.ui-tag { display:inline-flex; align-items:flex-start; gap:.3rem; max-width:100%; text-align:left; white-space:normal; line-height:1.35; }
-.personas-eliminadas__col-situacion .tec-status.ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.15rem; }
-
-/* Tablet: el filtro de estado y la columna de acciones ceden ancho. */
-@media (max-width:991.98px) {
-    body .ui-datatable.tec-table thead th .iglesias-filtro-estado.ui-selectonemenu { min-width:6rem; }
-    .iglesias-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 2.357rem + .375rem); }
-    .iglesias-table td .tec-status { white-space:normal; }
-}
-@media (max-width:640px) {
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.iglesias-col-sel { position:absolute; top:.55rem; right:.25rem; left:auto; width:auto !important; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.iglesias-col-sel > .ui-column-title { display:none; }
-    .iglesias-table.ui-datatable-reflow .ui-datatable-data > tr > td.tec-col-primary { padding-right:2.5rem !important; }
-    .iglesias-table__head { flex-wrap:wrap; }
-    .iglesias-busqueda { flex-basis:100%; }
-    .iglesias-table.ui-datatable-reflow .tec-acciones { width:auto; }
-    .iglesias-admin__nombre { max-width:none; }
-}
-@media (max-width:576px) {
-    .iglesias-toolbar,
-    .iglesias-toolbar__grupo { width:100%; align-items:stretch; }
-    body .iglesias-toolbar__grupo .tec-btn.ui-button { flex:1 1 calc(50% - 1.5rem); }
-}
-
-/* ==========================================================================
- * Reportes de mesa (mesas-*): solo reportesMesa.xhtml.
- * ========================================================================== */
-.mesas-menu.ui-tieredmenu { width:15rem; }
-/* Mesa: solo números de pocos dígitos, columna estrecha y centrada. */
-.mesas-col-mesa { text-align:center; }
-.mesas-numero { display:inline-block; min-width:2.25rem; color:#0f172a; font-size:.9rem; font-weight:700; }
-.mesas-lugar { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
-.mesas-lugar__recinto { color:#0f172a; font-size:.85rem; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
-.mesas-lugar__ubicacion { color:#64748b; font-size:.72rem; line-height:1.3; overflow-wrap:anywhere; }
-/* Las acciones y el resumen no deben empujar la tabla fuera de la pantalla. */
-.mesas-table td.tec-col-actions { min-width:7rem; }
-
-/* ==========================================================================
- * Acta de inscripción (candidatos.xhtml): la carga del acta firmada debe
- * medir lo mismo que el botón de generar, que va a ancho completo.
- * ========================================================================== */
-.tec-acta-upload .ui-fileupload-choose { width:100%; justify-content:center; }
-.tec-acta-upload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }
-
-/* Tabla de mesas de MJRV: las columnas de cifras se alinean entre filas y, en
-   reflow móvil, vuelven a la izquierda junto a su etiqueta. */
-.mjrv-mesas-table td.mjrv-col-num, .mjrv-mesas-table th.mjrv-col-num { font-variant-numeric: tabular-nums; }
-.mjrv-mesas-table td, .mjrv-mesas-table th { overflow-wrap: anywhere; }
-@media (max-width: 640px) {
-    .mjrv-mesas-table.ui-datatable-reflow td.mjrv-col-num { text-align: left; }
-}
-
-/* Listado gerencial de escrutinios (actaE): cifras alineadas entre filas y, en
-   reflow móvil, pegadas a su etiqueta para no dejar huecos. */
-.actae-tabla-gerencial td.actae-col-num, .actae-tabla-gerencial th.actae-col-num { font-variant-numeric: tabular-nums; }
-.actae-tabla-gerencial td, .actae-tabla-gerencial th { overflow-wrap: anywhere; }
-@media (max-width: 640px) {
-    .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-num { text-align: left; }
-}
-/* Panel operativo de escrutinio: barra de avance discreta y columnas de contexto
-   geográfico que se ocultan en móvil, donde priman recinto, mesa, estado y acción. */
-.actae-avance-barra .ui-progressbar { height: .5rem; border: 0 none; background: var(--surface-200, #e9ecef); }
-.actae-avance-barra .ui-progressbar-value { background: #b45309; border: 0 none; }
-.actae-avance-barra .ui-progressbar-label { display: none; }
-@media (max-width: 640px) {
-    .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-contexto,
-    .actae-tabla-gerencial th.actae-col-contexto { display: none; }
-}
-
-/* ==========================================================================
- * Visor del acta física de escrutinio (reportesMesa.xhtml y actaE.xhtml).
- * Movido desde el <style> en línea de reportesMesa para compartirlo. Las variables
- * estaban escritas var(- -x), con un espacio entre guiones: sintaxis inválida que el
- * navegador descartaba; aquí van corregidas como var(--x).
- * ========================================================================== */
-.acta-fisica-dialog .ui-dialog-content {
-	max-height: calc(100vh - 9rem);
-	overflow-y: auto;
-	padding: 1rem 1.25rem;
-}
-
-.acta-fisica-contenido {
-	margin: 0;
-}
-
-.acta-fisica-panel {
-	height: 100%;
-	border: 1px solid var(--surface-border);
-	border-radius: 6px;
-	background: var(--surface-card);
-	padding: 1rem;
-}
-
-.acta-fisica-panel-cabecera {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: .75rem;
-	margin-bottom: .875rem;
-}
-
-.acta-fisica-panel-titulo {
-	color: var(--text-color);
-	font-size: 1rem;
-	font-weight: 700;
-}
-
-.acta-fisica-panel-subtitulo {
-	color: var(--text-color-secondary);
-	font-size: .8125rem;
-	line-height: 1.35;
-	margin-top: .2rem;
-}
-
-.acta-fisica-herramientas {
-	flex-shrink: 0;
-}
-
-.acta-fisica-visor {
-	background: #eef2f7;
-	border: 1px solid var(--surface-border);
-	border-radius: 4px;
-}
-
-.acta-fisica-visor img {
-	background: #ffffff;
-	box-shadow: 0 8px 20px rgba(15, 23, 42, .18);
-}
-
-.acta-fisica-totales {
-	margin: .875rem 0 0;
-	padding: .625rem .75rem;
-	border-top: 1px solid var(--surface-border);
-	background: var(--surface-ground);
-}
-
-.acta-fisica-totales .col-6 {
-	padding-top: .25rem;
-	padding-bottom: .25rem;
-}
-
-.acta-fisica-totales .col-6:nth-last-child(-n+2) {
-	border-top: 1px solid var(--surface-border);
-	margin-top: .25rem;
-	padding-top: .55rem;
-}
-
-/* Votos registrados con la forma del acta impresa (subtotal y total sombreados). */
-.acta-comparacion {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: .875rem;
-}
-
-.acta-comparacion th, .acta-comparacion td {
-	padding: .35rem .6rem;
-	border: 1px solid var(--surface-border);
-	text-align: left;
-}
-
-.acta-comparacion th {
-	background: var(--surface-ground);
-	font-size: .75rem;
-	font-weight: 600;
-	letter-spacing: .02em;
-}
-
-.acta-comparacion .acta-comparacion__num {
-	width: 7.5rem;
-	text-align: right;
-	font-variant-numeric: tabular-nums;
-}
-
-.acta-comparacion__subtotal td {
-	background: #eef2f7;
-	font-weight: 600;
-}
-
-.acta-comparacion__total td {
-	background: #dfe6ef;
-	font-weight: 700;
-}
-
-/* Controles del sistema: separados del contenido del acta. */
-.acta-comparacion-controles {
-	display: flex;
-	flex-direction: column;
-	gap: .4rem;
-	margin-top: 1rem;
-	padding: .625rem .75rem;
-	border: 1px dashed var(--surface-border);
-	border-radius: 4px;
-	background: var(--surface-ground);
-	font-size: .875rem;
-}
-
-.acta-comparacion-controles__titulo {
-	font-size: .75rem;
-	font-weight: 600;
-	color: var(--text-color-secondary);
-	text-transform: uppercase;
-	letter-spacing: .03em;
-}
-
-/* Transcripción del acta en la revisión oficial: una entrada por línea del acta. */
-.acta-comparacion td.acta-comparacion__entrada {
-	width: 8rem;
-	padding: .2rem .35rem;
-}
-
-.acta-comparacion__entrada .ui-inputnumber input {
-	width: 100%;
-	padding: .3rem .45rem;
-	text-align: right;
-	font-variant-numeric: tabular-nums;
-}
-
-/* Revisión oficial: acción del revisor, separada de los controles del sistema. */
-.acta-revision-oficial {
-	display: flex;
-	flex-direction: column;
-	gap: .5rem;
-	margin-top: 1rem;
-	padding: .75rem;
-	border: 1px solid var(--surface-border);
-	border-left: 4px solid var(--primary-color);
-	border-radius: 4px;
-	background: var(--surface-card);
-}
-
-@media ( max-width : 991px) {
-	.acta-fisica-dialog {
-		width: 94vw !important;
-	}
-	.acta-fisica-visor {
-		height: 38vh !important;
-	}
-	.acta-fisica-visor img {
-		max-height: 36vh !important;
-	}
-}
-
-@media ( max-width : 575px) {
-	.acta-fisica-dialog {
-		width: 96vw !important;
-	}
-	.acta-fisica-dialog .ui-dialog-content {
-		max-height: calc(100vh - 7.25rem);
-		padding: .625rem;
-	}
-	.acta-fisica-panel {
-		padding: .75rem;
-	}
-	.acta-fisica-panel-cabecera {
-		flex-wrap: wrap;
-		align-items: flex-start;
-	}
-	.acta-fisica-herramientas {
-		width: 100%;
-		justify-content: flex-end;
-	}
-	.acta-fisica-visor {
-		height: 32vh !important;
-	}
-	.acta-fisica-visor img {
-		max-height: 30vh !important;
-	}
-}
-
-/* Listado de escrutinios (actaE) más denso: fuente y relleno algo menores para ver más
-   mesas por pantalla sin bajar de un tamaño cómodo de lectura. Las etiquetas p:tag se
-   compactan en proporción para que la columna Situación no ensanche la fila. */
-.actae-tabla-densa .ui-datatable-data > tr > td { font-size: .8125rem; padding-top: .35rem; padding-bottom: .35rem; }
-.actae-tabla-densa thead > tr > th { font-size: .75rem; }
-.actae-tabla-densa .ui-tag { font-size: .72rem; padding: .15rem .45rem; }
-.actae-tabla-densa small { font-size: .72rem; }
-/* Filtros de columna del listado de escrutinios: compactos, bajo el título. */
-.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .35rem; min-width: 0; font-size: .75rem; font-weight: 400; text-align: left; }
-.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: .75rem; }
-
-/* Pasos del escrutinio (tab Escrutinio): hecho, en curso o pendiente. En pantallas
-   estrechas se muestran solo las marcas y el rótulo del paso en curso. */
-.actae-pasos { display: flex; gap: .25rem; align-items: center; }
-.actae-paso { display: flex; align-items: center; gap: .4rem; flex: 1 1 0; min-width: 0; padding: .35rem .5rem; border-radius: 6px; color: var(--text-color-secondary); font-size: .8rem; }
-.actae-paso__marca { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 1px solid var(--surface-border); background: var(--surface-card); font-size: .72rem; font-weight: 600; }
-.actae-paso__texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.actae-paso--hecho { color: var(--text-color); }
-.actae-paso--hecho .actae-paso__marca { background: #16a34a; border-color: #16a34a; color: #ffffff; }
-.actae-paso--actual { background: var(--surface-ground); color: var(--text-color); font-weight: 600; }
-.actae-paso--actual .actae-paso__marca { border-color: var(--primary-color); color: var(--primary-color); }
-@media (max-width: 575px) {
-    .actae-paso { flex: 0 0 auto; }
-    .actae-paso--actual { flex: 1 1 auto; }
-    .actae-paso:not(.actae-paso--actual) .actae-paso__texto { display: none; }
 }

@@ -426,7 +426,8 @@ public class DashboardController implements Serializable {
         });
         electoresPorCanton = "{\"type\":\"bar\",\"data\":{\"labels\":[" + etiquetas + "],"
                 + "\"datasets\":[{\"label\":\"" + escaparJson(JsfUtil.getMessage("dashboard.grafico.electores"))
-                + "\",\"data\":[" + valores + "],\"backgroundColor\":\"rgba(24,82,133,.85)\","
+                // Sin colores: los aplica el extender tecGraficoTema con las variables del tema activo.
+                + "\",\"data\":[" + valores + "],"
                 + "\"borderRadius\":4}]},"
                 + "\"options\":{\"maintainAspectRatio\":false,\"plugins\":{\"legend\":{\"display\":false}},"
                 + "\"scales\":{\"y\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0}}}}}";

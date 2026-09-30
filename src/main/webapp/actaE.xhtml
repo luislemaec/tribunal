@@ -14,14 +14,16 @@
     </ui:define>
 
     <ui:define name="content">
+        <h:outputStylesheet library="css" name="acta-fisica.css"/>
+        <h:outputStylesheet library="css" name="actaE.css"/>
 
         <!-- Cabecera con el mismo patrón de reportesMesa.xhtml: título a la izquierda y
              el proceso vigente como etiqueta, en lugar de ofrecerlo como filtro. -->
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
             <div class="flex align-items-start gap-3">
                 <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                     style="width:2.5rem;height:2.5rem;background:#b45309;flex-shrink:0">
-                    <i class="pi pi-file-edit text-white"></i>
+                     style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                    <i class="pi pi-file-edit"></i>
                 </div>
                 <div>
                     <h2 class="m-0 text-900 font-semibold text-xl">#{msg['form.actaE.title']}</h2>
@@ -35,16 +37,16 @@
         <h:form id="frmActaE" enctype="multipart/form-data">
 
             <p:outputPanel rendered="#{actaEController.sinMesaAsignada}" layout="block" styleClass="mb-3">
-                <div class="border-round-lg p-3" style="background:#fff7ed;border-left:4px solid #f97316">
-                    <i class="pi pi-exclamation-triangle mr-2" style="color:#f97316"/>
+                <div class="border-round-lg p-3" style="background:var(--orange-50);border-left:4px solid var(--orange-500)">
+                    <i class="pi pi-exclamation-triangle mr-2" style="color:var(--orange-500)"/>
                     <span class="text-700">#{msg['actaE.mensaje.sin.mesa.asignada']}</span>
                 </div>
             </p:outputPanel>
 
             <p:outputPanel rendered="#{actaEController.accesoRestringidoPresidenteMesa and not actaEController.sinMesaAsignada}"
                            layout="block" styleClass="mb-3">
-                <div class="border-round-lg p-3" style="background:#eff6ff;border-left:4px solid #2563eb">
-                    <i class="pi pi-info-circle mr-2" style="color:#2563eb"/>
+                <div class="border-round-lg p-3" style="background:var(--blue-50);border-left:4px solid var(--blue-500)">
+                    <i class="pi pi-info-circle mr-2" style="color:var(--blue-500)"/>
                     <span class="text-700">#{msg['actaE.info.mesa.restringida']}</span>
                 </div>
             </p:outputPanel>
@@ -237,7 +239,7 @@
                              de operación; los demás conservan la descarga del acta. -->
                         <p:column headerText="#{msg['actaE.tabla.acciones']}" exportable="false"
                                   styleClass="text-center" style="width:13rem">
-                            <div class="flex align-items-center justify-content-center gap-1">
+                            <span class="tec-acciones">
                                 <!-- Quien opera ve Iniciar, Continuar o Ver acta; el revisor que
                                      no opera (Tribunal) abre la mesa en consulta. -->
                                 <p:commandButton value="#{actaEController.puedeOperarActa ? msg[item.accionClave] : msg['actaE.accion.consultar']}"
@@ -251,7 +253,7 @@
                                 <!-- Acta física en un clic: verla si existe, cargarla si la mesa
                                      está cerrada y falta. Lleva directo al tab «Acta física». -->
                                 <p:commandButton icon="#{item.tieneActaFisica ? 'pi pi-image' : 'pi pi-upload'}"
-                                                 styleClass="ui-button-rounded ui-button-text #{item.tieneActaFisica ? 'ui-button-info' : 'ui-button-warning'}"
+                                                 styleClass="rounded-button ui-button-flat #{item.tieneActaFisica ? 'ui-button-info' : 'ui-button-warning'}"
                                                  ariaLabel="#{item.tieneActaFisica ? msg['actaE.accion.ver.actaFisica'] : msg['actaE.accion.cargar.actaFisica']}"
                                                  rendered="#{actaEController.usuarioRevisorActas and (item.tieneActaFisica or item.situacion eq 'CERRADA_SIN_ACTA_FISICA')}"
                                                  actionListener="#{actaEController.abrirActaFisicaMesa(item)}"
@@ -262,14 +264,14 @@
                                                value="#{item.tieneActaFisica ? msg['actaE.accion.ver.actaFisica'] : msg['actaE.accion.cargar.actaFisica']}"/>
                                 </p:commandButton>
                                 <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                                 styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                 styleClass="rounded-button ui-button-flat ui-button-info"
                                                  title="#{msg['actaE.documentos.descargar']}"
                                                  ariaLabel="#{msg['actaE.documentos.descargar']}"
                                                  rendered="#{item.actaPdfGenerada and item.documentoActa ne null}">
                                     <f:setPropertyActionListener value="#{item.documentoActa}" target="#{documentoBean.documento}"/>
                                     <p:fileDownload value="#{documentoBean.file}"/>
                                 </p:commandButton>
-                            </div>
+                            </span>
                         </p:column>
                     </p:dataTable>
                     </div>
@@ -296,8 +298,8 @@
                 <p:tab title="#{msg['actaE.tab.escrutinio']}" rendered="#{actaEController.puedeConsultarMesa}">
                     <p:outputPanel rendered="#{actaEController.mesaSoloLectura}" layout="block"
                                    styleClass="border-round-lg p-3 mb-3"
-                                   style="background:#eff6ff;border-left:4px solid #2563eb">
-                        <i class="pi pi-eye mr-2" style="color:#2563eb"/>
+                                   style="background:var(--blue-50);border-left:4px solid var(--blue-500)">
+                        <i class="pi pi-eye mr-2" style="color:var(--blue-500)"/>
                         <span class="text-700 text-sm">#{msg['actaE.mensaje.solo.lectura']}</span>
                     </p:outputPanel>
 
@@ -370,7 +372,7 @@
                                 <h:panelGroup rendered="#{actaEController.esDocumentoActaValido(doc)}">
                                     <p:commandButton icon="pi pi-file-pdf" ajax="false" immediate="true" process="@this"
                                                      value="#{msg['actaE.documentos.descargar']}"
-                                                     styleClass="ui-button-sm ui-button-outlined ui-button-danger"
+                                                     styleClass="tec-btn ui-button-sm ui-button-outlined ui-button-info"
                                                      ariaLabel="#{msg['actaE.documentos.descargar']} #{doc.nombre}">
                                         <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
                                         <p:fileDownload value="#{documentoBean.file}"/>
@@ -387,8 +389,8 @@
                         </h:panelGroup>
                         <p:outputPanel rendered="#{actaEController.actaPdfRegistradaNoDisponible}" layout="block"
                                        styleClass="border-round-lg p-2 mt-2 text-sm"
-                                       style="background:#fef2f2;border-left:4px solid #ef4444">
-                            <i class="pi pi-exclamation-triangle mr-2" style="color:#ef4444"/>
+                                       style="background:var(--red-50);border-left:4px solid var(--red-500)">
+                            <i class="pi pi-exclamation-triangle mr-2" style="color:var(--red-500)"/>
                             <span class="text-700">#{msg['actaE.documentos.archivo.no.disponible']}</span>
                         </p:outputPanel>
 
@@ -410,7 +412,7 @@
                                 </div>
                                 <div class="field col-12 md:col-3 flex align-items-end">
                                     <p:commandButton value="#{msg['actaE.boton.apertura']}" icon="pi pi-play"
-                                                     styleClass="ui-button-primary w-full"
+                                                     styleClass="tec-btn ui-button-primary w-full"
                                                      actionListener="#{actaEController.registrarApertura}"
                                                      process="pnlApertura @this" update=":frmActaE">
                                         <p:confirm header="#{msg['actaE.confirmacion.apertura.titulo']}"
@@ -456,13 +458,13 @@
                             <h:panelGroup layout="block" styleClass="flex justify-content-end flex-wrap gap-2 mt-3"
                                           rendered="#{actaEController.puedeOperarMesaSeleccionada}">
                                 <p:commandButton value="#{msg['actaE.boton.borrador']}" icon="pi pi-save"
-                                                 styleClass="ui-button-secondary ui-button-outlined"
+                                                 styleClass="tec-btn ui-button-secondary ui-button-outlined"
                                                  disabled="#{not actaEController.puedeEditarConteo}"
                                                  process="@form @this"
                                                  actionListener="#{actaEController.guardarBorradorConteo}"
                                                  update=":frmActaE"/>
                                 <p:commandButton value="#{msg['actaE.boton.cerrar']}" icon="pi pi-check-circle"
-                                                 styleClass="ui-button-success"
+                                                 styleClass="tec-btn ui-button-success"
                                                  disabled="#{not actaEController.puedeCerrarMesa}"
                                                  process="@form @this"
                                                  actionListener="#{actaEController.cerrarMesa}"
@@ -478,12 +480,12 @@
                     <!-- Mesa cerrada: el flujo sigue en Acta física -->
                     <p:outputPanel rendered="#{actaEController.mesaCerrada}" layout="block"
                                    styleClass="border-round-lg p-3 mb-3 flex align-items-center justify-content-between gap-2 flex-wrap"
-                                   style="background:#ecfdf5;border-left:4px solid #16a34a">
+                                   style="background:var(--green-50);border-left:4px solid var(--green-600)">
                         <span class="text-700 text-sm">
-                            <i class="pi pi-check-circle mr-2" style="color:#16a34a"/>#{msg['actaE.escrutinio.continuar.actaFisica']}
+                            <i class="pi pi-check-circle mr-2" style="color:var(--green-600)"/>#{msg['actaE.escrutinio.continuar.actaFisica']}
                         </span>
                         <p:commandButton type="button" value="#{msg['actaE.tab.actaFisica']}" icon="pi pi-arrow-right"
-                                         iconPos="right" styleClass="ui-button-sm ui-button-success ui-button-outlined"
+                                         iconPos="right" styleClass="tec-btn ui-button-sm ui-button-success ui-button-outlined"
                                          onclick="PF('wdTabActaE').select(#{actaEController.indiceTabActaFisica})"/>
                     </p:outputPanel>
 
@@ -507,7 +509,7 @@
                                 </div>
                                 <div class="field col-12 md:col-4 flex align-items-end justify-content-end gap-2 flex-wrap">
                                     <p:commandButton value="#{msg['actaE.boton.observar']}" icon="pi pi-eye"
-                                                     styleClass="ui-button-warning"
+                                                     styleClass="tec-btn ui-button-warning"
                                                      disabled="#{not actaEController.puedeObservarEscrutinio}"
                                                      actionListener="#{actaEController.observarEscrutinio}"
                                                      process="pnlEstadosAdministrativos @this" update=":frmActaE">
@@ -516,7 +518,7 @@
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                     <p:commandButton value="#{msg['actaE.boton.anular']}" icon="pi pi-ban"
-                                                     styleClass="ui-button-danger"
+                                                     styleClass="tec-btn ui-button-danger"
                                                      disabled="#{not actaEController.puedeAnularEscrutinio}"
                                                      actionListener="#{actaEController.anularEscrutinio}"
                                                      process="pnlEstadosAdministrativos @this" update=":frmActaE">
@@ -525,7 +527,7 @@
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                     <p:commandButton value="#{msg['actaE.boton.reabrir']}" icon="pi pi-unlock"
-                                                     styleClass="ui-button-info"
+                                                     styleClass="tec-btn ui-button-warning"
                                                      disabled="#{not actaEController.puedeReabrirEscrutinio}"
                                                      actionListener="#{actaEController.reabrirEscrutinio}"
                                                      process="pnlEstadosAdministrativos @this" update=":frmActaE">
@@ -548,8 +550,8 @@
                     <p:outputPanel id="pnlActaFisica" layout="block">
                         <p:outputPanel rendered="#{not actaEController.mesaCerrada}" layout="block"
                                        styleClass="border-round-lg p-3"
-                                       style="background:#fff7ed;border-left:4px solid #f97316">
-                            <i class="pi pi-info-circle mr-2" style="color:#f97316"/>
+                                       style="background:var(--orange-50);border-left:4px solid var(--orange-500)">
+                            <i class="pi pi-info-circle mr-2" style="color:var(--orange-500)"/>
                             <span class="text-700 text-sm">#{msg['actaE.actaFisica.requiere.cierre']}</span>
                         </p:outputPanel>
                         <ui:include src="/WEB-INF/actaE-devolucion.xhtml"/>
@@ -579,27 +581,27 @@
                                                   rendered="#{not empty actaEController.actaFisica and not actaEController.actaFisicaEnVisor}"
                                                   styleClass="flex align-items-center justify-content-between gap-2 flex-wrap">
                                         <span class="flex align-items-center gap-2 text-700 text-sm">
-                                            <i class="pi pi-image text-primary"/>#{actaEController.actaFisica.nombre}
+                                            <i class="pi pi-image text-primary-700"/>#{actaEController.actaFisica.nombre}
                                         </span>
                                         <p:commandButton value="#{msg['actaE.accion.ver.actaFisica']}" icon="pi pi-eye"
-                                                         styleClass="ui-button-sm"
+                                                         styleClass="tec-btn ui-button-sm"
                                                          actionListener="#{actaEController.verActaFisica}"
                                                          process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
                                     </h:panelGroup>
 
                                     <h:panelGroup layout="block" rendered="#{actaEController.actaFisicaEnVisor}">
                                         <div class="flex justify-content-end gap-1 acta-fisica-herramientas mb-2">
-                                            <p:commandButton type="button" icon="pi pi-search-plus" styleClass="ui-button-text ui-button-rounded"
-                                                             onclick="ajustarImagenActa(0.15, 0)" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.mas']}"/>
-                                            <p:commandButton type="button" icon="pi pi-search-minus" styleClass="ui-button-text ui-button-rounded"
-                                                             onclick="ajustarImagenActa(-0.15, 0)" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.menos']}"/>
-                                            <p:commandButton type="button" icon="pi pi-replay" styleClass="ui-button-text ui-button-rounded"
-                                                             onclick="ajustarImagenActa(0, 90)" ariaLabel="#{msg['reportesMesa.actaFisica.rotar']}"/>
-                                            <p:commandButton type="button" icon="pi pi-undo" styleClass="ui-button-text ui-button-rounded"
-                                                             onclick="restablecerImagenActa()" ariaLabel="#{msg['reportesMesa.actaFisica.restablecer']}"/>
+                                            <p:commandButton type="button" icon="pi pi-search-plus" styleClass="ui-button-flat rounded-button ui-button-info"
+                                                             onclick="ajustarImagenActa(0.15, 0)" title="#{msg['reportesMesa.actaFisica.zoom.mas']}" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.mas']}"/>
+                                            <p:commandButton type="button" icon="pi pi-search-minus" styleClass="ui-button-flat rounded-button ui-button-info"
+                                                             onclick="ajustarImagenActa(-0.15, 0)" title="#{msg['reportesMesa.actaFisica.zoom.menos']}" ariaLabel="#{msg['reportesMesa.actaFisica.zoom.menos']}"/>
+                                            <p:commandButton type="button" icon="pi pi-replay" styleClass="ui-button-flat rounded-button ui-button-info"
+                                                             onclick="ajustarImagenActa(0, 90)" title="#{msg['reportesMesa.actaFisica.rotar']}" ariaLabel="#{msg['reportesMesa.actaFisica.rotar']}"/>
+                                            <p:commandButton type="button" icon="pi pi-undo" styleClass="ui-button-flat rounded-button ui-button-info"
+                                                             onclick="restablecerImagenActa()" title="#{msg['reportesMesa.actaFisica.restablecer']}" ariaLabel="#{msg['reportesMesa.actaFisica.restablecer']}"/>
                                             <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                                             styleClass="ui-button-text ui-button-rounded"
-                                                             ariaLabel="#{msg['actaE.documentos.descargar']}">
+                                                             styleClass="ui-button-flat rounded-button ui-button-info"
+                                                             title="#{msg['actaE.documentos.descargar']}" ariaLabel="#{msg['actaE.documentos.descargar']}">
                                                 <f:setPropertyActionListener value="#{actaEController.actaFisica}" target="#{documentoBean.documento}"/>
                                                 <p:fileDownload value="#{documentoBean.file}"/>
                                             </p:commandButton>
@@ -639,7 +641,7 @@
                                                      class="mt-2 border-round border-1 border-200 hidden" style="max-height:12rem;max-width:100%"/>
                                             </div>
                                             <p:commandButton value="#{msg['actaE.actaFisica.cargar']}" icon="pi pi-upload"
-                                                             styleClass="ui-button-primary" process="archivoActaFisica @this"
+                                                             styleClass="tec-btn ui-button-primary" process="archivoActaFisica @this"
                                                              actionListener="#{actaEController.cargarActaFisica}"
                                                              update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
                                         </div>
@@ -835,7 +837,7 @@
                                                 </small>
                                             </div>
                                             <p:commandButton value="#{msg['actaE.oficial.boton.revertir']}" icon="pi pi-replay"
-                                                             styleClass="ui-button-sm ui-button-outlined ui-button-danger"
+                                                             styleClass="tec-btn ui-button-sm ui-button-outlined ui-button-warning"
                                                              rendered="#{actaEController.puedeRevertirValidacion and empty actaEController.accionRevisionActa}"
                                                              actionListener="#{actaEController.prepararReversionValidacion}"
                                                              process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
@@ -853,7 +855,7 @@
                                             </p:selectBooleanCheckbox>
                                             <div class="flex gap-2 flex-wrap mt-2">
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.marcar']}" icon="pi pi-verified"
-                                                                 styleClass="ui-button-sm ui-button-success"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-success"
                                                                  disabled="#{not actaEController.actaFisicaEnVisor or not actaEController.cotejoConfirmado}"
                                                                  actionListener="#{actaEController.marcarDatosOficiales}"
                                                                  process="@this"
@@ -863,11 +865,11 @@
                                                                icon="pi pi-exclamation-triangle"/>
                                                 </p:commandButton>
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.transcribir']}" icon="pi pi-pencil"
-                                                                 styleClass="ui-button-sm ui-button-outlined"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-outlined"
                                                                  actionListener="#{actaEController.iniciarRevisionActa}"
                                                                  process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.devolver']}" icon="pi pi-reply"
-                                                                 styleClass="ui-button-sm ui-button-outlined ui-button-warning"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-outlined ui-button-warning"
                                                                  actionListener="#{actaEController.prepararDevolucionActa}"
                                                                  process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
                                             </div>
@@ -895,7 +897,7 @@
                                             </div>
                                             <div class="flex gap-2 flex-wrap mt-2">
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.validar']}" icon="pi pi-verified"
-                                                                 styleClass="ui-button-sm ui-button-success"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-success"
                                                                  disabled="#{not actaEController.revisionActa.cuadrada or not actaEController.revisionActa.revisada}"
                                                                  actionListener="#{actaEController.validarActaFisica}"
                                                                  process="@this pnlTranscripcionActa"
@@ -905,7 +907,7 @@
                                                                icon="pi pi-exclamation-triangle"/>
                                                 </p:commandButton>
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.cancelar']}" icon="pi pi-times"
-                                                                 styleClass="ui-button-sm ui-button-secondary ui-button-outlined"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-secondary ui-button-outlined"
                                                                  actionListener="#{actaEController.cancelarRevisionActa}"
                                                                  process="@this" update=":frmActaE:tabActaE:pnlActaFisica"/>
                                             </div>
@@ -929,7 +931,7 @@
                                             <div class="flex gap-2 flex-wrap mt-2">
                                                 <p:commandButton value="#{actaEController.accionRevisionActa eq 'REVERTIR' ? msg['actaE.oficial.boton.revertir'] : msg['actaE.oficial.boton.devolver']}"
                                                                  icon="pi pi-check"
-                                                                 styleClass="ui-button-sm #{actaEController.accionRevisionActa eq 'REVERTIR' ? 'ui-button-danger' : 'ui-button-warning'}"
+                                                                 styleClass="tec-btn ui-button-sm #{actaEController.accionRevisionActa eq 'REVERTIR' ? 'ui-button-danger' : 'ui-button-warning'}"
                                                                  actionListener="#{actaEController.confirmarAccionRevision}"
                                                                  process="@this pnlAccionRevision"
                                                                  update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal">
@@ -938,7 +940,7 @@
                                                                icon="pi pi-exclamation-triangle"/>
                                                 </p:commandButton>
                                                 <p:commandButton value="#{msg['actaE.oficial.boton.cancelar']}" icon="pi pi-times"
-                                                                 styleClass="ui-button-sm ui-button-secondary ui-button-outlined"
+                                                                 styleClass="tec-btn ui-button-sm ui-button-secondary ui-button-outlined"
                                                                  actionListener="#{actaEController.cancelarAccionRevision}"
                                                                  process="@this" update=":frmActaE:tabActaE:pnlActaFisica"/>
                                             </div>

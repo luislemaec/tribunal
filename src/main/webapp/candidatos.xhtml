@@ -14,12 +14,13 @@
     </ui:define>
 
     <ui:define name="content">
+        <h:outputStylesheet library="css" name="candidatos.css"/>
         <div class="grid mb-3">
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0f766e,#22c55e);flex-shrink:0">
-                        <i class="pi pi-users text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-users" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.candidatos.title']}</h2>
@@ -46,7 +47,7 @@
                                 <small class="text-500">#{msg['form.candidatos.listas.hint']}</small>
                             </div>
                             <p:commandButton value="#{msg['form.candidatos.lista.new']}" icon="pi pi-plus"
-                                             styleClass="ui-button-success"
+                                             styleClass="tec-btn"
                                              action="#{candidatoController.prepararNuevaLista}"
                                              process="@this" update=":frmCandidatos:dlgListaContenido"
                                              oncomplete="PF('dlgLista').show()">
@@ -110,9 +111,9 @@
                             <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
                             <p:column exportable="false" style="width:7rem" styleClass="text-center"
                                       selectRow="false">
-                                <div class="flex align-items-center justify-content-center gap-1">
+                                <span class="tec-acciones">
                                     <p:commandButton icon="pi pi-pencil" title="#{msg['form.candidatos.lista.edit']}" ariaLabel="#{msg['form.candidatos.lista.edit']}"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                     styleClass="rounded-button ui-button-flat ui-button-secondary"
                                                      rendered="#{lista.estado}"
                                                      action="#{candidatoController.prepararEdicionLista(lista)}"
                                                      process="@this" update=":frmCandidatos:dlgListaContenido"
@@ -120,7 +121,7 @@
                                         <p:resetInput target=":frmCandidatos:dlgListaContenido"/>
                                     </p:commandButton>
                                     <p:commandButton icon="pi pi-power-off" title="#{msg['form.candidatos.lista.disable']}" ariaLabel="#{msg['form.candidatos.lista.disable']}"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                     styleClass="rounded-button ui-button-flat ui-button-danger"
                                                      rendered="#{lista.estado}"
                                                      action="#{candidatoController.desactivarLista(lista)}"
                                                      process="@this" update=":frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal">
@@ -129,7 +130,7 @@
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                     <p:commandButton icon="pi pi-refresh" title="#{msg['form.candidatos.lista.enable']}" ariaLabel="#{msg['form.candidatos.lista.enable']}"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                                     styleClass="rounded-button ui-button-flat ui-button-success"
                                                      rendered="#{not lista.estado}"
                                                      action="#{candidatoController.reactivarLista(lista)}"
                                                      process="@this" update=":frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal">
@@ -137,7 +138,7 @@
                                                    message="¿Desea reactivar esta lista y conservar su historial?"
                                                    icon="pi pi-refresh"/>
                                     </p:commandButton>
-                                </div>
+                                </span>
                             </p:column>
                         </p:dataTable>
                     </div>
@@ -208,7 +209,7 @@
                                             <p:commandButton icon="pi pi-user-edit"
                                                              title="#{msg['form.candidatos.candidato.reassign']}"
                                                              ariaLabel="#{msg['form.candidatos.candidato.reassign']}"
-                                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                             styleClass="rounded-button ui-button-flat ui-button-warning"
                                                              rendered="#{candidatoController.listaSeleccionadaActiva}"
                                                              action="#{candidatoController.prepararAsignacionCandidato(candidato)}"
                                                              process="@this"
@@ -234,7 +235,7 @@
                                     <p:column headerText="#{msg['form.candidatos.table.header.acciones']}" exportable="false" style="width:5rem"
                                               styleClass="text-center" rendered="#{candidatoController.listaSeleccionadaActiva}">
                                         <p:commandButton icon="pi pi-trash" title="#{msg['form.candidatos.candidato.disable']}" ariaLabel="#{msg['form.candidatos.candidato.disable']}"
-                                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                                          rendered="#{candidato.iglesiaPersona.persona ne null}"
                                                          process="@this" update=":frmCandidatos:tabsCandidatos:tblCandidatos :frmGlobal:growlGlobal"
                                                          action="#{candidatoController.eliminarCandidato(candidato)}">
@@ -251,7 +252,7 @@
                                              dos acciones quedan alineadas y del mismo tamaño. -->
                                         <div class="grid formgrid align-items-start">
                                             <div class="col-12 lg:col-8 flex align-items-start gap-3">
-                                                <div class="flex align-items-center justify-content-center border-circle surface-100 text-primary"
+                                                <div class="flex align-items-center justify-content-center border-circle surface-100 text-primary-700"
                                                      style="width:2.5rem;height:2.5rem;flex-shrink:0">
                                                     <i class="pi pi-file-pdf"></i>
                                                 </div>
@@ -270,7 +271,7 @@
                                             </div>
                                             <div class="col-12 lg:col-4 flex flex-column gap-2 lg:align-items-end">
                                                 <p:commandButton value="#{msg['form.candidatos.acta.generate']}" icon="pi pi-file-pdf"
-                                                                 styleClass="ui-button-info w-full"
+                                                                 styleClass="tec-btn ui-button-info w-full"
                                                                  action="#{candidatoController.generarActaInscripcion}"
                                                                  process="@this"
                                                                  update=":frmCandidatos:tabsCandidatos:panelActaInscripcion :frmGlobal:growlGlobal"
@@ -332,7 +333,7 @@
                                                       exportable="false" style="width:4.5rem" styleClass="text-center">
                                                 <p:commandButton icon="pi pi-download" ajax="false" immediate="true"
                                                                  process="@this"
-                                                                 styleClass="ui-button-rounded ui-button-text ui-button-info"
+                                                                 styleClass="rounded-button ui-button-flat ui-button-info"
                                                                  title="#{msg['form.candidatos.acta.download']}"
                                                                  ariaLabel="#{msg['form.candidatos.acta.download']}">
                                                     <p:fileDownload value="#{documentoBean.obtenerArchivo(doc)}"
@@ -347,12 +348,12 @@
                         <!-- Estado vacío: sin lista elegida no hay nada que consultar -->
                         <p:outputPanel rendered="#{empty candidatoController.listaSeleccionado}">
                             <div class="surface-card shadow-1 border-round-lg p-5 text-center">
-                                <i class="pi pi-list text-primary" style="font-size:2rem"></i>
+                                <i class="pi pi-list text-primary-700" style="font-size:2rem"></i>
                                 <h3 class="text-900 mt-3 mb-2">#{msg['form.candidatos.detalle.sinSeleccion.titulo']}</h3>
                                 <p class="text-500 m-0 mb-3">#{msg['form.candidatos.detalle.sinSeleccion.ayuda']}</p>
                                 <p:commandButton value="#{msg['form.candidatos.detalle.sinSeleccion.accion']}"
                                                  icon="pi pi-arrow-left"
-                                                 styleClass="ui-button-outlined ui-button-secondary"
+                                                 styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                                  type="button"
                                                  onclick="PF('wdTabsCandidatos').select(0)"/>
                             </div>
@@ -388,8 +389,8 @@
                 <f:facet name="footer">
                     <div class="flex justify-content-end gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
-                                         onclick="PF('dlgLista').hide()" styleClass="ui-button-outlined ui-button-secondary"/>
-                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check" styleClass="ui-button-success"
+                                         onclick="PF('dlgLista').hide()" styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check" styleClass="tec-btn"
                                          action="#{candidatoController.guardarLista}"
                                          process="@this :frmCandidatos:dlgListaContenido"
                                          update=":frmCandidatos:dlgListaContenido :frmCandidatos:tabsCandidatos:tblListas :frmCandidatos:tabsCandidatos:panelDetalle :frmGlobal:growlGlobal"/>
@@ -417,6 +418,7 @@
                             <div class="flex gap-2">
                                 <p:inputText id="cedulaBuscar" value="#{candidatoController.cedulaBuscar}" maxlength="10" required="true" styleClass="mask-cedula flex-1"/>
                                 <p:commandButton icon="pi pi-search" styleClass="ui-button-info" action="#{candidatoController.buscaPersona}"
+                                                 title="#{msg['btn.search']}" ariaLabel="#{msg['btn.search']}"
                                                  update=":frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmGlobal:growlGlobal"
                                                  process=":frmCandidatos:outPnlAsignaCandidatoBusca @this"/>
                             </div>
@@ -435,8 +437,8 @@
                 <f:facet name="footer">
                     <p:outputPanel id="outPnlFooter" class="ui-fluid">
                         <div class="flex justify-content-end flex-wrap gap-2 w-full">
-                            <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button" onclick="PF('dlgAsignaCandidato').hide()" styleClass="ui-button-outlined ui-button-secondary"/>
-                            <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check" styleClass="ui-button-success"
+                            <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button" onclick="PF('dlgAsignaCandidato').hide()" styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
+                            <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check" styleClass="tec-btn"
                                              action="#{candidatoController.guardarCandidato}" process=":frmCandidatos:outPnlAsignaCandidato @this"
                                              update=":frmCandidatos:outPnlCandidatoContexto :frmCandidatos:outPnlAsignaCandidatoBusca :frmCandidatos:outPnlAsignaCandidato :frmCandidatos:outPnlFooter :frmCandidatos:tabsCandidatos:tblCandidatos :frmGlobal:growlGlobal"
                                              rendered="#{candidatoController.candidatoSeleccionado.iglesiaPersona ne null}"/>

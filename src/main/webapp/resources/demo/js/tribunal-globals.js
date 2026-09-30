@@ -6,14 +6,13 @@
  *   - NProgress: barra superior durante ajax JSF/PrimeFaces
  *   - PrimeFaces <p:growl widgetVar="growlGlobal"> (definido en globals.xhtml)
  *     accesible vía Tribunal.toast.* y Tribunal.notify(...)
- *   - SweetAlert2: helper global Tribunal.confirm(...) / Tribunal.alert(...)
+ *   - Confirmaciones: se usa <p:confirm> de PrimeFaces con el diálogo global de globals.xhtml
  *   - Inputmask: máscaras automáticas para .mask-cedula, .mask-ruc,
  *     .mask-fecha, .mask-telefono
  *
  * Todos los assets se sirven localmente desde resources/demo (sin CDN).
  * El template.xhtml los carga vía h:outputScript/Stylesheet en este orden:
  *   nprogress.min.css/js
- *   sweetalert2.min.css / sweetalert2.all.min.js
  *   jquery.inputmask.min.js
  *   tribunal-globals.js (este archivo)
  * ============================================================ */
@@ -63,29 +62,6 @@
         warn:    function (m, t) { showToast('warn',    t || 'Advertencia', m); },
         error:   function (m, t) { showToast('error',   t || 'Error',       m); }
     };
-
-    // ------------------------------------------------------------------
-    // SweetAlert2 helpers
-    // ------------------------------------------------------------------
-    if (global.Swal) {
-        Tribunal.confirm = function (opts) {
-            opts = opts || {};
-            return Swal.fire({
-                title: opts.title || '¿Está seguro?',
-                text: opts.text || 'Esta acción no se puede deshacer',
-                icon: opts.icon || 'warning',
-                showCancelButton: true,
-                confirmButtonText: opts.confirmText || 'Sí, continuar',
-                cancelButtonText: opts.cancelText || 'Cancelar',
-                confirmButtonColor: opts.confirmColor || '#d33',
-                cancelButtonColor: '#6c757d',
-                reverseButtons: true
-            });
-        };
-        Tribunal.alert = function (msg, icon) {
-            return Swal.fire({ text: msg, icon: icon || 'info', confirmButtonText: 'OK' });
-        };
-    }
 
     // ------------------------------------------------------------------
     // NProgress: engancha al ciclo ajax de JSF

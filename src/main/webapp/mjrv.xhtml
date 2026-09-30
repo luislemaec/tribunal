@@ -14,13 +14,14 @@
     </ui:define>
 
     <ui:define name="content">
+        <h:outputStylesheet library="css" name="mjrv.css"/>
 
         <div class="surface-ground p-2 md:p-4">
 
         <div class="flex align-items-start gap-3 mb-3">
             <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                 style="width:2.5rem;height:2.5rem;background:#0f766e;flex-shrink:0">
-                <i class="pi pi-id-card text-white"></i>
+                 style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                <i class="pi pi-id-card"></i>
             </div>
             <div>
                 <h2 class="m-0 text-900 font-semibold text-xl">#{msg['mjrv.titulo']}</h2>
@@ -32,8 +33,8 @@
 
             <p:outputPanel rendered="#{jrvController.restringidoAMesaAsignada}" layout="block" styleClass="mb-3">
                 <div class="flex align-items-center gap-2 border-round-lg p-3"
-                     style="background:#eff6ff;border-left:4px solid #2563eb">
-                    <i class="pi pi-info-circle flex-shrink-0" style="color:#2563eb"/>
+                     style="background:var(--blue-50);border-left:4px solid var(--blue-500)">
+                    <i class="pi pi-info-circle flex-shrink-0" style="color:var(--blue-500)"/>
                     <span class="text-700 text-sm">#{msg['mjrv.info.mesa.restringida']}</span>
                 </div>
             </p:outputPanel>
@@ -206,7 +207,7 @@
                         <div class="text-900 font-medium mt-2">#{msg['mjrv.empty.sin.mesa.titulo']}</div>
                         <p class="text-500 text-sm mt-1 mb-3">#{msg['mjrv.empty.sin.mesa.ayuda']}</p>
                         <p:commandButton value="#{msg['mjrv.boton.ir.mesas']}" icon="pi pi-arrow-left" type="button"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          onclick="PF('wdTabsMJRV').select(0)"/>
                     </div>
                 </ui:fragment>
@@ -215,7 +216,7 @@
             <div class="flex justify-content-end mb-3">
                 <p:commandButton id="btnIglesiasAsignadas" type="button" icon="pi pi-building"
                                  value="#{msg['mjrv.boton.ver.iglesias']} (#{jrvController.totalIglesiasAsignadas})"
-                                 styleClass="ui-button-outlined ui-button-secondary"/>
+                                 styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                 <p:overlayPanel id="opIglesiasAsignadas" for="btnIglesiasAsignadas" showEvent="click"
                                 dismissable="true" my="right top" at="right bottom" style="width:min(42rem, calc(100vw - 2rem))">
                     <div class="font-semibold text-800 mb-3">#{msg['mjrv.seccion.iglesias']}</div>
@@ -265,12 +266,12 @@
                             </p:selectOneMenu>
                         </div>
                         <div class="col-12 lg:col-4 flex flex-wrap align-items-end gap-2">
-                        <p:commandButton value="#{msg['mjrv.boton.asignar']}" icon="pi pi-plus" styleClass="ui-button-success"
+                        <p:commandButton value="#{msg['mjrv.boton.asignar']}" icon="pi pi-plus" styleClass="tec-btn"
                                          disabled="#{jrvController.asignacionBloqueada}"
                                          actionListener="#{jrvController.designarMiembro}"
                                          process=":frmMJRV:tabsMJRV:pnlDesignacion"
                                          update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
-                        <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle" styleClass="ui-button-primary"
+                        <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle" styleClass="tec-btn ui-button-success"
                                          disabled="#{not jrvController.puedeCompletarJunta}"
                                          actionListener="#{jrvController.completarJunta}"
                                          process="@this"
@@ -305,7 +306,7 @@
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:5rem">
                                 <p:commandButton icon="pi pi-user-plus"
-                                                 styleClass="ui-button-rounded ui-button-text"
+                                                 styleClass="rounded-button ui-button-flat ui-button-secondary"
                                                  title="#{msg['mjrv.tooltip.seleccionar']}"
                                                  disabled="#{jrvController.edicionBloqueada}"
                                                  actionListener="#{jrvController.seleccionarPersona(padron)}"
@@ -366,7 +367,7 @@
                                        severity="#{jrvController.edicionBloqueada ? 'success' : 'warning'}"/>
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:6%">
-                                <p:commandButton icon="pi pi-times" styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                <p:commandButton icon="pi pi-times" styleClass="rounded-button ui-button-flat ui-button-danger"
                                                  title="#{msg['mjrv.tooltip.quitar']}"
                                                  disabled="#{jrvController.edicionBloqueada}"
                                                  actionListener="#{jrvController.quitarMiembro(miembro)}"

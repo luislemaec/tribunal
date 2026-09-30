@@ -1,0 +1,46 @@
+/* Estilos propios de mjrv.xhtml. Se carga solo en esa vista, después de tribunal-globals.css;
+   lo compartido entre pantallas vive en tribunal-globals.css. */
+
+
+
+/* Selección por fila: resalta la fila activa en las tablas maestro-detalle
+ * (MJRV y Candidatos comparten el mismo comportamiento y aspecto). */
+.mjrv-mesas-table .ui-datatable-data {
+    transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.mjrv-mesas-table .ui-datatable-data > tr:not(.fila-seleccionada):not(.ui-state-highlight):not(.p-highlight):hover > td {
+    background: var(--primary-50) !important;
+    color: var(--text-color) !important;
+    cursor: pointer;
+}
+
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td,
+.mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td,
+.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td {
+    background: var(--primary-100) !important;
+    color: var(--text-color) !important;
+    font-weight: 600;
+}
+
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td:first-child,
+.mjrv-mesas-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
+.mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td:first-child {
+    box-shadow: inset 4px 0 0 var(--primary-color);
+}
+
+.mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td .ui-column-title {
+    color: var(--text-color) !important;
+}
+
+/* Tabla de mesas de MJRV: las columnas de cifras se alinean entre filas y, en
+   reflow móvil, vuelven a la izquierda junto a su etiqueta. */
+.mjrv-mesas-table td.mjrv-col-num,
+.mjrv-mesas-table th.mjrv-col-num { font-variant-numeric: tabular-nums; }
+
+.mjrv-mesas-table td,
+.mjrv-mesas-table th { overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+    .mjrv-mesas-table.ui-datatable-reflow td.mjrv-col-num { text-align: left; }
+}

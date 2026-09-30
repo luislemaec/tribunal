@@ -103,13 +103,13 @@
                 </div>
                 <div class="flex flex-wrap align-items-center gap-2">
                     <p:commandButton value="#{msg['gestionPadron.borrar.filtros']}" icon="pi pi-filter-slash"
-                                     styleClass="ui-button-outlined ui-button-secondary"
+                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                      action="#{gestionPadronController.limpiarFiltros}" process="@this"
                                      update=":frmPadron:filtros :frmPadron:contexto :frmPadron:tabsPadron:consulta :frmPadron:tabsPadron:iglesiasDisponibles :frmPadron:tabsPadron:iglesiasAsignadas"/>
                     <!-- Reporte general: vive con los filtros porque exporta exactamente lo
                          que esos filtros delimitan. -->
                     <p:commandButton value="#{msg['gestionPadron.reporte']}" icon="pi pi-file-excel" ajax="false"
-                                     styleClass="ui-button-success" process="@this"
+                                     styleClass="tec-btn ui-button-info" process="@this"
                                      title="#{msg['gestionPadron.reporte.ayuda']}"
                                      disabled="#{empty gestionPadronController.procesoActivo}">
                         <p:fileDownload value="#{gestionPadronController.generarReporte()}"/>
@@ -178,7 +178,7 @@
                                 <p:column headerText="#{msg['gestionPadron.mesas.reporte']}" exportable="false"
                                           styleClass="text-center" style="width:6rem" selectRow="false">
                                     <p:commandButton icon="pi pi-file-excel" ajax="false" process="@this"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                                     styleClass="rounded-button ui-button-flat ui-button-info"
                                                      title="#{msg['gestionPadron.reporte.mesa.tooltip']}"
                                                      ariaLabel="#{msg['gestionPadron.reporte.mesa.tooltip']}"
                                                      disabled="#{empty gestionPadronController.procesoActivo or empty mesa.total or mesa.total eq 0}">
@@ -203,7 +203,7 @@
                                 </p:column>
                                 <p:column style="width:8rem" exportable="false">
                                     <p:commandButton value="#{msg['gestionPadron.simple.asignar']}" icon="pi pi-plus"
-                                                     styleClass="ui-button-success" action="#{gestionPadronController.asignarIglesia(iglesia.id)}"
+                                                     styleClass="" action="#{gestionPadronController.asignarIglesia(iglesia.id)}"
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"
                                                      update=":frmPadron:pnlAvance :frmPadron:tabsPadron:consulta :frmPadron:tabsPadron:iglesiasDisponibles :frmPadron:tabsPadron:iglesiasAsignadas :frmPadron:contexto :frmGlobal:growlGlobal">
                                         <p:confirm header="#{msg['gestionPadron.confirmar']}"

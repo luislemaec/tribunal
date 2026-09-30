@@ -21,8 +21,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:#0f766e;flex-shrink:0">
-                        <i class="pi pi-table text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-table" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['mesas.titulo']}</h2>
@@ -91,14 +91,14 @@
                         <p:commandButton value="#{msg['mesas.boton.nuevo']}" icon="pi pi-plus"
                                          actionListener="#{mesaController.nuevaMesa}"
                                          process="@this" update=":frmMesas:outPnlMesas"
-                                         styleClass="ui-button-primary"
+                                         styleClass="tec-btn ui-button-primary"
                                          oncomplete="PF('dlgMesa').show()"/>
                         <p:commandButton id="btnEliminarSeleccionadas"
                                          value="#{mesaController.mensajeBotonEliminar}" icon="pi pi-trash"
                                          actionListener="#{mesaController.eliminarMesasSeleccionados}"
                                          process="@this" update="@form"
                                          disabled="#{not mesaController.existeMesasSeleccionados()}"
-                                         styleClass="ui-button-danger ui-button-outlined">
+                                         styleClass="tec-btn ui-button-danger ui-button-outlined">
                             <p:confirm header="#{msg['mesas.confirmacion.titulo']}"
                                        message="#{msg['mesas.confirmacion.eliminar.seleccionadas']}"
                                        icon="pi pi-exclamation-triangle"/>
@@ -160,9 +160,9 @@
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.acciones']}" exportable="false"
                               styleClass="text-center" style="width:7rem">
-                        <div class="flex justify-content-center gap-1">
+                        <span class="tec-acciones">
                             <p:commandButton icon="pi pi-pencil"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              title="#{msg['mesas.tooltip.editar']}"
                                              update=":frmMesas:outPnlMesas"
                                              oncomplete="PF('dlgMesa').show()"
@@ -172,7 +172,7 @@
                                 <p:resetInput target=":frmMesas:outPnlMesas"/>
                             </p:commandButton>
                             <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
                                              title="#{msg['mesas.tooltip.eliminar']}"
                                              action="#{mesaController.eliminarMesa(mesa)}"
                                              process="@this" update="@form">
@@ -180,7 +180,7 @@
                                            message="#{msg['mesas.confirmacion.eliminar']}"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
-                        </div>
+                        </span>
                     </p:column>
                 </p:dataTable>
 
@@ -280,12 +280,12 @@
                         <p:commandButton value="#{msg['mesas.boton.cancelar']}" icon="pi pi-times"
                                          onclick="PF('dlgMesa').hide()"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{empty mesaController.mesaSeleccionado.id ? msg['mesas.boton.guardar'] : msg['mesas.boton.actualizar']}"
                                          icon="pi pi-check"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{mesaController.guardarMesaSeleccionado}"
                                          update="outPnlMesas tblMesas"
                                          process="outPnlMesas @this"

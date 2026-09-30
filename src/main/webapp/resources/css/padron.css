@@ -8,9 +8,9 @@
 .padron-mesas .padron-col-estado { width: 11rem; }
 .padron-mesas .padron-col-total { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; }
 .padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight {
-    background: #d9eeef; color: #123b40; box-shadow: inset 4px 0 #12656c;
+    background: var(--primary-100); color: var(--primary-800); box-shadow: inset 4px 0 var(--primary-color);
 }
-.padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight td { color: #123b40; }
+.padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight td { color: var(--primary-800); }
 .padron-mesas tbody.ui-datatable-data > tr { cursor: pointer; }
 .padron-vista .ui-tabs-nav { display: flex; flex-wrap: wrap; }
 .padron-vista .ui-button-text { white-space: normal; }
@@ -24,7 +24,7 @@
 /* Resumen ejecutivo: barra de avance discreta, sin etiqueta dentro de la barra
    en pantallas estrechas, y tarjetas de cifras que no fuerzan scroll lateral. */
 .padron-avance-barra .ui-progressbar { height: .5rem; border: 0 none; background: var(--surface-200, #e9ecef); }
-.padron-avance-barra .ui-progressbar-value { background: #12656c; border: 0 none; }
+.padron-avance-barra .ui-progressbar-value { background: var(--primary-color); border: 0 none; }
 .padron-avance-barra .ui-progressbar-label { display: none; }
 .padron-vista .padron-filtros .ui-panel-content { padding-bottom: .5rem; }
 .padron-vista .padron-filtros .ui-panel-title { font-size: .95rem; font-weight: 600; }

@@ -1,0 +1,17 @@
+/* Estilos propios de candidatos.xhtml. Se carga solo en esa vista, después de tribunal-globals.css;
+   lo compartido entre pantallas vive en tribunal-globals.css. */
+
+
+
+/* Fila de un registro dado de baja: se puede consultar, pero se distingue. */
+.tec-table-seleccionable .ui-datatable-data > tr.fila-inactiva > td {
+    color: var(--text-color-secondary);
+}
+
+/* ==========================================================================
+ * Acta de inscripción (candidatos.xhtml): la carga del acta firmada debe
+ * medir lo mismo que el botón de generar, que va a ancho completo.
+ * ========================================================================== */
+.tec-acta-upload .ui-fileupload-choose { width:100%; justify-content:center; }
+
+.tec-acta-upload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }

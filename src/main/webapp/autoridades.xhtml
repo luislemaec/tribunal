@@ -89,7 +89,7 @@
                               filterBy="#{tribunal.iglesiaPersona.persona.nombres}"
                               style="min-width:16rem">
                         <div class="flex align-items-center gap-2">
-                            <span class="inline-flex align-items-center justify-content-center border-circle bg-primary-50 text-primary w-2rem h-2rem flex-shrink-0">
+                            <span class="inline-flex align-items-center justify-content-center border-circle bg-primary-50 text-primary-700 w-2rem h-2rem flex-shrink-0">
                                 <i class="pi #{tribunal.iglesiaPersona.persona ne null ? 'pi-user' : 'pi-user-plus'}"></i>
                             </span>
                             <div class="min-w-0">
@@ -97,7 +97,7 @@
                                               rendered="#{tribunal.iglesiaPersona.persona ne null}"
                                               styleClass="block text-sm font-medium text-900 white-space-normal"/>
                                 <p:commandButton value="#{msg['form.autoridades.btn.asignar']}" icon="pi pi-user-plus"
-                                                 styleClass="ui-button-info ui-button-sm"
+                                                 styleClass="ui-button-sm"
                                                  update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
                                                  oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
                                                  process="@this"
@@ -121,9 +121,9 @@
 
                     <p:column headerText="#{msg['form.autoridades.table.acciones']}" exportable="false"
                               styleClass="text-center" style="width:9rem">
-                        <div class="flex justify-content-center gap-2">
+                        <span class="tec-acciones">
                             <p:commandButton icon="pi pi-user-edit"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-warning"
                                              title="#{msg['form.autoridades.btn.reasignar.title']}"
                                              update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
                                              oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
@@ -131,7 +131,7 @@
                                              disabled="#{not tribunalController.puedeGestionarAutoridades or tribunal.iglesiaPersona.persona eq null}"
                                              action="#{tribunalController.prepararAsignacionAutoridad(tribunal)}"/>
                             <p:commandButton icon="pi pi-user-minus"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
                                              title="#{msg['form.autoridades.btn.quitar.title']}"
                                              actionListener="#{tribunalController.eliminarAutoridadSeleccionada}"
                                              process="@this" update="tbtribunal :frmGlobal:growlGlobal"
@@ -141,7 +141,7 @@
                                            message="#{msg['form.autoridades.confirm.delete.message']}"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
-                        </div>
+                        </span>
                     </p:column>
                 </p:dataTable>
 
@@ -160,7 +160,7 @@
                         <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
                             <div class="surface-50 border-round-lg p-3 mb-3">
                                 <div class="flex align-items-center gap-2 mb-2">
-                                    <i class="pi pi-id-card text-primary"></i>
+                                    <i class="pi pi-id-card text-primary-700"></i>
                                     <span class="font-semibold text-800">#{msg['form.autoridades.seccion.busqueda']}</span>
                                 </div>
                                 <div class="formgrid grid">
@@ -177,7 +177,7 @@
                                     </div>
                                     <div class="field col-12 md:col-4 flex align-items-end">
                                         <p:commandButton value="#{msg['btn.search']}" icon="pi pi-search"
-                                                         styleClass="ui-button-info w-full"
+                                                         styleClass="tec-btn w-full"
                                                          actionListener="#{tribunalController.buscaPersona}"
                                                          update="outPnlAsignaAutoridadBusca outPnlAsignaAutoridad outPnlFooter :frmGlobal:growlGlobal"
                                                          process="outPnlAsignaAutoridadBusca @this"
@@ -249,10 +249,10 @@
                         <div class="flex justify-content-end flex-column sm:flex-row gap-2 w-full">
                             <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                              onclick="PF('dlgAsignaAutoridad').hide()"
-                                             styleClass="ui-button-outlined ui-button-secondary w-full sm:w-auto"
+                                             styleClass="tec-btn ui-button-outlined ui-button-secondary w-full sm:w-auto"
                                              type="button"/>
                             <p:commandButton id="btnGuardaAsignado" value="#{msg['btn.save']}" icon="pi pi-check"
-                                             styleClass="ui-button-success w-full sm:w-auto"
+                                             styleClass="tec-btn w-full sm:w-auto"
                                              action="#{tribunalController.guardarAutoridad}"
                                              update="outPnlAsignaAutoridad outPnlAsignaAutoridadBusca outPnlFooter tbtribunal :frmGlobal:growlGlobal"
                                              process="outPnlAsignaAutoridad @this"

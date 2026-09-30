@@ -22,7 +22,7 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#f59e0b,#f97316);flex-shrink:0">
+                         style="width:3.5rem;height:3.5rem;background:var(--orange-500);flex-shrink:0">
                         <i class="pi pi-key text-white" style="font-size:1.5rem"></i>
                     </div>
                     <div>
@@ -42,7 +42,7 @@
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.roles.btn.new']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{rolController.nuevoRol}"
                                          update="outPnlRoles" oncomplete="PF('dlgRol').show()">
                             <p:resetInput target="outPnlRoles"/>
@@ -50,7 +50,7 @@
                         <p:commandButton id="btnEliminaRegistros"
                                          value="#{rolController.mensajeBotonEliminar}"
                                          icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
+                                         styleClass="tec-btn ui-button-danger"
                                          actionListener="#{rolController.eliminarRolesSeleccionados}"
                                          disabled="#{!rolController.existeRolesSeleccionados()}"
                                          update="@this tblRoles">
@@ -60,7 +60,7 @@
                         </p:commandButton>
                     </div>
                     <p:commandButton value="#{msg['form.roles.btn.export']}" icon="pi pi-upload"
-                                     styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                     styleClass="tec-btn ui-button-outlined ui-button-info" ajax="false"
                                      disabled="#{empty rolController.roles}">
                         <p:dataExporter type="pdf" target="tblRoles" fileName="Roles"/>
                     </p:commandButton>
@@ -110,8 +110,9 @@
 
                     <p:column headerText="Acciones" exportable="false"
                               styleClass="text-center" style="width:7rem">
+                      <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         styleClass="rounded-button ui-button-flat ui-button-secondary"
                                          title="Editar rol"
                                          update=":frmRoles:outPnlRoles"
                                          oncomplete="PF('dlgRol').show()"
@@ -119,7 +120,7 @@
                             <f:setPropertyActionListener value="#{rol}" target="#{rolController.rolSeleccionado}"/>
                         </p:commandButton>
                         <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                          title="#{msg['form.roles.confirm.delete.header']}"
                                          actionListener="#{rolController.eliminarRolesSeleccionados}"
                                          process="@this" update="tblRoles">
@@ -128,6 +129,7 @@
                                        message="#{msg['form.roles.confirm.delete.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                      </span>
                     </p:column>
                 </p:dataTable>
 
@@ -183,10 +185,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgRol').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{rolController.actualizarRegistro}"
                                          update="outPnlRoles tblRoles"
                                          process="outPnlRoles @this"

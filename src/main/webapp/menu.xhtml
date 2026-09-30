@@ -21,8 +21,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#0f766e,#0891b2);flex-shrink:0">
-                        <i class="pi pi-sitemap text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-sitemap" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['menu.encabezado']}</h2>
@@ -44,7 +44,7 @@
 
                     <div class="flex flex-wrap align-items-center justify-content-end gap-2">
                         <p:commandButton value="#{msg['menu.boton.nuevo']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{menuController.nuevoMenu}"
                                          update="frmMenu:outPnlMenu"
                                          oncomplete="PF('dlgMenuo').show()">
@@ -67,7 +67,7 @@
                             <p:cellEditor>
                                 <f:facet name="output">
                                     <div class="flex align-items-start gap-2">
-                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono} text-primary mt-1"/>
+                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono} text-primary-700 mt-1"/>
                                         <div>
                                             <div class="text-sm font-semibold text-900">#{menu.nombre}</div>
                                             <div class="text-xs text-500">#{empty menu.padreNombre ? msg['menu.valor.sinPadre'] : menu.padreNombre}</div>
@@ -140,14 +140,17 @@
 
                         <p:column headerText="#{msg['menu.tabla.acciones']}" style="width:110px" responsivePriority="1"
                                   styleClass="text-center">
+                          <!-- div (no span): p:rowEditor genera un bloque. -->
+                          <div class="tec-acciones">
                             <p:rowEditor/>
                             <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
                                              title="#{msg['menu.boton.eliminar']}"
                                              process="@this"
                                              oncomplete="PF('dlgEliminaRegistro').show()">
                                 <f:setPropertyActionListener value="#{menu}" target="#{menuController.menuSeleccionado}"/>
                             </p:commandButton>
+                          </div>
                         </p:column>
                     </p:treeTable>
                 </div>
@@ -158,13 +161,13 @@
                                  message="#{msg['menu.confirmacion.eliminar']}"
                                  header="#{msg['menu.confirmacion.titulo']}" severity="warn">
                     <p:commandButton value="#{msg['menu.boton.confirmarEliminar']}" icon="pi pi-check"
-                                     styleClass="ui-button-danger"
+                                     styleClass="tec-btn ui-button-danger"
                                      actionListener="#{menuController.eliminarMenuSeleccionado}"
                                      process="@this"
                                      update="trTblMenuo outPnlMenu"
                                      oncomplete="PF('dlgEliminaRegistro').hide()"/>
                     <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
-                                     styleClass="ui-button-secondary ml-2" type="button"
+                                     styleClass="tec-btn ui-button-outlined ui-button-secondary ml-2" type="button"
                                      onclick="PF('dlgEliminaRegistro').hide()"/>
                 </p:confirmDialog>
 
@@ -284,10 +287,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgMenuo').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{menuController.guardarMenu}"
                                          update="outPnlMenu trTblMenuo"
                                          process="outPnlMenu @this"

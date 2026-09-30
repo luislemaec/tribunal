@@ -21,8 +21,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:#0f766e;flex-shrink:0">
-                        <i class="pi pi-map-marker text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-map-marker" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['recintos.titulo']}</h2>
@@ -135,7 +135,7 @@
                             </div>
                             <div class="flex flex-wrap gap-2 justify-content-start md:justify-content-end">
                                 <p:commandButton value="#{msg['recintos.boton.nuevo']}" icon="pi pi-plus"
-                                                 styleClass="ui-button-primary"
+                                                 styleClass="tec-btn ui-button-primary"
                                                  actionListener="#{recintoController.nuevaRecinto}"
                                                  process="@this" partialSubmit="true"
                                                  update=":frmRecintos:dlgRecinto"
@@ -209,9 +209,9 @@
                             <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
                             <p:column headerText="#{msg['recintos.tabla.acciones']}" exportable="false"
                                       styleClass="text-center" style="width:7rem" selectRow="false">
-                                <div class="flex justify-content-center gap-1">
+                                <span class="tec-acciones">
                                     <p:commandButton icon="pi pi-pencil"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                     styleClass="rounded-button ui-button-flat ui-button-secondary"
                                                      title="#{msg['recintos.tooltip.editar']}"
                                                      update=":frmRecintos:dlgRecinto"
                                                      oncomplete="if (!args.validationFailed) PF('dlgRecinto').show()"
@@ -220,7 +220,7 @@
                                         <p:resetInput target=":frmRecintos:outPnlRecintos"/>
                                     </p:commandButton>
                                     <p:commandButton icon="pi pi-trash"
-                                                     styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                     styleClass="rounded-button ui-button-flat ui-button-danger"
                                                      title="#{msg['recintos.tooltip.eliminar']}"
                                                      action="#{recintoController.eliminarRecinto(recinto)}"
                                                      process="@this" partialSubmit="true"
@@ -229,7 +229,7 @@
                                                    message="#{msg['recintos.confirmacion.eliminar']}"
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
-                                </div>
+                                </span>
                             </p:column>
                         </p:dataTable>
                     </div>
@@ -251,7 +251,7 @@
                                                       value="#{msg['recintos.mesas.ayuda.con.seleccion']} #{mesaController.recintoSeleccionado.nombre}"/>
                                     </p>
                                 </p:outputPanel>
-                                <p:commandButton id="btnNuevaMesa"
+                                <p:commandButton styleClass="tec-btn" id="btnNuevaMesa"
                                                  value="#{msg['recintos.mesas.boton.nuevo']}" icon="pi pi-plus"
                                                  actionListener="#{mesaController.nuevaMesaParaRecinto}"
                                                  process="@this" partialSubmit="true" update=":frmRecintos:dlgMesa"
@@ -296,9 +296,9 @@
                                 </p:column>
                                 <p:column headerText="#{msg['recintos.mesas.tabla.acciones']}" exportable="false"
                                           styleClass="text-center" style="width:6rem">
-                                    <div class="flex justify-content-center gap-1">
+                                    <span class="tec-acciones">
                                         <p:commandButton icon="pi pi-pencil"
-                                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                                         styleClass="rounded-button ui-button-flat ui-button-secondary"
                                                          title="#{msg['recintos.mesas.tooltip.editar']}"
                                                          update=":frmRecintos:dlgMesa"
                                                          oncomplete="if (!args.validationFailed) PF('dlgMesa').show()"
@@ -307,7 +307,7 @@
                                             <p:resetInput target=":frmRecintos:outPnlMesa"/>
                                         </p:commandButton>
                                         <p:commandButton icon="pi pi-trash"
-                                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                                          title="#{msg['recintos.mesas.tooltip.eliminar']}"
                                                          action="#{mesaController.eliminarMesa(mesa)}"
                                                          process="@this" partialSubmit="true"
@@ -316,7 +316,7 @@
                                                        message="#{msg['recintos.mesas.confirmacion.eliminar']}"
                                                        icon="pi pi-exclamation-triangle"/>
                                         </p:commandButton>
-                                    </div>
+                                    </span>
                                 </p:column>
                             </p:dataTable>
                         </div>
@@ -387,12 +387,12 @@
                         <p:commandButton value="#{msg['recintos.boton.cancelar']}" icon="pi pi-times"
                                          onclick="PF('dlgRecinto').hide()"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.boton.guardar'] : msg['recintos.boton.actualizar']}"
                                          icon="pi pi-check"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{recintoController.guardarRecintoSeleccionado}"
                                          update="outPnlRecintos"
                                          process="outPnlRecintos @this" partialSubmit="true"
@@ -452,12 +452,12 @@
                         <p:commandButton value="#{msg['recintos.boton.cancelar']}" icon="pi pi-times"
                                          onclick="PF('dlgMesa').hide()"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.boton.guardar'] : msg['recintos.mesas.boton.actualizar']}"
                                          icon="pi pi-check"
                                          style="width:auto;flex:0 0 auto"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{mesaController.guardarMesaSeleccionado}"
                                          update="outPnlMesa :frmRecintos:tabsRecintos:pnlMesasRecinto :frmRecintos:tabsRecintos:tblRecintos :frmRecintos:resumenRecintos"
                                          process="outPnlMesa @this" partialSubmit="true"

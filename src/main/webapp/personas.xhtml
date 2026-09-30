@@ -16,6 +16,7 @@
     </ui:define>
 
     <ui:define name="content">
+        <h:outputStylesheet library="css" name="personas.css"/>
 
         <div class="tec-page-header">
             <div class="tec-page-header__icon" aria-hidden="true">
@@ -245,12 +246,12 @@
                                                      title="#{personaController.ayudaActaActualizacion}"
                                                      actionListener="#{personaController.generarActaActualizacionIglesia}"
                                                      process="@this" update="panelResumenMiembros"
-                                                     styleClass="tec-btn ui-button-outlined ui-button-help"
+                                                     styleClass="tec-btn ui-button-outlined"
                                                      disabled="#{not personaController.puedeGenerarActaActualizacion}"/>
                                     <p:commandButton rendered="#{personaController.restringidoAIglesia and personaController.actaActualizacionDisponible}"
                                                      value="#{msg['actaActualizacion.boton.descargar']}" icon="pi pi-download"
                                                      ajax="false" immediate="true"
-                                                     styleClass="tec-btn ui-button-outlined ui-button-secondary">
+                                                     styleClass="tec-btn ui-button-outlined ui-button-info">
                                         <p:fileDownload value="#{personaController.actaActualizacionDescargable}"/>
                                     </p:commandButton>
                                     <p:commandButton rendered="#{not personaController.restringidoAIglesia}"
@@ -258,7 +259,7 @@
                                                      ajax="false"
                                                      title="Descargar acta PDF de actualización"
                                                      actionListener="#{personaController.generarActaActualizacion}"
-                                                     styleClass="tec-btn ui-button-outlined ui-button-help"
+                                                     styleClass="tec-btn ui-button-outlined"
                                                      disabled="#{personaController.totalMiembros eq 0}"/>
                                 </span>
                             </div>
@@ -327,7 +328,7 @@
                 <div class="personas-toolbar">
                     <div class="personas-toolbar__grupo">
                         <p:commandButton value="Nuevo" icon="pi pi-plus"
-                                         styleClass="tec-btn ui-button-success"
+                                         styleClass="tec-btn"
                                          disabled="#{not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.nuevaPersona}"
                                          update="outPnlPersonas"
@@ -354,7 +355,7 @@
                         <!-- Consulta secundaria: no modifica el listado ni los datos de miembros. -->
                         <p:commandButton id="btnBuscarPersona" value="#{msg['form.personas.busqueda.accion']}"
                                          icon="pi pi-search"
-                                         styleClass="tec-btn ui-button-text ui-button-secondary"
+                                         styleClass="tec-btn ui-button-flat ui-button-secondary"
                                          actionListener="#{personaController.prepararBusquedaPersonas}"
                                          process="@this"
                                          update=":frmPersonas:panelBusquedaPersona"
@@ -378,21 +379,21 @@
                                       styleClass="ui-button-raised ui-button-info"/>
 
                         <p:commandButton value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
-                                         styleClass="tec-btn ui-button-outlined ui-button-success"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          ajax="false"
                                          actionListener="#{personaController.exportarExcel}"
                                          disabled="#{empty personaController.listaIglesiaPersona}"/>
 
                         <p:commandButton value="#{msg['form.personas.inconsistencias.reporte.boton']}"
                                          icon="pi pi-exclamation-triangle"
-                                         styleClass="tec-btn ui-button-outlined ui-button-warning"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          ajax="false"
                                          rendered="#{personaController.puedeGenerarReporteInconsistencias}"
                                          actionListener="#{personaController.exportarInconsistenciasExcel}"/>
 
                         <!-- Las personas eliminadas se consultan aquí, no en la carga inicial -->
                         <p:commandButton value="#{msg['form.personas.btn.eliminadas']}" icon="pi pi-inbox"
-                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          rendered="#{personaController.puedeGestionarEliminadas}"
                                          action="#{personaController.abrirEliminadas}"
                                          process="@this" update=":frmPersonasEliminadas :frmGlobal:growlGlobal"
@@ -633,7 +634,7 @@
                               styleClass="tec-col-actions">
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-pencil"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
                                              ariaLabel="Editar miembro"
                                              disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
@@ -642,7 +643,7 @@
                                              oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
                                              process="@this"/>
                             <p:commandButton icon="pi pi-wrench"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-help"
+                                             styleClass="rounded-button ui-button-flat ui-button-warning"
                                              title="#{msg['form.personas.regularizacion.accion']}"
                                              ariaLabel="#{msg['form.personas.regularizacion.accion']}"
                                              rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
@@ -652,7 +653,7 @@
                                              update=":frmPersonas:panelDialogRegularizacion"
                                              oncomplete="if (args.dialogReady) PF('dlgRegularizarIglesias').show()"/>
                             <p:commandButton icon="pi pi-history"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             styleClass="rounded-button ui-button-flat ui-button-info"
                                              title="#{msg['form.personas.btn.historial.title']}"
                                              ariaLabel="#{msg['form.personas.btn.historial.title']}"
                                              rendered="#{personaController.puedeVerAuditoria}"
@@ -661,7 +662,7 @@
                                              update=":frmPersonasHistorial :frmGlobal:growlGlobal"
                                              oncomplete="PF('dlgPersonaHistorial').show()"/>
                             <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
                                              title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
                                              ariaLabel="Eliminar miembro"
                                              disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
@@ -763,7 +764,7 @@
                 </p:outputPanel>
                 <f:facet name="footer">
                     <p:commandButton value="Cancelar" type="button" icon="pi pi-times"
-                                     styleClass="ui-button-text ui-button-secondary"
+                                     styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                      onclick="PF('dlgBuscarPersonas').hide()"/>
                 </f:facet>
             </p:dialog>
@@ -893,7 +894,7 @@
                                          styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton id="btnGuardarPersona" value="Guardar" icon="pi pi-check"
-                                         styleClass="tec-btn ui-button-success"
+                                         styleClass="tec-btn"
                                          disabled="#{personaController.requiereRegularizacion}"
                                          actionListener="#{personaController.actualizarPersona}"
                                          oncomplete="if (!args.validationFailed) PF('dlgPersona').hide()"
@@ -1120,7 +1121,7 @@
                               styleClass="tec-col-actions">
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-replay"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             styleClass="rounded-button ui-button-flat ui-button-success"
                                              title="#{msg['form.personas.eliminadas.btn.restaurar']}"
                                              ariaLabel="#{msg['form.personas.eliminadas.btn.restaurar']}"
                                              disabled="#{not eliminada.restaurable}"

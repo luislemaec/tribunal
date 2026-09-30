@@ -14,6 +14,7 @@
     </ui:define>
 
     <ui:define name="content">
+        <h:outputStylesheet library="css" name="iglesias.css"/>
 
         <!-- ======================================================
              ENCABEZADO
@@ -195,7 +196,7 @@
                         <div class="field col-12 sm:col-5 md:col-3 xl:col-1 tec-filter-actions-cell">
                             <div class="tec-filter-actions">
                                 <p:commandButton value="#{msg['form.iglesias.filters.btn.clear']}" icon="pi pi-times-circle"
-                                                 styleClass="tec-btn ui-button-outlined"
+                                                 styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                                  actionListener="#{iglesiaController.cancelarIglesia}"
                                                  process="@this" update=":frmFiltros :frmIglesias"/>
                             </div>
@@ -242,7 +243,7 @@
                 <div class="iglesias-toolbar">
                     <div class="iglesias-toolbar__grupo">
                         <p:commandButton value="#{msg['form.iglesias.btn.new']}" icon="pi pi-plus"
-                                         styleClass="tec-btn ui-button-success"
+                                         styleClass="tec-btn"
                                          rendered="#{not iglesiaController.restringidoAIglesia}"
                                          disabled="#{not iglesiaController.puedeRegistrarIglesia}"
                                          actionListener="#{iglesiaController.nuevaIglesia}"
@@ -269,7 +270,7 @@
                                       rendered="#{iglesiaController.puedeGestionarEliminadas}"/>
                         <!-- Las iglesias eliminadas se consultan aquí, no en la carga inicial -->
                         <p:commandButton value="#{msg['form.iglesias.btn.eliminadas']}" icon="pi pi-inbox"
-                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          rendered="#{iglesiaController.puedeGestionarEliminadas}"
                                          action="#{iglesiaController.abrirEliminadas}"
                                          process="@this" update=":frmEliminadas :frmGlobal:growlGlobal"
@@ -288,14 +289,14 @@
                     </div>
                     <div class="iglesias-toolbar__grupo">
                         <p:commandButton value="#{msg['form.iglesias.btn.export.pdf']}" icon="pi pi-file-pdf"
-                                         styleClass="tec-btn ui-button-outlined ui-button-warning" ajax="false"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info" ajax="false"
                                          rendered="false"
                                          disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}">
                             <p:dataExporter type="pdf" target="tblIglesia" fileName="iglesias"
                                             pageOnly="false"/>
                         </p:commandButton>
                         <p:commandButton value="#{msg['form.iglesias.btn.export.excel']}" icon="pi pi-file-excel"
-                                         styleClass="tec-btn ui-button-outlined ui-button-success"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          disabled="#{iglesiaController.restringidoAIglesia and not iglesiaController.tieneIglesiaAsignada}"
                                          actionListener="#{iglesiaController.exportarExcel}"
                                          ajax="false"/>
@@ -485,7 +486,7 @@
                         <span class="tec-acciones">
                             <!-- action (no actionListener) para garantizar el orden tras f:setPropertyActionListener -->
                             <p:commandButton icon="pi pi-pencil"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.edit.title'] : msg['form.iglesias.btn.disabled.title']}"
                                              ariaLabel="#{msg['form.iglesias.btn.edit.title']}"
                                              disabled="#{not iglesiaController.puedeRegistrarIglesia}"
@@ -497,7 +498,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="#{iglesia.tieneAdministrador ? 'pi pi-user-edit' : 'pi pi-user-plus'}"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              title="#{iglesiaController.puedeAsignarAdministradores ? (iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']) : msg['iglesias.admin.error.fase.no.permite']}"
                                              ariaLabel="#{iglesia.tieneAdministrador ? msg['iglesias.admin.boton.reasignar'] : msg['iglesias.admin.boton.asignar']}"
                                              rendered="#{iglesiaController.puedeGestionarAdministradores}"
@@ -509,23 +510,8 @@
                                                              target="#{iglesiaController.iglesiaAdministradorSeleccionada}"/>
                             </p:commandButton>
 
-                            <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                             title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
-                                             ariaLabel="#{msg['form.iglesias.btn.delete.title']}"
-                                             rendered="#{not iglesiaController.restringidoAIglesia}"
-                                             disabled="#{not iglesiaController.puedeRegistrarIglesia}"
-                                             action="#{iglesiaController.eliminarIglesiaFila}"
-                                             process="@this" update=":frmIglesias :frmProgreso :frmStats">
-                                <f:setPropertyActionListener value="#{iglesia}"
-                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
-                                <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
-                                           message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-
                             <p:commandButton icon="pi pi-history"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-secondary"
+                                             styleClass="rounded-button ui-button-flat ui-button-info"
                                              title="#{msg['form.iglesias.btn.historial.title']}"
                                              ariaLabel="#{msg['form.iglesias.btn.historial.title']}"
                                              rendered="#{iglesiaController.puedeVerAuditoria}"
@@ -537,7 +523,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-folder-open"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             styleClass="rounded-button ui-button-flat ui-button-info"
                                              title="#{msg['form.iglesias.btn.docs.title']}"
                                              ariaLabel="#{msg['form.iglesias.btn.docs.title']}"
                                              rendered="#{iglesia.tieneDocumentos}"
@@ -547,6 +533,22 @@
                                              update=":frmDocs">
                                 <f:setPropertyActionListener value="#{iglesia}"
                                                              target="#{iglesiaController.iglesiaSeleccionado}"/>
+                            </p:commandButton>
+
+                            <!-- Eliminar al final: la acción destructiva queda aislada en el extremo. -->
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
+                                             title="#{iglesiaController.puedeRegistrarIglesia ? msg['form.iglesias.btn.delete.title'] : msg['form.iglesias.btn.disabled.title']}"
+                                             ariaLabel="#{msg['form.iglesias.btn.delete.title']}"
+                                             rendered="#{not iglesiaController.restringidoAIglesia}"
+                                             disabled="#{not iglesiaController.puedeRegistrarIglesia}"
+                                             action="#{iglesiaController.eliminarIglesiaFila}"
+                                             process="@this" update=":frmIglesias :frmProgreso :frmStats">
+                                <f:setPropertyActionListener value="#{iglesia}"
+                                                             target="#{iglesiaController.iglesiaSeleccionado}"/>
+                                <p:confirm header="#{msg['form.iglesias.confirm.delete.header']}"
+                                           message="¿Eliminar la iglesia '#{iglesia.nombre}'? El registro será dado de baja."
+                                           icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </span>
                     </p:column>
@@ -687,7 +689,7 @@
                                          process="@this :frmDlgAdministradorIglesia:datosAdministrador"
                                          update=":frmGlobal:growlGlobal :frmDlgAdministradorIglesia:pnlAsignarAdmin :frmIglesias:tblIglesia"
                                          oncomplete="if (args.assignmentSuccess) PF('dlgAsignarAdministrador').hide()"
-                                         styleClass="tec-btn ui-button-success">
+                                         styleClass="tec-btn">
                             <p:confirm rendered="#{iglesiaController.diagnosticoAdministrador ne null and iglesiaController.diagnosticoAdministrador.requiereReasignacion and not iglesiaController.diagnosticoAdministrador.tieneCedulaDuplicada}"
                                        header="#{msg['iglesias.admin.reasignacion.confirmar.titulo']}"
                                        message="#{msg['iglesias.admin.reasignacion.confirmar.descripcion']} #{iglesiaController.diagnosticoAdministrador.iglesiasAsociadasTexto}"
@@ -866,7 +868,7 @@
                                          oncomplete="PF('dlgIglesia').hide()"
                                          process="@this" update=":frmIglesias"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="tec-btn ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{iglesiaController.actualizarIglesia}"
                                          oncomplete="if (!args.validationFailed) PF('dlgIglesia').hide()"
                                          process="@form" update="@form :frmIglesias :frmProgreso :frmStats"/>
@@ -995,7 +997,7 @@
                     <p:column headerText="#{msg['form.iglesias.docs.btn.download']}" exportable="false"
                               styleClass="tec-col-fit iglesias-col-descarga">
                         <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-#{doc.extension.contains('pdf')?'danger':'success'}"
+                                         styleClass="rounded-button ui-button-flat ui-button-info"
                                          title="#{msg['form.iglesias.docs.btn.download']}"
                                          ariaLabel="#{msg['form.iglesias.docs.btn.download']}">
                             <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
@@ -1189,7 +1191,7 @@
                               styleClass="tec-col-actions">
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-replay"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             styleClass="rounded-button ui-button-flat ui-button-success"
                                              title="#{msg['form.iglesias.eliminadas.btn.restaurar']}"
                                              ariaLabel="#{msg['form.iglesias.eliminadas.btn.restaurar']}"
                                              disabled="#{not eliminada.restaurable}"
@@ -1204,7 +1206,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-sync"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-warning"
                                              title="#{msg['form.iglesias.eliminadas.btn.regularizar']}"
                                              ariaLabel="#{msg['form.iglesias.eliminadas.btn.regularizar']}"
                                              rendered="#{eliminada.requiereRegularizacion}"

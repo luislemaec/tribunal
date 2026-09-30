@@ -23,8 +23,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#22c55e,#16a34a);flex-shrink:0">
-                        <i class="pi pi-chart-pie text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-chart-pie" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.escrutinios.title']}</h2>
@@ -36,7 +36,7 @@
 
         <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
         <p:blockUI block="frmActaE" trigger="frmActaE">
-            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#f59e0b"/>
+            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--primary-700)"/>
             <div style="margin:.5rem 0 0;color:#fff">Calculando escrutinio...</div>
         </p:blockUI>
 
@@ -100,11 +100,11 @@
             <!-- KPIs -->
             <div class="grid mb-3">
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #0ea5e9">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#0ea5e9,#38bdf8);flex-shrink:0">
-                                <i class="pi pi-map-marker text-white"/>
+                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                                <i class="pi pi-map-marker"/>
                             </div>
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">Recintos</span>
@@ -114,11 +114,11 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #f59e0b">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#f59e0b,#fbbf24);flex-shrink:0">
-                                <i class="pi pi-list text-white"/>
+                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                                <i class="pi pi-list"/>
                             </div>
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">Mesas</span>
@@ -128,11 +128,11 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #22c55e">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center gap-3">
                             <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:linear-gradient(135deg,#22c55e,#4ade80);flex-shrink:0">
-                                <i class="pi pi-users text-white"/>
+                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                                <i class="pi pi-users"/>
                             </div>
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">Votantes</span>
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid #8b5cf6">
+                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
                         <div>
                             <span class="block text-500 text-xs font-medium uppercase mb-2">Mesas escrutadas</span>
                             <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}"

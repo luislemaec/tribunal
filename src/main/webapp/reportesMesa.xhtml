@@ -11,12 +11,14 @@
 		<li>#{msg['reportesMesa.title']}</li>
 	</ui:define>
 	<ui:define name="content">
+		<h:outputStylesheet library="css" name="acta-fisica.css"/>
+		<h:outputStylesheet library="css" name="reportesMesa.css"/>
 		<div class="surface-ground p-2 md:p-4">
 			<div
 				class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
 				<div>
 					<span
-						class="inline-flex align-items-center gap-2 text-primary font-semibold text-sm uppercase"><i
+						class="inline-flex align-items-center gap-2 text-primary-700 font-semibold text-sm uppercase"><i
 						class="pi pi-file" />#{msg['reportesMesa.eyebrow']}</span>
 					<h1 class="text-900 text-3xl font-bold mt-2 mb-1">#{msg['reportesMesa.title']}</h1>
 					<p class="text-500 m-0">#{msg['reportesMesa.documentos.resumen']}</p>
@@ -113,7 +115,7 @@
 					</div>
 					<p:commandButton
 						value="#{msg['reportesMesa.actualizar.disponibilidad']}"
-						icon="pi pi-refresh" styleClass="ui-button-outlined mb-3"
+						icon="pi pi-refresh" styleClass="tec-btn ui-button-outlined mb-3 ui-button-info"
 						action="#{reporteMesaController.actualizarDisponibilidadDocumental}"
 						process="@this"
 						update=":frmReportesMesa:panelPrincipal :frmGlobal:growlGlobal" />
@@ -149,7 +151,7 @@
 								<p:commandButton icon="pi pi-bolt"
 									title="#{msg['reportesMesa.generar.todos.ayuda']}"
 									ariaLabel="#{msg['reportesMesa.generar.todos']}"
-									styleClass="ui-button-rounded ui-button-text"
+									styleClass="rounded-button ui-button-flat ui-button-secondary"
 									disabled="#{not (fila.estados['PADRON_MESA'].puedeGenerar or fila.estados['ACTA_PARCIAL'].puedeGenerar or fila.estados['CERTIFICADOS_VOTACION'].puedeGenerar)}"
 									action="#{reporteMesaController.generarDocumentosMesa(fila.mesaId, fila.recintoId)}"
 									process="@this"
@@ -161,7 +163,7 @@
 								<p:commandButton icon="pi pi-download" ajax="false"
 									title="#{msg['reportesMesa.descargar.todos.ayuda']}"
 									ariaLabel="#{msg['reportesMesa.descargar.todos']}"
-									styleClass="ui-button-rounded ui-button-text"
+									styleClass="rounded-button ui-button-flat ui-button-info"
 									disabled="#{not (fila.estados['PADRON_MESA'].puedeVisualizar or fila.estados['ACTA_PARCIAL'].puedeVisualizar or fila.estados['CERTIFICADOS_VOTACION'].puedeVisualizar or fila.estados['ACTA_FISICA_ESCRUTINIO'].puedeVisualizar)}">
 									<p:fileDownload
 										value="#{reporteMesaController.descargarDocumentosMesa(fila.mesaId, fila.recintoId, fila.mesa)}" />
@@ -169,7 +171,7 @@
 								<p:commandButton id="accionesMesa" icon="pi pi-ellipsis-v"
 									type="button" title="#{msg['reportesMesa.accion.documentos.mesa']}"
 									ariaLabel="#{msg['reportesMesa.accion.documentos.mesa']}"
-									styleClass="ui-button-rounded ui-button-text" />
+									styleClass="rounded-button ui-button-flat ui-button-secondary" />
 							</span>
 							<p:tieredMenu overlay="true" trigger="accionesMesa" my="right top"
 								at="right bottom" styleClass="mesas-menu">
@@ -292,7 +294,7 @@
 						class="surface-card border-round-lg border-1 surface-border p-3 mt-3 text-sm text-600">
 						<strong class="text-900">#{msg['reportesMesa.simbologia.titulo']}</strong>
 						<div class="flex flex-wrap gap-3 mt-2">
-							<span><i class="pi pi-users text-primary" />
+							<span><i class="pi pi-users text-primary-700" />
 								#{msg['reportesMesa.simbologia.padron']}</span><span><i
 								class="pi pi-file-pdf text-red-500" />
 								#{msg['reportesMesa.simbologia.acta']}</span><span><i
@@ -339,24 +341,24 @@
 									</div>
 									<div class="flex gap-1 acta-fisica-herramientas">
 										<p:commandButton type="button" icon="pi pi-search-plus"
-											styleClass="ui-button-text ui-button-rounded"
+											styleClass="ui-button-flat rounded-button ui-button-info"
 											onclick="ajustarImagenActa(0.15, 0)"
 											title="#{msg['reportesMesa.actaFisica.zoom.mas']}" />
 										<p:commandButton type="button" icon="pi pi-search-minus"
-											styleClass="ui-button-text ui-button-rounded"
+											styleClass="ui-button-flat rounded-button ui-button-info"
 											onclick="ajustarImagenActa(-0.15, 0)"
 											title="#{msg['reportesMesa.actaFisica.zoom.menos']}" />
 										<p:commandButton type="button" icon="pi pi-replay"
-											styleClass="ui-button-text ui-button-rounded"
+											styleClass="ui-button-flat rounded-button ui-button-info"
 											onclick="ajustarImagenActa(0, 90)"
 											title="#{msg['reportesMesa.actaFisica.rotar']}" />
 										<p:commandButton type="button" icon="pi pi-undo"
-											styleClass="ui-button-text ui-button-rounded"
+											styleClass="ui-button-flat rounded-button ui-button-info"
 											onclick="restablecerImagenActa()"
 											title="#{msg['reportesMesa.actaFisica.restablecer']}" />
 										<p:commandButton icon="pi pi-download" ajax="false"
 											immediate="true" process="@this"
-											styleClass="ui-button-text ui-button-rounded"
+											styleClass="ui-button-flat rounded-button ui-button-info"
 											title="#{msg['reportesMesa.accion.descargar']}"
 											ariaLabel="#{msg['reportesMesa.accion.descargar']}">
 											<p:fileDownload
@@ -484,11 +486,11 @@
 					<f:facet name="footer">
 						<p:commandButton value="#{msg['reportesMesa.accion.cerrar']}"
 							type="button" icon="pi pi-times"
-							styleClass="ui-button-secondary ui-button-outlined"
+							styleClass="tec-btn ui-button-secondary ui-button-outlined"
 							onclick="PF('dlgActaFisica').hide()" />
 						<p:commandButton id="guardarFinal"
 							value="#{msg['reportesMesa.actaFisica.guardar.final']}"
-							icon="pi pi-check-circle" styleClass="ui-button-success"
+							icon="pi pi-check-circle" styleClass="tec-btn ui-button-success"
 							rendered="#{reporteMesaController.puedeValidarActaFinal and reporteMesaController.actaFisicaVisualizada.estadoRevision ne 'VALIDADA'}"
 							disabled="#{not reporteMesaController.resultadosActaFinalCuadrados or not reporteMesaController.revisionActaFinal.revisada}"
 							actionListener="#{reporteMesaController.guardarActaFinal}"
@@ -501,7 +503,7 @@
 						</p:commandButton>
 					</f:facet>
 				</p:dialog>
-				<!-- Visor del acta física: JS compartido con actaE.xhtml; su CSS vive en tribunal-globals.css. -->
+				<!-- Visor del acta física: JS compartido con actaE.xhtml; su CSS vive en resources/css/acta-fisica.css, que también carga actaE.xhtml. -->
 				<h:outputScript name="js/visor-acta-fisica.js" library="demo"/>
 			</h:form>
 		</div>

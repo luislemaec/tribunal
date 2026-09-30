@@ -22,8 +22,8 @@
              ====================================================== -->
         <div class="flex align-items-start gap-3 mb-3">
             <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                 style="width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
-                <i class="pi pi-shield text-white"></i>
+                 style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                <i class="pi pi-shield"></i>
             </div>
             <div>
                 <h2 class="m-0 text-900 font-semibold text-xl">#{msg['form.usuarios.title']}</h2>
@@ -46,7 +46,7 @@
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <span class="text-900 font-semibold">#{msg['form.usuarios.seccion.registrados']}</span>
                     <p:commandButton value="#{msg['form.usuarios.btn.new']}" icon="pi pi-plus"
-                                     styleClass="ui-button-success"
+                                     styleClass="tec-btn"
                                      actionListener="#{usuarioControlador.crearNuevoUsuario}"
                                      process="@this"
                                      update=":frmUsuarios:outPnlUsuario"
@@ -141,8 +141,8 @@
                             <h:outputText value="#{rolUs.usuario.username} — #{rolUs.usuario.correo}"/>
                         </f:facet>
                         <div class="flex align-items-center gap-2">
-                            <div class="flex-shrink-0 flex justify-content-center align-items-center border-circle text-white text-xs font-bold"
-                                 style="width:2rem;height:2rem;background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                            <div class="flex-shrink-0 flex justify-content-center align-items-center border-circle text-xs font-bold"
+                                 style="width:2rem;height:2rem;background:var(--primary-color);color:var(--primary-color-text)">
                                 #{not empty rolUs.usuario.username ? rolUs.usuario.username.substring(0,1).toUpperCase() : '?'}
                             </div>
                             <div class="flex flex-column line-height-3">
@@ -203,10 +203,10 @@
                          mostrar dos tooltips superpuestos. -->
                     <p:column headerText="#{msg['form.usuarios.table.header.acciones']}" exportable="false"
                               styleClass="text-center" style="width:11rem">
-                        <div class="flex align-items-center justify-content-center gap-1">
+                        <span class="tec-acciones">
 
                             <p:commandButton icon="pi pi-pencil"
-                                             styleClass="ui-button-rounded ui-button-text"
+                                             styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              ariaLabel="#{msg['form.usuarios.btn.edit.title']}"
                                              rendered="#{rolUs.usuario.estado}"
                                              update=":frmUsuarios:outPnlUsuario"
@@ -218,7 +218,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-key"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                             styleClass="rounded-button ui-button-flat ui-button-warning"
                                              ariaLabel="#{msg['form.usuarios.btn.reset.password']}"
                                              rendered="#{rolUs.usuario.estado}"
                                              action="#{usuarioControlador.restablecerContraseniaACedula(rolUs.usuario)}"
@@ -236,7 +236,7 @@
                                  · exento (permanente = true) → Volver a exigir: candado cerrado
                                    en azul, porque la refuerza obligando a renovarla. -->
                             <p:commandButton icon="#{rolUs.usuario.permanente ? 'pi pi-lock' : 'pi pi-lock-open'}"
-                                             styleClass="ui-button-rounded ui-button-text #{rolUs.usuario.permanente ? 'ui-button-info' : 'ui-button-warning'}"
+                                             styleClass="rounded-button ui-button-flat #{rolUs.usuario.permanente ? 'ui-button-info' : 'ui-button-warning'}"
                                              ariaLabel="#{rolUs.usuario.permanente ? msg['form.usuarios.btn.permanente.revertir'] : msg['form.usuarios.btn.permanente.activar']}"
                                              rendered="#{rolUs.usuario.estado}"
                                              action="#{usuarioControlador.alternarPermanente(rolUs.usuario)}"
@@ -249,7 +249,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-trash"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                             styleClass="rounded-button ui-button-flat ui-button-danger"
                                              ariaLabel="#{msg['form.usuarios.btn.delete']}"
                                              rendered="#{rolUs.usuario.estado}"
                                              action="#{usuarioControlador.eliminarUsuario(rolUs.usuario)}"
@@ -261,7 +261,7 @@
                             </p:commandButton>
 
                             <p:commandButton icon="pi pi-refresh"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-success"
+                                             styleClass="rounded-button ui-button-flat ui-button-success"
                                              ariaLabel="#{msg['form.usuarios.btn.restore']}"
                                              rendered="#{not rolUs.usuario.estado}"
                                              action="#{usuarioControlador.prepararReactivacion(rolUs)}"
@@ -270,7 +270,7 @@
                                 <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.restore']}"/>
                             </p:commandButton>
 
-                        </div>
+                        </span>
                     </p:column>
 
                 </p:dataTable>
@@ -280,7 +280,7 @@
                      código; no describe acciones que no existan. -->
                 <div class="flex flex-wrap align-items-center column-gap-4 row-gap-2 mt-3 pt-3 border-top-1 surface-border text-sm text-600">
                     <span class="font-medium text-700">#{msg['form.usuarios.simbologia.titulo']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-pencil text-primary" aria-hidden="true"></i>#{msg['form.usuarios.btn.edit.title']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-pencil text-color-secondary" aria-hidden="true"></i>#{msg['form.usuarios.btn.edit.title']}</span>
                     <span class="flex align-items-center gap-2"><i class="pi pi-key text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.reset.password']}</span>
                     <span class="flex align-items-center gap-2"><i class="pi pi-lock-open text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.activar']}</span>
                     <span class="flex align-items-center gap-2"><i class="pi pi-lock text-blue-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.revertir']}</span>
@@ -415,10 +415,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgUsuario').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          action="#{usuarioControlador.actualizarUsuario}"
                                          update="outPnlUsuario tblUsuarios"
                                          process="outPnlUsuario @this"
@@ -472,9 +472,9 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgReactivarUsuario').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary" type="button"/>
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary" type="button"/>
                         <p:commandButton value="#{msg['form.usuarios.btn.restore']}" icon="pi pi-refresh"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn ui-button-success"
                                          action="#{usuarioControlador.confirmarReactivacion}"
                                          process="outPnlReactivarUsuario @this"
                                          update="outPnlReactivarUsuario tblUsuarios"

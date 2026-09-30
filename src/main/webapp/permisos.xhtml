@@ -21,8 +21,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0">
-                        <i class="pi pi-lock text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-lock" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.permisos.title']}</h2>
@@ -62,7 +62,7 @@
                         <i class="pi pi-sitemap text-500"></i>
                         <span class="font-semibold text-700">
                             Permisos para el rol:
-                            <span class="text-primary font-bold">#{permisosController.rolSeleccionado.nombre}</span>
+                            <span class="text-primary-700 font-bold">#{permisosController.rolSeleccionado.nombre}</span>
                         </span>
                     </div>
                     <p:treeTable value="#{permisosController.root}" var="menuRol"

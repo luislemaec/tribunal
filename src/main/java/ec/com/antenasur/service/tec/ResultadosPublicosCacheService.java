@@ -29,10 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResultadosPublicosCacheService {
 
-    private static final String[] COLORES_GRAFICO = {
-        "#1d4ed8", "#047857", "#b45309", "#7c3aed", "#be123c",
-        "#0891b2", "#4d7c0f", "#c2410c", "#4338ca", "#0f766e"
-    };
 
     @Inject
     private ProcesoElectoralService procesoElectoralService;
@@ -132,24 +128,22 @@ public class ResultadosPublicosCacheService {
                 .divide(BigDecimal.valueOf(totalMesasProceso), 2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Configuración Chart.js del gráfico de votos por lista. No incluye colores: los aplica
+     * en el navegador el extender {@code tecGraficoTema} (graficos-tema.js) con las variables
+     * del tema activo, de modo que el gráfico sigue al tema elegido por el usuario.
+     */
     private String construirModeloGraficoResultados(List<ResultadoCategoriaPublicaDTO> resultados) {
         StringBuilder labels = new StringBuilder();
         StringBuilder data = new StringBuilder();
-        StringBuilder background = new StringBuilder();
-        StringBuilder border = new StringBuilder();
         for (int i = 0; i < resultados.size(); i++) {
             ResultadoCategoriaPublicaDTO item = resultados.get(i);
             if (i > 0) {
                 labels.append(',');
                 data.append(',');
-                background.append(',');
-                border.append(',');
             }
-            String color = COLORES_GRAFICO[i % COLORES_GRAFICO.length];
             labels.append('"').append(escaparJson(item.getCategoria())).append('"');
             data.append(item.getTotalVotos() != null ? item.getTotalVotos() : 0L);
-            background.append('"').append(color).append("CC").append('"');
-            border.append('"').append(color).append('"');
         }
         return "{"
                 + "\"type\":\"bar\","
@@ -158,8 +152,6 @@ public class ResultadosPublicosCacheService {
                 + "\"datasets\":[{"
                 + "\"label\":\"Votos por lista\","
                 + "\"data\":[" + data + "],"
-                + "\"backgroundColor\":[" + background + "],"
-                + "\"borderColor\":[" + border + "],"
                 + "\"borderWidth\":1,"
                 + "\"borderRadius\":6"
                 + "}]"
@@ -172,8 +164,8 @@ public class ResultadosPublicosCacheService {
                 + "\"tooltip\":{\"enabled\":true}"
                 + "},"
                 + "\"scales\":{"
-                + "\"x\":{\"grid\":{\"display\":false},\"ticks\":{\"color\":\"#334155\",\"font\":{\"weight\":\"bold\"}}},"
-                + "\"y\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0,\"color\":\"#475569\"},\"grid\":{\"color\":\"#e2e8f0\"}}"
+                + "\"x\":{\"grid\":{\"display\":false},\"ticks\":{\"font\":{\"weight\":\"bold\"}}},"
+                + "\"y\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0}}"
                 + "}"
                 + "}"
                 + "}";

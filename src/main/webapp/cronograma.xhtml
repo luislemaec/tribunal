@@ -27,7 +27,7 @@
 
         <!-- BlockUI global del formulario -->
         <p:blockUI block="frmCronograma" trigger="frmCronograma">
-            <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#f59e0b"/>
+            <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:var(--primary-700)"/>
             <span style="display:block;margin-top:.5rem;color:#fff;font-size:.9rem;font-weight:500">
                 Procesando cronograma...
             </span>
@@ -44,7 +44,7 @@
                 <!-- Título de módulo -->
                 <div>
                     <div class="flex align-items-center gap-2 mb-1">
-                        <i class="pi pi-calendar-plus text-primary" style="font-size:1.4rem"/>
+                        <i class="pi pi-calendar-plus text-primary-700" style="font-size:1.4rem"/>
                         <h2 class="m-0 text-900 font-bold" style="font-size:1.35rem">
                             Cronograma electoral
                         </h2>
@@ -85,10 +85,10 @@
                 <!-- KPI: Procesos registrados -->
                 <div class="col-12 sm:col-6 lg:col-3">
                     <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid #3b82f6">
+                         style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:#eff6ff">
-                            <i class="pi pi-folder-open" style="font-size:1.25rem;color:#3b82f6"/>
+                             style="width:2.8rem;height:2.8rem;background:var(--blue-50)">
+                            <i class="pi pi-folder-open" style="font-size:1.25rem;color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -104,12 +104,12 @@
                 <!-- KPI: Proceso seleccionado -->
                 <div class="col-12 sm:col-6 lg:col-3">
                     <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid #{hayProceso and proceso.activo ? '#22c55e' : '#f59e0b'}">
+                         style="border-left:4px solid #{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
                              style="width:2.8rem;height:2.8rem;
                                     background:#{hayProceso and proceso.activo ? '#f0fdf4' : '#fffbeb'}">
                             <i class="pi #{hayProceso and proceso.activo ? 'pi-bolt' : 'pi-pause'}"
-                               style="font-size:1.25rem;color:#{hayProceso and proceso.activo ? '#22c55e' : '#f59e0b'}"/>
+                               style="font-size:1.25rem;color:#{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}"/>
                         </div>
                         <div class="min-w-0 flex-auto">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -126,10 +126,10 @@
                 <!-- KPI: Fases configuradas -->
                 <div class="col-12 sm:col-6 lg:col-3">
                     <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid #f59e0b">
+                         style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:#fffbeb">
-                            <i class="pi pi-list" style="font-size:1.25rem;color:#f59e0b"/>
+                             style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
+                            <i class="pi pi-list" style="font-size:1.25rem;color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -145,10 +145,10 @@
                 <!-- KPI: Catálogo enum -->
                 <div class="col-12 sm:col-6 lg:col-3">
                     <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid #8b5cf6">
+                         style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:#f5f3ff">
-                            <i class="pi pi-tags" style="font-size:1.25rem;color:#8b5cf6"/>
+                             style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
+                            <i class="pi pi-tags" style="font-size:1.25rem;color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -172,7 +172,7 @@
                 <div class="flex align-items-center justify-content-between flex-wrap gap-2
                             px-3 py-2 border-bottom-1 surface-border">
                     <div class="flex align-items-center gap-2">
-                        <i class="pi pi-flag text-primary"/>
+                        <i class="pi pi-flag text-primary-700"/>
                         <span class="font-semibold text-800">Datos del proceso</span>
                         <p:tag rendered="#{hayProceso and proceso.activo}"
                                value="ACTIVO" severity="success" icon="pi pi-bolt"/>
@@ -183,12 +183,12 @@
                         <p:commandButton value="Nuevo proceso" icon="pi pi-plus"
                                          actionListener="#{cronogramaController.nuevoProceso}"
                                          title="Crear un nuevo proceso electoral"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined"
                                          update="@form"/>
                         <p:commandButton value="Guardar proceso" icon="pi pi-save"
                                          actionListener="#{cronogramaController.guardarProceso}"
                                          title="Guardar cambios del proceso seleccionado"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          update="@form"/>
                     </div>
                 </div>
@@ -255,8 +255,8 @@
 
                             <div class="field col-12">
                                 <div class="flex align-items-start gap-2 p-3 border-round"
-                                     style="background:#f0f9ff;border:1px solid #bae6fd">
-                                    <i class="pi pi-info-circle mt-1" style="color:#0ea5e9"/>
+                                     style="background:var(--blue-50);border:1px solid var(--blue-100)">
+                                    <i class="pi pi-info-circle mt-1" style="color:var(--primary-700)"/>
                                     <span class="text-700 text-sm">
                                         Este es el rango global del proceso. Todas las fases
                                         del cronograma deben caer dentro de este intervalo.
@@ -279,7 +279,7 @@
                 <div class="flex align-items-center justify-content-between flex-wrap gap-2
                             px-3 py-2 border-bottom-1 surface-border">
                     <div class="flex align-items-center gap-2">
-                        <i class="pi pi-list" style="color:#f59e0b"/>
+                        <i class="pi pi-list" style="color:var(--primary-700)"/>
                         <span class="font-semibold text-800">Fases del cronograma</span>
                         <p:badge rendered="#{not empty fases}"
                                  value="#{totalFases}" severity="warning"/>
@@ -294,7 +294,7 @@
                                          resetValues="true"
                                          oncomplete="PF('dlgFase').show()"
                                          title="#{hayProceso ? 'Agregar fase al cronograma' : 'Seleccione un proceso primero'}"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          disabled="#{not hayProceso}">
                             <p:resetInput target=":frmCronograma:dlgFaseContent"/>
                         </p:commandButton>
@@ -361,7 +361,7 @@
                               filterPlaceholder="Filtrar..."
                               style="min-width:14rem">
                         <span class="text-xs font-semibold text-700 border-round px-2 py-1"
-                              style="background:#f3f4f6;font-family:monospace;letter-spacing:.02em;
+                              style="background:var(--surface-100);font-family:monospace;letter-spacing:.02em;
                                      white-space:nowrap">
                             <h:outputText value="#{f.fase}"/>
                         </span>
@@ -383,7 +383,7 @@
                               style="min-width:12rem">
                         <div class="flex flex-column gap-1">
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-right" style="font-size:.65rem;color:#22c55e"/>
+                                <i class="pi pi-arrow-right" style="font-size:.65rem;color:var(--text-color-secondary)"/>
                                 <span class="text-700 text-xs">
                                     <h:outputText value="#{f.fechaInicio}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
@@ -391,7 +391,7 @@
                                 </span>
                             </div>
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-left" style="font-size:.65rem;color:#ef4444"/>
+                                <i class="pi pi-arrow-left" style="font-size:.65rem;color:var(--text-color-secondary)"/>
                                 <span class="text-700 text-xs">
                                     <h:outputText value="#{f.fechaFin}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
@@ -434,6 +434,7 @@
 
                     <!-- Acciones de fila -->
                     <p:column exportable="false" styleClass="text-center" style="width:6rem">
+                      <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
                                          actionListener="#{cronogramaController.editarFase(f)}"
                                          process="@this"
@@ -441,8 +442,7 @@
                                          resetValues="true"
                                          oncomplete="PF('dlgFase').show()"
                                          title="Editar fase"
-                                         styleClass="rounded-button ui-button-info"
-                                         style="margin-right:.3rem">
+                                         styleClass="rounded-button ui-button-flat ui-button-secondary">
                             <p:resetInput target=":frmCronograma:dlgFaseContent"/>
                         </p:commandButton>
 
@@ -451,11 +451,12 @@
                                          process="@this"
                                          update=":frmCronograma:panelFases"
                                          title="Eliminar fase"
-                                         styleClass="rounded-button ui-button-danger">
+                                         styleClass="rounded-button ui-button-flat ui-button-danger">
                             <p:confirm header="Confirmar eliminación"
                                        message="¿Eliminar esta fase del cronograma?"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                      </span>
                     </p:column>
 
                 </p:dataTable>
@@ -465,8 +466,8 @@
                               styleClass="flex flex-column align-items-center justify-content-center
                                           text-center py-6 px-3">
                     <div class="flex align-items-center justify-content-center border-round mb-3"
-                         style="width:5rem;height:5rem;background:#f3f4f6">
-                        <i class="pi pi-calendar" style="font-size:2rem;color:#9ca3af"/>
+                         style="width:5rem;height:5rem;background:var(--surface-100)">
+                        <i class="pi pi-calendar" style="font-size:2rem;color:var(--text-color-secondary)"/>
                     </div>
                     <h4 class="text-700 font-semibold m-0 mb-2">Sin fases registradas</h4>
                     <p class="text-500 text-sm m-0 mb-3" style="max-width:480px;line-height:1.6">
@@ -481,7 +482,7 @@
                                      update=":frmCronograma:dlgFaseContent"
                                      resetValues="true"
                                      oncomplete="PF('dlgFase').show()"
-                                     styleClass="ui-button-success"
+                                     styleClass="tec-btn"
                                      disabled="#{not hayProceso}">
                         <p:resetInput target=":frmCronograma:dlgFaseContent"/>
                     </p:commandButton>
@@ -630,8 +631,8 @@
 
                                 <div class="field col-12">
                                     <div class="flex align-items-start gap-2 p-3 border-round"
-                                         style="background:#fffbeb;border:1px solid #fde68a">
-                                        <i class="pi pi-info-circle mt-1" style="color:#d97706"/>
+                                         style="background:var(--orange-50);border:1px solid var(--orange-100)">
+                                        <i class="pi pi-info-circle mt-1" style="color:var(--orange-600)"/>
                                         <span class="text-700 text-sm">
                                             La fase queda <b>vigente</b> mientras la fecha actual
                                             esté dentro del rango. Las fechas deben caer dentro
@@ -657,8 +658,8 @@
 
                                 <div class="field col-12">
                                     <div class="flex align-items-start gap-2 p-3 border-round"
-                                         style="background:#f0f9ff;border:1px solid #bae6fd">
-                                        <i class="pi pi-comment mt-1" style="color:#0ea5e9"/>
+                                         style="background:var(--blue-50);border:1px solid var(--blue-100)">
+                                        <i class="pi pi-comment mt-1" style="color:var(--primary-700)"/>
                                         <span class="text-700 text-sm">
                                             Este mensaje aparece en la cabecera del sistema durante
                                             la fase activa. Informe a los usuarios sobre la etapa
@@ -675,7 +676,7 @@
                             <div class="formgrid grid p-3">
                                 <div class="field col-12">
                                     <div class="flex align-items-start gap-3 p-3 border-round"
-                                         style="background:#f0fdf4;border:1px solid #bbf7d0">
+                                         style="background:var(--green-50);border:1px solid var(--green-100)">
                                         <p:selectBooleanCheckbox id="permite"
                                                                  value="#{cronogramaController.faseSeleccionada.permiteEdicion}"/>
                                         <div>
@@ -687,7 +688,7 @@
                                                 editar y eliminar miembros de su iglesia. Aplica
                                                 principalmente en la fase
                                                 <code class="font-semibold text-green-700"
-                                                      style="background:#dcfce7;padding:.1rem .4rem;
+                                                      style="background:var(--green-100);padding:.1rem .4rem;
                                                              border-radius:.3rem">
                                                     ACTUALIZACION_MIEMBROS
                                                 </code>
@@ -710,13 +711,13 @@
                         <p:commandButton value="Cancelar" icon="pi pi-times"
                                          type="button"
                                          onclick="PF('dlgFase').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"/>
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                         <p:commandButton value="Guardar fase" icon="pi pi-check"
                                          actionListener="#{cronogramaController.guardarFase}"
                                          process=":frmCronograma:dlgFaseContent @this"
                                          update=":frmCronograma:panelFases :frmCronograma:dlgFaseContent"
                                          oncomplete="if(args &amp;&amp; !args.validationFailed &amp;&amp; !args.faseError) PF('dlgFase').hide()"
-                                         styleClass="ui-button-success"/>
+                                         styleClass="tec-btn"/>
                     </div>
                 </f:facet>
 

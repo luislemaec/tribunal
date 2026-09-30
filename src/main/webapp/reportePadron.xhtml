@@ -21,8 +21,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:#0f766e;flex-shrink:0">
-                        <i class="pi pi-list text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-list" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['reportePadron.title']}</h2>
@@ -35,7 +35,7 @@
         <h:form id="frmReportePadron">
 
             <p:blockUI block="frmReportePadron" trigger="frmReportePadron">
-                <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:#0f766e"/>
+                <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--primary-700)"/>
                 <div style="margin:.5rem 0 0;color:#fff">#{msg['reportePadron.processing']}</div>
             </p:blockUI>
 
@@ -137,13 +137,13 @@
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:button value="#{msg['reportePadron.boton.volver.asignacion']}" icon="pi pi-arrow-left"
                                   outcome="/padron"
-                                  styleClass="ui-button-outlined ui-button-secondary"/>
+                                  styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                         <p:inputText id="globalFilter" placeholder="#{msg['padron.buscador.placeholder']}"
                                      onkeyup="PF('wdTablaReportePadron').filter()" styleClass="w-12rem"/>
                         <p:commandButton id="btnExportarExcel"
                                          value="#{msg['reportePadron.boton.exportar.excel']}" icon="pi pi-file-excel"
                                          title="#{msg['reportePadron.boton.exportar.excel.tooltip']}"
-                                         styleClass="ui-button-outlined ui-button-success"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info"
                                          actionListener="#{padronController.exportarExcelReportePadron}"
                                          ajax="false"
                                          disabled="#{padronController.mesaSeleccionado.id eq null}"/>

@@ -14,95 +14,8 @@
     <title>#{msg['resultadosPublicos.titulo']}</title>
     <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
     <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
-    <style>
-        body.resultados-publicos {
-            background: #f4f7fb;
-            color: #1f2937;
-            margin: 0;
-        }
-
-        .public-topbar {
-            background: #ffffff;
-            border-bottom: 1px solid #d9e2ec;
-            box-shadow: 0 2px 10px rgba(15, 23, 42, .06);
-        }
-
-        .public-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .public-hero {
-            background: linear-gradient(135deg, #123a63 0%, #1f6f8b 56%, #2f855a 100%);
-            color: #ffffff;
-            border-bottom: 6px solid #f59e0b;
-        }
-
-        .hero-title {
-            font-size: 2rem;
-            line-height: 1.15;
-            margin: 0;
-            letter-spacing: 0;
-        }
-
-        .metric-card,
-        .result-card,
-        .table-card {
-            background: #ffffff;
-            border: 1px solid #dfe7ef;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, .07);
-        }
-
-        .metric-value {
-            font-size: 2rem;
-            line-height: 1;
-            color: #0f172a;
-        }
-
-        .result-row {
-            border-bottom: 1px solid #edf2f7;
-        }
-
-        .result-row:last-child {
-            border-bottom: 0;
-        }
-
-        .category-rank {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-            background: #e9f5ff;
-            color: #155e75;
-        }
-
-        .public-table-wrap {
-            max-width: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-
-        .chart-shell {
-            height: 24rem;
-            min-height: 20rem;
-            width: 100%;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 1rem;
-            background: #fbfdff;
-        }
-
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 1.5rem;
-            }
-
-            .metric-value {
-                font-size: 1.6rem;
-            }
-        }
-    </style>
+    <h:outputStylesheet library="css" name="resultados.css"/>
+    <h:outputScript name="js/graficos-tema.js" library="demo"/>
 </h:head>
 <h:body styleClass="resultados-publicos #{guestPreferences.inputStyleClass}">
     <div class="public-topbar">
@@ -241,7 +154,7 @@
                                 <div class="grid">
                                     <div class="col-12 lg:col-7">
                                         <div class="chart-shell">
-                                            <p:chart value="#{resultadoPublicoController.resultadosChartModel}"
+                                            <p:chart value="#{resultadoPublicoController.resultadosChartModel}" extender="tecGraficoTema"
                                                      style="height:24rem;width:100%"
                                                      canvasStyle="height:24rem;width:100%"/>
                                         </div>

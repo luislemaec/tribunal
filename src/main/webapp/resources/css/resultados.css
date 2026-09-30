@@ -1,0 +1,92 @@
+/* Estilos propios de resultados.xhtml (portal público de resultados). Se carga solo en esa vista,
+   después de primeflex y del layout; antes estaban incrustados en un bloque <style> de la página.
+   Colores: variables del tema activo. El encabezado usa los tonos 800-900 del primario con texto
+   blanco, que mantienen contraste ≥ 4,5:1 en todos los temas Ecuador. */
+
+    body.resultados-publicos {
+        background: var(--surface-ground);
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .public-topbar {
+        background: var(--surface-card);
+        border-bottom: 1px solid var(--surface-border);
+        box-shadow: 0 2px 10px rgba(15, 23, 42, .06);
+    }
+
+    .public-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .public-hero {
+        background: linear-gradient(135deg, var(--primary-900) 0%, var(--primary-800) 100%);
+        color: var(--surface-0);
+        border-bottom: 6px solid var(--primary-color);
+    }
+
+    .hero-title {
+        font-size: 2rem;
+        line-height: 1.15;
+        margin: 0;
+        letter-spacing: 0;
+    }
+
+    .metric-card,
+    .result-card,
+    .table-card {
+        background: var(--surface-card);
+        border: 1px solid var(--surface-border);
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .07);
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        line-height: 1;
+        color: var(--text-color);
+    }
+
+    .result-row {
+        border-bottom: 1px solid var(--surface-200);
+    }
+
+    .result-row:last-child {
+        border-bottom: 0;
+    }
+
+    .category-rank {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: var(--primary-50);
+        color: var(--primary-800);
+    }
+
+    .public-table-wrap {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .chart-shell {
+        height: 24rem;
+        min-height: 20rem;
+        width: 100%;
+        border: 1px solid var(--surface-border);
+        border-radius: 8px;
+        padding: 1rem;
+        background: var(--surface-50);
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 1.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+        }
+    }

@@ -11,6 +11,7 @@
 	</ui:define>
 
 	<ui:define name="content">
+		<h:outputStylesheet library="css" name="procesos.css"/>
 		<div class="audit-page">
 
 			<div class="tec-page-header">
@@ -125,7 +126,7 @@
 										update="pnlFiltros tblAuditoria" />
 									<p:commandButton id="btnExportarPdf" value="Exportar PDF"
 										icon="pi pi-file-pdf"
-										styleClass="tec-btn ui-button-outlined ui-button-secondary"
+										styleClass="tec-btn ui-button-outlined ui-button-info"
 										ajax="false" action="#{procesoController.exportaPDF}" />
 								</div>
 							</div>
@@ -204,7 +205,7 @@
 							exportable="false" styleClass="audit-col-ver tec-col-actions">
 							<p:commandButton icon="pi pi-eye" title="Ver detalle"
 								ariaLabel="Ver detalle de la actividad"
-								styleClass="ui-button-rounded ui-button-flat ui-button-plain"
+								styleClass="rounded-button ui-button-flat ui-button-info"
 								process="@this" update=":frmProcesos:pnlDetalleAuditoria"
 								oncomplete="PF('dlgDetalleAuditoria').show()">
 								<f:setPropertyActionListener value="#{registro}"
@@ -279,7 +280,7 @@
 					</p:outputPanel>
 					<f:facet name="footer">
 						<p:commandButton type="button" value="Cerrar" icon="pi pi-times"
-							styleClass="ui-button-flat ui-button-plain"
+							styleClass="tec-btn ui-button-outlined ui-button-secondary"
 							onclick="PF('dlgDetalleAuditoria').hide()" />
 					</f:facet>
 				</p:dialog>

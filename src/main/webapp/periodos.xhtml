@@ -22,8 +22,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#6366f1,#4f46e5);flex-shrink:0">
-                        <i class="pi pi-calendar text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-calendar" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.periodos.title']}</h2>
@@ -41,7 +41,7 @@
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="flex align-items-center gap-2 flex-wrap">
                         <p:commandButton value="#{msg['form.periodos.btn.new']}" icon="pi pi-plus"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{periodoController.nuevo}"
                                          update="outPnlPeriodo" oncomplete="PF('dlgPeriodo').show()">
                             <p:resetInput target="outPnlPeriodo"/>
@@ -49,7 +49,7 @@
                         <p:commandButton id="btnEliminaRegistros"
                                          value="#{periodoController.mensajeBotonEliminar}"
                                          icon="pi pi-trash"
-                                         styleClass="ui-button-danger"
+                                         styleClass="tec-btn ui-button-danger"
                                          actionListener="#{periodoController.eliminarPeriodoSeleccionadas}"
                                          disabled="#{!periodoController.existePeriodosSeleccionadas()}"
                                          update="@this tblPeriodos">
@@ -64,7 +64,7 @@
                                       chooseIcon="pi pi-download"
                                       disabled="#{periodoController.periodoSeleccionado.id eq null}"/>
                         <p:commandButton value="#{msg['form.periodos.btn.export']}" icon="pi pi-upload"
-                                         styleClass="ui-button-outlined ui-button-help" ajax="false"
+                                         styleClass="tec-btn ui-button-outlined ui-button-info" ajax="false"
                                          disabled="#{empty periodoController.listaPeriodos}">
                             <p:dataExporter type="pdf" target="tblPeriodos" fileName="Periodos"/>
                         </p:commandButton>
@@ -120,8 +120,9 @@
                     </p:column>
                     <p:column headerText="Acciones" exportable="false"
                               styleClass="text-center" style="width:7rem">
+                      <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-warning"
+                                         styleClass="rounded-button ui-button-flat ui-button-secondary"
                                          title="#{msg['form.periodos.btn.edit.title']}"
                                          update=":frmPeriodos:outPnlPeriodo"
                                          oncomplete="PF('dlgPeriodo').show()"
@@ -130,7 +131,7 @@
                             <p:resetInput target=":frmPeriodos:outPnlPeriodo"/>
                         </p:commandButton>
                         <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                          title="#{msg['form.periodos.btn.delete.title']}"
                                          actionListener="#{periodoController.eliminarPeriodoSeleccionados}"
                                          process="@this" update="tblPeriodos">
@@ -139,6 +140,7 @@
                                        message="#{msg['form.periodos.confirm.delete.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                      </span>
                     </p:column>
                 </p:dataTable>
 
@@ -199,10 +201,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgPeriodo').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{periodoController.guardar}"
                                          update="outPnlPeriodo tblPeriodos"
                                          process="outPnlPeriodo @this"

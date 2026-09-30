@@ -22,8 +22,8 @@
             <div class="col-12">
                 <div class="flex align-items-center gap-3">
                     <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:linear-gradient(135deg,#06b6d4,#0ea5e9);flex-shrink:0">
-                        <i class="pi pi-list text-white" style="font-size:1.5rem"></i>
+                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                        <i class="pi pi-list" style="font-size:1.5rem"></i>
                     </div>
                     <div>
                         <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.catalogos.title']}</h2>
@@ -40,7 +40,7 @@
                 <!-- TOOLBAR -->
                 <div class="flex flex-wrap align-items-center justify-content-end gap-2 mb-3">
                     <p:commandButton value="#{msg['form.catalogos.btn.new']}" icon="pi pi-plus"
-                                     styleClass="ui-button-success"
+                                     styleClass="tec-btn"
                                      actionListener="#{catalogoController.nuevoCatalogo}"
                                      process="@this" update="outPnlCatalogo :frmGlobal:growlGlobal"
                                      rendered="#{catalogoController.puedeAdministrarCatalogos()}"
@@ -91,9 +91,11 @@
                     </p:column>
 
                     <p:column style="width:7%" responsivePriority="5" styleClass="text-center">
+                      <!-- div (no span): p:rowEditor genera un bloque. -->
+                      <div class="tec-acciones">
                         <p:rowEditor rendered="#{catalogoController.puedeAdministrarCatalogos()}"/>
                         <p:commandButton icon="pi pi-trash"
-                                         styleClass="ui-button-rounded ui-button-text ui-button-danger"
+                                         styleClass="rounded-button ui-button-flat ui-button-danger"
                                          title="#{msg['form.catalogos.btn.delete.title']}"
                                          actionListener="#{catalogoController.eliminarCatalogoSeleccionado}"
                                          process="@this" update="trTblCatalogo :frmGlobal:growlGlobal"
@@ -104,6 +106,7 @@
                                        message="#{msg['form.catalogos.confirm.disable.message']}"
                                        icon="pi pi-exclamation-triangle"/>
                         </p:commandButton>
+                      </div>
                     </p:column>
                 </p:treeTable>
 
@@ -183,10 +186,10 @@
                     <div class="flex justify-content-end flex-wrap gap-2 w-full">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          onclick="PF('dlgCatalogo').hide()"
-                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          type="button"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
-                                         styleClass="ui-button-success"
+                                         styleClass="tec-btn"
                                          actionListener="#{catalogoController.guardarCatalogo}"
                                          update="outPnlCatalogo trTblCatalogo :frmGlobal:growlGlobal"
                                          process="outPnlCatalogo @this"
