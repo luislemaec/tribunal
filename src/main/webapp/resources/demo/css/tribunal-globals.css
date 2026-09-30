@@ -178,6 +178,18 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     color: var(--primary-700);
 }
 
+/* Menú oscuro (config.xhtml → color de menú; fondo #050505 del layout en todos los temas):
+   el fondo claro no aplica. Velo translúcido y texto claro equivalente al #BBBBBB que el
+   layout da a los enlaces del menú; el contenedor del layout no define color propio. */
+.layout-wrapper.layout-menu-dark .layout-sidebar .menu-search-empty {
+    background: rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .72);
+}
+
+.layout-wrapper.layout-menu-dark .layout-sidebar .menu-search-empty i {
+    color: rgba(255, 255, 255, .9);
+}
+
 /* ScrollTop flotante con color Ecuador */
 .custom-scroll-top.ui-scrolltop {
     background: var(--primary-color) !important;
