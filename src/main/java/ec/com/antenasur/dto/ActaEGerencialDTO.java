@@ -39,82 +39,10 @@ public class ActaEGerencialDTO implements Serializable {
     /** Estado de revisión del acta física vigente; null si la mesa no tiene acta física. */
     private String actaFisicaEstado;
 
-    /**
-     * Situación de la mesa para el listado, derivada solo de datos existentes: el estado
-     * del escrutinio y, una vez cerrada, el acta física y su revisión. No es un estado
-     * nuevo ni se persiste; ordena de un vistazo qué falta en cada mesa.
-     */
-    public enum Situacion {
-        SIN_DATOS("secondary", "pi pi-circle"),
-        EN_PROCESO("warning", "pi pi-sync"),
-        CERRADA_SIN_ACTA_FISICA("warning", "pi pi-upload"),
-        ACTA_FISICA_PENDIENTE("info", "pi pi-clock"),
-        ACTA_FISICA_OBSERVADA("warning", "pi pi-exclamation-circle"),
-        ACTA_FISICA_RECHAZADA("danger", "pi pi-times-circle"),
-        VALIDADA("success", "pi pi-verified"),
-        ESCRUTINIO_OBSERVADO("danger", "pi pi-exclamation-triangle"),
-        ANULADA("danger", "pi pi-ban");
-
-        private final String severity;
-        private final String icono;
-
-        Situacion(String severity, String icono) {
-            this.severity = severity;
-            this.icono = icono;
-        }
-
-        /** Severidad de p:tag; también la usa la simbología del listado. */
-        public String getSeverity() {
-            return severity;
-        }
-
-        public String getIcono() {
-            return icono;
-        }
+    public ProgresoEscrutinioDTO getProgreso() {
+        return ProgresoEscrutinioDTO.determinar(estadoEscrutinio, fechaApertura != null, actaFisicaEstado);
     }
 
-    public Situacion getSituacion() {
-        if (estadoEscrutinio == null || estadoEscrutinio == EstadoEscrutinio.PENDIENTE) {
-            return Situacion.SIN_DATOS;
-        }
-        switch (estadoEscrutinio) {
-            case ANULADO:
-                return Situacion.ANULADA;
-            case OBSERVADO:
-                return Situacion.ESCRUTINIO_OBSERVADO;
-            case CERRADO:
-                if (actaFisicaEstado == null) {
-                    return Situacion.CERRADA_SIN_ACTA_FISICA;
-                }
-                switch (actaFisicaEstado) {
-                    case "VALIDADA": return Situacion.VALIDADA;
-                    case "OBSERVADA": return Situacion.ACTA_FISICA_OBSERVADA;
-                    case "RECHAZADA": return Situacion.ACTA_FISICA_RECHAZADA;
-                    default: return Situacion.ACTA_FISICA_PENDIENTE;
-                }
-            default:
-                // ABIERTO, EN_CONTEO, CONTEO_REGISTRADO y REABIERTO.
-                return Situacion.EN_PROCESO;
-        }
-    }
-
-    /** Clave del bundle con el rótulo de la situación: actaE.situacion.&lt;situacion&gt;. */
-    public String getSituacionClave() {
-        return "actaE.situacion." + getSituacion().name();
-    }
-
-    /** Clave del bundle con la explicación que muestra el tooltip. */
-    public String getSituacionAyudaClave() {
-        return getSituacionClave() + ".ayuda";
-    }
-
-    public String getSituacionSeverity() {
-        return getSituacion().getSeverity();
-    }
-
-    public String getSituacionIcono() {
-        return getSituacion().getIcono();
-    }
 
     public boolean isTieneActaFisica() {
         return actaFisicaEstado != null;

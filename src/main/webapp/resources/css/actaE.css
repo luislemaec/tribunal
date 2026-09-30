@@ -128,26 +128,71 @@
 
 .actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: .75rem; }
 
-/* Pasos del escrutinio (tab Escrutinio): hecho, en curso o pendiente. En pantallas
-   estrechas se muestran solo las marcas y el rótulo del paso en curso. */
-.actae-pasos { display: flex; gap: .25rem; align-items: center; }
-
-.actae-paso { display: flex; align-items: center; gap: .4rem; flex: 1 1 0; min-width: 0; padding: .35rem .5rem; border-radius: 6px; color: var(--text-color-secondary); font-size: .8rem; }
-
-.actae-paso__marca { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 1px solid var(--surface-border); background: var(--surface-card); font-size: .72rem; font-weight: 600; }
-
-.actae-paso__texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.actae-paso--hecho { color: var(--text-color); }
-
-.actae-paso--hecho .actae-paso__marca { background: var(--green-600); border-color: var(--green-600); color: var(--surface-0); }
-
-.actae-paso--actual { background: var(--surface-ground); color: var(--text-color); font-weight: 600; }
-
-.actae-paso--actual .actae-paso__marca { border-color: var(--primary-color); color: var(--primary-700); }
-
-@media (max-width: 575px) {
-    .actae-paso { flex: 0 0 auto; }
-    .actae-paso--actual { flex: 1 1 auto; }
-    .actae-paso:not(.actae-paso--actual) .actae-paso__texto { display: none; }
+/* La clase de cada paso procede del modelo de progreso del backend. */
+body .actae-steps.ui-steps > ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: .5rem;
+}
+body .actae-steps.ui-steps .ui-steps-item {
+    float: none;
+    width: auto;
+    min-width: 0;
+    opacity: 1;
+}
+body .actae-steps.ui-steps .ui-menuitem-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem .25rem;
+    background: var(--surface-card);
+    cursor: default;
+}
+body .actae-steps.ui-steps .ui-steps-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    margin: 0;
+    font-size: .8rem;
+    color: var(--text-color);
+}
+body .actae-steps.ui-steps .ui-steps-item:not(.ui-state-disabled) .ui-menuitem-link {
+    cursor: pointer;
+}
+body .actae-steps.ui-steps .ui-state-highlight .ui-menuitem-link {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+body .actae-steps.ui-steps .ui-steps-number {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    line-height: 2rem;
+    font-size: .85rem;
+    background: var(--surface-ground);
+    color: var(--text-color-secondary);
+    border: 1px solid var(--surface-border);
+}
+body .actae-steps.ui-steps .actae-step-completado .ui-steps-number {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color-text);
+}
+body .actae-steps.ui-steps .actae-step-actual .ui-steps-number {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    background: var(--surface-card);
+}
+body .actae-steps.ui-steps .actae-step-actual .ui-steps-title {
+    font-weight: 700;
+}
+body .actae-steps.ui-steps .actae-step-bloqueado .ui-steps-number {
+    border-style: dashed;
+}
+@media (max-width: 767px) {
+    body .actae-steps.ui-steps > ul { grid-template-columns: minmax(0, 1fr); gap: .15rem; }
+    body .actae-steps.ui-steps .ui-steps-item::before { display: none; }
+    body .actae-steps.ui-steps .ui-menuitem-link { flex-direction: row; gap: .75rem; padding: .25rem; }
+    body .actae-steps.ui-steps .ui-steps-title { text-align: left; }
 }

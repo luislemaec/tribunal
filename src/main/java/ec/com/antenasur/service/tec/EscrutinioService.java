@@ -150,6 +150,13 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         if (mesa == null) {
             throw new NegocioException("No se pudo resolver la mesa seleccionada.");
         }
+        // Una apertura ya registrada se informa como tal, aunque después cambie la junta o el padrón.
+        EscrutinioCabecera existente = proceso != null
+                ? escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, proceso.getId()) : null;
+        if (existente == null || EstadoEscrutinio.PENDIENTE.equals(existente.getEstadoEscrutinio())) {
+            // Se valida antes de crear la cabecera: una mesa no habilitada no deja registros.
+            disponibilidadDocumental.validarApertura(procesoId, mesaId);
+        }
         EscrutinioCabecera cabecera = obtenerOCrearCabecera(mesa, proceso);
         if (EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("El escrutinio ya se encuentra cerrado.");

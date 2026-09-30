@@ -26,6 +26,7 @@ public class DisponibilidadDocumentoMesaService {
     @Inject private CronogramaFaseFacade cronogramaFacade;
     @Inject private CategoriaVotoFacade categoriaFacade;
     @Inject private AccesoDocumentoMesaService acceso;
+    @Inject private ProcesoElectoralFacade procesoFacade;
 
     public void completar(Integer procesoId, List<MesaDocumentosDTO> filas) {
         Integer permitida = acceso.mesaPermitida(procesoId);
@@ -86,6 +87,36 @@ public class DisponibilidadDocumentoMesaService {
         var d = cargar(proceso, List.of(mesa)).get(mesa);
         if (!d.isJuntaCompleta()) throw new NegocioException(motivoJunta(d, true));
         if (d.getEmpadronados() == 0) throw new NegocioException(mensaje("reportesMesa.error.sin.padron"));
+    }
+
+    /**
+     * Motivo por el que la mesa no puede iniciar el escrutinio (paso 1: Apertura), o null si
+     * está habilitada. Condiciones: la mesa existe y está vigente, el proceso es el activo,
+     * la junta está completa (las mismas reglas de mjrv) y la mesa tiene electores en el
+     * padrón del proceso. No se consulta {@code Mesa.estadoTarea}: no pertenece al proceso.
+     */
+    public String motivoBloqueoApertura(Integer proceso, Integer mesa) {
+        var entidad = mesa != null ? mesaFacade.find(mesa) : null;
+        if (entidad == null || !Boolean.TRUE.equals(entidad.getEstado())) return mensaje("actaE.apertura.bloqueo.mesa");
+        var activo = procesoFacade.getActivo();
+        if (proceso == null || activo == null || !proceso.equals(activo.getId()))
+            return mensaje("actaE.apertura.bloqueo.proceso");
+        var junta = miembroJRVService.consultarEstadoJunta(mesa, proceso);
+        if (!junta.isCompleta()) {
+            var faltantes = junta.getCargosFaltantes();
+            return mensaje("actaE.apertura.bloqueo.junta") + (faltantes == null || faltantes.isEmpty() ? ""
+                    : " " + Constantes.getMensaje("reportesMesa.regla.cargos", String.join(", ", faltantes)));
+        }
+        long empadronados = 0;
+        for (Object[] r : facade.padrones(proceso, List.of(mesa))) empadronados += ((Number) r[1]).longValue();
+        if (empadronados == 0) return mensaje("actaE.apertura.bloqueo.padron");
+        return null;
+    }
+
+    /** Exige {@link #motivoBloqueoApertura}: lanza el motivo si la mesa no está habilitada. */
+    public void validarApertura(Integer proceso, Integer mesa) {
+        String motivo = motivoBloqueoApertura(proceso, mesa);
+        if (motivo != null) throw new NegocioException(motivo);
     }
 
     private Map<Integer, DependenciasMesaDTO> cargar(Integer proceso, List<Integer> mesas) {

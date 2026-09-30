@@ -24,6 +24,10 @@ import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.ActaEGerencialDTO;
+import ec.com.antenasur.dto.ProgresoEscrutinioDTO;
+import org.primefaces.model.menu.DefaultMenuModel;
+import org.primefaces.model.menu.DefaultMenuItem;
+import org.primefaces.model.menu.MenuModel;
 import ec.com.antenasur.dto.CandidatoDTO;
 import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
@@ -119,6 +123,13 @@ public class ActaEController implements Serializable {
 
     @Inject
     private ActaFisicaEscrutinioService actaFisicaEscrutinioService;
+
+    @Inject
+    private ec.com.antenasur.service.tec.DisponibilidadDocumentoMesaService disponibilidadDocumentoMesaService;
+
+    /** Motivo por el que la mesa seleccionada no puede registrar la apertura; null si está habilitada. */
+    @Getter
+    private String motivoBloqueoApertura;
 
     @Getter
     @Setter
@@ -272,8 +283,6 @@ public class ActaEController implements Serializable {
     private String filtroRecintoTabla;
 
     private static final String ID_TABLA_ESCRUTINIOS = FORMULARIO + ":tabActaE:tblConsultaGerencial";
-    private static final String PREFIJO_SITUACION = "S:";
-    private static final String PREFIJO_ESTADO = "E:";
 
     /**
      * Imagen del acta física para el visor, leída solo cuando el usuario pide verla: no se
@@ -562,7 +571,10 @@ public class ActaEController implements Serializable {
         if (isMesaCerrada()) {
             JsfUtil.addInfoMessageFromBundle("actaE.mensaje.mesa.cerrada");
         }
+        cargarBloqueoApertura();
         cargarDocumentosActa();
+        actualizarActaFisicaEnListado(mesaSeleccionado.getId(), actaFisica);
+        pasoVisible = getProgresoEscrutinio().getIndice();
     }
 
     /**
@@ -629,45 +641,36 @@ public class ActaEController implements Serializable {
         }
         for (ActaEGerencialDTO fila : filasEscrutinioProceso) {
             if (mesaId.equals(fila.getMesaId())) {
+                if (escrutinioCabecera != null && mesaSeleccionado != null
+                        && mesaId.equals(mesaSeleccionado.getId())) {
+                    fila.setEstadoEscrutinio(escrutinioCabecera.getEstadoEscrutinio());
+                    fila.setFechaApertura(escrutinioCabecera.getFechaApertura());
+                    fila.setFechaCierre(escrutinioCabecera.getFechaCierre());
+                    fila.setVotosRegistrados(valorEntero(escrutinioCabecera.getTotalVotosRegistrados()));
+                    fila.setVotosValidos(valorEntero(escrutinioCabecera.getTotalVotosValidos()));
+                    fila.setVotosBlancos(valorEntero(escrutinioCabecera.getTotalVotosBlancos()));
+                    fila.setVotosNulos(valorEntero(escrutinioCabecera.getTotalVotosNulos()));
+                }
                 fila.setActaFisicaEstado(fisica == null ? null
                         : (fisica.getEstadoRevision() != null ? fisica.getEstadoRevision()
                                 : ActaFisicaEscrutinioService.PENDIENTE_REVISION));
             }
         }
         aplicarFiltrosEscrutinio();
+        refiltrarTablaEscrutinios();
     }
 
-    /** Situaciones que se ofrecen en el filtro del listado, en el orden del flujo. */
-    public ActaEGerencialDTO.Situacion[] getSituacionesEscrutinio() {
-        return ActaEGerencialDTO.Situacion.values();
+    public ProgresoEscrutinioDTO.Etapa[] getEtapasEscrutinio() {
+        return ProgresoEscrutinioDTO.Etapa.values();
     }
 
     /**
-     * Opciones del filtro de la columna Situación. Son las situaciones reales de
-     * {@link ActaEGerencialDTO#getSituacion()}; «En proceso» agrupa varios estados del
-     * escrutinio, así que se ofrece completa y también por cada estado real que agrupa
-     * (abierta, en conteo, conteo registrado, reabierta). Valores: «S:» + situación o
-     * «E:» + estado, que interpreta {@link #filtrarPorSituacion}.
+     * Filtro exacto de etapa actual, no acumulativo. Solo usa datos ya cargados.
      */
     public List<jakarta.faces.model.SelectItem> getOpcionesFiltroSituacion() {
         List<jakarta.faces.model.SelectItem> opciones = new ArrayList<>();
-        for (ActaEGerencialDTO.Situacion situacion : ActaEGerencialDTO.Situacion.values()) {
-            String etiqueta = Constantes.getMensaje("actaE.situacion." + situacion.name());
-            if (situacion != ActaEGerencialDTO.Situacion.EN_PROCESO) {
-                opciones.add(new jakarta.faces.model.SelectItem(PREFIJO_SITUACION + situacion.name(), etiqueta));
-                continue;
-            }
-            jakarta.faces.model.SelectItemGroup grupo = new jakarta.faces.model.SelectItemGroup(etiqueta);
-            List<jakarta.faces.model.SelectItem> detalle = new ArrayList<>();
-            detalle.add(new jakarta.faces.model.SelectItem(PREFIJO_SITUACION + situacion.name(),
-                    Constantes.getMensaje("actaE.filtro.situacion.enProceso.todas")));
-            for (EstadoEscrutinio estado : new EstadoEscrutinio[]{EstadoEscrutinio.ABIERTO,
-                    EstadoEscrutinio.EN_CONTEO, EstadoEscrutinio.CONTEO_REGISTRADO, EstadoEscrutinio.REABIERTO}) {
-                detalle.add(new jakarta.faces.model.SelectItem(PREFIJO_ESTADO + estado.name(),
-                        Constantes.getMensaje("escrutinio.estado." + estado.name())));
-            }
-            grupo.setSelectItems(detalle.toArray(new jakarta.faces.model.SelectItem[0]));
-            opciones.add(grupo);
+        for (ProgresoEscrutinioDTO.Etapa etapa : getEtapasEscrutinio()) {
+            opciones.add(new jakarta.faces.model.SelectItem(etapa.name(), Constantes.getMensaje(etapa.getClave())));
         }
         return opciones;
     }
@@ -681,12 +684,7 @@ public class ActaEController implements Serializable {
         if (!(valor instanceof ActaEGerencialDTO fila)) {
             return false;
         }
-        if (clave.startsWith(PREFIJO_ESTADO)) {
-            return fila.getEstadoEscrutinio() != null
-                    && fila.getEstadoEscrutinio().name().equals(clave.substring(PREFIJO_ESTADO.length()));
-        }
-        return clave.startsWith(PREFIJO_SITUACION)
-                && fila.getSituacion().name().equals(clave.substring(PREFIJO_SITUACION.length()));
+        return fila.getProgreso().coincideFiltro(clave);
     }
 
     /** Recintos presentes en el listado ya filtrado por cantón y parroquia, sin consultar. */
@@ -842,7 +840,7 @@ public class ActaEController implements Serializable {
                     mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
             cargaDatosMesaSeleccionada();
             // Cerrada la mesa, el paso siguiente del flujo es cargar y contrastar el acta física.
-            tabActivoActaE = indiceTab(TAB_ACTA_FISICA);
+            tabActivoActaE = indiceTab(TAB_ESCRUTINIO);
             if (escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
                     && !escrutinioCabecera.getObservacionConteo().isBlank()) {
                 JsfUtil.addWarningMessageFromBundle("actaE.mensaje.cierre.con.observacion");
@@ -877,7 +875,11 @@ public class ActaEController implements Serializable {
                     archivoActaFisica.getContentType(), archivoActaFisica.getContent());
             archivoActaFisica = null;
             contenidoActaFisica = null;
+            pasoVisible = 4;
+            verActaFisica();
+            org.primefaces.PrimeFaces.current().ajax().update("frmActaE:tabActaE:contenidoEtapa");
             actualizarActaFisicaEnListado(mesaSeleccionado.getId(), actaFisica);
+            actualizarIndicadoresProgreso();
             if (usuarioConsultaGerencial) {
                 // La situación de la mesa cambió: se refresca su fila sin volver a consultar.
                 org.primefaces.PrimeFaces.current().ajax().update(
@@ -1231,7 +1233,29 @@ public class ActaEController implements Serializable {
                 && isPuedeOperarActa()
                 && !sinMesaAsignada
                 && !isMesaAbierta()
-                && !isMesaCerrada();
+                && !isMesaCerrada()
+                && motivoBloqueoApertura == null;
+    }
+
+    /** La apertura está pendiente y la mesa no cumple las condiciones para iniciarla. */
+    public boolean isAperturaBloqueada() {
+        return mesaSeleccionadaValida() && motivoBloqueoApertura != null;
+    }
+
+    /**
+     * Solo se evalúa mientras la apertura está pendiente: una vez registrada, los cambios
+     * posteriores en la junta o el padrón no bloquean el escrutinio en curso.
+     */
+    private void cargarBloqueoApertura() {
+        motivoBloqueoApertura = null;
+        if (!mesaSeleccionadaValida() || mesaSoloLectura || escrutinioCabecera == null
+                || (escrutinioCabecera.getEstadoEscrutinio() != null
+                        && !EstadoEscrutinio.PENDIENTE.equals(escrutinioCabecera.getEstadoEscrutinio()))) {
+            return;
+        }
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        motivoBloqueoApertura = disponibilidadDocumentoMesaService.motivoBloqueoApertura(
+                procesoId, mesaSeleccionado.getId());
     }
 
     public boolean isPuedeEditarConteo() {
@@ -1364,12 +1388,78 @@ public class ActaEController implements Serializable {
                 && !EstadoEscrutinio.ANULADO.equals(escrutinioCabecera.getEstadoEscrutinio());
     }
 
+    /**
+     * Reabrir desde el control administrativo. Una mesa cerrada que ya tiene acta física
+     * no se reabre aquí: se hace desde la revisión oficial («Devolver al presidente» o
+     * «Revertir validación»), para que el motivo quede registrado en el acta física.
+     */
     public boolean isPuedeReabrirEscrutinio() {
         return mesaSeleccionadaValida() && tieneRolAdministrador()
                 && escrutinioCabecera != null
                 && (EstadoEscrutinio.CERRADO.equals(escrutinioCabecera.getEstadoEscrutinio())
                 || EstadoEscrutinio.OBSERVADO.equals(escrutinioCabecera.getEstadoEscrutinio())
-                || EstadoEscrutinio.ANULADO.equals(escrutinioCabecera.getEstadoEscrutinio()));
+                || EstadoEscrutinio.ANULADO.equals(escrutinioCabecera.getEstadoEscrutinio()))
+                && !isReaperturaPorRevisionOficial();
+    }
+
+    /** Mesa cerrada con acta física: la reapertura corresponde a la revisión oficial. */
+    public boolean isReaperturaPorRevisionOficial() {
+        return mesaSeleccionadaValida() && tieneRolAdministrador() && isMesaCerrada() && actaFisica != null;
+    }
+
+    // ── Control administrativo (observar, anular, reabrir) ────────────────────────
+    // Solo se ofrecen las acciones que admite el estado actual. El motivo se pide
+    // después de elegir la acción, así queda claro a cuál corresponde.
+
+    private static final String ADMIN_OBSERVAR = "OBSERVAR";
+    private static final String ADMIN_ANULAR = "ANULAR";
+    private static final String ADMIN_REABRIR = "REABRIR";
+
+    /** Acción administrativa elegida y pendiente de motivo; null si no hay ninguna. */
+    @Getter
+    private String accionAdministrativa;
+
+    public boolean isHayControlAdministrativo() {
+        return isPuedeObservarEscrutinio() || isPuedeAnularEscrutinio() || isPuedeReabrirEscrutinio()
+                || isReaperturaPorRevisionOficial();
+    }
+
+    public void prepararAccionAdministrativa(String accion) {
+        boolean permitida = (ADMIN_OBSERVAR.equals(accion) && isPuedeObservarEscrutinio())
+                || (ADMIN_ANULAR.equals(accion) && isPuedeAnularEscrutinio())
+                || (ADMIN_REABRIR.equals(accion) && isPuedeReabrirEscrutinio());
+        if (!permitida) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        accionAdministrativa = accion;
+        motivoCambioEstado = "";
+    }
+
+    public void cancelarAccionAdministrativa() {
+        accionAdministrativa = null;
+        motivoCambioEstado = "";
+    }
+
+    /** Ejecuta la acción elegida con los controles de siempre (permiso, motivo y transición). */
+    public void confirmarAccionAdministrativa() {
+        String accion = accionAdministrativa;
+        EstadoEscrutinio antes = escrutinioCabecera != null ? escrutinioCabecera.getEstadoEscrutinio() : null;
+        if (ADMIN_OBSERVAR.equals(accion)) {
+            observarEscrutinio();
+        } else if (ADMIN_ANULAR.equals(accion)) {
+            anularEscrutinio();
+        } else if (ADMIN_REABRIR.equals(accion)) {
+            reabrirEscrutinio();
+        } else {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        // Se cierra solo si el estado cambió; si falló (p. ej., motivo vacío) sigue abierta.
+        EstadoEscrutinio despues = escrutinioCabecera != null ? escrutinioCabecera.getEstadoEscrutinio() : null;
+        if (despues != antes) {
+            accionAdministrativa = null;
+        }
     }
 
     private boolean mesaSeleccionadaValida() {
@@ -1397,6 +1487,7 @@ public class ActaEController implements Serializable {
         cancelarRevisionActa();
         cancelarAccionRevision();
         cotejoConfirmado = false;
+        accionAdministrativa = null;
         if (!mesaSeleccionadaValida()) {
             return;
         }
@@ -1431,6 +1522,7 @@ public class ActaEController implements Serializable {
         mesaSeleccionado = new MesaDTO();
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;
+        motivoBloqueoApertura = null;
     }
 
     private String getPlantillaDocumento(String nombrePlantilla) {
@@ -1639,7 +1731,8 @@ public class ActaEController implements Serializable {
         if (!isPuedeConsultarMesa()) {
             return;
         }
-        tabActivoActaE = indiceTab(TAB_ACTA_FISICA);
+        tabActivoActaE = indiceTab(TAB_ESCRUTINIO);
+        pasoVisible = actaFisica == null ? 3 : 4;
         if (actaFisica != null) {
             verActaFisica();
         }
@@ -1647,7 +1740,6 @@ public class ActaEController implements Serializable {
 
     private static final String TAB_MESAS = "mesas";
     private static final String TAB_ESCRUTINIO = "escrutinio";
-    private static final String TAB_ACTA_FISICA = "actaFisica";
 
     /**
      * Índice de un tab entre los que están visibles. PrimeFaces cuenta solo los tabs
@@ -1662,7 +1754,6 @@ public class ActaEController implements Serializable {
         if (isPuedeConsultarMesa()) {
             // Escrutinio (resumen, apertura, conteo y cierre) y Acta física.
             visibles.add(TAB_ESCRUTINIO);
-            visibles.add(TAB_ACTA_FISICA);
         }
         int indice = visibles.indexOf(clave);
         return indice < 0 ? 0 : indice;
@@ -1670,7 +1761,7 @@ public class ActaEController implements Serializable {
 
     /** Índice del tab «Acta física», para el acceso directo desde Escrutinio. */
     public int getIndiceTabActaFisica() {
-        return indiceTab(TAB_ACTA_FISICA);
+        return indiceTab(TAB_ESCRUTINIO);
     }
 
     /** Pasos del flujo de la mesa, en orden; sus rótulos son actaE.paso.&lt;paso&gt;. */
@@ -1685,14 +1776,59 @@ public class ActaEController implements Serializable {
      * de estados existentes: cabecera del escrutinio, acta física vigente y su revisión.
      */
     public int getPasoEscrutinio() {
-        EstadoEscrutinio estado = escrutinioCabecera != null ? escrutinioCabecera.getEstadoEscrutinio() : null;
-        if (isMesaCerrada()) {
-            if (isActaFisicaValidada()) {
-                return 5;
-            }
-            return actaFisica != null ? 4 : 3;
+        ProgresoEscrutinioDTO progreso = getProgresoEscrutinio();
+        return progreso.isOficial() ? 5 : progreso.getIndice();
+    }
+
+    public ProgresoEscrutinioDTO getProgresoEscrutinio() {
+        return ProgresoEscrutinioDTO.determinar(
+                escrutinioCabecera == null ? null : escrutinioCabecera.getEstadoEscrutinio(),
+                escrutinioCabecera != null && escrutinioCabecera.getFechaApertura() != null,
+                actaFisica == null ? null : (actaFisica.getEstadoRevision() == null
+                        ? ActaFisicaEscrutinioService.PENDIENTE_REVISION : actaFisica.getEstadoRevision()));
+    }
+
+    private Integer pasoVisible;
+
+    public int getPasoVisible() {
+        return pasoVisible == null ? getProgresoEscrutinio().getIndice() : pasoVisible;
+    }
+
+    public boolean isPasoDisponible(int paso) {
+        return isPuedeConsultarMesa() && paso >= 0 && paso <= 4
+                && (paso <= getProgresoEscrutinio().getIndice()
+                    || (paso == 4 && isMesaCerrada() && actaFisica != null));
+    }
+
+    public void seleccionarPaso(int paso) {
+        if (!isPasoDisponible(paso)) {
+            JsfUtil.addWarningMessageFromBundle("actaE.mensaje.accionBloqueada");
+            return;
         }
-        return estado == null || EstadoEscrutinio.PENDIENTE.equals(estado) ? 0 : 1;
+        pasoVisible = paso;
+        if (paso == 4 && actaFisica != null && !isActaFisicaEnVisor()) {
+            verActaFisica();
+        }
+    }
+
+    /** Navegacion de consulta; no cambia estados ni concede permisos operativos. */
+    public MenuModel getModeloPasosEscrutinio() {
+        ProgresoEscrutinioDTO progreso = getProgresoEscrutinio();
+        DefaultMenuModel modelo = new DefaultMenuModel();
+        for (ProgresoEscrutinioDTO.Etapa etapa : getEtapasEscrutinio()) {
+            String estado = progreso.estadoPaso(etapa.getIndice());
+            // Steps ya representa el numero; la etiqueta del filtro lo incluye por separado.
+            String etiqueta = Constantes.getMensaje("actaE.paso." + PASOS_ESCRUTINIO[etapa.getIndice()]);
+            modelo.getElements().add(DefaultMenuItem.builder()
+                    .value(etiqueta + " - " + Constantes.getMensaje("actaE.avance." + estado))
+                    .icon(progreso.completado(etapa.getIndice()) ? "pi pi-check" : null)
+                    .command("#{actaEController.seleccionarPaso(" + etapa.getIndice() + ")}")
+                    .process("@this :frmActaE:tabActaE:contenidoEtapa")
+                    .update(":frmActaE:tabActaE:contenidoEtapa :frmActaE:tabActaE:progresoMesa :frmGlobal:growlGlobal")
+                    .disabled(!isPasoDisponible(etapa.getIndice()))
+                    .containerStyleClass("actae-step-" + estado).build());
+        }
+        return modelo;
     }
 
     /**
@@ -1704,6 +1840,7 @@ public class ActaEController implements Serializable {
      */
     private void cargarMesaSoloLectura() {
         mesaSoloLectura = true;
+        motivoBloqueoApertura = null;
         cargarTotalSufragantes();
         Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
         EscrutinioCabeceraDTO cabecera = escrutinioService.buscarCabeceraDTO(mesaSeleccionado.getId(), procesoId);
@@ -1713,6 +1850,7 @@ public class ActaEController implements Serializable {
         observacionApertura = escrutinioCabecera.getObservacionApertura() != null
                 ? escrutinioCabecera.getObservacionApertura() : "";
         cargarDocumentosActa();
+        pasoVisible = getProgresoEscrutinio().getIndice();
     }
 
     /** Hay una mesa elegida y el usuario puede verla, como operador o como revisor. */
@@ -2041,10 +2179,32 @@ public class ActaEController implements Serializable {
         List<EscrutinioDTO> registrados = escrutinioService.listarDTOsPorMesaYProceso(mesaSeleccionado.getId(), procesoId);
         listaCamposActaE = registrados != null ? new ArrayList<>(registrados) : new ArrayList<>();
         cargarDocumentosActa();
+        actualizarIndicadoresProgreso();
         if (usuarioConsultaGerencial) {
             consultarEscrutiniosGerenciales();
+            refiltrarTablaEscrutinios();
             org.primefaces.PrimeFaces.current().ajax().update(
                     "frmActaE:tabActaE:tblConsultaGerencial", "frmActaE:tabActaE:pnlResumenGerencial");
+        }
+    }
+
+    private void actualizarIndicadoresProgreso() {
+        org.primefaces.PrimeFaces.current().ajax().update(
+                "frmActaE:tabActaE:progresoMesa", "frmActaE:tabActaE:etiquetasEstadoMesa");
+    }
+
+    /** Reaplica filtros activos al cambiar de etapa sin reiniciar orden ni pagina. */
+    private void refiltrarTablaEscrutinios() {
+        var faces = jakarta.faces.context.FacesContext.getCurrentInstance();
+        if (!usuarioConsultaGerencial || faces == null || faces.getViewRoot() == null) return;
+        var componente = faces.getViewRoot().findComponent("frmActaE:tabActaE:tblConsultaGerencial");
+        if (componente instanceof org.primefaces.component.datatable.DataTable tabla) {
+            int primero = tabla.getFirst();
+            tabla.filterAndSort();
+            int filas = tabla.getRows();
+            int total = tabla.getRowCount();
+            tabla.setFirst(total == 0 ? 0 : (filas > 0 && primero >= total
+                    ? ((total - 1) / filas) * filas : primero));
         }
     }
 
@@ -2124,6 +2284,7 @@ public class ActaEController implements Serializable {
         escrutinioCabecera = new EscrutinioCabeceraDTO();
         totalSufragantesAsignados = 0;
         observacionApertura = "";
+        motivoBloqueoApertura = null;
     }
 
     /**
