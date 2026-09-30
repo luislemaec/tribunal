@@ -616,7 +616,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     }
 
     /** Cuadre de papeletas de una mesa ya registrada (lo usa el dashboard del presidente). */
-    public int calcularCuadrePapeletas(Integer mesaId, Integer procesoId, int sufragantes) {
+    public int calcularCuadrePapeletasMesa(Integer mesaId, Integer procesoId, int sufragantes) {
         int votosEmitidos = 0;
         int papeletas = 0;
         if (mesaId != null && procesoId != null) {

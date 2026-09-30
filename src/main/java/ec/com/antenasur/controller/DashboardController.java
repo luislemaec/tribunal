@@ -256,7 +256,7 @@ public class DashboardController implements Serializable {
         totalVotosRegistrados = cabecera != null && cabecera.getTotalVotosRegistrados() != null
                 ? cabecera.getTotalVotosRegistrados() : 0;
         // Cuadre de papeletas: sufragantes − votos emitidos − papeletas no utilizadas.
-        diferenciaMesa = escrutinioService.calcularCuadrePapeletas(mesaId, procesoId, sufragantesAsignados);
+        diferenciaMesa = escrutinioService.calcularCuadrePapeletasMesa(mesaId, procesoId, sufragantesAsignados);
         diferenciaMesaTexto = construirTextoDiferencia(diferenciaMesa);
         estadoMesa = estadoEscrutinioMesa.name();
         estadoApertura = cabecera != null && cabecera.getFechaApertura() != null
