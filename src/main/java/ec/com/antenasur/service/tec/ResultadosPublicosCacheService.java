@@ -9,6 +9,8 @@ import java.util.List;
 import ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO;
 import ec.com.antenasur.dto.ResultadoMesaPublicaDTO;
 import ec.com.antenasur.dto.ResultadoPublicoSnapshotDTO;
+import ec.com.antenasur.enums.FaseElectoral;
+import ec.com.antenasur.facade.tec.CronogramaFaseFacade;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.ConcurrencyManagement;
@@ -38,6 +40,9 @@ public class ResultadosPublicosCacheService {
 
     @Inject
     private PadronService padronService;
+
+    @Inject
+    private CronogramaFaseFacade cronogramaFaseFacade;
 
     private ResultadoPublicoSnapshotDTO snapshot = crearSnapshotVacio();
 
@@ -74,12 +79,32 @@ public class ResultadosPublicosCacheService {
             return nuevo;
         }
         Integer procesoId = procesoActivo.getId();
-        List<ResultadoCategoriaPublicaDTO> resultados = escrutinioService.obtenerResultadosPublicosPorCategoria(procesoId);
+        var faseSufragio = cronogramaFaseFacade.getFasePorTipo(procesoId, FaseElectoral.SUFRAGIO);
+        if (faseSufragio != null && Boolean.TRUE.equals(faseSufragio.getEstado())) {
+            nuevo.setInicioSufragio(faseSufragio.getFechaInicio());
+            nuevo.setFinSufragio(faseSufragio.getFechaFin());
+        }
+        // Una sola consulta de categorías: de ella salen las listas y los blancos/nulos.
+        List<ResultadoCategoriaPublicaDTO> categorias = escrutinioService.obtenerCategoriasPublicas(procesoId);
+        List<ResultadoCategoriaPublicaDTO> resultados = EscrutinioService.soloListas(categorias);
         List<ResultadoMesaPublicaDTO> mesasCerradas = escrutinioService.listarMesasCerradasPublicas(procesoId);
         long totalVotosRegistrados = 0L;
         for (ResultadoCategoriaPublicaDTO resultado : resultados) {
             totalVotosRegistrados += resultado.getTotalVotos() != null ? resultado.getTotalVotos() : 0L;
         }
+        long totalBlancos = 0L;
+        long totalNulos = 0L;
+        for (ResultadoCategoriaPublicaDTO categoria : categorias) {
+            String clase = EscrutinioService.clasificarCategoriaPublica(categoria.getTipo(), categoria.getCategoria());
+            long votos = categoria.getTotalVotos() != null ? categoria.getTotalVotos() : 0L;
+            if (EscrutinioService.CLASE_BLANCOS.equals(clase)) {
+                totalBlancos += votos;
+            } else if (EscrutinioService.CLASE_NULOS.equals(clase)) {
+                totalNulos += votos;
+            }
+        }
+        nuevo.setTotalVotosBlancos(totalBlancos);
+        nuevo.setTotalVotosNulos(totalNulos);
         long totalMesasProceso = padronService.contarMesasPorProceso(procesoId);
         long totalMesasCerradas = escrutinioService.contarMesasCerradasPorProceso(procesoId);
         BigDecimal porcentaje = calcularPorcentajeMesasCerradas(totalMesasProceso, totalMesasCerradas);
@@ -112,10 +137,14 @@ public class ResultadosPublicosCacheService {
         copia.setTotalMesasProceso(origen.getTotalMesasProceso());
         copia.setTotalMesasCerradas(origen.getTotalMesasCerradas());
         copia.setTotalVotosRegistrados(origen.getTotalVotosRegistrados());
+        copia.setTotalVotosBlancos(origen.getTotalVotosBlancos());
+        copia.setTotalVotosNulos(origen.getTotalVotosNulos());
         copia.setPorcentajeMesasCerradas(origen.getPorcentajeMesasCerradas());
         copia.setPorcentajeMesasCerradasEntero(origen.getPorcentajeMesasCerradasEntero());
         copia.setResultadosChartModel(origen.getResultadosChartModel());
         copia.setUltimaActualizacion(origen.getUltimaActualizacion());
+        copia.setInicioSufragio(origen.getInicioSufragio());
+        copia.setFinSufragio(origen.getFinSufragio());
         return copia;
     }
 

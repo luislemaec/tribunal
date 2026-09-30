@@ -130,6 +130,33 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         return resultado;
     }
 
+    /**
+     * Fecha y hora de validación del acta física vigente de cada mesa del proceso: la
+     * {@code fechaRevision} del documento VALIDADO, con las mismas condiciones que
+     * {@link #existeActaFisicaValidada}. Una sola consulta para todo el listado público.
+     *
+     * @return mapa id de mesa → fecha de validación
+     */
+    public java.util.Map<Integer, java.util.Date> fechasValidacionPorProceso(Integer procesoId) {
+        java.util.Map<Integer, java.util.Date> resultado = new java.util.HashMap<>();
+        if (procesoId == null) {
+            return resultado;
+        }
+        String sql = "SELECT d.mesa.id, MAX(d.fechaRevision) FROM Documentos d"
+                + " WHERE d.proceso.id = :procesoId"
+                + " AND d.estado = TRUE"
+                + " AND d.estadoRevision = :revisionValidada"
+                + " AND UPPER(d.tipoDocumento.nombre) = :tipoActaFisica"
+                + " GROUP BY d.mesa.id";
+        jakarta.persistence.TypedQuery<Object[]> query = super.getEntityManager().createQuery(sql, Object[].class)
+                .setParameter("procesoId", procesoId);
+        parametrosActaFisicaValidada(query);
+        for (Object[] fila : query.getResultList()) {
+            resultado.put((Integer) fila[0], (java.util.Date) fila[1]);
+        }
+        return resultado;
+    }
+
     /** Cabeceras cerradas y con acta física VALIDADA (datos oficiales) del proceso. */
     public List<EscrutinioCabecera> listarCerradasPorProceso(Integer procesoId) {
         if (procesoId == null) {

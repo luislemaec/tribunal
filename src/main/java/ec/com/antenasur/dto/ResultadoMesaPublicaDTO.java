@@ -2,6 +2,8 @@ package ec.com.antenasur.dto;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,4 +26,8 @@ public class ResultadoMesaPublicaDTO implements Serializable {
     private Integer votosBlancos;
     private Integer votosNulos;
     private Date fechaCierre;
+    /** Fecha y hora en que el Tribunal validó el acta física (dato oficial). */
+    private Date fechaValidacion;
+    /** Votos de cada lista en la mesa: id de categoría de lista → votos. */
+    private Map<Integer, Long> votosPorLista = new LinkedHashMap<>();
 }

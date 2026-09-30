@@ -3,152 +3,211 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Resultados oficiales del proceso electoral activo: qué lista va ganando, votos por lista y resultados por mesa validada.">
+    <meta name="color-scheme" content="light dark">
     <title>Resultados electorales</title>
     <link rel="shortcut icon" href="assets/img/favicon.ico">
     <link rel="stylesheet" href="assets/css/resultados.css">
-    <script src="assets/js/chart.js"></script>
 </head>
 <body>
-    <header class="topbar">
-        <div class="container topbar-inner">
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+    <header class="site-header">
+        <div class="container site-header-inner">
             <div class="brand">
-                <img src="assets/img/logo.png" alt="Tribunal Electoral">
-                <div>
-                    <div class="brand-title">Tribunal Electoral</div>
-                    <div class="brand-subtitle">Portal publico de resultados</div>
-                </div>
+                <img src="assets/img/logo-tribunal.png" alt="TEC · Tribunal Electoral CONPOCIIECH" width="170" height="26">
             </div>
+            <span id="statusPill" class="status-pill is-warning">Inicializando</span>
         </div>
     </header>
 
-    <section class="hero">
-        <div class="container hero-grid">
-            <div>
-                <span class="tag">Informacion oficial</span>
+    <main id="contenido" class="container">
+        <section class="intro">
+            <div class="intro-text">
+                <span class="eyebrow">Información oficial</span>
                 <h1>Resultados electorales</h1>
-                <p>Consulta publica del avance de escrutinios y votos registrados en actas cerradas del proceso electoral activo.</p>
+                <p>Resultados del proceso electoral activo. Solo se cuentan las mesas cuya acta ya fue validada por el Tribunal.</p>
             </div>
-            <div class="process-card">
-                <div class="label">Proceso electoral</div>
-                <div id="processName" class="process-name">Cargando...</div>
-                <div id="statusPill" class="status-pill warning">Inicializando</div>
-                <div class="label" style="margin-top:16px">Ultima actualizacion</div>
-                <div id="updatedAt" style="margin-top:6px">--</div>
+            <dl class="intro-meta">
+                <div>
+                    <dt>Proceso electoral</dt>
+                    <dd id="processName" class="process-name">Cargando…</dd>
+                </div>
+                <div>
+                    <dt>Última actualización</dt>
+                    <dd id="updatedAt" aria-live="polite">--</dd>
+                </div>
                 <div class="refresh-meta">
-                    <span id="loaderDot" class="loader-dot"></span>
+                    <span id="loaderDot" class="loader-dot" aria-hidden="true"></span>
                     <span id="refreshMeta">Esperando datos</span>
                 </div>
-            </div>
-        </div>
-    </section>
+            </dl>
+        </section>
 
-    <main class="container">
-        <div id="runtimeWarning" class="runtime-warning">
-            Esta pagina debe abrirse desde el servidor de aplicaciones, por ejemplo: /public/resultados.html
+        <div id="runtimeWarning" class="runtime-warning" role="alert">
+            Esta página debe abrirse desde el servidor de aplicaciones, por ejemplo: /public/resultados.html
         </div>
 
-        <section class="metrics">
-            <div class="metric-card">
-                <div class="label">Mesas del proceso</div>
-                <div id="totalMesas" class="value">0</div>
+        <!-- Antes del cierre de la votación: cuenta regresiva. El servidor no envía resultados. -->
+        <section id="countdownSection" class="countdown hidden" aria-labelledby="countdownTitle">
+            <span id="countdownBadge" class="countdown-badge">Próximamente</span>
+            <h2 id="countdownTitle">Los resultados se publicarán al cierre de la votación</h2>
+            <div id="countdownClock" class="countdown-clock" role="timer" aria-live="off">
+                <div class="countdown-unit"><span id="cdDias" class="countdown-value">0</span><span class="countdown-label">días</span></div>
+                <div class="countdown-unit"><span id="cdHoras" class="countdown-value">00</span><span class="countdown-label">horas</span></div>
+                <div class="countdown-unit"><span id="cdMinutos" class="countdown-value">00</span><span class="countdown-label">minutos</span></div>
+                <div class="countdown-unit"><span id="cdSegundos" class="countdown-value">00</span><span class="countdown-label">segundos</span></div>
             </div>
-            <div class="metric-card">
-                <div class="label">Mesas escrutadas</div>
-                <div id="mesasCerradas" class="value">0</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Mesas pendientes</div>
-                <div id="mesasPendientes" class="value">0</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Votos de listas</div>
-                <div id="totalVotos" class="value">0</div>
+            <p id="countdownSchedule" class="countdown-schedule"></p>
+            <p id="countdownPending" class="countdown-schedule hidden">La fecha de la votación aún no ha sido programada. Vuelva a consultar más adelante.</p>
+        </section>
+
+        <div id="resultsContent" class="hidden">
+        <!-- Resumen principal: quién va primero y cuánto falta por contar. -->
+        <section class="overview" aria-label="Resumen del resultado">
+            <article id="leaderCard" class="leader-card" aria-live="polite">
+                <div class="leader-top">
+                    <span id="leaderLabel" class="leader-label">¿Quién va ganando?</span>
+                    <span id="leaderScope" class="leader-scope">En todo el proceso</span>
+                </div>
+                <div id="leaderBody" class="leader-body">
+                    <span id="leaderSwatch" class="leader-swatch" aria-hidden="true"></span>
+                    <div class="leader-identity">
+                        <div id="leaderName" class="leader-name">--</div>
+                        <div id="leaderListName" class="leader-list-name"></div>
+                        <div id="leaderSlogan" class="leader-slogan"></div>
+                    </div>
+                    <div class="leader-figures">
+                        <div id="leaderPercent" class="leader-percent">0%</div>
+                        <div class="leader-votes"><strong id="leaderVotes">0</strong> votos</div>
+                    </div>
+                </div>
+                <p id="leaderLead" class="leader-lead"></p>
+                <p id="leaderEmpty" class="leader-empty hidden">Aún no hay mesas validadas con votos para mostrar.</p>
+                <span id="leaderStatus" class="leader-status">Resultado parcial</span>
+            </article>
+
+            <article class="progress-card">
+                <span class="card-label">Avance del conteo</span>
+                <span id="avanceTexto" class="progress-value">0%</span>
+                <span class="progress" role="progressbar" aria-label="Mesas contadas y validadas"
+                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="avanceProgress">
+                    <span id="avanceBar" class="progress-bar"></span>
+                </span>
+                <dl class="progress-facts">
+                    <div>
+                        <dt>Mesas contadas y validadas</dt>
+                        <dd><strong id="mesasCerradas">0</strong> de <span id="totalMesas">0</span></dd>
+                    </div>
+                    <div>
+                        <dt>Mesas por contar</dt>
+                        <dd><strong id="mesasPendientes">0</strong></dd>
+                    </div>
+                </dl>
+            </article>
+        </section>
+
+        <!-- Zona: recalcula el ganador, el ranking y la tabla. -->
+        <section class="scope-bar" aria-label="Filtrar por zona">
+            <span class="scope-title">Ver resultados de</span>
+            <div class="filters">
+                <label class="field">
+                    <span>Cantón</span>
+                    <select id="cantonFilter"></select>
+                </label>
+                <label class="field">
+                    <span>Parroquia</span>
+                    <select id="parroquiaFilter"></select>
+                </label>
+                <label class="field">
+                    <span>Recinto</span>
+                    <select id="recintoFilter"></select>
+                </label>
+                <button id="clearFiltersButton" class="button button-ghost" type="button">Ver todo</button>
             </div>
         </section>
 
-        <nav class="tabs" aria-label="Secciones de resultados">
-            <button class="tab active" type="button" data-tab="summaryPanel">Resultados por listas</button>
-            <button class="tab" type="button" data-tab="tablesPanel">Mesas escrutadas</button>
+        <nav class="tabs" role="tablist" aria-label="Secciones de resultados">
+            <button class="tab is-active" type="button" role="tab" id="tabSummary"
+                    aria-selected="true" aria-controls="summaryPanel" data-tab="summaryPanel">Resultados por lista</button>
+            <button class="tab" type="button" role="tab" id="tabTables"
+                    aria-selected="false" aria-controls="tablesPanel" data-tab="tablesPanel" tabindex="-1">Resultados por mesa</button>
         </nav>
 
-        <section id="summaryPanel" class="panel">
-            <div class="toolbar">
-                <div style="flex:1">
-                    <h2 class="section-title">Resumen de resultados</h2>
-                    <p class="section-subtitle">Resultados consolidados por listas, considerando unicamente mesas cerradas.</p>
-                </div>
+        <section id="summaryPanel" class="panel" role="tabpanel" aria-labelledby="tabSummary">
+            <header class="panel-header">
                 <div>
-                    <div class="label">Avance de escrutinio</div>
-                    <div id="avanceTexto" style="font-size:28px;font-weight:800;color:#0f4c81;text-align:right">0%</div>
+                    <h2>Votos por lista</h2>
+                    <p id="rankingSubtitle">De la lista más votada a la menos votada. El porcentaje se calcula sobre los votos válidos.</p>
                 </div>
+            </header>
+            <ol id="resultsList" class="ranking"></ol>
+            <div id="emptyResults" class="empty hidden">Aún no existen resultados de listas publicados para esta zona.</div>
+
+            <div class="votes-strip">
+                <dl class="votes-grid">
+                    <div class="votes-item is-main">
+                        <dt>Votos válidos</dt>
+                        <dd id="validVotes">0</dd>
+                        <span class="votes-hint">Suma de los votos de todas las listas</span>
+                    </div>
+                    <div class="votes-item">
+                        <dt>Votos en blanco</dt>
+                        <dd id="blankVotes">0</dd>
+                    </div>
+                    <div class="votes-item">
+                        <dt>Votos nulos</dt>
+                        <dd id="nullVotes">0</dd>
+                    </div>
+                    <div class="votes-item">
+                        <dt>Total de votos</dt>
+                        <dd id="totalVotes">0</dd>
+                    </div>
+                </dl>
+                <p class="votes-note">Los votos en blanco y nulos son solo informativos: no se asignan a ninguna lista ni cuentan para el porcentaje.</p>
             </div>
-            <div class="progress"><div id="avanceBar"></div></div>
-            <div id="summaryContent" class="result-grid">
-                <div class="chart-shell">
-                    <canvas id="resultsChart" width="900" height="420" aria-label="Grafico de votos por lista"></canvas>
-                </div>
-                <div id="resultsList"></div>
-            </div>
-            <div id="emptyResults" class="empty hidden">Aun no existen resultados de listas publicados para el proceso activo.</div>
         </section>
 
-        <section id="tablesPanel" class="panel hidden">
-            <div class="toolbar">
-                <div style="flex:1">
-                    <h2 class="section-title">Mesas escrutadas</h2>
-                    <p class="section-subtitle">Detalle territorial de mesas con acta cerrada.</p>
+        <section id="tablesPanel" class="panel hidden" role="tabpanel" aria-labelledby="tabTables">
+            <header class="panel-header">
+                <div>
+                    <h2>Resultados por mesa</h2>
+                    <p>Votos de cada lista en cada mesa validada. Se resalta la lista más votada de cada mesa.</p>
                 </div>
-                <button id="refreshButton" class="button" type="button">Actualizar resultados</button>
-            </div>
+                <button id="refreshButton" class="button button-primary" type="button">Actualizar</button>
+            </header>
 
-            <div class="filters">
-                <div>
-                    <label class="label" for="cantonFilter">Canton</label>
-                    <select id="cantonFilter"></select>
-                </div>
-                <div>
-                    <label class="label" for="parroquiaFilter">Parroquia</label>
-                    <select id="parroquiaFilter"></select>
-                </div>
-                <div>
-                    <label class="label" for="recintoFilter">Recinto</label>
-                    <select id="recintoFilter"></select>
-                </div>
-            </div>
-
-            <div class="table-actions">
-                <input id="tableSearch" class="search-input" type="search" placeholder="Buscar por canton, parroquia, recinto o mesa">
-                <div class="label"><span id="tableCount">0</span> registros</div>
-                <button id="clearFiltersButton" class="button" type="button">Limpiar filtros</button>
+            <div class="table-meta">
+                <label class="field field-search">
+                    <span class="visually-hidden">Buscar mesa</span>
+                    <input id="tableSearch" type="search" placeholder="Buscar por cantón, parroquia, recinto o mesa">
+                </label>
+                <span><strong id="tableCount">0</strong> mesas</span>
             </div>
 
             <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Canton</th>
-                            <th>Parroquia</th>
-                            <th>Recinto</th>
-                            <th>Mesa</th>
-                            <th>Sufragantes</th>
-                            <th>Votos registrados</th>
-                            <th>Fecha de cierre</th>
-                        </tr>
-                    </thead>
+                <table class="data-table">
+                    <thead id="tablesHead"></thead>
                     <tbody id="tablesBody"></tbody>
                 </table>
             </div>
-            <div id="emptyTables" class="empty hidden">Aun no existen mesas cerradas para publicar.</div>
+            <div id="emptyTables" class="empty hidden">Aún no existen mesas con acta validada para esta zona.</div>
             <div class="pagination">
-                <button id="prevPageButton" class="button" type="button">Anterior</button>
-                <span id="pageInfo" class="label">Pagina 1 de 1</span>
-                <button id="nextPageButton" class="button" type="button">Siguiente</button>
+                <button id="prevPageButton" class="button button-ghost" type="button" aria-label="Página anterior">Anterior</button>
+                <span id="pageInfo">Página 1 de 1</span>
+                <button id="nextPageButton" class="button button-ghost" type="button" aria-label="Página siguiente">Siguiente</button>
             </div>
         </section>
+        </div>
     </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            Datos oficiales publicados por el Tribunal Electoral. Solo se incluyen mesas cerradas con acta física validada.
+            La proclamación oficial de resultados corresponde al Tribunal.
+        </div>
+    </footer>
+
     <script src="assets/js/resultados.js"></script>
 </body>
 </html>
-
-

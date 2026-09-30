@@ -87,9 +87,11 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
             return java.util.Collections.emptyList();
         }
         String sql = "SELECT new ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO("
-                + " c.id, c.nombre, COALESCE(SUM(e.totalVotos), 0), c.orden)"
+                + " c.id, c.nombre, COALESCE(SUM(e.totalVotos), 0), c.orden,"
+                + " c.tipo, l.numero, l.nombre, l.slogan)"
                 + " FROM Escrutinio e"
                 + " JOIN e.categoria c"
+                + " LEFT JOIN c.lista l"
                 + " JOIN e.mesa m"
                 + " JOIN e.proceso pro"
                 + " WHERE pro.id = :procesoId"
@@ -103,10 +105,44 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
                 + " )"
                 // Solo datos oficiales: mesas con acta física VALIDADA.
                 + " AND" + EscrutinioCabeceraFacade.existeActaFisicaValidada("m.id")
-                + " GROUP BY c.id, c.nombre, c.orden"
+                + " GROUP BY c.id, c.nombre, c.orden, c.tipo, l.numero, l.nombre, l.slogan"
                 + " ORDER BY c.orden, c.nombre";
         TypedQuery<ResultadoCategoriaPublicaDTO> query = super.getEntityManager()
                 .createQuery(sql, ResultadoCategoriaPublicaDTO.class);
+        query.setParameter("procesoId", procesoId);
+        query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        EscrutinioCabeceraFacade.parametrosActaFisicaValidada(query);
+        return query.getResultList();
+    }
+
+    /**
+     * Votos de cada mesa por categoría, con las mismas condiciones que
+     * {@link #obtenerResultadosPublicosPorCategoria}: mesa cerrada y acta física validada.
+     * Una sola consulta agregada para todo el listado público.
+     *
+     * @return filas [mesaId, categoriaId, tipo, nombre de la categoría, votos]
+     */
+    public List<Object[]> obtenerVotosPublicosPorMesaYCategoria(Integer procesoId) {
+        if (procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = "SELECT m.id, c.id, c.tipo, c.nombre, COALESCE(SUM(e.totalVotos), 0)"
+                + " FROM Escrutinio e"
+                + " JOIN e.categoria c"
+                + " JOIN e.mesa m"
+                + " JOIN e.proceso pro"
+                + " WHERE pro.id = :procesoId"
+                + " AND e.estado = TRUE"
+                + " AND EXISTS ("
+                + "     SELECT cab.id FROM EscrutinioCabecera cab"
+                + "     WHERE cab.mesa.id = m.id"
+                + "     AND cab.proceso.id = :procesoId"
+                + "     AND cab.estado = TRUE"
+                + "     AND cab.estadoEscrutinio = :estadoCerrado"
+                + " )"
+                + " AND" + EscrutinioCabeceraFacade.existeActaFisicaValidada("m.id")
+                + " GROUP BY m.id, c.id, c.tipo, c.nombre";
+        TypedQuery<Object[]> query = super.getEntityManager().createQuery(sql, Object[].class);
         query.setParameter("procesoId", procesoId);
         query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
         EscrutinioCabeceraFacade.parametrosActaFisicaValidada(query);

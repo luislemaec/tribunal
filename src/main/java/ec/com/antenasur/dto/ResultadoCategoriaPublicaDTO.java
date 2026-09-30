@@ -20,12 +20,26 @@ public class ResultadoCategoriaPublicaDTO implements Serializable {
     private Long totalVotos;
     private Integer orden;
     private BigDecimal porcentaje = BigDecimal.ZERO;
+    /** Tipo de la categoría (LISTA, ESPECIAL, LEGACY): decide si es una lista o un voto blanco/nulo. */
+    private String tipo;
+    private String listaNumero;
+    private String listaNombre;
+    private String listaSlogan;
 
     public ResultadoCategoriaPublicaDTO(Integer categoriaId, String categoria, Long totalVotos, Integer orden) {
         this.categoriaId = categoriaId;
         this.categoria = categoria;
         this.totalVotos = totalVotos != null ? totalVotos : 0L;
         this.orden = orden;
+    }
+
+    public ResultadoCategoriaPublicaDTO(Integer categoriaId, String categoria, Long totalVotos, Integer orden,
+            String tipo, String listaNumero, String listaNombre, String listaSlogan) {
+        this(categoriaId, categoria, totalVotos, orden);
+        this.tipo = tipo;
+        this.listaNumero = listaNumero;
+        this.listaNombre = listaNombre;
+        this.listaSlogan = listaSlogan;
     }
 
     public void calcularPorcentaje(long totalGeneral) {

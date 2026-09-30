@@ -498,12 +498,28 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);
     }
 
+    public static final String CLASE_LISTA = "LISTA";
+    public static final String CLASE_BLANCOS = "BLANCOS";
+    public static final String CLASE_NULOS = "NULOS";
+
+    /** Solo las listas, con su porcentaje sobre los votos válidos (suma de las listas). */
     public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
-        List<ResultadoCategoriaPublicaDTO> resultados = escrutinioFacade.obtenerResultadosPublicosPorCategoria(procesoId);
-        resultados.removeIf(resultado -> !esCategoriaLista(resultado));
+        return soloListas(obtenerCategoriasPublicas(procesoId));
+    }
+
+    /** Todas las categorías con votos publicados (listas, blancos, nulos y papeletas). */
+    public List<ResultadoCategoriaPublicaDTO> obtenerCategoriasPublicas(Integer procesoId) {
+        return escrutinioFacade.obtenerResultadosPublicosPorCategoria(procesoId);
+    }
+
+    public static List<ResultadoCategoriaPublicaDTO> soloListas(List<ResultadoCategoriaPublicaDTO> categorias) {
+        List<ResultadoCategoriaPublicaDTO> resultados = new ArrayList<>();
         long totalGeneral = 0L;
-        for (ResultadoCategoriaPublicaDTO resultado : resultados) {
-            totalGeneral += resultado.getTotalVotos() != null ? resultado.getTotalVotos() : 0L;
+        for (ResultadoCategoriaPublicaDTO resultado : categorias) {
+            if (resultado != null && CLASE_LISTA.equals(clasificarCategoriaPublica(resultado.getTipo(), resultado.getCategoria()))) {
+                resultados.add(resultado);
+                totalGeneral += resultado.getTotalVotos() != null ? resultado.getTotalVotos() : 0L;
+            }
         }
         for (ResultadoCategoriaPublicaDTO resultado : resultados) {
             resultado.calcularPorcentaje(totalGeneral);
@@ -511,23 +527,57 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return resultados;
     }
 
-    private boolean esCategoriaLista(ResultadoCategoriaPublicaDTO resultado) {
-        if (resultado == null || resultado.getCategoria() == null) {
-            return false;
+    /**
+     * Clase pública de una categoría de voto: LISTA, BLANCOS, NULOS o null (papeletas no
+     * utilizadas u otras). Una lista se reconoce por {@code tipo = LISTA}, igual que en la
+     * validación oficial del acta; las categorías antiguas sin tipo o LEGACY se reconocen por
+     * su nombre «LISTA N». Blancos y nulos son informativos: no pertenecen a ninguna lista.
+     */
+    public static String clasificarCategoriaPublica(String tipo, String nombre) {
+        String categoria = nombre != null ? nombre.trim().toUpperCase(java.util.Locale.ROOT) : "";
+        if (CategoriaVotoService.TIPO_LISTA.equals(tipo)) {
+            return CLASE_LISTA;
         }
-        String categoria = resultado.getCategoria().trim().toUpperCase(java.util.Locale.ROOT);
-        return categoria.startsWith("LISTA")
-                && !categoria.contains("BLANCO")
-                && !categoria.contains("NULO")
-                && !categoria.contains("PAPELETA")
-                && !categoria.contains("PAPELTA")
-                && !categoria.contains("RESTANTE");
+        if (esCategoriaPapeletas(categoria)) {
+            return null;
+        }
+        if (categoria.contains("BLANCO")) {
+            return CLASE_BLANCOS;
+        }
+        if (categoria.contains("NULO")) {
+            return CLASE_NULOS;
+        }
+        if ((tipo == null || CategoriaVotoService.TIPO_LEGACY.equals(tipo)) && categoria.matches("LISTA\\s*\\d+.*")) {
+            return CLASE_LISTA;
+        }
+        return null;
     }
 
     public List<ResultadoMesaPublicaDTO> listarMesasCerradasPublicas(Integer procesoId) {
         List<ResultadoMesaPublicaDTO> resultado = new ArrayList<>();
+        java.util.Map<Integer, Date> validaciones = escrutinioCabeceraFacade.fechasValidacionPorProceso(procesoId);
+        java.util.Map<Integer, java.util.Map<Integer, Long>> votosPorMesa = votosPublicosPorMesaYLista(procesoId);
         for (EscrutinioCabecera cabecera : escrutinioCabeceraFacade.listarCerradasPorProceso(procesoId)) {
-            resultado.add(toResultadoMesaPublicaDTO(cabecera));
+            ResultadoMesaPublicaDTO dto = toResultadoMesaPublicaDTO(cabecera);
+            dto.setFechaValidacion(validaciones.get(dto.getMesaId()));
+            java.util.Map<Integer, Long> votos = votosPorMesa.get(dto.getMesaId());
+            if (votos != null) {
+                dto.setVotosPorLista(votos);
+            }
+            resultado.add(dto);
+        }
+        return resultado;
+    }
+
+    /** Votos de las listas por mesa (mesa → categoría de lista → votos), en una sola consulta. */
+    private java.util.Map<Integer, java.util.Map<Integer, Long>> votosPublicosPorMesaYLista(Integer procesoId) {
+        java.util.Map<Integer, java.util.Map<Integer, Long>> resultado = new java.util.HashMap<>();
+        for (Object[] fila : escrutinioFacade.obtenerVotosPublicosPorMesaYCategoria(procesoId)) {
+            if (!CLASE_LISTA.equals(clasificarCategoriaPublica((String) fila[2], (String) fila[3]))) {
+                continue;
+            }
+            resultado.computeIfAbsent((Integer) fila[0], k -> new java.util.LinkedHashMap<>())
+                    .put((Integer) fila[1], ((Number) fila[4]).longValue());
         }
         return resultado;
     }
