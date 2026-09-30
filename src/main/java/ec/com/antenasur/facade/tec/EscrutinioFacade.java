@@ -101,12 +101,15 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
                 + "     AND cab.estado = TRUE"
                 + "     AND cab.estadoEscrutinio = :estadoCerrado"
                 + " )"
+                // Solo datos oficiales: mesas con acta física VALIDADA.
+                + " AND" + EscrutinioCabeceraFacade.existeActaFisicaValidada("m.id")
                 + " GROUP BY c.id, c.nombre, c.orden"
                 + " ORDER BY c.orden, c.nombre";
         TypedQuery<ResultadoCategoriaPublicaDTO> query = super.getEntityManager()
                 .createQuery(sql, ResultadoCategoriaPublicaDTO.class);
         query.setParameter("procesoId", procesoId);
         query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        EscrutinioCabeceraFacade.parametrosActaFisicaValidada(query);
         return query.getResultList();
     }
 

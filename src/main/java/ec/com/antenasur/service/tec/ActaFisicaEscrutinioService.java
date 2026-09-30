@@ -202,6 +202,101 @@ public class ActaFisicaEscrutinioService {
         escrutinioService.validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);
     }
 
+    /** Marca como datos oficiales lo registrado, cuando el acta física coincide. */
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public void validarDatosRegistrados(Integer documentoId, Integer mesaId, Integer procesoId) {
+        try {
+            escrutinioService.validarDatosRegistradosDTO(documentoId, mesaId, procesoId);
+        } catch (RuntimeException e) {
+            sessionContext.setRollbackOnly();
+            throw e;
+        }
+    }
+
+    /**
+     * Devuelve la mesa al presidente cuando el acta física no concuerda: marca el acta
+     * vigente OBSERVADA o RECHAZADA con el motivo (mismas reglas que {@link #revisar}) y
+     * reabre el escrutinio, todo en una transacción. La mesa debe estar CERRADA.
+     */
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public void devolverActaFisica(Integer documentoId, String estadoRevision, String motivo) {
+        try {
+            Documentos documento = documentoService.obtenerEntidad(documentoId);
+            if (documento == null || documento.getMesa() == null || documento.getProceso() == null) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.evidencia"));
+            }
+            Integer mesaId = documento.getMesa().getId();
+            Integer procesoId = documento.getProceso().getId();
+            exigirMesaCerrada(mesaId, procesoId);
+            revisar(documentoId, estadoRevision, motivo, null);
+            escrutinioService.cambiarEstadoCabeceraDTO(mesaId, procesoId, EstadoEscrutinio.REABIERTO, motivo.trim());
+        } catch (RuntimeException e) {
+            // NegocioException no revierte por sí sola (rollback=false): sin esto el acta
+            // podría quedar observada con la mesa aún cerrada.
+            sessionContext.setRollbackOnly();
+            throw e;
+        }
+    }
+
+    /**
+     * Revierte la validación (dato oficial) del acta física vigente: el acta pasa a
+     * OBSERVADA con el motivo, registrando quién y cuándo, y el escrutinio se reabre
+     * para que el presidente corrija, en una sola transacción. Los cambios quedan en el
+     * historial Envers de documentos y escrutinio_cabecera.
+     */
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    public void revertirValidacion(Integer documentoId, String motivo) {
+        try {
+            if (motivo == null || motivo.isBlank()) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.6"));
+            }
+            Documentos documento = documentoService.obtenerEntidad(documentoId);
+            if (documento == null || documento.getTipoDocumento() == null
+                    || !TIPO_DOCUMENTO.equalsIgnoreCase(documento.getTipoDocumento().getNombre())
+                    || !Boolean.TRUE.equals(documento.getEstado())
+                    || documento.getMesa() == null || documento.getProceso() == null) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.evidencia"));
+            }
+            Integer mesaId = documento.getMesa().getId();
+            Integer procesoId = documento.getProceso().getId();
+            accesoDocumental.exigirRevisor(mesaId, procesoId);
+            documentoService.bloquearMesaParaVersion(mesaId);
+            documentoService.refrescar(documento);
+            Documentos vigente = obtenerVigente(mesaId, procesoId);
+            if (!Boolean.TRUE.equals(documento.getEstado()) || !VALIDADA.equals(documento.getEstadoRevision())
+                    || vigente == null || !documento.getId().equals(vigente.getId())) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("actaE.oficial.revertir.no.validada"));
+            }
+            exigirMesaCerrada(mesaId, procesoId);
+            String usuario = accesoDocumental.usuarioActual();
+            documento.setEstadoRevision(OBSERVADA);
+            documento.setObservacionRevision(motivo.trim());
+            documento.setUsuarioRevision(usuario);
+            documento.setFechaRevision(new java.util.Date());
+            documento.setUsuarioActualiza(usuario);
+            documentoService.actualizar(documento);
+            escrutinioService.cambiarEstadoCabeceraDTO(mesaId, procesoId, EstadoEscrutinio.REABIERTO, motivo.trim());
+            // La validación la marcó COMPLETADO; al reabrirse vuelve a estar en curso y deja
+            // de contar como mesa escrutada en los reportes que usan estadoTarea.
+            Mesa mesa = mesaFacade.find(mesaId);
+            if (mesa != null) {
+                mesa.setEstadoTarea(ec.com.antenasur.enums.EstadoTarea.INICIADA);
+                mesa.setUsuarioActualiza(usuario);
+                mesaFacade.edit(mesa);
+            }
+        } catch (RuntimeException e) {
+            sessionContext.setRollbackOnly();
+            throw e;
+        }
+    }
+
+    private void exigirMesaCerrada(Integer mesaId, Integer procesoId) {
+        EscrutinioCabecera cabecera = escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId);
+        if (cabecera == null || !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.regla.actaFisica.cierre"));
+        }
+    }
+
     /**
      * Quién puede subir el acta física y cuándo.
      *

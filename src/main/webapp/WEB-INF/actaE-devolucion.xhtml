@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!--
+      Aviso de acta física devuelta (OBSERVADA o RECHAZADA) con el motivo del revisor.
+      Lo ven todos los que consultan la mesa, en especial el presidente, que debe
+      corregir el conteo y volver a cerrar. Se incluye en los tabs Resumen y Acta física.
+    -->
+    <p:outputPanel rendered="#{actaEController.actaFisicaDevuelta}" layout="block"
+                   styleClass="border-round-lg p-3 mt-3"
+                   style="background:#fff7ed;border-left:4px solid #f97316">
+        <div class="flex align-items-start gap-2">
+            <i class="pi pi-exclamation-circle mt-1" style="color:#f97316"/>
+            <div class="text-sm">
+                <span class="block font-semibold text-800">
+                    #{msg['actaE.oficial.devuelta.titulo']}:
+                    #{msg['actaE.situacion.revision.'.concat(actaEController.actaFisica.estadoRevision)]}
+                </span>
+                <span class="block text-700 mt-1">#{actaEController.actaFisica.observacionRevision}</span>
+                <small class="block text-500 mt-1">
+                    #{actaEController.actaFisica.usuarioRevision} ·
+                    <h:outputText value="#{actaEController.actaFisica.fechaRevision}">
+                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                    </h:outputText>
+                </small>
+            </div>
+        </div>
+    </p:outputPanel>
+</ui:composition>

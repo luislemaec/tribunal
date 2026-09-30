@@ -49,6 +49,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
 
     @Inject private DisponibilidadDocumentoMesaService disponibilidadDocumental;
     @Inject private DocumentoService documentoService;
+    @Inject private ec.com.antenasur.facade.tec.TipoDocumentoFacade tipoDocumentoFacade;
     @Inject private AccesoDocumentoMesaService accesoDocumental;
 
     @Override
@@ -461,6 +462,35 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         return EscrutinioCabeceraDTO.fromEntity(cabecera);
     }
 
+    /**
+     * Validación sin transcripción: el revisor declara que el acta física coincide con lo
+     * registrado. Los valores no llegan de la vista: se leen de la base y se validan con
+     * las mismas reglas de {@link #validarResultadosFinalesDTO} (mesa cerrada, evidencia
+     * vigente, todas las categorías, listas, blancos y nulos presentes y sin vacíos).
+     */
+    public EscrutinioCabeceraDTO validarDatosRegistradosDTO(Integer documentoId, Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.error.seleccion"));
+        }
+        var revision = new ec.com.antenasur.dto.RevisionActaFinalDTO();
+        for (Escrutinio registrado : escrutinioFacade.listarPorMesaProceso(mesaId, procesoId)) {
+            EscrutinioDTO dto = new EscrutinioDTO();
+            dto.setId(registrado.getId());
+            if (registrado.getCategoria() != null) {
+                dto.setCategoriaId(registrado.getCategoria().getId());
+                dto.setCategoriaNombre(registrado.getCategoria().getNombre());
+                dto.setCategoriaTipo(registrado.getCategoria().getTipo());
+            }
+            dto.setTotalVotos(registrado.getTotalVotos());
+            revision.getResultados().add(dto);
+        }
+        // Lo declarado es lo registrado: el revisor dio fe de que el acta coincide.
+        revision.setValidosDeclarados(Math.toIntExact(revision.getValidos()));
+        revision.setTotalDeclarado(Math.toIntExact(revision.getTotal()));
+        revision.setRevisada(true);
+        return validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);
+    }
+
     public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
         List<ResultadoCategoriaPublicaDTO> resultados = escrutinioFacade.obtenerResultadosPublicosPorCategoria(procesoId);
         resultados.removeIf(resultado -> !esCategoriaLista(resultado));
@@ -615,9 +645,25 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                     && !EstadoEscrutinio.ANULADO.equals(estadoActual)) {
                 throw new NegocioException("Solo se puede reabrir un escrutinio cerrado, observado o anulado.");
             }
+            // Una mesa con acta física VALIDADA es dato oficial: solo se reabre revirtiendo
+            // antes la validación (ActaFisicaEscrutinioService#revertirValidacion).
+            if (cabecera.getMesa() != null && cabecera.getProceso() != null
+                    && tieneActaFisicaValidada(cabecera.getMesa().getId(), cabecera.getProceso().getId())) {
+                throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("actaE.oficial.reabrir.bloqueado"));
+            }
             return;
         }
         throw new NegocioException("El cambio de estado solicitado no esta permitido.");
+    }
+
+    /** El acta física vigente de la mesa en el proceso está VALIDADA (dato oficial). */
+    private boolean tieneActaFisicaValidada(Integer mesaId, Integer procesoId) {
+        var tipo = tipoDocumentoFacade.buscarActivoPorNombre(ActaFisicaEscrutinioService.TIPO_DOCUMENTO);
+        if (tipo == null) {
+            return false;
+        }
+        var vigente = documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
+        return vigente != null && ActaFisicaEscrutinioService.VALIDADA.equals(vigente.getEstadoRevision());
     }
 
     private void validarMotivo(String motivo) {

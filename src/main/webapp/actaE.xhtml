@@ -49,11 +49,11 @@
                 </div>
             </p:outputPanel>
 
-            <!-- Gestor de actas en tabs. «Mesas» es el primero y solo lo ven los revisores
-                 (Administrador y Tribunal); al elegir una mesa, los demás trabajan sobre
-                 ella. Cada tab aplica los permisos de siempre: Apertura, Conteo y Cierre
-                 solo para quien opera la mesa. El orden y las condiciones de visibilidad
-                 coinciden con ActaEController#indiceTab, que calcula el tab activo. -->
+            <!-- Gestor de actas en tres tabs, en el orden del flujo: Mesas (seleccionar;
+                 solo Administrador y Tribunal) → Escrutinio (revisar y registrar: apertura,
+                 conteo y cierre) → Acta física (contrastar y validar como dato oficial). El
+                 presidente de mesa ve Escrutinio y Acta física de su mesa. El orden y las
+                 condiciones de visibilidad coinciden con ActaEController#indiceTab. -->
             <p:tabView id="tabActaE" widgetVar="wdTabActaE" dynamic="false" cache="true"
                        activeIndex="#{actaEController.tabActivoActaE}"
                        rendered="#{actaEController.usuarioConsultaGerencial or actaEController.puedeConsultarMesa}"
@@ -120,21 +120,8 @@
                                         update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             </p:selectOneMenu>
                         </div>
-                        <!-- Situación de la mesa: permite trabajar por estado (p. ej. solo las
-                             cerradas sin acta física). Filtra en memoria, sin consultar. -->
-                        <div class="field col-12 md:col-4 lg:col-3 mb-0">
-                            <p:outputLabel for="situacionFiltro" styleClass="font-medium text-700 text-sm"
-                                           value="#{msg['actaE.filtro.situacion']}"/>
-                            <p:selectOneMenu id="situacionFiltro" value="#{actaEController.situacionFiltro}" styleClass="w-full">
-                                <f:selectItem itemLabel="#{msg['actaE.filtro.todas']}" itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{actaEController.situacionesEscrutinio}" var="sit"
-                                               itemLabel="#{msg['actaE.situacion.'.concat(sit.name())]}" itemValue="#{sit}"/>
-                                <p:ajax event="change" listener="#{actaEController.buscarEnListadoEscrutinios}"
-                                        process="@this"
-                                        update=":frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
-                            </p:selectOneMenu>
-                        </div>
-                        <div class="field col-12 md:col-8 lg:col-3 mb-0">
+                        <!-- Situación y Recinto se filtran en la propia tabla. -->
+                        <div class="field col-12 md:col-8 lg:col-6 mb-0">
                             <p:outputLabel for="busquedaEscrutinio" styleClass="font-medium text-700 text-sm"
                                            value="#{msg['actaE.buscar']}"/>
                             <p:inputText id="busquedaEscrutinio" value="#{actaEController.busquedaEscrutinio}"
@@ -151,7 +138,7 @@
                                              styleClass="ui-button-outlined ui-button-secondary"
                                              actionListener="#{actaEController.limpiarFiltrosGerenciales}"
                                              process="@this"
-                                             update=":frmActaE:tabActaE:canton :frmActaE:tabActaE:parroquia :frmActaE:tabActaE:situacionFiltro :frmActaE:tabActaE:busquedaEscrutinio :frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
+                                             update=":frmActaE:tabActaE:canton :frmActaE:tabActaE:parroquia :frmActaE:tabActaE:busquedaEscrutinio :frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             <p:commandButton icon="pi pi-refresh" title="#{msg['actaE.boton.actualizar']}"
                                              ariaLabel="#{msg['actaE.boton.actualizar']}"
                                              styleClass="ui-button-outlined"
@@ -172,17 +159,37 @@
                                severity="info"/>
                     </div>
                     <div style="max-width:100%;overflow-x:auto;overflow-y:hidden">
-                    <p:dataTable id="tblConsultaGerencial" var="item"
+                    <!-- Sin reflow: en pantallas pequeñas PrimeFaces oculta la cabecera en modo
+                         reflow y con ella los filtros de columna; la tabla se desplaza en
+                         horizontal dentro de este contenedor. -->
+                    <p:dataTable id="tblConsultaGerencial" var="item" widgetVar="wdTblEscrutinios"
                                  value="#{actaEController.listaConsultaGerencial}"
-                                 reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                                 rows="10" paginator="true" paginatorPosition="bottom"
+                                 rowsPerPageTemplate="10,25,50"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 currentPageReportTemplate="#{msg['mesas.paginador.reporte']}"
                                  tableStyle="min-width:62rem"
                                  showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm actae-tabla-gerencial actae-tabla-densa"
                                  emptyMessage="#{msg['actaE.mensaje.sinResultados']}">
                         <!-- Orden por prioridad: primero identifica la mesa y su estado, que
                              es también lo primero que se ve en el reflow móvil. Sin columnas
                              de provincia (única) ni de presidente de mesa. -->
+                        <!-- Filtros de columna: los aplica la tabla sobre las filas ya
+                             cargadas, sin consultar. Cantón, parroquia y búsqueda (arriba)
+                             siguen acotando el listado y el resumen. -->
                         <p:column headerText="#{msg['actaE.tabla.recinto']}" sortBy="#{item.recinto}"
+                                  filterBy="#{item.recinto}" filterMatchMode="exact"
                                   style="min-width:13rem">
+                            <f:facet name="filter">
+                                <p:selectOneMenu value="#{actaEController.filtroRecintoTabla}"
+                                                 onchange="PF('wdTblEscrutinios').filter()"
+                                                 filter="true" filterMatchMode="contains"
+                                                 styleClass="w-full actae-filtro-columna">
+                                    <f:selectItem itemLabel="#{msg['actaE.filtro.todos']}" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{actaEController.opcionesFiltroRecinto}" var="rec"
+                                                   itemLabel="#{rec}" itemValue="#{rec}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
                             <span class="font-medium text-900">#{item.recinto}</span>
                         </p:column>
                         <p:column headerText="#{msg['actaE.tabla.mesa']}" sortBy="#{item.mesa}"
@@ -193,7 +200,16 @@
                              física y su revisión. El tooltip explica la situación y conserva
                              el estado exacto del escrutinio, que la situación agrupa. -->
                         <p:column headerText="#{msg['actaE.tabla.situacion']}" sortBy="#{item.situacion}"
-                                  styleClass="text-center" style="width:12rem">
+                                  filterBy="#{item}" filterFunction="#{actaEController.filtrarPorSituacion}"
+                                  styleClass="text-center" style="width:13rem">
+                            <f:facet name="filter">
+                                <p:selectOneMenu value="#{actaEController.filtroSituacionTabla}"
+                                                 onchange="PF('wdTblEscrutinios').filter()"
+                                                 styleClass="w-full actae-filtro-columna">
+                                    <f:selectItem itemLabel="#{msg['actaE.filtro.todas']}" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{actaEController.opcionesFiltroSituacion}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
                             <h:panelGroup layout="block">
                                 <p:tag value="#{msg[item.situacionClave]}" severity="#{item.situacionSeverity}"
                                        icon="#{item.situacionIcono}"/>
@@ -270,233 +286,256 @@
             </p:outputPanel>
                 </p:tab>
 
-                <!-- El resumen de la mesa vive solo aquí: antes se repetía en un bloque de
-                     cuatro tarjetas sobre los tabs con los mismos datos. -->
-                <p:tab title="#{msg['actaE.tab.resumen']}" rendered="#{actaEController.puedeConsultarMesa}">
+                <!-- Escrutinio: todo el trabajo sobre la mesa elegida en un solo tab, en el
+                     orden del flujo. Reúne lo que antes eran Resumen, Apertura, Conteo, Cierre
+                     y Actas generadas: cabecera con el estado y las cifras de control (una
+                     sola vez), los pasos del flujo y, según el estado, la apertura o el conteo
+                     con su cierre. Las acciones mantienen sus permisos: solo quien opera la
+                     mesa abre, cuenta y cierra; observar, anular y reabrir siguen siendo de
+                     Administrador y Tribunal. -->
+                <p:tab title="#{msg['actaE.tab.escrutinio']}" rendered="#{actaEController.puedeConsultarMesa}">
                     <p:outputPanel rendered="#{actaEController.mesaSoloLectura}" layout="block"
                                    styleClass="border-round-lg p-3 mb-3"
                                    style="background:#eff6ff;border-left:4px solid #2563eb">
                         <i class="pi pi-eye mr-2" style="color:#2563eb"/>
                         <span class="text-700 text-sm">#{msg['actaE.mensaje.solo.lectura']}</span>
                     </p:outputPanel>
-                    <div class="surface-card shadow-1 border-round-lg p-3">
-                        <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                            <div class="font-semibold text-800">
-                                <i class="pi pi-info-circle text-500 mr-2"></i>#{msg['actaE.tab.resumen']}
-                            </div>
-                            <p:tag value="#{actaEController.estadoMesaTexto}"
-                                   severity="#{actaEController.estadoMesaSeverity}"
-                                   icon="pi pi-flag"/>
-                        </div>
-                        <div class="grid">
-                            <div class="col-12 md:col-3">
-                                <span class="block text-500 text-sm">#{msg['actaE.resumen.proceso']}</span>
-                                <span class="font-semibold text-900">#{actaEController.procesoActivoNombre}</span>
-                            </div>
-                            <div class="col-12 md:col-3">
+
+                    <!-- Cabecera de la mesa: identificación, estado, cifras de control y acta PDF -->
+                    <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                        <div class="flex align-items-start justify-content-between flex-wrap gap-2">
+                            <div>
                                 <span class="block text-500 text-sm">#{msg['actaE.resumen.mesa']}</span>
-                                <span class="font-semibold text-900">#{actaEController.mesaSeleccionado.nombre}</span>
+                                <span class="font-semibold text-900 text-lg">#{actaEController.mesaSeleccionado.nombre}</span>
                                 <small class="block text-500">#{actaEController.mesaSeleccionado.recinto.nombre}</small>
                             </div>
-                            <div class="col-12 md:col-3">
+                            <div class="flex align-items-center gap-2 flex-wrap">
+                                <p:tag value="#{msg['actaE.oficial.dato.oficial']}" severity="success" icon="pi pi-verified"
+                                       rendered="#{actaEController.actaFisicaValidada}"/>
+                                <p:tag value="#{actaEController.estadoMesaTexto}"
+                                       severity="#{actaEController.estadoMesaSeverity}" icon="pi pi-flag"/>
+                            </div>
+                        </div>
+
+                        <!-- Pasos del flujo: hecho, en curso o pendiente -->
+                        <div class="actae-pasos mt-3" role="list">
+                            <ui:repeat value="#{actaEController.pasosEscrutinio}" var="paso" varStatus="st">
+                                <div role="listitem"
+                                     class="actae-paso #{st.index lt actaEController.pasoEscrutinio ? 'actae-paso--hecho' : (st.index eq actaEController.pasoEscrutinio ? 'actae-paso--actual' : '')}">
+                                    <span class="actae-paso__marca">
+                                        <ui:fragment rendered="#{st.index lt actaEController.pasoEscrutinio}"><i class="pi pi-check" aria-hidden="true"/></ui:fragment>
+                                        <ui:fragment rendered="#{st.index ge actaEController.pasoEscrutinio}">#{st.index + 1}</ui:fragment>
+                                    </span>
+                                    <span class="actae-paso__texto">#{msg['actaE.paso.'.concat(paso)]}</span>
+                                </div>
+                            </ui:repeat>
+                        </div>
+
+                        <p:outputPanel id="resumenConteoEstado" layout="block" styleClass="grid mt-2">
+                            <div class="col-4">
                                 <span class="block text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</span>
-                                <span class="font-bold text-900 text-xl">#{actaEController.totalSufragantesAsignados}</span>
+                                <span class="font-bold text-900 text-xl actae-col-num">#{actaEController.totalSufragantesAsignados}</span>
                             </div>
-                            <div class="col-12 md:col-3">
+                            <div class="col-4">
                                 <span class="block text-500 text-sm">#{msg['actaE.total.registrado']}</span>
-                                <span class="font-bold text-900 text-xl">#{actaEController.totalVotosRegistrados}</span>
-                                <small class="block text-500">#{msg['actaE.diferencia']}: #{actaEController.diferenciaConteo}</small>
+                                <span class="font-bold text-900 text-xl actae-col-num">#{actaEController.totalVotosRegistrados}</span>
+                            </div>
+                            <div class="col-4">
+                                <span class="block text-500 text-sm">#{msg['actaE.diferencia']}</span>
+                                <p:tag value="#{actaEController.diferenciaConteo}"
+                                       severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
+                            </div>
+                        </p:outputPanel>
+
+                        <!-- Novedad de apertura, una vez registrada -->
+                        <h:panelGroup layout="block" styleClass="text-sm text-700 mt-1"
+                                      rendered="#{actaEController.pasoEscrutinio gt 0 and not empty actaEController.observacionApertura}">
+                            <span class="text-500">#{msg['actaE.label.novedad.apertura']}:</span> #{actaEController.observacionApertura}
+                        </h:panelGroup>
+
+                        <!-- Acta PDF del escrutinio (antes, tab «Actas generadas»): descarga,
+                             fecha y huella; si el archivo registrado ya no está, se advierte. -->
+                        <h:panelGroup layout="block" rendered="#{not empty actaEController.documentosActa}"
+                                      styleClass="flex align-items-center gap-2 flex-wrap border-top-1 surface-border pt-2 mt-2">
+                            <span class="text-500 text-sm">#{msg['actaE.seccion.documentos']}:</span>
+                            <ui:repeat value="#{actaEController.documentosActa}" var="doc">
+                                <h:panelGroup rendered="#{actaEController.esDocumentoActaValido(doc)}">
+                                    <p:commandButton icon="pi pi-file-pdf" ajax="false" immediate="true" process="@this"
+                                                     value="#{msg['actaE.documentos.descargar']}"
+                                                     styleClass="ui-button-sm ui-button-outlined ui-button-danger"
+                                                     ariaLabel="#{msg['actaE.documentos.descargar']} #{doc.nombre}">
+                                        <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
+                                        <p:fileDownload value="#{documentoBean.file}"/>
+                                    </p:commandButton>
+                                    <p:tooltip for="@parent" position="top">
+                                        #{doc.nombre} ·
+                                        <h:outputText value="#{doc.fechaCrea}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText>
+                                        · #{empty doc.hashSha256 ? msg['actaE.documentos.hash.no.disponible'] : doc.hashSha256.substring(0, 12)}
+                                    </p:tooltip>
+                                </h:panelGroup>
+                                <p:tag rendered="#{not actaEController.esDocumentoActaValido(doc)}"
+                                       value="#{msg['actaE.documentos.no.disponible']}" severity="danger"/>
+                            </ui:repeat>
+                        </h:panelGroup>
+                        <p:outputPanel rendered="#{actaEController.actaPdfRegistradaNoDisponible}" layout="block"
+                                       styleClass="border-round-lg p-2 mt-2 text-sm"
+                                       style="background:#fef2f2;border-left:4px solid #ef4444">
+                            <i class="pi pi-exclamation-triangle mr-2" style="color:#ef4444"/>
+                            <span class="text-700">#{msg['actaE.documentos.archivo.no.disponible']}</span>
+                        </p:outputPanel>
+
+                        <ui:include src="/WEB-INF/actaE-devolucion.xhtml"/>
+                    </div>
+
+                    <!-- Paso 1: apertura, solo mientras está pendiente -->
+                    <p:outputPanel id="pnlApertura" layout="block"
+                                   rendered="#{actaEController.puedeOperarMesaSeleccionada and actaEController.puedeRegistrarApertura and actaEController.pasoEscrutinio eq 0}">
+                        <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                            <div class="font-semibold text-800 mb-3">
+                                <i class="pi pi-play-circle text-500 mr-2"></i>#{msg['actaE.seccion.apertura']}
+                            </div>
+                            <div class="formgrid grid">
+                                <div class="field col-12 md:col-9">
+                                    <label for="obsApertura" class="font-medium text-700 text-sm">#{msg['actaE.label.novedad.apertura']}</label>
+                                    <p:inputTextarea id="obsApertura" value="#{actaEController.observacionApertura}"
+                                                     rows="2" autoResize="false" maxlength="500" styleClass="w-full"/>
+                                </div>
+                                <div class="field col-12 md:col-3 flex align-items-end">
+                                    <p:commandButton value="#{msg['actaE.boton.apertura']}" icon="pi pi-play"
+                                                     styleClass="ui-button-primary w-full"
+                                                     actionListener="#{actaEController.registrarApertura}"
+                                                     process="pnlApertura @this" update=":frmActaE">
+                                        <p:confirm header="#{msg['actaE.confirmacion.apertura.titulo']}"
+                                                   message="#{msg['actaE.confirmacion.apertura']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                </div>
                             </div>
                         </div>
-                        <p:outputPanel rendered="#{actaEController.mesaCerrada}" layout="block"
-                                       styleClass="border-round-lg p-3 mt-3"
-                                       style="background:#ecfdf5;border-left:4px solid #16a34a">
-                            <i class="pi pi-check-circle mr-2" style="color:#16a34a"/>
-                            <span class="text-700 text-sm">#{msg['actaE.mensaje.mesaCerrada']}</span>
-                        </p:outputPanel>
-                    </div>
-                </p:tab>
+                    </p:outputPanel>
 
-                <p:tab title="#{msg['actaE.tab.apertura']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
-            <p:outputPanel id="pnlApertura" layout="block"
-                           rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="font-semibold text-800">
-                            <i class="pi pi-play-circle text-500 mr-2"></i>#{msg['actaE.seccion.apertura']}
-                        </div>
-                        <p:tag value="#{actaEController.mesaAbierta or actaEController.mesaCerrada ? msg['actaE.apertura.registrada'] : msg['actaE.apertura.pendiente']}"
-                               severity="#{actaEController.mesaAbierta or actaEController.mesaCerrada ? 'success' : 'warning'}"/>
-                    </div>
-                    <div class="formgrid grid">
-                        <div class="field col-12 md:col-9">
-                            <label for="obsApertura" class="font-medium text-700 text-sm">#{msg['actaE.label.novedad.apertura']}</label>
-                            <p:inputTextarea id="obsApertura" value="#{actaEController.observacionApertura}"
-                                             rows="2" autoResize="false" maxlength="500"
-                                             disabled="#{not actaEController.puedeRegistrarApertura}"
-                                             styleClass="w-full"/>
-                        </div>
-                        <div class="field col-12 md:col-3 flex align-items-end">
-                            <p:commandButton value="#{msg['actaE.boton.apertura']}" icon="pi pi-play"
-                                             styleClass="ui-button-primary w-full"
-                                             disabled="#{not actaEController.puedeRegistrarApertura}"
-                                             actionListener="#{actaEController.registrarApertura}"
-                                             process="pnlApertura @this" update=":frmActaE">
-                                <p:confirm header="#{msg['actaE.confirmacion.apertura.titulo']}"
-                                           message="#{msg['actaE.confirmacion.apertura']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                        </div>
-                    </div>
-                </div>
-            </p:outputPanel>
+                    <!-- Pasos 2 y 3: conteo y cierre en la misma tarjeta, mientras la mesa no
+                         esté cerrada. Cerrada, los votos se consultan junto al acta física. -->
+                    <p:outputPanel id="pnlConteo" layout="block"
+                                   rendered="#{(actaEController.puedeOperarMesaSeleccionada or actaEController.mesaSoloLectura) and actaEController.pasoEscrutinio eq 1 and not empty actaEController.listaCamposActaE}">
+                        <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                            <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <div class="font-semibold text-800">
+                                    <i class="pi pi-calculator text-500 mr-2"></i>#{msg['actaE.seccion.conteo']}
+                                </div>
+                                <p:tag value="#{actaEController.estadoValidacionCierreTexto}"
+                                       severity="#{actaEController.estadoValidacionCierreSeverity}"
+                                       rendered="#{actaEController.puedeOperarMesaSeleccionada}"/>
+                            </div>
 
-                </p:tab>
-                <p:tab title="#{msg['actaE.tab.conteo']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
-            <p:outputPanel id="pnlConteo" layout="block"
-                           rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa and not empty actaEController.listaCamposActaE}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="font-semibold text-800">
-                            <i class="pi pi-calculator text-500 mr-2"></i>#{msg['actaE.seccion.conteo']}
-                        </div>
-                        <p:outputPanel id="resumenConteoEstado" layout="block" styleClass="flex gap-2 flex-wrap">
-                            <p:tag value="#{msg['actaE.total.registrado']}: #{actaEController.totalVotosRegistrados}" severity="info"/>
-                            <p:tag value="#{msg['actaE.diferencia']}: #{actaEController.diferenciaConteo}"
-                                   severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
-                        </p:outputPanel>
-                    </div>
+                            <p:dataTable id="tblActaE" var="actaE"
+                                         value="#{actaEController.listaCamposActaE}" reflow="true"
+                                         showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm"
+                                         emptyMessage="#{msg['actaE.empty.categorias']}">
+                                <p:column headerText="#{msg['actaE.tabla.categoria']}" style="min-width:12rem">
+                                    <span class="text-900">#{actaE.categoriaNombre}</span>
+                                </p:column>
+                                <p:column headerText="#{msg['actaE.tabla.votos']}" style="width:14rem">
+                                    <p:inputNumber value="#{actaE.totalVotos}" label="#{msg['form.actaE.label.votos']}"
+                                                   minValue="0" maxValue="999999"
+                                                   decimalPlaces="0" placeholder="0" required="true"
+                                                   disabled="#{not actaEController.puedeEditarConteo}">
+                                        <p:ajax event="valueChange" process="@this" update=":frmActaE:tabActaE:resumenConteoEstado"/>
+                                    </p:inputNumber>
+                                </p:column>
+                            </p:dataTable>
 
-                    <p:dataTable id="tblActaE" var="actaE"
-                                 value="#{actaEController.listaCamposActaE}" reflow="true"
-                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm"
-                                 emptyMessage="#{msg['actaE.empty.categorias']}">
-                        <p:column headerText="#{msg['actaE.tabla.categoria']}" style="min-width:12rem">
-                            <p:chip label="#{actaE.categoriaNombre}" icon="pi pi-tag"/>
-                        </p:column>
-                        <p:column headerText="#{msg['actaE.tabla.votos']}" style="width:14rem">
-                            <p:inputNumber value="#{actaE.totalVotos}" label="#{msg['form.actaE.label.votos']}"
-                                           minValue="0" maxValue="999999"
-                                           decimalPlaces="0" placeholder="0" required="true"
-                                           disabled="#{not actaEController.puedeEditarConteo}">
-                                <p:ajax event="valueChange" process="@this" update=":frmActaE:tabActaE:resumenConteoEstado"/>
-                            </p:inputNumber>
-                        </p:column>
-                    </p:dataTable>
+                            <h:panelGroup layout="block" styleClass="flex justify-content-end flex-wrap gap-2 mt-3"
+                                          rendered="#{actaEController.puedeOperarMesaSeleccionada}">
+                                <p:commandButton value="#{msg['actaE.boton.borrador']}" icon="pi pi-save"
+                                                 styleClass="ui-button-secondary ui-button-outlined"
+                                                 disabled="#{not actaEController.puedeEditarConteo}"
+                                                 process="@form @this"
+                                                 actionListener="#{actaEController.guardarBorradorConteo}"
+                                                 update=":frmActaE"/>
+                                <p:commandButton value="#{msg['actaE.boton.cerrar']}" icon="pi pi-check-circle"
+                                                 styleClass="ui-button-success"
+                                                 disabled="#{not actaEController.puedeCerrarMesa}"
+                                                 process="@form @this"
+                                                 actionListener="#{actaEController.cerrarMesa}"
+                                                 update=":frmActaE">
+                                    <p:confirm header="#{msg['actaE.confirmacion.cierre.titulo']}"
+                                               message="#{msg['actaE.confirmacion.cierre']}"
+                                               icon="pi pi-exclamation-triangle"/>
+                                </p:commandButton>
+                            </h:panelGroup>
+                        </div>
+                    </p:outputPanel>
 
-                    <div class="flex justify-content-end flex-wrap gap-2 mt-3">
-                        <p:commandButton value="#{msg['actaE.boton.borrador']}" icon="pi pi-save"
-                                         styleClass="ui-button-secondary"
-                                         disabled="#{not actaEController.puedeEditarConteo}"
-                                         process="@form @this"
-                                         actionListener="#{actaEController.guardarBorradorConteo}"
-                                         update=":frmActaE"/>
-                    </div>
-                </div>
-            </p:outputPanel>
+                    <!-- Mesa cerrada: el flujo sigue en Acta física -->
+                    <p:outputPanel rendered="#{actaEController.mesaCerrada}" layout="block"
+                                   styleClass="border-round-lg p-3 mb-3 flex align-items-center justify-content-between gap-2 flex-wrap"
+                                   style="background:#ecfdf5;border-left:4px solid #16a34a">
+                        <span class="text-700 text-sm">
+                            <i class="pi pi-check-circle mr-2" style="color:#16a34a"/>#{msg['actaE.escrutinio.continuar.actaFisica']}
+                        </span>
+                        <p:commandButton type="button" value="#{msg['actaE.tab.actaFisica']}" icon="pi pi-arrow-right"
+                                         iconPos="right" styleClass="ui-button-sm ui-button-success ui-button-outlined"
+                                         onclick="PF('wdTabActaE').select(#{actaEController.indiceTabActaFisica})"/>
+                    </p:outputPanel>
 
-                </p:tab>
-                <p:tab title="#{msg['actaE.tab.cierre']}" rendered="#{actaEController.puedeOperarMesaSeleccionada}">
-            <p:outputPanel id="pnlCierre" layout="block"
-                           rendered="#{actaEController.mesaSeleccionadaValida and actaEController.puedeOperarActa}">
-                <div class="surface-card shadow-1 border-round-lg p-3">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="font-semibold text-800">
-                            <i class="pi pi-lock text-500 mr-2"></i>#{msg['actaE.seccion.cierre']}
+                    <!-- Acciones administrativas (Administrador y Tribunal), con motivo -->
+                    <p:outputPanel id="pnlEstadosAdministrativos" layout="block"
+                                   rendered="#{actaEController.mesaSeleccionadaValida and (actaEController.puedeObservarEscrutinio or actaEController.puedeAnularEscrutinio or actaEController.puedeReabrirEscrutinio)}">
+                        <div class="surface-card shadow-1 border-round-lg p-3">
+                            <div class="font-semibold text-800 mb-3">
+                                <i class="pi pi-shield text-500 mr-2"></i>#{msg['actaE.seccion.estados.admin']}
+                            </div>
+                            <div class="formgrid grid">
+                                <div class="field col-12 md:col-8">
+                                    <label for="motivoCambioEstado" class="font-medium text-700 text-sm">
+                                        #{msg['actaE.label.motivo.estado']} <span class="text-red-500">*</span>
+                                    </label>
+                                    <p:inputTextarea id="motivoCambioEstado"
+                                                     value="#{actaEController.motivoCambioEstado}"
+                                                     rows="3" maxlength="1000" autoResize="false"
+                                                     styleClass="w-full"
+                                                     placeholder="#{msg['actaE.placeholder.motivo.estado']}"/>
+                                </div>
+                                <div class="field col-12 md:col-4 flex align-items-end justify-content-end gap-2 flex-wrap">
+                                    <p:commandButton value="#{msg['actaE.boton.observar']}" icon="pi pi-eye"
+                                                     styleClass="ui-button-warning"
+                                                     disabled="#{not actaEController.puedeObservarEscrutinio}"
+                                                     actionListener="#{actaEController.observarEscrutinio}"
+                                                     process="pnlEstadosAdministrativos @this" update=":frmActaE">
+                                        <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
+                                                   message="#{msg['actaE.confirmacion.observar']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                    <p:commandButton value="#{msg['actaE.boton.anular']}" icon="pi pi-ban"
+                                                     styleClass="ui-button-danger"
+                                                     disabled="#{not actaEController.puedeAnularEscrutinio}"
+                                                     actionListener="#{actaEController.anularEscrutinio}"
+                                                     process="pnlEstadosAdministrativos @this" update=":frmActaE">
+                                        <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
+                                                   message="#{msg['actaE.confirmacion.anular']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                    <p:commandButton value="#{msg['actaE.boton.reabrir']}" icon="pi pi-unlock"
+                                                     styleClass="ui-button-info"
+                                                     disabled="#{not actaEController.puedeReabrirEscrutinio}"
+                                                     actionListener="#{actaEController.reabrirEscrutinio}"
+                                                     process="pnlEstadosAdministrativos @this" update=":frmActaE">
+                                        <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
+                                                   message="#{msg['actaE.confirmacion.reabrir']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
+                                </div>
+                            </div>
                         </div>
-                        <p:tag value="#{actaEController.estadoValidacionCierreTexto}"
-                               severity="#{actaEController.estadoValidacionCierreSeverity}"/>
-                    </div>
-                    <div class="grid">
-                        <div class="col-12 md:col-4">
-                            <span class="block text-500 text-sm">#{msg['actaE.total.registrado']}</span>
-                            <span class="font-bold text-900 text-xl">#{actaEController.totalVotosRegistrados}</span>
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <span class="block text-500 text-sm">#{msg['actaE.resumen.sufragantes']}</span>
-                            <span class="font-bold text-900 text-xl">#{actaEController.totalSufragantesAsignados}</span>
-                        </div>
-                        <div class="col-12 md:col-4">
-                            <span class="block text-500 text-sm">#{msg['actaE.diferencia']}</span>
-                            <span class="font-bold text-900 text-xl">#{actaEController.diferenciaConteo}</span>
-                        </div>
-                    </div>
-                    <div class="flex justify-content-end flex-wrap gap-2 mt-3">
-                        <p:commandButton value="#{msg['actaE.boton.cerrar']}" icon="pi pi-check-circle"
-                                         styleClass="ui-button-success"
-                                         disabled="#{not actaEController.puedeCerrarMesa}"
-                                         process="@form @this"
-                                         actionListener="#{actaEController.cerrarMesa}"
-                                         update=":frmActaE">
-                            <p:confirm header="#{msg['actaE.confirmacion.cierre.titulo']}"
-                                       message="#{msg['actaE.confirmacion.cierre']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
-                    </div>
-                </div>
-            </p:outputPanel>
-
-            <p:outputPanel id="pnlEstadosAdministrativos" layout="block"
-                           rendered="#{actaEController.mesaSeleccionadaValida and (actaEController.puedeObservarEscrutinio or actaEController.puedeAnularEscrutinio or actaEController.puedeReabrirEscrutinio)}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mt-3">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="font-semibold text-800">
-                            <i class="pi pi-shield text-500 mr-2"></i>#{msg['actaE.seccion.estados.admin']}
-                        </div>
-                        <p:tag value="#{actaEController.estadoMesaTexto}"
-                               severity="#{actaEController.estadoMesaSeverity}"/>
-                    </div>
-                    <div class="formgrid grid">
-                        <div class="field col-12 md:col-8">
-                            <label for="motivoCambioEstado" class="font-medium text-700 text-sm">
-                                #{msg['actaE.label.motivo.estado']} <span class="text-red-500">*</span>
-                            </label>
-                            <p:inputTextarea id="motivoCambioEstado"
-                                             value="#{actaEController.motivoCambioEstado}"
-                                             rows="3" maxlength="1000" autoResize="false"
-                                             styleClass="w-full"
-                                             placeholder="#{msg['actaE.placeholder.motivo.estado']}"/>
-                        </div>
-                        <div class="field col-12 md:col-4 flex align-items-end justify-content-end gap-2 flex-wrap">
-                            <p:commandButton value="#{msg['actaE.boton.observar']}" icon="pi pi-eye"
-                                             styleClass="ui-button-warning"
-                                             disabled="#{not actaEController.puedeObservarEscrutinio}"
-                                             actionListener="#{actaEController.observarEscrutinio}"
-                                             process="pnlEstadosAdministrativos @this" update=":frmActaE">
-                                <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
-                                           message="#{msg['actaE.confirmacion.observar']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                            <p:commandButton value="#{msg['actaE.boton.anular']}" icon="pi pi-ban"
-                                             styleClass="ui-button-danger"
-                                             disabled="#{not actaEController.puedeAnularEscrutinio}"
-                                             actionListener="#{actaEController.anularEscrutinio}"
-                                             process="pnlEstadosAdministrativos @this" update=":frmActaE">
-                                <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
-                                           message="#{msg['actaE.confirmacion.anular']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                            <p:commandButton value="#{msg['actaE.boton.reabrir']}" icon="pi pi-unlock"
-                                             styleClass="ui-button-info"
-                                             disabled="#{not actaEController.puedeReabrirEscrutinio}"
-                                             actionListener="#{actaEController.reabrirEscrutinio}"
-                                             process="pnlEstadosAdministrativos @this" update=":frmActaE">
-                                <p:confirm header="#{msg['actaE.confirmacion.estado.titulo']}"
-                                           message="#{msg['actaE.confirmacion.reabrir']}"
-                                           icon="pi pi-exclamation-triangle"/>
-                            </p:commandButton>
-                        </div>
-                    </div>
-                </div>
-            </p:outputPanel>
-
+                    </p:outputPanel>
                 </p:tab>
 
                 <!-- Acta física: vista de trabajo dividida, en la etapa en que el acta existe
                      (se carga con la mesa cerrada). Izquierda: la imagen, con el visor de
                      reportesMesa (zoom y rotación) y la carga o el reemplazo. Derecha: los
-                     votos registrados en el conteo, en solo lectura, para cotejarlos. En
-                     pantallas estrechas los paneles se apilan. -->
+                     votos registrados con la forma del acta y la revisión oficial (validar,
+                     corregir, devolver o revertir). En pantallas estrechas se apilan. -->
                 <p:tab title="#{msg['actaE.tab.actaFisica']}" rendered="#{actaEController.puedeConsultarMesa}">
                     <p:outputPanel id="pnlActaFisica" layout="block">
                         <p:outputPanel rendered="#{not actaEController.mesaCerrada}" layout="block"
@@ -505,6 +544,7 @@
                             <i class="pi pi-info-circle mr-2" style="color:#f97316"/>
                             <span class="text-700 text-sm">#{msg['actaE.actaFisica.requiere.cierre']}</span>
                         </p:outputPanel>
+                        <ui:include src="/WEB-INF/actaE-devolucion.xhtml"/>
 
                         <h:panelGroup layout="block" styleClass="grid acta-fisica-contenido"
                                       rendered="#{actaEController.mesaCerrada}">
@@ -612,11 +652,19 @@
                                          (claves reportesMesa.acta.*), para leerla fila por fila
                                          junto a la imagen. Solo números: el sistema no guarda la
                                          columna «en letras». -->
+                                    <!-- En modo revisión se añade la columna «Acta física», donde
+                                         el revisor transcribe cada línea del acta (también subtotal
+                                         y total, que se copian, no se calculan) junto al valor
+                                         registrado. Solo se valida si todo cuadra. -->
+                                    <h:panelGroup id="pnlTranscripcionActa" layout="block">
                                     <table class="acta-comparacion">
                                         <thead>
                                             <tr>
                                                 <th>#{msg['reportesMesa.acta.columna.lista']}</th>
-                                                <th class="acta-comparacion__num">#{msg['reportesMesa.acta.columna.numeros']}</th>
+                                                <th class="acta-comparacion__num">#{actaEController.modoRevisionActa ? msg['actaE.oficial.columna.registrado'] : msg['reportesMesa.acta.columna.numeros']}</th>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <th class="acta-comparacion__num">#{msg['actaE.oficial.columna.acta']}</th>
+                                                </ui:fragment>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -624,23 +672,75 @@
                                                 <tr>
                                                     <td>#{fila.categoriaNombre}</td>
                                                     <td class="acta-comparacion__num">#{empty fila.totalVotos ? 0 : fila.totalVotos}</td>
+                                                    <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                        <td class="acta-comparacion__entrada">
+                                                            <p:inputNumber value="#{actaEController.revisionPorCategoria[fila.categoriaId].totalVotos}"
+                                                                           minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                           ariaLabel="#{fila.categoriaNombre}">
+                                                                <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                        update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                            </p:inputNumber>
+                                                        </td>
+                                                    </ui:fragment>
                                                 </tr>
                                             </ui:repeat>
                                             <tr class="acta-comparacion__subtotal">
                                                 <td>#{msg['reportesMesa.acta.subtotal.validos']}</td>
                                                 <td class="acta-comparacion__num">#{actaEController.comparacionActa.validos}</td>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <td class="acta-comparacion__entrada">
+                                                        <p:inputNumber value="#{actaEController.revisionActa.validosDeclarados}"
+                                                                       minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                       ariaLabel="#{msg['reportesMesa.acta.subtotal.validos']}">
+                                                            <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                    update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                        </p:inputNumber>
+                                                    </td>
+                                                </ui:fragment>
                                             </tr>
                                             <tr>
                                                 <td>#{msg['reportesMesa.acta.votos.nulos']}</td>
                                                 <td class="acta-comparacion__num">#{actaEController.comparacionActa.nulos}</td>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <td class="acta-comparacion__entrada">
+                                                        <p:inputNumber value="#{actaEController.revisionDeClase('NULOS').totalVotos}"
+                                                                       rendered="#{not empty actaEController.revisionDeClase('NULOS')}"
+                                                                       minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                       ariaLabel="#{msg['reportesMesa.acta.votos.nulos']}">
+                                                            <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                    update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                        </p:inputNumber>
+                                                    </td>
+                                                </ui:fragment>
                                             </tr>
                                             <tr>
                                                 <td>#{msg['reportesMesa.acta.votos.blancos']}</td>
                                                 <td class="acta-comparacion__num">#{actaEController.comparacionActa.blancos}</td>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <td class="acta-comparacion__entrada">
+                                                        <p:inputNumber value="#{actaEController.revisionDeClase('BLANCOS').totalVotos}"
+                                                                       rendered="#{not empty actaEController.revisionDeClase('BLANCOS')}"
+                                                                       minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                       ariaLabel="#{msg['reportesMesa.acta.votos.blancos']}">
+                                                            <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                    update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                        </p:inputNumber>
+                                                    </td>
+                                                </ui:fragment>
                                             </tr>
                                             <tr class="acta-comparacion__total">
                                                 <td>#{msg['reportesMesa.acta.total.votos']}</td>
                                                 <td class="acta-comparacion__num">#{actaEController.comparacionActa.total}</td>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <td class="acta-comparacion__entrada">
+                                                        <p:inputNumber value="#{actaEController.revisionActa.totalDeclarado}"
+                                                                       minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                       ariaLabel="#{msg['reportesMesa.acta.total.votos']}">
+                                                            <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                    update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                        </p:inputNumber>
+                                                    </td>
+                                                </ui:fragment>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -657,9 +757,21 @@
                                                     <h:outputText value="—" title="#{msg['actaE.comparacion.papeletas.sin.registro']}"
                                                                   rendered="#{not actaEController.papeletasRegistradas}"/>
                                                 </td>
+                                                <ui:fragment rendered="#{actaEController.modoRevisionActa}">
+                                                    <td class="acta-comparacion__entrada">
+                                                        <p:inputNumber value="#{actaEController.revisionDeClase('PAPELETAS').totalVotos}"
+                                                                       rendered="#{not empty actaEController.revisionDeClase('PAPELETAS')}"
+                                                                       minValue="0" maxValue="2147483647" decimalPlaces="0" emptyValue="empty"
+                                                                       ariaLabel="#{msg['reportesMesa.acta.papeletas.restantes']}">
+                                                            <p:ajax process="@this" listener="#{actaEController.cambiarRevisionActa}"
+                                                                    update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                        </p:inputNumber>
+                                                    </td>
+                                                </ui:fragment>
                                             </tr>
                                         </tbody>
                                     </table>
+                                    </h:panelGroup>
 
                                     <!-- Categorías que no son ninguna fila del acta: se muestran
                                          para no ocultar datos; normalmente no hay ninguna. -->
@@ -694,76 +806,140 @@
                                                    severity="#{actaEController.diferenciaConteo eq 0 ? 'success' : 'warning'}"/>
                                         </div>
                                     </div>
+
+                                    <!-- Revisión oficial (Administrador y Tribunal): validar como dato
+                                         oficial, devolver al presidente o revertir una validación.
+                                         Cada acción se revalida en el servidor y queda auditada. -->
+                                    <p:outputPanel id="pnlRevisionOficial" layout="block" styleClass="acta-revision-oficial"
+                                                   rendered="#{actaEController.usuarioRevisorActas and not empty actaEController.actaFisica}">
+                                        <span class="acta-comparacion-controles__titulo">#{msg['actaE.oficial.titulo']}</span>
+
+                                        <!-- Ya validada: dato oficial -->
+                                        <h:panelGroup layout="block" rendered="#{actaEController.actaFisicaValidada}"
+                                                      styleClass="flex align-items-center justify-content-between gap-2 flex-wrap">
+                                            <div>
+                                                <p:tag value="#{msg['actaE.oficial.dato.oficial']}" severity="success" icon="pi pi-verified"/>
+                                                <small class="block text-500 mt-1">
+                                                    #{actaEController.actaFisica.usuarioRevision} ·
+                                                    <h:outputText value="#{actaEController.actaFisica.fechaRevision}">
+                                                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                                    </h:outputText>
+                                                </small>
+                                            </div>
+                                            <p:commandButton value="#{msg['actaE.oficial.boton.revertir']}" icon="pi pi-replay"
+                                                             styleClass="ui-button-sm ui-button-outlined ui-button-danger"
+                                                             rendered="#{actaEController.puedeRevertirValidacion and empty actaEController.accionRevisionActa}"
+                                                             actionListener="#{actaEController.prepararReversionValidacion}"
+                                                             process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
+                                        </h:panelGroup>
+
+                                        <!-- Pendiente. Camino habitual: si el acta coincide, solo se
+                                             confirma el cotejo y se guarda, sin digitar. Si no
+                                             coincide: corregir transcribiendo o devolver. -->
+                                        <h:panelGroup id="pnlCotejoActa" layout="block"
+                                                      rendered="#{actaEController.puedeRevisarActaFisica and not actaEController.modoRevisionActa and empty actaEController.accionRevisionActa}">
+                                            <p:selectBooleanCheckbox value="#{actaEController.cotejoConfirmado}"
+                                                                     disabled="#{not actaEController.actaFisicaEnVisor}"
+                                                                     itemLabel="#{msg['actaE.oficial.cotejo']}">
+                                                <p:ajax process="@this" update="pnlCotejoActa"/>
+                                            </p:selectBooleanCheckbox>
+                                            <div class="flex gap-2 flex-wrap mt-2">
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.marcar']}" icon="pi pi-verified"
+                                                                 styleClass="ui-button-sm ui-button-success"
+                                                                 disabled="#{not actaEController.actaFisicaEnVisor or not actaEController.cotejoConfirmado}"
+                                                                 actionListener="#{actaEController.marcarDatosOficiales}"
+                                                                 process="@this"
+                                                                 update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal">
+                                                    <p:confirm header="#{msg['reportesMesa.actaFisica.confirmar.titulo']}"
+                                                               message="#{msg['actaE.oficial.confirmar.marcar']}"
+                                                               icon="pi pi-exclamation-triangle"/>
+                                                </p:commandButton>
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.transcribir']}" icon="pi pi-pencil"
+                                                                 styleClass="ui-button-sm ui-button-outlined"
+                                                                 actionListener="#{actaEController.iniciarRevisionActa}"
+                                                                 process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.devolver']}" icon="pi pi-reply"
+                                                                 styleClass="ui-button-sm ui-button-outlined ui-button-warning"
+                                                                 actionListener="#{actaEController.prepararDevolucionActa}"
+                                                                 process="@this" update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal"/>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:outputText value="#{msg['actaE.oficial.ayuda.visor']}" styleClass="block text-500 text-sm mt-2"
+                                                      rendered="#{actaEController.puedeRevisarActaFisica and not actaEController.actaFisicaEnVisor and not actaEController.modoRevisionActa}"/>
+
+                                        <!-- Transcripción en curso: cuadre y confirmación -->
+                                        <h:panelGroup layout="block" rendered="#{actaEController.modoRevisionActa}">
+                                            <div class="flex justify-content-between text-sm">
+                                                <span>#{msg['reportesMesa.revision.diferencia.validos']}</span>
+                                                <span class="font-semibold actae-col-num">#{actaEController.revisionActa.diferenciaValidos}</span>
+                                            </div>
+                                            <div class="flex justify-content-between text-sm">
+                                                <span>#{msg['reportesMesa.revision.diferencia.total']}</span>
+                                                <span class="font-semibold actae-col-num">#{actaEController.revisionActa.diferenciaTotal}</span>
+                                            </div>
+                                            <p:tag value="#{actaEController.revisionActa.cuadrada ? msg['reportesMesa.actaFisica.cuadre.ok'] : msg['reportesMesa.actaFisica.cuadre.error']}"
+                                                   severity="#{actaEController.revisionActa.cuadrada ? 'success' : 'danger'}" styleClass="mt-2"/>
+                                            <div class="mt-2">
+                                                <p:selectBooleanCheckbox value="#{actaEController.revisionActa.revisada}"
+                                                                         itemLabel="#{msg['reportesMesa.revision.confirmada']}">
+                                                    <p:ajax process="@this" update=":frmActaE:tabActaE:pnlRevisionOficial"/>
+                                                </p:selectBooleanCheckbox>
+                                            </div>
+                                            <div class="flex gap-2 flex-wrap mt-2">
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.validar']}" icon="pi pi-verified"
+                                                                 styleClass="ui-button-sm ui-button-success"
+                                                                 disabled="#{not actaEController.revisionActa.cuadrada or not actaEController.revisionActa.revisada}"
+                                                                 actionListener="#{actaEController.validarActaFisica}"
+                                                                 process="@this pnlTranscripcionActa"
+                                                                 update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal">
+                                                    <p:confirm header="#{msg['reportesMesa.actaFisica.confirmar.titulo']}"
+                                                               message="#{msg['actaE.oficial.confirmar.validar']}"
+                                                               icon="pi pi-exclamation-triangle"/>
+                                                </p:commandButton>
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.cancelar']}" icon="pi pi-times"
+                                                                 styleClass="ui-button-sm ui-button-secondary ui-button-outlined"
+                                                                 actionListener="#{actaEController.cancelarRevisionActa}"
+                                                                 process="@this" update=":frmActaE:tabActaE:pnlActaFisica"/>
+                                            </div>
+                                        </h:panelGroup>
+
+                                        <!-- Devolver al presidente o revertir la validación: motivo obligatorio -->
+                                        <h:panelGroup id="pnlAccionRevision" layout="block"
+                                                      rendered="#{not empty actaEController.accionRevisionActa}">
+                                            <div class="text-sm text-700 mb-2">
+                                                #{actaEController.accionRevisionActa eq 'REVERTIR' ? msg['actaE.oficial.ayuda.revertir'] : msg['actaE.oficial.ayuda.devolver']}
+                                            </div>
+                                            <p:selectOneRadio value="#{actaEController.estadoDevolucionActa}" layout="lineDirection"
+                                                              rendered="#{actaEController.accionRevisionActa eq 'DEVOLVER'}" styleClass="mb-2">
+                                                <f:selectItem itemValue="OBSERVADA" itemLabel="#{msg['actaE.situacion.revision.OBSERVADA']}"/>
+                                                <f:selectItem itemValue="RECHAZADA" itemLabel="#{msg['actaE.situacion.revision.RECHAZADA']}"/>
+                                            </p:selectOneRadio>
+                                            <p:inputTextarea value="#{actaEController.motivoRevisionActa}" rows="3" maxlength="1000"
+                                                             autoResize="false" styleClass="w-full"
+                                                             placeholder="#{msg['actaE.oficial.motivo']}"
+                                                             ariaLabel="#{msg['actaE.oficial.motivo']}"/>
+                                            <div class="flex gap-2 flex-wrap mt-2">
+                                                <p:commandButton value="#{actaEController.accionRevisionActa eq 'REVERTIR' ? msg['actaE.oficial.boton.revertir'] : msg['actaE.oficial.boton.devolver']}"
+                                                                 icon="pi pi-check"
+                                                                 styleClass="ui-button-sm #{actaEController.accionRevisionActa eq 'REVERTIR' ? 'ui-button-danger' : 'ui-button-warning'}"
+                                                                 actionListener="#{actaEController.confirmarAccionRevision}"
+                                                                 process="@this pnlAccionRevision"
+                                                                 update=":frmActaE:tabActaE:pnlActaFisica :frmGlobal:growlGlobal">
+                                                    <p:confirm header="#{msg['actaE.oficial.titulo']}"
+                                                               message="#{msg['actaE.oficial.confirmar.accion']}"
+                                                               icon="pi pi-exclamation-triangle"/>
+                                                </p:commandButton>
+                                                <p:commandButton value="#{msg['actaE.oficial.boton.cancelar']}" icon="pi pi-times"
+                                                                 styleClass="ui-button-sm ui-button-secondary ui-button-outlined"
+                                                                 actionListener="#{actaEController.cancelarAccionRevision}"
+                                                                 process="@this" update=":frmActaE:tabActaE:pnlActaFisica"/>
+                                            </div>
+                                        </h:panelGroup>
+                                    </p:outputPanel>
                                 </div>
                             </div>
                         </h:panelGroup>
                     </p:outputPanel>
-                </p:tab>
-
-                <p:tab title="#{msg['actaE.tab.actas']}" rendered="#{actaEController.puedeConsultarMesa}">
-                <p:outputPanel id="pnlDocumentosActa" layout="block"
-                           rendered="#{actaEController.puedeConsultarMesa}">
-                <div class="surface-card shadow-1 border-round-lg p-3 mt-3">
-                    <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div class="font-semibold text-800">
-                            <i class="pi pi-folder-open text-500 mr-2"></i>#{msg['actaE.seccion.documentos']}
-                        </div>
-                        <p:tag value="#{empty actaEController.documentosActa ? 0 : actaEController.documentosActa.size()}"
-                               severity="#{empty actaEController.documentosActa ? 'secondary' : 'success'}"
-                               icon="pi pi-file-pdf"/>
-                    </div>
-
-                    <p:outputPanel rendered="#{not actaEController.mesaCerrada}" layout="block"
-                                   styleClass="border-round-lg p-3 mb-3"
-                                   style="background:#fff7ed;border-left:4px solid #f97316">
-                        <i class="pi pi-info-circle mr-2" style="color:#f97316"/>
-                        <span class="text-700 text-sm">#{msg['actaE.documentos.debe.cerrar']}</span>
-                    </p:outputPanel>
-
-                    <p:outputPanel rendered="#{actaEController.actaPdfRegistradaNoDisponible}" layout="block"
-                                   styleClass="border-round-lg p-3 mb-3"
-                                   style="background:#fef2f2;border-left:4px solid #ef4444">
-                        <i class="pi pi-exclamation-triangle mr-2" style="color:#ef4444"/>
-                        <span class="text-700 text-sm">#{msg['actaE.documentos.archivo.no.disponible']}</span>
-                    </p:outputPanel>
-
-                    <p:dataTable id="tblDocumentosActa" var="doc" value="#{actaEController.documentosActa}"
-                                 reflow="true" rows="5" paginator="true" paginatorPosition="bottom"
-                                 showGridlines="true" styleClass="ui-datatable-striped ui-datatable-sm"
-                                 emptyMessage="#{msg['actaE.documentos.empty']}">
-                        <p:column headerText="#{msg['actaE.documentos.accion']}" exportable="false" style="width:5rem"
-                                  styleClass="text-center">
-                            <p:commandButton icon="pi pi-download" ajax="false" immediate="true" process="@this"
-                                             styleClass="ui-button-rounded ui-button-text ui-button-danger"
-                                             title="#{msg['actaE.documentos.descargar']}"
-                                             rendered="#{actaEController.esDocumentoActaValido(doc)}">
-                                <f:setPropertyActionListener value="#{doc}" target="#{documentoBean.documento}"/>
-                                <p:fileDownload value="#{documentoBean.file}"/>
-                            </p:commandButton>
-                            <p:tag rendered="#{not actaEController.esDocumentoActaValido(doc)}"
-                                   value="#{msg['actaE.documentos.no.disponible']}"
-                                   severity="danger"/>
-                        </p:column>
-                        <p:column headerText="#{msg['actaE.documentos.nombre']}">
-                            <div class="flex align-items-center gap-2">
-                                <i class="pi pi-file-pdf text-red-500 text-lg flex-shrink-0"/>
-                                <span class="text-900 text-sm">#{doc.nombre}</span>
-                            </div>
-                        </p:column>
-                        <p:column headerText="#{msg['actaE.documentos.hash']}" style="width:11rem">
-                            <span class="text-sm" style="font-family:monospace">
-                                #{empty doc.hashSha256 ? msg['actaE.documentos.hash.no.disponible'] : doc.hashSha256.substring(0, 12)}
-                            </span>
-                        </p:column>
-                        <p:column headerText="#{msg['actaE.documentos.fecha']}" style="width:11rem">
-                            <h:outputText value="#{doc.fechaCrea}">
-                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
-                            </h:outputText>
-                        </p:column>
-                    </p:dataTable>
-
-                </div>
-            </p:outputPanel>
                 </p:tab>
             </p:tabView>
 

@@ -259,10 +259,22 @@ public class ActaEController implements Serializable {
     @Getter
     private String busquedaEscrutinio;
 
-    /** Filtro del listado por situación de la mesa (sin datos, sin acta física, validada...). */
+    /**
+     * Filtros de columna del listado (Situación y Recinto). Los aplica el propio
+     * p:dataTable sobre las filas ya cargadas; se enlazan aquí solo para poder
+     * limpiarlos desde el botón «Limpiar».
+     */
     @Setter
     @Getter
-    private ActaEGerencialDTO.Situacion situacionFiltro;
+    private String filtroSituacionTabla;
+
+    @Setter
+    @Getter
+    private String filtroRecintoTabla;
+
+    private static final String ID_TABLA_ESCRUTINIOS = FORMULARIO + ":tabActaE:tblConsultaGerencial";
+    private static final String PREFIJO_SITUACION = "S:";
+    private static final String PREFIJO_ESTADO = "E:";
 
     /**
      * Imagen del acta física para el visor, leída solo cuando el usuario pide verla: no se
@@ -271,8 +283,9 @@ public class ActaEController implements Serializable {
     private byte[] contenidoActaFisica;
 
     /**
-     * La mesa se abrió en modo consulta (revisor sin permiso de operación, es decir
-     * Tribunal): se cargó sin crear la cabecera ni preparar el conteo.
+     * La mesa se abrió en modo consulta (revisor sin permiso de operación): se cargó
+     * sin crear la cabecera ni preparar el conteo. Administrador y Tribunal operan, así
+     * que para ellos no se activa.
      */
     @Getter
     private boolean mesaSoloLectura;
@@ -666,6 +679,78 @@ public class ActaEController implements Serializable {
     }
 
     /**
+     * Opciones del filtro de la columna Situación. Son las situaciones reales de
+     * {@link ActaEGerencialDTO#getSituacion()}; «En proceso» agrupa varios estados del
+     * escrutinio, así que se ofrece completa y también por cada estado real que agrupa
+     * (abierta, en conteo, conteo registrado, reabierta). Valores: «S:» + situación o
+     * «E:» + estado, que interpreta {@link #filtrarPorSituacion}.
+     */
+    public List<jakarta.faces.model.SelectItem> getOpcionesFiltroSituacion() {
+        List<jakarta.faces.model.SelectItem> opciones = new ArrayList<>();
+        for (ActaEGerencialDTO.Situacion situacion : ActaEGerencialDTO.Situacion.values()) {
+            String etiqueta = Constantes.getMensaje("actaE.situacion." + situacion.name());
+            if (situacion != ActaEGerencialDTO.Situacion.EN_PROCESO) {
+                opciones.add(new jakarta.faces.model.SelectItem(PREFIJO_SITUACION + situacion.name(), etiqueta));
+                continue;
+            }
+            jakarta.faces.model.SelectItemGroup grupo = new jakarta.faces.model.SelectItemGroup(etiqueta);
+            List<jakarta.faces.model.SelectItem> detalle = new ArrayList<>();
+            detalle.add(new jakarta.faces.model.SelectItem(PREFIJO_SITUACION + situacion.name(),
+                    Constantes.getMensaje("actaE.filtro.situacion.enProceso.todas")));
+            for (EstadoEscrutinio estado : new EstadoEscrutinio[]{EstadoEscrutinio.ABIERTO,
+                    EstadoEscrutinio.EN_CONTEO, EstadoEscrutinio.CONTEO_REGISTRADO, EstadoEscrutinio.REABIERTO}) {
+                detalle.add(new jakarta.faces.model.SelectItem(PREFIJO_ESTADO + estado.name(),
+                        Constantes.getMensaje("escrutinio.estado." + estado.name())));
+            }
+            grupo.setSelectItems(detalle.toArray(new jakarta.faces.model.SelectItem[0]));
+            opciones.add(grupo);
+        }
+        return opciones;
+    }
+
+    /** filterFunction de la columna Situación (ver {@link #getOpcionesFiltroSituacion()}). */
+    public boolean filtrarPorSituacion(Object valor, Object filtro, Locale locale) {
+        String clave = filtro == null ? "" : filtro.toString().trim();
+        if (clave.isEmpty()) {
+            return true;
+        }
+        if (!(valor instanceof ActaEGerencialDTO fila)) {
+            return false;
+        }
+        if (clave.startsWith(PREFIJO_ESTADO)) {
+            return fila.getEstadoEscrutinio() != null
+                    && fila.getEstadoEscrutinio().name().equals(clave.substring(PREFIJO_ESTADO.length()));
+        }
+        return clave.startsWith(PREFIJO_SITUACION)
+                && fila.getSituacion().name().equals(clave.substring(PREFIJO_SITUACION.length()));
+    }
+
+    /** Recintos presentes en el listado ya filtrado por cantón y parroquia, sin consultar. */
+    public List<String> getOpcionesFiltroRecinto() {
+        java.util.TreeSet<String> recintos = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        if (listaConsultaGerencial != null) {
+            for (ActaEGerencialDTO fila : listaConsultaGerencial) {
+                if (fila.getRecinto() != null && !fila.getRecinto().isBlank()) {
+                    recintos.add(fila.getRecinto());
+                }
+            }
+        }
+        return new ArrayList<>(recintos);
+    }
+
+    /** Quita los filtros de columna y vuelve a la primera página. */
+    private void limpiarFiltrosTabla() {
+        filtroSituacionTabla = null;
+        filtroRecintoTabla = null;
+        jakarta.faces.context.FacesContext contexto = jakarta.faces.context.FacesContext.getCurrentInstance();
+        jakarta.faces.component.UIComponent tabla = contexto == null ? null
+                : contexto.getViewRoot().findComponent(ID_TABLA_ESCRUTINIOS);
+        if (tabla instanceof org.primefaces.component.datatable.DataTable dataTable) {
+            dataTable.reset();
+        }
+    }
+
+    /**
      * Aplica en memoria los filtros visibles: cantón, parroquia, estado y búsqueda por
      * recinto o mesa. No consulta la base.
      */
@@ -682,9 +767,6 @@ public class ActaEController implements Serializable {
                 continue;
             }
             if (estadoFiltro != null && !estadoFiltro.equals(fila.getEstadoEscrutinio())) {
-                continue;
-            }
-            if (situacionFiltro != null && situacionFiltro != fila.getSituacion()) {
                 continue;
             }
             if (!texto.isEmpty() && !contieneTexto(fila.getRecinto(), texto)
@@ -715,8 +797,8 @@ public class ActaEController implements Serializable {
         recintoSeleccionado = new RecintoDTO();
         mesaSeleccionado = new MesaDTO();
         estadoFiltro = null;
-        situacionFiltro = null;
         busquedaEscrutinio = null;
+        limpiarFiltrosTabla();
         procesoConsultaId = procesoActivo != null ? procesoActivo.getId() : null;
         // Recupera la provincia operativa y sus cantones, no deja la geografía vacía.
         cargarGeografiaOperativa();
@@ -799,6 +881,8 @@ public class ActaEController implements Serializable {
             escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
                     mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
             cargaDatosMesaSeleccionada();
+            // Cerrada la mesa, el paso siguiente del flujo es cargar y contrastar el acta física.
+            tabActivoActaE = indiceTab(TAB_ACTA_FISICA);
             if (escrutinioCabecera != null && escrutinioCabecera.getObservacionConteo() != null
                     && !escrutinioCabecera.getObservacionConteo().isBlank()) {
                 JsfUtil.addWarningMessageFromBundle("actaE.mensaje.cierre.con.observacion");
@@ -849,6 +933,15 @@ public class ActaEController implements Serializable {
         }
     }
 
+    /**
+     * CÓDIGO HEREDADO: genera el acta PDF antigua del escrutinio (tipo de documento
+     * {@link Constantes#ACTA_ESCRUTINIO}). Ninguna vista la invoca: el acta oficial de la
+     * mesa se genera en Docs. mesa (reportesMesa, ACTA_PARCIAL) con sus propias reglas.
+     * Se conserva solo porque existen PDF ya generados que actaE, el dashboard y mesas
+     * siguen listando y descargando. Candidata a retirarse tras confirmar en la base que
+     * no hay documentos tipo 1 recientes. No volver a exponerla: un PDF generado antes
+     * de la revisión oficial podría contradecir los datos validados.
+     */
     public void generarActaMesaCerrada() {
         try {
             if (!mesaSeleccionadaValida()) {
@@ -1333,6 +1426,10 @@ public class ActaEController implements Serializable {
     private void cargarDocumentosActa() {
         documentosActa = new ArrayList<>();
         actaFisica = null;
+        // Una transcripción o una acción con motivo pertenecen al acta que se revisaba.
+        cancelarRevisionActa();
+        cancelarAccionRevision();
+        cotejoConfirmado = false;
         if (!mesaSeleccionadaValida()) {
             return;
         }
@@ -1381,6 +1478,7 @@ public class ActaEController implements Serializable {
         }
     }
 
+    /** CÓDIGO HEREDADO: solo lo usa {@link #generarActaMesaCerrada()}; ver su nota. */
     public String exportaPDF(ReportTemplateController documentoActaE, String observacion) throws Exception {
         alcanceQr.validar(mesaSeleccionado != null ? mesaSeleccionado.getId() : null,
                 procesoActivo != null ? procesoActivo.getId() : null);
@@ -1594,15 +1692,15 @@ public class ActaEController implements Serializable {
         recintoSeleccionado = mesa.getRecinto() != null ? mesa.getRecinto() : new RecintoDTO();
         contenidoActaFisica = null;
         if (opera) {
-            // Operador (Administrador): flujo de siempre, que prepara el acta para registrar.
+            // Operador (Administrador o Tribunal): flujo de siempre, que prepara el acta para registrar.
             mesaSoloLectura = false;
             cargaDatosMesaSeleccionada();
         } else {
-            // Revisor sin operación (Tribunal): consulta, sin crear cabecera ni conteo.
+            // Revisor sin operación: consulta, sin crear cabecera ni conteo.
             cargarMesaSoloLectura();
         }
-        // Los demás tabs trabajan sobre la mesa elegida: se abre su resumen.
-        tabActivoActaE = indiceTab(TAB_RESUMEN);
+        // Los demás tabs trabajan sobre la mesa elegida: se abre su escrutinio.
+        tabActivoActaE = indiceTab(TAB_ESCRUTINIO);
     }
 
     /**
@@ -1622,8 +1720,7 @@ public class ActaEController implements Serializable {
     }
 
     private static final String TAB_MESAS = "mesas";
-    private static final String TAB_RESUMEN = "resumen";
-    private static final String TAB_OPERACION = "operacion";
+    private static final String TAB_ESCRUTINIO = "escrutinio";
     private static final String TAB_ACTA_FISICA = "actaFisica";
 
     /**
@@ -1637,19 +1734,39 @@ public class ActaEController implements Serializable {
             visibles.add(TAB_MESAS);
         }
         if (isPuedeConsultarMesa()) {
-            visibles.add(TAB_RESUMEN);
-        }
-        if (isPuedeOperarMesaSeleccionada()) {
-            // Apertura, Conteo y Cierre.
-            visibles.add(TAB_OPERACION);
-            visibles.add(TAB_OPERACION);
-            visibles.add(TAB_OPERACION);
-        }
-        if (isPuedeConsultarMesa()) {
+            // Escrutinio (resumen, apertura, conteo y cierre) y Acta física.
+            visibles.add(TAB_ESCRUTINIO);
             visibles.add(TAB_ACTA_FISICA);
         }
         int indice = visibles.indexOf(clave);
         return indice < 0 ? 0 : indice;
+    }
+
+    /** Índice del tab «Acta física», para el acceso directo desde Escrutinio. */
+    public int getIndiceTabActaFisica() {
+        return indiceTab(TAB_ACTA_FISICA);
+    }
+
+    /** Pasos del flujo de la mesa, en orden; sus rótulos son actaE.paso.&lt;paso&gt;. */
+    private static final String[] PASOS_ESCRUTINIO = {"apertura", "conteo", "cierre", "actaFisica", "validacion"};
+
+    public String[] getPasosEscrutinio() {
+        return PASOS_ESCRUTINIO;
+    }
+
+    /**
+     * Índice del paso en curso (0 a 4), o 5 cuando la mesa ya es dato oficial. Se deduce
+     * de estados existentes: cabecera del escrutinio, acta física vigente y su revisión.
+     */
+    public int getPasoEscrutinio() {
+        EstadoEscrutinio estado = escrutinioCabecera != null ? escrutinioCabecera.getEstadoEscrutinio() : null;
+        if (isMesaCerrada()) {
+            if (isActaFisicaValidada()) {
+                return 5;
+            }
+            return actaFisica != null ? 4 : 3;
+        }
+        return estado == null || EstadoEscrutinio.PENDIENTE.equals(estado) ? 0 : 1;
     }
 
     /**
@@ -1773,6 +1890,248 @@ public class ActaEController implements Serializable {
         return filas;
     }
 
+    // ── Revisión oficial del acta física (Administrador y Tribunal) ──────────────
+    // Reutiliza la validación existente (ActaFisicaEscrutinioService#validarActaFinal):
+    // el revisor transcribe cada línea del acta, incluidos subtotal y total, y solo se
+    // valida si todo cuadra. Si no concuerda puede devolver la mesa al presidente
+    // (acta OBSERVADA o RECHAZADA con motivo y escrutinio reabierto). Una validación se
+    // revierte con motivo. Todas las reglas se comprueban de nuevo en el servidor.
+
+    /** Transcripción en curso; null fuera del modo revisión. */
+    @Getter
+    private ec.com.antenasur.dto.RevisionActaFinalDTO revisionActa;
+
+    /** Copias editables de la transcripción, por categoría, para enlazarlas junto a cada fila. */
+    @Getter
+    private Map<Integer, EscrutinioDTO> revisionPorCategoria = new HashMap<>();
+
+    /** Acción con motivo en preparación: DEVOLVER o REVERTIR; null si no hay ninguna. */
+    @Getter
+    private String accionRevisionActa;
+
+    @Getter
+    @Setter
+    private String estadoDevolucionActa = ActaFisicaEscrutinioService.OBSERVADA;
+
+    @Getter
+    @Setter
+    private String motivoRevisionActa;
+
+    /** El revisor declara que cotejó el acta física y coincide con lo registrado. */
+    @Getter
+    @Setter
+    private boolean cotejoConfirmado;
+
+    private static final String ACCION_DEVOLVER = "DEVOLVER";
+    private static final String ACCION_REVERTIR = "REVERTIR";
+
+    public boolean isActaFisicaValidada() {
+        return actaFisica != null && ActaFisicaEscrutinioService.VALIDADA.equals(actaFisica.getEstadoRevision());
+    }
+
+    /** Acta devuelta al presidente: se muestra el motivo a todos los que ven la mesa. */
+    public boolean isActaFisicaDevuelta() {
+        return actaFisica != null && actaFisica.getObservacionRevision() != null
+                && (ActaFisicaEscrutinioService.OBSERVADA.equals(actaFisica.getEstadoRevision())
+                || ActaFisicaEscrutinioService.RECHAZADA.equals(actaFisica.getEstadoRevision()));
+    }
+
+    /** Validar o devolver: revisor, mesa cerrada y acta física vigente aún no validada. */
+    public boolean isPuedeRevisarActaFisica() {
+        return isUsuarioRevisorActas() && isMesaCerrada() && actaFisica != null && !isActaFisicaValidada();
+    }
+
+    public boolean isPuedeRevertirValidacion() {
+        return isUsuarioRevisorActas() && isMesaCerrada() && isActaFisicaValidada();
+    }
+
+    public boolean isModoRevisionActa() {
+        return revisionActa != null;
+    }
+
+    /** Copia de la transcripción para la primera categoría de la clase (NULOS, BLANCOS, PAPELETAS). */
+    public EscrutinioDTO revisionDeClase(String clase) {
+        List<EscrutinioDTO> registrados = filtrarPorClase(clase);
+        return registrados.isEmpty() ? null : revisionPorCategoria.get(registrados.get(0).getCategoriaId());
+    }
+
+    /**
+     * Abre la transcripción con los valores registrados como punto de partida; el
+     * revisor los corrige según el acta. Subtotal y total declarados empiezan vacíos:
+     * se copian del acta, no se calculan.
+     */
+    public void iniciarRevisionActa() {
+        if (!isPuedeRevisarActaFisica() || listaCamposActaE == null || listaCamposActaE.isEmpty()) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        revisionActa = new ec.com.antenasur.dto.RevisionActaFinalDTO();
+        revisionPorCategoria = new HashMap<>();
+        for (EscrutinioDTO registrado : listaCamposActaE) {
+            EscrutinioDTO copia = new EscrutinioDTO();
+            copia.setId(registrado.getId());
+            copia.setMesa(registrado.getMesa());
+            copia.setProcesoId(registrado.getProcesoId());
+            copia.setCategoriaId(registrado.getCategoriaId());
+            copia.setCategoriaNombre(registrado.getCategoriaNombre());
+            copia.setCategoriaTipo(registrado.getCategoriaTipo());
+            copia.setTotalVotos(registrado.getTotalVotos());
+            revisionActa.getResultados().add(copia);
+            revisionPorCategoria.put(copia.getCategoriaId(), copia);
+        }
+        accionRevisionActa = null;
+    }
+
+    public void cancelarRevisionActa() {
+        revisionActa = null;
+        revisionPorCategoria = new HashMap<>();
+    }
+
+    /** Cualquier cambio en la transcripción obliga a confirmar de nuevo la revisión. */
+    public void cambiarRevisionActa() {
+        if (revisionActa != null) {
+            revisionActa.setRevisada(false);
+        }
+    }
+
+    public void validarActaFisica() {
+        try {
+            if (!isPuedeRevisarActaFisica() || revisionActa == null) {
+                JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+                return;
+            }
+            if (!revisionActa.isRevisada() || !revisionActa.isCuadrada()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.oficial.validar.requisitos");
+                return;
+            }
+            Integer procesoId = procesoActivo.getId();
+            actaFisicaEscrutinioService.validarActaFinal(actaFisica.getId(), mesaSeleccionado.getId(), procesoId, revisionActa);
+            auditarRevisionActa("VALIDA ACTA FISICA", null);
+            cancelarRevisionActa();
+            recargarTrasRevision();
+            JsfUtil.addSuccessMessage(Constantes.getMensaje("reportesMesa.actaFisica.validada"));
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL VALIDAR ACTA FISICA DE MESA {}", mesaSeleccionado != null ? mesaSeleccionado.getId() : null, e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("reportesMesa.actaFisica.error.validar"));
+        }
+    }
+
+    /**
+     * Camino habitual: el acta coincide con lo registrado y el revisor solo confirma, sin
+     * digitar nada. Exige haber abierto el acta en el visor y marcado el cotejo; el
+     * servidor toma los votos de la base, no de la vista.
+     */
+    public void marcarDatosOficiales() {
+        try {
+            if (!isPuedeRevisarActaFisica() || isModoRevisionActa()) {
+                JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+                return;
+            }
+            if (!isActaFisicaEnVisor() || !cotejoConfirmado) {
+                JsfUtil.addWarningMessageFromBundle("actaE.oficial.cotejo.requerido");
+                return;
+            }
+            actaFisicaEscrutinioService.validarDatosRegistrados(actaFisica.getId(), mesaSeleccionado.getId(),
+                    procesoActivo.getId());
+            auditarRevisionActa("VALIDA ACTA FISICA SIN CAMBIOS", null);
+            recargarTrasRevision();
+            JsfUtil.addSuccessMessage(Constantes.getMensaje("reportesMesa.actaFisica.validada"));
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR AL MARCAR DATOS OFICIALES DE MESA {}", mesaSeleccionado != null ? mesaSeleccionado.getId() : null, e);
+            JsfUtil.addErrorMessage(Constantes.getMensaje("reportesMesa.actaFisica.error.validar"));
+        }
+    }
+
+    public void prepararDevolucionActa() {
+        prepararAccionRevision(ACCION_DEVOLVER, isPuedeRevisarActaFisica());
+    }
+
+    public void prepararReversionValidacion() {
+        prepararAccionRevision(ACCION_REVERTIR, isPuedeRevertirValidacion());
+    }
+
+    private void prepararAccionRevision(String accion, boolean permitida) {
+        if (!permitida) {
+            JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+            return;
+        }
+        cancelarRevisionActa();
+        accionRevisionActa = accion;
+        estadoDevolucionActa = ActaFisicaEscrutinioService.OBSERVADA;
+        motivoRevisionActa = null;
+    }
+
+    public void cancelarAccionRevision() {
+        accionRevisionActa = null;
+        motivoRevisionActa = null;
+    }
+
+    /** Ejecuta la acción preparada (devolver o revertir) con su motivo. */
+    public void confirmarAccionRevision() {
+        try {
+            if (motivoRevisionActa == null || motivoRevisionActa.isBlank()) {
+                JsfUtil.addWarningMessageFromBundle("actaE.mensaje.motivo.requerido");
+                return;
+            }
+            if (ACCION_DEVOLVER.equals(accionRevisionActa) && isPuedeRevisarActaFisica()) {
+                if (!ActaFisicaEscrutinioService.OBSERVADA.equals(estadoDevolucionActa)
+                        && !ActaFisicaEscrutinioService.RECHAZADA.equals(estadoDevolucionActa)) {
+                    JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+                    return;
+                }
+                actaFisicaEscrutinioService.devolverActaFisica(actaFisica.getId(), estadoDevolucionActa, motivoRevisionActa);
+                auditarRevisionActa("DEVUELVE ACTA FISICA " + estadoDevolucionActa, motivoRevisionActa);
+                JsfUtil.addSuccessMessageFromBundle("actaE.oficial.devuelta");
+            } else if (ACCION_REVERTIR.equals(accionRevisionActa) && isPuedeRevertirValidacion()) {
+                actaFisicaEscrutinioService.revertirValidacion(actaFisica.getId(), motivoRevisionActa);
+                auditarRevisionActa("REVIERTE VALIDACION ACTA FISICA", motivoRevisionActa);
+                JsfUtil.addSuccessMessageFromBundle("actaE.oficial.revertida");
+            } else {
+                JsfUtil.addErrorMessageFromBundle("actaE.mensaje.accesoDenegado");
+                return;
+            }
+            cancelarAccionRevision();
+            recargarTrasRevision();
+        } catch (NegocioException e) {
+            JsfUtil.addErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            log.error("ERROR EN REVISION DE ACTA FISICA DE MESA {}", mesaSeleccionado != null ? mesaSeleccionado.getId() : null, e);
+            JsfUtil.addErrorMessageFromBundle("actaE.oficial.error");
+        }
+    }
+
+    /**
+     * Relee la mesa sin crear nada (la cabecera y el conteo ya existen) y refresca su
+     * fila en el listado, porque cambian los votos y la situación.
+     */
+    private void recargarTrasRevision() {
+        Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
+        EscrutinioCabeceraDTO cabecera = escrutinioService.buscarCabeceraDTO(mesaSeleccionado.getId(), procesoId);
+        escrutinioCabecera = cabecera != null ? cabecera : new EscrutinioCabeceraDTO();
+        List<EscrutinioDTO> registrados = escrutinioService.listarDTOsPorMesaYProceso(mesaSeleccionado.getId(), procesoId);
+        listaCamposActaE = registrados != null ? new ArrayList<>(registrados) : new ArrayList<>();
+        cargarDocumentosActa();
+        if (usuarioConsultaGerencial) {
+            consultarEscrutiniosGerenciales();
+            org.primefaces.PrimeFaces.current().ajax().update(
+                    "frmActaE:tabActaE:tblConsultaGerencial", "frmActaE:tabActaE:pnlResumenGerencial");
+        }
+    }
+
+    private void auditarRevisionActa(String actividad, String motivo) {
+        String datos = "MESA=" + (mesaSeleccionado != null ? mesaSeleccionado.getId() : "")
+                + ";PROCESO=" + (procesoActivo != null ? procesoActivo.getId() : "")
+                + ";DOCUMENTO=" + (actaFisica != null ? actaFisica.getId() : "")
+                + ";USUARIO=" + (loginBean != null ? loginBean.getUserName() : "")
+                + ";FECHA=" + JsfUtil.getFechaStringYYYYMMddHHmm(new Date())
+                + (motivo != null ? ";MOTIVO=" + motivo.trim() : "");
+        procesoBean.okActivityRegister(actividad, datos);
+    }
+
     public org.primefaces.model.StreamedContent getImagenActaFisica() {
         if (contenidoActaFisica == null) {
             return null;
@@ -1843,8 +2202,8 @@ public class ActaEController implements Serializable {
 
     /**
      * Revisores de actas: Administrador y Tribunal. Ven el listado de todas las mesas y
-     * visualizan y cargan el acta física, pero Tribunal no abre, cuenta ni cierra mesas
-     * (eso sigue en {@link #tieneRolOperacionActa()} y en el presidente de mesa). Es el
+     * visualizan y cargan el acta física. La operación de mesas va aparte, en
+     * {@link #tieneRolOperacionActa()} y en el presidente de mesa. Es el
      * mismo criterio que AccesoDocumentoMesaService#esRevisor aplica en el servidor.
      */
     public boolean isUsuarioRevisorActas() {
@@ -1861,19 +2220,24 @@ public class ActaEController implements Serializable {
                 || tieneRol("SITEC-Superadministrador");
     }
 
+    /**
+     * Operación de cualquier mesa (apertura, conteo, cierre, acta PDF). Tribunal tiene el
+     * mismo acceso funcional que Administrador. El presidente de mesa no pasa por aquí:
+     * {@link #puedeGestionarMesa} lo limita a su mesa, aunque sume otros roles.
+     */
     private boolean tieneRolOperacionActa() {
-        return tieneRol("SITEC-Administrador")
-                || tieneRol("SITEC-Supervisor")
-                || tieneRol("SITEC-SuperAdministrador")
-                || tieneRol("SITEC-Superadministrador");
+        return tieneRolAdministrador()
+                || tieneRol("SITEC-Supervisor");
     }
 
     private boolean tieneRolSupervisorOAdministrador() {
         return tieneRol("SITEC-Supervisor") || tieneRolAdministrador();
     }
 
+    /** Administrador o Tribunal: mismas acciones administrativas (observar, anular, reabrir). */
     private boolean tieneRolAdministrador() {
         return tieneRol("SITEC-Administrador")
+                || tieneRol("SITEC-Tribunal")
                 || tieneRol("SITEC-SuperAdministrador")
                 || tieneRol("SITEC-Superadministrador");
     }

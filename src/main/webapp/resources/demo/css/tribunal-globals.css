@@ -942,6 +942,32 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
 	letter-spacing: .03em;
 }
 
+/* Transcripción del acta en la revisión oficial: una entrada por línea del acta. */
+.acta-comparacion td.acta-comparacion__entrada {
+	width: 8rem;
+	padding: .2rem .35rem;
+}
+
+.acta-comparacion__entrada .ui-inputnumber input {
+	width: 100%;
+	padding: .3rem .45rem;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Revisión oficial: acción del revisor, separada de los controles del sistema. */
+.acta-revision-oficial {
+	display: flex;
+	flex-direction: column;
+	gap: .5rem;
+	margin-top: 1rem;
+	padding: .75rem;
+	border: 1px solid var(--surface-border);
+	border-left: 4px solid var(--primary-color);
+	border-radius: 4px;
+	background: var(--surface-card);
+}
+
 @media ( max-width : 991px) {
 	.acta-fisica-dialog {
 		width: 94vw !important;
@@ -988,3 +1014,22 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:#689f38; }
 .actae-tabla-densa thead > tr > th { font-size: .75rem; }
 .actae-tabla-densa .ui-tag { font-size: .72rem; padding: .15rem .45rem; }
 .actae-tabla-densa small { font-size: .72rem; }
+/* Filtros de columna del listado de escrutinios: compactos, bajo el título. */
+.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .35rem; min-width: 0; font-size: .75rem; font-weight: 400; text-align: left; }
+.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: .75rem; }
+
+/* Pasos del escrutinio (tab Escrutinio): hecho, en curso o pendiente. En pantallas
+   estrechas se muestran solo las marcas y el rótulo del paso en curso. */
+.actae-pasos { display: flex; gap: .25rem; align-items: center; }
+.actae-paso { display: flex; align-items: center; gap: .4rem; flex: 1 1 0; min-width: 0; padding: .35rem .5rem; border-radius: 6px; color: var(--text-color-secondary); font-size: .8rem; }
+.actae-paso__marca { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 1px solid var(--surface-border); background: var(--surface-card); font-size: .72rem; font-weight: 600; }
+.actae-paso__texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.actae-paso--hecho { color: var(--text-color); }
+.actae-paso--hecho .actae-paso__marca { background: #16a34a; border-color: #16a34a; color: #ffffff; }
+.actae-paso--actual { background: var(--surface-ground); color: var(--text-color); font-weight: 600; }
+.actae-paso--actual .actae-paso__marca { border-color: var(--primary-color); color: var(--primary-color); }
+@media (max-width: 575px) {
+    .actae-paso { flex: 0 0 auto; }
+    .actae-paso--actual { flex: 1 1 auto; }
+    .actae-paso:not(.actae-paso--actual) .actae-paso__texto { display: none; }
+}

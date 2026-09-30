@@ -15,6 +15,28 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         super(EscrutinioCabecera.class, Integer.class);
     }
 
+    /**
+     * Condición JPQL de dato oficial: la mesa tiene, en el proceso, un acta física
+     * vigente VALIDADA. Usa el parámetro :procesoId de la consulta que la incluye y los
+     * que fija {@link #parametrosActaFisicaValidada}. La cubre el índice
+     * idx_documentos_mesa_proceso_tipo_revision (V3).
+     *
+     * @param mesaId expresión JPQL con el id de la mesa (p. ej. "m.id")
+     */
+    public static String existeActaFisicaValidada(String mesaId) {
+        return " EXISTS (SELECT d.id FROM Documentos d"
+                + " WHERE d.mesa.id = " + mesaId
+                + " AND d.proceso.id = :procesoId"
+                + " AND d.estado = TRUE"
+                + " AND d.estadoRevision = :revisionValidada"
+                + " AND UPPER(d.tipoDocumento.nombre) = :tipoActaFisica)";
+    }
+
+    public static void parametrosActaFisicaValidada(jakarta.persistence.Query query) {
+        query.setParameter("revisionValidada", ec.com.antenasur.service.tec.ActaFisicaEscrutinioService.VALIDADA);
+        query.setParameter("tipoActaFisica", ec.com.antenasur.service.tec.ActaFisicaEscrutinioService.TIPO_DOCUMENTO);
+    }
+
     public EscrutinioCabecera buscarPorMesaProceso(Integer mesaId, Integer procesoId) {
         if (mesaId == null || procesoId == null) {
             return null;
@@ -63,6 +85,7 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         return resultado;
     }
 
+    /** Mesas cerradas y con acta física VALIDADA (datos oficiales) del proceso. */
     public long contarCerradasPorProceso(Integer procesoId) {
         if (procesoId == null) {
             return 0L;
@@ -71,11 +94,13 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
                 + " JOIN e.proceso pro"
                 + " WHERE pro.id = :procesoId"
                 + " AND e.estado = TRUE"
-                + " AND e.estadoEscrutinio = :estadoCerrado";
-        Long total = super.getEntityManager().createQuery(sql, Long.class)
+                + " AND e.estadoEscrutinio = :estadoCerrado"
+                + " AND" + existeActaFisicaValidada("e.mesa.id");
+        TypedQuery<Long> query = super.getEntityManager().createQuery(sql, Long.class)
                 .setParameter("procesoId", procesoId)
-                .setParameter("estadoCerrado", EstadoEscrutinio.CERRADO)
-                .getSingleResult();
+                .setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        parametrosActaFisicaValidada(query);
+        Long total = query.getSingleResult();
         return total != null ? total : 0L;
     }
 
@@ -105,6 +130,7 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
         return resultado;
     }
 
+    /** Cabeceras cerradas y con acta física VALIDADA (datos oficiales) del proceso. */
     public List<EscrutinioCabecera> listarCerradasPorProceso(Integer procesoId) {
         if (procesoId == null) {
             return java.util.Collections.emptyList();
@@ -119,11 +145,13 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
                 + " WHERE pro.id = :procesoId"
                 + " AND e.estado = TRUE"
                 + " AND e.estadoEscrutinio = :estadoCerrado"
+                + " AND" + existeActaFisicaValidada("m.id")
                 + " ORDER BY provincia.name, canton.name, parroquia.name, r.nombre, m.nombre";
         TypedQuery<EscrutinioCabecera> query = super.getEntityManager()
                 .createQuery(sql, EscrutinioCabecera.class);
         query.setParameter("procesoId", procesoId);
         query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        parametrosActaFisicaValidada(query);
         return query.getResultList();
     }
 }
