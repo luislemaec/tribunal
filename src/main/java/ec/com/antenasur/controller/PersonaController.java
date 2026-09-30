@@ -629,10 +629,30 @@ public class PersonaController implements Serializable {
             rechazarGuardado(e.getMessageKey(), e.getArguments());
             return;
         } catch (Exception e) {
-            log.error("Error al guardar persona", e);
-            rechazarGuardado("form.personas.error.guardar");
+            if (esViolacionRelacionActiva(e)) {
+                // El servicio valida antes de insertar; llegar aquí solo es posible si
+                // otro guardado simultáneo ganó la carrera. El trigger protegió los datos.
+                log.warn("Guardado de miembro rechazado por relación activa existente (SQLState 23505)");
+                rechazarGuardado("form.personas.error.relacion.activa");
+            } else {
+                log.error("Error al guardar persona", e);
+                rechazarGuardado("form.personas.error.guardar");
+            }
             return;
         }
+    }
+
+    /** Violación 23505 del trigger fn_validar_iglesia_activa_persona en la cadena de causas. */
+    private static boolean esViolacionRelacionActiva(Throwable error) {
+        for (Throwable causa = error; causa != null; causa = causa.getCause()) {
+            if (causa instanceof java.sql.SQLException sql && "23505".equals(sql.getSQLState())) {
+                return true;
+            }
+            if (causa.getCause() == causa) {
+                break;
+            }
+        }
+        return false;
     }
 
     private void rechazarGuardado(String clave, Object... argumentos) {
@@ -642,7 +662,8 @@ public class PersonaController implements Serializable {
             contexto.addMessage("frmPersonas:cedula", new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
             PrimeFaces.current().focus("frmPersonas:cedula");
         } else {
-            contexto.addMessage("frmPersonas:reglasPersona", new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
+            // Mensaje global: lo muestra el growl de la plantilla (globalOnly, autoUpdate).
+            contexto.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
         }
         PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
     }

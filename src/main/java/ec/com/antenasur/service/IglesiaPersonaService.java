@@ -247,7 +247,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			return null;
 		}
 		validarDocumentoDisponibleParaPersona(documento, persona.getId());
-		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+		// Mismo criterio que el trigger fn_validar_iglesia_activa_persona: se valida
+		// aquí para no depender de la violación 23505 como control del flujo.
+		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarRelacionesActivasPorDocumento(documento, true);
 		validarAsignacionNormal(activas, dto.getId(), iglesia.getId());
 		actualizarPersona(persona, dto, documento);
 		persona = persona.getId() != null ? personaFacade.edit(persona) : personaFacade.create(persona);
@@ -392,7 +394,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		validarAlcanceIglesiaAdmin(iglesia, null);
 		String documento = normalizarDocumento(persona.getDocumento());
 		validarDocumentoDisponibleParaPersona(documento, persona.getId());
-		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarActivasPorDocumento(documento, true);
+		// Criterio del trigger: una relación activa impide crear otra, aunque su
+		// registro de persona esté inactivo.
+		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarRelacionesActivasPorDocumento(documento, true);
 		if (contarIglesiasDistintas(activas) > 1) {
 			throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
 		}
@@ -409,19 +413,43 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		return new ResultadoVinculo(creado, true);
 	}
 
+	/**
+	 * Reglas de pertenencia antes de persistir. {@code activas} debe traer las
+	 * relaciones activas del documento con el criterio del trigger (ver
+	 * IglesiaPersonaFacade#listarRelacionesActivasPorDocumento), de modo que
+	 * cualquier caso que el trigger rechazaría se detecta aquí con un mensaje claro:
+	 * <ul>
+	 * <li>Alta con una relación activa en la misma iglesia: no se inserta otra; se
+	 * mantiene la existente y se indica editarla.</li>
+	 * <li>Relación activa ligada a un registro de persona inactivo: se informa y no
+	 * se guarda; la corrección la hace manualmente Administrador o Tribunal
+	 * (decisión funcional del 2026-09-29).</li>
+	 * <li>Relación activa en otra iglesia, o edición que cambia de iglesia: se
+	 * rechaza. El cambio de iglesia permanece bloqueado a propósito, porque afecta
+	 * padrón y JRV; si se habilita, será un flujo aparte (decisión del 2026-09-29).</li>
+	 * </ul>
+	 */
 	private void validarAsignacionNormal(List<IglesiaPersona> activas, Integer vinculoActualId,
 			Integer iglesiaDestinoId) {
 		if (contarIglesiasDistintas(activas) > 1) {
 			throw new IglesiaPersonaException("form.personas.error.varias.iglesias");
 		}
-		if (activas.isEmpty()) {
-			return;
-		}
-		IglesiaPersona activa = activas.get(0);
-		if (vinculoActualId == null || !vinculoActualId.equals(activa.getId())) {
-			throw conflictoOtraIglesia(activa);
-		}
-		if (activa.getIglesia() == null || !iglesiaDestinoId.equals(activa.getIglesia().getId())) {
+		for (IglesiaPersona activa : activas) {
+			boolean esLaEditada = vinculoActualId != null && vinculoActualId.equals(activa.getId());
+			boolean mismaIglesia = activa.getIglesia() != null && iglesiaDestinoId.equals(activa.getIglesia().getId());
+			if (esLaEditada) {
+				if (!mismaIglesia) {
+					throw conflictoOtraIglesia(activa);
+				}
+				continue;
+			}
+			String iglesia = activa.getIglesia() != null ? activa.getIglesia().getNombre() : "";
+			if (activa.getPersona() == null || !Boolean.TRUE.equals(activa.getPersona().getEstado())) {
+				throw new IglesiaPersonaException("form.personas.error.relacion.persona.inactiva", iglesia);
+			}
+			if (mismaIglesia) {
+				throw new IglesiaPersonaException("form.personas.error.ya.miembro", iglesia);
+			}
 			throw conflictoOtraIglesia(activa);
 		}
 	}

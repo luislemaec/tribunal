@@ -288,6 +288,40 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 	}
 
 	/**
+	 * Relaciones activas del documento con el mismo criterio que el trigger
+	 * fn_validar_iglesia_activa_persona: basta {@code ip.estado = TRUE}, sin
+	 * importar si el registro de persona está activo. Permite validar antes de
+	 * persistir, en lugar de enterarse por la violación 23505 del trigger.
+	 */
+	public List<IglesiaPersona> listarRelacionesActivasPorDocumento(String documento, boolean bloquear) {
+		if (documento == null || documento.trim().isEmpty()) {
+			return java.util.Collections.emptyList();
+		}
+		// Igual que listarRelacionesPorDocumentos: el filtro de activos ocultaría las
+		// personas inactivas, que el trigger sí considera.
+		Session session = getEntityManager().unwrap(Session.class);
+		Filter filtro = session.getEnabledFilter(EntidadBase.FILTER_ACTIVE);
+		if (filtro != null) {
+			session.disableFilter(EntidadBase.FILTER_ACTIVE);
+		}
+		try {
+			String sql = HQL + " JOIN FETCH ip.iglesia i JOIN FETCH ip.persona p"
+					+ " WHERE TRIM(p.documento) = :documento AND ip.estado = TRUE ORDER BY ip.id";
+			TypedQuery<IglesiaPersona> query = super.getEntityManager().createQuery(sql, IglesiaPersona.class);
+			query.setParameter("documento", documento.trim());
+			if (bloquear) {
+				query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+			}
+			List<IglesiaPersona> resultado = query.getResultList();
+			return resultado != null ? resultado : java.util.Collections.emptyList();
+		} finally {
+			if (filtro != null) {
+				session.enableFilter(EntidadBase.FILTER_ACTIVE);
+			}
+		}
+	}
+
+	/**
 	 * Búsqueda de consulta de miembros activos por cédula o nombres. Carga la
 	 * ubicación completa de la iglesia en una sola consulta para que el DTO pueda
 	 * mostrar provincia, cantón y parroquia sin consultas por fila.
