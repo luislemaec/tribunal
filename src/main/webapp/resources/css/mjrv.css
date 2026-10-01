@@ -20,7 +20,7 @@
 .mjrv-mesas-table .ui-datatable-data > tr.p-highlight > td {
     background: var(--primary-100) !important;
     color: var(--text-color) !important;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .mjrv-mesas-table .ui-datatable-data > tr.fila-seleccionada > td:first-child,

@@ -37,13 +37,13 @@
 
 .acta-fisica-panel-titulo {
 	color: var(--text-color);
-	font-size: 1rem;
+	font-size: var(--tec-fs-lg);
 	font-weight: 700;
 }
 
 .acta-fisica-panel-subtitulo {
 	color: var(--text-color-secondary);
-	font-size: .8125rem;
+	font-size: var(--tec-fs-sm);
 	line-height: 1.35;
 	margin-top: .2rem;
 }
@@ -60,7 +60,7 @@
 
 .acta-fisica-visor img {
 	background: var(--surface-card);
-	box-shadow: 0 8px 20px rgba(15, 23, 42, .18);
+	box-shadow: var(--tec-shadow-float);
 }
 
 .acta-fisica-totales {

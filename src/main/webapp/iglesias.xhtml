@@ -195,7 +195,9 @@
                         </h:panelGroup>
                         <div class="field col-12 sm:col-5 md:col-3 xl:col-1 tec-filter-actions-cell">
                             <div class="tec-filter-actions">
-                                <p:commandButton value="#{msg['form.iglesias.filters.btn.clear']}" icon="pi pi-times-circle"
+                                <p:commandButton icon="pi pi-filter-slash"
+                                                 title="#{msg['form.iglesias.filters.btn.clear']}"
+                                                 ariaLabel="#{msg['form.iglesias.filters.btn.clear']}"
                                                  styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                                  actionListener="#{iglesiaController.cancelarIglesia}"
                                                  process="@this" update=":frmFiltros :frmIglesias"/>
@@ -281,7 +283,7 @@
                         <p:commandButton icon="pi pi-refresh"
                                          title="#{msg['form.iglesias.btn.refresh']}"
                                          ariaLabel="#{msg['form.iglesias.btn.refresh']}"
-                                         styleClass="ui-button-rounded ui-button-outlined ui-button-secondary"
+                                         styleClass="rounded-button ui-button-outlined ui-button-secondary"
                                          actionListener="#{iglesiaController.cancelarIglesia}"
                                          process="@this" update="@form">
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.refresh.tooltip']}"/>
@@ -315,21 +317,7 @@
                              emptyMessage="#{msg['form.iglesias.list.empty']}"
                              reflow="true" size="small"
                              styleClass="tec-table iglesias-table"
-                             globalFilter="#{globalFilter}"
                              filteredValue="#{iglesiaController.listaIglesiasFiltrada}">
-
-                    <f:facet name="header">
-                        <div class="tec-table-heading iglesias-table__head">
-                            <h3>#{msg['form.iglesias.list.header']}</h3>
-                            <div class="tec-search-input iglesias-busqueda">
-                                <i class="pi pi-search" aria-hidden="true"/>
-                                <p:inputText id="globalFilter" placeholder="#{msg['form.iglesias.placeholder.search']}"
-                                             ariaLabel="#{msg['form.iglesias.placeholder.search']}"
-                                             onkeyup="PF('wdTblIglesia').filter()"
-                                             onkeydown="PrimeFaces.utils.blockEnterKey(event)"/>
-                            </div>
-                        </div>
-                    </f:facet>
 
                     <f:facet name="emptyMessage">
                         <span class="tec-empty">

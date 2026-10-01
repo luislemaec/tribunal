@@ -7,7 +7,8 @@
 .dashboard-speeddial.ui-button {
     background: var(--primary-color) !important; border-color: var(--primary-color) !important;
     width: 3rem !important; height: 3rem !important;
-    box-shadow: 0 6px 14px rgba(0,0,0,.18) !important;
+    color: var(--primary-color-text) !important;
+    box-shadow: var(--tec-shadow-float) !important;
 }
 
 .dashboard-speeddial.ui-button:hover { background: var(--primary-700) !important; }

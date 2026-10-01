@@ -6,6 +6,44 @@
    por dos pantallas concretas, en un archivo común (p. ej. acta-fisica.css).
    Colores: solo variables del tema (--primary-*, --surface-*, --text-color*, paleta). */
 
+/* Escala tipográfica compartida. Las hojas por pantalla deben usar estas variables en lugar
+   de tamaños sueltos: xs = etiquetas/encabezados en mayúsculas, sm = metadatos y texto secundario,
+   md = contenido de celdas, inputs y botones, lg = títulos, xl = cifras destacadas (KPI). */
+:root { --tec-fs-xs:.72rem; --tec-fs-sm:.8rem; --tec-fs-md:.875rem; --tec-fs-lg:1rem; --tec-fs-xl:1.35rem; }
+
+/* ==========================================================================
+ * Tipografía base: una sola familia (Montserrat, definida en --font-family del tema) y dos pesos
+ * reales (400 y 700). Los controles nativos no heredan la fuente por defecto del navegador;
+ * 'font-medium' (500) y 'font-semibold' (600) de PrimeFlex se resuelven a los pesos existentes.
+ * ========================================================================== */
+body { font-family:var(--font-family); font-weight:400; }
+body input, body button, body select, body textarea, body optgroup { font-family:inherit; }
+body .font-medium, body .font-normal { font-weight:400 !important; }
+body .font-semibold { font-weight:700 !important; }
+
+/* Identidad institucional (bandera de Ecuador). Son acentos de marca, NO colores de acción:
+   el color primario de los controles lo define el tema de PrimeFaces (tema "Tribunal" = azul institucional,
+   contraste 8:1 sobre blanco) y success/info/warn/danger conservan su significado funcional. El
+   amarillo no se usa como fondo de botones ni texto (contraste insuficiente) y el rojo queda
+   reservado a danger/error; aquí solo alimentan la franja tricolor del topbar. */
+:root { --tec-ecuador-yellow:#FFDD00; --tec-ecuador-blue:#034EA2; --tec-ecuador-red:#ED1C24; }
+
+/* Franja tricolor bajo el topbar, con las proporciones de la bandera (2:1:1). */
+.layout-wrapper .layout-topbar::after { content:""; position:absolute; right:0; bottom:0; left:0; height:3px; pointer-events:none;
+    background:linear-gradient(to right, var(--tec-ecuador-yellow) 0 50%, var(--tec-ecuador-blue) 50% 75%, var(--tec-ecuador-red) 75% 100%); }
+
+/* Superficies de tabla: se derivan del color primario del tema seleccionado (cambian con él).
+   El primer valor es el respaldo para navegadores sin color-mix. */
+:root { --tec-table-head-bg:var(--surface-50); --tec-table-hover-bg:var(--surface-50); --tec-table-select-bg:var(--primary-50); --tec-table-stripe-bg:var(--surface-50); }
+@supports (background: color-mix(in srgb, red 10%, white)) {
+    :root {
+        --tec-table-head-bg:color-mix(in srgb, var(--primary-color) 7%, var(--surface-card));
+        --tec-table-hover-bg:color-mix(in srgb, var(--primary-color) 5%, var(--surface-card));
+        --tec-table-stripe-bg:color-mix(in srgb, var(--text-color) 2.5%, var(--surface-card));
+        --tec-table-select-bg:color-mix(in srgb, var(--primary-color) 12%, var(--surface-card));
+    }
+}
+
 /* NProgress: la barra se dibuja sobre el topbar, que usa el color primario del tema;
    por eso toma el color de texto sobre primario (claro u oscuro según el tema). */
 #nprogress .bar { background: var(--primary-color-text) !important; height: 3px; }
@@ -16,27 +54,27 @@
 .ui-growl { top: 70px !important; right: 20px !important; }
 
 .ui-growl-item-container {
-    border-radius: 10px !important;
-    box-shadow: 0 8px 22px rgba(0,0,0,.18) !important;
+    border-radius: var(--tec-radius) !important;
+    box-shadow: var(--tec-shadow-float) !important;
     margin-bottom: .75rem !important;
 }
 
-.ui-growl-item-container.ui-growl-info { border-left: 5px solid var(--blue-600) !important; }
+.ui-growl-item-container.ui-growl-info { border-left: 4px solid var(--blue-600) !important; }
 
-.ui-growl-item-container.ui-growl-success { border-left: 5px solid var(--green-600) !important; }
+.ui-growl-item-container.ui-growl-success { border-left: 4px solid var(--green-600) !important; }
 
-.ui-growl-item-container.ui-growl-warn { border-left: 5px solid var(--orange-600) !important; }
+.ui-growl-item-container.ui-growl-warn { border-left: 4px solid var(--orange-600) !important; }
 
 .ui-growl-item-container.ui-growl-error,
-.ui-growl-item-container.ui-growl-fatal { border-left: 5px solid var(--red-600) !important; }
+.ui-growl-item-container.ui-growl-fatal { border-left: 4px solid var(--red-600) !important; }
 
 .ui-growl-title {
     font-weight: 700 !important;
-    font-size: .95rem !important;
+    font-size: var(--tec-fs-lg) !important;
 }
 
 .ui-growl-message p {
-    font-size: .85rem !important;
+    font-size: var(--tec-fs-md) !important;
     margin-top: .25rem !important;
 }
 
@@ -80,7 +118,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-profile-icon i {
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--tec-fs-lg);
 }
 
 /* Perfil del topbar: nombre y rol(es) del usuario.
@@ -112,7 +150,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     /* Sin color propio: hereda el que el layout da al perfil en cada tema
        (#topbar-profile-menu-button span: blanco u oscuro según el fondo del topbar). */
     font-size: clamp(.72rem, .9vw, 1rem);
-    font-weight: 600;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -170,7 +208,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     border-radius: .5rem;
     background: var(--surface-50);
     color: var(--text-color-secondary);
-    font-size: .9rem;
+    font-size: var(--tec-fs-md);
     line-height: 1.25;
 }
 
@@ -190,16 +228,16 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     color: rgba(255, 255, 255, .9);
 }
 
-/* ScrollTop flotante con color Ecuador */
+/* ScrollTop flotante con el color primario del tema */
 .custom-scroll-top.ui-scrolltop {
     background: var(--primary-color) !important;
     color: var(--primary-color-text) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,.18) !important;
+    box-shadow: var(--tec-shadow-float) !important;
     width: 2.5rem !important; height: 2.5rem !important;
     right: 1.5rem !important; bottom: 1.5rem !important;
 }
 
-.custom-scroll-top.ui-scrolltop:hover { background: var(--orange-600) !important; }
+.custom-scroll-top.ui-scrolltop:hover { background: var(--primary-700) !important; }
 
 /* BlockUI: contenido centrado con texto blanco sobre overlay oscuro */
 .ui-blockui-content { text-align: center; padding: 1.5rem; }
@@ -226,7 +264,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 /* Tooltips: tipografía coherente */
 .ui-tooltip .ui-tooltip-text {
-    font-size: .8rem !important;
+    font-size: var(--tec-fs-sm) !important;
     padding: .35rem .6rem !important;
     border-radius: 6px !important;
 }
@@ -241,9 +279,9 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td,
 .tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td,
 .tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td {
-    background: var(--primary-100) !important;
+    background: var(--tec-table-select-bg) !important;
     color: var(--text-color) !important;
-    font-weight: 600;
+    font-weight: 700;
 }
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td:first-child,
 .tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td:first-child,
@@ -265,27 +303,27 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 .tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:var(--surface-100); color:var(--text-color); font-size:1.2rem; }
 
-.tec-page-header h2 { margin:0; color:var(--text-color); font-size:1.35rem; line-height:1.25; }
+.tec-page-header h2 { margin:0; color:var(--text-color); font-size:var(--tec-fs-xl); line-height:1.25; }
 
-.tec-page-header p { margin:.15rem 0 0; color:var(--text-color-secondary); font-size:.875rem; }
+.tec-page-header p { margin:.15rem 0 0; color:var(--text-color-secondary); font-size:var(--tec-fs-md); }
 
 .tec-page-header__aside { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:.375rem; margin-left:auto; }
 
 /* Tarjeta y filtros */
 .tec-card { padding:1rem 1.25rem; border:1px solid var(--surface-border); box-shadow:0 1px 2px rgba(15, 23, 42, .05); }
 
-.tec-filters { border-bottom:1px solid var(--surface-100); }
+.tec-filters { border-bottom:1px solid var(--surface-border); }
 
 .tec-filters .field { margin-bottom:.75rem; }
 
 .tec-filters .ui-outputlabel,
 .tec-form .ui-outputlabel,
 .tec-filters .tec-field-label,
-.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:.78rem; font-weight:600; }
+.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:700; }
 
 .tec-search-input { position:relative; display:block; }
 
-.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.75rem; transform:translateY(-50%); color:var(--text-color-secondary); font-size:.85rem; pointer-events:none; }
+.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.75rem; transform:translateY(-50%); color:var(--text-color-secondary); font-size:var(--tec-fs-md); pointer-events:none; }
 
 .tec-search-input .ui-inputfield { width:100%; padding-left:2.1rem; }
 
@@ -295,7 +333,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 body .ui-fluid .tec-filter-actions .ui-button { flex:0 0 auto; width:auto; }
 
-.tec-btn.ui-button { font-size:.85rem; }
+.tec-btn.ui-button { font-size:var(--tec-fs-md); }
 
 .tec-select-panel.ui-selectonemenu-panel { max-width:min(26rem, calc(100vw - 2rem)); }
 
@@ -304,48 +342,48 @@ body .ui-fluid .tec-filter-actions .ui-button { flex:0 0 auto; width:auto; }
 /* Tabla */
 .tec-table-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin:1rem 0 .5rem; }
 
-.tec-table-heading h3 { margin:0; color:var(--text-color); font-size:.95rem; font-weight:700; }
+.tec-table-heading h3 { margin:0; color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:700; }
 
 body .ui-datatable.tec-table table { table-layout:auto; }
 
 /* PrimeFaces sincroniza las columnas de las tablas con scroll asumiendo table-layout:fixed. */
 body .ui-datatable.tec-table.ui-datatable-scrollable table { table-layout:fixed; }
 
-body .ui-datatable.tec-table thead th { border-right:0 none; border-left:0 none; background:var(--surface-50); vertical-align:top; }
+body .ui-datatable thead th { border-right:0 none; border-left:0 none; border-bottom:2px solid var(--primary-color); background:var(--tec-table-head-bg); vertical-align:top; }
 
-body .ui-datatable.tec-table thead th > .ui-column-title { color:var(--text-color-secondary); font-size:.72rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+body .ui-datatable thead th > .ui-column-title { color:var(--primary-800); font-size:var(--tec-fs-xs); font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
 
-body .ui-datatable.tec-table thead th .ui-column-filter { margin-top:.35rem; font-size:.8rem; }
+body .ui-datatable thead th .ui-column-filter { margin-top:.35rem; font-size:var(--tec-fs-sm); }
 
-body .ui-datatable.tec-table .ui-datatable-header { padding:.5rem 0 .75rem; border:0 none; background:transparent; }
+body .ui-datatable .ui-datatable-header { padding:.5rem 0 .75rem; border:0 none; background:transparent; }
 
 .tec-table .ui-datatable-data > tr { cursor:pointer; transition:background-color .15s ease; }
 
-body .ui-datatable.tec-table .ui-datatable-data > tr > td { border-right:0 none; border-left:0 none; vertical-align:middle; }
+body .ui-datatable .ui-datatable-data > tr > td { border-right:0 none; border-left:0 none; vertical-align:middle; }
 
-.tec-table .ui-datatable-data > tr:hover > td { background:var(--surface-50) !important; }
+.ui-datatable .ui-datatable-data > tr:hover > td { background:var(--tec-table-hover-bg) !important; }
 
-.tec-table .ui-datatable-data > tr.ui-state-highlight > td,
-.tec-table .ui-datatable-data > tr.p-highlight > td { background:var(--primary-50) !important; color:var(--text-color) !important; }
+.ui-datatable .ui-datatable-data > tr.ui-state-highlight > td,
+.ui-datatable .ui-datatable-data > tr.p-highlight > td { background:var(--tec-table-select-bg) !important; color:var(--text-color) !important; }
 
-.tec-table .ui-datatable-data > tr.ui-state-highlight > td:first-child,
-.tec-table .ui-datatable-data > tr.p-highlight > td:first-child { box-shadow:inset 3px 0 0 var(--primary-color); }
+.ui-datatable .ui-datatable-data > tr.ui-state-highlight > td:first-child,
+.ui-datatable .ui-datatable-data > tr.p-highlight > td:first-child { box-shadow:inset 3px 0 0 var(--primary-color); }
 
 /* El tema pinta la fila completa (azul sólido / gris); se alinea con el fondo de las celdas. */
-body .ui-datatable.tec-table .ui-datatable-data > tr.ui-state-hover { background:var(--surface-50); color:inherit; }
+body .ui-datatable .ui-datatable-data > tr.ui-state-hover { background:var(--tec-table-hover-bg); color:inherit; }
 
-body .ui-datatable.tec-table .ui-datatable-data > tr.ui-state-highlight,
-body .ui-datatable.tec-table .ui-datatable-data > tr.p-highlight { background:var(--primary-50); color:var(--text-color); }
+body .ui-datatable .ui-datatable-data > tr.ui-state-highlight,
+body .ui-datatable .ui-datatable-data > tr.p-highlight { background:var(--tec-table-select-bg); color:var(--text-color); }
 
 .tec-table .ui-datatable-data > tr.ui-datatable-empty-message { cursor:default; }
 
 .tec-table--static .ui-datatable-data > tr { cursor:default; }
 
-.tec-table .ui-datatable-data > tr.ui-datatable-empty-message > td { background:var(--surface-card) !important; }
+.ui-datatable .ui-datatable-data > tr.ui-datatable-empty-message > td { background:var(--surface-card) !important; }
 
-body .ui-datatable.tec-table .ui-paginator { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.25rem; padding:.625rem 0 0; border:0 none; background:transparent; }
+body .ui-datatable .ui-paginator { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.25rem; padding:.625rem 0 0; border:0 none; background:transparent; }
 
-body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { margin-right:auto; color:var(--text-color-secondary); font-size:.8rem; }
+body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); }
 
 .tec-col-fit { width:1%; }
 
@@ -359,14 +397,92 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 /* Separador vertical entre grupos de acciones de una barra */
 .tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.5rem; margin:0 .25rem; background:var(--surface-200); }
 
-.tec-mono { color:var(--text-color); font-family:monospace; font-size:.82rem; }
+.tec-mono { color:var(--text-color); font-family:monospace; font-size:var(--tec-fs-sm); }
 
 .tec-muted { color:var(--text-color-secondary); }
 
-.tec-table td .tec-muted { font-size:.8rem; }
+.tec-table td .tec-muted { font-size:var(--tec-fs-sm); }
+
+/* Rayado, pie y filas impares: el CSS del tema las pinta con HEX fijos (#fbfcfc, #e9ecef); aquí
+   toman las superficies derivadas del tema para que hover y selección sigan siendo legibles. */
+body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd { background:var(--tec-table-stripe-bg); }
+body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd.ui-state-hover { background:var(--tec-table-hover-bg); color:inherit; }
+body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd.ui-state-highlight { background:var(--tec-table-select-bg); color:var(--text-color); }
+body .ui-datatable tfoot td,
+body .ui-datatable .ui-datatable-footer { border-top:1px solid var(--surface-border); background:var(--tec-table-head-bg); color:var(--text-color); font-weight:700; }
+
+/* Columnas numéricas y centradas: cifras alineadas a la derecha con ancho tabular. */
+.tec-col-num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* ==========================================================================
+ * Contenedores (dialog, panel, fieldset, card, accordion, tabview, steps, overlays)
+ * Los CSS de los temas ya emparejan fondo/texto y primary/primary-text; aquí solo se
+ * (1) leen las superficies de las variables del tema, (2) se unifica densidad, radio, borde
+ * sutil y UNA sombra pequeña (el tema usa sombras de 3 capas con 46px de difusión).
+ * ========================================================================== */
+:root { --tec-radius:.5rem; --tec-shadow-float:0 4px 12px rgba(0,0,0,.15); }
+
+/* PrimeFlex pinta text-400/500 con surface-400/500 (≈1.9:1 y 2.7:1 sobre blanco): se sube al secundario del tema. */
+body .text-400, body .text-500 { color:var(--text-color-secondary) !important; }
+
+body .ui-dialog { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:var(--tec-shadow-float); }
+body .ui-dialog .ui-dialog-titlebar { padding:.875rem 1.25rem; border-bottom:1px solid var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-card); color:var(--text-color); }
+body .ui-dialog .ui-dialog-titlebar .ui-dialog-title { font-size:var(--tec-fs-lg); }
+body .ui-dialog .ui-dialog-content { padding:1rem 1.25rem 1.25rem; background:var(--surface-card); color:var(--text-color); }
+body .ui-dialog .ui-dialog-content:last-child { border-radius:0 0 var(--tec-radius) var(--tec-radius); }
+body .ui-dialog .ui-dialog-footer { padding:.75rem 1.25rem; border-top:1px solid var(--surface-border); border-radius:0 0 var(--tec-radius) var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
+
+body .ui-overlaypanel { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:var(--tec-shadow-float); }
+body .ui-tooltip .ui-tooltip-text,
+body .ui-autocomplete-panel, body .ui-selectonemenu-panel, body .ui-datepicker.ui-input-overlay, body .ui-menu.ui-shadow { box-shadow:var(--tec-shadow-float); }
+
+body .ui-panel .ui-panel-titlebar { padding:.75rem 1rem; border-color:var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-ground); color:var(--text-color); }
+body .ui-panel .ui-panel-titlebar .ui-panel-title { font-size:var(--tec-fs-lg); font-weight:700; }
+body .ui-panel .ui-panel-content, body .ui-panel .ui-panel-footer { border-color:var(--surface-border); background:var(--surface-card); color:var(--text-color); }
+body .ui-panel > div:last-of-type { border-radius:0 0 var(--tec-radius) var(--tec-radius); }
+body .ui-panel.ui-panel-collapsed .ui-panel-titlebar { border-radius:var(--tec-radius); }
+
+body .ui-fieldset { padding:.75rem 1rem 1rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
+body .ui-fieldset .ui-fieldset-legend { padding:.375rem .75rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-ground); color:var(--text-color); font-size:var(--tec-fs-md); font-weight:700; }
+
+body .ui-card { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:none; }
+
+body .ui-accordion .ui-accordion-header { padding:.75rem 1rem; border-color:var(--surface-border); background:var(--surface-ground); color:var(--text-color); }
+body .ui-accordion .ui-accordion-header.ui-state-hover { background:var(--tec-table-hover-bg); color:var(--text-color); }
+body .ui-accordion .ui-accordion-content { border-color:var(--surface-border); background:var(--surface-card); color:var(--text-color); }
+
+body .ui-tabs .ui-tabs-nav, body .ui-tabs .ui-tabs-nav li.ui-tabs-header, body .ui-tabs .ui-tabs-panels { background:var(--surface-card); }
+body .ui-tabs .ui-tabs-panels { color:var(--text-color); }
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header, body .ui-tabs .ui-tabs-nav li.ui-tabs-header a { color:var(--text-color-secondary); }
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header { padding:.75rem 1rem; }
+body .ui-tabs.ui-tabs-top > .ui-tabs-nav:before, body .ui-tabs.ui-tabs-top > .ui-tabs-nav li.ui-tabs-header { border-bottom-color:var(--surface-border); }
+
+/* Pasos inactivos: el tema los apaga con opacity:.65, que deja título y número ilegibles. */
+body .ui-steps .ui-steps-item:not(.ui-state-highlight) { opacity:1; }
+body .ui-steps .ui-steps-item .ui-menuitem-link .ui-steps-number { border-color:var(--surface-border); background:var(--surface-card); color:var(--text-color-secondary); }
+body .ui-steps .ui-steps-item .ui-menuitem-link .ui-steps-title { color:var(--text-color); }
+body .ui-steps .ui-steps-item.ui-state-highlight .ui-steps-title { color:var(--text-color); }
+body .ui-steps:before { border-top-color:var(--surface-border); }
+
+/* Primario usado como TEXTO/borde sobre superficies claras (enlaces, pestaña activa, botón outlined):
+   en temas de primario claro (Yellow, Amber, Lime, Green) el tema lo pinta con contraste 1.4–2.5:1.
+   --tec-primary-text lo define cada tema.css como el primer escalón de su rampa con contraste ≥ 4.5:1
+   (en el tema Tribunal es el propio --primary-color). */
+body .ui-commandlink, body .ui-link,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active a, body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active .ui-icon,
+body .ui-tabmenu .ui-tabmenu-nav .ui-tabmenuitem.ui-state-active a, body .ui-tabmenu .ui-tabmenu-nav .ui-tabmenuitem.ui-state-active a .ui-icon,
+body .ui-datatable thead th.ui-state-active { color:var(--tec-primary-text, var(--primary-color)); }
+body .ui-button.ui-button-outlined:not(.ui-button-secondary):not(.ui-button-success):not(.ui-button-info):not(.ui-button-warning):not(.ui-button-danger):not(.ui-button-help) { border-color:var(--tec-primary-text, var(--primary-color)); color:var(--tec-primary-text, var(--primary-color)); }
+
+/* Mensajes: misma semántica del tema con menos relleno. */
+body .ui-messages > div { padding:.75rem 1rem; }
+body .ui-growl .ui-growl-item-container .ui-growl-item { padding:.75rem 1rem; }
+
+/* Deshabilitado/solo lectura: identificable (fondo de superficie) pero legible (sin opacity .6 sobre el texto). */
+body .ui-inputfield:disabled, body .ui-inputfield[readonly], body .ui-state-disabled .ui-inputfield, body .ui-inputfield.ui-state-disabled { opacity:1; border-color:var(--surface-border); background:var(--surface-100); color:var(--text-color); }
 
 /* Estados discretos (el tema pinta p:tag con colores sólidos) */
-.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:.7rem; font-weight:600; line-height:1.4; white-space:nowrap; }
+.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:700; line-height:1.4; white-space:nowrap; }
 
 .tec-status.ui-tag.ui-tag-success { background:var(--green-50); color:var(--green-700); }
 
@@ -376,16 +492,16 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 
 .tec-status.ui-tag.ui-tag-info { background:var(--blue-50); color:var(--blue-700); }
 
-.tec-status.ui-tag .ui-tag-icon { font-size:.7rem; }
+.tec-status.ui-tag .ui-tag-icon { font-size:var(--tec-fs-xs); }
 
 /* Estado vacío */
 .tec-empty { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:2rem 1rem; text-align:center; }
 
 .tec-empty > .pi { margin-bottom:.35rem; color:var(--text-color-secondary); font-size:1.75rem; }
 
-.tec-empty__title { color:var(--text-color); font-size:.95rem; font-weight:600; }
+.tec-empty__title { color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:700; }
 
-.tec-empty__text { max-width:26rem; color:var(--text-color-secondary); font-size:.82rem; }
+.tec-empty__text { max-width:26rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); }
 
 /* Diálogos sin width fijo.
    PrimeFaces fija width:auto en línea al mostrar el diálogo, así que estas
@@ -399,9 +515,9 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 /* Móvil: PrimeFaces pasa la tabla a tarjetas (reflow) por debajo de 640px.
    La celda marcada con tec-col-primary encabeza la tarjeta. */
 @media (max-width:640px) {
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.625rem .25rem; border-bottom:1px solid var(--surface-100); }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.625rem .25rem; border-bottom:1px solid var(--surface-border); }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td { display:flex !important; align-items:center; gap:.5rem; width:100% !important; padding:.2rem .5rem !important; border:0 none !important; background:transparent !important; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 6.5rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:var(--text-color-secondary); font-size:.72rem; font-weight:600; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 6.5rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:700; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > :not(.ui-column-title) { min-width:0; }
     .tec-table.ui-datatable-reflow td.tec-col-primary { order:-1; padding-bottom:.35rem !important; }
     .tec-table.ui-datatable-reflow td.tec-col-primary > .ui-column-title { display:none; }
@@ -419,8 +535,8 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
     .tec-filter-actions { justify-content:stretch; }
     .tec-toolbar-sep { display:none; }
     body .ui-fluid .tec-filter-actions .ui-button { flex:1 1 calc(50% - .25rem); }
-    body .ui-datatable.tec-table .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .25rem; text-align:center; }
-    body .ui-datatable.tec-table .ui-paginator .ui-paginator-first,
-body .ui-datatable.tec-table .ui-paginator .ui-paginator-last { display:none; }
-    body .ui-datatable.tec-table .ui-paginator .ui-paginator-rpp-options { margin:0; }
+    body .ui-datatable .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .25rem; text-align:center; }
+    body .ui-datatable .ui-paginator .ui-paginator-first,
+body .ui-datatable .ui-paginator .ui-paginator-last { display:none; }
+    body .ui-datatable .ui-paginator .ui-paginator-rpp-options { margin:0; }
 }

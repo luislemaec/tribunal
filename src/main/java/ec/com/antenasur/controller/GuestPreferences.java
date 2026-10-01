@@ -30,9 +30,11 @@ import lombok.Setter;
 @SessionScoped
 public class GuestPreferences implements Serializable {
 
-    @Setter
+    /** Tema predeterminado oficial del TEC; también es el respaldo ante un valor desconocido. */
+    public static final String DEFAULT_THEME = "tribunal";
+
     @Getter
-    private String theme = "blue";
+    private String theme = DEFAULT_THEME;
 
     @Setter
     @Getter
@@ -56,21 +58,17 @@ public class GuestPreferences implements Serializable {
     @PostConstruct
     public void init() {
         menuThemes = new ArrayList<>();
-        menuThemes.add(new MenuTheme("Amber", "amber", "#f66b0b", "#efd417"));
-        menuThemes.add(new MenuTheme("Blue", "blue", "#2872B4", "#26BED0"));
-        menuThemes.add(new MenuTheme("Blue-Grey", "bluegrey", "#16222A", "#3A6073"));
-        menuThemes.add(new MenuTheme("Cyan", "cyan", "#12AABD", "#C4C988"));
-        menuThemes.add(new MenuTheme("Dark-Blue", "darkblue", "#4b6cb7", "#182848"));
-        menuThemes.add(new MenuTheme("Deep-Orange", "deeporange", "#FF2525", "#FFA43B"));
-        menuThemes.add(new MenuTheme("Deep-Purple", "deeppurple", "#5023A0", "#7A318D"));
-        menuThemes.add(new MenuTheme("Green", "green", "#07b750", "#c7d41b"));
-        menuThemes.add(new MenuTheme("Grey", "grey", "#333333", "#5A5D60"));
-        menuThemes.add(new MenuTheme("Indigo", "indigo", "#1e469a", "#49a7c1"));
-        menuThemes.add(new MenuTheme("Lime", "lime", "#53C018", "#C6D309"));
-        menuThemes.add(new MenuTheme("Mojito", "mojito", "#1D976C", "#93F9B9"));
-        menuThemes.add(new MenuTheme("Pink", "pink", "#e02365", "#db3c06"));
-        menuThemes.add(new MenuTheme("Purple", "purple", "#B721FF", "#21D4FD"));
-        menuThemes.add(new MenuTheme("Yellow", "yellow", "#F39C05", "#F3C704"));
+        // Único tema oficial del TEC (azul institucional). Se conserva la lista para validar el valor recibido.
+        menuThemes.add(new MenuTheme("Tribunal", DEFAULT_THEME, "#034EA2", "#0B2E6B"));
+    }
+
+    /**
+     * Solo acepta temas del catálogo: un valor desconocido (petición manipulada o tema retirado)
+     * vuelve al predeterminado para no pedir un CSS inexistente. Sin consultas ni procesamiento extra.
+     */
+    public void setTheme(String theme) {
+        boolean valido = theme != null && menuThemes != null && menuThemes.stream().anyMatch(t -> t.getFile().equals(theme));
+        this.theme = valido ? theme : DEFAULT_THEME;
     }
 
     public String getInputStyleClass() {

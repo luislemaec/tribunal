@@ -7,7 +7,7 @@
  * invoca con this = widget justo antes de dibujar, y aquí se completa la configuración
  * con las variables CSS del tema (--primary-*, --text-color*, --surface-border).
  *
- * Barras en --primary-700: contraste ≥ 3:1 sobre la tarjeta en todos los temas Ecuador
+ * Barras en --primary-700: contraste ≥ 3:1 sobre la tarjeta con el tema Tribunal
  * (el --primary-color puro no lo alcanza en los temas de primario claro). Un solo color
  * por serie: las barras se distinguen por su etiqueta, no por el color.
  *

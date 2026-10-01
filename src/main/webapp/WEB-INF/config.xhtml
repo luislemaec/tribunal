@@ -47,25 +47,6 @@
                             onchange="PrimeFaces.EcuadorConfigurator.changeMenuToRTL()">
                 <p:ajax onstart="PrimeFaces.EcuadorConfigurator.beforeResourceChange()" update="config-form"/>
             </p:toggleSwitch>
-
-            <hr/>
-
-            <h5>#{msg['config.themes']}</h5>
-            <div class="layout-themes">
-                <ui:repeat value="#{guestPreferences.menuThemes}" var="theme">
-                    <div>
-                        <p:commandLink actionListener="#{guestPreferences.setTheme(theme.file)}"
-                                       style="background-image: linear-gradient(to right, #{theme.color1}, #{theme.color2})"
-                                       title="#{theme.name}" process="@this" update="config-form"
-                                       onstart="PrimeFaces.EcuadorConfigurator.beforeResourceChange()"
-                                       oncomplete="PrimeFaces.EcuadorConfigurator.changeScheme('#{theme.file}')">
-                            <ui:fragment rendered="#{theme.file eq guestPreferences.theme}">
-                                <i class="pi pi-check" style="color: #ffffff"/>
-                            </ui:fragment>
-                        </p:commandLink>
-                    </div>
-                </ui:repeat>
-            </div>
         </h:form>
     </div>
 </ui:composition>

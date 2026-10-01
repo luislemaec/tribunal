@@ -302,7 +302,7 @@
                                 <small class="block text-500">#{padron.iglesiaPersona.iglesia.comunidad}</small>
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:8rem">
-                                <p:tag value="#{msg['mjrv.estado.habilitado']}" severity="success" icon="pi pi-check"/>
+                                <p:tag value="#{msg['mjrv.estado.habilitado']}" severity="success" icon="pi pi-check-circle"/>
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:5rem">
                                 <p:commandButton icon="pi pi-user-plus"
@@ -364,7 +364,8 @@
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:14%">
                                 <p:tag value="#{jrvController.edicionBloqueada ? msg['mjrv.estado.completa'] : msg['mjrv.estado.incompleta']}"
-                                       severity="#{jrvController.edicionBloqueada ? 'success' : 'warning'}"/>
+                                       severity="#{jrvController.edicionBloqueada ? 'success' : 'warning'}"
+                                       icon="#{jrvController.edicionBloqueada ? 'pi pi-check-circle' : 'pi pi-exclamation-circle'}"/>
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:6%">
                                 <p:commandButton icon="pi pi-times" styleClass="rounded-button ui-button-flat ui-button-danger"

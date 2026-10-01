@@ -28,7 +28,7 @@
         <!-- BlockUI global del formulario -->
         <p:blockUI block="frmCronograma" trigger="frmCronograma">
             <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:var(--primary-700)"/>
-            <span style="display:block;margin-top:.5rem;color:#fff;font-size:.9rem;font-weight:500">
+            <span style="display:block;margin-top:.5rem;color:#fff;font-size:var(--tec-fs-md);font-weight:500">
                 Procesando cronograma...
             </span>
         </p:blockUI>
@@ -45,11 +45,11 @@
                 <div>
                     <div class="flex align-items-center gap-2 mb-1">
                         <i class="pi pi-calendar-plus text-primary-700" style="font-size:1.4rem"/>
-                        <h2 class="m-0 text-900 font-bold" style="font-size:1.35rem">
+                        <h2 class="m-0 text-900 font-bold" style="font-size:var(--tec-fs-xl)">
                             Cronograma electoral
                         </h2>
                         <p:tag rendered="#{hayProceso and proceso.activo}"
-                               value="ACTIVO" severity="success" icon="pi pi-bolt"/>
+                               value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
                     </div>
                     <p class="m-0 text-500 text-sm">
                         Gestión de fases del proceso electoral — 10 bloques: registro inicial,
@@ -175,9 +175,9 @@
                         <i class="pi pi-flag text-primary-700"/>
                         <span class="font-semibold text-800">Datos del proceso</span>
                         <p:tag rendered="#{hayProceso and proceso.activo}"
-                               value="ACTIVO" severity="success" icon="pi pi-bolt"/>
+                               value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
                         <p:tag rendered="#{hayProceso and not proceso.activo}"
-                               value="Inactivo" severity="secondary" icon="pi pi-pause"/>
+                               value="Inactivo" severity="secondary" icon="pi pi-ban"/>
                     </div>
                     <div class="flex gap-2">
                         <p:commandButton value="Nuevo proceso" icon="pi pi-plus"
@@ -311,7 +311,7 @@
                                          ajax="false"
                                          disabled="#{empty fases}"
                                          title="Exportar a PDF"
-                                         styleClass="ui-button-outlined ui-button-help">
+                                         styleClass="tec-btn ui-button-outlined ui-button-info">
                             <p:dataExporter type="pdf" target="tblFases" fileName="cronograma_fases"/>
                         </p:commandButton>
 

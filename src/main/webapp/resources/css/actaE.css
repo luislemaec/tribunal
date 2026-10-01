@@ -32,7 +32,7 @@
 .acta-comparacion {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: .875rem;
+	font-size: var(--tec-fs-md);
 }
 
 .acta-comparacion th,
@@ -44,8 +44,8 @@
 
 .acta-comparacion th {
 	background: var(--surface-ground);
-	font-size: .75rem;
-	font-weight: 600;
+	font-size: var(--tec-fs-xs);
+	font-weight: 700;
 	letter-spacing: .02em;
 }
 
@@ -57,7 +57,7 @@
 
 .acta-comparacion__subtotal td {
 	background: var(--surface-100);
-	font-weight: 600;
+	font-weight: 700;
 }
 
 .acta-comparacion__total td {
@@ -75,12 +75,12 @@
 	border: 1px dashed var(--surface-border);
 	border-radius: 4px;
 	background: var(--surface-ground);
-	font-size: .875rem;
+	font-size: var(--tec-fs-md);
 }
 
 .acta-comparacion-controles__titulo {
-	font-size: .75rem;
-	font-weight: 600;
+	font-size: var(--tec-fs-xs);
+	font-weight: 700;
 	color: var(--text-color-secondary);
 	text-transform: uppercase;
 	letter-spacing: .03em;
@@ -115,18 +115,18 @@
 /* Listado de escrutinios (actaE) más denso: fuente y relleno algo menores para ver más
    mesas por pantalla sin bajar de un tamaño cómodo de lectura. Las etiquetas p:tag se
    compactan en proporción para que la columna Situación no ensanche la fila. */
-.actae-tabla-densa .ui-datatable-data > tr > td { font-size: .8125rem; padding-top: .35rem; padding-bottom: .35rem; }
+.actae-tabla-densa .ui-datatable-data > tr > td { font-size: var(--tec-fs-sm); padding-top: .35rem; padding-bottom: .35rem; }
 
-.actae-tabla-densa thead > tr > th { font-size: .75rem; }
+.actae-tabla-densa thead > tr > th { font-size: var(--tec-fs-xs); }
 
-.actae-tabla-densa .ui-tag { font-size: .72rem; padding: .15rem .45rem; }
+.actae-tabla-densa .ui-tag { font-size: var(--tec-fs-xs); padding: .15rem .45rem; }
 
-.actae-tabla-densa small { font-size: .72rem; }
+.actae-tabla-densa small { font-size: var(--tec-fs-xs); }
 
 /* Filtros de columna del listado de escrutinios: compactos, bajo el título. */
-.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .35rem; min-width: 0; font-size: .75rem; font-weight: 400; text-align: left; }
+.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .35rem; min-width: 0; font-size: var(--tec-fs-xs); font-weight: 400; text-align: left; }
 
-.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: .75rem; }
+.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: var(--tec-fs-xs); }
 
 /* La clase de cada paso procede del modelo de progreso del backend. */
 body .actae-steps.ui-steps > ul {
@@ -154,7 +154,7 @@ body .actae-steps.ui-steps .ui-steps-title {
     overflow-wrap: anywhere;
     text-align: center;
     margin: 0;
-    font-size: .8rem;
+    font-size: var(--tec-fs-sm);
     color: var(--text-color);
 }
 body .actae-steps.ui-steps .ui-steps-item:not(.ui-state-disabled) .ui-menuitem-link {
@@ -169,7 +169,7 @@ body .actae-steps.ui-steps .ui-steps-number {
     height: 2rem;
     min-width: 2rem;
     line-height: 2rem;
-    font-size: .85rem;
+    font-size: var(--tec-fs-md);
     background: var(--surface-ground);
     color: var(--text-color-secondary);
     border: 1px solid var(--surface-border);

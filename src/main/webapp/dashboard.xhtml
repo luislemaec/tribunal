@@ -42,26 +42,26 @@
                              type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/iglesias"     icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-success" rendered="#{dashboardController.permite('iglesias')}"/>
-                    <p:menuitem outcome="/personas"     icon="pi pi-users"       title="#{msg['form.dashboard.shortcut.personas']}"     styleClass="ui-button-info"    rendered="#{dashboardController.permite('personas')}"/>
-                    <p:menuitem outcome="/padron"       icon="pi pi-id-card"     title="#{msg['form.dashboard.shortcut.padron']}"       styleClass="ui-button-info"    rendered="#{dashboardController.permite('padron')}"/>
-                    <p:menuitem outcome="/recintos"     icon="pi pi-map-marker"  title="#{msg['form.dashboard.shortcut.recintos']}"     styleClass="ui-button-info"    rendered="#{dashboardController.permite('recintos')}"/>
-                    <p:menuitem outcome="/mjrv"         icon="pi pi-sitemap"     title="#{msg['form.dashboard.shortcut.mjrv']}"         styleClass="ui-button-warning" rendered="#{dashboardController.permite('mjrv')}"/>
-                    <p:menuitem outcome="/reportesMesa" icon="pi pi-folder-open" title="#{msg['form.dashboard.shortcut.reportesMesa']}" styleClass="ui-button-warning" rendered="#{dashboardController.permite('reportesMesa')}"/>
-                    <p:menuitem outcome="/escrutinios"  icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-help"    rendered="#{dashboardController.permite('escrutinios')}"/>
+                    <p:menuitem outcome="/iglesias"     icon="pi pi-home"        title="#{msg['form.dashboard.shortcut.iglesias']}"     styleClass="ui-button-secondary" rendered="#{dashboardController.permite('iglesias')}"/>
+                    <p:menuitem outcome="/personas"     icon="pi pi-users"       title="#{msg['form.dashboard.shortcut.personas']}"     styleClass="ui-button-secondary"    rendered="#{dashboardController.permite('personas')}"/>
+                    <p:menuitem outcome="/padron"       icon="pi pi-id-card"     title="#{msg['form.dashboard.shortcut.padron']}"       styleClass="ui-button-secondary"    rendered="#{dashboardController.permite('padron')}"/>
+                    <p:menuitem outcome="/recintos"     icon="pi pi-map-marker"  title="#{msg['form.dashboard.shortcut.recintos']}"     styleClass="ui-button-secondary"    rendered="#{dashboardController.permite('recintos')}"/>
+                    <p:menuitem outcome="/mjrv"         icon="pi pi-sitemap"     title="#{msg['form.dashboard.shortcut.mjrv']}"         styleClass="ui-button-secondary" rendered="#{dashboardController.permite('mjrv')}"/>
+                    <p:menuitem outcome="/reportesMesa" icon="pi pi-folder-open" title="#{msg['form.dashboard.shortcut.reportesMesa']}" styleClass="ui-button-secondary" rendered="#{dashboardController.permite('reportesMesa')}"/>
+                    <p:menuitem outcome="/escrutinios"  icon="pi pi-file-edit"   title="#{msg['form.dashboard.shortcut.escrutinios']}"  styleClass="ui-button-secondary"    rendered="#{dashboardController.permite('escrutinios')}"/>
                 </p:speedDial>
                 <p:speedDial rendered="#{dashboardController.restringidoAIglesia and dashboardController.tieneIglesiaAsignada}"
                              type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="#{msg['dashboard.iglesia.accion.actualizarIglesia']}" styleClass="ui-button-success"/>
-                    <p:menuitem outcome="/personas" icon="pi pi-users" title="#{msg['dashboard.iglesia.accion.gestionarPersonas']}" styleClass="ui-button-info"/>
+                    <p:menuitem outcome="/iglesias" icon="pi pi-home" title="#{msg['dashboard.iglesia.accion.actualizarIglesia']}" styleClass="ui-button-secondary"/>
+                    <p:menuitem outcome="/personas" icon="pi pi-users" title="#{msg['dashboard.iglesia.accion.gestionarPersonas']}" styleClass="ui-button-secondary"/>
                 </p:speedDial>
                 <p:speedDial rendered="#{dashboardController.restringidoAPresidenteMesa and dashboardController.tieneMesaAsignada}"
                              type="quarter-circle" radius="120" direction="up-left"
                              showIcon="pi pi-plus" hideIcon="pi pi-times"
                              buttonStyleClass="dashboard-speeddial">
-                    <p:menuitem outcome="/actaE" icon="pi pi-file-edit" title="#{msg['dashboard.presidente.accion.acta']}" styleClass="ui-button-success"/>
+                    <p:menuitem outcome="/actaE" icon="pi pi-file-edit" title="#{msg['dashboard.presidente.accion.acta']}" styleClass="ui-button-secondary"/>
                 </p:speedDial>
             </h:form>
 

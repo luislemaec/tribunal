@@ -1,8 +1,12 @@
 /* Portal público de resultados: diseño minimalista, sin dependencias externas. */
 
 :root {
-    --accent: #1d4ed8;
-    --accent-soft: #eff4ff;
+    /* Identidad institucional (mismos valores que tribunal-globals.css). El azul es el acento; amarillo y rojo solo en la franja. */
+    --tec-ecuador-yellow: #FFDD00;
+    --tec-ecuador-blue: #034EA2;
+    --tec-ecuador-red: #ED1C24;
+    --accent: var(--tec-ecuador-blue);
+    --accent-soft: #eef4fb;
     --success: #047857;
     --success-soft: #ecfdf5;
     --warning: #b45309;
@@ -26,8 +30,8 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --accent: #7aa2ff;
-        --accent-soft: rgba(122, 162, 255, .12);
+        --accent: #6aa3e8;
+        --accent-soft: rgba(106, 163, 232, .12);
         --success: #34d399;
         --success-soft: rgba(52, 211, 153, .12);
         --warning: #fbbf24;
@@ -44,6 +48,18 @@
         --chart-grid: #232a33;
         --shadow: none;
     }
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    height: 3px;
+    pointer-events: none;
+    background: linear-gradient(to right, var(--tec-ecuador-yellow) 0 50%, var(--tec-ecuador-blue) 50% 75%, var(--tec-ecuador-red) 75% 100%);
 }
 
 *,

@@ -1,9 +1,10 @@
-:root { color-scheme: light; font-family: system-ui, sans-serif; color: #252a30; background: #f3f5f6; }
+/* Página independiente (sin tema PrimeFaces): mismos tokens de identidad que tribunal-globals.css. */
+:root { --tec-ecuador-yellow: #FFDD00; --tec-ecuador-blue: #034EA2; --tec-ecuador-red: #ED1C24; color-scheme: light; font-family: system-ui, sans-serif; color: #252a30; background: #f3f5f6; }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 24px 16px; }
-main { margin: 8vh auto 0; max-width: 480px; border-top: 4px solid #197563; padding: 24px 0; }
+main { margin: 8vh auto 0; max-width: 480px; border-top: 4px solid; border-image: linear-gradient(to right, var(--tec-ecuador-yellow) 0 50%, var(--tec-ecuador-blue) 50% 75%, var(--tec-ecuador-red) 75% 100%) 1; padding: 24px 0; }
 h1 { font-size: 24px; line-height: 1.3; margin: 0 0 20px; }
 p { font-size: 16px; line-height: 1.6; }
-button { background: #185986; color: white; border: 0; border-radius: 4px; padding: 14px 20px; font: inherit; cursor: pointer; }
+button { background: var(--tec-ecuador-blue); color: white; border: 0; border-radius: 4px; padding: 14px 20px; font: inherit; cursor: pointer; }
 button:disabled { background: #66717b; cursor: not-allowed; }
-button:focus-visible { outline: 3px solid #197563; outline-offset: 4px; }
+button:focus-visible { outline: 3px solid var(--tec-ecuador-blue); outline-offset: 4px; }

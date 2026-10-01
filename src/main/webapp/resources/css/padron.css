@@ -27,7 +27,7 @@
 .padron-avance-barra .ui-progressbar-value { background: var(--primary-color); border: 0 none; }
 .padron-avance-barra .ui-progressbar-label { display: none; }
 .padron-vista .padron-filtros .ui-panel-content { padding-bottom: .5rem; }
-.padron-vista .padron-filtros .ui-panel-title { font-size: .95rem; font-weight: 600; }
+.padron-vista .padron-filtros .ui-panel-title { font-size: var(--tec-fs-lg); font-weight: 700; }
 @media (max-width: 640px) {
     .padron-vista .padron-filtros .ui-panel-titlebar { flex-wrap: wrap; row-gap: .25rem; }
 }
