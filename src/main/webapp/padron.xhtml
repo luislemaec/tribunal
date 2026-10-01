@@ -1,19 +1,19 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html"
                 xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui" template="/WEB-INF/template.xhtml">
-    <ui:define name="title">#{msg['padron.title']}</ui:define>
-    <ui:define name="viewname"><li>#{msg['padron.crumb.admin']}</li><li>/</li><li>#{msg['padron.title']}</li></ui:define>
+    <ui:define name="title">#{msg['pagina.padron.titulo']}</ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.padron.migas']}"/>
+
     <ui:define name="content">
         <h:outputStylesheet library="css" name="padron.css"/>
 
         <h:form id="frmPadron" styleClass="padron-vista">
-            <div class="flex align-items-start gap-3 mb-3">
-                <i class="pi pi-users text-orange-500 text-2xl mt-1"/>
-                <div>
-                    <h2 class="m-0 text-xl">#{msg['padron.title']}</h2>
-                    <p class="text-500 mt-1 mb-0 text-sm">#{msg['padron.subtitulo']}</p>
-                </div>
-            </div>
+                    <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-users"/>
+            <ui:param name="titulo" value="#{msg['pagina.padron.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.padron.descripcion']}"/>
+        </ui:include>
 
             <!-- Prioridad 1: estado general y avance. Cifras agregadas del proceso
                  vigente, sin detalle por iglesia. -->

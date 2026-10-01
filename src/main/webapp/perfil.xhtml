@@ -5,33 +5,17 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.perfil.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.perfil.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.usuarios.crumb.security']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/perfil">#{msg['form.perfil.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecPagina" value="#{msg['pagina.perfil.migas']}"/>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                        <i class="pi pi-user" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.perfil.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Información y configuración de su cuenta de usuario</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-user"/>
+            <ui:param name="titulo" value="#{msg['pagina.perfil.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.perfil.descripcion']}"/>
+        </ui:include>
 
         <h:form id="frmPerfil">
             <div class="surface-card shadow-1 border-round-lg p-4">

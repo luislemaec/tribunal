@@ -5,13 +5,10 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.iglesias.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.iglesias.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.iglesias.crumb.admin']}</li>
-        <li>/</li>
-        <li><p:link outcome="/iglesias">#{msg['form.iglesias.title']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.iglesias.migas']}"/>
 
     <ui:define name="content">
         <h:outputStylesheet library="css" name="iglesias.css"/>
@@ -19,15 +16,11 @@
         <!-- ======================================================
              ENCABEZADO
              ====================================================== -->
-        <div class="tec-page-header">
-            <div class="tec-page-header__icon" aria-hidden="true">
-                <i class="pi pi-building"/>
-            </div>
-            <div class="min-w-0">
-                <h2>#{msg['form.iglesias.header']}</h2>
-                <p>#{msg['form.iglesias.subheader']}</p>
-            </div>
-        </div>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-building"/>
+            <ui:param name="titulo" value="#{msg['pagina.iglesias.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.iglesias.descripcion']}"/>
+        </ui:include>
 
         <!-- ======================================================
              RESUMEN: indicadores + progreso de la fase activa.

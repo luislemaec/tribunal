@@ -4,30 +4,24 @@
 	xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core"
 	xmlns:ui="jakarta.faces.facelets" xmlns:p="http://primefaces.org/ui"
 	template="/WEB-INF/template.xhtml">
-	<ui:define name="title">#{msg['reportesMesa.title']}</ui:define>
-	<ui:define name="viewname">
-		<li>#{msg['reportesMesa.menu.reportes']}</li>
-		<li>/</li>
-		<li>#{msg['reportesMesa.title']}</li>
-	</ui:define>
+	<ui:define name="title">#{msg['pagina.reportesMesa.titulo']}</ui:define>
+	    <ui:param name="tecModulo" value="#{msg['nav.modulo.reportes']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.reportesMesa.migas']}"/>
+
 	<ui:define name="content">
 		<h:outputStylesheet library="css" name="acta-fisica.css"/>
 		<h:outputStylesheet library="css" name="reportesMesa.css"/>
 		<div class="surface-ground p-2 md:p-4">
-			<div
-				class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
-				<div>
-					<span
-						class="inline-flex align-items-center gap-2 text-primary-700 font-semibold text-sm uppercase"><i
-						class="pi pi-file" />#{msg['reportesMesa.eyebrow']}</span>
-					<h1 class="text-900 text-3xl font-bold mt-2 mb-1">#{msg['reportesMesa.title']}</h1>
-					<p class="text-500 m-0">#{msg['reportesMesa.documentos.resumen']}</p>
-				</div>
-				<p:tag
-					value="#{msg['reportesMesa.proceso.activo']}: #{reporteMesaController.procesoActivo.nombre}"
-					severity="info"
-					rendered="#{not empty reporteMesaController.procesoActivo}" />
-			</div>
+			        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-file"/>
+            <ui:param name="titulo" value="#{msg['pagina.reportesMesa.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.reportesMesa.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag value="#{msg['reportesMesa.proceso.activo']}: #{reporteMesaController.procesoActivo.nombre}" severity="info" rendered="#{not empty reporteMesaController.procesoActivo}" />
+                </div>
+            </ui:define>
+        </ui:include>
 			<h:form id="frmReportesMesa">
 				<p:outputPanel id="panelPrincipal">
 					<div class="surface-card border-round-lg shadow-1 p-3 mb-3">

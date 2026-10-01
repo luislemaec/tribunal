@@ -89,6 +89,7 @@
              ================================================================ -->
         <link rel="preload" as="font" type="font/woff2" crossorigin="anonymous" href="#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-regular.woff2']}"/>
         <link rel="preload" as="font" type="font/woff2" crossorigin="anonymous" href="#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-700.woff2']}"/>
+        <h:outputScript name="js/tribunal-fontsize.js"       library="demo" target="head"/>
         <h:outputStylesheet name="css/nprogress.min.css"     library="demo"/>
         <h:outputStylesheet name="css/tribunal-globals.css"  library="demo"/>
 
@@ -113,15 +114,17 @@
 
             <div class="layout-main">
                 <div class="route-bar">
-                    <div class="route-bar-breadcrumb">
+                    <!-- Migas de pan: Inicio / módulo / página. Cada página declara ui:param tecModulo y tecPagina
+                         (el módulo es solo texto; la página actual no es enlace). El separador lo pone el CSS. -->
+                    <div class="route-bar-breadcrumb" role="navigation" aria-label="#{msg['nav.migas']}">
                         <ul>
                             <li>
-                                <a href="dashboard.jsf">
-                                    <i class="pi pi-home"/>
+                                <a href="dashboard.jsf" title="#{msg['nav.inicio']}" aria-label="#{msg['nav.inicio']}">
+                                    <i class="pi pi-home" aria-hidden="true"/>
                                 </a>
                             </li>
-                            <li>/</li>
-                            <ui:insert name="viewname" />
+                            <ui:fragment rendered="#{not empty tecModulo}"><li>#{tecModulo}</li></ui:fragment>
+                            <ui:fragment rendered="#{not empty tecPagina}"><li aria-current="page">#{tecPagina}</li></ui:fragment>
                         </ul>
                     </div>
                 </div>

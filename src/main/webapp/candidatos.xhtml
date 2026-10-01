@@ -5,30 +5,18 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.candidatos.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.candidatos.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.candidatos.crumb.admin']}</li>
-        <li>/</li>
-        <li><p:link outcome="/candidatos">#{msg['form.candidatos.title']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.candidatos.migas']}"/>
 
     <ui:define name="content">
         <h:outputStylesheet library="css" name="candidatos.css"/>
-        <div class="grid mb-3">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                        <i class="pi pi-users" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.candidatos.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Gestione listas electorales y sus candidaturas desde una sola pantalla.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-users"/>
+            <ui:param name="titulo" value="#{msg['pagina.candidatos.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.candidatos.descripcion']}"/>
+        </ui:include>
 
         <h:form id="frmCandidatos" enctype="multipart/form-data">
             <!-- Listas y sus candidaturas en dos pestañas: al elegir una lista la
@@ -129,7 +117,7 @@
                                                    message="¿Desea dar de baja esta lista? No será posible si tiene candidatos activos."
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
-                                    <p:commandButton icon="pi pi-refresh" title="#{msg['form.candidatos.lista.enable']}" ariaLabel="#{msg['form.candidatos.lista.enable']}"
+                                    <p:commandButton icon="pi pi-replay" title="#{msg['form.candidatos.lista.enable']}" ariaLabel="#{msg['form.candidatos.lista.enable']}"
                                                      styleClass="rounded-button ui-button-flat ui-button-success"
                                                      rendered="#{not lista.estado}"
                                                      action="#{candidatoController.reactivarLista(lista)}"

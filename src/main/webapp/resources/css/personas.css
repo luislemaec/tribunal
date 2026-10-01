@@ -8,7 +8,7 @@
 
 .kpi-card .label { display:block; color:var(--text-color-secondary); font-weight:400; font-size:var(--tec-fs-md); }
 
-.kpi-card .value { display:block; color:var(--text-color); font-weight:700; font-size:1.5rem; }
+.kpi-card .value { display:block; color:var(--text-color); font-weight:700; font-size:var(--tec-fs-xl); }
 
 .tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)) !important; }
 
@@ -115,6 +115,10 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 
 .personas-filtro-estado .ui-selectonemenu-label { font-size:var(--tec-fs-sm); text-transform:none; letter-spacing:normal; }
 
+/* La búsqueda rápida (header de la tabla) solo se muestra en móvil, donde el reflow oculta los filtros por columna.
+   Mismo punto de corte (640px) que el reflow de PrimeFaces. */
+.personas-table .ui-datatable-header { display:none; }
+
 .personas-busqueda-rapida { max-width:26rem; }
 
 .personas-filtros__titulo { margin-bottom:.5rem !important; }
@@ -178,6 +182,7 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
     /* Casilla de selección en la esquina de la tarjeta, junto al nombre. */.tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel { position:absolute; top:.55rem; right:.25rem; left:auto; width:auto !important; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel > .ui-column-title { display:none; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-nombre { padding-right:2.5rem !important; }
+    .personas-table .ui-datatable-header { display:block; }
     .personas-busqueda-rapida { max-width:none; }
     .personas-table.ui-datatable-reflow .tec-acciones { width:auto; }
 }
@@ -206,12 +211,11 @@ body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:var(--green-600)
 /* Personas eliminadas: el motivo de bloqueo es una frase larga y .tec-status
    impone white-space:nowrap, así que sin un ancho propio esa columna no podía
    encogerse, desbordaba el diálogo y dejaba el resto en una letra por línea. */
-.personas-eliminadas__col-nombre { min-width:12rem; }
+.personas-eliminadas__col-nombre { width:30%; min-width:9rem; }
 
-.personas-eliminadas__col-iglesia { min-width:9rem; }
+.personas-eliminadas__col-iglesia { width:20%; min-width:6rem; font-size:var(--tec-fs-sm); }
 
-.personas-eliminadas__col-situacion { width:28%; min-width:14rem; }
+.personas-eliminadas__col-situacion { width:32%; min-width:9rem; }
 
-.personas-eliminadas__col-situacion .tec-status.ui-tag { display:inline-flex; align-items:flex-start; gap:.3rem; max-width:100%; text-align:left; white-space:normal; line-height:1.35; }
-
-.personas-eliminadas__col-situacion .tec-status.ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.15rem; }
+/* Nombre y sexo en la misma línea cuando caben: el metadato no añade una fila más de altura. */
+.personas-eliminadas__col-nombre .personas-nombre { flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:.5rem; }

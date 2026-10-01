@@ -5,33 +5,18 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.roles.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.roles.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.roles.crumb.security']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/roles">#{msg['form.roles.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.seguridad']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.roles.migas']}"/>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                        <i class="pi pi-key" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.roles.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Gestión de roles y perfiles de acceso al sistema</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-key"/>
+            <ui:param name="titulo" value="#{msg['pagina.roles.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.roles.descripcion']}"/>
+        </ui:include>
 
         <h:form id="frmRoles">
 

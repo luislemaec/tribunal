@@ -5,36 +5,29 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.personas.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.personas.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.iglesias.crumb.admin']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/personas">#{msg['form.personas.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.personas.migas']}"/>
 
     <ui:define name="content">
         <h:outputStylesheet library="css" name="personas.css"/>
 
-        <div class="tec-page-header">
-            <div class="tec-page-header__icon" aria-hidden="true">
-                <i class="pi pi-users"/>
-            </div>
-            <div class="min-w-0">
-                <h2>#{msg['form.personas.title']}</h2>
-                <p>Gestión de miembros e integrantes del padrón electoral</p>
-            </div>
-            <div class="tec-page-header__aside">
-                <p:tag rendered="#{personaController.puedeEditarPadron}"
-                       value="Edición habilitada" icon="pi pi-pencil" severity="success"
-                       styleClass="tec-status"/>
-                <p:tag rendered="#{not personaController.puedeEditarPadron}"
-                       value="Edición bloqueada" icon="pi pi-lock" severity="warning"
-                       styleClass="tec-status"/>
-            </div>
-        </div>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-users"/>
+            <ui:param name="titulo" value="#{msg['pagina.personas.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.personas.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                        <p:tag rendered="#{personaController.puedeEditarPadron}"
+                               value="Edición habilitada" icon="pi pi-pencil" severity="success"
+                               styleClass="tec-status"/>
+                        <p:tag rendered="#{not personaController.puedeEditarPadron}"
+                               value="Edición bloqueada" icon="pi pi-lock" severity="warning"
+                               styleClass="tec-status"/>
+                </div>
+            </ui:define>
+        </ui:include>
 
         <h:form id="frmPersonas">
 
@@ -355,7 +348,7 @@
                         <!-- Consulta secundaria: no modifica el listado ni los datos de miembros. -->
                         <p:commandButton id="btnBuscarPersona" value="#{msg['form.personas.busqueda.accion']}"
                                          icon="pi pi-search"
-                                         styleClass="tec-btn ui-button-flat ui-button-secondary"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
                                          actionListener="#{personaController.prepararBusquedaPersonas}"
                                          process="@this"
                                          update=":frmPersonas:panelBusquedaPersona"
@@ -433,7 +426,8 @@
                     <p:ajax event="toggleSelect"        update=":frmPersonas:btnEliminaRegistros"/>
 
                     <!-- Búsqueda rápida: filtro global de PrimeFaces sobre las columnas con filterBy.
-                         Es la única vía de filtrar en móvil, donde los filtros por columna no se muestran. -->
+                         Es la única vía de filtrar en móvil, donde los filtros por columna no se muestran;
+                         en pantallas mayores a 640px se oculta por CSS (personas.css) y se usan los filtros de columna. -->
                     <f:facet name="header">
                         <div class="tec-search-input personas-busqueda-rapida">
                             <i class="pi pi-search" aria-hidden="true"/>

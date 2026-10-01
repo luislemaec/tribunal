@@ -6,34 +6,23 @@
                 xmlns:pe="http://primefaces.org/ui/extensions"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['plantillaCorreos.titulo']}</ui:define>
+    <ui:define name="title">#{msg['pagina.plantillaCorreos.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['plantillaCorreos.crumb.configuracion']}</li>
-        <li>/</li>
-        <li><p:link outcome="/plantillaCorreos">#{msg['plantillaCorreos.titulo']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.seguridad']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.plantillaCorreos.migas']}"/>
 
     <ui:define name="content">
 
-        <div class="grid mb-3">
-            <div class="col-12">
-                <div class="flex align-items-center justify-content-between flex-wrap gap-3">
-                    <div class="flex align-items-center gap-3">
-                        <div class="flex justify-content-center align-items-center border-round-lg"
-                             style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                            <i class="pi pi-envelope" style="font-size:1.5rem"></i>
-                        </div>
-                        <div>
-                            <h2 class="m-0 text-900 font-bold text-2xl">#{msg['plantillaCorreos.titulo']}</h2>
-                            <p class="text-500 mt-1 mb-0 text-sm">#{msg['plantillaCorreos.subtitulo']}</p>
-                        </div>
-                    </div>
-                    <p:tag value="#{empty plantillaCorreoController.plantillasCorreos ? 0 : plantillaCorreoController.plantillasCorreos.size()} #{msg['plantillaCorreos.tag.total']}"
-                           icon="pi pi-list" severity="info"/>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-envelope"/>
+            <ui:param name="titulo" value="#{msg['pagina.plantillaCorreos.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.plantillaCorreos.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag value="#{empty plantillaCorreoController.plantillasCorreos ? 0 : plantillaCorreoController.plantillasCorreos.size()} #{msg['plantillaCorreos.tag.total']}" icon="pi pi-list" severity="info"/>
                 </div>
-            </div>
-        </div>
+            </ui:define>
+        </ui:include>
 
         <p:blockUI block="frmPlantillaCorreo" trigger="frmPlantillaCorreo">
             <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--blue-500)"/>

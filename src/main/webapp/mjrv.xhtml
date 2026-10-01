@@ -5,29 +5,21 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['mjrv.titulo']}</ui:define>
+    <ui:define name="title">#{msg['pagina.mjrv.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['mjrv.crumb.admin']}</li>
-        <li>/</li>
-        <li><p:link outcome="/mjrv">#{msg['mjrv.titulo']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.mjrv.migas']}"/>
 
     <ui:define name="content">
         <h:outputStylesheet library="css" name="mjrv.css"/>
 
         <div class="surface-ground p-2 md:p-4">
 
-        <div class="flex align-items-start gap-3 mb-3">
-            <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                 style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                <i class="pi pi-id-card"></i>
-            </div>
-            <div>
-                <h2 class="m-0 text-900 font-semibold text-xl">#{msg['mjrv.titulo']}</h2>
-                <p class="text-500 mt-1 mb-0 text-sm">#{msg['mjrv.subtitulo']}</p>
-            </div>
-        </div>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-id-card"/>
+            <ui:param name="titulo" value="#{msg['pagina.mjrv.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.mjrv.descripcion']}"/>
+        </ui:include>
 
         <h:form id="frmMJRV">
 

@@ -27,9 +27,15 @@ html {
   font-size: 13px;
 }
 
+/* Tamaño de texto elegido por el usuario (tribunal-fontsize.js). Escala el contenido (theme.css y CSS de TEC están en rem);
+   el menú y la barra superior mantienen sus tamaños en px (primera fase). */
+html[data-tec-fs="11"] { font-size: 11px; }
+html[data-tec-fs="12"] { font-size: 12px; }
+html[data-tec-fs="15"] { font-size: 15px; }
+
 body {
   font-family: var(--font-family);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 400;
   color: #333333;
   -webkit-font-smoothing: antialiased;

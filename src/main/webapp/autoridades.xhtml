@@ -5,36 +5,23 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.autoridades.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.autoridades.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.periodos.crumb.tribunal']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/autoridades">#{msg['form.autoridades.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.tribunal']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.autoridades.migas']}"/>
 
     <ui:define name="content">
 
-        <div class="grid mb-3">
-            <div class="col-12">
-                <div class="flex align-items-center justify-content-between flex-wrap gap-3">
-                    <div class="flex align-items-center gap-3">
-                        <div class="flex justify-content-center align-items-center border-round-lg bg-primary w-4rem h-4rem flex-shrink-0">
-                            <i class="pi pi-star text-2xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.autoridades.title']}</h2>
-                            <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.autoridades.header']}</p>
-                        </div>
-                    </div>
-                    <p:tag value="#{empty tribunalController.periodoSeleccionado ? msg['form.autoridades.estado.sinProceso'] : tribunalController.periodoSeleccionado.nombre}"
-                           severity="#{empty tribunalController.periodoSeleccionado ? 'warning' : 'info'}"
-                           icon="pi pi-calendar"/>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-star"/>
+            <ui:param name="titulo" value="#{msg['pagina.autoridades.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.autoridades.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag value="#{empty tribunalController.periodoSeleccionado ? msg['form.autoridades.estado.sinProceso'] : tribunalController.periodoSeleccionado.nombre}" severity="#{empty tribunalController.periodoSeleccionado ? 'warning' : 'info'}" icon="pi pi-calendar"/>
                 </div>
-            </div>
-        </div>
+            </ui:define>
+        </ui:include>
 
         <h:form id="frmPeriodos">
 

@@ -6,13 +6,10 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.cronograma.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.cronograma.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.periodos.crumb.tribunal']}</li>
-        <li>/</li>
-        <li><p:link outcome="/cronograma">#{msg['form.cronograma.title']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.tribunal']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.cronograma.migas']}"/>
 
     <ui:define name="content">
 
@@ -41,22 +38,16 @@
                  ================================================================= -->
             <div class="flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
 
-                <!-- Título de módulo -->
-                <div>
-                    <div class="flex align-items-center gap-2 mb-1">
-                        <i class="pi pi-calendar-plus text-primary-700" style="font-size:1.4rem"/>
-                        <h2 class="m-0 text-900 font-bold" style="font-size:var(--tec-fs-xl)">
-                            Cronograma electoral
-                        </h2>
-                        <p:tag rendered="#{hayProceso and proceso.activo}"
-                               value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
-                    </div>
-                    <p class="m-0 text-500 text-sm">
-                        Gestión de fases del proceso electoral — 10 bloques: registro inicial,
-                        miembros, convocatoria, candidaturas, organización, campaña,
-                        jornada, escrutinio, resultados y cierre.
-                    </p>
+                        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-calendar-plus"/>
+            <ui:param name="titulo" value="#{msg['pagina.cronograma.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.cronograma.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag rendered="#{hayProceso and proceso.activo}" value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
                 </div>
+            </ui:define>
+        </ui:include>
 
                 <!-- Selector de proceso (posición prominente) -->
                 <div class="flex align-items-center gap-2 flex-wrap">
@@ -88,13 +79,13 @@
                          style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
                              style="width:2.8rem;height:2.8rem;background:var(--blue-50)">
-                            <i class="pi pi-folder-open" style="font-size:1.25rem;color:var(--primary-700)"/>
+                            <i class="pi pi-folder-open" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Procesos
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:1.7rem;line-height:1.1">
+                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
                                 #{totalProcesos}
                             </span>
                         </div>
@@ -109,7 +100,7 @@
                              style="width:2.8rem;height:2.8rem;
                                     background:#{hayProceso and proceso.activo ? '#f0fdf4' : '#fffbeb'}">
                             <i class="pi #{hayProceso and proceso.activo ? 'pi-bolt' : 'pi-pause'}"
-                               style="font-size:1.25rem;color:#{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}"/>
+                               style="font-size:var(--tec-fs-lg);color:#{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}"/>
                         </div>
                         <div class="min-w-0 flex-auto">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -129,13 +120,13 @@
                          style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
                              style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
-                            <i class="pi pi-list" style="font-size:1.25rem;color:var(--primary-700)"/>
+                            <i class="pi pi-list" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Fases configuradas
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:1.7rem;line-height:1.1">
+                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
                                 #{totalFases}
                             </span>
                         </div>
@@ -148,13 +139,13 @@
                          style="border-left:4px solid var(--primary-color)">
                         <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
                              style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
-                            <i class="pi pi-tags" style="font-size:1.25rem;color:var(--primary-700)"/>
+                            <i class="pi pi-tags" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Catálogo de fases
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:1.7rem;line-height:1.1">
+                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
                                 #{cronogramaController.totalFasesCatalogo}
                             </span>
                         </div>
@@ -383,7 +374,7 @@
                               style="min-width:12rem">
                         <div class="flex flex-column gap-1">
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-right" style="font-size:.65rem;color:var(--text-color-secondary)"/>
+                                <i class="pi pi-arrow-right" style="font-size:var(--tec-fs-2xs);color:var(--text-color-secondary)"/>
                                 <span class="text-700 text-xs">
                                     <h:outputText value="#{f.fechaInicio}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
@@ -391,7 +382,7 @@
                                 </span>
                             </div>
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-left" style="font-size:.65rem;color:var(--text-color-secondary)"/>
+                                <i class="pi pi-arrow-left" style="font-size:var(--tec-fs-2xs);color:var(--text-color-secondary)"/>
                                 <span class="text-700 text-xs">
                                     <h:outputText value="#{f.fechaFin}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>

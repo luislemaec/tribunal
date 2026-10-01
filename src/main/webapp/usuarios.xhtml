@@ -5,31 +5,21 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.usuarios.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.usuarios.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.usuarios.crumb.security']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/usuarios">#{msg['form.usuarios.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.seguridad']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.usuarios.migas']}"/>
 
     <ui:define name="content">
 
         <!-- ======================================================
              ENCABEZADO
              ====================================================== -->
-        <div class="flex align-items-start gap-3 mb-3">
-            <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                 style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                <i class="pi pi-shield"></i>
-            </div>
-            <div>
-                <h2 class="m-0 text-900 font-semibold text-xl">#{msg['form.usuarios.title']}</h2>
-                <p class="text-500 mt-1 mb-0 text-sm">#{msg['form.usuarios.subtitulo']}</p>
-            </div>
-        </div>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-shield"/>
+            <ui:param name="titulo" value="#{msg['pagina.usuarios.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.usuarios.descripcion']}"/>
+        </ui:include>
 
         <!-- ======================================================
              TABLA PRINCIPAL DE USUARIOS
@@ -260,7 +250,7 @@
                                 <p:tooltip for="@parent" position="top" value="#{msg['form.usuarios.btn.delete']}"/>
                             </p:commandButton>
 
-                            <p:commandButton icon="pi pi-refresh"
+                            <p:commandButton icon="pi pi-replay"
                                              styleClass="rounded-button ui-button-flat ui-button-success"
                                              ariaLabel="#{msg['form.usuarios.btn.restore']}"
                                              rendered="#{not rolUs.usuario.estado}"

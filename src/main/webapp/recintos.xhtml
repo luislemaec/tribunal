@@ -5,32 +5,18 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['recintos.titulo']}</ui:define>
+    <ui:define name="title">#{msg['pagina.recintos.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['recintos.crumb.admin']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/recintos">#{msg['recintos.titulo']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.recintos.migas']}"/>
 
     <ui:define name="content">
 
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                        <i class="pi pi-map-marker" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['recintos.titulo']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">#{msg['recintos.subtitulo']}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-map-marker"/>
+            <ui:param name="titulo" value="#{msg['pagina.recintos.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.recintos.descripcion']}"/>
+        </ui:include>
 
         <h:form id="frmRecintos">
 
@@ -43,7 +29,7 @@
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.total.recintos']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintos}</div>
                                 </div>
-                                <i class="pi pi-building text-teal-600" style="font-size:1.5rem"></i>
+                                <i class="pi pi-building text-teal-600" style="font-size:var(--tec-fs-xl)"></i>
                             </div>
                         </div>
                     </div>
@@ -54,7 +40,7 @@
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.recintos.activos']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintosActivos}</div>
                                 </div>
-                                <i class="pi pi-check-circle text-green-600" style="font-size:1.5rem"></i>
+                                <i class="pi pi-check-circle text-green-600" style="font-size:var(--tec-fs-xl)"></i>
                             </div>
                         </div>
                     </div>
@@ -65,7 +51,7 @@
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.total.mesas']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRegistradas}</div>
                                 </div>
-                                <i class="pi pi-table text-cyan-700" style="font-size:1.5rem"></i>
+                                <i class="pi pi-table text-cyan-700" style="font-size:var(--tec-fs-xl)"></i>
                             </div>
                         </div>
                     </div>
@@ -76,7 +62,7 @@
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.mesas.seleccionado']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRecintoSeleccionado}</div>
                                 </div>
-                                <i class="pi pi-sitemap text-orange-600" style="font-size:1.5rem"></i>
+                                <i class="pi pi-sitemap text-orange-600" style="font-size:var(--tec-fs-xl)"></i>
                             </div>
                         </div>
                     </div>

@@ -6,10 +6,33 @@
    por dos pantallas concretas, en un archivo común (p. ej. acta-fisica.css).
    Colores: solo variables del tema (--primary-*, --surface-*, --text-color*, paleta). */
 
-/* Escala tipográfica compartida. Las hojas por pantalla deben usar estas variables en lugar
-   de tamaños sueltos: xs = etiquetas/encabezados en mayúsculas, sm = metadatos y texto secundario,
-   md = contenido de celdas, inputs y botones, lg = títulos, xl = cifras destacadas (KPI). */
-:root { --tec-fs-xs:.72rem; --tec-fs-sm:.8rem; --tec-fs-md:.875rem; --tec-fs-lg:1rem; --tec-fs-xl:1.35rem; }
+/* ==========================================================================
+ * ESCALA TIPOGRÁFICA OFICIAL DE TEC (Montserrat; la raíz del layout es 13px, por eso los valores son rem)
+ *   2xs  9px  EXCEPCIÓN: microtexto no esencial o espacio extremo (iconos diminutos, contadores). Nunca en tablas,
+ *            formularios, botones, encabezados, nombres, cédulas ni información que se lea con normalidad.
+ *   xs  11px  fechas, metadatos, tags, hints y encabezados de tabla
+ *   sm  12px  información secundaria y labels
+ *   md  13px  BASE: texto, inputs, botones, celdas y datos principales
+ *   lg  15px  títulos de diálogos y paneles
+ *   xl  18px  títulos superiores y cifras destacadas
+ *   2xl 22px  títulos de página / cifras de gran formato
+ * Pesos reales de la fuente: 400 y 700 (500 y 600 se resuelven a 400 y 700, sin síntesis). Texto pequeño en 400;
+ * encabezados y títulos en 700. No se usan Thin/Light. Para ganar espacio se ajusta padding, gap, anchos y wrapping,
+ * nunca el tamaño de letra.
+ * ========================================================================== */
+/* Con el tamaño de texto compacto (raíz 11–12px) los niveles pequeños no bajan de un piso legible. */
+:root { --tec-fs-2xs:max(9px, .692rem); --tec-fs-xs:max(10px, .846rem); --tec-fs-sm:max(10.5px, .923rem); --tec-fs-md:1rem; --tec-fs-lg:1.154rem; --tec-fs-xl:1.385rem; --tec-fs-2xl:1.692rem; --tec-lh-tight:1.25; --tec-lh-base:1.4; }
+
+/* Selector de tamaño de texto (WEB-INF/config.xhtml): grupo de botones con el estado activo en el color primario. */
+.tec-fs-selector { display:flex; flex-wrap:wrap; gap:.375rem; margin-top:.5rem; }
+/* Opción marcada: color primario + icono de verificación (no depende solo del color). Se antepone html body porque el tema
+   pinta .ui-button-outlined con una regla de mayor especificidad que ignoraba el estado marcado. */
+html body .tec-fs-selector .ui-button.ui-button-outlined[aria-pressed="true"],
+html body .tec-fs-selector .ui-button.ui-button-outlined[aria-pressed="true"]:enabled:hover { border-color:var(--primary-color); background:var(--primary-color); color:var(--primary-color-text); }
+html body .tec-fs-selector .ui-button[aria-pressed="true"]::before { content:"\e909"; margin-right:.35rem; font-family:'primeicons'; font-weight:normal; }
+
+/* Excepción controlada (2xs): usar solo donde el espacio sea extremo y el texto no sea esencial. */
+.tec-text-2xs { font-size:var(--tec-fs-2xs); font-weight:400; letter-spacing:.02em; line-height:var(--tec-lh-tight); }
 
 /* ==========================================================================
  * Tipografía base: una sola familia (Montserrat, definida en --font-family del tema) y dos pesos
@@ -20,6 +43,15 @@ body { font-family:var(--font-family); font-weight:400; }
 body input, body button, body select, body textarea, body optgroup { font-family:inherit; }
 body .font-medium, body .font-normal { font-weight:400 !important; }
 body .font-semibold { font-weight:700 !important; }
+
+/* PrimeFlex define text-xs/sm/base/lg/xl/2xl en rem propios (.75/.875/1/1.125/1.25/1.5) que no coinciden con la escala TEC;
+   se alinean con ella para que un mismo rol tenga el mismo tamaño en todas las pantallas y diálogos. */
+body .text-xs { font-size:var(--tec-fs-xs) !important; }
+body .text-sm { font-size:var(--tec-fs-sm) !important; }
+body .text-base { font-size:var(--tec-fs-md) !important; }
+body .text-lg { font-size:var(--tec-fs-lg) !important; }
+body .text-xl { font-size:var(--tec-fs-xl) !important; }
+body .text-2xl, body .text-3xl { font-size:var(--tec-fs-2xl) !important; }
 
 /* Identidad institucional (bandera de Ecuador). Son acentos de marca, NO colores de acción:
    el color primario de los controles lo define el tema de PrimeFaces (tema "Tribunal" = azul institucional,
@@ -301,11 +333,20 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 /* Encabezado de página */
 .tec-page-header { display:flex; align-items:center; gap:.875rem; margin-bottom:1rem; }
 
-.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:var(--surface-100); color:var(--text-color); font-size:1.2rem; }
+.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:var(--surface-100); color:var(--text-color); font-size:var(--tec-fs-lg); }
 
-.tec-page-header h2 { margin:0; color:var(--text-color); font-size:var(--tec-fs-xl); line-height:1.25; }
+.tec-page-header :is(h1, h2) { margin:0; color:var(--text-color); font-size:var(--tec-fs-2xl); font-weight:700; line-height:var(--tec-lh-tight); }
 
 .tec-page-header p { margin:.15rem 0 0; color:var(--text-color-secondary); font-size:var(--tec-fs-md); }
+
+/* Migas de pan: Inicio / módulo / página. Colores y tamaños salen del tema (el layout los fija en px y HEX). */
+html body .layout-wrapper .layout-main .route-bar { min-height:0; border-bottom:1px solid var(--surface-border); background:var(--surface-ground); box-shadow:none; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb { padding:.4rem 1rem; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li { padding:0; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); line-height:var(--tec-lh-tight); }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li + li::before { content:"/"; padding:0 .5rem; color:var(--text-color-secondary); opacity:.7; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li a { color:var(--tec-primary-text, var(--primary-color)); font-size:var(--tec-fs-sm); }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li i { color:var(--tec-primary-text, var(--primary-color)); font-size:var(--tec-fs-lg); top:2px; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li[aria-current="page"] { font-weight:700; }
 
 .tec-page-header__aside { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:.375rem; margin-left:auto; }
 
@@ -319,7 +360,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 .tec-filters .ui-outputlabel,
 .tec-form .ui-outputlabel,
 .tec-filters .tec-field-label,
-.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:700; }
+.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:400; }
 
 .tec-search-input { position:relative; display:block; }
 
@@ -430,6 +471,28 @@ body .ui-dialog .ui-dialog-titlebar { padding:.875rem 1.25rem; border-bottom:1px
 body .ui-dialog .ui-dialog-titlebar .ui-dialog-title { font-size:var(--tec-fs-lg); }
 body .ui-dialog .ui-dialog-content { padding:1rem 1.25rem 1.25rem; background:var(--surface-card); color:var(--text-color); }
 body .ui-dialog .ui-dialog-content:last-child { border-radius:0 0 var(--tec-radius) var(--tec-radius); }
+/* ---- Estándar de p:dialog (todos los diálogos, modernos y antiguos) ----
+   Jerarquía: título lg · texto y datos principales md · labels e info secundaria sm · hints, fechas, metadatos y tags xs. */
+body .ui-dialog .ui-dialog-content { font-size:var(--tec-fs-md); line-height:var(--tec-lh-base); }
+body .ui-dialog .ui-outputlabel, body .ui-dialog .field > label, body .ui-dialog .tec-field-label { font-size:var(--tec-fs-sm); font-weight:400; line-height:var(--tec-lh-tight); }
+body .ui-dialog small { font-size:var(--tec-fs-xs); line-height:var(--tec-lh-base); }
+body .ui-dialog :is(h3, h4, h5) { margin:0 0 .5rem; font-size:var(--tec-fs-lg); font-weight:700; line-height:var(--tec-lh-tight); }
+
+/* Tablas dentro de diálogos: densidad compacta. Las columnas se reparten el ancho disponible (max-width:100%);
+   el scroll horizontal queda solo como último recurso. */
+body .ui-dialog .ui-datatable { max-width:100%; }
+body .ui-dialog .ui-datatable thead th { padding:.4rem .5rem; }
+body .ui-dialog .ui-datatable .ui-datatable-data > tr > td { padding:.35rem .5rem; line-height:var(--tec-lh-base); }
+body .ui-dialog .ui-datatable .ui-paginator { padding-top:.4rem; }
+body .ui-dialog .ui-datatable .tec-mono { font-size:var(--tec-fs-md); }
+body .ui-dialog .ui-datatable td .personas-nombre__meta { font-size:var(--tec-fs-xs); }
+/* Acciones: columna estrecha (el icono manda, no el encabezado) y con los iconos centrados. */
+body .ui-dialog .ui-datatable th.tec-col-actions, body .ui-dialog .ui-datatable td.tec-col-actions { padding-right:.25rem; padding-left:.25rem; text-align:center; }
+body .ui-dialog .ui-datatable .tec-col-actions .tec-acciones { justify-content:center; }
+/* Tags: texto xs, varias líneas si hace falta, sin imponer la altura de la fila. */
+body .ui-dialog .ui-datatable td .tec-status.ui-tag { display:inline-flex; align-items:flex-start; gap:.3rem; max-width:100%; line-height:var(--tec-lh-tight); text-align:left; white-space:normal; }
+body .ui-dialog .ui-datatable td .tec-status.ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.1rem; }
+body .ui-dialog .ui-dialog-content .ui-datatable .ui-datatable-tablewrapper { max-width:100%; overflow-x:auto; }
 body .ui-dialog .ui-dialog-footer { padding:.75rem 1.25rem; border-top:1px solid var(--surface-border); border-radius:0 0 var(--tec-radius) var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
 
 body .ui-overlaypanel { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:var(--tec-shadow-float); }
@@ -481,8 +544,38 @@ body .ui-growl .ui-growl-item-container .ui-growl-item { padding:.75rem 1rem; }
 /* Deshabilitado/solo lectura: identificable (fondo de superficie) pero legible (sin opacity .6 sobre el texto). */
 body .ui-inputfield:disabled, body .ui-inputfield[readonly], body .ui-state-disabled .ui-inputfield, body .ui-inputfield.ui-state-disabled { opacity:1; border-color:var(--surface-border); background:var(--surface-100); color:var(--text-color); }
 
+/* ==========================================================================
+ * Acciones de fila (botones de solo icono): iconos con presencia, sin fondos fuertes.
+ * PrimeIcons es una fuente de UN solo peso: con font-weight:700 el navegador engrosa el trazo
+ * (negrita sintética) sin deformarlo, y es lo que da la presencia buscada. El color de cada
+ * acción sale de su severidad (variante -text del tema, contraste ≥ 4.5:1); 'secondary' usa el
+ * color de texto para que Editar no se vea apagado. Aplica a .tec-acciones y a cualquier tabla.
+ * ========================================================================== */
+:root { --tec-action-icon-size:1.05rem; }
+
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only { --tec-action-color:var(--text-color); color:var(--tec-action-color); opacity:1; }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-secondary { --tec-action-color:var(--text-color); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-info { --tec-action-color:var(--info-text); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-success { --tec-action-color:var(--success-text); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-warning { --tec-action-color:var(--warning-text); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-help { --tec-action-color:var(--help-text); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-danger { --tec-action-color:var(--danger-text); }
+
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only .ui-icon { color:inherit; font-size:var(--tec-action-icon-size); font-weight:700; }
+
+/* Hover / active: tinte suave del propio color de la acción (no cambia el color del icono). */
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:enabled:hover,
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-state-hover { background:color-mix(in srgb, var(--tec-action-color) 14%, transparent); color:var(--tec-action-color); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:enabled:active,
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-state-active { background:color-mix(in srgb, var(--tec-action-color) 22%, transparent); color:var(--tec-action-color); }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:focus-visible { outline:2px solid var(--tec-action-color); outline-offset:1px; box-shadow:none; }
+
+/* Solo lo realmente deshabilitado se atenúa (el tema usa .6; con este icono más delgado se baja a .4 para que se distinga). */
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:disabled,
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-state-disabled { opacity:.4; background:transparent; }
+
 /* Estados discretos (el tema pinta p:tag con colores sólidos) */
-.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:700; line-height:1.4; white-space:nowrap; }
+.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:400; line-height:var(--tec-lh-base); white-space:nowrap; }
 
 .tec-status.ui-tag.ui-tag-success { background:var(--green-50); color:var(--green-700); }
 
@@ -497,7 +590,7 @@ body .ui-inputfield:disabled, body .ui-inputfield[readonly], body .ui-state-disa
 /* Estado vacío */
 .tec-empty { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:2rem 1rem; text-align:center; }
 
-.tec-empty > .pi { margin-bottom:.35rem; color:var(--text-color-secondary); font-size:1.75rem; }
+.tec-empty > .pi { margin-bottom:.35rem; color:var(--text-color-secondary); font-size:var(--tec-fs-2xl); }
 
 .tec-empty__title { color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:700; }
 
@@ -529,6 +622,9 @@ body .ui-inputfield:disabled, body .ui-inputfield[readonly], body .ui-state-disa
 }
 
 @media (max-width:576px) {
+    body .ui-dialog .ui-dialog-titlebar { padding:.75rem 1rem; }
+    body .ui-dialog .ui-dialog-content { padding:.75rem 1rem 1rem; }
+    body .ui-dialog .ui-dialog-footer { padding:.5rem 1rem; }
     .tec-page-header { flex-wrap:wrap; }
     .tec-page-header__aside { margin-left:0; }
     .tec-card { padding:.875rem; }

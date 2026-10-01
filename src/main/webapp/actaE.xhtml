@@ -5,34 +5,25 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/template.xhtml">
 
-    <ui:define name="title">#{msg['form.actaE.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.actaE.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.iglesias.crumb.admin']}</li>
-        <li>/</li>
-        <li><p:link outcome="/actaE">#{msg['form.actaE.title']}</p:link></li>
-    </ui:define>
+        <ui:param name="tecModulo" value="#{msg['nav.modulo.administracion']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.actaE.migas']}"/>
 
     <ui:define name="content">
         <h:outputStylesheet library="css" name="acta-fisica.css"/>
         <h:outputStylesheet library="css" name="actaE.css"/>
 
-        <!-- Cabecera con el mismo patrón de reportesMesa.xhtml: título a la izquierda y
-             el proceso vigente como etiqueta, en lugar de ofrecerlo como filtro. -->
-        <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
-            <div class="flex align-items-start gap-3">
-                <div class="flex justify-content-center align-items-center border-round-lg mt-1"
-                     style="width:2.5rem;height:2.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                    <i class="pi pi-file-edit"></i>
+                <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-file-edit"/>
+            <ui:param name="titulo" value="#{msg['pagina.actaE.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.actaE.descripcion']}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag value="#{msg['reportesMesa.proceso.activo']}: #{actaEController.procesoActivo.nombre}" severity="info" rendered="#{not empty actaEController.procesoActivo}"/>
                 </div>
-                <div>
-                    <h2 class="m-0 text-900 font-semibold text-xl">#{msg['form.actaE.title']}</h2>
-                    <p class="text-500 mt-1 mb-0 text-sm">#{msg['actaE.subtitulo']}</p>
-                </div>
-            </div>
-            <p:tag value="#{msg['reportesMesa.proceso.activo']}: #{actaEController.procesoActivo.nombre}"
-                   severity="info" rendered="#{not empty actaEController.procesoActivo}"/>
-        </div>
+            </ui:define>
+        </ui:include>
 
         <h:form id="frmActaE" enctype="multipart/form-data">
 

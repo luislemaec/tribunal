@@ -3,29 +3,24 @@
 	xmlns:ui="jakarta.faces.facelets" xmlns:p="http://primefaces.org/ui"
 	template="/WEB-INF/template.xhtml">
 
-	<ui:define name="title">#{msg['form.procesos.title']}</ui:define>
-	<ui:define name="viewname">
-		<li>#{msg['form.usuarios.crumb.security']}</li>
-		<li>/</li>
-		<li><p:link outcome="/procesos">#{msg['form.procesos.title']}</p:link></li>
-	</ui:define>
+	<ui:define name="title">#{msg['pagina.procesos.titulo']}</ui:define>
+	    <ui:param name="tecModulo" value="#{msg['nav.modulo.seguridad']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.procesos.migas']}"/>
 
 	<ui:define name="content">
 		<h:outputStylesheet library="css" name="procesos.css"/>
 		<div class="audit-page">
 
-			<div class="tec-page-header">
-				<div class="tec-page-header__icon" aria-hidden="true">
-					<i class="pi pi-history" />
-				</div>
-				<div class="min-w-0">
-					<h2>#{msg['form.procesos.title']}</h2>
-					<p>#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}</p>
-				</div>
-				<p:tag rendered="#{procesoController.administrador}"
-					value="Vista global" severity="info" icon="pi pi-shield"
-					styleClass="tec-page-header__aside tec-status" />
-			</div>
+			        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-history"/>
+            <ui:param name="titulo" value="#{msg['pagina.procesos.titulo']}"/>
+            <ui:param name="descripcion" value="#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}"/>
+            <ui:define name="contexto">
+                <div class="tec-page-header__aside">
+                    <p:tag rendered="#{procesoController.administrador}" value="Vista global" severity="info" icon="pi pi-shield" styleClass="tec-status" />
+                </div>
+            </ui:define>
+        </ui:include>
 
 			<h:form id="frmProcesos">
 				<div class="surface-card border-round-lg tec-card">

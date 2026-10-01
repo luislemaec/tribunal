@@ -6,33 +6,17 @@
                 template="/WEB-INF/template.xhtml"
                 xmlns:c="jakarta.tags.core">
 
-    <ui:define name="title">#{msg['form.escrutinios.title']}</ui:define>
+    <ui:define name="title">#{msg['pagina.escrutinios.titulo']}</ui:define>
 
-    <ui:define name="viewname">
-        <li>#{msg['form.iglesias.crumb.admin']}</li>
-        <li>/</li>
-        <li>
-            <p:link outcome="/escrutinios">#{msg['form.escrutinios.title']}</p:link>
-        </li>
-    </ui:define>
+        <ui:param name="tecPagina" value="#{msg['pagina.escrutinios.migas']}"/>
 
     <ui:define name="content">
 
-        <!-- ENCABEZADO -->
-        <div class="grid mb-2">
-            <div class="col-12">
-                <div class="flex align-items-center gap-3">
-                    <div class="flex justify-content-center align-items-center border-round-lg"
-                         style="width:3.5rem;height:3.5rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
-                        <i class="pi pi-chart-pie" style="font-size:1.5rem"></i>
-                    </div>
-                    <div>
-                        <h2 class="m-0 text-900 font-bold text-2xl">#{msg['form.escrutinios.title']}</h2>
-                        <p class="text-500 mt-1 mb-0 text-sm">Resumen de escrutinio por cantón, parroquia, recinto y mesa de votación</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-chart-pie"/>
+            <ui:param name="titulo" value="#{msg['pagina.escrutinios.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.escrutinios.descripcion']}"/>
+        </ui:include>
 
         <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
         <p:blockUI block="frmActaE" trigger="frmActaE">
@@ -160,7 +144,7 @@
                              emptyMessage="Seleccione los filtros para ver el escrutinio."
                              showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm"
-                             style="font-size:1.1rem">
+                             style="font-size:var(--tec-fs-lg)">
 
                     <p:column headerText="Categoria">
                         <p:chip label="#{voto[0]}" icon="pi pi-tag"/>
