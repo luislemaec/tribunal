@@ -9,7 +9,6 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -47,9 +46,9 @@ public final class ActaActualizacionMiembrosPdf {
                     Constantes.getMensaje("actaActualizacion.pdf.titulo"), fechaGeneracion, codigoBarras);
             Document documento = contexto.documento();
             try {
-                Font titulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, AZUL_INSTITUCIONAL);
-                Font subtitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.BLACK);
-                Font normal = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                Font titulo = Constantes.fuentePdf(14, Font.BOLD, AZUL_INSTITUCIONAL);
+                Font subtitulo = Constantes.fuentePdf(9, Font.BOLD, BaseColor.BLACK);
+                Font normal = Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK);
 
                 agregarTitulo(documento, titulo, subtitulo);
                 agregarDatos(documento, iglesia, procesoNombre, miembros.size(), fechaGeneracion, subtitulo, normal);

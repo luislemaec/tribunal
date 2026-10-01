@@ -254,23 +254,23 @@
                                 <div class="grid mt-3">
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.recinto']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.nombre ? msg['dashboard.valor.noAsignado'] : dashboardController.mesaAsignadaPresidente.recinto.nombre}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.mesaAsignadaPresidente.recinto.nombre ? msg['dashboard.valor.noAsignado'] : dashboardController.mesaAsignadaPresidente.recinto.nombre}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.proceso']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.procesoActivoNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.procesoActivoNombre}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.procesoActivoNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.procesoActivoNombre}</span>
                                     </div>
                                     <div class="col-12 md:col-4">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.provincia']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.provinciaNombre}</span>
                                     </div>
                                     <div class="col-12 md:col-4">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.canton']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.cantonNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.cantonNombre}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.mesaAsignadaPresidente.recinto.cantonNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.cantonNombre}</span>
                                     </div>
                                     <div class="col-12 md:col-4">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.parroquia']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre ? msg['dashboard.valor.noRegistrado'] : dashboardController.mesaAsignadaPresidente.recinto.ubicacionNombre}</span>
                                     </div>
                                 </div>
                             </div>
@@ -329,19 +329,19 @@
                                 <div class="grid">
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.apertura']}</span>
-                                        <span class="block text-900 font-semibold">#{dashboardController.estadoApertura}</span>
+                                        <span class="block text-900 font-medium">#{dashboardController.estadoApertura}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.conteo']}</span>
-                                        <span class="block text-900 font-semibold">#{dashboardController.estadoConteo}</span>
+                                        <span class="block text-900 font-medium">#{dashboardController.estadoConteo}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.cierre']}</span>
-                                        <span class="block text-900 font-semibold">#{dashboardController.estadoCierre}</span>
+                                        <span class="block text-900 font-medium">#{dashboardController.estadoCierre}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.estado.acta']}</span>
-                                        <span class="block text-900 font-semibold">#{dashboardController.estadoActaPdf}</span>
+                                        <span class="block text-900 font-medium">#{dashboardController.estadoActaPdf}</span>
                                     </div>
                                 </div>
                             </div>
@@ -352,7 +352,7 @@
                                 <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.integrantes']}</span>
                                 <ui:repeat value="#{dashboardController.integrantesMesa}" var="integrante">
                                     <div class="mb-3">
-                                        <span class="block text-900 font-semibold">#{integrante.cargoNombre}</span>
+                                        <span class="block text-900 font-medium">#{integrante.cargoNombre}</span>
                                         <span class="block text-600 text-sm">#{integrante.iglesiaPersona.persona.nombres} #{integrante.iglesiaPersona.persona.apellidos}</span>
                                     </div>
                                 </ui:repeat>
@@ -427,19 +427,19 @@
                                 <div class="grid mt-3">
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.comunidad']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.iglesiaAsignada.comunidad ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.comunidad}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.iglesiaAsignada.comunidad ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.comunidad}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.rucCodigo']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.iglesiaAsignada.documento ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.documento}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.iglesiaAsignada.documento ? msg['dashboard.valor.noRegistrado'] : dashboardController.iglesiaAsignada.documento}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.recinto']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.recintosAsignados ? msg['dashboard.valor.noAsignado'] : dashboardController.recintosAsignados}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.recintosAsignados ? msg['dashboard.valor.noAsignado'] : dashboardController.recintosAsignados}</span>
                                     </div>
                                     <div class="col-12 md:col-6">
                                         <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.mesa']}</span>
-                                        <span class="block text-900 font-semibold">#{empty dashboardController.mesasAsignadas ? msg['dashboard.valor.noAsignado'] : dashboardController.mesasAsignadas}</span>
+                                        <span class="block text-900 font-medium">#{empty dashboardController.mesasAsignadas ? msg['dashboard.valor.noAsignado'] : dashboardController.mesasAsignadas}</span>
                                     </div>
                                 </div>
                             </div>

@@ -10,7 +10,6 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -18,6 +17,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 
 import ec.com.antenasur.dto.CandidatoDTO;
 import ec.com.antenasur.dto.ListaDTO;
+import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.dto.TribunalDTO;
 
 /** Construye el acta de inscripcion sin depender del estado de una vista JSF. */
@@ -37,10 +37,10 @@ public final class ActaInscripcionPdf {
                     salida, codigoDocumento, tituloDocumento, fechaGeneracion);
             Document documento = contexto.documento();
 
-            Font titulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 15, AZUL);
-            Font subtitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
-            Font normal = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
-            Font pequeno = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.DARK_GRAY);
+            Font titulo = Constantes.fuentePdf(15, Font.BOLD, AZUL);
+            Font subtitulo = Constantes.fuentePdf(10, Font.BOLD, BaseColor.BLACK);
+            Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
+            Font pequeno = Constantes.fuentePdf(8, Font.NORMAL, BaseColor.DARK_GRAY);
 
             Paragraph institucion = new Paragraph("CONPOCIIECH - TRIBUNAL ELECTORAL", titulo);
             institucion.setAlignment(Element.ALIGN_CENTER);

@@ -9,7 +9,6 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Phrase;
@@ -18,6 +17,7 @@ import com.itextpdf.text.pdf.Barcode128;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
+import ec.com.antenasur.util.Constantes;
 import com.itextpdf.text.pdf.PdfWriter;
 
 /**
@@ -225,8 +225,8 @@ public final class PlantillaA4 {
          */
         private void dibujarDatosDocumento(PdfWriter writer, Document document) {
             PdfContentByte lienzo = writer.getDirectContent();
-            Font fuenteTitulo = FontFactory.getFont("arial", 9.5f, Font.BOLD, COLOR_TEXTO);
-            Font fuenteDatos = FontFactory.getFont("arial", 7.5f, Font.NORMAL, COLOR_TEXTO);
+            Font fuenteTitulo = Constantes.fuentePdf(9.5f, Font.BOLD, COLOR_TEXTO);
+            Font fuenteDatos = Constantes.fuentePdf(7.5f, Font.NORMAL, COLOR_TEXTO);
             float baseTitulo = LINEA_DATOS;
 
             if (tituloDocumento != null && !tituloDocumento.isBlank()) {
@@ -256,7 +256,7 @@ public final class PlantillaA4 {
 
         /** Paginación sobre la línea del pie, sin invadir el texto de la plantilla. */
         private void dibujarPaginacion(PdfWriter writer, Document document) {
-            Font fuente = FontFactory.getFont("arial", 7, Font.NORMAL, COLOR_TEXTO);
+            Font fuente = Constantes.fuentePdf(7, Font.NORMAL, COLOR_TEXTO);
             String texto = "Página " + writer.getPageNumber();
             if (codigoDocumento != null && !codigoDocumento.isBlank()) {
                 texto = texto + "  |  Código de validación: " + codigoDocumento;

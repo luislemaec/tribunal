@@ -56,8 +56,9 @@ final class CertificadosVotacionPDF {
     record Recursos(byte[] logo, byte[] regular, byte[] negrita) {
         static Recursos delProyecto() throws IOException {
             return new Recursos(grafico("cert-logo.png"),
-                    leer("/resources/fonts/Montserrat-Regular.ttf"),
-                    leer("/resources/fonts/Montserrat-Bold.ttf"));
+                    // Texto = Light (300) y énfasis = Medium (500), como la interfaz web.
+                    leer("/resources/fonts/Montserrat-Light.ttf"),
+                    leer("/resources/fonts/Montserrat-Medium.ttf"));
         }
 
         /**
@@ -87,9 +88,9 @@ final class CertificadosVotacionPDF {
         logoTec = recursos.logo();
         onda = Recursos.grafico("cert-onda.png");
         silueta = Recursos.grafico("cert-silueta.png");
-        regular = BaseFont.createFont("Montserrat-Regular.ttf", BaseFont.IDENTITY_H,
+        regular = BaseFont.createFont("Montserrat-Light.ttf", BaseFont.IDENTITY_H,
                 BaseFont.EMBEDDED, true, recursos.regular(), null);
-        negrita = BaseFont.createFont("Montserrat-Bold.ttf", BaseFont.IDENTITY_H,
+        negrita = BaseFont.createFont("Montserrat-Medium.ttf", BaseFont.IDENTITY_H,
                 BaseFont.EMBEDDED, true, recursos.negrita(), null);
     }
 

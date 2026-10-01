@@ -34,6 +34,16 @@
         }
     }
 
+    /* Tamaño en px de un token de la escala TEC (--tec-fs-*), calculado por el navegador. */
+    function tamano(token, respaldo) {
+        var doc = global.document, e = doc.createElement('span');
+        e.style.cssText = 'position:absolute;visibility:hidden;font-size:var(' + token + ')';
+        doc.body.appendChild(e);
+        var px = parseFloat(global.getComputedStyle(e).fontSize);
+        doc.body.removeChild(e);
+        return px > 0 ? px : respaldo;
+    }
+
     global.tecGraficoTema = function () {
         var config = this.cfg && this.cfg.config;
         if (!config) {
@@ -67,5 +77,13 @@
         opciones.plugins.legend = opciones.plugins.legend || {};
         opciones.plugins.legend.labels = opciones.plugins.legend.labels || {};
         opciones.plugins.legend.labels.color = texto;
+
+        // Tipografía del tema: Montserrat, peso base 300 (Light) y 500 en títulos de tooltip.
+        var familia = variable('--font-family', 'Montserrat, sans-serif');
+        var xs = tamano('--tec-fs-xs', 11);
+        opciones.font = {family: familia, size: xs, weight: '300'};
+        opciones.plugins.tooltip = opciones.plugins.tooltip || {};
+        opciones.plugins.tooltip.titleFont = {family: familia, size: xs, weight: '500'};
+        opciones.plugins.tooltip.bodyFont = {family: familia, size: xs, weight: '300'};
     };
 }(window));

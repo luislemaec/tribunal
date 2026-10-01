@@ -3,6 +3,7 @@ package ec.com.antenasur.util;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.pdf.BaseFont;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,17 +63,40 @@ public class Constantes {
 
     /*----------------------------------- FUENTE -----------------------------------*/
     public static Font getFuenteCabeceraDefault(final float tamanioLetra) {
-        String aliasFuente = "Montserrat-Bold";
-        String pathFuente = getPathFuenteExterna("Montserrat-Bold.ttf");
-        FontFactory.register(pathFuente, aliasFuente);
-        return FontFactory.getFont(aliasFuente, tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+        // Énfasis del documento = Medium (500), igual que la interfaz web (antes Bold).
+        return fuentePdf(tamanioLetra, Font.BOLD, BaseColor.BLACK);
     }
 
     public static Font getFuenteContenidoDefault(final float tamanioLetra) {
-        String aliasFuente = "Montserrat-Regular";
-        String pathFuente = getPathFuenteExterna("Montserrat-Regular.ttf");
-        FontFactory.register(pathFuente, aliasFuente);
-        return FontFactory.getFont(aliasFuente, tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+        // Texto del documento = Light (300), igual que la interfaz web (antes Regular).
+        return fuentePdf(tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+    }
+
+    /**
+     * Fuente de PDF institucional (Montserrat), igual que la interfaz: texto en Light (300), énfasis (negrita) en
+     * Medium (500) y cursiva en Light Italic. Si no hay contexto web o falta el archivo (p. ej. pruebas) cae en
+     * Helvetica para no interrumpir la generación del documento.
+     */
+    public static Font fuentePdf(final float tamanio, final int estilo, final BaseColor color) {
+        final boolean enfasis = (estilo & Font.BOLD) != 0;
+        final boolean cursiva = !enfasis && (estilo & Font.ITALIC) != 0;
+        final String archivo = enfasis ? "Montserrat-Medium.ttf"
+                : cursiva ? "Montserrat-LightItalic.ttf" : "Montserrat-Light.ttf";
+        final String alias = archivo.replace(".ttf", "");
+        try {
+            if (!FontFactory.isRegistered(alias)) {
+                final java.io.File fuente = new java.io.File(getPathFuenteExterna(archivo));
+                if (!fuente.isFile()) {
+                    throw new IllegalStateException("Fuente no disponible: " + archivo);
+                }
+                FontFactory.register(fuente.getPath(), alias);
+            }
+            // Incrustada (subconjunto): el PDF se ve igual en equipos sin Montserrat instalada.
+            return FontFactory.getFont(alias, BaseFont.CP1252, BaseFont.EMBEDDED, tamanio, Font.NORMAL, color);
+        } catch (RuntimeException e) {
+            return FontFactory.getFont(enfasis ? FontFactory.HELVETICA_BOLD
+                    : cursiva ? FontFactory.HELVETICA_OBLIQUE : FontFactory.HELVETICA, tamanio, color);
+        }
     }
 
     public static Font getFuente(final String nombreFuenteConExtension, final float tamanioLetra, final int estiloFuente, final BaseColor color) {

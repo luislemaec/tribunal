@@ -1,10 +1,18 @@
 /* Tribunal — layout (topbar/menú). El primario y el degradé del topbar leen las variables del tema. */
 /* Add your customizations of the layout variables here */
+/* montserrat-300 - latin-ext_latin (peso por defecto del texto) */
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local("Montserrat Light"), local("Montserrat-Light"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-300.woff2']}") format("woff2"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-300.woff']}") format("woff");
+}
 /* montserrat-regular - latin-ext_latin (solo woff2/woff: navegadores actuales) */
 @font-face {
   font-family: "Montserrat";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300;
   font-display: swap;
   src: local("Montserrat Regular"), local("Montserrat-Regular"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-regular.woff2']}") format("woff2"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-regular.woff']}") format("woff");
 }
@@ -12,9 +20,45 @@
 @font-face {
   font-family: "Montserrat";
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   font-display: swap;
   src: local("Montserrat Bold"), local("Montserrat-Bold"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-700.woff2']}") format("woff2"), url("#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-700.woff']}") format("woff");
+}
+/* Pesos 100, 500, 600, 800 y 900: WOFF generado desde los TTF del proyecto (resources/fonts). Solo se descargan si algún texto los usa. */
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: local("Montserrat Thin"), local("Montserrat-Thin"), url("#{resource['ecuador-layout:fonts/Montserrat-Thin.woff']}") format("woff");
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Montserrat Medium"), local("Montserrat-Medium"), url("#{resource['ecuador-layout:fonts/Montserrat-Medium.woff']}") format("woff");
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local("Montserrat SemiBold"), local("Montserrat-SemiBold"), url("#{resource['ecuador-layout:fonts/Montserrat-SemiBold.woff']}") format("woff");
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: local("Montserrat ExtraBold"), local("Montserrat-ExtraBold"), url("#{resource['ecuador-layout:fonts/Montserrat-ExtraBold.woff']}") format("woff");
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: local("Montserrat Black"), local("Montserrat-Black"), url("#{resource['ecuador-layout:fonts/Montserrat-Black.woff']}") format("woff");
 }
 * {
   -moz-box-sizing: border-box;
@@ -24,19 +68,19 @@
 
 html {
   height: 100%;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-/* Tamaño de texto elegido por el usuario (tribunal-fontsize.js). Escala el contenido (theme.css y CSS de TEC están en rem);
-   el menú y la barra superior mantienen sus tamaños en px (primera fase). */
+/* Tamaño de texto elegido por el usuario (tribunal-fontsize.js): 12px es el estándar. Toda la interfaz (tema, layout, CSS de TEC)
+   está en rem, así que escala completa, incluidos menú y barra superior. */
 html[data-tec-fs="11"] { font-size: 11px; }
-html[data-tec-fs="12"] { font-size: 12px; }
-html[data-tec-fs="15"] { font-size: 15px; }
+html[data-tec-fs="14"] { font-size: 14px; }
+html[data-tec-fs="16"] { font-size: 16px; }
 
 body {
   font-family: var(--font-family);
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 300;
   color: #333333;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -89,7 +133,7 @@ a {
 }
 .layout-wrapper .layout-topbar #topbar-menu-button i {
   line-height: inherit;
-  font-size: 24px;
+  font-size: 1.846rem;
   -moz-transition: all 0.3s;
   -o-transition: all 0.3s;
   -webkit-transition: all 0.3s;
@@ -121,7 +165,7 @@ a {
   transition: transform 0.3s;
 }
 .layout-wrapper .layout-topbar #right-panel-button i {
-  font-size: 36px;
+  font-size: 2.769rem;
   position: relative;
   top: 5px;
   color: #BBBBBB;
@@ -170,7 +214,7 @@ a {
   display: inline-block;
   vertical-align: middle;
   text-align: left;
-  font-size: 13px;
+  font-size: 1rem;
   color: #ffffff;
   background-color: transparent;
   border: 0 none;
@@ -200,7 +244,7 @@ a {
   top: 0;
   height: 60px;
   padding: 20px;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-wrapper .layout-topbar #topbar-profile-menu-button img {
   width: 25px;
@@ -211,7 +255,7 @@ a {
 }
 .layout-wrapper .layout-topbar #topbar-profile-menu-button span {
   vertical-align: middle;
-  font-size: 14px;
+  font-size: 1.077rem;
   line-height: 21px;
   text-align: left;
   margin-right: 10px;
@@ -249,7 +293,7 @@ a {
   text-align: left;
   color: #BBBBBB;
   padding: 10px 20px;
-  font-weight: 400;
+  font-weight: 300;
   text-decoration: none;
   border: 1px solid transparent;
   -moz-border-radius: 3px;
@@ -439,7 +483,7 @@ a {
   color: #656565;
   letter-spacing: 0.5px;
   padding: 25px 0 10px 0;
-  font-size: 12px;
+  font-size: 0.923rem;
   border-bottom: 1px solid #383838;
   margin-left: 20px;
   margin-right: 20px;
@@ -514,7 +558,7 @@ a {
 .layout-wrapper .layout-sidebar .layout-menu li a i {
   color: #BBBBBB;
   vertical-align: middle;
-  font-size: 16px;
+  font-size: 1.231rem;
   margin-right: 16px;
 }
 .layout-wrapper .layout-sidebar .layout-menu li a .layout-menuitem-toggler {
@@ -522,7 +566,7 @@ a {
   margin-top: -7px;
   top: 50%;
   right: 16px;
-  font-size: 14px;
+  font-size: 1.077rem;
   left: auto;
   margin-right: 0;
   -moz-transition: transform 0.3s;
@@ -770,11 +814,11 @@ a {
     display: block;
   }
   .layout-wrapper.layout-menu-slim .layout-sidebar .layout-menu > li > a i {
-    font-size: 14px;
+    font-size: 1.077rem;
     margin-right: 0;
   }
   .layout-wrapper.layout-menu-slim .layout-sidebar .layout-menu > li > a i:first-child {
-    font-size: 16px;
+    font-size: 1.231rem;
     width: auto;
   }
   .layout-wrapper.layout-menu-slim .layout-sidebar .layout-menu > li > a i.layout-menuitem-toggler {
@@ -830,8 +874,8 @@ a {
   }
   .layout-wrapper.layout-menu-slim .layout-sidebar .layout-menu .layout-menu-tooltip .layout-menu-tooltip-text {
     padding: 6px 8px;
-    font-weight: 700;
-    font-size: 13px;
+    font-weight: 500;
+    font-size: 1rem;
     background-color: #1B1B1B;
     color: #BBBBBB;
     min-width: 75px;
@@ -918,12 +962,12 @@ body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li {
   padding: 0 0.25em;
 }
 body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li a {
-  font-size: 14px;
+  font-size: 1.077rem;
   color: #828282;
 }
 body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li i {
   color: #828282;
-  font-size: 18px;
+  font-size: 1.385rem;
   position: relative;
   top: 1px;
 }
@@ -958,8 +1002,8 @@ body .layout-wrapper .layout-main .layout-content {
   vertical-align: middle;
 }
 .layout-wrapper .layout-main .layout-footer .logo-container .app-name {
-  font-weight: 400;
-  font-size: 14px;
+  font-weight: 300;
+  font-size: 1.077rem;
   display: block;
   margin-top: 15px;
   color: #1F1F1F;
@@ -968,8 +1012,8 @@ body .layout-wrapper .layout-main .layout-content {
   text-align: left;
 }
 .layout-wrapper .layout-main .layout-footer #footer-menu .footer-box span {
-  font-size: 15px;
-  font-weight: 400;
+  font-size: 1.154rem;
+  font-weight: 300;
   text-align: left;
   color: #8A8A8A;
   display: block;
@@ -977,14 +1021,14 @@ body .layout-wrapper .layout-main .layout-content {
 .layout-wrapper .layout-main .layout-footer #footer-menu .footer-box a {
   text-decoration: none;
   margin-top: 8px;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   display: block;
   color: #666666;
 }
 .layout-wrapper .layout-main .layout-footer #footer-menu .footer-box a > a {
   opacity: 0.9;
-  font-size: 13px;
+  font-size: 1rem;
   text-align: left;
   color: #666666;
 }
@@ -997,7 +1041,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-wrapper .layout-main .layout-footer #footer-menu .footer-box .icon-link .icon {
   color: #666666;
-  font-size: 22px;
+  font-size: 1.692rem;
   margin-right: 16px;
   margin-left: 16px;
 }
@@ -1051,7 +1095,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .card .card-subtitle {
   color: #737373;
-  font-weight: 700;
+  font-weight: 500;
   margin: -1rem 0 1rem 0;
 }
 
@@ -1114,7 +1158,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-wrapper .layout-ajax-loader .layout-ajax-loader-icon {
   color: var(--primary-color);
-  font-size: 32px;
+  font-size: 2.462rem;
 }
 
 #layout-right-panel {
@@ -1137,14 +1181,14 @@ body .layout-wrapper .layout-main .layout-content {
 }
 #layout-right-panel .header {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 500;
 }
 #layout-right-panel .ui-accordion-header {
   background-color: #323232;
   color: #ffffff;
   border: none;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 500;
 }
 #layout-right-panel .ui-accordion-header .ui-icon-triangle-1-e {
   color: #ffffff;
@@ -1161,7 +1205,7 @@ body .layout-wrapper .layout-main .layout-content {
 #layout-right-panel .ui-accordion-content ul li {
   list-style: none;
   padding: 10px 0;
-  font-size: 13px;
+  font-size: 1rem;
 }
 #layout-right-panel .ui-accordion-content ul li img {
   width: 30px;
@@ -1176,7 +1220,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 #layout-right-panel .ui-accordion-content ul li .message-container .name {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 500;
 }
 #layout-right-panel .ui-accordion-content ul li .message-container .message {
   display: block;
@@ -1202,7 +1246,7 @@ body .layout-wrapper .layout-main .layout-content {
 #layout-right-panel .ui-panel-content ul li {
   list-style: none;
   padding: 10px 6px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 #layout-right-panel .ui-panel-content ul li img {
   width: 30px;
@@ -1217,7 +1261,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 #layout-right-panel .ui-panel-content ul li .activity-container .name {
   display: inline-block;
-  font-weight: 700;
+  font-weight: 500;
 }
 #layout-right-panel .ui-panel-content ul li .activity-container .activity {
   display: block;
@@ -1269,22 +1313,22 @@ body .layout-wrapper .layout-main .layout-content {
 .layout-content .layout-dashboard .overview-box .overview-title {
   margin-left: 12px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .layout-content .layout-dashboard .overview-box .overview-numbers {
   margin-left: 12px;
   margin-bottom: 20px;
-  font-size: 20px;
+  font-size: 1.538rem;
 }
 .layout-content .layout-dashboard .overview-box .overview-subinfo {
   background-color: #E9E9E9;
   height: 38px;
-  font-size: 13px;
+  font-size: 1rem;
   border: 1px solid #dedede;
 }
 .layout-content .layout-dashboard .overview-box .overview-subinfo i {
   color: #44BE2D;
-  font-size: 13px;
+  font-size: 1rem;
   margin-right: 8px;
 }
 .layout-content .layout-dashboard .overview-box .overview-subinfo .progressbar {
@@ -1402,24 +1446,24 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .contacts .ui-panel-content ul li .team-box {
   display: inline-block;
-  font-size: 13px;
+  font-size: 1rem;
   vertical-align: middle;
   width: 69%;
 }
 .layout-content .layout-dashboard .contacts .ui-panel-content ul li .team-box .team-member {
   color: #323232;
-  font-weight: 400;
+  font-weight: 300;
   display: block;
 }
 .layout-content .layout-dashboard .contacts .ui-panel-content ul li .team-box .team-member-mail {
   color: #888888;
   display: inline-block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .contacts .ui-panel-content ul li .team-box .team-member-address {
   color: #888888;
   display: inline-block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .contacts .ui-panel-content ul li .team-box i {
   display: inline-block;
@@ -1454,8 +1498,8 @@ body .layout-wrapper .layout-main .layout-content {
   float: right;
 }
 .layout-content .layout-dashboard .tasks .ui-panel-content ul li .time-badge span {
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 0.769rem;
+  font-weight: 300;
   color: #ffffff;
 }
 .layout-content .layout-dashboard .resolution-center .ui-panel-content {
@@ -1484,7 +1528,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-left i {
   color: #ABABAB;
-  font-size: 14px;
+  font-size: 1.077rem;
   margin-right: 4px;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-left span {
@@ -1499,7 +1543,7 @@ body .layout-wrapper .layout-main .layout-content {
   height: 150px;
   line-height: 150px;
   margin-top: 20px;
-  font-size: 50px;
+  font-size: 3.846rem;
   color: #6a6a7d;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
@@ -1510,14 +1554,14 @@ body .layout-wrapper .layout-main .layout-content {
   border-left-color: var(--primary-tint);
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-left .details {
-  font-size: 14px;
+  font-size: 1.077rem;
   color: #ABABAB;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-left .details span {
   margin-right: 6px;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-left .details i {
-  font-size: 14px;
+  font-size: 1.077rem;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-right {
   padding: 53px 100px 53px 20px;
@@ -1526,18 +1570,18 @@ body .layout-wrapper .layout-main .layout-content {
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-right i {
   color: #ABABAB;
   display: inline-block;
-  font-size: 14px;
+  font-size: 1.077rem;
   margin-right: 4px;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-right .icon-label {
   color: #ABABAB;
-  font-size: 14px;
+  font-size: 1.077rem;
   display: inline-block;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-right span {
   color: #353535;
-  font-weight: 400;
-  font-size: 24px;
+  font-weight: 300;
+  font-size: 1.846rem;
   display: block;
 }
 .layout-content .layout-dashboard .statistics .ui-panel-content .stats-right .statsbar {
@@ -1559,8 +1603,8 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table thead tr th {
   color: #ABABAB;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 500;
+  font-size: 1rem;
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table thead tr th.country {
   text-align: left;
@@ -1571,8 +1615,8 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table tbody tr td {
   color: #353535;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   text-align: center;
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table tbody tr td img {
@@ -1585,7 +1629,7 @@ body .layout-wrapper .layout-main .layout-content {
   vertical-align: middle;
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table tbody tr td i {
-  font-size: 16px;
+  font-size: 1.231rem;
 }
 .layout-content .layout-dashboard .global-sales .ui-panel-content table tbody tr td i.up {
   color: #44BE2D;
@@ -1622,19 +1666,19 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info .name {
   display: block;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 1.077rem;
+  font-weight: 500;
   color: #353535;
 }
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info i {
-  font-size: 13px;
+  font-size: 1rem;
   color: #ABABAB;
   margin-right: 5px;
 }
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info span {
-  font-size: 13px;
+  font-size: 1rem;
   color: #696969;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info .profile-numbers {
   display: inline-block;
@@ -1644,15 +1688,15 @@ body .layout-wrapper .layout-main .layout-content {
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info .profile-numbers .header {
   display: block;
   color: #ABABAB;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   margin-top: 16px;
 }
 .layout-content .layout-dashboard .profile .ui-panel-content .profile-info .profile-numbers .number {
   display: block;
   color: #353535;
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 1.538rem;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .inbox {
   margin-bottom: 16px;
@@ -1689,13 +1733,13 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .inbox .ui-panel-content ul li .message-box {
   display: inline-block;
-  font-size: 13px;
+  font-size: 1rem;
   vertical-align: middle;
   width: 73%;
 }
 .layout-content .layout-dashboard .inbox .ui-panel-content ul li .message-box .messager {
   color: #323232;
-  font-weight: 700;
+  font-weight: 500;
   display: inline-block;
 }
 .layout-content .layout-dashboard .inbox .ui-panel-content ul li .message-box .time {
@@ -1713,7 +1757,7 @@ body .layout-wrapper .layout-main .layout-content {
   top: 20px;
 }
 .layout-content .layout-dashboard .inbox .ui-panel-content ul li .message-status i {
-  font-size: 18px;
+  font-size: 1.385rem;
   color: var(--primary-color);
   display: block;
 }
@@ -1721,13 +1765,13 @@ body .layout-wrapper .layout-main .layout-content {
   color: #ABABAB;
 }
 .layout-content .layout-dashboard .inbox .ui-panel-content ul li .message-status span {
-  font-size: 13px;
+  font-size: 1rem;
   color: #ABABAB;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .timeline .ui-panel-content {
   padding: 0;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .layout-content .layout-dashboard .timeline .ui-panel-content ul {
   padding: 0;
@@ -1761,7 +1805,7 @@ body .layout-wrapper .layout-main .layout-content {
   vertical-align: middle;
   position: absolute;
   top: 28px;
-  font-size: 20px;
+  font-size: 1.538rem;
 }
 .layout-content .layout-dashboard .timeline .ui-panel-content ul li i.device {
   float: right;
@@ -1785,7 +1829,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .layout-content .layout-dashboard .timeline .ui-panel-content ul li .timeline-subject .timeline-header {
   display: block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .layout-content .layout-dashboard .timeline .ui-panel-content ul li .timeline-subject .timeline-subheader {
   color: #ABABAB;
@@ -1817,13 +1861,13 @@ body .layout-wrapper .layout-main .layout-content {
   width: 25%;
 }
 .layout-content .layout-dashboard .projects .ui-panel-content ul li .project-info .project-name {
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 1.077rem;
+  font-weight: 300;
   color: #ffffff;
   display: block;
 }
 .layout-content .layout-dashboard .projects .ui-panel-content ul li .project-info .project-firm {
-  font-size: 13px;
+  font-size: 1rem;
   color: #b0b0ae;
   display: block;
 }
@@ -1847,7 +1891,7 @@ body .layout-wrapper .layout-main .layout-content {
   text-align: center;
   display: inline-block;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 1rem;
   margin-left: 21px;
 }
 .layout-content .layout-dashboard .projects .ui-panel-content ul li .button {
@@ -1972,7 +2016,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .login-body .login-panel .checkbox-container .remember-me span:not(.ui-icon-check) {
   margin-left: 0.5em;
-  font-size: 12px;
+  font-size: 0.923rem;
   color: #8a8a8a;
   vertical-align: middle;
 }
@@ -1991,7 +2035,7 @@ body .layout-wrapper .layout-main .layout-content {
   color: var(--primary-color);
 }
 .login-body .login-panel .subinfo span {
-  font-size: 14px;
+  font-size: 1.077rem;
 }
 
 .exception-body .exception-topbar {
@@ -2047,7 +2091,7 @@ body .layout-wrapper .layout-main .layout-content {
 .exception-body .exception-panel .top span {
   display: block;
   color: #DDD5D0;
-  font-size: 30px;
+  font-size: 2.308rem;
   font-family: 400;
 }
 .exception-body .exception-panel .top .seperator {
@@ -2062,11 +2106,11 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .exception-body .exception-panel .bottom .exception-panel-header {
   display: block;
-  font-size: 18px;
+  font-size: 1.385rem;
 }
 .exception-body .exception-panel .bottom .exception-panel-subheader {
   display: block;
-  font-size: 14px;
+  font-size: 1.077rem;
   margin: 10px 0 20px 0;
 }
 
@@ -2124,7 +2168,7 @@ body .layout-wrapper .layout-main .layout-content {
   text-decoration: none;
   color: #ffffff;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 .landing-body .landing-wrapper #header .header-top #landing-menu li a:hover {
   background-color: #582E51;
@@ -2141,17 +2185,17 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .landing-body .landing-wrapper #header .header-content .header-bg span {
   color: #ffffff;
-  font-size: 40px;
+  font-size: 3.077rem;
 }
 .landing-body .landing-wrapper #header .header-content h2 {
   color: #ffffff;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 1.385rem;
+  font-weight: 300;
 }
 .landing-body .landing-wrapper #header .header-content .ui-button {
   padding: 8px 16px;
   margin-top: 10px;
-  font-weight: 700;
+  font-weight: 500;
 }
 .landing-body .landing-wrapper #header .header-content .ui-button:hover {
   background-color: #582E51;
@@ -2161,7 +2205,7 @@ body .layout-wrapper .layout-main .layout-content {
   background-color: #ffffff;
   color: #de294d;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.21);
-  font-weight: 400;
+  font-weight: 300;
 }
 .landing-body .landing-wrapper #features {
   background-color: #ffffff;
@@ -2185,8 +2229,8 @@ body .layout-wrapper .layout-main .layout-content {
   padding: 60px 200px;
 }
 .landing-body .landing-wrapper #pricing .section-header {
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 1.846rem;
+  font-weight: 300;
   border-bottom: 1px solid #C5C5C5;
   width: fit-content;
   display: inline-block;
@@ -2208,12 +2252,12 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .landing-body .landing-wrapper #pricing .pricing-container .price-type .price-header h3 {
   color: #7D7D7D;
-  font-size: 20px;
+  font-size: 1.538rem;
 }
 .landing-body .landing-wrapper #pricing .pricing-container .price-type .price-header .price-for {
   color: #ABABAB;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 1.231rem;
+  font-weight: 300;
 }
 .landing-body .landing-wrapper #pricing .pricing-container .price-type .pricing-bottom {
   padding: 24px;
@@ -2252,8 +2296,8 @@ body .layout-wrapper .layout-main .layout-content {
   text-align: center;
 }
 .landing-body .landing-wrapper #multimedia .video-header .section-header {
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 1.846rem;
+  font-weight: 300;
   border-bottom: 1px solid #B76F80;
   width: fit-content;
   display: inline-block;
@@ -2261,8 +2305,8 @@ body .layout-wrapper .layout-main .layout-content {
   padding-bottom: 10px;
 }
 .landing-body .landing-wrapper #multimedia .video-header span {
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 1.231rem;
+  font-weight: 300;
   display: block;
 }
 .landing-body .landing-wrapper #multimedia .video-container {
@@ -2283,8 +2327,8 @@ body .layout-wrapper .layout-main .layout-content {
   vertical-align: middle;
 }
 .landing-body .landing-wrapper #footer .footer span {
-  font-weight: 400;
-  font-size: 13px;
+  font-weight: 300;
+  font-size: 1rem;
   display: block;
   margin-top: 15px;
   color: #1F1F1F;
@@ -2295,8 +2339,8 @@ body .layout-wrapper .layout-main .layout-content {
   padding: 0;
 }
 .landing-body .landing-wrapper #footer #landing-menu-footer .landing-box span {
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 1.231rem;
+  font-weight: 300;
   text-align: left;
   color: #8A8A8A;
   display: block;
@@ -2304,14 +2348,14 @@ body .layout-wrapper .layout-main .layout-content {
 .landing-body .landing-wrapper #footer #landing-menu-footer .landing-box a {
   text-decoration: none;
   margin-top: 8px;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   display: block;
   color: #666666;
 }
 .landing-body .landing-wrapper #footer #landing-menu-footer .landing-box a > a {
   opacity: 0.9;
-  font-size: 13px;
+  font-size: 1rem;
   text-align: left;
   color: #666666;
 }
@@ -2324,7 +2368,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .landing-body .landing-wrapper #footer #landing-menu-footer .landing-box .icon-link .icon {
   color: #666666;
-  font-size: 22px;
+  font-size: 1.692rem;
   margin-right: 16px;
   margin-left: 16px;
 }
@@ -2382,7 +2426,7 @@ body .layout-wrapper .layout-main .layout-content {
     color: #A22650;
   }
   .landing-body .landing-wrapper #header .header-top #landing-menu.landing-menu-active li a:hover {
-    font-weight: 700;
+    font-weight: 500;
     background-color: transparent;
     padding: 0 14px;
   }
@@ -2653,7 +2697,7 @@ body .layout-wrapper .layout-main .layout-content {
   }
   .layout-wrapper.layout-rtl .layout-topbar #topbar-profile-menu-button {
     left: 0;
-    font-weight: 400;
+    font-weight: 300;
     width: 100px;
   }
   .layout-wrapper.layout-rtl .layout-topbar #topbar-usermenu {
@@ -3052,11 +3096,11 @@ body .layout-wrapper .layout-main .layout-content {
   font-size: 1.25rem;
   color: #ffffff;
   margin-bottom: 1rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 .help-page .blog-post .blog-text span {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 500;
 }
 .help-page .blog-post .blog-profile {
   position: absolute;
@@ -3100,7 +3144,7 @@ body .layout-wrapper .layout-main .layout-content {
   margin-bottom: 0.5rem;
 }
 .invoice .invoice-company .company-name {
-  font-weight: 700;
+  font-weight: 500;
   font-size: 1.5rem;
 }
 .invoice .invoice-title {
@@ -3121,7 +3165,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .invoice .invoice-details .invoice-label {
   text-align: left;
-  font-weight: 700;
+  font-weight: 500;
 }
 .invoice .invoice-details .invoice-value {
   text-align: right;
@@ -3133,7 +3177,7 @@ body .layout-wrapper .layout-main .layout-content {
 }
 .invoice .invoice-to .bill-to {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 500;
   margin-bottom: 0.5rem;
 }
 .invoice .invoice-to .invoice-to-info div {
@@ -3151,7 +3195,7 @@ body .layout-wrapper .layout-main .layout-content {
   border-bottom: 1px solid #dee2e6;
 }
 .invoice .invoice-items table th {
-  font-weight: 700;
+  font-weight: 500;
 }
 .invoice .invoice-items table th, .invoice .invoice-items table td {
   padding: 1rem;
@@ -3169,7 +3213,7 @@ body .layout-wrapper .layout-main .layout-content {
   padding-top: 2.5rem;
 }
 .invoice .invoice-summary .invoice-value {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 @media print {
@@ -3202,7 +3246,7 @@ body .layout-wrapper .layout-main .layout-content {
 h1, h2, h3, h4, h5, h6 {
   margin: 1.5rem 0 1rem 0;
   font-family: inherit;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1.2;
   color: inherit;
 }
@@ -3285,22 +3329,22 @@ p:last-child {
 .widget-overview-box .overview-title {
   margin-left: 12px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .widget-overview-box .overview-numbers {
   margin-left: 12px;
   margin-bottom: 20px;
-  font-size: 20px;
+  font-size: 1.538rem;
 }
 .widget-overview-box .overview-subinfo {
   background-color: #E9E9E9;
   height: 38px;
-  font-size: 13px;
+  font-size: 1rem;
   border: 1px solid #dedede;
 }
 .widget-overview-box .overview-subinfo i {
   color: #44BE2D;
-  font-size: 13px;
+  font-size: 1rem;
   margin-right: 8px;
 }
 .widget-overview-box .overview-subinfo .progressbar {
@@ -3400,7 +3444,7 @@ p:last-child {
 }
 .widget-statistics .stats-left i {
   color: #ABABAB;
-  font-size: 14px;
+  font-size: 1.077rem;
   margin-right: 4px;
 }
 .widget-statistics .stats-left span {
@@ -3415,7 +3459,7 @@ p:last-child {
   height: 150px;
   line-height: 150px;
   margin-top: 20px;
-  font-size: 50px;
+  font-size: 3.846rem;
   color: #6a6a7d;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
@@ -3426,14 +3470,14 @@ p:last-child {
   border-left-color: var(--primary-tint);
 }
 .widget-statistics .stats-left .details {
-  font-size: 14px;
+  font-size: 1.077rem;
   color: #ABABAB;
 }
 .widget-statistics .stats-left .details span {
   margin-right: 6px;
 }
 .widget-statistics .stats-left .details i {
-  font-size: 14px;
+  font-size: 1.077rem;
 }
 .widget-statistics .stats-right {
   padding: 53px 100px 53px 20px;
@@ -3442,18 +3486,18 @@ p:last-child {
 .widget-statistics .stats-right i {
   color: #ABABAB;
   display: inline-block;
-  font-size: 14px;
+  font-size: 1.077rem;
   margin-right: 4px;
 }
 .widget-statistics .stats-right .icon-label {
   color: #ABABAB;
-  font-size: 14px;
+  font-size: 1.077rem;
   display: inline-block;
 }
 .widget-statistics .stats-right span {
   color: #353535;
-  font-weight: 400;
-  font-size: 24px;
+  font-weight: 300;
+  font-size: 1.846rem;
   display: block;
 }
 .widget-statistics .stats-right .statsbar {
@@ -3473,8 +3517,8 @@ p:last-child {
 }
 .widget-global-sales table thead tr th {
   color: #ABABAB;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 500;
+  font-size: 1rem;
 }
 .widget-global-sales table thead tr th.country {
   text-align: left;
@@ -3485,8 +3529,8 @@ p:last-child {
 }
 .widget-global-sales table tbody tr td {
   color: #353535;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   text-align: center;
 }
 .widget-global-sales table tbody tr td img {
@@ -3499,7 +3543,7 @@ p:last-child {
   vertical-align: middle;
 }
 .widget-global-sales table tbody tr td i {
-  font-size: 16px;
+  font-size: 1.231rem;
 }
 .widget-global-sales table tbody tr td i.up {
   color: #44BE2D;
@@ -3534,19 +3578,19 @@ p:last-child {
 }
 .widget-profile .profile-info .name {
   display: block;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 1.077rem;
+  font-weight: 500;
   color: #353535;
 }
 .widget-profile .profile-info i {
-  font-size: 13px;
+  font-size: 1rem;
   color: #ABABAB;
   margin-right: 5px;
 }
 .widget-profile .profile-info span {
-  font-size: 13px;
+  font-size: 1rem;
   color: #696969;
-  font-weight: 400;
+  font-weight: 300;
 }
 .widget-profile .profile-info .profile-numbers {
   display: inline-block;
@@ -3556,15 +3600,15 @@ p:last-child {
 .widget-profile .profile-info .profile-numbers .header {
   display: block;
   color: #ABABAB;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 300;
   margin-top: 16px;
 }
 .widget-profile .profile-info .profile-numbers .number {
   display: block;
   color: #353535;
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 1.538rem;
+  font-weight: 300;
 }
 
 .widget-timeline ul {
@@ -3599,7 +3643,7 @@ p:last-child {
   vertical-align: middle;
   position: absolute;
   top: 28px;
-  font-size: 20px;
+  font-size: 1.538rem;
 }
 .widget-timeline ul li i.device {
   float: right;
@@ -3623,7 +3667,7 @@ p:last-child {
 }
 .widget-timeline ul li .timeline-subject .timeline-header {
   display: block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .widget-timeline ul li .timeline-subject .timeline-subheader {
   color: #ABABAB;
@@ -3661,13 +3705,13 @@ p:last-child {
 }
 .widget-inbox ul li .message-box {
   display: inline-block;
-  font-size: 13px;
+  font-size: 1rem;
   vertical-align: middle;
   width: 73%;
 }
 .widget-inbox ul li .message-box .messager {
   color: #323232;
-  font-weight: 700;
+  font-weight: 500;
   display: inline-block;
 }
 .widget-inbox ul li .message-box .time {
@@ -3685,7 +3729,7 @@ p:last-child {
   top: 20px;
 }
 .widget-inbox ul li .message-status i {
-  font-size: 18px;
+  font-size: 1.385rem;
   color: var(--primary-color);
   display: block;
 }
@@ -3693,9 +3737,9 @@ p:last-child {
   color: #ABABAB;
 }
 .widget-inbox ul li .message-status span {
-  font-size: 13px;
+  font-size: 1rem;
   color: #ABABAB;
-  font-weight: 400;
+  font-weight: 300;
 }
 
 .widget-projects {
@@ -3722,13 +3766,13 @@ p:last-child {
   width: 25%;
 }
 .widget-projects ul li .project-info .project-name {
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 1.077rem;
+  font-weight: 300;
   color: #ffffff;
   display: block;
 }
 .widget-projects ul li .project-info .project-firm {
-  font-size: 13px;
+  font-size: 1rem;
   color: #b0b0ae;
   display: block;
 }
@@ -3752,7 +3796,7 @@ p:last-child {
   text-align: center;
   display: inline-block;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 1rem;
   margin-left: 21px;
 }
 .widget-projects ul li .button {
@@ -3785,24 +3829,24 @@ p:last-child {
 }
 .widget-contacts ul li .team-box {
   display: inline-block;
-  font-size: 13px;
+  font-size: 1rem;
   vertical-align: middle;
   width: 69%;
 }
 .widget-contacts ul li .team-box .team-member {
   color: #323232;
-  font-weight: 400;
+  font-weight: 300;
   display: block;
 }
 .widget-contacts ul li .team-box .team-member-mail {
   color: #888888;
   display: inline-block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .widget-contacts ul li .team-box .team-member-address {
   color: #888888;
   display: inline-block;
-  font-weight: 400;
+  font-weight: 300;
 }
 .widget-contacts ul li .team-box i {
   display: inline-block;

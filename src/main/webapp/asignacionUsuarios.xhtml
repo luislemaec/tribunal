@@ -321,7 +321,7 @@
                                 #{not empty ig.nombre ? ig.nombre.substring(0,1) : '?'}
                             </div>
                             <div class="flex flex-column">
-                                <span class="font-semibold text-900 text-sm">#{ig.nombre}</span>
+                                <span class="font-medium text-900 text-sm">#{ig.nombre}</span>
                                 <small class="text-500">#{ig.comunidad}</small>
                             </div>
                         </div>
@@ -347,7 +347,7 @@
                               filterBy="#{ig.adminPersonaNombres}" filterMatchMode="contains">
                         <p:outputPanel rendered="#{ig.tieneAdmin}">
                             <div class="flex flex-column line-height-3">
-                                <span class="font-semibold text-900 text-sm">
+                                <span class="font-medium text-900 text-sm">
                                     <i class="pi pi-user mr-1 text-green-500"/>
                                     #{ig.adminPersonaNombres} #{ig.adminPersonaApellidos}
                                 </span>
@@ -413,7 +413,7 @@
                     <div class="surface-100 border-round-lg p-3 mb-3">
                         <div class="flex align-items-center gap-2 mb-1">
                             <i class="pi pi-building text-primary-700"/>
-                            <span class="font-semibold text-900">
+                            <span class="font-medium text-900">
                                 #{asignacionUsuariosController.iglesiaSeleccionada.nombre}
                             </span>
                         </div>

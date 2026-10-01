@@ -13,7 +13,6 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
@@ -90,9 +89,9 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
             celdaLogo.setPaddingTop(actaParcial ? 4f : 8f);
             cabecera.addCell(celdaLogo);
 
-            Font titulo = FontFactory.getFont("arial", actaParcial ? 13 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
-            Font institucion = FontFactory.getFont("arial", actaParcial ? 10 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
-            Font texto = FontFactory.getFont("arial", 8, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
+            Font titulo = Constantes.fuentePdf(actaParcial ? 13 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font institucion = Constantes.fuentePdf(actaParcial ? 10 : 11, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font texto = Constantes.fuentePdf(8, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
             Phrase datos = new Phrase();
             datos.add(new Chunk(Constantes.INSTITUCION + "\n", actaParcial ? institucion : titulo));
             datos.add(new Chunk(Constantes.SISTEMA + "\n", texto));
@@ -130,7 +129,7 @@ public class HeaderFooterPageEvent extends PdfPageEventHelper {
 
             document.add(bannerFooter);
 
-            Font footerFont = FontFactory.getFont("arial", 7, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
+            Font footerFont = Constantes.fuentePdf(7, Font.NORMAL, COLOR_TEXTO_SECUNDARIO);
             String textoFooter = actaParcial
                     ? Constantes.getMensaje("reportesMesa.acta.pie", writer.getPageNumber())
                     : "Pagina " + writer.getPageNumber()

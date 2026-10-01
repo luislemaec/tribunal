@@ -53,18 +53,12 @@
 
         <h5 id="tec-fs-label">#{msg['config.fontsize']}</h5>
         <div class="tec-fs-selector" role="group" aria-labelledby="tec-fs-label">
-            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs="11" aria-pressed="false"
-                    title="#{msg['config.fontsize.11.title']}" aria-label="#{msg['config.fontsize.11.title']}"
-                    onclick="TecFontSize.set('11')">#{msg['config.fontsize.11']}</button>
-            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs="12" aria-pressed="false"
-                    title="#{msg['config.fontsize.12.title']}" aria-label="#{msg['config.fontsize.12.title']}"
-                    onclick="TecFontSize.set('12')">#{msg['config.fontsize.12']}</button>
-            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs="13" aria-pressed="true"
-                    title="#{msg['config.fontsize.13.title']}" aria-label="#{msg['config.fontsize.13.title']}"
-                    onclick="TecFontSize.set('13')">#{msg['config.fontsize.13']}</button>
-            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs="15" aria-pressed="false"
-                    title="#{msg['config.fontsize.15.title']}" aria-label="#{msg['config.fontsize.15.title']}"
-                    onclick="TecFontSize.set('15')">#{msg['config.fontsize.15']}</button>
+            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs-step="-1"
+                    title="#{msg['config.fontsize.menos']}" aria-label="#{msg['config.fontsize.menos']}"
+                    onclick="TecFontSize.step(-1)">A-</button>
+            <button type="button" class="ui-button ui-button-outlined ui-button-secondary" data-fs-step="1"
+                    title="#{msg['config.fontsize.mas']}" aria-label="#{msg['config.fontsize.mas']}"
+                    onclick="TecFontSize.step(1)">A+</button>
         </div>
     </div>
 </ui:composition>

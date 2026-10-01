@@ -1564,7 +1564,7 @@ public class ActaEController implements Serializable {
         Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(tamanioLetra);
         Font fuenteContenido = Constantes.getFuenteContenidoDefault(tamanioLetra);
 
-        String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Regular.ttf");
+        String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Light.ttf");   // montsR = texto base (Light 300)
         FontFactory.register(pathMontsR, "montsR");
         FontFactory.getFont("montsR", tamanioLetra, Font.NORMAL, BaseColor.BLACK);
 

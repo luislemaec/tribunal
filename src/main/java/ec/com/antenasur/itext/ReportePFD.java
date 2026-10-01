@@ -16,7 +16,6 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.FontProvider;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
@@ -151,7 +150,7 @@ public class ReportePFD {
 
     public static void addTableHeader(int numColumns, String tableTitle, Font fuente) {
 
-        Font fuenteTituloTabla = FontFactory.getFont("arial", 9, Font.BOLD, BaseColor.WHITE);
+        Font fuenteTituloTabla = Constantes.fuentePdf(9, Font.BOLD, BaseColor.WHITE);
         PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, fuenteTituloTabla));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -249,13 +248,13 @@ public class ReportePFD {
     private static void agregarInformacionActaParcial(Document pdf, ReporteMesaDTO reporte)
             throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.titulo"),
-                FontFactory.getFont("arial", 15, Font.BOLD, COLOR_INSTITUCIONAL));
+                Constantes.fuentePdf(15, Font.BOLD, COLOR_INSTITUCIONAL));
         titulo.setAlignment(Element.ALIGN_CENTER);
         titulo.setSpacingAfter(3f);
         pdf.add(titulo);
 
         Paragraph proceso = new Paragraph(texto(reporte.getProceso().getNombre()),
-                FontFactory.getFont("arial", 9, Font.NORMAL, COLOR_TEXTO_SECUNDARIO));
+                Constantes.fuentePdf(9, Font.NORMAL, COLOR_TEXTO_SECUNDARIO));
         proceso.setAlignment(Element.ALIGN_CENTER);
         proceso.setSpacingAfter(9f);
         pdf.add(proceso);
@@ -269,8 +268,8 @@ public class ReportePFD {
      * del escrutinio.
      */
     private static Paragraph construirIntroduccionActa(ReporteMesaDTO reporte) {
-        Font normal = FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK);
-        Font destacado = FontFactory.getFont("arial", 9, Font.BOLD, BaseColor.BLACK);
+        Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
+        Font destacado = Constantes.fuentePdf(9, Font.BOLD, BaseColor.BLACK);
         // La fecha del acta es la del sufragio, tomada de la fase SUFRAGIO del
         // cronograma del proceso (ReporteMesaService la carga en el DTO). Si esa
         // fase no está configurada se dejan espacios para completarla a mano, en
@@ -334,7 +333,7 @@ public class ReportePFD {
     private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean conQr)
             throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.resultados.titulo"),
-                FontFactory.getFont("arial", 10, Font.BOLD, COLOR_INSTITUCIONAL));
+                Constantes.fuentePdf(10, Font.BOLD, COLOR_INSTITUCIONAL));
         titulo.setSpacingAfter(8f);
         pdf.add(titulo);
         int cantidadListas = (int) reporte.getEscrutinios().stream()
@@ -428,7 +427,7 @@ public class ReportePFD {
      * texto, sin tabulaciones ni espacios de relleno.
      */
     private static PdfPTable crearLineaConEtiqueta(String etiqueta, float altura) throws DocumentException {
-        Font fuente = FontFactory.getFont("arial", 8.5f, Font.BOLD, COLOR_INSTITUCIONAL);
+        Font fuente = Constantes.fuentePdf(8.5f, Font.BOLD, COLOR_INSTITUCIONAL);
         float anchoEtiqueta = new Chunk(etiqueta, fuente).getWidthPoint() + 6f;
         PdfPTable fila = new PdfPTable(2);
         fila.setWidthPercentage(100);
@@ -463,7 +462,7 @@ public class ReportePFD {
     private static PdfPCell crearCeldaActa(String valor, int alineacion, int estilo, float altura,
             BaseColor fondo, boolean bordeSuperiorMarcado) {
         Paragraph contenido = new Paragraph(texto(valor),
-                FontFactory.getFont("arial", 8, estilo, BaseColor.BLACK));
+                Constantes.fuentePdf(8, estilo, BaseColor.BLACK));
         contenido.setAlignment(alineacion);
         PdfPCell celda = new PdfPCell(contenido);
         celda.setMinimumHeight(altura);
@@ -506,7 +505,7 @@ public class ReportePFD {
     private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr) throws DocumentException {
         // Fórmula de cierre del acta, en lugar de un rótulo de sección: da fe de
         // lo actuado e incorpora la hora de suscripción que se completa a mano.
-        Font normal = FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK);
+        Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
         Paragraph cierre = new Paragraph();
         cierre.setAlignment(Element.ALIGN_JUSTIFIED);
         cierre.setLeading(13f);
@@ -536,11 +535,11 @@ public class ReportePFD {
             }
             Paragraph contenido = new Paragraph();
             contenido.add(new Chunk("\n________________________\n",
-                    FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
+                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK)));
             contenido.add(new Chunk(nombre.trim() + "\n",
-                    FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK)));
+                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK)));
             contenido.add(new Chunk(texto(miembro.getCargoNombre()),
-                    FontFactory.getFont("arial", 8, Font.BOLD, BaseColor.BLACK)));
+                    Constantes.fuentePdf(8, Font.BOLD, BaseColor.BLACK)));
             PdfPCell celda = new PdfPCell(contenido);
             celda.setBorder(PdfPCell.NO_BORDER);
             celda.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -580,8 +579,8 @@ public class ReportePFD {
     }
 
     private static void agregarDatoActa(PdfPTable tabla, String etiqueta, String valor, boolean mesa) {
-        Font etiquetaFont = FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL);
-        Font valorFont = FontFactory.getFont("arial", mesa ? 12 : 8, mesa ? Font.BOLD : Font.NORMAL,
+        Font etiquetaFont = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
+        Font valorFont = Constantes.fuentePdf(mesa ? 12 : 8, mesa ? Font.BOLD : Font.NORMAL,
                 BaseColor.BLACK);
         PdfPCell etiquetaCelda = new PdfPCell(new Phrase(texto(etiqueta).toUpperCase() + ":", etiquetaFont));
         etiquetaCelda.setBorder(PdfPCell.NO_BORDER);
@@ -609,8 +608,8 @@ public class ReportePFD {
 
     private static void agregarDatoActaConExtension(PdfPTable tabla, String etiqueta, String valor,
             int columnasValor, boolean destacado, float alturaMinima) {
-        Font etiquetaFont = FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL);
-        Font valorFont = FontFactory.getFont("arial", destacado ? 10 : 8,
+        Font etiquetaFont = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
+        Font valorFont = Constantes.fuentePdf(destacado ? 10 : 8,
                 destacado ? Font.BOLD : Font.NORMAL, BaseColor.BLACK);
         PdfPCell etiquetaCelda = new PdfPCell(new Phrase(texto(etiqueta).toUpperCase() + ":", etiquetaFont));
         etiquetaCelda.setBorder(PdfPCell.NO_BORDER);
@@ -644,7 +643,7 @@ public class ReportePFD {
 
     private static void agregarCabecera(PdfPTable tabla, String valor) {
         PdfPCell celda = new PdfPCell(new Paragraph(valor,
-                FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL)));
+                Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL)));
         celda.setBackgroundColor(COLOR_CABECERA_TABLA);
         celda.setBorderColor(COLOR_BORDE_TABLA);
         celda.setPadding(6f);
@@ -659,7 +658,7 @@ public class ReportePFD {
 
     private static void agregarCelda(PdfPTable tabla, String valor, int alineacion, int estilo) {
         PdfPCell celda = new PdfPCell(new Paragraph(texto(valor),
-                FontFactory.getFont("arial", 8, estilo, BaseColor.BLACK)));
+                Constantes.fuentePdf(8, estilo, BaseColor.BLACK)));
         celda.setBorderColor(COLOR_BORDE_TABLA);
         celda.setPadding(5f);
         celda.setHorizontalAlignment(alineacion);
@@ -680,7 +679,7 @@ public class ReportePFD {
             actual().tabla.setTotalWidth(columWidth);
             addTableHeader(numColumns, tableTitle, fuente);
 
-            Font fuenteEncabezado = FontFactory.getFont("arial", 8, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font fuenteEncabezado = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
             for (String columName : listColumNames) {
                 PdfPCell header = new PdfPCell(new Paragraph(columName, fuenteEncabezado));
                 header.setBackgroundColor(COLOR_CABECERA_TABLA);
@@ -736,7 +735,7 @@ public class ReportePFD {
 
     public static void addParagraph(String string) {
         try {
-            Paragraph paragraph = new Paragraph(string, FontFactory.getFont("arial", 9, Font.NORMAL, BaseColor.BLACK));
+            Paragraph paragraph = new Paragraph(string, Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK));
             paragraph.setSpacingAfter(6f);
             paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
             actual().documento.add(paragraph);
@@ -749,7 +748,7 @@ public class ReportePFD {
     public static void agregaTituloSeccion(String titulo) {
         try {
             Paragraph paragraph = new Paragraph(titulo,
-                    FontFactory.getFont("arial", 11, Font.BOLD, COLOR_INSTITUCIONAL));
+                    Constantes.fuentePdf(11, Font.BOLD, COLOR_INSTITUCIONAL));
             paragraph.setSpacingBefore(10f);
             paragraph.setSpacingAfter(6f);
             actual().documento.add(paragraph);
@@ -868,7 +867,7 @@ public class ReportePFD {
 
             Paragraph texto = new Paragraph("Codigo de verificacion: " + codigoActa + "\n"
                     + "Este documento puede verificarse con el codigo institucional impreso en el acta.",
-                    FontFactory.getFont("arial", 8, Font.NORMAL, BaseColor.BLACK));
+                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK));
             PdfPCell celdaTexto = new PdfPCell(texto);
             celdaTexto.setBorder(PdfPCell.NO_BORDER);
             celdaTexto.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -895,7 +894,7 @@ public class ReportePFD {
                     + " Hora: " + date.substring(11, 19);
 
             Paragraph parrafo = new Paragraph(finalParagraph,
-                    FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
+                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
             actual().documento.add(parrafo);
             actual().documento.close();
@@ -932,7 +931,7 @@ public class ReportePFD {
     public static void agregaParrafoEnBlanco() {
         try {
             Paragraph parrafo = new Paragraph("\n",
-                    FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.BLACK));
+                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
             actual().documento.add(parrafo);
         } catch (Exception e) {
@@ -943,7 +942,7 @@ public class ReportePFD {
     public static void agregaParrafoObservacion(String observacion) {
         try {
             Paragraph parrafo = new Paragraph("\n" + observacion,
-                    FontFactory.getFont("arial", 8, Font.ITALIC, BaseColor.RED));
+                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.RED));
             parrafo.setAlignment(Element.ALIGN_LEFT);
             actual().documento.add(parrafo);
         } catch (Exception e) {

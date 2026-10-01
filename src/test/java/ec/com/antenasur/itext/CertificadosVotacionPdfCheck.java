@@ -37,8 +37,8 @@ public class CertificadosVotacionPdfCheck {
         reporte.setMesa(mesa);
         var recursos = new CertificadosVotacionPDF.Recursos(
                 Files.readAllBytes(Path.of("src/main/resources/img/cert-logo.png")),
-                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Regular.ttf")),
-                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Bold.ttf")));
+                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Light.ttf")),
+                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Medium.ttf")));
         var fecha = new SimpleDateFormat("yyyy-MM-dd").parse("2027-02-21");
         List<CertificadoVotacionDTO> personas = new ArrayList<>();
         for (int i = 1; i <= 21; i++) {
@@ -77,7 +77,7 @@ public class CertificadosVotacionPdfCheck {
                     var fuentes = lector.getPageN(pagina).getAsDict(PdfName.RESOURCES).getAsDict(PdfName.FONT);
                     String nombres = fuentes.getKeys().stream().map(k -> fuentes.getAsDict(k)
                             .getAsName(PdfName.BASEFONT).toString()).reduce("", String::concat);
-                    comprobar(nombres.contains("Montserrat-Regular") && nombres.contains("Montserrat-Bold"), "Fuentes institucionales");
+                    comprobar(nombres.contains("Montserrat-Light") && nombres.contains("Montserrat-Medium"), "Fuentes institucionales");
                 } else {
                     comprobar(texto.split("PRESIDENTA/E", -1).length - 1 == esperados, "Firmas completas");
                     comprobar(texto.split("Este documento acredita", -1).length - 1 == esperados, "Texto reverso");
