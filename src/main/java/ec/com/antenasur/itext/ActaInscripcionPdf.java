@@ -23,7 +23,7 @@ import ec.com.antenasur.dto.TribunalDTO;
 /** Construye el acta de inscripcion sin depender del estado de una vista JSF. */
 public final class ActaInscripcionPdf {
 
-    private static final BaseColor AZUL = new BaseColor(24, 82, 133);
+    private static final BaseColor AZUL = TipografiaPdf.AZUL;
 
     private ActaInscripcionPdf() {
     }
@@ -37,10 +37,10 @@ public final class ActaInscripcionPdf {
                     salida, codigoDocumento, tituloDocumento, fechaGeneracion);
             Document documento = contexto.documento();
 
-            Font titulo = Constantes.fuentePdf(15, Font.BOLD, AZUL);
-            Font subtitulo = Constantes.fuentePdf(10, Font.BOLD, BaseColor.BLACK);
-            Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
-            Font pequeno = Constantes.fuentePdf(8, Font.NORMAL, BaseColor.DARK_GRAY);
+            Font titulo = TipografiaPdf.Estilo.TITULO_DOCUMENTO.fuente(15);
+            Font subtitulo = TipografiaPdf.Estilo.SECCION.fuente(10);
+            Font normal = TipografiaPdf.Estilo.TEXTO.fuente(9);
+            Font pequeno = TipografiaPdf.Estilo.METADATO.fuente(8, BaseColor.DARK_GRAY);
 
             Paragraph institucion = new Paragraph("CONPOCIIECH - TRIBUNAL ELECTORAL", titulo);
             institucion.setAlignment(Element.ALIGN_CENTER);
@@ -138,7 +138,7 @@ public final class ActaInscripcionPdf {
 
     private static void agregarCabecera(PdfPTable tabla, String valor, Font fuente) {
         PdfPCell celda = new PdfPCell(new Phrase(valor, fuente));
-        celda.setBackgroundColor(new BaseColor(232, 240, 247));
+        celda.setBackgroundColor(TipografiaPdf.FONDO_CABECERA);
         celda.setHorizontalAlignment(Element.ALIGN_CENTER);
         celda.setPadding(6);
         tabla.addCell(celda);

@@ -27,7 +27,7 @@ import ec.com.antenasur.util.Constantes;
  */
 public final class ActaActualizacionMiembrosPdf {
 
-    private static final BaseColor AZUL_INSTITUCIONAL = new BaseColor(24, 82, 133);
+    private static final BaseColor AZUL_INSTITUCIONAL = TipografiaPdf.AZUL;
 
     private ActaActualizacionMiembrosPdf() {
     }
@@ -46,9 +46,9 @@ public final class ActaActualizacionMiembrosPdf {
                     Constantes.getMensaje("actaActualizacion.pdf.titulo"), fechaGeneracion, codigoBarras);
             Document documento = contexto.documento();
             try {
-                Font titulo = Constantes.fuentePdf(14, Font.BOLD, AZUL_INSTITUCIONAL);
-                Font subtitulo = Constantes.fuentePdf(9, Font.BOLD, BaseColor.BLACK);
-                Font normal = Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK);
+                Font titulo = TipografiaPdf.Estilo.TITULO_DOCUMENTO.fuente(14);
+                Font subtitulo = TipografiaPdf.Estilo.SECCION.fuente(9);
+                Font normal = TipografiaPdf.Estilo.TEXTO.fuente(8);
 
                 agregarTitulo(documento, titulo, subtitulo);
                 agregarDatos(documento, iglesia, procesoNombre, miembros.size(), fechaGeneracion, subtitulo, normal);
@@ -178,7 +178,7 @@ public final class ActaActualizacionMiembrosPdf {
 
     private static void agregarCabecera(PdfPTable tabla, String texto, Font fuente) {
         PdfPCell celda = new PdfPCell(new Phrase(texto(texto), fuente));
-        celda.setBackgroundColor(new BaseColor(232, 240, 247));
+        celda.setBackgroundColor(TipografiaPdf.FONDO_CABECERA);
         celda.setHorizontalAlignment(Element.ALIGN_CENTER);
         celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
         celda.setPadding(5f);

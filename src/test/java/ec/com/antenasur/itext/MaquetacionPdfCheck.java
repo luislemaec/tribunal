@@ -11,10 +11,16 @@ import java.util.List;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.PdfArray;
+import com.itextpdf.text.pdf.PdfDictionary;
+import com.itextpdf.text.pdf.PdfName;
 import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfStream;
+import com.itextpdf.text.pdf.parser.ContentByteUtils;
+import com.itextpdf.text.pdf.parser.ContentOperator;
+import com.itextpdf.text.pdf.parser.PdfContentStreamProcessor;
 import com.itextpdf.text.pdf.parser.ImageRenderInfo;
 import com.itextpdf.text.pdf.parser.Matrix;
-import com.itextpdf.text.pdf.parser.PdfReaderContentParser;
 import com.itextpdf.text.pdf.parser.RenderListener;
 import com.itextpdf.text.pdf.parser.TextRenderInfo;
 import com.itextpdf.text.pdf.parser.Vector;
@@ -38,7 +44,7 @@ import ec.com.antenasur.dto.TribunalDTO;
  *
  * <p>Recorre el contenido real de cada página (texto e imágenes) y verifica que
  * ningún elemento invada los márgenes, con una tolerancia de 1 pt para el
- * redondeo de las fuentes. El fondo de la plantilla se excluye porque ocupa la
+ * redondeo de las fuentes. El fondo de la plantilla (un Form XObject de página completa) se excluye porque ocupa la
  * página completa por diseño.
  *
  * <p>Ejecución: {@code java -cp ... ec.com.antenasur.itext.MaquetacionPdfCheck [directorio]};
@@ -53,7 +59,7 @@ public class MaquetacionPdfCheck {
      * El criterio es no solaparse con la gráfica de la plantilla: el título y el
      * código se imprimen bajo la línea del encabezado y la paginación sobre la
      * línea del pie, ambos fuera del margen de contenido pero dentro del área
-     * limpia de A4TEC.png.
+     * limpia de la plantilla (docs/diseno/A4TEC.png).
      */
     private static final float LIMITE_SUPERIOR = PlantillaA4.LIMITE_ENCABEZADO + TOLERANCIA;
     private static final float LIMITE_INFERIOR = PlantillaA4.LIMITE_PIE - TOLERANCIA;
@@ -134,7 +140,7 @@ public class MaquetacionPdfCheck {
 
         System.out.println("Documentos: " + documentos + " | páginas: " + paginas + " | elementos: " + elementos);
         if (fallos.isEmpty()) {
-            System.out.println("OK: todo el contenido está dentro de la zona segura de A4TEC.png");
+            System.out.println("OK: todo el contenido está dentro de la zona segura de la plantilla A4");
         } else {
             System.out.println("FALLOS (" + fallos.size() + "):");
             fallos.stream().limit(40).forEach(f -> System.out.println("  - " + f));
@@ -147,7 +153,7 @@ public class MaquetacionPdfCheck {
     /** Listado tipo Personas / Acta de escrutinio, con textos largos. */
     private byte[] reporteListado(int filas) {
         ReportePFD.nuevoPDF("REPORTE-PRUEBA");
-        Font fuente = FontFactory.getFont("arial", 8);
+        Font fuente = ec.com.antenasur.util.Constantes.getFuenteContenidoDefault(8);
         ReportePFD.agregaTituloSeccion("Listado de personas registradas en el proceso electoral vigente");
         ReportePFD.addParagraph("Texto largo de prueba para comprobar el ajuste de línea dentro de la zona segura"
                 + " de la plantilla institucional, que debe respetar los márgenes definidos por las líneas del"
@@ -258,11 +264,10 @@ public class MaquetacionPdfCheck {
         }
         PdfReader lector = new PdfReader(pdf);
         try {
-            PdfReaderContentParser parser = new PdfReaderContentParser(lector);
             for (int pagina = 1; pagina <= lector.getNumberOfPages(); pagina++) {
                 paginas++;
                 if (aplicaPlantilla) {
-                    parser.processContent(pagina, new Inspector(nombre, pagina, LIMITE_IZQUIERDO));
+                    procesarSinPlantilla(lector, pagina, new Inspector(nombre, pagina, LIMITE_IZQUIERDO));
                 }
             }
             System.out.println(String.format("%-38s %d página(s)%s", nombre, lector.getNumberOfPages(),
@@ -270,6 +275,32 @@ public class MaquetacionPdfCheck {
         } finally {
             lector.close();
         }
+    }
+
+    /**
+     * Recorre el contenido de la página omitiendo la plantilla institucional: {@link PlantillaA4} la
+     * dibuja como un Form XObject del tamaño de la página completa (banda, líneas, logotipos y textos
+     * fijos, que por diseño ocupan el encabezado y el pie). El resto de XObjects se procesa normalmente.
+     */
+    private static void procesarSinPlantilla(PdfReader lector, int pagina, RenderListener inspector)
+            throws Exception {
+        PdfDictionary recursos = lector.getPageN(pagina).getAsDict(PdfName.RESOURCES);
+        PdfDictionary xobjetos = recursos != null ? recursos.getAsDict(PdfName.XOBJECT) : null;
+        PdfContentStreamProcessor procesador = new PdfContentStreamProcessor(inspector);
+        ContentOperator doOriginal = procesador.registerContentOperator("Do", null);
+        procesador.registerContentOperator("Do", (proc, operador, operandos) -> {
+            PdfStream xobjeto = xobjetos != null ? xobjetos.getAsStream((PdfName) operandos.get(0)) : null;
+            if (xobjeto != null && PdfName.FORM.equals(xobjeto.getAsName(PdfName.SUBTYPE))) {
+                PdfArray caja = xobjeto.getAsArray(PdfName.BBOX);
+                if (caja != null && caja.size() == 4
+                        && caja.getAsNumber(2).floatValue() - caja.getAsNumber(0).floatValue() >= PageSize.A4.getWidth() - 1
+                        && caja.getAsNumber(3).floatValue() - caja.getAsNumber(1).floatValue() >= PageSize.A4.getHeight() - 1) {
+                    return;
+                }
+            }
+            doOriginal.invoke(proc, operador, operandos);
+        });
+        procesador.processContent(ContentByteUtils.getContentBytesForPage(lector, pagina), recursos);
     }
 
     /** Anota cada texto o imagen que se sale de la zona segura. */

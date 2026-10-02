@@ -14,9 +14,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.FontProvider;
 
 import ec.com.antenasur.bean.DocumentoBean;
@@ -1609,11 +1607,9 @@ public class ActaEController implements Serializable {
         Font fuenteCabecerta = Constantes.getFuenteCabeceraDefault(tamanioLetra);
         Font fuenteContenido = Constantes.getFuenteContenidoDefault(tamanioLetra);
 
-        String pathMontsR = Constantes.getPathFuenteExterna("Montserrat-Light.ttf");   // montsR = texto base (Light 300)
-        FontFactory.register(pathMontsR, "montsR");
-        FontFactory.getFont("montsR", tamanioLetra, Font.NORMAL, BaseColor.BLACK);
-
-            FontProvider fontProvider = FontFactory.getFontImp();
+            // Las familias de la hoja de estilo (montsR, montsSB, montsB) se resuelven a Montserrat
+            // Regular, Medium y Bold; antes montsSB y montsB no estaban registradas y salían en Helvetica.
+            FontProvider fontProvider = ec.com.antenasur.itext.TipografiaPdf.proveedorHtml();
             ReportePFD.nuevoPDF(documentoActaE.getNombreReporte());
             ReportePFD.agregaHTML(txtContenidoActaE, pathCss, fontProvider);
             ReportePFD.creaTablaCabecera(documentoActaE.getNumeroColumnas(), documentoActaE.getTamanioColumnasPDF(),

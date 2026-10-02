@@ -248,6 +248,9 @@ Notas:
 - Al guardar archivos, crear el directorio padre si no existe.
 - `Documentos.doc_path` debe guardar la ruta real donde se escribio el archivo.
 - Para PDF/XLSX revisar `itext/`, controladores involucrados y `DocumentoBean`/`DocumentoService`.
+- Tipografia y colores PDF: solo via `itext/TipografiaPdf` (estilos por funcion: titulo 700, seccion/etiqueta/destacado 500, texto/valor/metadato 400; azul `#004385`). No crear `Font`/`BaseColor` sueltos ni registrar fuentes con `FontFactory`; las TTF viven en `src/main/resources/fonts`. Light 300 solo en la replica grafica de `PlantillaA4`.
+- Plantilla A4: `PlantillaA4` la dibuja vectorial (fuente de diseno `docs/diseno/A4TEC.png`); los recursos graficos se crean una vez por documento, nunca por pagina ni por certificado.
+- El certificado de votacion no lleva QR; su codigo se imprime solo como Code 128 en el reverso.
 - Los logos en reportes deben conservar proporcion y no distorsionarse.
 - `ReportePFD.guardarDocumentosActasEObligatorio(...)` debe fallar si no existe contenido PDF o no se puede escribir el archivo.
 - En `actaE.xhtml`, el cierre de mesa debe generar/guardar el PDF antes de marcar el escrutinio como `CERRADO`.

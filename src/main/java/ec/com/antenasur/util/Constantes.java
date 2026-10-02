@@ -2,8 +2,7 @@ package ec.com.antenasur.util;
 
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.pdf.BaseFont;
+import ec.com.antenasur.itext.TipografiaPdf;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,65 +62,27 @@ public class Constantes {
 
     /*----------------------------------- FUENTE -----------------------------------*/
     public static Font getFuenteCabeceraDefault(final float tamanioLetra) {
-        // Énfasis del documento = Medium (500), igual que la interfaz web (antes Bold).
-        return fuentePdf(tamanioLetra, Font.BOLD, BaseColor.BLACK);
+        return TipografiaPdf.Estilo.ENCABEZADO_TABLA.fuente(tamanioLetra, BaseColor.BLACK);
     }
 
     public static Font getFuenteContenidoDefault(final float tamanioLetra) {
-        // Texto del documento = Light (300), igual que la interfaz web (antes Regular).
-        return fuentePdf(tamanioLetra, Font.NORMAL, BaseColor.BLACK);
+        return TipografiaPdf.Estilo.CELDA.fuente(tamanioLetra);
     }
 
     /**
-     * Fuente de PDF institucional (Montserrat), igual que la interfaz: texto en Light (300), énfasis (negrita) en
-     * Medium (500) y cursiva en Light Italic. Si no hay contexto web o falta el archivo (p. ej. pruebas) cae en
-     * Helvetica para no interrumpir la generación del documento.
+     * Fuente de PDF institucional (Montserrat) para el código que aún pide un estilo de iText: texto en
+     * Regular (400) y énfasis ({@code Font.BOLD}) en Medium (500). La cursiva no tiene archivo propio y se
+     * imprime en Regular. Para jerarquías nuevas usar {@link TipografiaPdf.Estilo}.
      */
     public static Font fuentePdf(final float tamanio, final int estilo, final BaseColor color) {
-        final boolean enfasis = (estilo & Font.BOLD) != 0;
-        final boolean cursiva = !enfasis && (estilo & Font.ITALIC) != 0;
-        final String archivo = enfasis ? "Montserrat-Medium.ttf"
-                : cursiva ? "Montserrat-LightItalic.ttf" : "Montserrat-Light.ttf";
-        final String alias = archivo.replace(".ttf", "");
-        try {
-            if (!FontFactory.isRegistered(alias)) {
-                final java.io.File fuente = new java.io.File(getPathFuenteExterna(archivo));
-                if (!fuente.isFile()) {
-                    throw new IllegalStateException("Fuente no disponible: " + archivo);
-                }
-                FontFactory.register(fuente.getPath(), alias);
-            }
-            // Incrustada (subconjunto): el PDF se ve igual en equipos sin Montserrat instalada.
-            return FontFactory.getFont(alias, BaseFont.CP1252, BaseFont.EMBEDDED, tamanio, Font.NORMAL, color);
-        } catch (RuntimeException e) {
-            return FontFactory.getFont(enfasis ? FontFactory.HELVETICA_BOLD
-                    : cursiva ? FontFactory.HELVETICA_OBLIQUE : FontFactory.HELVETICA, tamanio, color);
-        }
-    }
-
-    public static Font getFuente(final String nombreFuenteConExtension, final float tamanioLetra, final int estiloFuente, final BaseColor color) {
-        String aliasFuente = nombreFuenteConExtension.replaceAll("ttf", "");
-        String pathFuente = getPathFuenteExterna(nombreFuenteConExtension);
-        FontFactory.register(pathFuente, aliasFuente);
-        return FontFactory.getFont(aliasFuente, tamanioLetra, estiloFuente, color);
-    }
-
-    public static final String getPathFuenteExterna(String nombreFuenteConExtension) {
-        ExternalContext externalContext = JsfUtil.getExternalContext();
-        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
-                + File.separator + nombreFuenteConExtension;
-    }
-
-    public static final String getPathArchivos() {
-        ExternalContext externalContext = JsfUtil.getExternalContext();
-        return externalContext.getRealPath("") + File.separator + "resources" + File.separator + "fonts"
-                + File.separator;
+        TipografiaPdf.Peso peso = (estilo & Font.BOLD) != 0 ? TipografiaPdf.Peso.MEDIUM : TipografiaPdf.Peso.REGULAR;
+        return TipografiaPdf.fuente(peso, tamanio, color);
     }
 
     /*----------------------------------- FIN FUENTE -----------------------------------*/
     public static final String getHojaEstilo() {
         return "p {font-size: 10pt; margin-top: 1em; margin-bottom: 1em; font-family: montsR; line-height: 1.5;}"
-                + "h1{font-size: 20pt; font-family: montsB; color: #185285; margin-bottom: 1.2em;}"
+                + "h1{font-size: 20pt; font-family: montsB; color: #004385; margin-bottom: 1.2em;}"
                 + "h3{font-size: 18pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
                 + "h3{font-size: 16pt; font-family: montsB;}"//CODIGO, CARGO-INSTITUCION
                 + "h4{font-size: 14pt; font-family: montsR;}"

@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
@@ -56,10 +55,10 @@ import ec.com.antenasur.dto.ReporteMesaDTO;
 public class ReportePFD {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ReportePFD.class);
-    private static final BaseColor COLOR_INSTITUCIONAL = new BaseColor(24, 82, 133);
-    private static final BaseColor COLOR_CABECERA_TABLA = new BaseColor(232, 240, 248);
-    private static final BaseColor COLOR_BORDE_TABLA = new BaseColor(210, 220, 230);
-    private static final BaseColor COLOR_TEXTO_SECUNDARIO = new BaseColor(90, 100, 110);
+    private static final BaseColor COLOR_INSTITUCIONAL = TipografiaPdf.AZUL;
+    private static final BaseColor COLOR_CABECERA_TABLA = TipografiaPdf.FONDO_CABECERA;
+    private static final BaseColor COLOR_BORDE_TABLA = TipografiaPdf.BORDE;
+    private static final BaseColor COLOR_TEXTO_SECUNDARIO = TipografiaPdf.SECUNDARIO;
     private static final BaseColor COLOR_SUBTOTAL = new BaseColor(246, 248, 250);
     private static final BaseColor COLOR_TOTAL = new BaseColor(235, 241, 247);
     private static final float[] ANCHOS_ACTA_PARCIAL = new float[]{50, 18, 32};
@@ -150,7 +149,7 @@ public class ReportePFD {
 
     public static void addTableHeader(int numColumns, String tableTitle, Font fuente) {
 
-        Font fuenteTituloTabla = Constantes.fuentePdf(9, Font.BOLD, BaseColor.WHITE);
+        Font fuenteTituloTabla = TipografiaPdf.Estilo.ENCABEZADO_TABLA.fuente(9, BaseColor.WHITE);
         PdfPCell cell = new PdfPCell(new Paragraph(tableTitle, fuenteTituloTabla));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -248,13 +247,13 @@ public class ReportePFD {
     private static void agregarInformacionActaParcial(Document pdf, ReporteMesaDTO reporte)
             throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.titulo"),
-                Constantes.fuentePdf(15, Font.BOLD, COLOR_INSTITUCIONAL));
+                TipografiaPdf.Estilo.TITULO_DOCUMENTO.fuente(15));
         titulo.setAlignment(Element.ALIGN_CENTER);
         titulo.setSpacingAfter(3f);
         pdf.add(titulo);
 
         Paragraph proceso = new Paragraph(texto(reporte.getProceso().getNombre()),
-                Constantes.fuentePdf(9, Font.NORMAL, COLOR_TEXTO_SECUNDARIO));
+                TipografiaPdf.Estilo.SUBTITULO.fuente(9));
         proceso.setAlignment(Element.ALIGN_CENTER);
         proceso.setSpacingAfter(9f);
         pdf.add(proceso);
@@ -268,8 +267,8 @@ public class ReportePFD {
      * del escrutinio.
      */
     private static Paragraph construirIntroduccionActa(ReporteMesaDTO reporte) {
-        Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
-        Font destacado = Constantes.fuentePdf(9, Font.BOLD, BaseColor.BLACK);
+        Font normal = TipografiaPdf.Estilo.TEXTO.fuente(9);
+        Font destacado = TipografiaPdf.Estilo.VALOR_DESTACADO.fuente(9);
         // La fecha del acta es la del sufragio, tomada de la fase SUFRAGIO del
         // cronograma del proceso (ReporteMesaService la carga en el DTO). Si esa
         // fase no está configurada se dejan espacios para completarla a mano, en
@@ -286,7 +285,8 @@ public class ReportePFD {
             fecha != null ? new SimpleDateFormat("yyyy", LOCALE_ES).format(fecha) : "________"
         };
 
-        Paragraph introduccion = new Paragraph();
+        // Con fuente propia: iText usa la del párrafo (Helvetica por defecto) para los espacios que inserta al justificar.
+        Paragraph introduccion = new Paragraph("", normal);
         introduccion.setAlignment(Element.ALIGN_JUSTIFIED);
         introduccion.setLeading(13f);
         introduccion.setSpacingAfter(10f);
@@ -333,7 +333,7 @@ public class ReportePFD {
     private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean conQr)
             throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.resultados.titulo"),
-                Constantes.fuentePdf(10, Font.BOLD, COLOR_INSTITUCIONAL));
+                TipografiaPdf.Estilo.SECCION.fuente(10));
         titulo.setSpacingAfter(8f);
         pdf.add(titulo);
         int cantidadListas = (int) reporte.getEscrutinios().stream()
@@ -427,7 +427,7 @@ public class ReportePFD {
      * texto, sin tabulaciones ni espacios de relleno.
      */
     private static PdfPTable crearLineaConEtiqueta(String etiqueta, float altura) throws DocumentException {
-        Font fuente = Constantes.fuentePdf(8.5f, Font.BOLD, COLOR_INSTITUCIONAL);
+        Font fuente = TipografiaPdf.Estilo.ETIQUETA.fuente(8.5f);
         float anchoEtiqueta = new Chunk(etiqueta, fuente).getWidthPoint() + 6f;
         PdfPTable fila = new PdfPTable(2);
         fila.setWidthPercentage(100);
@@ -505,8 +505,8 @@ public class ReportePFD {
     private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr) throws DocumentException {
         // Fórmula de cierre del acta, en lugar de un rótulo de sección: da fe de
         // lo actuado e incorpora la hora de suscripción que se completa a mano.
-        Font normal = Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK);
-        Paragraph cierre = new Paragraph();
+        Font normal = TipografiaPdf.Estilo.TEXTO.fuente(9);
+        Paragraph cierre = new Paragraph("", normal);
         cierre.setAlignment(Element.ALIGN_JUSTIFIED);
         cierre.setLeading(13f);
         cierre.setSpacingAfter(4f);
@@ -533,13 +533,12 @@ public class ReportePFD {
                             + texto(miembro.getIglesiaPersona().getPersona().getApellidos());
                 }
             }
-            Paragraph contenido = new Paragraph();
+            Paragraph contenido = new Paragraph("", TipografiaPdf.Estilo.TEXTO.fuente(8));
             contenido.add(new Chunk("\n________________________\n",
                     Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK)));
-            contenido.add(new Chunk(nombre.trim() + "\n",
-                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK)));
-            contenido.add(new Chunk(texto(miembro.getCargoNombre()),
-                    Constantes.fuentePdf(8, Font.BOLD, BaseColor.BLACK)));
+            // Firma: el nombre de quien firma (500) sobre su cargo (400).
+            contenido.add(new Chunk(nombre.trim() + "\n", TipografiaPdf.Estilo.FIRMA.fuente(8)));
+            contenido.add(new Chunk(texto(miembro.getCargoNombre()), TipografiaPdf.Estilo.TEXTO.fuente(8)));
             PdfPCell celda = new PdfPCell(contenido);
             celda.setBorder(PdfPCell.NO_BORDER);
             celda.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -579,9 +578,8 @@ public class ReportePFD {
     }
 
     private static void agregarDatoActa(PdfPTable tabla, String etiqueta, String valor, boolean mesa) {
-        Font etiquetaFont = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
-        Font valorFont = Constantes.fuentePdf(mesa ? 12 : 8, mesa ? Font.BOLD : Font.NORMAL,
-                BaseColor.BLACK);
+        Font etiquetaFont = TipografiaPdf.Estilo.ETIQUETA.fuente(8);
+        Font valorFont = mesa ? TipografiaPdf.Estilo.VALOR_DESTACADO.fuente(12) : TipografiaPdf.Estilo.VALOR.fuente(8);
         PdfPCell etiquetaCelda = new PdfPCell(new Phrase(texto(etiqueta).toUpperCase() + ":", etiquetaFont));
         etiquetaCelda.setBorder(PdfPCell.NO_BORDER);
         etiquetaCelda.setBackgroundColor(COLOR_CABECERA_TABLA);
@@ -608,9 +606,8 @@ public class ReportePFD {
 
     private static void agregarDatoActaConExtension(PdfPTable tabla, String etiqueta, String valor,
             int columnasValor, boolean destacado, float alturaMinima) {
-        Font etiquetaFont = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
-        Font valorFont = Constantes.fuentePdf(destacado ? 10 : 8,
-                destacado ? Font.BOLD : Font.NORMAL, BaseColor.BLACK);
+        Font etiquetaFont = TipografiaPdf.Estilo.ETIQUETA.fuente(8);
+        Font valorFont = destacado ? TipografiaPdf.Estilo.VALOR_DESTACADO.fuente(10) : TipografiaPdf.Estilo.VALOR.fuente(8);
         PdfPCell etiquetaCelda = new PdfPCell(new Phrase(texto(etiqueta).toUpperCase() + ":", etiquetaFont));
         etiquetaCelda.setBorder(PdfPCell.NO_BORDER);
         etiquetaCelda.setBackgroundColor(COLOR_CABECERA_TABLA);
@@ -643,7 +640,7 @@ public class ReportePFD {
 
     private static void agregarCabecera(PdfPTable tabla, String valor) {
         PdfPCell celda = new PdfPCell(new Paragraph(valor,
-                Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL)));
+                TipografiaPdf.Estilo.ENCABEZADO_TABLA.fuente(8)));
         celda.setBackgroundColor(COLOR_CABECERA_TABLA);
         celda.setBorderColor(COLOR_BORDE_TABLA);
         celda.setPadding(6f);
@@ -679,7 +676,7 @@ public class ReportePFD {
             actual().tabla.setTotalWidth(columWidth);
             addTableHeader(numColumns, tableTitle, fuente);
 
-            Font fuenteEncabezado = Constantes.fuentePdf(8, Font.BOLD, COLOR_INSTITUCIONAL);
+            Font fuenteEncabezado = TipografiaPdf.Estilo.ENCABEZADO_TABLA.fuente(8);
             for (String columName : listColumNames) {
                 PdfPCell header = new PdfPCell(new Paragraph(columName, fuenteEncabezado));
                 header.setBackgroundColor(COLOR_CABECERA_TABLA);
@@ -720,22 +717,9 @@ public class ReportePFD {
         return valor != null && valor.trim().matches("-?\\d+(\\.\\d+)?");
     }
 
-    public static void addImagen(String rutaImagen, float fitWidth, float fitHeight, int alignment, Document document)
-            throws DocumentException {
-        try {
-            Image foto = Image.getInstance(rutaImagen);
-            foto.scaleToFit(fitWidth, fitHeight);
-            foto.setAlignment(alignment);
-            document.add(foto);
-        } catch (BadElementException | IOException ex) {
-            Logger.getLogger(ReportePFD.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
     public static void addParagraph(String string) {
         try {
-            Paragraph paragraph = new Paragraph(string, Constantes.fuentePdf(9, Font.NORMAL, BaseColor.BLACK));
+            Paragraph paragraph = new Paragraph(string, TipografiaPdf.Estilo.TEXTO.fuente(9));
             paragraph.setSpacingAfter(6f);
             paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
             actual().documento.add(paragraph);
@@ -748,7 +732,7 @@ public class ReportePFD {
     public static void agregaTituloSeccion(String titulo) {
         try {
             Paragraph paragraph = new Paragraph(titulo,
-                    Constantes.fuentePdf(11, Font.BOLD, COLOR_INSTITUCIONAL));
+                    TipografiaPdf.Estilo.SECCION.fuente(11));
             paragraph.setSpacingBefore(10f);
             paragraph.setSpacingAfter(6f);
             actual().documento.add(paragraph);
@@ -867,7 +851,7 @@ public class ReportePFD {
 
             Paragraph texto = new Paragraph("Codigo de verificacion: " + codigoActa + "\n"
                     + "Este documento puede verificarse con el codigo institucional impreso en el acta.",
-                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK));
+                    TipografiaPdf.Estilo.METADATO.fuente(8, BaseColor.BLACK));
             PdfPCell celdaTexto = new PdfPCell(texto);
             celdaTexto.setBorder(PdfPCell.NO_BORDER);
             celdaTexto.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -894,7 +878,7 @@ public class ReportePFD {
                     + " Hora: " + date.substring(11, 19);
 
             Paragraph parrafo = new Paragraph(finalParagraph,
-                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.BLACK));
+                    TipografiaPdf.Estilo.METADATO.fuente(8, BaseColor.BLACK));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
             actual().documento.add(parrafo);
             actual().documento.close();
@@ -930,8 +914,7 @@ public class ReportePFD {
 
     public static void agregaParrafoEnBlanco() {
         try {
-            Paragraph parrafo = new Paragraph("\n",
-                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.BLACK));
+            Paragraph parrafo = new Paragraph("\n", TipografiaPdf.Estilo.TEXTO.fuente(8));
             parrafo.setAlignment(Element.ALIGN_RIGHT);
             actual().documento.add(parrafo);
         } catch (Exception e) {
@@ -941,8 +924,7 @@ public class ReportePFD {
 
     public static void agregaParrafoObservacion(String observacion) {
         try {
-            Paragraph parrafo = new Paragraph("\n" + observacion,
-                    Constantes.fuentePdf(8, Font.ITALIC, BaseColor.RED));
+            Paragraph parrafo = new Paragraph("\n" + observacion, TipografiaPdf.Estilo.NOTA.fuente(8));
             parrafo.setAlignment(Element.ALIGN_LEFT);
             actual().documento.add(parrafo);
         } catch (Exception e) {

@@ -36,9 +36,7 @@ public class CertificadosVotacionPdfCheck {
         mesa.setNombre("12");
         reporte.setMesa(mesa);
         var recursos = new CertificadosVotacionPDF.Recursos(
-                Files.readAllBytes(Path.of("src/main/resources/img/cert-logo.png")),
-                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Light.ttf")),
-                Files.readAllBytes(Path.of("src/main/webapp/resources/fonts/Montserrat-Medium.ttf")));
+                Files.readAllBytes(Path.of("src/main/resources/img/cert-logo.png")));
         var fecha = new SimpleDateFormat("yyyy-MM-dd").parse("2027-02-21");
         List<CertificadoVotacionDTO> personas = new ArrayList<>();
         for (int i = 1; i <= 21; i++) {
@@ -67,6 +65,7 @@ public class CertificadosVotacionPdfCheck {
                     comprobar(texto.split("CERTIFICADO DE VOTACI", -1).length - 1 == esperados, "Titulos");
                     comprobar(texto.split("21/02/2027", -1).length - 1 == esperados, "Fecha cronograma");
                     comprobar(!texto.contains("PRESIDENTA/E") && !texto.contains("Este documento"), "Frente sin texto del reverso");
+                    comprobar(texto.contains("Riobamba"), "Ubicacion del recinto en el anverso");
                     for (int fila = 1; fila <= esperados; fila++) {
                         int persona = inicio + fila;
                         comprobar(Pattern.compile("C\\u00c9DULA:\\s+SN-" + persona + "(?:\\s|$)")
@@ -77,15 +76,19 @@ public class CertificadosVotacionPdfCheck {
                     var fuentes = lector.getPageN(pagina).getAsDict(PdfName.RESOURCES).getAsDict(PdfName.FONT);
                     String nombres = fuentes.getKeys().stream().map(k -> fuentes.getAsDict(k)
                             .getAsName(PdfName.BASEFONT).toString()).reduce("", String::concat);
-                    comprobar(nombres.contains("Montserrat-Light") && nombres.contains("Montserrat-Medium"), "Fuentes institucionales");
+                    comprobar(nombres.contains("Montserrat-Regular") && nombres.contains("Montserrat-Medium")
+                            && nombres.contains("Montserrat-Bold") && !nombres.contains("Light"), "Fuentes institucionales");
+                    comprobar(!texto.contains("CONSULTA QR") && lector.getPageN(pagina).getAsDict(PdfName.RESOURCES)
+                            .getAsDict(PdfName.XOBJECT).size() <= 3, "Frente sin QR");
                 } else {
                     comprobar(texto.split("PRESIDENTA/E", -1).length - 1 == esperados, "Firmas completas");
                     comprobar(texto.split("Este documento acredita", -1).length - 1 == esperados, "Texto reverso");
                     comprobar(!texto.contains("CERTIFICADO DE VOTACI") && !texto.contains("SN-"), "Reverso sin datos frontales");
-                    comprobar(texto.contains("Riobamba"), "Ubicacion del recinto, no de la iglesia");
+                    // La ubicación del recinto consta solo en el anverso; el reverso detalla la pertenencia.
+                    comprobar(!texto.contains("Riobamba"), "Ubicacion del recinto solo en el anverso");
                     comprobar(texto.contains("Iglesia Evangelica"), "Conserva informacion de iglesia");
-                    for (int fila = 1; fila <= esperados; fila++)
-                        comprobar(texto.contains(CertificadosVotacionPDF.codigo(7, 12, inicio + fila)), "Codigo visible en reverso");
+                    // El código se imprime solo como Code 128 (sin texto legible); se valida a 300 ppp
+                    // con verificarBarrasRasterizadas cuando se indica la imagen.
                 }
                 String contenido = new String(lector.getPageContent(pagina), StandardCharsets.ISO_8859_1);
                 var rectangulos = Pattern.compile("([\\d.]+) ([\\d.]+) ([\\d.]+) ([\\d.]+) re").matcher(contenido);
