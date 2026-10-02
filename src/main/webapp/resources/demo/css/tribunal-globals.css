@@ -29,6 +29,13 @@
 .tec-fs-selector .ui-button[data-fs-step="-1"] { font-size:var(--tec-fs-sm); }
 .tec-fs-selector .ui-button[data-fs-step="1"] { font-size:var(--tec-fs-xl); }
 
+/* Metadatos de fila: datos secundarios (comunidad o barrio, provincia, cantón, parroquia, sexo, usuario, fechas...). Un solo tamaño
+   para todas las tablas (sm = 11px); el dato principal (nombre, cédula, valores) se queda en md. Peso 300: a 11px Light sigue legible. */
+:root { --tec-fs-meta:var(--tec-fs-sm); }
+.tec-meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
+/* Tablas con utilidades PrimeFlex: las líneas secundarias marcadas text-500/text-600 (no iconos) toman el tamaño de metadato. */
+body .ui-datatable td :is(.text-500, .text-600):not(.pi) { font-size:var(--tec-fs-meta) !important; }
+
 /* Excepción controlada (2xs): usar solo donde el espacio sea extremo y el texto no sea esencial. */
 .tec-text-2xs { font-size:var(--tec-fs-2xs); font-weight:300; letter-spacing:.02em; line-height:var(--tec-lh-tight); }
 
@@ -450,7 +457,7 @@ body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 
 .tec-muted { color:var(--text-color-secondary); }
 
-.tec-table td .tec-muted { font-size:var(--tec-fs-sm); font-weight:300; }
+.tec-table td .tec-muted { font-size:var(--tec-fs-meta); font-weight:300; }
 
 /* Rayado, pie y filas impares: el CSS del tema las pinta con HEX fijos (#fbfcfc, #e9ecef); aquí
    toman las superficies derivadas del tema para que hover y selección sigan siendo legibles. */
@@ -493,7 +500,6 @@ body .ui-dialog .ui-datatable thead th { padding:.4rem .5rem; }
 body .ui-dialog .ui-datatable .ui-datatable-data > tr > td { padding:.35rem .5rem; line-height:var(--tec-lh-base); }
 body .ui-dialog .ui-datatable .ui-paginator { padding-top:.4rem; }
 body .ui-dialog .ui-datatable .tec-mono { font-size:var(--tec-fs-md); }
-body .ui-dialog .ui-datatable td .personas-nombre__meta { font-size:var(--tec-fs-xs); font-weight:300; }
 /* Acciones: columna estrecha (el icono manda, no el encabezado) y con los iconos centrados. */
 body .ui-dialog .ui-datatable th.tec-col-actions, body .ui-dialog .ui-datatable td.tec-col-actions { padding-right:.25rem; padding-left:.25rem; text-align:center; }
 body .ui-dialog .ui-datatable .tec-col-actions .tec-acciones { justify-content:center; }

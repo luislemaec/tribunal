@@ -104,19 +104,19 @@ body .iglesias-barra--baja.ui-progressbar .ui-progressbar-value { background:var
 
 .iglesias-nombre__titulo { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:400; line-height:1.35; overflow-wrap:anywhere; }
 
-.iglesias-nombre__meta { color:var(--text-color-secondary); font-size:var(--tec-fs-sm); overflow-wrap:anywhere; font-weight:300; }
+.iglesias-nombre__meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); overflow-wrap:anywhere; font-weight:300; }
 
 .iglesias-col-ubicacion { min-width:10rem; }
 
 .iglesias-ubicacion { display:flex; flex-direction:column; gap:.05rem; line-height:1.35; }
 
-.iglesias-ubicacion__provincia { display:inline-flex; align-items:center; gap:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:300; }
+.iglesias-ubicacion__provincia { display:inline-flex; align-items:center; gap:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
 
-.iglesias-ubicacion__provincia > .pi { font-size:var(--tec-fs-xs); font-weight:300; }
+.iglesias-ubicacion__provincia > .pi { font-size:var(--tec-fs-meta); font-weight:300; }
 
-.iglesias-ubicacion__canton { color:var(--text-color); font-size:var(--tec-fs-sm); font-weight:300; }
+.iglesias-ubicacion__canton { color:var(--text-color); font-size:var(--tec-fs-meta); font-weight:300; }
 
-.iglesias-ubicacion__parroquia { color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.iglesias-ubicacion__parroquia { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
 
 /* Miembros activos: el total y, si está bajo el mínimo, la marca de revisión */
 .iglesias-miembros { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
@@ -204,9 +204,9 @@ body .ui-tag.ui-tag-success.iglesias-nueva .ui-tag-icon { color:var(--green-600)
 /* Registro y última actualización en una sola columna, cada fecha con su ícono */
 .iglesias-fechas { display:flex; flex-direction:column; gap:.2rem; }
 
-.iglesias-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:300; }
+.iglesias-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
 
-.iglesias-fechas__icono { color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:300; }
+.iglesias-fechas__icono { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
 
 .iglesias-fechas__icono--actualiza { color:var(--primary-700); }
 

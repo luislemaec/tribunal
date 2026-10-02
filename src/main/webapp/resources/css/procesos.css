@@ -55,7 +55,7 @@
 
 .audit-when__date { color:var(--text-color); font-size:var(--tec-fs-sm); font-weight:300; }
 
-.audit-when__time { color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.audit-when__time { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
 
 .audit-col-usuario .tec-mono { display:inline-block; max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
 
@@ -65,7 +65,7 @@
 
 .audit-activity__title { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:400; line-height:1.35; }
 
-.audit-activity__meta { display:-webkit-box; overflow:hidden; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); line-height:1.4; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; font-weight:300; }
+.audit-activity__meta { display:-webkit-box; overflow:hidden; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); line-height:1.4; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; font-weight:300; }
 
 .audit-detail-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding-bottom:.875rem; border-bottom:1px solid var(--surface-border); }
 
