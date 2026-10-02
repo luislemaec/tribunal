@@ -105,6 +105,29 @@ public class EscrutinioCabeceraFacade extends AbstractFacade<EscrutinioCabecera,
     }
 
     /**
+     * Ids de las mesas cerradas y con acta física VALIDADA del proceso, limitadas a
+     * {@code mesaIds} (filtro geográfico de escrutinios). Una sola consulta.
+     */
+    public List<Integer> listarMesasValidadasPorProceso(Integer procesoId, java.util.Collection<Integer> mesaIds) {
+        if (procesoId == null || mesaIds == null || mesaIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = "SELECT DISTINCT e.mesa.id FROM EscrutinioCabecera e"
+                + " JOIN e.proceso pro"
+                + " WHERE pro.id = :procesoId"
+                + " AND e.mesa.id IN :mesaIds"
+                + " AND e.estado = TRUE"
+                + " AND e.estadoEscrutinio = :estadoCerrado"
+                + " AND" + existeActaFisicaValidada("e.mesa.id");
+        TypedQuery<Integer> query = super.getEntityManager().createQuery(sql, Integer.class)
+                .setParameter("procesoId", procesoId)
+                .setParameter("mesaIds", mesaIds)
+                .setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        parametrosActaFisicaValidada(query);
+        return query.getResultList();
+    }
+
+    /**
      * Mesas del proceso agrupadas por estado de escrutinio, en una sola consulta
      * agregada. Alimenta los indicadores gerenciales del panel sin recorrer las
      * cabeceras ni lanzar un COUNT por estado.

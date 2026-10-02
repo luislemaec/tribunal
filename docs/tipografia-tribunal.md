@@ -121,3 +121,37 @@ PrimeFlex: `.text-xs` = 2xs, `.text-sm` = xs, `.text-base` = md, `.text-lg` = lg
     - En pantallas menores de 992px la barra pasa de dos filas (120px) a una (60px): el perfil sube junto al logo y el desplegable de usuario, el menú lateral móvil y el panel derecho se reubican desde 60px (`layout-tribunal.css`).
     - Verificado en 375 y 768px.
     - Se eliminó también el código del filtro, que no se usaba en otro lugar: en `LoginBean`, 4 campos, 10 métodos y 8 imports (`inicializarMenuAutorizado`, que llama `LoginController`, se conserva simplificado); el aviso «sin resultados» de `WEB-INF/menu.xhtml` y sus estilos; y las claves `topbar.search.*` y `menu.busqueda.sinResultados`.
+
+- **Verificación final sobre el sistema desplegado (2026-10-02, CSS real sin inyectar):**
+  - **Anchos:** 20 pantallas en 375, 576, 768, 992, 1200 y 1440px, sin desbordamiento de página ni celdas cortadas; la barra superior mide 60px en todos los anchos. Única excepción: plantillaCorreos a 375px (punto 17).
+  - **Contraste:** todo el texto visible de las 20 pantallas cumple WCAG AA, salvo el separador decorativo del footer (punto 18).
+  - **Correcciones 1–16** confirmadas una por una: etiquetas suaves; acciones de 139/158/83px; nombre de 204px a 992px; etiqueta «Nombre» oculta en móvil; barra de padrón sin etiqueta; título del menú #5f6870; rol de 10px; perfil con padding 0 12px; barra móvil de 60px con el logo centrado.
+- **Corregido en esta verificación** (requiere un nuevo despliegue):
+  17. El tooltip de SunEditor seguía desbordando a 375px: `suneditor.css` se carga después con la misma especificidad. La regla pasa a `html body`.
+  18. Separador `|` del footer: `--surface-400` (1,69:1) pasa a `--text-color-secondary`.
+
+- **Módulo candidatos (2026-10-02)**, requiere un nuevo despliegue:
+  1. **Buscador:** `p-input-icon-left` no existe en PrimeFaces 15 ni en el tema; el ícono quedaba sobre el texto. Se usa `tec-search-input`. Mismo cambio en asignacionUsuarios, autoridades, cronograma y mjrv.
+  2. **Columna de acciones de listas:** pasa a `tec-col-actions`, alineada a la derecha y ajustada.
+  3. **Número de lista:** el `p:badge` amarillo pasa a texto `tec-dato font-medium`, tanto en la tabla como en la cabecera de la pestaña 2.
+  4. **Botón «Asignar»:** el verde (success) pasa a primario delineado (`tec-btn ui-button-outlined`).
+  5. **Carga del acta firmada:** el tema oculta los botones deshabilitados del fileUpload y quedaban dos recuadros vacíos. Ahora el botón se muestra deshabilitado y el área de archivos se oculta mientras está vacía (`candidatos.css`).
+  6. **Tabla de candidatos:** se aplica el estándar `ui-datatable-striped ui-datatable-sm tec-table tec-table--static`; la columna Cargo usa `tec-col-primary`.
+  7. **Textos fijos:** confirmaciones de baja y reactivación y título del diálogo de lista, ahora en `form.candidatos.confirm.*` y `form.candidatos.lista.dialog.titulo`.
+
+- **Jerarquía de celdas con dos líneas (2026-10-02)**, igual en candidatos, personas e iglesias:
+  - **Dato principal:** Medium 500, 13px, color de texto (`tec-dato font-medium`, `.personas-nombre__texto`, `.iglesias-nombre__titulo`).
+  - **Dato secundario:** Regular 400, 12px, color secundario (`tec-meta`, `*__meta`). Light 300 no se usa en tablas.
+  - Esto reemplaza la decisión anterior de usar Regular 400 para el nombre en personas e iglesias.
+  - En personas e iglesias, el nombre usa además el color de texto más oscuro (`--surface-900`, igual que `text-900` en candidatos).
+
+- **Candidatos, segunda revisión (2026-10-02):**
+  - Columna «Número» de 5rem: el ícono de orden ya no baja a otra línea.
+  - Columna «Cédula» con `min-width` en lugar de `width`: el filtro ya no se comprime.
+  - **Columna de acciones fija** (`tribunal-globals.css`): si una tabla no cabe, se desplaza dentro de su contenedor y la columna `tec-col-actions` queda fija a la derecha (`position:sticky`, con el fondo heredado de su fila).
+    - Aplica a toda dataTable o treeTable entre 641 y 1199px.
+    - En tablas con `tec-acciones-fijas` aplica desde 641px. Hoy solo la usa el árbol de `menu.xhtml`, que se desborda incluso a 1440px.
+    - Se probó en candidatos, iglesias, personas, autoridades, recintos, roles y menú.
+  - En móvil (reflow) se ocultan las celdas vacías: Cédula, Iglesia y Acciones de un cargo sin candidato.
+  - Se corrige el marco gris que quedaba alrededor de «Cargar acta firmada»: el tema ganaba por especificidad.
+- **Caché de recursos:** `util/VersionadoRecursosHandler`, registrado en `faces-config.xml`, agrega `tv=<marca del despliegue>` a las URL de los recursos propios. Antes, tras desplegar, el navegador seguía usando hasta una hora los CSS anteriores (`max-age=3600`, URL sin versión). Las bibliotecas de PrimeFaces y Jakarta Faces conservan su propio versionado.

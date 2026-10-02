@@ -186,5 +186,12 @@ body .actae-steps.ui-steps .actae-step-bloqueado .ui-steps-number {
     body .actae-steps.ui-steps > ul { grid-template-columns: minmax(0, 1fr); gap: .1125rem; }
     body .actae-steps.ui-steps .ui-steps-item::before { display: none; }
     body .actae-steps.ui-steps .ui-menuitem-link { flex-direction: row; gap: .5625rem; padding: .1875rem; }
-    body .actae-steps.ui-steps .ui-steps-title { text-align: left; }
+    body .actae-steps.ui-steps .ui-steps-title { flex: 1 1 auto; text-align: left; }
+    /* El tema centra el número con margen superior (pensado para la fila horizontal); en la lista
+       vertical lo desplazaba y cada paso medía 54px. Misma especificidad que la regla del tema. */
+    body .actae-steps.ui-steps .ui-steps-item .ui-menuitem-link .ui-steps-number { margin: 0; }
 }
+
+/* Listado de mesas: la tabla (mínimo 62rem) se desplaza en horizontal dentro de su tarjeta en
+   cualquier ancho; no usa reflow para conservar los filtros de columna. */
+.actae-tabla-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; }

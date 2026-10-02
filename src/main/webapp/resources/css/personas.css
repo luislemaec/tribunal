@@ -97,7 +97,7 @@ body .personas-barra.ui-progressbar .ui-progressbar-label { display:none !import
 
 .personas-nombre { display:flex; flex-direction:column; gap:.075rem; min-width:0; }
 
-.personas-nombre__texto { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-regular); line-height:var(--tec-lh-tight); overflow-wrap:anywhere; }
+.personas-nombre__texto { color:var(--surface-900); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-tight); overflow-wrap:anywhere; }
 
 .personas-nombre__meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); overflow-wrap:anywhere; font-weight:var(--tec-fw-regular); }
 

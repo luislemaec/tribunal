@@ -3,8 +3,7 @@
                 xmlns:f="jakarta.faces.core"
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
-                template="/WEB-INF/template.xhtml"
-                xmlns:c="jakarta.tags.core">
+                template="/WEB-INF/template.xhtml">
 
     <ui:define name="title">#{msg['pagina.escrutinios.titulo']}</ui:define>
 
@@ -18,140 +17,196 @@
             <ui:param name="descripcion" value="#{msg['pagina.escrutinios.descripcion']}"/>
         </ui:include>
 
-        <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
-        <p:blockUI block="frmActaE" trigger="frmActaE">
+        <!-- Bloquea el formulario mientras se recalculan los totales de un filtro. -->
+        <p:blockUI block="frmEscrutinios" trigger="frmEscrutinios">
             <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>
-            <div class="tec-overlay-text">Calculando escrutinio...</div>
+            <div class="tec-overlay-text">#{msg['escrutinios.calculando']}</div>
         </p:blockUI>
 
-        <h:form id="frmActaE">
+        <!-- Solo el proceso electoral activo y solo mesas cerradas con acta física validada
+             (mismo criterio que el portal público). Blancos y nulos son informativos. -->
+        <h:form id="frmEscrutinios">
+            <h:panelGroup rendered="#{not totalVotosController.resumen.procesoActivo}" layout="block" styleClass="callout callout--warning mb-3">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"/>#{msg['escrutinios.sinProceso']}
+            </h:panelGroup>
+            <h:panelGroup rendered="#{totalVotosController.resumen.procesoActivo}" layout="block" styleClass="callout callout--info mb-3">
+                <i class="pi pi-info-circle" aria-hidden="true"/>
+                <strong>#{totalVotosController.resumen.procesoNombre}</strong> · #{msg['escrutinios.criterio']}
+            </h:panelGroup>
 
-            <!-- FILTROS GEOGRAFICOS -->
-            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-                <div class="flex align-items-center gap-2 mb-3">
-                    <i class="pi pi-filter text-500"></i>
-                    <span class="font-semibold text-700">Filtros geográficos</span>
-                </div>
-                <div class="formgrid grid">
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="canton" class="font-medium text-700 text-sm">Cantón</label>
-                        <p:selectOneMenu id="canton" value="#{totalVotosController.cantonSeleccionado.id}"
-                                         filter="true" filterMatchMode="startsWith" styleClass="w-full">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{recintoController.cantones}" var="canton"
-                                           itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
-                            <p:ajax event="change" listener="#{totalVotosController.cargaParroquiasPorCanton()}"
-                                    process="@this" update="frmActaE"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="parroquia" class="font-medium text-700 text-sm">Parroquia</label>
-                        <p:selectOneMenu id="parroquia" value="#{totalVotosController.parroquiaSeleccionado.id}" styleClass="w-full">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"
-                                           itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
-                            <p:ajax event="change" listener="#{totalVotosController.cargaRecintosPorParroquia()}"
-                                    process="@this" update="frmActaE"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="recintos" class="font-medium text-700 text-sm">Recinto</label>
-                        <p:selectOneMenu id="recintos" value="#{totalVotosController.recintoSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full"
-                                         disabled="#{empty recintoController.listaRecintos}">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{totalVotosController.recintos}" var="recinto"
-                                           itemLabel="#{recinto.nombre} - #{recinto.id}" itemValue="#{recinto.id}"/>
-                            <p:ajax event="change" listener="#{totalVotosController.cargaMesasPorRecintos()}"
-                                    process="@this" update="frmActaE"/>
-                        </p:selectOneMenu>
-                    </div>
-                    <div class="field col-12 md:col-6 lg:col-3">
-                        <label for="mesas" class="font-medium text-700 text-sm">Mesa</label>
-                        <p:selectOneMenu id="mesas" value="#{totalVotosController.mesaSeleccionado.id}"
-                                         filter="true" filterMatchMode="contains" styleClass="w-full"
-                                         disabled="#{empty mesaController.listaMesas}">
-                            <f:selectItem itemLabel="— Seleccione —" itemValue=""/>
-                            <f:selectItems value="#{totalVotosController.mesas}" var="mesa"
-                                           itemLabel="#{mesa.nombre} - #{mesa.id}" itemValue="#{mesa.id}"/>
-                            <p:ajax event="change" listener="#{totalVotosController.cargaVotosPorMesas()}"
-                                    process="@this" update="frmActaE"/>
-                        </p:selectOneMenu>
+            <!-- FILTROS GEOGRÁFICOS: al cambiar uno se limpian los inferiores -->
+            <div class="surface-card border-round-lg tec-card mb-3">
+                <div class="tec-filters ui-fluid">
+                    <span class="tec-field-label">
+                        <i class="pi pi-filter" aria-hidden="true"/> #{msg['escrutinios.filtros.titulo']}
+                    </span>
+                    <div class="formgrid grid mt-2">
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="canton" class="tec-field-label">#{msg['escrutinios.filtros.canton']}</label>
+                            <p:selectOneMenu id="canton" value="#{totalVotosController.cantonId}"
+                                             filter="true" filterMatchMode="contains"
+                                             autoWidth="false" panelStyleClass="tec-select-panel">
+                                <f:selectItem itemLabel="#{msg['escrutinios.filtros.todos']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{totalVotosController.cantones}" var="canton"
+                                               itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
+                                <p:ajax listener="#{totalVotosController.cambiarCanton}" process="@this" update="@form"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="parroquia" class="tec-field-label">#{msg['escrutinios.filtros.parroquia']}</label>
+                            <p:selectOneMenu id="parroquia" value="#{totalVotosController.parroquiaId}"
+                                             filter="true" filterMatchMode="contains"
+                                             autoWidth="false" panelStyleClass="tec-select-panel"
+                                             disabled="#{empty totalVotosController.parroquias}">
+                                <f:selectItem itemLabel="#{msg['escrutinios.filtros.todas']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{totalVotosController.parroquias}" var="parroquia"
+                                               itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
+                                <p:ajax listener="#{totalVotosController.cambiarParroquia}" process="@this" update="@form"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="recinto" class="tec-field-label">#{msg['escrutinios.filtros.recinto']}</label>
+                            <p:selectOneMenu id="recinto" value="#{totalVotosController.recintoId}"
+                                             filter="true" filterMatchMode="contains"
+                                             autoWidth="false" panelStyleClass="tec-select-panel"
+                                             disabled="#{empty totalVotosController.recintos}">
+                                <f:selectItem itemLabel="#{msg['escrutinios.filtros.todos']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{totalVotosController.recintos}" var="recinto"
+                                               itemLabel="#{recinto.nombre}" itemValue="#{recinto.id}"/>
+                                <p:ajax listener="#{totalVotosController.cambiarRecinto}" process="@this" update="@form"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6 lg:col-3">
+                            <label for="mesa" class="tec-field-label">#{msg['escrutinios.filtros.mesa']}</label>
+                            <p:selectOneMenu id="mesa" value="#{totalVotosController.mesaId}"
+                                             filter="true" filterMatchMode="contains"
+                                             autoWidth="false" panelStyleClass="tec-select-panel"
+                                             disabled="#{empty totalVotosController.mesas}">
+                                <f:selectItem itemLabel="#{msg['escrutinios.filtros.todas']}" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{totalVotosController.mesas}" var="mesa"
+                                               itemLabel="#{totalVotosController.etiquetaMesa(mesa)}" itemValue="#{mesa.id}"/>
+                                <p:ajax listener="#{totalVotosController.cambiarMesa}" process="@this" update="@form"/>
+                            </p:selectOneMenu>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- KPIs -->
+            <!-- INDICADORES -->
             <div class="grid mb-3">
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="tec-kpi">
+                    <div class="tec-kpi h-full">
                         <div class="flex align-items-center gap-3">
-                            <div class="tec-icon-badge">
-                                <i class="pi pi-map-marker"/>
-                            </div>
+                            <div class="tec-icon-badge"><i class="pi pi-map-marker" aria-hidden="true"/></div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Recintos</span>
-                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.recintos.size()}</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['escrutinios.kpi.recintos']}</span>
+                                <span class="block text-900 font-bold text-2xl">
+                                    <h:outputText value="#{totalVotosController.resumen.recintos}"><f:convertNumber groupingUsed="true"/></h:outputText>
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="tec-kpi">
-                        <div class="flex align-items-center gap-3">
-                            <div class="tec-icon-badge">
-                                <i class="pi pi-list"/>
-                            </div>
+                    <div class="tec-kpi tec-kpi--success h-full">
+                        <div class="flex align-items-center gap-3 mb-2">
+                            <div class="tec-icon-badge"><i class="pi pi-check-square" aria-hidden="true"/></div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Mesas</span>
-                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.mesas.size()}</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['escrutinios.kpi.mesasEscrutadas']}</span>
+                                <span class="block text-900 font-bold text-2xl">
+                                    <h:outputText value="#{totalVotosController.resumen.mesasEscrutadas}"><f:convertNumber groupingUsed="true"/></h:outputText>
+                                    <span class="tec-meta"> #{msg['escrutinios.kpi.de']} <h:outputText value="#{totalVotosController.resumen.mesasProceso}"><f:convertNumber groupingUsed="true"/></h:outputText></span>
+                                </span>
+                            </div>
+                        </div>
+                        <p:progressBar value="#{totalVotosController.resumen.porcentajeMesasEscrutadas}" displayOnly="true" styleClass="tec-progress"
+                                       title="#{msg['escrutinios.kpi.mesasEscrutadas.ayuda']}"/>
+                        <span class="block tec-meta mt-1">
+                            <h:outputText value="#{totalVotosController.resumen.porcentajeMesasEscrutadas}"><f:convertNumber maxFractionDigits="1"/></h:outputText>% #{msg['escrutinios.kpi.mesasEscrutadas.ayuda']}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-12 md:col-6 lg:col-3">
+                    <div class="tec-kpi tec-kpi--info h-full">
+                        <div class="flex align-items-center gap-3">
+                            <div class="tec-icon-badge"><i class="pi pi-users" aria-hidden="true"/></div>
+                            <div>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['escrutinios.kpi.empadronados']}</span>
+                                <span class="block text-900 font-bold text-2xl">
+                                    <h:outputText value="#{totalVotosController.resumen.empadronados}"><f:convertNumber groupingUsed="true"/></h:outputText>
+                                </span>
+                                <span class="block tec-meta">#{msg['escrutinios.kpi.empadronados.ayuda']}</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="tec-kpi">
+                    <div class="tec-kpi tec-kpi--warn h-full">
                         <div class="flex align-items-center gap-3">
-                            <div class="tec-icon-badge">
-                                <i class="pi pi-users"/>
-                            </div>
+                            <div class="tec-icon-badge"><i class="pi pi-envelope" aria-hidden="true"/></div>
                             <div>
-                                <span class="block text-500 text-xs font-medium uppercase">Votantes</span>
-                                <span class="block text-900 font-bold text-2xl">#{totalVotosController.totalVotantes}</span>
+                                <span class="block text-500 text-xs font-medium uppercase">#{msg['escrutinios.kpi.sufragantes']}</span>
+                                <span class="block text-900 font-bold text-2xl">
+                                    <h:outputText value="#{totalVotosController.resumen.sufragantes}"><f:convertNumber groupingUsed="true"/></h:outputText>
+                                </span>
+                                <span class="block tec-meta">
+                                    <h:outputText value="#{totalVotosController.resumen.participacion}"><f:convertNumber maxFractionDigits="1"/></h:outputText>% #{msg['escrutinios.kpi.participacion']}
+                                </span>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6 lg:col-3">
-                    <div class="tec-kpi">
-                        <div>
-                            <span class="block text-500 text-xs font-medium uppercase mb-2">Mesas escrutadas</span>
-                            <span class="block text-900 font-semibold text-xl mb-2">
-                                <h:outputText value="#{totalVotosController.porcentajeMesasEscrutadas}">
-                                    <f:convertNumber maxFractionDigits="0"/>
-                                </h:outputText>%
-                            </span>
-                            <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}" displayOnly="true"
-                                           styleClass="tec-progress" title="Porcentaje de mesas con escrutinio completado"/>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TABLA DE VOTOS -->
-            <div class="surface-card shadow-1 border-round-lg p-3">
-                <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="voto"
-                             value="#{totalVotosController.votos}" reflow="true"
-                             emptyMessage="Seleccione los filtros para ver el escrutinio."
-                             styleClass="ui-datatable-striped ui-datatable-sm">
-
-                    <p:column headerText="Categoria">
-                        <p:chip label="#{voto[0]}" icon="pi pi-tag"/>
+            <!-- RESULTADOS POR LISTA: ranking sobre votos válidos; blancos y nulos aparte -->
+            <div class="surface-card border-round-lg tec-card">
+                <div class="tec-table-heading">
+                    <h3>#{msg['escrutinios.tabla.titulo']}</h3>
+                </div>
+                <p:dataTable id="tblResultados" var="lista" value="#{totalVotosController.resumen.listas}" rowIndexVar="rowIndex" reflow="true"
+                             emptyMessage="#{msg['escrutinios.tabla.vacia']}"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
+                    <p:column headerText="#{msg['escrutinios.tabla.posicion']}" styleClass="tec-col-fit text-center">
+                        <span class="tec-dato">#{rowIndex + 1}</span>
                     </p:column>
-                    <p:column headerText="Numero de votos" styleClass="text-center" style="width:9rem">
-                        <p:badge value="#{voto[1]}" severity="info"/>
+                    <p:column headerText="#{msg['escrutinios.tabla.lista']}" styleClass="tec-col-primary">
+                        <div class="flex flex-column">
+                            <span class="tec-dato font-medium text-900">#{empty lista.listaNombre ? lista.categoria : lista.listaNombre}</span>
+                            <h:outputText rendered="#{not empty lista.listaNumero}" styleClass="tec-meta"
+                                          value="#{msg['escrutinios.tabla.listaNumero']} #{lista.listaNumero}"/>
+                        </div>
+                    </p:column>
+                    <p:column headerText="#{msg['escrutinios.tabla.votos']}" styleClass="tec-col-fit text-right">
+                        <h:outputText value="#{lista.totalVotos}" styleClass="tec-dato font-medium">
+                            <f:convertNumber groupingUsed="true"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="#{msg['escrutinios.tabla.porcentaje']}" style="min-width:9rem">
+                        <div class="flex align-items-center gap-2">
+                            <p:progressBar value="#{lista.porcentajeEntero}" displayOnly="true" styleClass="tec-progress flex-1"/>
+                            <span class="tec-dato white-space-nowrap"><h:outputText value="#{lista.porcentaje}"><f:convertNumber minFractionDigits="2" maxFractionDigits="2"/></h:outputText>%</span>
+                        </div>
                     </p:column>
                 </p:dataTable>
+
+                <!-- Totales informativos: válidos, blancos y nulos sobre los votos emitidos -->
+                <h:panelGroup rendered="#{totalVotosController.resumen.sufragantes gt 0}" layout="block"
+                              styleClass="flex flex-wrap gap-3 mt-3 pt-2 border-top-1 surface-border">
+                    <span class="tec-meta">#{msg['escrutinios.totales.validos']}:
+                        <h:outputText value="#{totalVotosController.resumen.votosValidos}" styleClass="tec-dato text-900"><f:convertNumber groupingUsed="true"/></h:outputText>
+                    </span>
+                    <span class="tec-meta">#{msg['escrutinios.totales.blancos']}:
+                        <h:outputText value="#{totalVotosController.resumen.votosBlancos}" styleClass="tec-dato text-900"><f:convertNumber groupingUsed="true"/></h:outputText>
+                        (<h:outputText value="#{totalVotosController.resumen.porcentajeBlancos}"><f:convertNumber maxFractionDigits="2"/></h:outputText>%)
+                    </span>
+                    <span class="tec-meta">#{msg['escrutinios.totales.nulos']}:
+                        <h:outputText value="#{totalVotosController.resumen.votosNulos}" styleClass="tec-dato text-900"><f:convertNumber groupingUsed="true"/></h:outputText>
+                        (<h:outputText value="#{totalVotosController.resumen.porcentajeNulos}"><f:convertNumber maxFractionDigits="2"/></h:outputText>%)
+                    </span>
+                    <span class="tec-meta">#{msg['escrutinios.totales.emitidos']}:
+                        <h:outputText value="#{totalVotosController.resumen.sufragantes}" styleClass="tec-dato font-medium text-900"><f:convertNumber groupingUsed="true"/></h:outputText>
+                    </span>
+                </h:panelGroup>
             </div>
 
         </h:form>

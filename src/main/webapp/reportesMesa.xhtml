@@ -94,7 +94,7 @@
 									<p:commandButton icon="pi pi-search"
 										title="#{msg['reportesMesa.buscar']}"
 										action="#{reporteMesaController.buscarDocumentos}"
-										process="busqueda"
+										process="@this busqueda"
 										update=":frmReportesMesa:tablaDocumentosMesas" />
 								</div>
 							</div>

@@ -478,6 +478,16 @@ public class JrvController implements Serializable {
 		mesasDisponibles = new ArrayList<>(mesaService.listarDTOsActivasConUbicacion());
 		resumenMesas = mjrvService.consultarResumenMesas(procesoSeleccionado.getId(),
 				mesasDisponibles.stream().map(MesaDTO::getId).toList());
+		// Solo mesas del proceso: con padrón (iglesias asignadas) o con miembros ya designados, para
+		// no ocultar datos. En una mesa sin padrón no se puede conformar la junta. La mesa asignada
+		// al usuario restringido se conserva siempre.
+		Integer mesaAsignada = restringidoAMesaAsignada && mesaSeleccionada != null ? mesaSeleccionada.getId() : null;
+		mesasDisponibles.removeIf(mesa -> {
+			if (mesa.getId() != null && mesa.getId().equals(mesaAsignada))
+				return false;
+			ec.com.antenasur.dto.ResumenMesaJrvDTO resumen = resumenMesas.get(mesa.getId());
+			return resumen == null || (resumen.getIglesiasAsignadas() == 0 && resumen.getMiembrosAsignados() == 0);
+		});
 		filtrarMesasSeleccionables();
 	}
 

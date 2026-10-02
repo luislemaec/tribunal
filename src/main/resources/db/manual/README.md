@@ -15,6 +15,7 @@ Script preparado:
 
 - `importacion_iglesias_personas.sql`
 - `permisos_datasource.sql`: permisos runtime para el usuario de `TribunalDS`.
+- `limpieza_cabeceras_sin_padron.sql`: borra cabeceras de escrutinio PENDIENTES de mesas sin padrón del proceso activo (vista previa, BEGIN y COMMIT manual).
 
 Este script se conserva como alternativa manual. No ejecutarlo si
 `V2__datos_iniciales.sql` ya fue aplicado, porque V2 contiene estos datos.

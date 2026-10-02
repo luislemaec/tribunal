@@ -76,8 +76,10 @@
                                    severity="secondary" icon="pi pi-clock"/>
                             <p:tag value="#{msg['actaE.resumen.mesasCerradas']}: #{actaEController.mesasCerradasGerencial}"
                                    severity="success" icon="pi pi-check-circle"/>
+                            <p:tag value="#{msg['actaE.resumen.mesasValidadas']}: #{actaEController.mesasValidadasGerencial}"
+                                   severity="success" icon="pi pi-verified"/>
                             <p:tag value="#{msg['actaE.resumen.participacion']}: #{actaEController.porcentajeParticipacionGerencial}%"
-                                   severity="warning"/>
+                                   severity="info" icon="pi pi-users"/>
                         </div>
                     </div>
                 </p:outputPanel>
@@ -85,10 +87,10 @@
                 <!-- Filtros operativos: solo Cantón, Parroquia y búsqueda. Recinto y mesa
                      ya se ven en el listado, así que no se repiten como combos. Todos
                      refiltran en memoria sobre el listado ya cargado. -->
-                <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                <div class="surface-card shadow-1 border-round-lg p-3 mb-3 tec-form">
                     <div class="formgrid grid align-items-end">
-                        <div class="field col-12 md:col-4 lg:col-2 mb-0">
-                            <p:outputLabel for="canton" styleClass="font-medium text-700 text-sm"
+                        <div class="field col-12 md:col-4 lg:col-2 mb-2 lg:mb-0">
+                            <p:outputLabel for="canton" styleClass="tec-field-label"
                                            value="#{msg['actaE.filtro.canton']}"/>
                             <p:selectOneMenu id="canton" value="#{actaEController.cantonSeleccionado.id}"
                                              filter="true" filterMatchMode="startsWith" styleClass="w-full">
@@ -100,8 +102,8 @@
                                         update=":frmActaE:tabActaE:parroquia :frmActaE:tabActaE:tblConsultaGerencial :frmActaE:tabActaE:pnlResumenGerencial"/>
                             </p:selectOneMenu>
                         </div>
-                        <div class="field col-12 md:col-4 lg:col-2 mb-0">
-                            <p:outputLabel for="parroquia" styleClass="font-medium text-700 text-sm"
+                        <div class="field col-12 md:col-4 lg:col-2 mb-2 lg:mb-0">
+                            <p:outputLabel for="parroquia" styleClass="tec-field-label"
                                            value="#{msg['actaE.filtro.parroquia']}"/>
                             <p:selectOneMenu id="parroquia" value="#{actaEController.parroquiaSeleccionado.id}"
                                              filter="true" filterMatchMode="startsWith" styleClass="w-full">
@@ -114,8 +116,8 @@
                             </p:selectOneMenu>
                         </div>
                         <!-- Situación y Recinto se filtran en la propia tabla. -->
-                        <div class="field col-12 md:col-8 lg:col-6 mb-0">
-                            <p:outputLabel for="busquedaEscrutinio" styleClass="font-medium text-700 text-sm"
+                        <div class="field col-12 md:col-8 lg:col-6 mb-2 lg:mb-0">
+                            <p:outputLabel for="busquedaEscrutinio" styleClass="tec-field-label"
                                            value="#{msg['actaE.buscar']}"/>
                             <p:inputText id="busquedaEscrutinio" value="#{actaEController.busquedaEscrutinio}"
                                          styleClass="w-full" maxlength="100"
@@ -151,7 +153,7 @@
                         <p:tag value="#{empty actaEController.listaConsultaGerencial ? 0 : actaEController.listaConsultaGerencial.size()}"
                                severity="info"/>
                     </div>
-                    <div style="max-width:100%;overflow-x:auto;overflow-y:hidden">
+                    <div class="actae-tabla-scroll">
                     <!-- Sin reflow: en pantallas pequeñas PrimeFaces oculta la cabecera en modo
                          reflow y con ella los filtros de columna; la tabla se desplaza en
                          horizontal dentro de este contenedor. -->
@@ -161,7 +163,7 @@
                                  rowsPerPageTemplate="10,25,50"
                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                  currentPageReportTemplate="#{msg['mesas.paginador.reporte']}"
-                                 tableStyle="min-width:62rem" styleClass="ui-datatable-striped ui-datatable-sm actae-tabla-gerencial actae-tabla-densa"
+                                 tableStyle="min-width:62rem" styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static actae-tabla-gerencial actae-tabla-densa"
                                  emptyMessage="#{msg['actaE.mensaje.sinResultados']}">
                         <!-- Orden por prioridad: primero identifica la mesa y su estado, que
                              es también lo primero que se ve en el reflow móvil. Sin columnas
@@ -509,7 +511,8 @@
                                     <div class="acta-fisica-panel-cabecera">
                                         <div>
                                             <div class="acta-fisica-panel-titulo">#{msg['actaE.actaFisica.titulo']}</div>
-                                            <div class="acta-fisica-panel-subtitulo">#{msg['actaE.actaFisica.descripcion']}</div>
+                                            <h:panelGroup layout="block" styleClass="acta-fisica-panel-subtitulo"
+                                                          rendered="#{not actaEController.actaFisicaValidada}">#{msg['actaE.actaFisica.descripcion']}</h:panelGroup>
                                         </div>
                                         <p:tag value="#{empty actaEController.actaFisica ? msg['actaE.actaFisica.pendiente'] : msg['actaE.situacion.revision.'.concat(empty actaEController.actaFisica.estadoRevision ? 'PENDIENTE_REVISION' : actaEController.actaFisica.estadoRevision)]}"
                                                severity="#{empty actaEController.actaFisica ? 'warning' : (actaEController.actaFisica.estadoRevision eq 'VALIDADA' ? 'success' : 'info')}"/>

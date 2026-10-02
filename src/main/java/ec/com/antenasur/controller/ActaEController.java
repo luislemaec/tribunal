@@ -116,6 +116,9 @@ public class ActaEController implements Serializable {
     private EscrutinioService escrutinioService;
 
     @Inject
+    private ec.com.antenasur.service.tec.ResumenEscrutinioService resumenEscrutinioService;
+
+    @Inject
     private DocumentoBean documentoBean;
 
     @Inject
@@ -312,6 +315,13 @@ public class ActaEController implements Serializable {
 
     @Getter
     private int mesasCerradasGerencial;
+
+    /** Mesas cerradas con acta física validada (dato oficial), dentro del listado filtrado. */
+    @Getter
+    private int mesasValidadasGerencial;
+
+    /** Mesas del proceso con acta física validada; se consulta una vez con el listado. */
+    private java.util.Set<Integer> mesasValidadasProceso = new java.util.HashSet<>();
 
     @Getter
     private int mesasObservadasGerencial;
@@ -543,6 +553,31 @@ public class ActaEController implements Serializable {
     }
 
     public void cargaDatosMesaSeleccionada() {
+        cargaDatosMesaSeleccionada(true);
+    }
+
+    /** Cabecera de una mesa aún sin apertura: solo para mostrar, nunca se persiste desde aquí. */
+    private EscrutinioCabeceraDTO cabeceraPendienteEnMemoria(Integer procesoId) {
+        if (procesoId == null) {
+            return null;
+        }
+        EscrutinioCabeceraDTO pendiente = new EscrutinioCabeceraDTO();
+        pendiente.setMesa(mesaSeleccionado);
+        pendiente.setProcesoId(procesoId);
+        pendiente.setEstadoEscrutinio(EstadoEscrutinio.PENDIENTE);
+        pendiente.setTotalSufragantes(totalSufragantesAsignados);
+        pendiente.setTotalVotosRegistrados(0);
+        pendiente.setTotalVotosValidos(0);
+        pendiente.setTotalVotosBlancos(0);
+        pendiente.setTotalVotosNulos(0);
+        return pendiente;
+    }
+
+    /**
+     * @param avisarMesaCerrada false al abrir la mesa desde el listado: la etiqueta «Cerrada» de
+     *                          la cabecera ya lo indica y el aviso sería redundante.
+     */
+    private void cargaDatosMesaSeleccionada(boolean avisarMesaCerrada) {
         if (mesaSeleccionado == null || mesaSeleccionado.getId() == null) {
             limpiarSeleccionMesa();
             return;
@@ -563,12 +598,17 @@ public class ActaEController implements Serializable {
         }
         this.listaCamposActaE = escrutinioService.prepararActaPorMesaDTO(
                 mesaSeleccionado.getId(), procesoId, categoriaIds);
-        escrutinioCabecera = escrutinioService.obtenerOCrearCabeceraDTO(
-                mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados);
+        // Elegir una mesa no escribe nada: la cabecera real se crea al registrar la apertura
+        // (abrirMesa), después de validar junta, padrón y proceso. Mientras no exista se usa una
+        // cabecera PENDIENTE en memoria; así una mesa sin padrón no deja registros huérfanos.
+        EscrutinioCabeceraDTO existente = escrutinioService.buscarCabeceraDTO(mesaSeleccionado.getId(), procesoId);
+        escrutinioCabecera = existente != null
+                ? escrutinioService.obtenerOCrearCabeceraDTO(mesaSeleccionado.getId(), procesoId, totalSufragantesAsignados)
+                : cabeceraPendienteEnMemoria(procesoId);
         if (escrutinioCabecera != null && escrutinioCabecera.getObservacionApertura() != null) {
             observacionApertura = escrutinioCabecera.getObservacionApertura();
         }
-        if (isMesaCerrada()) {
+        if (avisarMesaCerrada && isMesaCerrada()) {
             JsfUtil.addInfoMessageFromBundle("actaE.mensaje.mesa.cerrada");
         }
         cargarBloqueoApertura();
@@ -611,6 +651,11 @@ public class ActaEController implements Serializable {
         }
         Map<Integer, EscrutinioCabeceraDTO> cabeceras = escrutinioService.buscarCabecerasDTOPorProceso(procesoId);
         Map<Integer, Long> sufragantes = padronService.contarSufragantesPorMesas(mesaIds, procesoId);
+        // Solo las mesas del proceso: con padrón, o con escrutinio ya iniciado (para no ocultar
+        // actividad registrada). Las demás no pueden abrirse y no cuentan en el avance.
+        mesaIds.removeIf(id -> !sufragantes.containsKey(id) && !cabeceras.containsKey(id));
+        mesas.removeIf(mesa -> mesa == null || mesa.getId() == null || !mesaIds.contains(mesa.getId()));
+        mesasValidadasProceso = new java.util.HashSet<>(resumenEscrutinioService.mesasValidadas(procesoId, mesaIds));
         Map<Integer, List<Documentos>> actas = documentoBean.getDocumentosPorEntidadesYTipoDoc(
                 mesaIds, Constantes.ACTA_ESCRUTINIO);
         // Acta física vigente de todas las mesas: una consulta más en total, no una por mesa.
@@ -1712,7 +1757,7 @@ public class ActaEController implements Serializable {
         if (opera) {
             // Operador (Administrador o Tribunal): flujo de siempre, que prepara el acta para registrar.
             mesaSoloLectura = false;
-            cargaDatosMesaSeleccionada();
+            cargaDatosMesaSeleccionada(false);
         } else {
             // Revisor sin operación: consulta, sin crear cabecera ni conteo.
             cargarMesaSoloLectura();
@@ -1833,10 +1878,10 @@ public class ActaEController implements Serializable {
 
     /**
      * Carga una mesa para consulta, sin escribir nada. A diferencia de
-     * {@link #cargaDatosMesaSeleccionada()}, que usa obtenerOCrearCabeceraDTO y
-     * prepararActaPorMesaDTO y por tanto crea la cabecera y los registros de conteo si
-     * no existen, aquí solo se leen los que ya hay: un revisor que abre una mesa sin
-     * datos no debe generarlos.
+     * {@link #cargaDatosMesaSeleccionada()}, que prepara los registros de conteo vacíos
+     * (prepararActaPorMesaDTO) y ajusta los sufragantes de una cabecera ya existente,
+     * aquí solo se leen los que ya hay: un revisor que abre una mesa sin datos no debe
+     * generarlos.
      */
     private void cargarMesaSoloLectura() {
         mesaSoloLectura = true;
@@ -2246,6 +2291,11 @@ public class ActaEController implements Serializable {
                 mesasConteoGerencial++;
             } else if (EstadoEscrutinio.CERRADO.equals(estado)) {
                 mesasCerradasGerencial++;
+                // La consulta cubre el listado inicial; el progreso refleja una validación
+                // hecha después en la misma vista.
+                if (mesasValidadasProceso.contains(fila.getMesaId()) || fila.getProgreso().isOficial()) {
+                    mesasValidadasGerencial++;
+                }
             } else if (EstadoEscrutinio.OBSERVADO.equals(estado)) {
                 mesasObservadasGerencial++;
             }
@@ -2267,6 +2317,7 @@ public class ActaEController implements Serializable {
         mesasAbiertasGerencial = 0;
         mesasConteoGerencial = 0;
         mesasCerradasGerencial = 0;
+        mesasValidadasGerencial = 0;
         mesasObservadasGerencial = 0;
         totalSufragantesGerencial = 0;
         totalVotosRegistradosGerencial = 0;
@@ -2421,7 +2472,8 @@ public class ActaEController implements Serializable {
         if (totalMesasGerencial == 0) {
             return 0;
         }
-        return Math.round((mesasCerradasGerencial * 100f) / totalMesasGerencial);
+        // Avance = mesas con acta física validada (dato oficial), no solo cerradas.
+        return Math.round((mesasValidadasGerencial * 100f) / totalMesasGerencial);
     }
 
     public int getPorcentajeParticipacionGerencial() {

@@ -10,8 +10,8 @@
 .mjrv-mesas-table td.mjrv-col-num,
 .mjrv-mesas-table th.mjrv-col-num { font-variant-numeric: tabular-nums; }
 
-.mjrv-mesas-table td,
-.mjrv-mesas-table th { overflow-wrap: anywhere; }
+/* Solo celdas: en los encabezados partía las palabras letra a letra («MIEM BROS»). */
+.mjrv-mesas-table td { overflow-wrap: anywhere; }
 
 @media (max-width: 640px) {
     .mjrv-mesas-table.ui-datatable-reflow td.mjrv-col-num { text-align: left; }

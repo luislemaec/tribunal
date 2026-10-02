@@ -83,7 +83,17 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
     }
 
     public List<ResultadoCategoriaPublicaDTO> obtenerResultadosPublicosPorCategoria(Integer procesoId) {
-        if (procesoId == null) {
+        return obtenerResultadosValidadosPorCategoria(procesoId, null);
+    }
+
+    /**
+     * Votos por categoría con las condiciones oficiales (mesa cerrada y acta física VALIDADA del
+     * proceso). Con {@code mesaIds} se limita a esas mesas (filtro geográfico de escrutinios);
+     * con null abarca todo el proceso, como el portal público.
+     */
+    public List<ResultadoCategoriaPublicaDTO> obtenerResultadosValidadosPorCategoria(Integer procesoId,
+            java.util.Collection<Integer> mesaIds) {
+        if (procesoId == null || (mesaIds != null && mesaIds.isEmpty())) {
             return java.util.Collections.emptyList();
         }
         String sql = "SELECT new ec.com.antenasur.dto.ResultadoCategoriaPublicaDTO("
@@ -105,12 +115,16 @@ public class EscrutinioFacade extends AbstractFacade<Escrutinio, Integer> {
                 + " )"
                 // Solo datos oficiales: mesas con acta física VALIDADA.
                 + " AND" + EscrutinioCabeceraFacade.existeActaFisicaValidada("m.id")
+                + (mesaIds != null ? " AND m.id IN :mesaIds" : "")
                 + " GROUP BY c.id, c.nombre, c.orden, c.tipo, l.numero, l.nombre, l.slogan"
                 + " ORDER BY c.orden, c.nombre";
         TypedQuery<ResultadoCategoriaPublicaDTO> query = super.getEntityManager()
                 .createQuery(sql, ResultadoCategoriaPublicaDTO.class);
         query.setParameter("procesoId", procesoId);
         query.setParameter("estadoCerrado", EstadoEscrutinio.CERRADO);
+        if (mesaIds != null) {
+            query.setParameter("mesaIds", mesaIds);
+        }
         EscrutinioCabeceraFacade.parametrosActaFisicaValidada(query);
         return query.getResultList();
     }

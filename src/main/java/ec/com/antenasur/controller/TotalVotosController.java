@@ -1,36 +1,33 @@
 package ec.com.antenasur.controller;
 
-import ec.com.antenasur.bean.GeograpBean;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import ec.com.antenasur.bean.LoginBean;
+import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.MesaBean;
 import ec.com.antenasur.bean.RecintoBean;
-import ec.com.antenasur.dto.ResumenVotosDTO;
+import ec.com.antenasur.dto.ResumenEscrutinioDTO;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.Recinto;
-import ec.com.antenasur.dto.VwTotalVotosDTO;
 import ec.com.antenasur.service.GeograpService;
-import ec.com.antenasur.service.tec.MesaService;
-import ec.com.antenasur.service.tec.VwTotalVotosService;
-import java.util.ArrayList;
+import ec.com.antenasur.service.tec.ResumenEscrutinioService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-// TODO [MIGRACION-PF15]: PrimeFaces 14+ eliminó las clases tipadas de charts
-// (BarChartModel, DonutChartModel, HorizontalBarChartModel y todas las
-// clases de org.primefaces.model.charts.*). Refactorizar usando la API
-// de <p:chart> con un modelo Chart.js JSON crudo o una librería externa.
-// Se conservan campos como Object para mantener bindings EL existentes.
 
 /**
+ * Pantalla de escrutinios (escrutinios.xhtml): totales del proceso electoral activo por cantón,
+ * parroquia, recinto y mesa. Los filtros se encadenan: al cambiar uno se limpian los inferiores, y
+ * «— Seleccione —» vuelve al nivel superior. El cálculo vive en {@link ResumenEscrutinioService}.
  *
  * @author Luis Lema <lemaedu@gmail.com>
  */
@@ -39,423 +36,144 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TotalVotosController implements Serializable {
 
-    private static final String DESTINATION = System.getProperty("java.io.tmpdir");
-
     private static final long serialVersionUID = 1L;
 
-    private static final String FORMULARIO = "frmMesas";
-    private static final String TABLA = "tblMesas";
-    private static final String MENSAJE_REGISTRA_OK = "Mesa registrado";
-    private static final String MENSAJE_ACTUALIZA_OK = "Mesa actualizado";
-    private static final String MENSAJE_ELIMINA_OK = "Mesa eliminado";
-    public static final String MENSAJE_CONFORMACION_ELIMINAR = "¿Esta seguro de eliminar?";
-
-    @Inject
-    private LoginBean loginBean;
-
-    @Inject
-    VwTotalVotosService vwTotalVotosService;
-
-    @Inject
-    private MesaService mesaService;
-
-    @Inject
-    private GeograpService geograpService;
+    /** Provincia cuyos cantones se ofrecen en el filtro. */
+    private static final int PROVINCIA_ID = 7;
 
     @Inject
     private GeograpBean geograpBean;
 
     @Inject
-    private MesaBean mesaBean;
+    private GeograpService geograpService;
 
     @Inject
     private RecintoBean recintoBean;
 
-    @Setter
-    @Getter
-    private List<VwTotalVotosDTO> totalVotos;
+    @Inject
+    private MesaBean mesaBean;
 
-    @Setter
-    @Getter
-    private List<Object[]> votos;
+    @Inject
+    private ResumenEscrutinioService resumenEscrutinioService;
 
     @Getter
-    private List<Object[]> votosPorCanton, votosPorParroquia, votosPorRecinto;
+    private List<Geograp> cantones = Collections.emptyList();
 
-    @Setter
     @Getter
-    private List<Geograp> cantones, parroquias;
+    private List<Geograp> parroquias = Collections.emptyList();
 
-    @Setter
     @Getter
-    private Geograp cantonSeleccionado, parroquiaSeleccionado;
+    private List<Recinto> recintos = Collections.emptyList();
 
-    @Setter
     @Getter
-    private Recinto recintoSeleccionado;
+    private List<Mesa> mesas = Collections.emptyList();
 
-    @Setter
     @Getter
-    private List<Recinto> recintos;
+    @Setter
+    private Integer cantonId;
 
-    @Setter
     @Getter
-    private List<Mesa> mesas, mesasEscrutadas;
+    @Setter
+    private Integer parroquiaId;
 
-    @Setter
     @Getter
-    private Mesa mesaSeleccionado;
+    @Setter
+    private Integer recintoId;
 
-    // TODO [MIGRACION-PF15]: tipos cambiaron a Object; refactorizar a Chart.js JSON (p:chart en PF 15)
-    @Setter
     @Getter
-    private Object barModel;
+    @Setter
+    private Integer mesaId;
 
-    @Setter
     @Getter
-    private Object donutModel;
+    private ResumenEscrutinioDTO resumen = new ResumenEscrutinioDTO();
 
-    @Setter
-    @Getter
-    private Object hbarModel;
-
-    @Setter
-    @Getter
-    private float porcentajeMesasEscrutadas;
-
-    @Setter
-    @Getter
-    private int totalVotantes;
+    /** Parroquias de todos los cantones: base cuando no hay cantón seleccionado. */
+    private List<Geograp> todasParroquias = Collections.emptyList();
 
     @PostConstruct
     private void init() {
         try {
-            totalVotos = new ArrayList();
-            cantonSeleccionado = new Geograp();
-            parroquiaSeleccionado = new Geograp();
-            recintoSeleccionado = new Recinto();
-            mesaSeleccionado = new Mesa();
-            parroquias = new ArrayList();
-            this.cantones = geograpBean.getByFatherId(7);
-
-            this.cargaParroquiaInicial();
-
+            cantones = noNulo(geograpBean.getByFatherId(PROVINCIA_ID));
+            todasParroquias = noNulo(geograpService.obtenerParroquiasDeCantones(cantones));
+            recalcular();
         } catch (Exception e) {
-            log.error("ERROR AL INICIALIZAR OBJETOS", e);
+            log.error("ERROR AL INICIALIZAR ESCRUTINIOS", e);
         }
     }
 
-    private void cargaParroquiaInicial() {
+    public void cambiarCanton() {
+        parroquiaId = null;
+        recintoId = null;
+        mesaId = null;
+        recalcular();
+    }
+
+    public void cambiarParroquia() {
+        recintoId = null;
+        mesaId = null;
+        recalcular();
+    }
+
+    public void cambiarRecinto() {
+        mesaId = null;
+        recalcular();
+    }
+
+    public void cambiarMesa() {
+        recalcular();
+    }
+
+    /** El recinto se muestra junto a la mesa cuando no hay un recinto elegido (los nombres de mesa se repiten). */
+    public String etiquetaMesa(Mesa mesa) {
+        if (mesa == null) {
+            return "";
+        }
+        if (recintoId != null || mesa.getRecinto() == null) {
+            return mesa.getNombre();
+        }
+        return mesa.getNombre() + " · " + mesa.getRecinto().getNombre();
+    }
+
+    private void recalcular() {
         try {
-            this.parroquias = geograpService.obtenerParroquiasDeCantones(cantones);
-            if (!parroquias.isEmpty()) {
-                this.cargaRecintosPorParroquia(parroquias);
-                this.cargaMesasPorRecintos(recintos);
-                this.cargaVotosPorMesas(mesas);
-                getReporteEstadistica();
+            Geograp canton = buscar(cantones, cantonId);
+            cantonId = canton != null ? canton.getId() : null;
+            parroquias = canton == null ? todasParroquias : noNulo(geograpBean.getByFatherGeograp(canton));
+            Geograp parroquia = buscar(parroquias, parroquiaId);
+            parroquiaId = parroquia != null ? parroquia.getId() : null;
+            List<Geograp> parroquiasFiltro = parroquia == null ? parroquias : List.of(parroquia);
+
+            recintos = parroquiasFiltro.isEmpty() ? Collections.emptyList()
+                    : noNulo(recintoBean.recintosPorParroquias(parroquiasFiltro));
+            Recinto recinto = recintos.stream().filter(r -> Objects.equals(r.getId(), recintoId)).findFirst().orElse(null);
+            recintoId = recinto != null ? recinto.getId() : null;
+            List<Recinto> recintosFiltro = recinto == null ? recintos : List.of(recinto);
+
+            mesas = recintosFiltro.isEmpty() ? Collections.emptyList()
+                    : noNulo(mesaBean.mesasPorRecintos(recintosFiltro));
+            Mesa mesa = mesas.stream().filter(m -> Objects.equals(m.getId(), mesaId)).findFirst().orElse(null);
+            mesaId = mesa != null ? mesa.getId() : null;
+            List<Mesa> mesasFiltro = mesa == null ? mesas : List.of(mesa);
+
+            List<Integer> mesaIds = new ArrayList<>();
+            for (Mesa m : mesasFiltro) {
+                mesaIds.add(m.getId());
             }
+            resumen = resumenEscrutinioService.resumir(recintosFiltro.size(), mesaIds);
         } catch (Exception e) {
-            log.error("ERROR EN CARGAR PARROQUIAS INICIAL", e);
+            log.error("ERROR AL CALCULAR EL RESUMEN DE ESCRUTINIOS", e);
+            resumen = new ResumenEscrutinioDTO();
         }
     }
 
-    /**
-     * Metodo para llamar desde formulario
-     */
-    public void cargaParroquiasPorCanton() {
-        try {
-            if (cantonSeleccionado.getId() != null) {
-                this.cantonSeleccionado = geograpBean.getById(this.cantonSeleccionado.getId());
-                this.parroquias = geograpBean.getByFatherGeograp(this.cantonSeleccionado);
-                this.cargaRecintosPorParroquia(parroquias);
-                this.cargaMesasPorRecintos(recintos);
-                this.cargaVotosPorMesas(mesas);
-            }
-        } catch (Exception e) {
-            log.error("ERROR EN CARGAR PARROQUIAS POR CANTON", e);
-        }
-    }
-
-    /**
-     * Metodo para llamar desde formulario
-     */
-    public void cargaRecintosPorParroquia() {
-        if (parroquiaSeleccionado != null) {
-            this.parroquiaSeleccionado = geograpBean.getById(this.parroquiaSeleccionado.getId());
-            List<Geograp> parroquiasTmp = new ArrayList();
-            parroquiasTmp.add(parroquiaSeleccionado);
-            this.cargaRecintosPorParroquia(parroquiasTmp);
-            this.cargaMesasPorRecintos(recintos);
-            this.cargaVotosPorMesas(mesas);
-        }
-    }
-
-    /**
-     * Metodo para llamar desde formulario
-     */
-    public void cargaMesasPorRecintos() {
-        if (recintoSeleccionado != null) {
-            this.recintoSeleccionado = recintoBean.recintosPorId(this.recintoSeleccionado.getId());
-            List<Recinto> recintoTmp = new ArrayList();
-            recintoTmp.add(recintoSeleccionado);
-            this.cargaMesasPorRecintos(recintoTmp);
-            this.cargaVotosPorMesas(mesas);
-        }
-    }
-
-    /**
-     * Metodo para llamar desde formulario
-     */
-    public List<Mesa> cargaMesasPorRecinto(Recinto recinto) {
-        try {
-            if (recinto != null) {
-                return mesaBean.mesasPorRecinto(recinto);
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
+    private static Geograp buscar(List<Geograp> lista, Integer id) {
+        if (id == null) {
             return null;
         }
-
+        return lista.stream().filter(g -> Objects.equals(g.getId(), id)).findFirst().orElse(null);
     }
 
-    /**
-     * Metodo para llamar desde formulario
-     */
-    public void cargaVotosPorMesas() {
-        if (mesaSeleccionado != null) {
-            this.mesaSeleccionado = mesaBean.mesaPorId(this.mesaSeleccionado.getId());
-            List<Mesa> mesasTmp = new ArrayList();
-            mesasTmp.add(mesaSeleccionado);
-            this.cargaVotosPorMesas(mesasTmp);
-        }
+    private static <T> List<T> noNulo(List<T> lista) {
+        return lista != null ? lista : Collections.emptyList();
     }
-
-    private void cargaRecintosPorParroquia(List<Geograp> parroquiasTmp) {
-        try {
-            if (recintos != null && !recintos.isEmpty()) {
-                recintos.clear();
-            }
-            this.recintos = recintoBean.recintosPorParroquias(parroquiasTmp);
-        } catch (Exception e) {
-            log.error("ERROR EN CARGAR RECINTOS POR PARROQUIAS", e);
-        }
-
-    }
-
-    public void cargaMesasPorRecintos(List<Recinto> recintosTmp) {
-        try {
-            ResumenVotosDTO resumen = mesaService.calcularResumenVotos(recintosTmp);
-            this.mesas = resumen.getMesas();
-            this.mesasEscrutadas = resumen.getMesasEscrutadas();
-            this.totalVotantes = resumen.getTotalVotantes();
-            this.porcentajeMesasEscrutadas = resumen.getPorcentajeMesasEscrutadas();
-        } catch (Exception e) {
-            log.error("ERROR EN CARGAR MESAS POR RECINTOS", e);
-        }
-    }
-
-    public void cargaVotosPorMesas(List<Mesa> mesasTmp) {
-        try {
-            this.votos = vwTotalVotosService.votosPorMesas(mesasTmp);
-            getReporteEstadistica();
-        } catch (Exception e) {
-            log.error("ERROR EN CARGAR VOTOS POR MESAS", e);
-        }
-
-    }
-
-    private void getReporteEstadistica() {
-        // TODO [MIGRACION-PF15]: Reactivar cuando se refactoricen los charts a la nueva API de p:chart (Chart.js JSON).
-        // try {
-        //     createBarModel();
-        //     createHorizontalBarModel();
-        // } catch (Exception e) {
-        //     log.error("ERROR AL CARGAR DATOS REPORTE ESTADISTICO", e);
-        // }
-    }
-
-    /* ================================================================
-     * CHARTS - DESACTIVADO TEMPORALMENTE
-     * ================================================================
-     * PrimeFaces 14+ eliminó BarChartModel, DonutChartModel,
-     * HorizontalBarChartModel y el paquete org.primefaces.model.charts.*.
-     *
-     * Para reactivar: refactorizar usando <p:chart> con un modelo
-     * Chart.js JSON crudo (ver showcase de PrimeFaces 15) o usar una
-     * librería externa de gráficos (e.g. Chart.js directo en JS).
-     * Lógica original preservada en el control de versiones.
-     * ================================================================ */
-    /*
-    public void createBarModel() {
-        barModel = new BarChartModel();
-        ChartData data = new ChartData();
-
-        BarChartDataSet barDataSet = new BarChartDataSet();
-        barDataSet.setLabel("TOTAL VOTOS");
-
-        List<Number> values = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (Object[] item : votos) {
-            values.add((Number) item[1]);
-            labels.add((String) item[0]);
-        }
-        barDataSet.setData(values);
-
-        List<String> bgColor = new ArrayList<>();
-        bgColor.add("rgba(33, 97, 140)");
-        bgColor.add("rgba(75, 192, 192)");
-        bgColor.add("rgba(54, 162, 235)");
-        bgColor.add("rgba(229, 231, 233)");
-        bgColor.add("rgba(85, 85, 85)");
-        bgColor.add("rgba(153, 102, 255, 0.2)");
-        bgColor.add("rgba(201, 203, 207, 0.2)");
-        barDataSet.setBackgroundColor(bgColor);
-
-        List<String> borderColor = new ArrayList<>();
-        borderColor.add("rgb(33, 97, 140)");
-        borderColor.add("rgb(75, 192, 192)");
-        borderColor.add("rgb(54, 162, 235)");
-        borderColor.add("rgb(229, 231, 233)");
-        borderColor.add("rgb(85, 85, 85)");
-        borderColor.add("rgb(153, 102, 255)");
-        borderColor.add("rgb(201, 203, 207)");
-        barDataSet.setBorderColor(borderColor);
-        barDataSet.setBorderWidth(1);
-
-        data.addChartDataSet(barDataSet);
-
-        data.setLabels(labels);
-        barModel.setData(data);
-
-        //Options
-        BarChartOptions options = new BarChartOptions();
-        CartesianScales cScales = new CartesianScales();
-        CartesianLinearAxes linearAxes = new CartesianLinearAxes();
-        linearAxes.setOffset(true);
-        CartesianLinearTicks ticks = new CartesianLinearTicks();
-        ticks.setBeginAtZero(true);
-        linearAxes.setTicks(ticks);
-        cScales.addYAxesData(linearAxes);
-        options.setScales(cScales);
-
-        Title title = new Title();
-        title.setDisplay(true);
-        title.setText("VOTOS POR LISTAS");
-        options.setTitle(title);
-
-        Legend legend = new Legend();
-        legend.setDisplay(true);
-        legend.setPosition("top");
-        LegendLabel legendLabels = new LegendLabel();
-        legendLabels.setFontStyle("bold");
-        legendLabels.setFontColor("#2980B9");
-        legendLabels.setFontSize(24);
-        legend.setLabels(legendLabels);
-        options.setLegend(legend);
-
-        // disable animation
-        Animation animation = new Animation();
-        animation.setDuration(1000);
-        options.setAnimation(animation);
-
-        barModel.setOptions(options);
-    }
-
-    public void createHorizontalBarModel() {
-        hbarModel = new HorizontalBarChartModel();
-        ChartData data = new ChartData();
-
-        HorizontalBarChartDataSet hbarDataSet = new HorizontalBarChartDataSet();
-        hbarDataSet.setLabel("Total votos");
-
-        List<Number> values = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-
-        for (Object[] item : votos) {
-            if (item[0] != null) {
-                values.add((Number) item[1]);
-                labels.add((String) item[0]);
-            }
-        }
-        hbarDataSet.setData(values);
-
-        List<String> bgColor = new ArrayList<>();
-        bgColor.add("rgba(33, 97, 140)");
-        bgColor.add("rgba(75, 192, 192)");
-        bgColor.add("rgba(54, 162, 235)");
-        bgColor.add("rgba(229, 231, 233)");
-        bgColor.add("rgba(85, 85, 85)");
-        bgColor.add("rgba(153, 102, 255)");
-        bgColor.add("rgba(201, 203, 207)");
-        hbarDataSet.setBackgroundColor(bgColor);
-
-        List<String> borderColor = new ArrayList<>();
-        borderColor.add("rgb(33, 97, 140)");
-        borderColor.add("rgb(75, 192, 192)");
-        borderColor.add("rgb(54, 162, 235)");
-        borderColor.add("rgb(229, 231, 233)");
-        borderColor.add("rgb(85, 85, 85)");
-        borderColor.add("rgb(153, 102, 255)");
-        borderColor.add("rgb(201, 203, 207)");
-        hbarDataSet.setBorderColor(borderColor);
-        hbarDataSet.setBorderWidth(1);
-
-        data.addChartDataSet(hbarDataSet);
-
-        data.setLabels(labels);
-        hbarModel.setData(data);
-
-        //Options
-        BarChartOptions options = new BarChartOptions();
-        CartesianScales cScales = new CartesianScales();
-        CartesianLinearAxes linearAxes = new CartesianLinearAxes();
-        linearAxes.setOffset(true);
-        CartesianLinearTicks ticks = new CartesianLinearTicks();
-        ticks.setBeginAtZero(true);
-        linearAxes.setTicks(ticks);
-        cScales.addXAxesData(linearAxes);
-        options.setScales(cScales);
-
-        Title title = new Title();
-        title.setDisplay(true);
-        title.setText("RESUMEN VOTOS");
-        options.setTitle(title);
-
-        hbarModel.setOptions(options);
-    }
-
-    public void createDonutModel() {
-        donutModel = new DonutChartModel();
-        ChartData data = new ChartData();
-
-        List<Number> values = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-
-        for (Object[] item : votos) {
-            values.add((Number) item[1]);
-            labels.add((String) item[0]);
-        }
-
-        DonutChartDataSet dataSet = new DonutChartDataSet();
-
-        dataSet.setData(values);
-
-        List<String> bgColors = new ArrayList<>();
-        bgColors.add("rgb(33, 97, 140)");
-        bgColors.add("rgb(75, 192, 192)");
-        bgColors.add("rgb(54, 162, 235)");
-
-        bgColors.add("rgb(229, 231, 233)");
-        bgColors.add("rgb(85, 85, 85)");
-        dataSet.setBackgroundColor(bgColors);
-
-        data.addChartDataSet(dataSet);
-
-        data.setLabels(labels);
-
-        donutModel.setData(data);
-    }
-    */
-
 }

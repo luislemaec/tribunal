@@ -267,6 +267,9 @@ Notas:
 - No permitir eliminar/modificar una junta completada salvo flujo autorizado.
 - Mensajes deben salir por el growl global.
 - La designacion de Presidente de Mesa habilita el usuario con rol `SITEC-Presidente-mesa`.
+- La pestaña Mesas lista solo mesas del proceso: con padron (iglesias asignadas) o con miembros ya designados; se filtra en memoria con `consultarResumenMesas`, sin consultas extra.
+- Con la junta registrada como completa se ocultan el formulario de asignacion y las personas disponibles.
+- Los contadores fuera de las tablas (iglesias asignadas, miembros designados) deben figurar en los `update` de cada accion; si no, quedan con el valor inicial.
 
 `actaE.xhtml`:
 
@@ -275,6 +278,18 @@ Notas:
 - Flujo esperado: apertura -> conteo/borrador -> generar PDF -> cerrar mesa.
 - Si una mesa ya esta cerrada, puede regenerarse el acta PDF sin modificar el conteo.
 - La tarjeta de cierre debe mostrar "Mesa cerrada" cuando el estado sea `CERRADO`, no "Validacion pendiente".
+- La pestaña Mesas lista solo las mesas del proceso activo: con padron o con escrutinio ya iniciado (cabecera del proceso). El resumen y el avance usan esa misma base, igual que escrutinios.xhtml.
+- El resumen distingue mesas cerradas de mesas validadas (acta fisica VALIDADA, `ResumenEscrutinioService.mesasValidadas`).
+- Elegir una mesa no escribe en la base: si no hay cabecera se muestra una PENDIENTE en memoria; la cabecera real la crea `abrirMesa` al registrar la apertura, despues de `validarApertura`. No volver a llamar `obtenerOCrearCabeceraDTO` al seleccionar una mesa sin cabecera.
+- La etapa 5 se llama "Validacion": "Pendiente" mientras el acta fisica espera revision y "Dato oficial" una vez validada.
+
+`escrutinios.xhtml`:
+
+- Solo el proceso electoral activo y solo mesas cerradas con acta fisica VALIDADA (mismo criterio que el portal publico).
+- El calculo vive en `ResumenEscrutinioService` (consultas agregadas sobre `tec.escrutinio`, `tec.escrutinio_cabecera` y `tec.padron`); no usar la vista `vw_total_escrutinios` ni `Mesa.totalVotos` / `Mesa.estadoTarea`, que no distinguen proceso.
+- Empadronados salen del padron del proceso; sufragantes = listas + blancos + nulos de las actas validadas; participacion = sufragantes / empadronados de las mesas escrutadas.
+- Blancos y nulos son informativos: el porcentaje de cada lista es sobre los votos validos.
+- Filtros encadenados: al cambiar uno se limpian los inferiores; «Todos» vuelve al nivel superior.
 
 `reportePadron.xhtml`:
 

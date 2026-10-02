@@ -14,4 +14,18 @@
  * ========================================================================== */
 .tec-acta-upload .ui-fileupload-choose { width:100%; justify-content:center; }
 
-.tec-acta-upload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }
+body .tec-acta-upload.ui-fileupload .ui-fileupload-buttonbar { padding:0; border:0 none; background:transparent; }
+
+/* Deshabilitado (aún no hay acta generada o ya está firmada): el tema oculta los botones
+   deshabilitados de la barra del fileUpload y dejaba dos recuadros vacíos. Se muestra
+   «Cargar acta firmada» deshabilitado y se oculta el área de archivos mientras está vacía. */
+body .tec-acta-upload .ui-fileupload-buttonbar .ui-button.ui-fileupload-choose.ui-state-disabled { display:inline-flex; }
+.tec-acta-upload .ui-fileupload-content:has(.ui-fileupload-files > div:empty) { display:none; }
+
+/* Móvil (reflow ≤640px): un cargo sin candidato no muestra las etiquetas Cédula, Iglesia y Acciones vacías.
+   El reflow global fuerza display:flex !important, por eso se requiere !important.
+   Solo aplica a esta tabla: todas sus celdas envuelven el valor en un elemento, así que una celda que
+   únicamente contiene el título de la columna está vacía. */
+@media (max-width:640px) {
+    [id$="tblCandidatos"].ui-datatable-reflow .ui-datatable-data > tr > td:has(> .ui-column-title:only-child) { display:none !important; }
+}

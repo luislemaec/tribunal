@@ -547,6 +547,22 @@ body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; colo
 
 .tec-col-actions { width:1%; text-align:right; white-space:nowrap; }
 
+/* Columna de acciones fija: si la tabla no cabe y se desplaza dentro de su contenedor, la columna de acciones queda
+   fija a la derecha para no perderla de vista. La celda hereda el fondo de su fila (rayado, hover o selección) para
+   tapar lo que pasa por debajo. En dataTable el encabezado toma el fondo de la cabecera; en treeTable conserva el del tema.
+   - Toda dataTable o treeTable, en tableta y escritorio angosto (641–1199px).
+   - Tablas marcadas con tec-acciones-fijas (p. ej. el árbol de menú, que no cabe ni en escritorio), desde 641px. */
+@media (min-width:641px) and (max-width:1199.98px) {
+    body :is(.ui-datatable, .ui-treetable) :is(th, td).tec-col-actions { position:sticky; right:0; z-index:1; box-shadow:inset 1px 0 0 var(--surface-border); }
+    body .ui-datatable thead th.tec-col-actions { background:var(--tec-table-head-bg); }
+    body :is(.ui-datatable, .ui-treetable) tbody > tr > td.tec-col-actions { background:inherit; }
+}
+@media (min-width:641px) {
+    body .tec-acciones-fijas :is(th, td).tec-col-actions { position:sticky; right:0; z-index:1; box-shadow:inset 1px 0 0 var(--surface-border); }
+    body .ui-datatable.tec-acciones-fijas thead th.tec-col-actions { background:var(--tec-table-head-bg); }
+    body .tec-acciones-fijas tbody > tr > td.tec-col-actions { background:inherit; }
+}
+
 /* Acciones por fila: separación fija entre botones */
 .tec-acciones { display:inline-flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:.2812rem; vertical-align:middle; }
 
@@ -764,15 +780,15 @@ body .ui-datatable .ui-paginator .ui-paginator-last { display:none; }
 
 /* Editor de texto (SunEditor, p:textEditor): sus tooltips ocultos (visibility:hidden) siguen ocupando espacio y,
    en pantallas estrechas, desbordan la página. Solo existen al pasar el cursor por el botón. */
-.sun-editor .se-tooltip .se-tooltip-inner { display:none; }
-.sun-editor .se-tooltip:hover .se-tooltip-inner, .sun-editor .se-tooltip:focus .se-tooltip-inner { display:block; }
+html body .sun-editor .se-tooltip .se-tooltip-inner { display:none; } /* "html body": suneditor.css se carga después con la misma especificidad */
+html body .sun-editor .se-tooltip:hover .se-tooltip-inner, html body .sun-editor .se-tooltip:focus .se-tooltip-inner { display:block; }
 
 /* Pie institucional (WEB-INF/footer.xhtml): logo y, en texto pequeño, versión del sistema y derechos. */
 /* padding-right: los botones flotantes (volver arriba, acción rápida) ocupan la esquina inferior derecha. */
 .tec-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1.5rem; padding-right:3.5rem; }
 .tec-footer__legal { display:flex; flex-wrap:wrap; align-items:center; gap:.25rem .5rem; margin:0;
     color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); line-height:var(--tec-lh-tight); }
-.tec-footer__sep { color:var(--surface-400); }
+.tec-footer__sep { color:var(--text-color-secondary); }
 @media (max-width:575.98px) {
     .tec-footer { flex-direction:column; text-align:center; padding:0 3.5rem; }
     .tec-footer__legal { justify-content:center; }

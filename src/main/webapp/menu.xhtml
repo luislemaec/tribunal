@@ -42,7 +42,7 @@
                 <div style="overflow-x:auto">
                     <p:treeTable value="#{menuController.root}" var="menu" editable="true" id="trTblMenuo"
                                  emptyMessage="#{msg['menu.tabla.vacia']}"
-                                 styleClass="ui-datatable-striped ui-datatable-sm"
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-acciones-fijas"
                                  tableStyle="min-width:980px">
                         <p:ajax event="rowEdit" listener="#{menuController.onRowEdit}" update="trTblMenuo"/>
                         <p:ajax event="rowEditCancel" listener="#{menuController.onRowCancel}" update="trTblMenuo"/>
