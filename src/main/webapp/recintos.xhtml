@@ -23,46 +23,46 @@
             <p:outputPanel id="resumenRecintos">
                 <div class="grid mb-3">
                     <div class="col-12 md:col-6 xl:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="tec-kpi h-full">
                             <div class="flex align-items-center justify-content-between">
                                 <div>
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.total.recintos']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintos}</div>
                                 </div>
-                                <i class="pi pi-building text-teal-600" style="font-size:var(--tec-fs-xl)"></i>
+                                <div class="tec-icon-badge"><i class="pi pi-building"/></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 md:col-6 xl:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="tec-kpi tec-kpi--success h-full">
                             <div class="flex align-items-center justify-content-between">
                                 <div>
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.recintos.activos']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{recintoController.totalRecintosActivos}</div>
                                 </div>
-                                <i class="pi pi-check-circle text-green-600" style="font-size:var(--tec-fs-xl)"></i>
+                                <div class="tec-icon-badge tec-icon-badge--success"><i class="pi pi-check-circle"/></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 md:col-6 xl:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="tec-kpi h-full">
                             <div class="flex align-items-center justify-content-between">
                                 <div>
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.total.mesas']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRegistradas}</div>
                                 </div>
-                                <i class="pi pi-table text-cyan-700" style="font-size:var(--tec-fs-xl)"></i>
+                                <div class="tec-icon-badge"><i class="pi pi-table"/></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 md:col-6 xl:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <div class="tec-kpi tec-kpi--info h-full">
                             <div class="flex align-items-center justify-content-between">
                                 <div>
                                     <div class="text-500 text-sm">#{msg['recintos.resumen.mesas.seleccionado']}</div>
                                     <div class="text-900 font-bold text-2xl mt-1">#{mesaController.totalMesasRecintoSeleccionado}</div>
                                 </div>
-                                <i class="pi pi-sitemap text-orange-600" style="font-size:var(--tec-fs-xl)"></i>
+                                <div class="tec-icon-badge tec-icon-badge--info"><i class="pi pi-sitemap"/></div>
                             </div>
                         </div>
                     </div>
@@ -145,7 +145,6 @@
                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                      currentPageReportTemplate="#{msg['recintos.paginador.reporte']}"
                                      emptyMessage="#{msg['recintos.empty.listado']}"
-                                     showGridlines="true"
                                      styleClass="ui-datatable-striped ui-datatable-sm tec-table-seleccionable">
 
                             <!-- El update nombra componentes hermanos concretos, nunca el tabView
@@ -163,38 +162,38 @@
 
                             <p:column headerText="#{msg['recintos.tabla.codigo']}"
                                       sortBy="#{recinto.id}" filterBy="#{recinto.id}"
-                                      style="width:5rem">
-                                <span class="text-sm text-500">#{recinto.id}</span>
+                                      style="width:3.75rem">
+                                <span class="tec-meta text-500">#{recinto.id}</span>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.nombre']}"
                                       sortBy="#{recinto.nombre}" filterBy="#{recinto.nombre}"
-                                      filterMatchMode="contains" style="min-width:12rem">
+                                      filterMatchMode="contains" style="min-width:9rem">
                                 <h:outputText id="nombreRecintoFila" value="#{recinto.nombre}"
-                                              styleClass="text-sm font-medium text-900"/>
+                                              styleClass="tec-dato font-medium text-900"/>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.canton']}"
                                       sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}"
-                                      filterMatchMode="contains" style="min-width:9rem">
+                                      filterMatchMode="contains" style="min-width:6.75rem">
                                 <h:outputText id="cantonRecintoFila" value="#{recinto.cantonNombre}"
-                                              styleClass="text-sm text-700"/>
+                                              styleClass="tec-meta text-700"/>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.parroquia']}"
                                       sortBy="#{recinto.ubicacionNombre}" filterBy="#{recinto.ubicacionNombre}"
-                                      filterMatchMode="contains" style="min-width:10rem">
+                                      filterMatchMode="contains" style="min-width:7.5rem">
                                 <h:outputText id="parroquiaRecintoFila" value="#{recinto.ubicacionNombre}"
-                                              styleClass="text-sm text-700"/>
+                                              styleClass="tec-meta text-700"/>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.mesas']}"
-                                      styleClass="text-center" style="width:6rem">
+                                      styleClass="text-center" style="width:4.5rem">
                                 <p:badge value="#{mesaController.getTotalMesasPorRecinto(recinto.id)}" severity="info"/>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.estado']}"
-                                      styleClass="text-center" style="width:7rem">
+                                      styleClass="text-center" style="width:5.25rem">
                                 <p:tag value="#{msg['recintos.estado.activo']}" severity="success" icon="pi pi-check-circle"/>
                             </p:column>
                             <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
                             <p:column headerText="#{msg['recintos.tabla.acciones']}" exportable="false"
-                                      styleClass="text-center" style="width:7rem" selectRow="false">
+                                      styleClass="tec-col-actions" selectRow="false">
                                 <span class="tec-acciones">
                                     <p:commandButton icon="pi pi-pencil"
                                                      styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -256,32 +255,31 @@
                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                          currentPageReportTemplate="#{msg['recintos.mesas.paginador.reporte']}"
                                          emptyMessage="#{empty mesaController.recintoSeleccionado.id ? msg['recintos.mesas.empty.sin.seleccion'] : msg['recintos.mesas.empty.listado']}"
-                                         showGridlines="true"
                                          styleClass="ui-datatable-striped ui-datatable-sm">
 
                                 <p:column headerText="#{msg['recintos.mesas.tabla.codigo']}"
-                                          sortBy="#{mesa.id}" style="width:5rem">
-                                    <span class="text-sm text-500">#{mesa.id}</span>
+                                          sortBy="#{mesa.id}" style="width:3.75rem">
+                                    <span class="tec-meta text-500">#{mesa.id}</span>
                                 </p:column>
                                 <p:column headerText="#{msg['recintos.mesas.tabla.nombre']}"
                                           sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"
-                                          filterMatchMode="contains" style="min-width:10rem">
-                                    <span class="text-sm font-medium text-900">#{mesa.nombre}</span>
+                                          filterMatchMode="contains" style="min-width:7.5rem">
+                                    <span class="tec-dato font-medium text-900">#{mesa.nombre}</span>
                                 </p:column>
                                 <p:column headerText="#{msg['recintos.mesas.tabla.responsable']}"
                                           sortBy="#{mesa.responsable}" filterBy="#{mesa.responsable}"
-                                          filterMatchMode="contains" style="min-width:10rem">
+                                          filterMatchMode="contains" style="min-width:7.5rem">
                                     <h:outputText rendered="#{not empty mesa.responsable}" value="#{mesa.responsable}"
-                                                  styleClass="text-sm text-700"/>
+                                                  styleClass="tec-meta text-700"/>
                                     <h:outputText rendered="#{empty mesa.responsable}" value="#{msg['recintos.mesas.sin.responsable']}"
-                                                  styleClass="text-sm text-500"/>
+                                                  styleClass="tec-meta text-500"/>
                                 </p:column>
                                 <p:column headerText="#{msg['recintos.mesas.tabla.estado']}"
-                                          styleClass="text-center" style="width:7rem">
+                                          styleClass="text-center" style="width:5.25rem">
                                     <p:tag value="#{msg['recintos.estado.activo']}" severity="success" icon="pi pi-check-circle"/>
                                 </p:column>
                                 <p:column headerText="#{msg['recintos.mesas.tabla.acciones']}" exportable="false"
-                                          styleClass="text-center" style="width:6rem">
+                                          styleClass="tec-col-actions">
                                     <span class="tec-acciones">
                                         <p:commandButton icon="pi pi-pencil"
                                                          styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -310,11 +308,10 @@
                 </p:tab>
             </p:tabView>
 
-            <p:dialog id="dlgRecinto" header="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.dialog.titulo.nuevo'] : msg['recintos.dialog.titulo.editar']}"
+            <p:dialog styleClass="tec-dialog" id="dlgRecinto" header="#{empty recintoController.recintoSeleccionado.id ? msg['recintos.dialog.titulo.nuevo'] : msg['recintos.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgRecinto"
-                      responsive="true" width="520"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -323,7 +320,7 @@
                         <div class="formgrid grid">
                             <div class="field col-12">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['recintos.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombre"
                                              value="#{recintoController.recintoSeleccionado.nombre}"
@@ -335,7 +332,7 @@
 
                             <div class="field col-12">
                                 <label for="cantonSel" class="font-medium text-700 text-sm">
-                                    #{msg['recintos.label.canton']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.canton']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="cantonSel"
                                                  value="#{recintoController.cantonEdicionId}"
@@ -353,7 +350,7 @@
 
                             <div class="field col-12">
                                 <label for="parroquiaSel" class="font-medium text-700 text-sm">
-                                    #{msg['recintos.label.parroquia']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.label.parroquia']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="parroquiaSel"
                                                  value="#{recintoController.recintoSeleccionado.ubicacionId}"
@@ -391,11 +388,10 @@
                 </f:facet>
             </p:dialog>
 
-            <p:dialog id="dlgMesa" header="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.dialog.titulo.nuevo'] : msg['recintos.mesas.dialog.titulo.editar']}"
+            <p:dialog styleClass="tec-dialog" id="dlgMesa" header="#{empty mesaController.mesaSeleccionado.id ? msg['recintos.mesas.dialog.titulo.nuevo'] : msg['recintos.mesas.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgMesa"
-                      responsive="true" width="520"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -410,7 +406,7 @@
                             </div>
                             <div class="field col-12">
                                 <label for="nombreMesa" class="font-medium text-700 text-sm">
-                                    #{msg['recintos.mesas.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['recintos.mesas.label.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombreMesa"
                                              value="#{mesaController.mesaSeleccionado.nombre}"

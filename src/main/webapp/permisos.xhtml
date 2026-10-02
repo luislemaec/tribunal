@@ -49,22 +49,21 @@
                         <i class="pi pi-sitemap text-500"></i>
                         <span class="font-semibold text-700">
                             Permisos para el rol:
-                            <span class="text-primary-700 font-bold">#{permisosController.rolSeleccionado.nombre}</span>
+                            <span class="tec-text-primary font-bold">#{permisosController.rolSeleccionado.nombre}</span>
                         </span>
                     </div>
-                    <p:treeTable value="#{permisosController.root}" var="menuRol"
-                                 showGridlines="true" id="trTblMenu"
+                    <p:treeTable value="#{permisosController.root}" var="menuRol" id="trTblMenu"
                                  rendered="#{permisosController.root ne null}"
                                  styleClass="ui-datatable-striped ui-datatable-sm">
                         <p:column headerText="Nombre" sortBy="#{menuRol.menu.nombre}"
                                   styleClass="w-auto" responsivePriority="1">
                             <span class="text-sm font-medium text-900">#{menuRol.menu.nombre}</span>
                         </p:column>
-                        <p:column headerText="Icono" styleClass="text-center" style="width:5rem" responsivePriority="4">
-                            <i class="#{menuRol.menu.icono}" style="font-size:var(--tec-fs-lg)"></i>
+                        <p:column headerText="Icono" styleClass="text-center" style="width:3.75rem" responsivePriority="4">
+                            <i class="#{menuRol.menu.icono} text-lg"></i>
                         </p:column>
                         <p:column headerText="#{permisosController.rolSeleccionado.nombre}"
-                                  styleClass="text-center" style="width:10rem">
+                                  styleClass="text-center" style="width:7.5rem">
                             <p:selectBooleanCheckbox value="#{menuRol.estado}">
                                 <p:ajax event="change" process="@this"
                                         listener="#{permisosController.guardarMenuRol(menuRol)}"/>

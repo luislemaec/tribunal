@@ -89,15 +89,15 @@
                                     <small class="text-500">#{lista.slogan}</small>
                                 </div>
                             </p:column>
-                            <p:column headerText="#{msg['form.candidatos.table.header.numero']}" sortBy="#{lista.numero}" style="width:4.5rem" styleClass="text-center">
+                            <p:column headerText="#{msg['form.candidatos.table.header.numero']}" sortBy="#{lista.numero}" style="width:3.375rem" styleClass="text-center">
                                 <p:badge value="#{lista.numero}" severity="warning"/>
                             </p:column>
-                            <p:column headerText="#{msg['form.candidatos.table.header.estado']}" style="width:6.5rem" styleClass="text-center">
+                            <p:column headerText="#{msg['form.candidatos.table.header.estado']}" style="width:4.875rem" styleClass="text-center">
                                 <p:tag value="#{lista.estado ? msg['form.candidatos.estado.activa'] : msg['form.candidatos.estado.baja']}"
                                        severity="#{lista.estado ? 'success' : 'secondary'}"/>
                             </p:column>
                             <!-- selectRow="false": pulsar una acción no cambia la fila seleccionada -->
-                            <p:column exportable="false" style="width:7rem" styleClass="text-center"
+                            <p:column exportable="false" style="width:5.25rem" styleClass="text-center"
                                       selectRow="false">
                                 <span class="tec-acciones">
                                     <p:commandButton icon="pi pi-pencil" title="#{msg['form.candidatos.lista.edit']}" ariaLabel="#{msg['form.candidatos.lista.edit']}"
@@ -155,7 +155,7 @@
                                      negocio la sigue aplicando el servicio. -->
                                 <ui:fragment rendered="#{not candidatoController.listaSeleccionadaActiva}">
                                     <div class="flex align-items-center gap-2 mb-3 p-2 border-round surface-hover">
-                                        <i class="pi pi-info-circle text-orange-500"/>
+                                        <i class="pi pi-info-circle tec-text-warn"/>
                                         <span class="text-700 text-sm">#{msg['form.candidatos.detalle.bajaAviso']}</span>
                                     </div>
                                 </ui:fragment>
@@ -170,29 +170,29 @@
                                              paginatorTemplate="{CurrentPageReport} {PreviousPageLink} {PageLinks} {NextPageLink}"
                                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
                                              emptyMessage="#{msg['form.candidatos.detalle.empty']}"
-                                             styleClass="ui-datatable-sm">
+                                             styleClass="ui-datatable-striped ui-datatable-sm">
                                     <p:column headerText="#{msg['form.candidatos.table.header.cargo']}" sortBy="#{candidato.cargoNombre}"
                                               filterBy="#{candidato.cargoNombre}" filterMatchMode="contains"
-                                              style="min-width:12rem">
+                                              style="min-width:9rem">
                                         <div class="flex align-items-center gap-2">
-                                            <i class="pi pi-briefcase text-400 text-sm"></i>
-                                            <span class="text-sm font-medium text-900">#{candidato.cargoNombre}</span>
+                                            <i class="tec-meta pi pi-briefcase text-400"></i>
+                                            <span class="tec-dato font-medium text-900">#{candidato.cargoNombre}</span>
                                         </div>
                                     </p:column>
                                     <p:column headerText="#{msg['form.candidatos.table.header.cedula']}"
                                               filterBy="#{candidato.iglesiaPersona.persona.documento}"
-                                              filterMatchMode="contains" style="width:8.5rem">
+                                              filterMatchMode="contains" style="width:6.375rem">
                                         <h:outputText value="#{candidato.iglesiaPersona.persona.documento}"
                                                       rendered="#{candidato.iglesiaPersona.persona ne null}"
-                                                      styleClass="text-sm font-medium text-700"/>
+                                                      styleClass="tec-dato font-medium text-700"/>
                                     </p:column>
                                     <p:column headerText="#{msg['form.candidatos.table.header.candidato']}" filterBy="#{candidato.iglesiaPersona.persona.nombres}"
-                                              style="min-width:13rem">
+                                              style="min-width:9.75rem">
                                         <p:outputPanel layout="block"
                                                        styleClass="flex align-items-center justify-content-between gap-2"
                                                        rendered="#{candidato.iglesiaPersona.persona ne null}">
                                             <div class="flex flex-column">
-                                                <span class="text-sm font-medium text-900">#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}</span>
+                                                <span class="tec-dato font-medium text-900">#{candidato.iglesiaPersona.persona.nombres} #{candidato.iglesiaPersona.persona.apellidos}</span>
                                             </div>
                                             <p:commandButton icon="pi pi-user-edit"
                                                              title="#{msg['form.candidatos.candidato.reassign']}"
@@ -206,7 +206,7 @@
                                         </p:outputPanel>
                                         <p:commandButton value="#{msg['form.candidatos.candidato.assign']}"
                                                          icon="pi pi-user-plus"
-                                                         styleClass="ui-button-sm ui-button-success"
+                                                         styleClass="ui-button-success"
                                                          rendered="#{candidato.iglesiaPersona.persona eq null and candidatoController.listaSeleccionadaActiva}"
                                                          action="#{candidatoController.prepararAsignacionCandidato(candidato)}"
                                                          process="@this"
@@ -215,13 +215,13 @@
                                     </p:column>
                                     <p:column headerText="#{msg['form.candidatos.table.header.iglesia']}"
                                               filterBy="#{candidato.iglesiaPersona.iglesia.nombre}"
-                                              filterMatchMode="contains" style="min-width:11rem">
+                                              filterMatchMode="contains" style="min-width:8.25rem">
                                         <h:outputText value="#{candidato.iglesiaPersona.iglesia.nombre}"
                                                       rendered="#{candidato.iglesiaPersona.iglesia ne null}"
-                                                      styleClass="text-sm text-700"/>
+                                                      styleClass="tec-meta text-700"/>
                                     </p:column>
-                                    <p:column headerText="#{msg['form.candidatos.table.header.acciones']}" exportable="false" style="width:5rem"
-                                              styleClass="text-center" rendered="#{candidatoController.listaSeleccionadaActiva}">
+                                    <p:column headerText="#{msg['form.candidatos.table.header.acciones']}" exportable="false"
+                                              styleClass="tec-col-actions" rendered="#{candidatoController.listaSeleccionadaActiva}">
                                         <p:commandButton icon="pi pi-trash" title="#{msg['form.candidatos.candidato.disable']}" ariaLabel="#{msg['form.candidatos.candidato.disable']}"
                                                          styleClass="rounded-button ui-button-flat ui-button-danger"
                                                          rendered="#{candidato.iglesiaPersona.persona ne null}"
@@ -240,8 +240,8 @@
                                              dos acciones quedan alineadas y del mismo tamaño. -->
                                         <div class="grid formgrid align-items-start">
                                             <div class="col-12 lg:col-8 flex align-items-start gap-3">
-                                                <div class="flex align-items-center justify-content-center border-circle surface-100 text-primary-700"
-                                                     style="width:2.5rem;height:2.5rem;flex-shrink:0">
+                                                <div class="flex align-items-center justify-content-center border-circle surface-100 tec-text-primary"
+                                                     style="width:1.875rem;height:1.875rem;flex-shrink:0">
                                                     <i class="pi pi-file-pdf"></i>
                                                 </div>
                                                 <div class="flex-1">
@@ -300,25 +300,25 @@
                                                      paginatorPosition="bottom"
                                                      paginatorTemplate="{CurrentPageReport} {PreviousPageLink} {PageLinks} {NextPageLink}"
                                                      currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
-                                                     styleClass="ui-datatable-sm mt-3" reflow="true"
+                                                     styleClass="ui-datatable-striped ui-datatable-sm mt-3" reflow="true"
                                                      emptyMessage="#{msg['form.candidatos.acta.empty']}">
                                             <p:column headerText="#{msg['form.candidatos.acta.document.type']}"
-                                                      style="width:8.5rem">
+                                                      style="width:6.375rem">
                                                 <p:tag value="#{doc.tipoDocumento.nombre}"
                                                        severity="#{empty doc.documentoOrigen ? 'info' : 'success'}"/>
                                             </p:column>
                                             <p:column headerText="#{msg['form.candidatos.acta.document.name']}"
-                                                      style="min-width:14rem">
-                                                <span class="text-sm text-900">#{doc.nombre}#{doc.extension}</span>
+                                                      style="min-width:10.5rem">
+                                                <span class="tec-meta text-900">#{doc.nombre}#{doc.extension}</span>
                                                 <small class="block text-500">#{doc.codigo}</small>
                                             </p:column>
-                                            <p:column headerText="#{msg['form.candidatos.acta.document.date']}" style="width:10rem">
-                                                <h:outputText value="#{doc.fechaCrea}" styleClass="text-sm text-700">
+                                            <p:column headerText="#{msg['form.candidatos.acta.document.date']}" style="width:7.5rem">
+                                                <h:outputText value="#{doc.fechaCrea}" styleClass="tec-meta text-700">
                                                     <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                                                 </h:outputText>
                                             </p:column>
                                             <p:column headerText="#{msg['form.candidatos.acta.document.action']}"
-                                                      exportable="false" style="width:4.5rem" styleClass="text-center">
+                                                      exportable="false" style="width:3.375rem" styleClass="text-center">
                                                 <p:commandButton icon="pi pi-download" ajax="false" immediate="true"
                                                                  process="@this"
                                                                  styleClass="rounded-button ui-button-flat ui-button-info"
@@ -336,7 +336,7 @@
                         <!-- Estado vacío: sin lista elegida no hay nada que consultar -->
                         <p:outputPanel rendered="#{empty candidatoController.listaSeleccionado}">
                             <div class="surface-card shadow-1 border-round-lg p-5 text-center">
-                                <i class="pi pi-list text-primary-700" style="font-size:2rem"></i>
+                                <i class="pi pi-list tec-icon-hero tec-text-primary"></i>
                                 <h3 class="text-900 mt-3 mb-2">#{msg['form.candidatos.detalle.sinSeleccion.titulo']}</h3>
                                 <p class="text-500 m-0 mb-3">#{msg['form.candidatos.detalle.sinSeleccion.ayuda']}</p>
                                 <p:commandButton value="#{msg['form.candidatos.detalle.sinSeleccion.accion']}"
@@ -350,25 +350,24 @@
                 </p:tab>
             </p:tabView>
 
-            <p:dialog header="Lista electoral" widgetVar="dlgLista" modal="true" responsive="true"
-                      width="500" style="max-width:96vw" closeOnEscape="true"
+            <p:dialog styleClass="tec-dialog" header="Lista electoral" widgetVar="dlgLista" modal="true" responsive="true" closeOnEscape="true"
                       contentStyle="overflow-y:auto;max-height:75vh">
                 <p:outputPanel id="dlgListaContenido" class="ui-fluid">
                     <div class="formgrid grid">
                         <div class="field col-12">
-                            <label for="listaNombre" class="font-medium text-700 text-sm">Nombre <span class="text-red-500">*</span></label>
+                            <label for="listaNombre" class="font-medium text-700 text-sm">Nombre <span class="tec-text-danger">*</span></label>
                             <p:inputText id="listaNombre" value="#{candidatoController.listaEdicion.nombre}"
                                          maxlength="100" required="true" styleClass="w-full"
                                          onkeyup="this.value = this.value.toUpperCase()"/>
                         </div>
                         <div class="field col-12">
-                            <label for="listaSlogan" class="font-medium text-700 text-sm">Slogan <span class="text-red-500">*</span></label>
+                            <label for="listaSlogan" class="font-medium text-700 text-sm">Slogan <span class="tec-text-danger">*</span></label>
                             <p:inputText id="listaSlogan" value="#{candidatoController.listaEdicion.slogan}"
                                          maxlength="100" required="true" styleClass="w-full"
                                          onkeyup="this.value = this.value.toUpperCase()"/>
                         </div>
                         <div class="field col-12 md:col-5">
-                            <label for="listaNumero" class="font-medium text-700 text-sm">Número <span class="text-red-500">*</span></label>
+                            <label for="listaNumero" class="font-medium text-700 text-sm">Número <span class="tec-text-danger">*</span></label>
                             <p:inputText id="listaNumero" value="#{candidatoController.listaEdicion.numero}"
                                          maxlength="10" required="true" styleClass="w-full"/>
                         </div>
@@ -386,9 +385,8 @@
                 </f:facet>
             </p:dialog>
 
-            <p:dialog header="#{msg['form.candidatos.dialog.title.assign']}" widgetVar="dlgAsignaCandidato"
-                      showEffect="fade" hideEffect="fade" modal="true" responsive="true" width="520"
-                      style="max-width:96vw" contentStyle="overflow-y:auto;max-height:75vh" closeOnEscape="true">
+            <p:dialog styleClass="tec-dialog" header="#{msg['form.candidatos.dialog.title.assign']}" widgetVar="dlgAsignaCandidato"
+                      showEffect="fade" hideEffect="fade" modal="true" responsive="true" contentStyle="overflow-y:auto;max-height:75vh" closeOnEscape="true">
                 <p:outputPanel id="outPnlCandidatoContexto" layout="block" class="mb-3">
                     <p:outputPanel rendered="#{not empty candidatoController.candidatoSeleccionado}">
                         <div class="surface-50 border-1 border-200 border-round-lg p-3">

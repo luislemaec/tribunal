@@ -24,8 +24,8 @@
 
         <!-- BlockUI global del formulario -->
         <p:blockUI block="frmCronograma" trigger="frmCronograma">
-            <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:var(--primary-700)"/>
-            <span style="display:block;margin-top:.5rem;color:#fff;font-size:var(--tec-fs-md);font-weight:500">
+            <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>
+            <span class="tec-overlay-text">
                 Procesando cronograma...
             </span>
         </p:blockUI>
@@ -75,17 +75,15 @@
 
                 <!-- KPI: Procesos registrados -->
                 <div class="col-12 sm:col-6 lg:col-3">
-                    <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid var(--primary-color)">
-                        <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:var(--blue-50)">
-                            <i class="pi pi-folder-open" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
+                    <div class="tec-kpi flex align-items-center gap-3 h-full">
+                        <div class="tec-icon-badge">
+                            <i class="pi pi-folder-open"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Procesos
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
+                            <span class="block text-900 font-bold text-2xl line-height-1">
                                 #{totalProcesos}
                             </span>
                         </div>
@@ -94,13 +92,9 @@
 
                 <!-- KPI: Proceso seleccionado -->
                 <div class="col-12 sm:col-6 lg:col-3">
-                    <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid #{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}">
-                        <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;
-                                    background:#{hayProceso and proceso.activo ? '#f0fdf4' : '#fffbeb'}">
-                            <i class="pi #{hayProceso and proceso.activo ? 'pi-bolt' : 'pi-pause'}"
-                               style="font-size:var(--tec-fs-lg);color:#{hayProceso and proceso.activo ? 'var(--green-500)' : 'var(--orange-500)'}"/>
+                    <div class="tec-kpi #{hayProceso and proceso.activo ? 'tec-kpi--success' : 'tec-kpi--warn'} flex align-items-center gap-3 h-full">
+                        <div class="tec-icon-badge #{hayProceso and proceso.activo ? 'tec-icon-badge--success' : 'tec-icon-badge--warn'}">
+                            <i class="pi #{hayProceso and proceso.activo ? 'pi-bolt' : 'pi-pause'}"/>
                         </div>
                         <div class="min-w-0 flex-auto">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
@@ -116,17 +110,15 @@
 
                 <!-- KPI: Fases configuradas -->
                 <div class="col-12 sm:col-6 lg:col-3">
-                    <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid var(--primary-color)">
-                        <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
-                            <i class="pi pi-list" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
+                    <div class="tec-kpi flex align-items-center gap-3 h-full">
+                        <div class="tec-icon-badge">
+                            <i class="pi pi-list"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Fases configuradas
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
+                            <span class="block text-900 font-bold text-2xl line-height-1">
                                 #{totalFases}
                             </span>
                         </div>
@@ -135,17 +127,15 @@
 
                 <!-- KPI: Catálogo enum -->
                 <div class="col-12 sm:col-6 lg:col-3">
-                    <div class="surface-card border-round shadow-1 p-3 flex align-items-center gap-3 h-full"
-                         style="border-left:4px solid var(--primary-color)">
-                        <div class="flex align-items-center justify-content-center border-round flex-shrink-0"
-                             style="width:2.8rem;height:2.8rem;background:var(--primary-50)">
-                            <i class="pi pi-tags" style="font-size:var(--tec-fs-lg);color:var(--primary-700)"/>
+                    <div class="tec-kpi flex align-items-center gap-3 h-full">
+                        <div class="tec-icon-badge">
+                            <i class="pi pi-tags"/>
                         </div>
                         <div class="min-w-0">
                             <span class="block text-500 text-xs font-medium uppercase tracking-wide mb-1">
                                 Catálogo de fases
                             </span>
-                            <span class="block text-900 font-bold" style="font-size:var(--tec-fs-2xl);line-height:1.1">
+                            <span class="block text-900 font-bold text-2xl line-height-1">
                                 #{cronogramaController.totalFasesCatalogo}
                             </span>
                         </div>
@@ -163,7 +153,7 @@
                 <div class="flex align-items-center justify-content-between flex-wrap gap-2
                             px-3 py-2 border-bottom-1 surface-border">
                     <div class="flex align-items-center gap-2">
-                        <i class="pi pi-flag text-primary-700"/>
+                        <i class="pi pi-flag tec-text-primary"/>
                         <span class="font-semibold text-800">Datos del proceso</span>
                         <p:tag rendered="#{hayProceso and proceso.activo}"
                                value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
@@ -245,10 +235,9 @@
                             </div>
 
                             <div class="field col-12">
-                                <div class="flex align-items-start gap-2 p-3 border-round"
-                                     style="background:var(--blue-50);border:1px solid var(--blue-100)">
-                                    <i class="pi pi-info-circle mt-1" style="color:var(--primary-700)"/>
-                                    <span class="text-700 text-sm">
+                                <div class="callout callout--info flex align-items-start gap-2">
+                                    <i class="pi pi-info-circle mt-1"/>
+                                    <span>
                                         Este es el rango global del proceso. Todas las fases
                                         del cronograma deben caer dentro de este intervalo.
                                     </span>
@@ -270,7 +259,7 @@
                 <div class="flex align-items-center justify-content-between flex-wrap gap-2
                             px-3 py-2 border-bottom-1 surface-border">
                     <div class="flex align-items-center gap-2">
-                        <i class="pi pi-list" style="color:var(--primary-700)"/>
+                        <i class="pi pi-list tec-text-primary"/>
                         <span class="font-semibold text-800">Fases del cronograma</span>
                         <p:badge rendered="#{not empty fases}"
                                  value="#{totalFases}" severity="warning"/>
@@ -321,7 +310,7 @@
                              var="f" value="#{fases}"
                              rendered="#{not empty fases}"
                              paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
-                             reflow="true" showGridlines="true" sortMode="multiple"
+                             reflow="true" sortMode="multiple"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
                              emptyMessage="Sin fases que coincidan con el filtro"
@@ -341,8 +330,8 @@
 
                     <!-- # Orden -->
                     <p:column headerText="#" sortBy="#{f.orden}"
-                              styleClass="text-center" style="width:3.5rem">
-                        <span class="font-bold text-500 text-sm">#{f.orden}</span>
+                              styleClass="text-center" style="width:2.625rem">
+                        <span class="tec-meta font-bold text-500">#{f.orden}</span>
                     </p:column>
 
                     <!-- Fase enum — monospace para código -->
@@ -350,7 +339,7 @@
                               sortBy="#{f.fase}"
                               filterBy="#{f.fase}" filterMatchMode="contains"
                               filterPlaceholder="Filtrar..."
-                              style="min-width:14rem">
+                              style="min-width:10.5rem">
                         <span class="text-xs font-semibold text-700 border-round px-2 py-1"
                               style="background:var(--surface-100);font-family:monospace;letter-spacing:.02em;
                                      white-space:nowrap">
@@ -363,27 +352,27 @@
                               sortBy="#{f.titulo}"
                               filterBy="#{f.titulo}" filterMatchMode="contains"
                               filterPlaceholder="Filtrar..."
-                              style="min-width:12rem">
-                        <span class="font-medium text-800 text-sm">
+                              style="min-width:9rem">
+                        <span class="tec-dato font-medium text-800">
                             <h:outputText value="#{f.titulo}"/>
                         </span>
                     </p:column>
 
                     <!-- Período: inicio y fin en celda stacked -->
                     <p:column headerText="Período" sortBy="#{f.fechaInicio}"
-                              style="min-width:12rem">
+                              style="min-width:9rem">
                         <div class="flex flex-column gap-1">
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-right" style="font-size:var(--tec-fs-2xs);color:var(--text-color-secondary)"/>
-                                <span class="text-700 text-xs">
+                                <i class="pi pi-arrow-right tec-text-3xs tec-muted"/>
+                                <span class="tec-meta text-700">
                                     <h:outputText value="#{f.fechaInicio}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                                     </h:outputText>
                                 </span>
                             </div>
                             <div class="flex align-items-center gap-1">
-                                <i class="pi pi-arrow-left" style="font-size:var(--tec-fs-2xs);color:var(--text-color-secondary)"/>
-                                <span class="text-700 text-xs">
+                                <i class="pi pi-arrow-left tec-text-3xs tec-muted"/>
+                                <span class="tec-meta text-700">
                                     <h:outputText value="#{f.fechaFin}">
                                         <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                                     </h:outputText>
@@ -393,7 +382,7 @@
                     </p:column>
 
                     <!-- Severidad / nivel de alerta -->
-                    <p:column headerText="Nivel" styleClass="text-center" style="width:7rem">
+                    <p:column headerText="Nivel" styleClass="text-center" style="width:5.25rem">
                         <c:set var="sev" value="#{f.severidad}"/>
                         <p:tag value="#{sev}"
                                severity="#{sev eq 'URGENT'  ? 'danger'  :
@@ -406,7 +395,7 @@
                     </p:column>
 
                     <!-- Edición del padrón -->
-                    <p:column headerText="Edición" styleClass="text-center" style="width:7rem">
+                    <p:column headerText="Edición" styleClass="text-center" style="width:5.25rem">
                         <p:tag rendered="#{f.permiteEdicion}"
                                value="Abierta" severity="success" icon="pi pi-unlock"/>
                         <p:tag rendered="#{not f.permiteEdicion}"
@@ -414,7 +403,7 @@
                     </p:column>
 
                     <!-- Estado temporal (vigente / futura / pasada) -->
-                    <p:column headerText="Estado" styleClass="text-center" style="width:9rem">
+                    <p:column headerText="Estado" styleClass="text-center" style="width:6.75rem">
                         <p:tag rendered="#{f.vigente}"
                                value="Vigente" severity="success" icon="pi pi-check-circle"/>
                         <p:tag rendered="#{f.futura}"
@@ -424,7 +413,7 @@
                     </p:column>
 
                     <!-- Acciones de fila -->
-                    <p:column exportable="false" styleClass="text-center" style="width:6rem">
+                    <p:column exportable="false" styleClass="text-center" style="width:4.5rem">
                       <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
                                          actionListener="#{cronogramaController.editarFase(f)}"
@@ -456,9 +445,8 @@
                 <h:panelGroup layout="block" rendered="#{empty fases}"
                               styleClass="flex flex-column align-items-center justify-content-center
                                           text-center py-6 px-3">
-                    <div class="flex align-items-center justify-content-center border-round mb-3"
-                         style="width:5rem;height:5rem;background:var(--surface-100)">
-                        <i class="pi pi-calendar" style="font-size:2rem;color:var(--text-color-secondary)"/>
+                    <div class="tec-icon-badge tec-icon-badge--xl tec-icon-badge--neutral mb-3">
+                        <i class="pi pi-calendar"/>
                     </div>
                     <h4 class="text-700 font-semibold m-0 mb-2">Sin fases registradas</h4>
                     <p class="text-500 text-sm m-0 mb-3" style="max-width:480px;line-height:1.6">
@@ -497,10 +485,9 @@
             <!-- width="740" + style max-width: el dialog no supera el 96% del
                  viewport en ningún breakpoint. contentStyle con max-height +
                  overflow-y:auto evita que quede cortado en pantallas cortas.  -->
-            <p:dialog widgetVar="dlgFase"
+            <p:dialog styleClass="tec-dialog tec-dialog--md" widgetVar="dlgFase"
                       header="Fase del cronograma"
-                      modal="true" width="740" responsive="true"
-                      style="max-width:96vw"
+                      modal="true" responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       showEffect="fade" hideEffect="fade" closeOnEscape="true">
 
@@ -621,10 +608,9 @@
                                 </div>
 
                                 <div class="field col-12">
-                                    <div class="flex align-items-start gap-2 p-3 border-round"
-                                         style="background:var(--orange-50);border:1px solid var(--orange-100)">
-                                        <i class="pi pi-info-circle mt-1" style="color:var(--orange-600)"/>
-                                        <span class="text-700 text-sm">
+                                    <div class="callout callout--warning flex align-items-start gap-2">
+                                        <i class="pi pi-info-circle mt-1"/>
+                                        <span>
                                             La fase queda <b>vigente</b> mientras la fecha actual
                                             esté dentro del rango. Las fechas deben caer dentro
                                             del rango maestro del proceso electoral.
@@ -648,10 +634,9 @@
                                 </div>
 
                                 <div class="field col-12">
-                                    <div class="flex align-items-start gap-2 p-3 border-round"
-                                         style="background:var(--blue-50);border:1px solid var(--blue-100)">
-                                        <i class="pi pi-comment mt-1" style="color:var(--primary-700)"/>
-                                        <span class="text-700 text-sm">
+                                    <div class="callout callout--info flex align-items-start gap-2">
+                                    <i class="pi pi-comment mt-1"/>
+                                    <span>
                                             Este mensaje aparece en la cabecera del sistema durante
                                             la fase activa. Informe a los usuarios sobre la etapa
                                             en curso («Inscripción de candidaturas abierta»,
@@ -666,8 +651,7 @@
                         <p:tab title="Permisos" titleStyleClass="font-medium">
                             <div class="formgrid grid p-3">
                                 <div class="field col-12">
-                                    <div class="flex align-items-start gap-3 p-3 border-round"
-                                         style="background:var(--green-50);border:1px solid var(--green-100)">
+                                    <div class="callout callout--success flex align-items-start gap-3">
                                         <p:selectBooleanCheckbox id="permite"
                                                                  value="#{cronogramaController.faseSeleccionada.permiteEdicion}"/>
                                         <div>
@@ -678,9 +662,9 @@
                                                 Cuando está marcado, los IglesiaAdmin pueden agregar,
                                                 editar y eliminar miembros de su iglesia. Aplica
                                                 principalmente en la fase
-                                                <code class="font-semibold text-green-700"
-                                                      style="background:var(--green-100);padding:.1rem .4rem;
-                                                             border-radius:.3rem">
+                                                <code class="font-semibold tec-text-success"
+                                                      style="background:var(--green-100);padding:.075rem .3rem;
+                                                             border-radius:.225rem">
                                                     ACTUALIZACION_MIEMBROS
                                                 </code>
                                                 (bloque 2 — Gestión de miembros).

@@ -25,8 +25,8 @@
         </ui:include>
 
         <p:blockUI block="frmPlantillaCorreo" trigger="frmPlantillaCorreo">
-            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--blue-500)"/>
-            <div style="margin:.5rem 0 0;color:#fff">#{msg['plantillaCorreos.processing']}</div>
+            <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>
+            <div class="tec-overlay-text">#{msg['plantillaCorreos.processing']}</div>
         </p:blockUI>
 
         <h:form id="frmPlantillaCorreo">
@@ -90,29 +90,28 @@
                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                      currentPageReportTemplate="#{msg['plantillaCorreos.paginador.reporte']}"
                                      emptyMessage="#{msg['plantillaCorreos.empty.listado']}"
-                                     reflow="true" showGridlines="true"
+                                     reflow="true"
                                      styleClass="ui-datatable-striped ui-datatable-sm">
 
                             <p:ajax event="rowSelectCheckbox" update="@form"/>
                             <p:ajax event="rowUnselectCheckbox" update="@form"/>
                             <p:ajax event="toggleSelect" update="@form"/>
 
-                            <p:column selectionMode="multiple" style="width:3rem;text-align:center"/>
+                            <p:column selectionMode="multiple" style="width:2.25rem;text-align:center"/>
 
                             <p:column headerText="#{msg['plantillaCorreos.tabla.codigo']}"
-                                      sortBy="#{plantilla.id}" style="width:5rem">
-                                <span class="text-sm text-500">#{plantilla.id}</span>
+                                      sortBy="#{plantilla.id}" style="width:3.75rem">
+                                <span class="tec-meta text-500">#{plantilla.id}</span>
                             </p:column>
 
                             <p:column headerText="#{msg['plantillaCorreos.tabla.asunto']}"
                                       sortBy="#{plantilla.asunto}" filterBy="#{plantilla.asunto}"
                                       filterMatchMode="contains">
-                                <div class="font-medium text-900 text-sm">#{plantilla.asunto}</div>
-                                <div class="text-500 text-xs mt-1">#{empty plantilla.descripcion ? msg['plantillaCorreos.sin.descripcion'] : plantilla.descripcion}</div>
+                                <div class="tec-dato font-medium text-900">#{plantilla.asunto}</div>
+                                <div class="tec-meta text-500 mt-1">#{empty plantilla.descripcion ? msg['plantillaCorreos.sin.descripcion'] : plantilla.descripcion}</div>
                             </p:column>
 
-                            <p:column headerText="#{msg['plantillaCorreos.tabla.acciones']}"
-                                      style="width:5rem;text-align:center" exportable="false">
+                            <p:column styleClass="tec-col-actions" headerText="#{msg['plantillaCorreos.tabla.acciones']}" exportable="false">
                                 <p:commandButton icon="pi pi-pencil"
                                                  title="#{msg['plantillaCorreos.tooltip.editar']}"
                                                  styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -143,7 +142,7 @@
                             <div class="formgrid grid">
                                 <div class="field col-12">
                                     <label for="asunto" class="font-medium text-700 text-sm">
-                                        #{msg['plantillaCorreos.label.asunto']} <span class="text-red-500">*</span>
+                                        #{msg['plantillaCorreos.label.asunto']} <span class="tec-text-danger">*</span>
                                     </label>
                                     <p:inputText id="asunto" styleClass="w-full"
                                                  value="#{plantillaCorreoController.plantillaCorreoSeleccionado.asunto}"
@@ -167,7 +166,7 @@
 
                                 <div class="field col-12">
                                     <label for="editor" class="font-medium text-700 text-sm">
-                                        #{msg['plantillaCorreos.label.mensaje']} <span class="text-red-500">*</span>
+                                        #{msg['plantillaCorreos.label.mensaje']} <span class="tec-text-danger">*</span>
                                     </label>
                                     <pe:sunEditor id="editor" widgetVar="editor" height="320px" width="100%"
                                                   secure="false" required="true" mode="classic" locale="es"

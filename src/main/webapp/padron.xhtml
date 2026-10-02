@@ -31,7 +31,7 @@
                 </div>
 
                 <p:progressBar value="#{gestionPadronController.avance.porcentaje}" displayOnly="true"
-                               labelTemplate="{value}%" styleClass="padron-avance-barra mb-3"/>
+                               labelTemplate="{value}%" styleClass="tec-progress mb-3"/>
 
                 <div class="grid text-center">
                     <div class="col-6 md:col-3">
@@ -39,11 +39,11 @@
                         <small class="text-500">#{msg['padron.avance.habilitadas']}</small>
                     </div>
                     <div class="col-6 md:col-3">
-                        <span class="block text-2xl font-semibold text-green-600">#{gestionPadronController.avance.iglesiasAsignadas}</span>
+                        <span class="block text-2xl font-semibold tec-text-success">#{gestionPadronController.avance.iglesiasAsignadas}</span>
                         <small class="text-500">#{msg['padron.avance.procesadas']}</small>
                     </div>
                     <div class="col-6 md:col-3">
-                        <span class="block text-2xl font-semibold text-orange-500">#{gestionPadronController.avance.iglesiasPendientes}</span>
+                        <span class="block text-2xl font-semibold tec-text-warn">#{gestionPadronController.avance.iglesiasPendientes}</span>
                         <small class="text-500">#{msg['padron.avance.pendientes']}</small>
                     </div>
                     <div class="col-6 md:col-3">
@@ -114,7 +114,7 @@
                                      disabled="#{empty gestionPadronController.procesoActivo}">
                         <p:fileDownload value="#{gestionPadronController.generarReporte()}"/>
                     </p:commandButton>
-                    <h:outputText value="#{msg['gestionPadron.error.proceso.sin.activo']}" styleClass="text-orange-600 text-sm"
+                    <h:outputText value="#{msg['gestionPadron.error.proceso.sin.activo']}" styleClass="tec-text-warn text-sm"
                                   rendered="#{empty gestionPadronController.procesoActivo}"/>
                 </div>
             </p:panel>
@@ -146,7 +146,7 @@
                             </div>
                             <p:dataTable id="tblMesas" widgetVar="padronMesas" value="#{gestionPadronController.mesasLazy}" var="mesa" lazy="true"
                                          paginator="true" rows="10" rowsPerPageTemplate="10,25,50" paginatorPosition="bottom"
-                                         first="#{gestionPadronController.primeraMesa}" reflow="true" styleClass="ui-datatable-sm padron-mesas"
+                                         first="#{gestionPadronController.primeraMesa}" reflow="true" styleClass="ui-datatable-striped ui-datatable-sm padron-mesas"
                                          rowKey="#{mesa.id}" selectionMode="single" selection="#{gestionPadronController.mesaSeleccionada}"
                                          emptyMessage="#{msg['gestionPadron.vacio']}">
                                 <!-- La selección no cambia de pestaña: el usuario sigue en el listado.
@@ -176,7 +176,7 @@
                                      de la fila seleccionada. selectRow="false" para que descargar
                                      no mueva la selección. -->
                                 <p:column headerText="#{msg['gestionPadron.mesas.reporte']}" exportable="false"
-                                          styleClass="text-center" style="width:6rem" selectRow="false">
+                                          styleClass="text-center" style="width:4.5rem" selectRow="false">
                                     <p:commandButton icon="pi pi-file-excel" ajax="false" process="@this"
                                                      styleClass="rounded-button ui-button-flat ui-button-info"
                                                      title="#{msg['gestionPadron.reporte.mesa.tooltip']}"
@@ -194,14 +194,14 @@
                             <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
                             <p:dataTable id="iglesiasDisponibles" value="#{gestionPadronController.iglesiasDisponibles}" var="iglesia"
                                          rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
-                                         emptyMessage="#{msg['padron.empty.iglesias.disponibles']}" styleClass="ui-datatable-sm">
+                                         emptyMessage="#{msg['padron.empty.iglesias.disponibles']}" styleClass="ui-datatable-striped ui-datatable-sm">
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
                                 </p:column>
-                                <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:8rem">
+                                <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="info"/>
                                 </p:column>
-                                <p:column style="width:8rem" exportable="false">
+                                <p:column style="width:6rem" exportable="false">
                                     <p:commandButton value="#{msg['gestionPadron.simple.asignar']}" icon="pi pi-plus"
                                                      styleClass="" action="#{gestionPadronController.asignarIglesia(iglesia.id)}"
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"
@@ -220,14 +220,14 @@
                             <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
                             <p:dataTable id="iglesiasAsignadas" value="#{gestionPadronController.iglesiasAsignadas}" var="iglesia"
                                          rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
-                                         emptyMessage="#{msg['padron.empty.iglesias.asignadas']}" styleClass="ui-datatable-sm">
+                                         emptyMessage="#{msg['padron.empty.iglesias.asignadas']}" styleClass="ui-datatable-striped ui-datatable-sm">
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
                                 </p:column>
-                                <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:8rem">
+                                <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="success"/>
                                 </p:column>
-                                <p:column style="width:8rem" exportable="false">
+                                <p:column style="width:6rem" exportable="false">
                                     <p:commandButton value="#{msg['gestionPadron.simple.retirar']}" icon="pi pi-minus"
                                                      styleClass="ui-button-outlined ui-button-danger" action="#{gestionPadronController.retirarIglesia(iglesia.id)}"
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"

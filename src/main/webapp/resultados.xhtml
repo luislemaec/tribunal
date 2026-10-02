@@ -155,7 +155,7 @@
                                     <div class="col-12 lg:col-7">
                                         <div class="chart-shell">
                                             <p:chart value="#{resultadoPublicoController.resultadosChartModel}" extender="tecGraficoTema"
-                                                     style="height:24rem;width:100%"
+                                                     style="height:18rem;width:100%"
                                                      canvasStyle="height:24rem;width:100%"/>
                                         </div>
                                     </div>
@@ -279,41 +279,41 @@
                                         <h:outputText value="#{mesa.recinto}"/>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.mesa']}"
-                                              sortBy="#{mesa.mesa}" style="width:8rem">
+                                              sortBy="#{mesa.mesa}" style="width:6rem">
                                         <h:outputText value="#{mesa.mesa}"/>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.sufragantes']}"
-                                              styleClass="text-right" style="width:10rem">
+                                              styleClass="text-right" style="width:7.5rem">
                                         <h:outputText value="#{mesa.sufragantesAsignados}">
                                             <f:convertNumber type="number" groupingUsed="true"/>
                                         </h:outputText>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.votos']}"
-                                              styleClass="text-right" style="width:10rem">
+                                              styleClass="text-right" style="width:7.5rem">
                                         <h:outputText value="#{mesa.votosRegistrados}">
                                             <f:convertNumber type="number" groupingUsed="true"/>
                                         </h:outputText>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.validos']}"
-                                              styleClass="text-right" style="width:7rem">
+                                              styleClass="text-right" style="width:5.25rem">
                                         <h:outputText value="#{mesa.votosValidos}">
                                             <f:convertNumber type="number" groupingUsed="true"/>
                                         </h:outputText>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.blancos']}"
-                                              styleClass="text-right" style="width:7rem">
+                                              styleClass="text-right" style="width:5.25rem">
                                         <h:outputText value="#{mesa.votosBlancos}">
                                             <f:convertNumber type="number" groupingUsed="true"/>
                                         </h:outputText>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.nulos']}"
-                                              styleClass="text-right" style="width:7rem">
+                                              styleClass="text-right" style="width:5.25rem">
                                         <h:outputText value="#{mesa.votosNulos}">
                                             <f:convertNumber type="number" groupingUsed="true"/>
                                         </h:outputText>
                                     </p:column>
                                     <p:column headerText="#{msg['resultadosPublicos.tabla.fecha']}"
-                                              sortBy="#{mesa.fechaCierre}" style="width:11rem">
+                                              sortBy="#{mesa.fechaCierre}" style="width:8.25rem">
                                         <h:outputText value="#{mesa.fechaCierre}">
                                             <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
                                         </h:outputText>

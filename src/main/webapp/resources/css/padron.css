@@ -1,12 +1,12 @@
-.padron-vista { min-width: 0; padding: 1rem; background: var(--surface-card, #fff); }
-.padron-filtros { padding: .75rem 0 1rem; border-bottom: 1px solid var(--surface-border, #ddd); }
-.padron-contexto { border-top: 1px solid var(--surface-border, #ddd); }
-.padron-vista .field { min-width: 0; margin-bottom: .75rem; }
-.padron-mesas table { table-layout: fixed; width: 100%; }
+.padron-vista { min-width: 0; padding: .75rem; background: var(--surface-card); }
+.padron-filtros { padding: .5625rem 0 .75rem; border-bottom: 1px solid var(--surface-border); }
+.padron-contexto { border-top: 1px solid var(--surface-border); }
+.padron-vista .field { min-width: 0; margin-bottom: .5625rem; }
+.padron-mesas table { table-layout: fixed; width: 100%; min-width: 44rem; } /* en lg con menú fijo, Recinto y Ubicación conservan ~100px y la tabla se desplaza */
 .padron-mesas th, .padron-mesas td { overflow-wrap: anywhere; }
-.padron-mesas .padron-col-mesa { width: 7rem; }
-.padron-mesas .padron-col-estado { width: 11rem; }
-.padron-mesas .padron-col-total { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; }
+.padron-mesas .padron-col-mesa { width: 5.25rem; }
+.padron-mesas .padron-col-estado { width: 8.25rem; }
+.padron-mesas .padron-col-total { width: 6rem; text-align: right; font-variant-numeric: tabular-nums; }
 .padron-vista .padron-mesas tbody.ui-datatable-data > tr.ui-state-highlight {
     background: var(--primary-100); color: var(--primary-800); box-shadow: inset 4px 0 var(--primary-color);
 }
@@ -15,7 +15,7 @@
 .padron-vista .ui-tabs-nav { display: flex; flex-wrap: wrap; }
 .padron-vista .ui-button-text { white-space: normal; }
 @media (max-width: 640px) {
-    .padron-vista { padding: .5rem; }
+    .padron-vista { padding: .375rem; }
     .padron-mesas .padron-col-mesa, .padron-mesas .padron-col-estado,
     .padron-mesas .padron-col-total { width: auto; text-align: left; }
     .padron-vista .ui-datatable-reflow td { overflow-wrap: anywhere; }
@@ -23,11 +23,8 @@
 
 /* Resumen ejecutivo: barra de avance discreta, sin etiqueta dentro de la barra
    en pantallas estrechas, y tarjetas de cifras que no fuerzan scroll lateral. */
-.padron-avance-barra .ui-progressbar { height: .5rem; border: 0 none; background: var(--surface-200, #e9ecef); }
-.padron-avance-barra .ui-progressbar-value { background: var(--primary-color); border: 0 none; }
-.padron-avance-barra .ui-progressbar-label { display: none; }
-.padron-vista .padron-filtros .ui-panel-content { padding-bottom: .5rem; }
-.padron-vista .padron-filtros .ui-panel-title { font-size: var(--tec-fs-lg); font-weight: 500; }
+.padron-vista .padron-filtros .ui-panel-content { padding-bottom: .375rem; }
+.padron-vista .padron-filtros .ui-panel-title { font-size: var(--tec-fs-lg); font-weight: var(--tec-fw-medium); }
 @media (max-width: 640px) {
-    .padron-vista .padron-filtros .ui-panel-titlebar { flex-wrap: wrap; row-gap: .25rem; }
+    .padron-vista .padron-filtros .ui-panel-titlebar { flex-wrap: wrap; row-gap: .1875rem; }
 }

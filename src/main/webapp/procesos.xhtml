@@ -145,10 +145,10 @@
 						paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
 						currentPageReportTemplate="{startRecord}–{endRecord} de {totalRecords}"
 						emptyMessage="No hay actividades para los filtros seleccionados."
-						reflow="true" size="small"
+						reflow="true"
 						selection="#{procesoController.registroSeleccionado}"
 						selectionMode="single" rowKey="#{registro.id}"
-						styleClass="tec-table audit-table">
+						styleClass="ui-datatable-striped ui-datatable-sm tec-table audit-table">
 						<p:ajax event="rowSelect"
 							update=":frmProcesos:pnlDetalleAuditoria"
 							oncomplete="PF('dlgDetalleAuditoria').show()" />

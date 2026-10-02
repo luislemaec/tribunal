@@ -308,8 +308,8 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} iglesias"
                              emptyMessage="#{msg['form.iglesias.list.empty']}"
-                             reflow="true" size="small"
-                             styleClass="tec-table iglesias-table"
+                             reflow="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table iglesias-table"
                              filteredValue="#{iglesiaController.listaIglesiasFiltrada}">
 
                     <f:facet name="emptyMessage">
@@ -577,8 +577,7 @@
                                  selectionMode="single" paginator="true" paginatorPosition="top" rows="6"
                                  emptyMessage="#{msg['iglesias.admin.lista.vacia']}"
                                  responsiveLayout="scroll" scrollable="true" scrollHeight="230"
-                                 size="small"
-                                 styleClass="tec-table tabla-asignar-admin-compacta">
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-table tabla-asignar-admin-compacta">
                         <p:ajax event="rowSelect" listener="#{iglesiaController.seleccionarCandidatoAdministrador}"
                                 process="@this"
                                 update=":frmDlgAdministradorIglesia:datosAdministrador :frmDlgAdministradorIglesia:btnConfirmarAdministrador"/>
@@ -587,10 +586,10 @@
                              su filtro comprimidos y desalineados. Selección y Cédula son fijas;
                              Nombre toma todo el espacio restante, que es el dato prioritario. -->
                         <p:column selectionMode="single" exportable="false" ariaHeaderText="Seleccionar"
-                                  styleClass="text-center" style="width:3rem"/>
+                                  styleClass="text-center" style="width:2.25rem"/>
                         <p:column headerText="#{msg['iglesias.admin.columna.cedula']}"
                                   filterBy="#{vinculo.persona.documento}" filterMatchMode="contains"
-                                  styleClass="iglesias-col-ruc" style="width:9.5rem">
+                                  styleClass="iglesias-col-ruc" style="width:7.125rem">
                             <h:outputText value="#{vinculo.persona.documento}" styleClass="tec-mono"/>
                         </p:column>
                         <p:column headerText="#{msg['iglesias.admin.columna.nombres']}"
@@ -972,8 +971,7 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords} documentos"
                              rowsPerPageTemplate="5,10,15"
-                             size="small"
-                             styleClass="tec-table tec-table--static">
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
 
                     <p:column headerText="#{msg['form.iglesias.docs.btn.download']}" exportable="false"
                               styleClass="tec-col-fit iglesias-col-descarga">
@@ -1034,8 +1032,8 @@
                 <p:dataTable var="h" value="#{iglesiaController.historialIglesia}"
                              emptyMessage="#{msg['form.iglesias.hist.empty']}"
                              reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
-                             styleClass="tec-table tec-table--static">
+                             paginatorAlwaysVisible="false" pageLinks="5"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
                     <p:column headerText="#{msg['form.iglesias.hist.col.fecha']}" styleClass="tec-col-fit">
                         <h:outputText value="#{h.fecha}" styleClass="iglesias-fecha">
                             <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
@@ -1118,8 +1116,8 @@
                              id="tblEliminadas" widgetVar="wdTblEliminadas"
                              emptyMessage="#{msg['form.iglesias.eliminadas.empty']}"
                              reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
-                             styleClass="tec-table tec-table--static">
+                             paginatorAlwaysVisible="false" pageLinks="5"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
 
                     <p:column headerText="#{msg['form.iglesias.table.header.ruc']}"
                               styleClass="tec-col-fit iglesias-col-ruc">

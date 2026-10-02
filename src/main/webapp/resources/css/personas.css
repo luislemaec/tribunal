@@ -4,47 +4,45 @@
 
 
 /* KPI cards en grilla superior */
-.kpi-card { background:var(--surface-card); border-radius:.5rem; box-shadow:0 1px 2px rgba(0,0,0,.06); padding:1rem; }
+.kpi-card { background:var(--surface-card); border-radius:.375rem; box-shadow:var(--tec-shadow-card); padding:.75rem; }
 
-.kpi-card .label { display:block; color:var(--text-color-secondary); font-weight:300; font-size:var(--tec-fs-md); }
+.kpi-card .label { display:block; color:var(--text-color-secondary); font-weight:var(--tec-fw-regular); font-size:var(--tec-fs-md); }
 
-.kpi-card .value { display:block; color:var(--text-color); font-weight:500; font-size:var(--tec-fs-xl); }
-
-.tec-dialog--sm.ui-dialog { width:min(34rem, calc(100vw - 2rem)) !important; }
+.kpi-card .value { display:block; color:var(--text-color); font-weight:var(--tec-fw-medium); font-size:var(--tec-fs-xl); }
 
 /* ==========================================================================
  * Miembros del padrón (personas-*): solo personas.xhtml.
  * ========================================================================== */
-.personas-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; font-size:var(--tec-fs-md); }
+.personas-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem; font-size:var(--tec-fs-md); }
 
 .personas-aviso__aside { margin-left:auto; }
 
 /* Cronograma: fase anterior / actual / siguiente */
-.personas-fases { margin-bottom:1rem; }
+.personas-fases { margin-bottom:.75rem; }
 
-.personas-fases__head { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem .5rem; margin-bottom:.75rem; color:var(--text-color); font-size:var(--tec-fs-md); font-weight:500; }
+.personas-fases__head { display:flex; flex-wrap:wrap; align-items:center; gap:.2812rem .375rem; margin-bottom:.5625rem; color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); }
 
-.personas-fases__vigente { color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-fases__vigente { color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-fase { display:flex; flex-direction:column; gap:.2rem; height:100%; padding:.75rem .875rem; border:1px solid var(--surface-border); border-radius:.5rem; background:var(--surface-card); }
+.personas-fase { display:flex; flex-direction:column; gap:.15rem; height:100%; padding:.5625rem .6562rem; border:1px solid var(--surface-border); border-radius:.375rem; background:var(--surface-card); }
 
-.personas-fase__label { color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:500; letter-spacing:.04em; text-transform:uppercase; }
+.personas-fase__label { color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-medium); letter-spacing:var(--tec-ls-caps); text-transform:uppercase; }
 
-.personas-fase__title { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:500; line-height:1.35; }
+.personas-fase__title { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-tight); }
 
-.personas-fase__dates { color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-fase__dates { color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-fase .ui-tag { align-self:flex-start; margin-top:.25rem; }
+.personas-fase .ui-tag { align-self:flex-start; margin-top:.1875rem; }
 
-.personas-fase--vacia { align-items:center; justify-content:center; border-style:dashed; background:var(--surface-50); color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-fase--vacia { align-items:center; justify-content:center; border-style:dashed; background:var(--surface-50); color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-fase--vacia > .pi { font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-fase--vacia > .pi { font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-fase__label > .pi { margin-right:.2rem; font-size:var(--tec-fs-xs); font-weight:300; }
+.personas-fase__label > .pi { margin-right:.15rem; font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
-.personas-fase--activa .personas-fase__label > .pi { color:var(--green-600); }
+.personas-fase--activa .personas-fase__label > .pi { color:var(--tec-success-text); }
 
-.personas-fase--bloqueada .personas-fase__label > .pi { color:var(--orange-600); }
+.personas-fase--bloqueada .personas-fase__label > .pi { color:var(--tec-warn-text); }
 
 .personas-fase--cerrada .personas-fase__label > .pi { color:var(--text-color-secondary); }
 
@@ -52,170 +50,170 @@
 
 .personas-fase--actual { border-width:1px 1px 1px 4px; }
 
-.personas-fase--activa { border-left-color:var(--green-600); background:var(--green-50); }
+.personas-fase--activa { border-left-color:var(--tec-success); background:var(--tec-success-bg); }
 
-.personas-fase--bloqueada { border-left-color:var(--orange-600); background:var(--orange-50); }
+.personas-fase--bloqueada { border-left-color:var(--tec-warn); background:var(--tec-warn-bg); }
 
 .personas-fase--cerrada { border-left-color:var(--text-color-secondary); }
 
 .personas-fase--proxima { border-left-color:var(--primary-color); background:var(--primary-50); }
 
 /* Resumen de actualización */
-.personas-resumen { margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--surface-border); }
+.personas-resumen { margin-bottom:.75rem; padding-bottom:.75rem; border-bottom:1px solid var(--surface-border); }
 
-.personas-resumen .kpi-card { box-shadow:none; border:1px solid var(--surface-border); padding:.625rem .75rem; }
+.personas-resumen .kpi-card { box-shadow:none; border:1px solid var(--surface-border); padding:.4688rem .5625rem; }
 
-.personas-resumen .kpi-card .label { font-size:var(--tec-fs-xs); font-weight:300; }
+.personas-resumen .kpi-card .label { font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
-.personas-resumen .kpi-card .value { font-size:var(--tec-fs-xl); line-height:1.2; }
+.personas-resumen .kpi-card .value { font-size:var(--tec-fs-xl); line-height:var(--tec-lh-title); }
 
-.personas-kpi { display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:.625rem; }
+.personas-kpi { display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:.4688rem; }
 
-.personas-kpi__icon { display:flex; grid-row:span 2; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; border-radius:.5rem; font-size:var(--tec-fs-lg); }
+.personas-kpi__icon { display:flex; grid-row:span 2; align-items:center; justify-content:center; width:1.6875rem; height:1.6875rem; border-radius:.375rem; font-size:var(--tec-fs-lg); }
 
 .personas-kpi__icon--total { background:var(--primary-50); color:var(--primary-700); }
 
-.personas-kpi__icon--actualizados { background:var(--green-50); color:var(--green-600); }
+.personas-kpi__icon--actualizados { background:var(--tec-success-bg); color:var(--tec-success-text); }
 
-.personas-kpi__icon--pendientes { background:var(--orange-50); color:var(--orange-600); }
+.personas-kpi__icon--pendientes { background:var(--tec-warn-bg); color:var(--tec-warn-text); }
 
-.personas-progreso { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:.75rem 0 .35rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-progreso { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.375rem; margin:.5625rem 0 .2625rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-progreso__acciones { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.personas-progreso__acciones { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem; }
 
-body .personas-barra.ui-progressbar { height:.5rem; border-radius:999px; }
+body .personas-barra.ui-progressbar { height:.375rem; border-radius:999px; }
 
 body .personas-barra.ui-progressbar .ui-progressbar-label { display:none !important; }
 
 /* Barra de acciones */
-.personas-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin:1rem 0 .25rem; }
+.personas-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.375rem; margin:.75rem 0 .1875rem; }
 
-.personas-toolbar__grupo { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.personas-toolbar__grupo { display:flex; flex-wrap:wrap; align-items:center; gap:.375rem; }
 
 /* Tabla de miembros */
 .personas-col-sel { text-align:center; }
 
 .personas-col-cedula { white-space:nowrap; }
 
-.personas-nombre { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
+.personas-nombre { display:flex; flex-direction:column; gap:.075rem; min-width:0; }
 
-.personas-nombre__texto { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:400; line-height:1.35; overflow-wrap:anywhere; }
+.personas-nombre__texto { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-regular); line-height:var(--tec-lh-tight); overflow-wrap:anywhere; }
 
-.personas-nombre__meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); overflow-wrap:anywhere; font-weight:300; }
+.personas-nombre__meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); overflow-wrap:anywhere; font-weight:var(--tec-fw-regular); }
 
 .personas-nombre__sexo + .personas-nombre__iglesia::before { content:" · "; }
 
-.personas-revision { display:flex; flex-direction:column; align-items:flex-start; gap:.15rem; }
+.personas-revision { display:flex; flex-direction:column; align-items:flex-start; gap:.1125rem; }
 
-.personas-revision__fecha { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); white-space:nowrap; font-weight:300; }
+.personas-revision__fecha { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); white-space:nowrap; font-weight:var(--tec-fw-regular); }
 
-body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { display:block; width:100%; min-width:7rem; margin-top:.35rem; }
+body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { display:block; width:100%; min-width:5.25rem; margin-top:.2625rem; }
 
-body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:6.5rem; }
+body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:4.875rem; }
 
-.personas-filtro-estado .ui-selectonemenu-label { font-size:var(--tec-fs-sm); text-transform:none; letter-spacing:normal; font-weight:300; }
+.personas-filtro-estado .ui-selectonemenu-label { font-size:var(--tec-fs-xs); text-transform:none; letter-spacing:normal; font-weight:var(--tec-fw-regular); }
 
 /* La búsqueda rápida (header de la tabla) solo se muestra en móvil, donde el reflow oculta los filtros por columna.
    Mismo punto de corte (640px) que el reflow de PrimeFaces. */
 .personas-table .ui-datatable-header { display:none; }
 
-.personas-busqueda-rapida { max-width:26rem; }
+.personas-busqueda-rapida { max-width:19.5rem; }
 
-.personas-filtros__titulo { margin-bottom:.5rem !important; }
+.personas-filtros__titulo { margin-bottom:.375rem !important; }
 
 .personas-filtros__titulo > .pi { color:var(--primary-700); }
 
 /* Diálogos */
-.personas-dialog-busqueda__fila { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.5rem; margin-bottom:1rem; }
+.personas-dialog-busqueda__fila { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.375rem; margin-bottom:.75rem; }
 
-.personas-dialog-busqueda__criterio { flex:1 1 18rem; min-width:0; }
+.personas-dialog-busqueda__criterio { flex:1 1 13.5rem; min-width:0; }
 
-.personas-ubicacion { display:flex; flex-direction:column; gap:.1rem; font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-ubicacion { display:flex; flex-direction:column; gap:.075rem; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 .personas-ubicacion dt { display:inline; color:var(--text-color-secondary); }
 
 .personas-ubicacion dd { display:inline; margin:0; color:var(--text-color); }
 
-.personas-estados { display:flex; flex-direction:column; align-items:flex-start; gap:.25rem; }
+.personas-estados { display:flex; flex-direction:column; align-items:flex-start; gap:.1875rem; }
 
-.personas-dialog-miembro .tec-form .field { margin-bottom:.75rem; }
+.personas-dialog-miembro .tec-form .field { margin-bottom:.5625rem; }
 
-.personas-dialog-miembro .tec-form .personas-aviso { flex-wrap:nowrap; align-items:flex-start; padding:.5rem .75rem; font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-dialog-miembro .tec-form .personas-aviso { flex-wrap:nowrap; align-items:flex-start; padding:.375rem .5625rem; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 /* Sexo: una sola fila; etiqueta larga en pantallas grandes y abreviada en móvil. */
-.personas-dialog-miembro .ui-selectoneradio { display:flex; flex-wrap:nowrap; align-items:center; gap:.75rem; min-height:2.4rem; }
+.personas-dialog-miembro .ui-selectoneradio { display:flex; flex-wrap:nowrap; align-items:center; gap:.5625rem; min-height:1.8rem; }
 
 .personas-sexo--corto { display:none; }
 
 .personas-dialog-miembro .ui-selectoneradio > div { display:inline-flex; align-items:center; }
 
-.personas-dialog-miembro .ui-selectoneradio label { margin:0 0 0 .4rem; padding:0; }
+.personas-dialog-miembro .ui-selectoneradio label { margin:0 0 0 .3rem; padding:0; }
 
-.personas-switch { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.625rem 0 0; border-top:1px solid var(--surface-border); }
+.personas-switch { display:flex; align-items:center; justify-content:space-between; gap:.5625rem; padding:.4688rem 0 0; border-top:1px solid var(--surface-border); }
 
-.personas-switch__texto { display:flex; flex:1 1 auto; flex-direction:column; gap:.1rem; min-width:0; }
+.personas-switch__texto { display:flex; flex:1 1 auto; flex-direction:column; gap:.075rem; min-width:0; }
 
 .tec-form .personas-switch__titulo.ui-outputlabel { margin:0; color:var(--text-color); font-size:var(--tec-fs-md); }
 
-.personas-switch__encabezado { display:flex; align-items:center; gap:.4rem; }
+.personas-switch__encabezado { display:flex; align-items:center; gap:.3rem; }
 
 .personas-switch__encabezado > .pi { color:var(--primary-700); font-size:var(--tec-fs-md); }
 
-.personas-switch__ayuda { color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:300; }
+.personas-switch__ayuda { color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
-.personas-switch__control { display:flex; flex:0 0 auto; align-items:center; gap:.5rem; }
+.personas-switch__control { display:flex; flex:0 0 auto; align-items:center; gap:.375rem; }
 
-.personas-switch__estado { min-width:1.5rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:500; text-align:right; }
+.personas-switch__estado { min-width:1.125rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-medium); text-align:right; }
 
-.personas-regularizacion__persona { display:block; color:var(--text-color); font-weight:400; }
+.personas-regularizacion__persona { display:block; color:var(--text-color); font-weight:var(--tec-fw-regular); }
 
 /* Tablet: las columnas de estado ceden ancho a los nombres. */
 @media (max-width:991.98px) {
-    body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { min-width:5.5rem; }
+    body .ui-datatable.tec-table thead th .personas-filtro-estado.ui-selectonemenu { min-width:4.125rem; }
     body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { min-width:0; }
     .personas-table td .tec-status { white-space:normal; }
-    .personas-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 2.357rem + .375rem); }
+    .personas-table .tec-acciones { flex-wrap:wrap; width:calc(2 * 1.7678rem + .2812rem); }
 }
 
 @media (max-width:640px) {
     
-    /* Casilla de selección en la esquina de la tarjeta, junto al nombre. */.tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel { position:absolute; top:.55rem; right:.25rem; left:auto; width:auto !important; }
+    /* Casilla de selección en la esquina de la tarjeta, junto al nombre. */.tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel { position:absolute; top:.4125rem; right:.1875rem; left:auto; width:auto !important; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-sel > .ui-column-title { display:none; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-nombre { padding-right:2.5rem !important; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td.personas-col-nombre { padding-right:1.875rem !important; }
     .personas-table .ui-datatable-header { display:block; }
     .personas-busqueda-rapida { max-width:none; }
     .personas-table.ui-datatable-reflow .tec-acciones { width:auto; }
 }
 
-@media (max-width:576px) {
+@media (max-width:575.98px) {
     .personas-toolbar,
 .personas-toolbar__grupo { width:100%; align-items:stretch; }
-    body .personas-toolbar__grupo .ui-button { flex:1 1 calc(50% - .25rem); }
+    body .personas-toolbar__grupo .ui-button { flex:1 1 calc(50% - .1875rem); }
     .personas-aviso__aside { margin-left:0; }
     .personas-kpi { display:block; }
     .personas-kpi__icon { display:none; }
     .personas-sexo--largo { display:none; }
     .personas-sexo--corto { display:inline; }
 }
-.personas-fecha { white-space:nowrap; font-size:var(--tec-fs-sm); font-weight:300; }
-body .ui-tag.ui-tag-success.personas-nuevo { margin-left:.4rem; vertical-align:middle; background:var(--green-50); color:var(--green-800); border:1px solid var(--green-100); }
-body .ui-tag.ui-tag-success.personas-nuevo .ui-tag-icon { color:var(--green-600); }
-.personas-fechas { display:flex; flex-direction:column; gap:.2rem; }
-.personas-fechas__item { display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
-.personas-fechas__icono { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
+.personas-fecha { white-space:nowrap; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
+/* "Nuevo": etiqueta success estándar; solo se separa del nombre. */
+.personas-nuevo { margin-left:.3rem; vertical-align:middle; }
+.personas-fechas { display:flex; flex-direction:column; gap:.15rem; }
+.personas-fechas__item { display:inline-flex; align-items:center; gap:.2625rem; white-space:nowrap; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+.personas-fechas__icono { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
 .personas-fechas__icono--actualiza { color:var(--primary-700); }
-.personas-hist__col { font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-hist__col { font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 .personas-hist__valor { display:inline-block; overflow-wrap:anywhere; }
-.personas-hist__valor--cambio { padding:.05rem .35rem; border-radius:.25rem; background:var(--green-50); color:var(--green-700); font-weight:500; cursor:help; }
+.personas-hist__valor--cambio { padding:.0375rem .2625rem; border-radius:.1875rem; background:var(--tec-success-bg); color:var(--tec-success-text); font-weight:var(--tec-fw-medium); cursor:help; }
 
 /* Personas eliminadas: el motivo de bloqueo es una frase larga y .tec-status
    impone white-space:nowrap, así que sin un ancho propio esa columna no podía
    encogerse, desbordaba el diálogo y dejaba el resto en una letra por línea. */
-.personas-eliminadas__col-nombre { width:30%; min-width:9rem; }
+.personas-eliminadas__col-nombre { width:30%; min-width:6.75rem; }
 
-.personas-eliminadas__col-iglesia { width:20%; min-width:6rem; font-size:var(--tec-fs-sm); font-weight:300; }
+.personas-eliminadas__col-iglesia { width:20%; min-width:4.5rem; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-.personas-eliminadas__col-situacion { width:32%; min-width:9rem; }
+.personas-eliminadas__col-situacion { width:32%; min-width:6.75rem; }
 
 /* Nombre y sexo en la misma línea cuando caben: el metadato no añade una fila más de altura. */
-.personas-eliminadas__col-nombre .personas-nombre { flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:.5rem; }
+.personas-eliminadas__col-nombre .personas-nombre { flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:.375rem; }

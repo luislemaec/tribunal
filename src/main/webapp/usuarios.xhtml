@@ -122,30 +122,27 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} usuarios"
                              emptyMessage="#{usuarioControlador.busquedaUsuariosEjecutada ? msg['form.usuarios.empty.search'] : msg['form.usuarios.empty.initial']}"
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <!-- Acceso: username (bold) + correo apilados -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.acceso']}" style="min-width:13rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.acceso']}" style="min-width:9.75rem">
                         <f:facet name="export">
                             <h:outputText value="#{rolUs.usuario.username} — #{rolUs.usuario.correo}"/>
                         </f:facet>
                         <div class="flex align-items-center gap-2">
-                            <div class="flex-shrink-0 flex justify-content-center align-items-center border-circle text-xs font-bold"
-                                 style="width:2rem;height:2rem;background:var(--primary-color);color:var(--primary-color-text)">
+                            <div class="tec-avatar">
                                 #{not empty rolUs.usuario.username ? rolUs.usuario.username.substring(0,1).toUpperCase() : '?'}
                             </div>
                             <div class="flex flex-column line-height-3">
-                                <span class="font-semibold text-900 text-sm"
-                                      style="font-family:monospace">#{rolUs.usuario.username}</span>
+                                <span class="tec-mono font-semibold">#{rolUs.usuario.username}</span>
                                 <small class="text-500">#{rolUs.usuario.correo}</small>
                             </div>
                         </div>
                     </p:column>
 
                     <!-- Persona: nombres + apellidos -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.nombres']}" style="min-width:12rem">
-                        <span class="text-800 text-sm">
+                    <p:column headerText="#{msg['form.usuarios.table.header.nombres']}" style="min-width:9rem">
+                        <span class="tec-meta text-800">
                             #{rolUs.usuario.personaNombres}
                             <h:outputText rendered="#{not empty rolUs.usuario.personaApellidos}"
                                           value=" #{rolUs.usuario.personaApellidos}"/>
@@ -154,7 +151,7 @@
 
                     <!-- Rol -->
                     <p:column headerText="#{msg['form.usuarios.table.header.rol']}" styleClass="text-center"
-                              style="width:12rem">
+                              style="width:9rem">
                         <p:tag value="#{rolUs.rol.nombre}"
                                severity="#{rolUs.rol.nombre.contains('Administrador') ? 'danger'
                                          : rolUs.rol.nombre.contains('Tribunal')      ? 'warning'
@@ -163,7 +160,7 @@
                     </p:column>
 
                     <!-- Iglesia asignada -->
-                    <p:column headerText="#{msg['form.usuarios.table.header.iglesia']}" style="min-width:11rem">
+                    <p:column headerText="#{msg['form.usuarios.table.header.iglesia']}" style="min-width:8.25rem">
                         <p:chip rendered="#{not empty rolUs.usuario.iglesiaNombre}"
                                 label="#{rolUs.usuario.iglesiaNombre}" icon="pi pi-home"/>
                         <h:outputText rendered="#{empty rolUs.usuario.iglesiaNombre}"
@@ -175,7 +172,7 @@
                          situación de la contraseña no se repite aquí: la muestra el botón de
                          candado de Acciones y la explica la simbología. -->
                     <p:column headerText="#{msg['form.usuarios.table.header.estado']}"
-                              styleClass="text-center" style="width:9rem">
+                              styleClass="text-center" style="width:6.75rem">
                         <h:panelGroup layout="block">
                             <p:tag value="#{rolUs.usuario.estado ? msg['form.usuarios.status.active'] : msg['form.usuarios.status.inactive']}"
                                    severity="#{rolUs.usuario.estado ? 'success' : 'secondary'}"
@@ -192,7 +189,7 @@
                          de cada una va en p:tooltip y en ariaLabel; se omite title para no
                          mostrar dos tooltips superpuestos. -->
                     <p:column headerText="#{msg['form.usuarios.table.header.acciones']}" exportable="false"
-                              styleClass="text-center" style="width:11rem">
+                              styleClass="tec-col-actions">
                         <span class="tec-acciones">
 
                             <p:commandButton icon="pi pi-pencil"
@@ -271,11 +268,11 @@
                 <div class="flex flex-wrap align-items-center column-gap-4 row-gap-2 mt-3 pt-3 border-top-1 surface-border text-sm text-600">
                     <span class="font-medium text-700">#{msg['form.usuarios.simbologia.titulo']}</span>
                     <span class="flex align-items-center gap-2"><i class="pi pi-pencil text-color-secondary" aria-hidden="true"></i>#{msg['form.usuarios.btn.edit.title']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-key text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.reset.password']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-lock-open text-orange-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.activar']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-lock text-blue-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.revertir']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-trash text-red-500" aria-hidden="true"></i>#{msg['form.usuarios.btn.delete']}</span>
-                    <span class="flex align-items-center gap-2"><i class="pi pi-refresh text-green-600" aria-hidden="true"></i>#{msg['form.usuarios.btn.restore']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-key tec-text-warn" aria-hidden="true"></i>#{msg['form.usuarios.btn.reset.password']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-lock-open tec-text-warn" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.activar']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-lock tec-text-info" aria-hidden="true"></i>#{msg['form.usuarios.btn.permanente.revertir']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-trash tec-text-danger" aria-hidden="true"></i>#{msg['form.usuarios.btn.delete']}</span>
+                    <span class="flex align-items-center gap-2"><i class="pi pi-refresh tec-text-success" aria-hidden="true"></i>#{msg['form.usuarios.btn.restore']}</span>
                 </div>
 
             </div><!-- /surface-card -->
@@ -283,11 +280,10 @@
             <!-- ======================================================
                  DIÁLOGO: NUEVO / EDITAR USUARIO
                  ====================================================== -->
-            <p:dialog header="#{usuarioControlador.esUsuarioNuevo ? msg['form.usuarios.dialog.title.new'] : msg['form.usuarios.dialog.title.edit']}"
+            <p:dialog styleClass="tec-dialog tec-dialog--md" header="#{usuarioControlador.esUsuarioNuevo ? msg['form.usuarios.dialog.title.new'] : msg['form.usuarios.dialog.title.edit']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgUsuario"
-                      responsive="true" width="620"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -299,7 +295,7 @@
                             <!-- Fila 1: Cédula + Nombres (autocompletado desde BD local) -->
                             <div class="field col-12 md:col-5">
                                 <label for="cedula" class="font-medium text-700 text-sm">
-                                    #{msg['form.usuarios.label.cedula']} <span class="text-red-500">*</span>
+                                    #{msg['form.usuarios.label.cedula']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="cedula"
                                              value="#{usuarioControlador.usuarioSeleccionado.personaDocumento}"
@@ -330,7 +326,7 @@
                             <!-- Fila 2: Username + Correo -->
                             <div class="field col-12 md:col-6">
                                 <label for="rolUs" class="font-medium text-700 text-sm">
-                                    #{msg['form.usuarios.label.username']} <span class="text-red-500">*</span>
+                                    #{msg['form.usuarios.label.username']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <!-- Editable también en modificación: es la identidad con la
                                      que autentica Elytron. El servicio comprueba que el
@@ -356,7 +352,7 @@
                             <!-- Fila 3: Perfil / Rol -->
                             <div class="field col-12">
                                 <label for="perfil" class="font-medium text-700 text-sm">
-                                    #{msg['form.usuarios.label.perfil']} <span class="text-red-500">*</span>
+                                    #{msg['form.usuarios.label.perfil']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="perfil"
                                                  value="#{usuarioControlador.rolSeleccionado.id}"
@@ -377,7 +373,7 @@
                                 <ui:fragment rendered="#{usuarioControlador.rolRequiereIglesia}">
                                     <label for="iglesia" class="font-medium text-700 text-sm">
                                         #{msg['form.usuarios.label.iglesia']}
-                                        <span class="text-red-500">*</span>
+                                        <span class="tec-text-danger">*</span>
                                     </label>
                                     <p:selectOneMenu id="iglesia"
                                                      value="#{usuarioControlador.usuarioSeleccionado.iglesiaId}"
@@ -418,10 +414,10 @@
 
             </p:dialog>
 
-            <p:dialog header="#{msg['form.usuarios.confirm.restore.header']}"
+            <p:dialog styleClass="tec-dialog" header="#{msg['form.usuarios.confirm.restore.header']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgReactivarUsuario"
-                      responsive="true" width="520" style="max-width:96vw"
+                      responsive="true"
                       closeOnEscape="true">
 
                 <p:outputPanel id="outPnlReactivarUsuario" class="ui-fluid">
@@ -439,7 +435,7 @@
                         <p:outputPanel rendered="#{usuarioControlador.rolReactivacionRequiereIglesia}"
                                        styleClass="field block">
                             <label for="iglesiaReactivacion" class="font-medium text-700 text-sm">
-                                #{msg['form.usuarios.label.iglesia']} <span class="text-red-500">*</span>
+                                #{msg['form.usuarios.label.iglesia']} <span class="tec-text-danger">*</span>
                             </label>
                             <p:selectOneMenu id="iglesiaReactivacion"
                                              value="#{usuarioControlador.iglesiaReactivacionId}"

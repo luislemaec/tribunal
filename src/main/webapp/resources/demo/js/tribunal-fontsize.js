@@ -1,4 +1,5 @@
-/* Tamaño de texto elegido por el usuario con los botones A- y A+. Pasos: 11, 12 [predeterminado], 14 y 16 px de base.
+/* Tamaño de texto elegido por el usuario con los botones A- y A+. Claves: 11, 12 [predeterminado], 14 y 16, que
+ * layout-tribunal.css traduce a 91.67 %, 100 %, 116.67 % y 133.33 % de la base del navegador (1rem = 16px por defecto).
  * Se guarda en localStorage y se aplica como atributo data-tec-fs en <html> ANTES de pintar (el script va en el <head>),
  * para evitar saltos de tamaño. La raíz cambia en layout-tribunal.css; no hay servidor ni AJAX. */
 (function (w, d) {

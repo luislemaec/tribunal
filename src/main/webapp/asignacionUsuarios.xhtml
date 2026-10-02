@@ -26,11 +26,9 @@
 
                 <!-- Total iglesias -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                            <div class="tec-icon-badge">
                                 <i class="pi pi-building"></i>
                             </div>
                             <div>
@@ -43,12 +41,10 @@
 
                 <!-- Con admin -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid var(--green-500)">
+                    <div class="tec-kpi tec-kpi--success">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--green-500);flex-shrink:0">
-                                <i class="pi pi-check-circle text-white"></i>
+                            <div class="tec-icon-badge tec-icon-badge--success">
+                                <i class="pi pi-check-circle"></i>
                             </div>
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">Con admin</span>
@@ -60,12 +56,10 @@
 
                 <!-- Sin admin -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid var(--orange-500)">
+                    <div class="tec-kpi tec-kpi--warn">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--orange-500);flex-shrink:0">
-                                <i class="pi pi-exclamation-triangle text-white"></i>
+                            <div class="tec-icon-badge tec-icon-badge--warn">
+                                <i class="pi pi-exclamation-triangle"></i>
                             </div>
                             <div>
                                 <span class="block text-500 text-xs font-medium uppercase">Sin admin</span>
@@ -77,11 +71,9 @@
 
                 <!-- Avance -->
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3"
-                         style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                            <div class="tec-icon-badge">
                                 <i class="pi pi-percentage"></i>
                             </div>
                             <div>
@@ -100,13 +92,12 @@
              ====================================================== -->
         <h:form id="frmProgreso">
             <p:outputPanel rendered="#{asignacionUsuariosController.faseVigente ne null}" styleClass="mb-2" layout="block">
-                <div class="surface-card shadow-1 border-round-lg p-3"
-                     style="border-left:4px solid var(--primary-color)">
+                <div class="tec-kpi">
                     <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-2">
                         <div class="flex align-items-center gap-2">
-                            <i class="pi pi-chart-line text-primary-700"></i>
+                            <i class="pi pi-chart-line tec-text-primary"></i>
                             <span class="font-semibold text-900">Progreso de asignación —
-                                <span class="text-primary-700">
+                                <span class="tec-text-primary">
                                     <h:outputText value="#{asignacionUsuariosController.faseVigente.titulo}"/>
                                 </span>
                             </span>
@@ -124,7 +115,7 @@
                         </div>
                     </div>
                     <p:progressBar value="#{asignacionUsuariosController.progresoAsignacion[2]}"
-                                   style="height:0.75rem;border-radius:0.5rem"/>
+                                   styleClass="tec-progress"/>
                     <div class="flex justify-content-between mt-1">
                         <small class="text-500">
                             Inicio: <h:outputText value="#{asignacionUsuariosController.faseVigente.fechaInicio}">
@@ -137,7 +128,7 @@
                                  </h:outputText>
                             <h:outputText rendered="#{asignacionUsuariosController.faseVigente.diasRestantes gt 0}"
                                           value=" · #{asignacionUsuariosController.faseVigente.diasRestantes} días restantes"
-                                          styleClass="text-orange-500 font-medium"/>
+                                          styleClass="tec-text-warn font-medium"/>
                         </small>
                     </div>
                 </div>
@@ -151,7 +142,7 @@
             <p:panel toggleable="true" collapsed="false" styleClass="mb-2 shadow-1 border-round-lg">
                 <f:facet name="header">
                     <div class="flex align-items-center gap-2">
-                        <i class="pi pi-filter text-primary-700"></i>
+                        <i class="pi pi-filter tec-text-primary"></i>
                         <span class="font-semibold text-900">Filtros</span>
                     </div>
                 </f:facet>
@@ -249,12 +240,11 @@
                 <!-- Banner bloqueo de fase -->
                 <p:outputPanel rendered="#{not asignacionUsuariosController.puedeAsignar}"
                                styleClass="mb-3" layout="block">
-                    <div class="flex align-items-center gap-2 border-round-lg p-3"
-                         style="background:var(--orange-50);border-left:4px solid var(--orange-500)">
-                        <i class="pi pi-lock text-orange-500 text-xl flex-shrink-0"/>
+                    <div class="callout callout--warning flex align-items-center gap-2">
+                        <i class="pi pi-lock text-xl flex-shrink-0"/>
                         <div class="flex flex-column gap-1">
-                            <span class="font-semibold text-900 text-sm">Asignación deshabilitada</span>
-                            <span class="text-700 text-sm">
+                            <span class="font-semibold text-900">Asignación deshabilitada</span>
+                            <span>
                                 <h:outputText value="#{asignacionUsuariosController.mensajeBloqueoFase}"/>
                             </span>
                         </div>
@@ -264,10 +254,9 @@
                 <!-- Banner fase activa -->
                 <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar}"
                                styleClass="mb-3" layout="block">
-                    <div class="flex align-items-center gap-2 border-round-lg p-2"
-                         style="background:var(--green-50);border-left:4px solid var(--green-500)">
-                        <i class="pi pi-unlock text-green-500 flex-shrink-0"/>
-                        <span class="text-700 text-sm">
+                    <div class="callout callout--success flex align-items-center gap-2">
+                        <i class="pi pi-unlock flex-shrink-0"/>
+                        <span>
                             Fase activa:
                             <strong>#{asignacionUsuariosController.faseVigente.titulo}</strong>
                             — la asignación de administradores está habilitada.
@@ -284,7 +273,7 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} iglesias"
                              emptyMessage="No hay iglesias para mostrar con los criterios actuales."
-                             reflow="true" size="small" showGridlines="true"
+                             reflow="true"
                              styleClass="ui-datatable-striped ui-datatable-sm"
                              globalFilter="#{globalFilter}">
 
@@ -303,12 +292,11 @@
                     <!-- RUC / Código -->
                     <p:column headerText="RUC / Código" sortBy="#{ig.documento}"
                               filterBy="#{ig.documento}" filterMatchMode="contains"
-                              style="width:9rem">
+                              style="width:6.75rem">
                         <p:tag rendered="#{not empty ig.documento and ig.documento.startsWith('00')}"
                                value="Genérico" icon="pi pi-tag" severity="warning"/>
                         <h:outputText rendered="#{not empty ig.documento and not ig.documento.startsWith('00')}"
-                                      value="#{ig.documento}" styleClass="text-sm text-900"
-                                      style="font-family:monospace"/>
+                                      value="#{ig.documento}" styleClass="tec-mono"/>
                         <h:outputText rendered="#{empty ig.documento}" value="—" styleClass="text-400"/>
                     </p:column>
 
@@ -316,12 +304,11 @@
                     <p:column headerText="Iglesia" sortBy="#{ig.nombre}"
                               filterBy="#{ig.nombre}" filterMatchMode="contains">
                         <div class="flex align-items-center gap-2">
-                            <div class="flex-shrink-0 flex justify-content-center align-items-center border-circle text-sm font-bold"
-                                 style="width:2rem;height:2rem;background:var(--primary-color);color:var(--primary-color-text)">
+                            <div class="tec-avatar">
                                 #{not empty ig.nombre ? ig.nombre.substring(0,1) : '?'}
                             </div>
                             <div class="flex flex-column">
-                                <span class="font-medium text-900 text-sm">#{ig.nombre}</span>
+                                <span class="tec-dato font-medium text-900">#{ig.nombre}</span>
                                 <small class="text-500">#{ig.comunidad}</small>
                             </div>
                         </div>
@@ -330,25 +317,25 @@
                     <!-- Ubicación (apilada) -->
                     <p:column headerText="Ubicación" sortBy="#{ig.provinciaNombre}"
                               filterBy="#{ig.provinciaNombre}" filterMatchMode="contains"
-                              style="width:13rem">
+                              style="width:9.75rem">
                         <div class="flex flex-column line-height-3">
-                            <small class="text-500 text-xs">
+                            <small class="tec-meta text-500">
                                 <i class="pi pi-map-marker mr-1"/>
                                 <h:outputText value="#{ig.provinciaNombre}"/>
                             </small>
-                            <span class="text-800 text-sm font-medium">#{ig.cantonNombre}</span>
-                            <small class="text-600 text-xs">#{ig.ubicacionNombre}</small>
+                            <span class="tec-dato text-800 font-medium">#{ig.cantonNombre}</span>
+                            <small class="tec-meta text-600">#{ig.ubicacionNombre}</small>
                         </div>
                     </p:column>
 
                     <!-- Administrador asignado -->
-                    <p:column headerText="Administrador" style="width:18rem"
+                    <p:column headerText="Administrador" style="width:13.5rem"
                               sortBy="#{ig.adminPersonaNombres}"
                               filterBy="#{ig.adminPersonaNombres}" filterMatchMode="contains">
                         <p:outputPanel rendered="#{ig.tieneAdmin}">
                             <div class="flex flex-column line-height-3">
-                                <span class="font-medium text-900 text-sm">
-                                    <i class="pi pi-user mr-1 text-green-500"/>
+                                <span class="tec-dato font-medium text-900">
+                                    <i class="pi pi-user mr-1 tec-text-success"/>
                                     #{ig.adminPersonaNombres} #{ig.adminPersonaApellidos}
                                 </span>
                                 <small class="text-500">#{ig.adminUsername} · #{ig.adminCorreo}</small>
@@ -359,7 +346,7 @@
                     </p:column>
 
                     <!-- Acciones -->
-                    <p:column headerText="Acciones" styleClass="text-center" style="width:9rem">
+                    <p:column headerText="Acciones" styleClass="tec-col-actions">
                       <span class="tec-acciones">
 
                         <!-- Asignar (si no tiene admin) -->
@@ -401,10 +388,9 @@
              debe envolver el dialog para serializar los inputs.
              ====================================================== -->
         <h:form id="frmDlgAsignacion">
-            <p:dialog widgetVar="dlgAsignacion"
+            <p:dialog styleClass="tec-dialog tec-dialog--md" widgetVar="dlgAsignacion"
                       header="#{asignacionUsuariosController.reasignacion ? 'Reasignar administrador' : 'Asignar administrador'}"
                       modal="true" responsive="true" closable="true" closeOnEscape="true"
-                      width="700" style="max-width:96vw"
                       contentStyle="overflow-y:auto;max-height:75vh">
 
                 <p:outputPanel rendered="#{asignacionUsuariosController.iglesiaSeleccionada ne null}">
@@ -412,7 +398,7 @@
                     <!-- Resumen de iglesia destino -->
                     <div class="surface-100 border-round-lg p-3 mb-3">
                         <div class="flex align-items-center gap-2 mb-1">
-                            <i class="pi pi-building text-primary-700"/>
+                            <i class="pi pi-building tec-text-primary"/>
                             <span class="font-medium text-900">
                                 #{asignacionUsuariosController.iglesiaSeleccionada.nombre}
                             </span>
@@ -427,10 +413,9 @@
                     <!-- Aviso de reasignación -->
                     <p:outputPanel rendered="#{asignacionUsuariosController.reasignacion}"
                                    styleClass="mb-3" layout="block">
-                        <div class="flex align-items-center gap-2 surface-100 border-round-lg p-2"
-                             style="border-left:3px solid var(--orange-500)">
-                            <i class="pi pi-info-circle text-orange-500 flex-shrink-0"/>
-                            <span class="text-sm text-700">
+                        <div class="callout callout--warning flex align-items-center gap-2">
+                            <i class="pi pi-info-circle flex-shrink-0"/>
+                            <span>
                                 Esta iglesia ya tiene asignado a
                                 <strong>#{asignacionUsuariosController.iglesiaSeleccionada.adminPersonaNombres}</strong>.
                                 Al guardar, se desasignará al actual y el nuevo usuario tomará su lugar.
@@ -450,7 +435,7 @@
                             <!-- Cédula -->
                             <div class="field col-12 md:col-5">
                                 <label for="cedula" class="font-medium text-700 text-sm">
-                                    Cédula <span class="text-red-500">*</span>
+                                    Cédula <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="cedula"
                                              value="#{asignacionUsuariosController.nuevoAdmin.personaDocumento}"
@@ -467,7 +452,7 @@
                             <!-- Nombres y apellidos -->
                             <div class="field col-12 md:col-7">
                                 <label for="nombres" class="font-medium text-700 text-sm">
-                                    Nombres y apellidos <span class="text-red-500">*</span>
+                                    Nombres y apellidos <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombres"
                                              value="#{asignacionUsuariosController.nuevoAdmin.personaNombres}"
@@ -478,7 +463,7 @@
                             <!-- Usuario -->
                             <div class="field col-12 md:col-6">
                                 <label for="username" class="font-medium text-700 text-sm">
-                                    Usuario <span class="text-red-500">*</span>
+                                    Usuario <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="username"
                                              value="#{asignacionUsuariosController.nuevoAdmin.username}"
@@ -488,7 +473,7 @@
                             <!-- Correo -->
                             <div class="field col-12 md:col-6">
                                 <label for="correo" class="font-medium text-700 text-sm">
-                                    Correo <span class="text-red-500">*</span>
+                                    Correo <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="correo"
                                              value="#{asignacionUsuariosController.nuevoAdmin.correo}"

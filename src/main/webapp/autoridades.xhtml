@@ -49,42 +49,41 @@
                              currentPageReportTemplate="{startRecord}-{endRecord} / {totalRecords}"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              emptyMessage="#{msg['form.autoridades.empty']}"
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <p:column headerText="#{msg['form.autoridades.table.id']}"
                               sortBy="#{tribunal.id}" filterBy="#{tribunal.id}"
                               rendered="#{loginBean.roles.contains('SITEC-Administrador')}"
-                              styleClass="text-center" style="width:6rem">
-                        <span class="text-sm text-500">#{tribunal.id}</span>
+                              styleClass="text-center" style="width:4.5rem">
+                        <span class="tec-meta text-500">#{tribunal.id}</span>
                     </p:column>
 
                     <p:column headerText="#{msg['form.autoridades.table.cargo']}"
                               sortBy="#{tribunal.cargoNombre}" filterBy="#{tribunal.cargoNombre}"
-                              style="min-width:12rem">
-                        <span class="text-sm font-medium text-900">#{tribunal.cargoNombre}</span>
+                              style="min-width:9rem">
+                        <span class="tec-dato font-medium text-900">#{tribunal.cargoNombre}</span>
                     </p:column>
 
                     <p:column headerText="#{msg['form.autoridades.table.proceso']}"
                               sortBy="#{tribunal.periodoNombre}" filterBy="#{tribunal.periodoNombre}"
-                              style="min-width:12rem">
+                              style="min-width:9rem">
                         <p:tag value="#{tribunal.periodoNombre}" severity="info" icon="pi pi-calendar"/>
                     </p:column>
 
                     <p:column headerText="#{msg['form.autoridades.table.autoridad']}"
                               sortBy="#{tribunal.iglesiaPersona.persona.nombres}"
                               filterBy="#{tribunal.iglesiaPersona.persona.nombres}"
-                              style="min-width:16rem">
+                              style="min-width:12rem">
                         <div class="flex align-items-center gap-2">
-                            <span class="inline-flex align-items-center justify-content-center border-circle bg-primary-50 text-primary-700 w-2rem h-2rem flex-shrink-0">
+                            <span class="inline-flex align-items-center justify-content-center border-circle bg-primary-50 tec-text-primary w-2rem h-2rem flex-shrink-0">
                                 <i class="pi #{tribunal.iglesiaPersona.persona ne null ? 'pi-user' : 'pi-user-plus'}"></i>
                             </span>
                             <div class="min-w-0">
                                 <h:outputText value="#{tribunal.iglesiaPersona.persona.nombres}"
                                               rendered="#{tribunal.iglesiaPersona.persona ne null}"
-                                              styleClass="block text-sm font-medium text-900 white-space-normal"/>
+                                              styleClass="tec-dato block font-medium text-900 white-space-normal"/>
                                 <p:commandButton value="#{msg['form.autoridades.btn.asignar']}" icon="pi pi-user-plus"
-                                                 styleClass="ui-button-sm"
+                                                 styleClass=""
                                                  update=":frmPeriodos:outPnlAsignaAutoridadBusca :frmPeriodos:outPnlAsignaAutoridad :frmPeriodos:outPnlFooter :frmGlobal:growlGlobal"
                                                  oncomplete="if (!args.validationFailed) PF('dlgAsignaAutoridad').show()"
                                                  process="@this"
@@ -97,17 +96,17 @@
                     <p:column headerText="#{msg['form.autoridades.table.iglesia']}"
                               sortBy="#{tribunal.iglesiaPersona.iglesia.nombre}"
                               filterBy="#{tribunal.iglesiaPersona.iglesia.nombre}"
-                              style="min-width:14rem">
+                              style="min-width:10.5rem">
                         <h:outputText value="#{tribunal.iglesiaPersona.iglesia.nombre}"
                                       rendered="#{tribunal.iglesiaPersona.iglesia ne null}"
-                                      styleClass="text-sm text-700 white-space-normal"/>
+                                      styleClass="tec-meta text-700 white-space-normal"/>
                         <p:tag value="#{msg['form.autoridades.estado.pendiente']}"
                                severity="warning" icon="pi pi-clock"
                                rendered="#{tribunal.iglesiaPersona.iglesia eq null}"/>
                     </p:column>
 
                     <p:column headerText="#{msg['form.autoridades.table.acciones']}" exportable="false"
-                              styleClass="text-center" style="width:9rem">
+                              styleClass="tec-col-actions">
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-user-edit"
                                              styleClass="rounded-button ui-button-flat ui-button-warning"
@@ -134,11 +133,10 @@
 
             </div>
 
-            <p:dialog header="#{msg['form.autoridades.dialog.title']}"
+            <p:dialog styleClass="tec-dialog tec-dialog--md" header="#{msg['form.autoridades.dialog.title']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgAsignaAutoridad"
-                      responsive="true" width="672"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyleClass="p-0"
                       closeOnEscape="true">
 
@@ -147,13 +145,13 @@
                         <p:outputPanel rendered="#{not empty tribunalController.tribunalSeleccionado}">
                             <div class="surface-50 border-round-lg p-3 mb-3">
                                 <div class="flex align-items-center gap-2 mb-2">
-                                    <i class="pi pi-id-card text-primary-700"></i>
+                                    <i class="pi pi-id-card tec-text-primary"></i>
                                     <span class="font-semibold text-800">#{msg['form.autoridades.seccion.busqueda']}</span>
                                 </div>
                                 <div class="formgrid grid">
                                     <div class="field col-12 md:col-8">
                                         <label for="cedulaBuscar" class="font-medium text-700 text-sm">
-                                            #{msg['form.autoridades.label.cedula']} <span class="text-red-500">*</span>
+                                            #{msg['form.autoridades.label.cedula']} <span class="tec-text-danger">*</span>
                                         </label>
                                         <p:inputText id="cedulaBuscar" type="text"
                                                      placeholder="#{msg['form.autoridades.placeholder.cedula']}"
@@ -213,7 +211,7 @@
                                 </div>
                                 <div class="field col-12">
                                     <label for="correoAutoridad" class="font-medium text-700 text-sm">
-                                        #{msg['form.autoridades.label.correo']} <span class="text-red-500">*</span>
+                                        #{msg['form.autoridades.label.correo']} <span class="tec-text-danger">*</span>
                                     </label>
                                     <p:inputText id="correoAutoridad" type="email" styleClass="w-full"
                                                  value="#{tribunalController.tribunalSeleccionado.correoAutoridad}"

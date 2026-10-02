@@ -7,63 +7,138 @@
    Colores: solo variables del tema (--primary-*, --surface-*, --text-color*, paleta). */
 
 /* ==========================================================================
- * ESCALA TIPOGRÁFICA OFICIAL DE TEC (Montserrat; la raíz del layout es 12px, por eso los valores son rem)
- *   2xs  9px  EXCEPCIÓN: microtexto no esencial o espacio extremo (iconos diminutos, contadores). Nunca en tablas,
- *            formularios, botones, encabezados, nombres, cédulas ni información que se lea con normalidad.
- *   xs  10px  fechas, metadatos, tags, hints y encabezados de tabla
- *   sm  11px  información secundaria y labels
- *   md  12px  BASE: texto, inputs, botones, celdas y datos principales
- *   lg  14px  títulos de diálogos y paneles
- *   xl  16px  títulos superiores y cifras destacadas
- *   2xl 20px  títulos de página / cifras de gran formato
- * Pesos (Montserrat): texto y texto pequeño (xs/sm/2xs) en 300 Light; font-medium en 400 Regular; énfasis (nombres, encabezados, títulos,
- * negritas) en 500 Medium. Disponibles además 100, 600, 700, 800 y 900 (declarados en layout-tribunal.css; solo se descargan si se usan). Thin y Light no se usan en tamaños pequeños. Para ganar espacio se ajusta padding, gap, anchos y wrapping,
- * nunca el tamaño de letra.
+ * ESTÁNDAR TIPOGRÁFICO DE TEC — Montserrat (docs/tipografia-tribunal.md)
+ * Unidades: rem sobre la base del navegador (html 100 % → 1rem = 16px). Nunca px para texto.
+ * Breakpoints (PrimeFlex): xs <576 · sm ≥576 · md ≥768 · lg ≥992 · xl ≥1200px.
+ *
+ * Escala (px con la base estándar → rem):
+ *   3xs 10px .625rem   EXCEPCIÓN: microtexto no esencial (contadores, iconos diminutos). Nunca en tablas ni formularios.
+ *   2xs 11px .6875rem  tags, hints, fechas auxiliares y encabezados de tabla (en mayúsculas)
+ *   xs  12px .75rem    METADATOS e información secundaria (comunidad, provincia, cantón, parroquia, sexo, usuario…)
+ *                      y labels de formulario; se distinguen del dato principal por tamaño y color secundario
+ *   md  13px .8125rem  BASE: texto, inputs, botones, celdas y datos principales (nombres de personas e iglesias)
+ *   lg  15px .9375rem  títulos de diálogos y paneles
+ *   xl  17px 1.0625rem títulos superiores y cifras destacadas
+ *   2xl 21px 1.3125rem títulos de página / cifras de gran formato
+ * Equivalencias con PrimeFlex: .text-xs = 2xs y .text-sm = xs.
+ *
+ * Pesos permitidos (únicos archivos cargados): Light 300 · Regular 400 · Medium 500 · Bold 700.
+ *   Regular 400: todo el texto (también metadatos y textos pequeños).
+ *   Medium 500: énfasis (títulos, encabezados, nombres destacados, font-medium y font-semibold).
+ *   Bold 700: font-bold y énfasis fuerte puntual.
+ *   Light 300: SOLO títulos de 24px o más y SOLO desde md (≥768px): clase .tec-display-light. En xs y sm
+ *   muta a Regular. Ningún texto de la escala actual llega a 24px, por eso hoy no se usa Light.
+ * Interlineado: títulos --tec-lh-title (1.2); texto compacto de UI --tec-lh-tight (1.3); párrafos --tec-lh-base (1.5).
+ * Mayúsculas: --tec-ls-caps (.04em) en títulos y encabezados con text-transform:uppercase.
+ * Para ganar espacio se ajusta padding, gap, anchos y wrapping, nunca el tamaño de letra.
  * ========================================================================== */
-/* Con el tamaño de texto compacto (raíz 11–12px) los niveles pequeños no bajan de un piso legible. */
-:root { --tec-fs-2xs:max(9px, .75rem); --tec-fs-xs:max(10px, .833rem); --tec-fs-sm:max(10.5px, .917rem); --tec-fs-md:1rem; --tec-fs-lg:1.167rem; --tec-fs-xl:1.333rem; --tec-fs-2xl:1.667rem; --tec-lh-tight:1.25; --tec-lh-base:1.4; }
+:root {
+    --tec-fs-3xs:.625rem; --tec-fs-2xs:.6875rem; --tec-fs-xs:.75rem; --tec-fs-md:.8125rem;
+    --tec-fs-lg:.9375rem; --tec-fs-xl:1.0625rem; --tec-fs-2xl:1.3125rem;
+    --tec-lh-title:1.2; --tec-lh-tight:1.3; --tec-lh-base:1.5;
+    --tec-ls-caps:.04em;
+}
+
+/* ==========================================================================
+ * TOKENS DE LA IDENTIDAD TRIBUNAL (único tema oficial: primefaces-tribunal/theme.css)
+ * Toda pantalla toma colores, pesos y radios de aquí; nunca HEX, RGB ni la paleta
+ * (--blue-*, --green-*, --orange-*, --red-*) para expresar un estado.
+ *   Severidades: primary · secondary · success · info · warn · danger, cada una con
+ *     --tec-<sev>        color sólido (borde, barra, icono sobre fondo claro)
+ *     --tec-<sev>-text   como texto sobre superficies claras (contraste AA del tema)
+ *     --tec-<sev>-bg     fondo suave (avisos, tags, iconos de acción, KPI)
+ *   Pesos Montserrat: regular 400 (texto, labels, botones) · medium 500 (énfasis) · bold 700 (énfasis fuerte); light 300 solo .tec-display-light.
+ * ========================================================================== */
+:root {
+    --tec-fw-light:300; --tec-fw-regular:400; --tec-fw-medium:500; --tec-fw-bold:700; /* light: solo .tec-display-light */
+    --tec-radius-sm:.2625rem;
+    /* --tec-primary-text lo define el tema (theme.css). */
+    --tec-primary:var(--primary-color);     --tec-primary-bg:var(--primary-50);
+    --tec-secondary:var(--secondary-color); --tec-secondary-text:var(--secondary-text);  --tec-secondary-bg:var(--surface-100);
+    --tec-success:var(--success-color);     --tec-success-text:var(--success-text);      --tec-success-bg:var(--green-50);
+    --tec-info:var(--info-color);           --tec-info-text:var(--info-text);            --tec-info-bg:var(--blue-50);
+    --tec-warn:var(--warning-color);        --tec-warn-text:var(--warning-text);         --tec-warn-bg:var(--yellow-50);
+    --tec-danger:var(--danger-color);       --tec-danger-text:var(--danger-text);        --tec-danger-bg:var(--red-50);
+    --tec-overlay-text:var(--on-color); --tec-overlay-bg:rgba(15, 23, 42, .55);
+}
+/* Fondos suaves derivados del color de cada severidad (el primer valor es el respaldo sin color-mix).
+   Porcentajes calculados para que --tec-<sev>-text sobre --tec-<sev>-bg mantenga contraste AA (≥ 4.5:1). */
+@supports (background: color-mix(in srgb, red 10%, white)) {
+    :root {
+        --tec-primary-bg:color-mix(in srgb, var(--primary-color) 8%, var(--surface-card));
+        --tec-secondary-bg:color-mix(in srgb, var(--secondary-color) 6%, var(--surface-card));
+        --tec-success-bg:color-mix(in srgb, var(--success-color) 6%, var(--surface-card));
+        --tec-info-bg:color-mix(in srgb, var(--info-color) 6%, var(--surface-card));
+        --tec-warn-bg:color-mix(in srgb, var(--warning-color) 12%, var(--surface-card));
+        --tec-danger-bg:color-mix(in srgb, var(--danger-color) 6%, var(--surface-card));
+    }
+}
 
 /* Selector de tamaño de texto (WEB-INF/config.xhtml): dos botones, A- (reducir) y A+ (aumentar). La A de A+ es mayor que la de A-. */
-.tec-fs-selector { display:flex; gap:.5rem; margin-top:.5rem; }
-.tec-fs-selector .ui-button { flex:1 1 0; min-width:3rem; font-weight:500; line-height:1; }
-.tec-fs-selector .ui-button[data-fs-step="-1"] { font-size:var(--tec-fs-sm); }
+.tec-fs-selector { display:flex; gap:.375rem; margin-top:.375rem; }
+.tec-fs-selector .ui-button { flex:1 1 0; min-width:2.25rem; font-weight:var(--tec-fw-medium); line-height:1; }
+.tec-fs-selector .ui-button[data-fs-step="-1"] { font-size:var(--tec-fs-xs); }
 .tec-fs-selector .ui-button[data-fs-step="1"] { font-size:var(--tec-fs-xl); }
 
 /* Metadatos de fila: datos secundarios (comunidad o barrio, provincia, cantón, parroquia, sexo, usuario, fechas...). Un solo tamaño
-   para todas las tablas (sm = 11px); el dato principal (nombre, cédula, valores) se queda en md. Peso 300: a 11px Light sigue legible. */
-:root { --tec-fs-meta:var(--tec-fs-sm); }
-.tec-meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:300; }
-/* Tablas con utilidades PrimeFlex: las líneas secundarias marcadas text-500/text-600 (no iconos) toman el tamaño de metadato. */
-body .ui-datatable td :is(.text-500, .text-600):not(.pi) { font-size:var(--tec-fs-meta) !important; }
+   para todas las tablas (xs = 12px, color secundario); el dato principal (nombre, cédula, valores) se queda en md (13px). Peso Regular. */
+:root { --tec-fs-meta:var(--tec-fs-xs); }
+/* Función del texto en celdas y listas: tec-dato = dato principal (md); tec-meta = metadato (xs, color secundario).
+   Úsese en lugar de text-sm/text-xs; el énfasis se añade con font-medium (500) o font-bold (700). */
+.tec-dato { font-size:var(--tec-fs-md); font-weight:var(--tec-fw-regular); }
+.tec-meta { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+/* ==========================================================================
+ * REGLA DE CELDAS DE TABLA (todas las p:dataTable), siempre en Regular 400:
+ *   md 13px: dato principal (nombres, valores, texto sin clase).
+ *   xs 12px en color secundario: metadatos (comunidad, ubicación, fechas, usuario, sexo…).
+ * Fuera de la regla: encabezados (th), etiquetas (p:tag), iconos, énfasis 500 y microtexto 3xs.
+ * ========================================================================== */
+body .ui-datatable .ui-datatable-data > tr > td { font-weight:var(--tec-fw-regular); }
+/* Metadatos marcados con utilidades PrimeFlex (text-500/600 y text-xs): xs (12px). */
+body .ui-datatable td :is(.text-500, .text-600):not(.pi):not(.font-medium):not(.font-semibold):not(.font-bold) { font-size:var(--tec-fs-meta) !important; font-weight:var(--tec-fw-regular) !important; }
+body .ui-datatable td .text-xs:not(.pi):not(.font-medium):not(.font-semibold):not(.font-bold) { font-size:var(--tec-fs-meta) !important; }
+/* Dato destacado con font-medium (Medium 500): tamaño md aunque lleve text-sm o text-xs. */
+body .ui-datatable td .font-medium:not(.pi) { font-size:var(--tec-fs-md) !important; }
 
-/* Excepción controlada (2xs): usar solo donde el espacio sea extremo y el texto no sea esencial. */
-.tec-text-2xs { font-size:var(--tec-fs-2xs); font-weight:300; letter-spacing:.02em; line-height:var(--tec-lh-tight); }
+/* Excepción controlada (3xs): usar solo donde el espacio sea extremo y el texto no sea esencial. */
+.tec-text-3xs { font-size:var(--tec-fs-3xs); font-weight:var(--tec-fw-regular); letter-spacing:.02em; line-height:var(--tec-lh-tight); }
+
+/* Light (300) permitido solo en títulos de 24px (1.5rem) o más y solo desde md (≥768px). En xs y sm queda en Regular. */
+/* Texto en mayúsculas (utilidad uppercase de PrimeFlex): espaciado estándar para legibilidad. */
+body .uppercase { letter-spacing:var(--tec-ls-caps); }
+
+.tec-display-light { font-weight:var(--tec-fw-regular); }
+@media (min-width:768px) { .tec-display-light { font-weight:var(--tec-fw-light); font-size:max(1.5rem, 1em); } }
 
 /* ==========================================================================
- * Tipografía base: una sola familia (Montserrat, definida en --font-family del tema) y dos pesos
- * reales (400 y 700). Los controles nativos no heredan la fuente por defecto del navegador;
- * 'font-medium' (500) y 'font-semibold' (600) de PrimeFlex se resuelven a los pesos existentes.
+ * Tipografía base: una sola familia (Montserrat, definida en --font-family del tema) y los pesos
+ * permitidos 400/500/700 (300 solo en .tec-display-light). Los controles nativos no heredan la fuente del navegador;
+ * clases de PrimeFlex: font-medium y font-semibold = Medium 500; font-bold = Bold 700; font-normal y font-light = Regular 400.
  * ========================================================================== */
-body { font-family:var(--font-family); font-weight:300; }
-/* Énfasis = SemiBold (600). El navegador pone 700 a títulos, b/strong y th (strong usa "bolder", que con base 300 daría 400). */
-h1, h2, h3, h4, h5, h6, b, strong, th { font-weight:500; }
-body .font-bold, body .font-semibold { font-weight:500 !important; }
-body .font-medium { font-weight:400 !important; }
-body .font-normal, body .font-light { font-weight:300 !important; }
+body { font-family:var(--font-family); font-weight:var(--tec-fw-regular); }
+/* Énfasis = Medium (500): títulos, b/strong y th (el navegador les pondría 700). */
+h1, h2, h3, h4, h5, h6, b, strong, th { font-weight:var(--tec-fw-medium); }
+/* Interlineado base: títulos cerrados y párrafos abiertos. */
+h1, h2, h3, h4, h5, h6 { line-height:var(--tec-lh-title); }
+p { line-height:var(--tec-lh-base); }
+body .font-bold { font-weight:var(--tec-fw-bold) !important; }
+body .font-semibold { font-weight:var(--tec-fw-medium) !important; }
+body .font-medium { font-weight:var(--tec-fw-medium) !important; }
+body .font-normal, body .font-light { font-weight:var(--tec-fw-regular) !important; }
 body input, body button, body select, body textarea, body optgroup { font-family:inherit; }
-/* Controles nativos: heredan el peso base (Light). Botones: Regular explícito (texto blanco sobre color, no se aligera). */
+/* Controles nativos: heredan el peso base (Regular). Botones: Regular explícito. */
 body input, body select, body textarea, body optgroup { font-weight:inherit; }
-body button, body .ui-button { font-weight:400; }
-/* Labels de formulario: Regular (400), un paso por encima del texto base (300), en todas las pantallas. */
-body .ui-outputlabel, body label.tec-field-label, body .field > label { font-weight:400; }
-/* Peso por defecto del texto = Light (300). Los controles de entrada y los textos pequeños (xs/sm/2xs) se mantienen en 400 para no perder legibilidad. */
-body .ui-inputfield, body .ui-selectonemenu-label, body .ui-selectonemenu-item { font-weight:300; }
-body .text-xs, body .text-sm { font-weight:300; }
+body button, body .ui-button { font-weight:var(--tec-fw-regular); }
+/* Labels de formulario: Regular (400), en tamaño xs y color secundario, en todas las pantallas. */
+body .ui-outputlabel, body label.tec-field-label, body .field > label { font-weight:var(--tec-fw-regular); }
+/* Peso por defecto del texto = Regular (400), también en controles de entrada y textos pequeños (2xs/xs). */
+body .ui-inputfield, body .ui-selectonemenu-label, body .ui-selectonemenu-item { font-weight:var(--tec-fw-regular); }
+body .text-xs, body .text-sm { font-weight:var(--tec-fw-regular); }
 
 /* PrimeFlex define text-xs/sm/base/lg/xl/2xl en rem propios (.75/.875/1/1.125/1.25/1.5) que no coinciden con la escala TEC;
    se alinean con ella para que un mismo rol tenga el mismo tamaño en todas las pantallas y diálogos. */
-body .text-xs { font-size:var(--tec-fs-xs) !important; font-weight:300; }
-body .text-sm { font-size:var(--tec-fs-sm) !important; font-weight:300; }
+body .text-xs { font-size:var(--tec-fs-2xs) !important; font-weight:var(--tec-fw-regular); }
+body .text-sm { font-size:var(--tec-fs-xs) !important; font-weight:var(--tec-fw-regular); }
 body .text-base { font-size:var(--tec-fs-md) !important; }
 body .text-lg { font-size:var(--tec-fs-lg) !important; }
 body .text-xl { font-size:var(--tec-fs-xl) !important; }
@@ -80,7 +155,7 @@ body .text-2xl, body .text-3xl { font-size:var(--tec-fs-2xl) !important; }
 .layout-wrapper .layout-topbar::after { content:""; position:absolute; right:0; bottom:0; left:0; height:3px; pointer-events:none;
     background:linear-gradient(to right, var(--tec-ecuador-yellow) 0 50%, var(--tec-ecuador-blue) 50% 75%, var(--tec-ecuador-red) 75% 100%); }
 
-/* Superficies de tabla: se derivan del color primario del tema seleccionado (cambian con él).
+/* Superficies de tabla: se derivan del color primario del tema Tribunal.
    El primer valor es el respaldo para navegadores sin color-mix. */
 :root { --tec-table-head-bg:var(--surface-50); --tec-table-hover-bg:var(--surface-50); --tec-table-select-bg:var(--primary-50); --tec-table-stripe-bg:var(--surface-50); }
 @supports (background: color-mix(in srgb, red 10%, white)) {
@@ -104,61 +179,38 @@ body .text-2xl, body .text-3xl { font-size:var(--tec-fs-2xl) !important; }
 .ui-growl-item-container {
     border-radius: var(--tec-radius) !important;
     box-shadow: var(--tec-shadow-float) !important;
-    margin-bottom: .75rem !important;
+    margin-bottom: .5625rem !important;
 }
 
-.ui-growl-item-container.ui-growl-info { border-left: 4px solid var(--blue-600) !important; }
+.ui-growl-item-container.ui-growl-info { border-left: 4px solid var(--tec-info) !important; }
 
-.ui-growl-item-container.ui-growl-success { border-left: 4px solid var(--green-600) !important; }
+.ui-growl-item-container.ui-growl-success { border-left: 4px solid var(--tec-success) !important; }
 
-.ui-growl-item-container.ui-growl-warn { border-left: 4px solid var(--orange-600) !important; }
+.ui-growl-item-container.ui-growl-warn { border-left: 4px solid var(--tec-warn) !important; }
 
 .ui-growl-item-container.ui-growl-error,
-.ui-growl-item-container.ui-growl-fatal { border-left: 4px solid var(--red-600) !important; }
+.ui-growl-item-container.ui-growl-fatal { border-left: 4px solid var(--tec-danger) !important; }
 
 .ui-growl-title {
-    font-weight: 500 !important;
+    font-weight: var(--tec-fw-medium) !important;
     font-size: var(--tec-fs-lg) !important;
 }
 
 .ui-growl-message p {
     font-size: var(--tec-fs-md) !important;
-    margin-top: .25rem !important;
+    margin-top: .1875rem !important;
 }
 
 /* Inputmask placeholder más sutil */
 input[data-inputmask]::placeholder { color: var(--surface-300); }
 
-/* Buscador del menu principal en topbar */
-.layout-wrapper .layout-topbar .topbar-search-form {
-    display: contents;
-}
-
-.layout-wrapper .layout-topbar .topbar-menu-search {
-    position: relative;
-}
-
-.layout-wrapper .layout-topbar .topbar-menu-search input {
-    padding-right: 2.75rem !important;
-}
-
-.layout-wrapper .layout-topbar .topbar-search-clear.ui-button {
-    position: absolute;
-    right: .2rem;
-    top: 50%;
-    width: 2rem;
-    height: 2rem;
-    transform: translateY(-50%);
-    color: var(--text-color-secondary) !important;
-}
-
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-profile-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    margin-left: .5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: .375rem;
     border-radius: 50%;
     background: rgba(255, 255, 255, .18);
     color: inherit;
@@ -172,13 +224,14 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 /* Perfil del topbar: nombre y rol(es) del usuario.
    La barra mide siempre 60px: el contenido nunca la estira, y en pantallas
    estrechas se reduce el tamaño de letra en lugar de crecer o partirse. */
-.layout-wrapper .layout-topbar #topbar-profile-menu-button {
+/* "html body": el layout fija padding:20px con la misma especificidad y se carga después. */
+html body .layout-wrapper .layout-topbar #topbar-profile-menu-button {
     display: flex;
     align-items: center;
-    gap: .25rem;
+    gap: .1875rem;
     height: 60px;
     max-width: 40vw;
-    padding: 0 1rem;
+    padding: 0 .75rem;
     overflow: hidden;
 }
 
@@ -186,19 +239,19 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: .15rem;
+    gap: .1125rem;
     margin: 0;
-    line-height: 1.2;
+    line-height: var(--tec-lh-title);
 }
 
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__nombre {
     max-width: 100%;
     margin: 0;
     overflow: hidden;
-    /* Sin color propio: hereda el que el layout da al perfil en cada tema
-       (#topbar-profile-menu-button span: blanco u oscuro según el fondo del topbar). */
-    font-size: clamp(.72rem, .9vw, 1rem);
-    font-weight: 500;
+    /* Sin color propio: hereda el que el layout da al perfil sobre el topbar
+       (#topbar-profile-menu-button span). */
+    font-size: clamp(.6025rem, .9vw, .8125rem);
+    font-weight: var(--tec-fw-medium);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -207,29 +260,29 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    gap: .25rem;
+    gap: .1875rem;
     margin: 0;
     max-width: 100%;
 }
 
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol {
     margin: 0;
-    padding: .05rem .4rem;
-    border-radius: .25rem;
+    padding: .0375rem .3rem;
+    border-radius: .1875rem;
     background: rgba(255, 255, 255, .2);
-    /* Texto: el del layout para el perfil en cada tema (ver .topbar-perfil__nombre). */
-    font-size: clamp(.6rem, .68vw, .76rem);
-    font-weight: 500;
+    /* Texto: el del layout para el perfil (ver .topbar-perfil__nombre). */
+    font-size: clamp(var(--tec-fs-3xs), .68vw, var(--tec-fs-2xs)); /* nunca por debajo de 10px */
+    font-weight: var(--tec-fw-medium);
     overflow: hidden;
     text-overflow: ellipsis;
     letter-spacing: .02em;
-    line-height: 1.5;
+    line-height: var(--tec-lh-base);
     white-space: nowrap;
 }
 
 /* Un color por rol (identificación rápida); el prefijo SITEC- se retira en la vista.
    Fondo claro y texto oscuro de la paleta del tema: legibles sobre cualquier topbar. */
-.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--administrador { background: var(--yellow-100); color: var(--yellow-800); }
+.layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--administrador { background: var(--yellow-100); color: var(--yellow-900); }
 
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--analista { background: var(--blue-100); color: var(--blue-800); }
 
@@ -242,55 +295,30 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__rol--tribunal { background: var(--pink-100); color: var(--pink-800); }
 
 @media (max-width: 640px) {
-    .layout-wrapper .layout-topbar #topbar-profile-menu-button { padding: 0 .5rem; }
-    .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__nombre { max-width: 8rem; }
+    html body .layout-wrapper .layout-topbar #topbar-profile-menu-button { padding: 0 .375rem; }
+    .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__nombre { max-width: 6rem; }
     .layout-wrapper .layout-topbar #topbar-profile-menu-button .topbar-perfil__roles { display: none; }
 }
 
-.layout-wrapper .layout-sidebar .menu-search-empty {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    margin: .75rem 1rem;
-    padding: .75rem;
-    border-radius: .5rem;
-    background: var(--surface-50);
-    color: var(--text-color-secondary);
-    font-size: var(--tec-fs-md);
-    line-height: 1.25;
-}
-
-.layout-wrapper .layout-sidebar .menu-search-empty i {
-    color: var(--primary-700);
-}
-
-/* Menú oscuro (config.xhtml → color de menú; fondo #050505 del layout en todos los temas):
-   el fondo claro no aplica. Velo translúcido y texto claro equivalente al #BBBBBB que el
-   layout da a los enlaces del menú; el contenedor del layout no define color propio. */
-.layout-wrapper.layout-menu-dark .layout-sidebar .menu-search-empty {
-    background: rgba(255, 255, 255, .08);
-    color: rgba(255, 255, 255, .72);
-}
-
-.layout-wrapper.layout-menu-dark .layout-sidebar .menu-search-empty i {
-    color: rgba(255, 255, 255, .9);
-}
+/* Título del menú: contraste AA (el layout usa #828282 en el menú claro y #656565 en el oscuro). */
+html body .layout-wrapper.layout-menu-light .layout-sidebar .layout-menu-title { color:var(--text-color-secondary); }
+html body .layout-wrapper:not(.layout-menu-light) .layout-sidebar .layout-menu-title { color:#8f8f8f; }
 
 /* ScrollTop flotante con el color primario del tema */
 .custom-scroll-top.ui-scrolltop {
     background: var(--primary-color) !important;
     color: var(--primary-color-text) !important;
     box-shadow: var(--tec-shadow-float) !important;
-    width: 2.5rem !important; height: 2.5rem !important;
-    right: 1.5rem !important; bottom: 1.5rem !important;
+    width: 1.875rem !important; height: 1.875rem !important;
+    right: 1.125rem !important; bottom: 1.125rem !important;
 }
 
 .custom-scroll-top.ui-scrolltop:hover { background: var(--primary-700) !important; }
 
 /* BlockUI: contenido centrado con texto blanco sobre overlay oscuro */
-.ui-blockui-content { text-align: center; padding: 1.5rem; }
+.ui-blockui-content { text-align: center; padding: 1.125rem; }
 
-.ui-blockui { background: rgba(15, 23, 42, 0.55) !important; }
+.ui-blockui { background: var(--tec-overlay-bg) !important; }
 
 /* ============================================================
  * Patrones reutilizables del sistema (callouts, page header, KPI)
@@ -299,22 +327,81 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 
 /* Cabecera de página (título + subtítulo + tag opcional) */
 
-/* Callouts informativos (paneles laterales con borde de color) */
-.callout { padding:.75rem 1rem; border-radius:.5rem; border-left:3px solid; }
+/* Avisos (callout): fondo suave, borde izquierdo e icono del color de la severidad; el texto
+   conserva el color normal para leerse bien. Único estándar de aviso en línea de todo el sistema:
+   <div class="callout callout--warning"><i class="pi pi-..."/>texto</div>. */
+.callout { padding:.5625rem .75rem; border-left:4px solid var(--tec-callout-color, var(--text-color-secondary)); border-radius:var(--tec-radius);
+    background:var(--tec-callout-bg, var(--surface-50)); color:var(--text-color); font-size:var(--tec-fs-md); line-height:var(--tec-lh-base); }
 
-.callout i { margin-right:.5rem; }
+.callout i { margin-right:.375rem; color:var(--tec-callout-icon, var(--tec-callout-color, var(--text-color-secondary))); }
 
-.callout--info { background:var(--blue-100); border-color:var(--blue-600); color:var(--blue-800); }
+/* En avisos con flex el espacio lo da gap. */
+.callout.flex > i, .callout .flex > i { margin-right:0; }
 
-.callout--warning { background:var(--orange-100); border-color:var(--orange-600); color:var(--orange-800); }
+.callout--info    { --tec-callout-color:var(--tec-info);    --tec-callout-icon:var(--tec-info-text);    --tec-callout-bg:var(--tec-info-bg); }
 
-.callout--neutral { background:var(--surface-50); border-color:var(--text-color-secondary); color:var(--text-color-secondary); }
+.callout--success { --tec-callout-color:var(--tec-success); --tec-callout-icon:var(--tec-success-text); --tec-callout-bg:var(--tec-success-bg); }
+
+.callout--warning { --tec-callout-color:var(--tec-warn);    --tec-callout-icon:var(--tec-warn-text);    --tec-callout-bg:var(--tec-warn-bg); }
+
+.callout--danger  { --tec-callout-color:var(--tec-danger);  --tec-callout-icon:var(--tec-danger-text);  --tec-callout-bg:var(--tec-danger-bg); }
+
+.callout--neutral { --tec-callout-color:var(--text-color-secondary); --tec-callout-bg:var(--surface-50); color:var(--text-color-secondary); }
+
+/* Tarjeta de indicador (KPI): superficie con acento izquierdo del color de la severidad.
+   <div class="tec-kpi tec-kpi--success">…</div>; sin modificador el acento es primary. */
+.tec-kpi { --tec-kpi-color:var(--tec-primary); --tec-kpi-bg:var(--tec-primary-bg); --tec-kpi-text:var(--tec-primary-text);
+    padding:.75rem; border-left:4px solid var(--tec-kpi-color); border-radius:var(--tec-radius); background:var(--surface-card); box-shadow:var(--tec-shadow-card); }
+.tec-kpi--success { --tec-kpi-color:var(--tec-success); --tec-kpi-bg:var(--tec-success-bg); --tec-kpi-text:var(--tec-success-text); }
+.tec-kpi--info    { --tec-kpi-color:var(--tec-info);    --tec-kpi-bg:var(--tec-info-bg);    --tec-kpi-text:var(--tec-info-text); }
+.tec-kpi--warn    { --tec-kpi-color:var(--tec-warn);    --tec-kpi-bg:var(--tec-warn-bg);    --tec-kpi-text:var(--tec-warn-text); }
+.tec-kpi--danger  { --tec-kpi-color:var(--tec-danger);  --tec-kpi-bg:var(--tec-danger-bg);  --tec-kpi-text:var(--tec-danger-text); }
+
+/* Icono en caja de fondo suave (KPI y encabezados de bloque). Dentro de .tec-kpi toma su severidad;
+   fuera, tec-icon-badge--success/info/warn/danger/neutral. */
+.tec-icon-badge { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:2.0625rem; height:2.0625rem;
+    border-radius:var(--tec-radius); background:var(--tec-kpi-bg, var(--tec-primary-bg)); color:var(--tec-kpi-text, var(--tec-primary-text)); font-size:var(--tec-fs-lg); }
+.tec-icon-badge > .pi { font-size:inherit; color:inherit; }
+.tec-icon-badge--success { --tec-kpi-bg:var(--tec-success-bg); --tec-kpi-text:var(--tec-success-text); }
+.tec-icon-badge--info    { --tec-kpi-bg:var(--tec-info-bg);    --tec-kpi-text:var(--tec-info-text); }
+.tec-icon-badge--warn    { --tec-kpi-bg:var(--tec-warn-bg);    --tec-kpi-text:var(--tec-warn-text); }
+.tec-icon-badge--danger  { --tec-kpi-bg:var(--tec-danger-bg);  --tec-kpi-text:var(--tec-danger-text); }
+.tec-icon-badge--neutral { --tec-kpi-bg:var(--surface-100);    --tec-kpi-text:var(--text-color-secondary); }
+/* Variante grande para estados vacíos o de bienvenida. */
+.tec-icon-badge--xl { width:3.75rem; height:3.75rem; font-size:1.5625rem; }
+
+/* Icono decorativo grande (confirmaciones, estados vacíos): un solo tamaño en todo el sistema. */
+.tec-icon-hero { font-size:1.9375rem; line-height:1; }
+
+/* Color semántico para texto e iconos sobre superficies claras (en lugar de text-green-600, text-orange-500…). */
+.tec-text-primary { color:var(--tec-primary-text); }
+.tec-text-success { color:var(--tec-success-text); }
+.tec-text-info    { color:var(--tec-info-text); }
+.tec-text-warn    { color:var(--tec-warn-text); }
+.tec-text-danger  { color:var(--tec-danger-text); }
+
+/* Rótulo de sección dentro de p:divider (p. ej. "Resumen" del dashboard). */
+.tec-section-label { display:inline-flex; align-items:center; gap:.3rem; padding:.15rem .45rem; border-radius:var(--tec-radius-sm);
+    background:var(--tec-primary-bg); color:var(--tec-primary-text); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-medium); }
+
+/* Barra de avance (p:progressBar): delgada, redondeada, relleno del color primario. */
+body .ui-progressbar.tec-progress { height:.375rem; border:0 none; border-radius:999px; background:var(--surface-200); }
+body .ui-progressbar.tec-progress .ui-progressbar-value { border-radius:999px; background:var(--tec-primary); }
+body .ui-progressbar.tec-progress .ui-progressbar-label { display:none !important; } /* PrimeFaces escribe display:block inline con labelTemplate */
+
+/* Avatar con iniciales del usuario. */
+.tec-avatar { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:1.5rem; height:1.5rem; border-radius:50%;
+    background:var(--tec-primary); color:var(--primary-color-text); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-medium); }
+
+/* p:blockUI: spinner y mensaje de "procesando" en claro sobre el velo oscuro (mismo aspecto en todas las vistas). */
+.tec-overlay-spinner { color:var(--tec-overlay-text); font-size:1.9375rem; }
+.tec-overlay-text { display:block; margin-top:.375rem; color:var(--tec-overlay-text); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); }
 
 /* Tooltips: tipografía coherente */
 .ui-tooltip .ui-tooltip-text {
-    font-size: var(--tec-fs-sm) !important;
-    padding: .35rem .6rem !important;
-    border-radius: 6px !important; font-weight:300; }
+    font-size: var(--tec-fs-xs) !important;
+    padding: .2625rem .45rem !important;
+    border-radius: 6px !important; font-weight:var(--tec-fw-regular); }
 .tec-table-seleccionable .ui-datatable-data > tr {
     transition: background-color .15s ease, box-shadow .15s ease;
 }
@@ -328,7 +415,7 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 .tec-table-seleccionable .ui-datatable-data > tr.p-highlight > td {
     background: var(--tec-table-select-bg) !important;
     color: var(--text-color) !important;
-    font-weight: 500;
+    font-weight: var(--tec-fw-medium);
 }
 .tec-table-seleccionable .ui-datatable-data > tr.fila-seleccionada > td:first-child,
 .tec-table-seleccionable .ui-datatable-data > tr.ui-state-highlight > td:first-child,
@@ -342,76 +429,91 @@ input[data-inputmask]::placeholder { color: var(--surface-300); }
 /* ==========================================================================
  * Vistas de listado (tec-*): capa compartida por procesos.xhtml y personas.xhtml.
  * Varias reglas usan "body .ui-..." para superar la especificidad del tema
- * ecuador sin depender del orden de carga de las hojas.
+ * Tribunal sin depender del orden de carga de las hojas.
  * ========================================================================== */
 
 /* Encabezado de página */
-.tec-page-header { display:flex; align-items:center; gap:.875rem; margin-bottom:1rem; }
+.tec-page-header { display:flex; align-items:center; gap:.6562rem; margin-bottom:.75rem; }
 
-.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.75rem; height:2.75rem; border-radius:.625rem; background:var(--surface-100); color:var(--text-color); font-size:var(--tec-fs-lg); }
+.tec-page-header__icon { display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:2.0625rem; height:2.0625rem; border-radius:.4688rem; background:var(--surface-100); color:var(--text-color); font-size:var(--tec-fs-lg); }
 
-.tec-page-header :is(h1, h2) { margin:0; color:var(--text-color); font-size:var(--tec-fs-2xl); font-weight:500; line-height:var(--tec-lh-tight); }
+.tec-page-header :is(h1, h2) { margin:0; color:var(--text-color); font-size:var(--tec-fs-2xl); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-title); }
 
-.tec-page-header p { margin:.15rem 0 0; color:var(--text-color-secondary); font-size:var(--tec-fs-md); }
+.tec-page-header p { margin:.1125rem 0 0; color:var(--text-color-secondary); font-size:var(--tec-fs-md); }
 
 /* Migas de pan: Inicio / módulo / página. Colores y tamaños salen del tema (el layout los fija en px y HEX). */
 html body .layout-wrapper .layout-main .route-bar { min-height:0; border-bottom:1px solid var(--surface-border); background:var(--surface-ground); box-shadow:none; }
-html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb { padding:.4rem 1rem; }
-html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li { padding:0; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); line-height:var(--tec-lh-tight); font-weight:300; }
-html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li + li::before { content:"/"; padding:0 .5rem; color:var(--text-color-secondary); opacity:.7; }
-html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li a { color:var(--tec-primary-text, var(--primary-color)); font-size:var(--tec-fs-sm); font-weight:300; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb { padding:.3rem .75rem; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li { padding:0; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); line-height:var(--tec-lh-tight); font-weight:var(--tec-fw-regular); }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li + li::before { content:"/"; padding:0 .375rem; color:var(--text-color-secondary); opacity:.7; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li a { color:var(--tec-primary-text, var(--primary-color)); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li i { color:var(--tec-primary-text, var(--primary-color)); font-size:var(--tec-fs-lg); top:2px; }
-html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li[aria-current="page"] { font-weight:500; }
+html body .layout-wrapper .layout-main .route-bar .route-bar-breadcrumb ul li[aria-current="page"] { font-weight:var(--tec-fw-medium); }
 
-.tec-page-header__aside { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:.375rem; margin-left:auto; }
+.tec-page-header__aside { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:.2812rem; margin-left:auto; }
 
 /* Tarjeta y filtros */
-.tec-card { padding:1rem 1.25rem; border:1px solid var(--surface-border); box-shadow:0 1px 2px rgba(15, 23, 42, .05); }
+.tec-card { padding:.75rem .9375rem; border:1px solid var(--surface-border); border-radius:var(--tec-radius); box-shadow:var(--tec-shadow-card); }
 
 .tec-filters { border-bottom:1px solid var(--surface-border); }
 
-.tec-filters .field { margin-bottom:.75rem; }
+.tec-filters .field { margin-bottom:.5625rem; }
 
 .tec-filters .ui-outputlabel,
 .tec-form .ui-outputlabel,
 .tec-filters .tec-field-label,
-.tec-form .tec-field-label { display:block; margin-bottom:.3rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:400; }
+.tec-form .tec-field-label { display:block; margin-bottom:.225rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 .tec-search-input { position:relative; display:block; }
 
-.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.75rem; transform:translateY(-50%); color:var(--text-color-secondary); font-size:var(--tec-fs-md); pointer-events:none; }
+.tec-search-input > i { position:absolute; z-index:1; top:50%; left:.5625rem; transform:translateY(-50%); color:var(--text-color-secondary); font-size:var(--tec-fs-md); pointer-events:none; }
 
-.tec-search-input .ui-inputfield { width:100%; padding-left:2.1rem; }
+.tec-search-input .ui-inputfield { width:100%; padding-left:1.575rem; }
 
 .tec-filter-actions-cell { display:flex; align-items:flex-end; }
 
-.tec-filter-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.5rem; width:100%; }
+.tec-filter-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.375rem; width:100%; }
 
 body .ui-fluid .tec-filter-actions .ui-button { flex:0 0 auto; width:auto; }
 
 .tec-btn.ui-button { font-size:var(--tec-fs-md); }
 
-.tec-select-panel.ui-selectonemenu-panel { max-width:min(26rem, calc(100vw - 2rem)); }
+/* p:selectOneMenu calcula un min-width inline con la opción más larga (p. ej. nombres de recinto de 60 caracteres)
+   y desborda la página en columnas estrechas; con w-full o ui-fluid manda el ancho de la columna (la etiqueta se recorta). */
+body .ui-selectonemenu.w-full, body .ui-fluid .ui-selectonemenu { min-width:0 !important; max-width:100%; }
+
+.tec-select-panel.ui-selectonemenu-panel { max-width:min(19.5rem, calc(100vw - 1.5rem)); }
 
 .tec-select-panel .ui-selectonemenu-item { white-space:normal; }
 
 /* Tabla */
-.tec-table-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin:1rem 0 .5rem; }
+.tec-table-heading { display:flex; align-items:center; justify-content:space-between; gap:.5625rem; margin:.75rem 0 .375rem; }
 
-.tec-table-heading h3 { margin:0; color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:500; }
+.tec-table-heading h3 { margin:0; color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:var(--tec-fw-medium); }
 
+/* PrimeFaces usa table-layout:fixed por defecto: con él, una columna ajustada al contenido (tec-col-actions, tec-col-fit,
+   width:1%) mide literalmente el 1 % y sus botones no caben. Las tablas sin scroll usan layout automático. */
+body .ui-datatable:not(.ui-datatable-scrollable) > .ui-datatable-tablewrapper > table { table-layout:auto; }
+body .ui-treetable:not(.ui-treetable-scrollable) > table { table-layout:auto; }
 body .ui-datatable.tec-table table { table-layout:auto; }
+
+/* Escritorio y tableta (fuera del modo tarjetas): si las columnas no caben, la tabla se desplaza dentro de su contenedor
+   y la columna principal (nombre) conserva un ancho legible en lugar de partirse letra a letra. */
+@media (min-width:641px) {
+    body .ui-datatable .ui-datatable-tablewrapper { overflow-x:auto; }
+    body .ui-datatable :is(th, td).tec-col-primary { min-width:12rem; }
+}
 
 /* PrimeFaces sincroniza las columnas de las tablas con scroll asumiendo table-layout:fixed. */
 body .ui-datatable.tec-table.ui-datatable-scrollable table { table-layout:fixed; }
 
 body .ui-datatable thead th { border-right:0 none; border-left:0 none; border-bottom:2px solid var(--primary-color); background:var(--tec-table-head-bg); vertical-align:top; }
 
-body .ui-datatable thead th > .ui-column-title { color:var(--primary-800); font-size:var(--tec-fs-xs); font-weight:500; letter-spacing:.03em; text-transform:uppercase; }
+body .ui-datatable thead th > .ui-column-title { color:var(--primary-800); font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-medium); letter-spacing:var(--tec-ls-caps); text-transform:uppercase; }
 
-body .ui-datatable thead th .ui-column-filter { margin-top:.35rem; font-size:var(--tec-fs-sm); font-weight:300; }
+body .ui-datatable thead th .ui-column-filter { margin-top:.2625rem; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
-body .ui-datatable .ui-datatable-header { padding:.5rem 0 .75rem; border:0 none; background:transparent; }
+body .ui-datatable .ui-datatable-header { padding:.375rem 0 .5625rem; border:0 none; background:transparent; }
 
 .tec-table .ui-datatable-data > tr { cursor:pointer; transition:background-color .15s ease; }
 
@@ -437,27 +539,27 @@ body .ui-datatable .ui-datatable-data > tr.p-highlight { background:var(--tec-ta
 
 .ui-datatable .ui-datatable-data > tr.ui-datatable-empty-message > td { background:var(--surface-card) !important; }
 
-body .ui-datatable .ui-paginator { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.25rem; padding:.625rem 0 0; border:0 none; background:transparent; }
+body .ui-datatable .ui-paginator { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.1875rem; padding:.4688rem 0 0; border:0 none; background:transparent; }
 
-body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 .tec-col-fit { width:1%; }
 
 .tec-col-actions { width:1%; text-align:right; white-space:nowrap; }
 
 /* Acciones por fila: separación fija entre botones */
-.tec-acciones { display:inline-flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:.375rem; vertical-align:middle; }
+.tec-acciones { display:inline-flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:.2812rem; vertical-align:middle; }
 
 body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 
 /* Separador vertical entre grupos de acciones de una barra */
-.tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.5rem; margin:0 .25rem; background:var(--surface-200); }
+.tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.125rem; margin:0 .1875rem; background:var(--surface-200); }
 
-.tec-mono { color:var(--text-color); font-family:monospace; font-size:var(--tec-fs-sm); font-weight:300; }
+.tec-mono { color:var(--text-color); font-family:monospace; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 .tec-muted { color:var(--text-color-secondary); }
 
-.tec-table td .tec-muted { font-size:var(--tec-fs-meta); font-weight:300; }
+.tec-table td .tec-muted { font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
 
 /* Rayado, pie y filas impares: el CSS del tema las pinta con HEX fijos (#fbfcfc, #e9ecef); aquí
    toman las superficies derivadas del tema para que hover y selección sigan siendo legibles. */
@@ -465,7 +567,7 @@ body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd
 body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd.ui-state-hover { background:var(--tec-table-hover-bg); color:inherit; }
 body .ui-datatable.ui-datatable-striped .ui-datatable-data > tr.ui-datatable-odd.ui-state-highlight { background:var(--tec-table-select-bg); color:var(--text-color); }
 body .ui-datatable tfoot td,
-body .ui-datatable .ui-datatable-footer { border-top:1px solid var(--surface-border); background:var(--tec-table-head-bg); color:var(--text-color); font-weight:500; }
+body .ui-datatable .ui-datatable-footer { border-top:1px solid var(--surface-border); background:var(--tec-table-head-bg); color:var(--text-color); font-weight:var(--tec-fw-medium); }
 
 /* Columnas numéricas y centradas: cifras alineadas a la derecha con ancho tabular. */
 .tec-col-num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
@@ -476,62 +578,63 @@ body .ui-datatable .ui-datatable-footer { border-top:1px solid var(--surface-bor
  * (1) leen las superficies de las variables del tema, (2) se unifica densidad, radio, borde
  * sutil y UNA sombra pequeña (el tema usa sombras de 3 capas con 46px de difusión).
  * ========================================================================== */
-:root { --tec-radius:.5rem; --tec-shadow-float:0 4px 12px rgba(0,0,0,.15); }
+/* Radios y sombras: --tec-shadow-card es la de las tarjetas (igual a shadow-1 de PrimeFlex), --tec-shadow-float la de overlays. */
+:root { --tec-radius:.375rem; --tec-shadow-card:0 3px 5px rgba(0,0,0,.02), 0 0 2px rgba(0,0,0,.05), 0 1px 4px rgba(0,0,0,.08); --tec-shadow-float:0 4px 12px rgba(0,0,0,.15); }
 
 /* PrimeFlex pinta text-400/500 con surface-400/500 (≈1.9:1 y 2.7:1 sobre blanco): se sube al secundario del tema. */
 body .text-400, body .text-500 { color:var(--text-color-secondary) !important; }
 
 body .ui-dialog { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:var(--tec-shadow-float); }
-body .ui-dialog .ui-dialog-titlebar { padding:.875rem 1.25rem; border-bottom:1px solid var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-card); color:var(--text-color); }
+body .ui-dialog .ui-dialog-titlebar { padding:.6562rem .9375rem; border-bottom:1px solid var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-card); color:var(--text-color); }
 body .ui-dialog .ui-dialog-titlebar .ui-dialog-title { font-size:var(--tec-fs-lg); }
-body .ui-dialog .ui-dialog-content { padding:1rem 1.25rem 1.25rem; background:var(--surface-card); color:var(--text-color); }
+body .ui-dialog .ui-dialog-content { padding:.75rem .9375rem .9375rem; background:var(--surface-card); color:var(--text-color); }
 body .ui-dialog .ui-dialog-content:last-child { border-radius:0 0 var(--tec-radius) var(--tec-radius); }
 /* ---- Estándar de p:dialog (todos los diálogos, modernos y antiguos) ----
-   Jerarquía: título lg · texto y datos principales md · labels e info secundaria sm · hints, fechas, metadatos y tags xs. */
+   Jerarquía: título lg · texto y datos principales md · labels, metadatos e info secundaria xs · hints, fechas y tags 2xs. */
 body .ui-dialog .ui-dialog-content { font-size:var(--tec-fs-md); line-height:var(--tec-lh-base); }
-body .ui-dialog .ui-outputlabel, body .ui-dialog .field > label, body .ui-dialog .tec-field-label { font-size:var(--tec-fs-sm); font-weight:400; line-height:var(--tec-lh-tight); }
-body .ui-dialog small { font-size:var(--tec-fs-xs); line-height:var(--tec-lh-base); font-weight:300; }
-body .ui-dialog :is(h3, h4, h5) { margin:0 0 .5rem; font-size:var(--tec-fs-lg); font-weight:500; line-height:var(--tec-lh-tight); }
+body .ui-dialog .ui-outputlabel, body .ui-dialog .field > label, body .ui-dialog .tec-field-label { font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); line-height:var(--tec-lh-tight); }
+body .ui-dialog small { font-size:var(--tec-fs-2xs); line-height:var(--tec-lh-base); font-weight:var(--tec-fw-regular); }
+body .ui-dialog :is(h3, h4, h5) { margin:0 0 .375rem; font-size:var(--tec-fs-lg); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-title); }
 
 /* Tablas dentro de diálogos: densidad compacta. Las columnas se reparten el ancho disponible (max-width:100%);
    el scroll horizontal queda solo como último recurso. */
 body .ui-dialog .ui-datatable { max-width:100%; }
-body .ui-dialog .ui-datatable thead th { padding:.4rem .5rem; }
-body .ui-dialog .ui-datatable .ui-datatable-data > tr > td { padding:.35rem .5rem; line-height:var(--tec-lh-base); }
-body .ui-dialog .ui-datatable .ui-paginator { padding-top:.4rem; }
-body .ui-dialog .ui-datatable .tec-mono { font-size:var(--tec-fs-md); }
+body .ui-dialog .ui-datatable thead th { padding:.3rem .375rem; }
+body .ui-dialog .ui-datatable .ui-datatable-data > tr > td { padding:.2625rem .375rem; line-height:var(--tec-lh-base); }
+body .ui-dialog .ui-datatable .ui-paginator { padding-top:.3rem; }
+body .ui-dialog .ui-datatable .tec-mono { font-size:var(--tec-fs-md); font-weight:var(--tec-fw-regular); }
 /* Acciones: columna estrecha (el icono manda, no el encabezado) y con los iconos centrados. */
-body .ui-dialog .ui-datatable th.tec-col-actions, body .ui-dialog .ui-datatable td.tec-col-actions { padding-right:.25rem; padding-left:.25rem; text-align:center; }
+body .ui-dialog .ui-datatable th.tec-col-actions, body .ui-dialog .ui-datatable td.tec-col-actions { padding-right:.1875rem; padding-left:.1875rem; text-align:center; }
 body .ui-dialog .ui-datatable .tec-col-actions .tec-acciones { justify-content:center; }
-/* Tags: texto xs, varias líneas si hace falta, sin imponer la altura de la fila. */
-body .ui-dialog .ui-datatable td .tec-status.ui-tag { display:inline-flex; align-items:flex-start; gap:.3rem; max-width:100%; line-height:var(--tec-lh-tight); text-align:left; white-space:normal; }
-body .ui-dialog .ui-datatable td .tec-status.ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.1rem; }
+/* Tags: texto 2xs, varias líneas si hace falta, sin imponer la altura de la fila. */
+body .ui-dialog .ui-datatable td .ui-tag { display:inline-flex; align-items:flex-start; gap:.225rem; max-width:100%; line-height:var(--tec-lh-tight); text-align:left; white-space:normal; }
+body .ui-dialog .ui-datatable td .ui-tag .ui-tag-icon { flex:0 0 auto; margin-top:.075rem; }
 body .ui-dialog .ui-dialog-content .ui-datatable .ui-datatable-tablewrapper { max-width:100%; overflow-x:auto; }
-body .ui-dialog .ui-dialog-footer { padding:.75rem 1.25rem; border-top:1px solid var(--surface-border); border-radius:0 0 var(--tec-radius) var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
+body .ui-dialog .ui-dialog-footer { padding:.5625rem .9375rem; border-top:1px solid var(--surface-border); border-radius:0 0 var(--tec-radius) var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
 
 body .ui-overlaypanel { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:var(--tec-shadow-float); }
 body .ui-tooltip .ui-tooltip-text,
 body .ui-autocomplete-panel, body .ui-selectonemenu-panel, body .ui-datepicker.ui-input-overlay, body .ui-menu.ui-shadow { box-shadow:var(--tec-shadow-float); }
 
-body .ui-panel .ui-panel-titlebar { padding:.75rem 1rem; border-color:var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-ground); color:var(--text-color); }
-body .ui-panel .ui-panel-titlebar .ui-panel-title { font-size:var(--tec-fs-lg); font-weight:500; }
+body .ui-panel .ui-panel-titlebar { padding:.5625rem .75rem; border-color:var(--surface-border); border-radius:var(--tec-radius) var(--tec-radius) 0 0; background:var(--surface-ground); color:var(--text-color); }
+body .ui-panel .ui-panel-titlebar .ui-panel-title { font-size:var(--tec-fs-lg); font-weight:var(--tec-fw-medium); }
 body .ui-panel .ui-panel-content, body .ui-panel .ui-panel-footer { border-color:var(--surface-border); background:var(--surface-card); color:var(--text-color); }
 body .ui-panel > div:last-of-type { border-radius:0 0 var(--tec-radius) var(--tec-radius); }
 body .ui-panel.ui-panel-collapsed .ui-panel-titlebar { border-radius:var(--tec-radius); }
 
-body .ui-fieldset { padding:.75rem 1rem 1rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
-body .ui-fieldset .ui-fieldset-legend { padding:.375rem .75rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-ground); color:var(--text-color); font-size:var(--tec-fs-md); font-weight:500; }
+body .ui-fieldset { padding:.5625rem .75rem .75rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); }
+body .ui-fieldset .ui-fieldset-legend { padding:.2812rem .5625rem; border-color:var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-ground); color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); }
 
 body .ui-card { border:1px solid var(--surface-border); border-radius:var(--tec-radius); background:var(--surface-card); color:var(--text-color); box-shadow:none; }
 
-body .ui-accordion .ui-accordion-header { padding:.75rem 1rem; border-color:var(--surface-border); background:var(--surface-ground); color:var(--text-color); }
+body .ui-accordion .ui-accordion-header { padding:.5625rem .75rem; border-color:var(--surface-border); background:var(--surface-ground); color:var(--text-color); }
 body .ui-accordion .ui-accordion-header.ui-state-hover { background:var(--tec-table-hover-bg); color:var(--text-color); }
 body .ui-accordion .ui-accordion-content { border-color:var(--surface-border); background:var(--surface-card); color:var(--text-color); }
 
 body .ui-tabs .ui-tabs-nav, body .ui-tabs .ui-tabs-nav li.ui-tabs-header, body .ui-tabs .ui-tabs-panels { background:var(--surface-card); }
 body .ui-tabs .ui-tabs-panels { color:var(--text-color); }
 body .ui-tabs .ui-tabs-nav li.ui-tabs-header, body .ui-tabs .ui-tabs-nav li.ui-tabs-header a { color:var(--text-color-secondary); }
-body .ui-tabs .ui-tabs-nav li.ui-tabs-header { padding:.75rem 1rem; }
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header { padding:.5625rem .75rem; }
 body .ui-tabs.ui-tabs-top > .ui-tabs-nav:before, body .ui-tabs.ui-tabs-top > .ui-tabs-nav li.ui-tabs-header { border-bottom-color:var(--surface-border); }
 
 /* Pasos inactivos: el tema los apaga con opacity:.65, que deja título y número ilegibles. */
@@ -542,9 +645,7 @@ body .ui-steps .ui-steps-item.ui-state-highlight .ui-steps-title { color:var(--t
 body .ui-steps:before { border-top-color:var(--surface-border); }
 
 /* Primario usado como TEXTO/borde sobre superficies claras (enlaces, pestaña activa, botón outlined):
-   en temas de primario claro (Yellow, Amber, Lime, Green) el tema lo pinta con contraste 1.4–2.5:1.
-   --tec-primary-text lo define cada tema.css como el primer escalón de su rampa con contraste ≥ 4.5:1
-   (en el tema Tribunal es el propio --primary-color). */
+   --tec-primary-text lo define theme.css (en el tema Tribunal es el propio --primary-color, contraste 8:1). */
 body .ui-commandlink, body .ui-link,
 body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active a, body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active .ui-icon,
 body .ui-tabmenu .ui-tabmenu-nav .ui-tabmenuitem.ui-state-active a, body .ui-tabmenu .ui-tabmenu-nav .ui-tabmenuitem.ui-state-active a .ui-icon,
@@ -552,20 +653,20 @@ body .ui-datatable thead th.ui-state-active { color:var(--tec-primary-text, var(
 body .ui-button.ui-button-outlined:not(.ui-button-secondary):not(.ui-button-success):not(.ui-button-info):not(.ui-button-warning):not(.ui-button-danger):not(.ui-button-help) { border-color:var(--tec-primary-text, var(--primary-color)); color:var(--tec-primary-text, var(--primary-color)); }
 
 /* Mensajes: misma semántica del tema con menos relleno. */
-body .ui-messages > div { padding:.75rem 1rem; }
-body .ui-growl .ui-growl-item-container .ui-growl-item { padding:.75rem 1rem; }
+body .ui-messages > div { padding:.5625rem .75rem; }
+body .ui-growl .ui-growl-item-container .ui-growl-item { padding:.5625rem .75rem; }
 
 /* Deshabilitado/solo lectura: identificable (fondo de superficie) pero legible (sin opacity .6 sobre el texto). */
 body .ui-inputfield:disabled, body .ui-inputfield[readonly], body .ui-state-disabled .ui-inputfield, body .ui-inputfield.ui-state-disabled { opacity:1; border-color:var(--surface-border); background:var(--surface-100); color:var(--text-color); }
 
 /* ==========================================================================
  * Acciones de fila (botones de solo icono): iconos con presencia, sin fondos fuertes.
- * PrimeIcons es una fuente de UN solo peso: con font-weight:500 el navegador engrosa el trazo
+ * PrimeIcons es una fuente de UN solo peso: con peso 500 (--tec-fw-medium) el navegador engrosa el trazo
  * (negrita sintética) sin deformarlo, y es lo que da la presencia buscada. El color de cada
  * acción sale de su severidad (variante -text del tema, contraste ≥ 4.5:1); 'secondary' usa el
  * color de texto para que Editar no se vea apagado. Aplica a .tec-acciones y a cualquier tabla.
  * ========================================================================== */
-:root { --tec-action-icon-size:1.05rem; }
+:root { --tec-action-icon-size:.7875rem; }
 
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only { --tec-action-color:var(--text-color); color:var(--tec-action-color); opacity:1; }
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-secondary { --tec-action-color:var(--text-color); }
@@ -575,7 +676,7 @@ html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-help { --tec-action-color:var(--help-text); }
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-button-danger { --tec-action-color:var(--danger-text); }
 
-html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only .ui-icon { color:inherit; font-size:var(--tec-action-icon-size); font-weight:500; }
+html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only .ui-icon { color:inherit; font-size:var(--tec-action-icon-size); font-weight:var(--tec-fw-medium); }
 
 /* Hover / active: tinte suave del propio color de la acción (no cambia el color del icono). */
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:enabled:hover,
@@ -588,46 +689,56 @@ html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:disabled,
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-state-disabled { opacity:.4; background:transparent; }
 
-/* Estados discretos (el tema pinta p:tag con colores sólidos) */
-.tec-status.ui-tag { padding:.1rem .45rem; border-radius:.35rem; background:var(--surface-100); color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:300; line-height:var(--tec-lh-base); white-space:nowrap; }
+/* Etiquetas de estado (p:tag): un solo aspecto en todo el sistema, fondo suave y texto del color de la
+   severidad (contraste AA). El tema las pinta sólidas y no define 'secondary'; "html body" supera su
+   especificidad. La clase tec-status ya no es necesaria (se conserva sin efecto propio). */
+html body .ui-tag, html body .ui-tag[class*="ui-tag-"] { --tec-tag-bg:var(--tec-secondary-bg); --tec-tag-text:var(--tec-secondary-text);
+    padding:.075rem .3375rem; border-radius:var(--tec-radius-sm); background:var(--tec-tag-bg); color:var(--tec-tag-text);
+    font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); line-height:var(--tec-lh-base); white-space:nowrap; }
 
-.tec-status.ui-tag.ui-tag-success { background:var(--green-50); color:var(--green-700); }
+html body .ui-tag.ui-tag-success { --tec-tag-bg:var(--tec-success-bg); --tec-tag-text:var(--tec-success-text); }
 
-.tec-status.ui-tag.ui-tag-danger { background:var(--red-50); color:var(--red-700); }
+html body .ui-tag.ui-tag-info { --tec-tag-bg:var(--tec-info-bg); --tec-tag-text:var(--tec-info-text); }
 
-.tec-status.ui-tag.ui-tag-warning { background:var(--orange-50); color:var(--orange-700); }
+html body .ui-tag.ui-tag-warning { --tec-tag-bg:var(--tec-warn-bg); --tec-tag-text:var(--tec-warn-text); }
 
-.tec-status.ui-tag.ui-tag-info { background:var(--blue-50); color:var(--blue-700); }
+html body .ui-tag.ui-tag-danger { --tec-tag-bg:var(--tec-danger-bg); --tec-tag-text:var(--tec-danger-text); }
 
-.tec-status.ui-tag .ui-tag-icon { font-size:var(--tec-fs-xs); font-weight:300; }
+html body .ui-tag .ui-tag-icon { font-size:var(--tec-fs-2xs); }
 
 /* Estado vacío */
-.tec-empty { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:2rem 1rem; text-align:center; }
+.tec-empty { display:flex; flex-direction:column; align-items:center; gap:.1875rem; padding:1.5rem .75rem; text-align:center; }
 
-.tec-empty > .pi { margin-bottom:.35rem; color:var(--text-color-secondary); font-size:var(--tec-fs-2xl); }
+.tec-empty > .pi { margin-bottom:.2625rem; color:var(--text-color-secondary); font-size:var(--tec-fs-2xl); }
 
-.tec-empty__title { color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:500; }
+.tec-empty__title { color:var(--text-color); font-size:var(--tec-fs-lg); font-weight:var(--tec-fw-medium); }
 
-.tec-empty__text { max-width:26rem; color:var(--text-color-secondary); font-size:var(--tec-fs-sm); font-weight:300; }
+.tec-empty__text { max-width:19.5rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
 /* Diálogos sin width fijo.
    PrimeFaces fija width:auto en línea al mostrar el diálogo, así que estas
    reglas necesitan !important para imponerse. */
-.tec-dialog.ui-dialog { width:min(40rem, calc(100vw - 2rem)) !important; }
+/* Cuatro anchos estándar (se adaptan al tamaño de texto elegido y a la pantalla):
+   sm 25.5rem (confirmaciones) · base 30rem (formularios) · md 42rem (formularios amplios) · lg 54rem (tablas y detalle). */
+.tec-dialog.ui-dialog { width:min(30rem, calc(100vw - 1.5rem)) !important; }
 
-.tec-dialog--lg.ui-dialog { width:min(72rem, calc(100vw - 2rem)) !important; }
+.tec-dialog--sm.ui-dialog { width:min(25.5rem, calc(100vw - 1.5rem)) !important; }
 
-.tec-dialog.ui-dialog .ui-dialog-content { padding-top:1rem; }
+.tec-dialog--md.ui-dialog { width:min(42rem, calc(100vw - 1.5rem)) !important; }
+
+.tec-dialog--lg.ui-dialog { width:min(54rem, calc(100vw - 1.5rem)) !important; }
+
+.tec-dialog.ui-dialog .ui-dialog-content { padding-top:.75rem; }
 
 /* Móvil: PrimeFaces pasa la tabla a tarjetas (reflow) por debajo de 640px.
    La celda marcada con tec-col-primary encabeza la tarjeta. */
 @media (max-width:640px) {
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.625rem .25rem; border-bottom:1px solid var(--surface-border); }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td { display:flex !important; align-items:center; gap:.5rem; width:100% !important; padding:.2rem .5rem !important; border:0 none !important; background:transparent !important; }
-    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 6.5rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:500; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr { position:relative; display:flex; flex-direction:column; padding:.4688rem .1875rem; border-bottom:1px solid var(--surface-border); }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td { display:flex !important; align-items:center; gap:.375rem; width:100% !important; padding:.15rem .375rem !important; border:0 none !important; background:transparent !important; }
+    .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > .ui-column-title { flex:0 0 4.875rem; min-width:0 !important; margin:0 !important; padding:0 !important; color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-medium); }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr > td > :not(.ui-column-title) { min-width:0; }
-    .tec-table.ui-datatable-reflow td.tec-col-primary { order:-1; padding-bottom:.35rem !important; }
-    .tec-table.ui-datatable-reflow td.tec-col-primary > .ui-column-title { display:none; }
+    .tec-table.ui-datatable-reflow td.tec-col-primary { order:-1; padding-bottom:.2625rem !important; }
+    html body .tec-table.ui-datatable-reflow td.tec-col-primary > .ui-column-title { display:none; }
     .tec-table.ui-datatable-reflow td.tec-col-actions { text-align:left; }
     .tec-table.ui-datatable-reflow .tec-acciones { flex-wrap:wrap; justify-content:flex-start; }
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-datatable-empty-message > td { justify-content:center; }
@@ -635,18 +746,35 @@ html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-
     .tec-table.ui-datatable-reflow .ui-datatable-data > tr.ui-state-highlight { box-shadow:inset 3px 0 0 var(--primary-color); }
 }
 
-@media (max-width:576px) {
-    body .ui-dialog .ui-dialog-titlebar { padding:.75rem 1rem; }
-    body .ui-dialog .ui-dialog-content { padding:.75rem 1rem 1rem; }
-    body .ui-dialog .ui-dialog-footer { padding:.5rem 1rem; }
+@media (max-width:575.98px) {
+    body .ui-dialog .ui-dialog-titlebar { padding:.5625rem .75rem; }
+    body .ui-dialog .ui-dialog-content { padding:.5625rem .75rem .75rem; }
+    body .ui-dialog .ui-dialog-footer { padding:.375rem .75rem; }
     .tec-page-header { flex-wrap:wrap; }
     .tec-page-header__aside { margin-left:0; }
-    .tec-card { padding:.875rem; }
+    .tec-card { padding:.6562rem; }
     .tec-filter-actions { justify-content:stretch; }
     .tec-toolbar-sep { display:none; }
-    body .ui-fluid .tec-filter-actions .ui-button { flex:1 1 calc(50% - .25rem); }
-    body .ui-datatable .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .25rem; text-align:center; }
+    body .ui-fluid .tec-filter-actions .ui-button { flex:1 1 calc(50% - .1875rem); }
+    body .ui-datatable .ui-paginator .ui-paginator-current { flex-basis:100%; margin:0 0 .1875rem; text-align:center; }
     body .ui-datatable .ui-paginator .ui-paginator-first,
 body .ui-datatable .ui-paginator .ui-paginator-last { display:none; }
     body .ui-datatable .ui-paginator .ui-paginator-rpp-options { margin:0; }
+}
+
+/* Editor de texto (SunEditor, p:textEditor): sus tooltips ocultos (visibility:hidden) siguen ocupando espacio y,
+   en pantallas estrechas, desbordan la página. Solo existen al pasar el cursor por el botón. */
+.sun-editor .se-tooltip .se-tooltip-inner { display:none; }
+.sun-editor .se-tooltip:hover .se-tooltip-inner, .sun-editor .se-tooltip:focus .se-tooltip-inner { display:block; }
+
+/* Pie institucional (WEB-INF/footer.xhtml): logo y, en texto pequeño, versión del sistema y derechos. */
+/* padding-right: los botones flotantes (volver arriba, acción rápida) ocupan la esquina inferior derecha. */
+.tec-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1.5rem; padding-right:3.5rem; }
+.tec-footer__legal { display:flex; flex-wrap:wrap; align-items:center; gap:.25rem .5rem; margin:0;
+    color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); line-height:var(--tec-lh-tight); }
+.tec-footer__sep { color:var(--surface-400); }
+@media (max-width:575.98px) {
+    .tec-footer { flex-direction:column; text-align:center; padding:0 3.5rem; }
+    .tec-footer__legal { justify-content:center; }
+    .tec-footer__sep { display:none; }
 }

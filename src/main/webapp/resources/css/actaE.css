@@ -17,11 +17,6 @@
 
 /* Panel operativo de escrutinio: barra de avance discreta y columnas de contexto
    geográfico que se ocultan en móvil, donde priman recinto, mesa, estado y acción. */
-.actae-avance-barra .ui-progressbar { height: .5rem; border: 0 none; background: var(--surface-200, #e9ecef); }
-
-.actae-avance-barra .ui-progressbar-value { background: var(--orange-700); border: 0 none; }
-
-.actae-avance-barra .ui-progressbar-label { display: none; }
 
 @media (max-width: 640px) {
     .actae-tabla-gerencial.ui-datatable-reflow td.actae-col-contexto,
@@ -37,41 +32,41 @@
 
 .acta-comparacion th,
 .acta-comparacion td {
-	padding: .35rem .6rem;
+	padding: .2625rem .45rem;
 	border: 1px solid var(--surface-border);
 	text-align: left;
 }
 
 .acta-comparacion th {
 	background: var(--surface-ground);
-	font-size: var(--tec-fs-xs);
-	font-weight: 500;
+	font-size: var(--tec-fs-2xs);
+	font-weight: var(--tec-fw-medium);
 	letter-spacing: .02em;
 }
 
 .acta-comparacion .acta-comparacion__num {
-	width: 7.5rem;
+	width: 5.625rem;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
 
 .acta-comparacion__subtotal td {
 	background: var(--surface-100);
-	font-weight: 500;
+	font-weight: var(--tec-fw-medium);
 }
 
 .acta-comparacion__total td {
 	background: var(--surface-200);
-	font-weight: 500;
+	font-weight: var(--tec-fw-medium);
 }
 
 /* Controles del sistema: separados del contenido del acta. */
 .acta-comparacion-controles {
 	display: flex;
 	flex-direction: column;
-	gap: .4rem;
-	margin-top: 1rem;
-	padding: .625rem .75rem;
+	gap: .3rem;
+	margin-top: .75rem;
+	padding: .4688rem .5625rem;
 	border: 1px dashed var(--surface-border);
 	border-radius: 4px;
 	background: var(--surface-ground);
@@ -79,22 +74,22 @@
 }
 
 .acta-comparacion-controles__titulo {
-	font-size: var(--tec-fs-xs);
-	font-weight: 500;
+	font-size: var(--tec-fs-2xs);
+	font-weight: var(--tec-fw-medium);
 	color: var(--text-color-secondary);
 	text-transform: uppercase;
-	letter-spacing: .03em;
+	letter-spacing:var(--tec-ls-caps);
 }
 
 /* Transcripción del acta en la revisión oficial: una entrada por línea del acta. */
 .acta-comparacion td.acta-comparacion__entrada {
-	width: 8rem;
-	padding: .2rem .35rem;
+	width: 6rem;
+	padding: .15rem .2625rem;
 }
 
 .acta-comparacion__entrada .ui-inputnumber input {
 	width: 100%;
-	padding: .3rem .45rem;
+	padding: .225rem .3375rem;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
@@ -103,9 +98,9 @@
 .acta-revision-oficial {
 	display: flex;
 	flex-direction: column;
-	gap: .5rem;
-	margin-top: 1rem;
-	padding: .75rem;
+	gap: .375rem;
+	margin-top: .75rem;
+	padding: .5625rem;
 	border: 1px solid var(--surface-border);
 	border-left: 4px solid var(--primary-color);
 	border-radius: 4px;
@@ -115,24 +110,22 @@
 /* Listado de escrutinios (actaE) más denso: fuente y relleno algo menores para ver más
    mesas por pantalla sin bajar de un tamaño cómodo de lectura. Las etiquetas p:tag se
    compactan en proporción para que la columna Situación no ensanche la fila. */
-.actae-tabla-densa .ui-datatable-data > tr > td { font-size: var(--tec-fs-sm); padding-top: .35rem; padding-bottom: .35rem; font-weight:300; }
+.actae-tabla-densa .ui-datatable-data > tr > td { font-size: var(--tec-fs-xs); padding-top: .2625rem; padding-bottom: .2625rem; font-weight:var(--tec-fw-regular); }
 
-.actae-tabla-densa thead > tr > th { font-size: var(--tec-fs-xs); font-weight:300; }
+.actae-tabla-densa thead > tr > th { font-size: var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
-.actae-tabla-densa .ui-tag { font-size: var(--tec-fs-xs); padding: .15rem .45rem; font-weight:300; }
-
-.actae-tabla-densa small { font-size: var(--tec-fs-xs); font-weight:300; }
+.actae-tabla-densa small { font-size: var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
 /* Filtros de columna del listado de escrutinios: compactos, bajo el título. */
-.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .35rem; min-width: 0; font-size: var(--tec-fs-xs); font-weight: 300; text-align: left; }
+.actae-tabla-densa thead th .actae-filtro-columna { display: flex; margin-top: .2625rem; min-width: 0; font-size: var(--tec-fs-2xs); font-weight: var(--tec-fw-regular); text-align: left; }
 
-.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .3rem .5rem; font-size: var(--tec-fs-xs); font-weight:300; }
+.actae-tabla-densa thead th .actae-filtro-columna .ui-selectonemenu-label { padding: .225rem .375rem; font-size: var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
 
 /* La clase de cada paso procede del modelo de progreso del backend. */
 body .actae-steps.ui-steps > ul {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: .5rem;
+    gap: .375rem;
 }
 body .actae-steps.ui-steps .ui-steps-item {
     float: none;
@@ -144,8 +137,8 @@ body .actae-steps.ui-steps .ui-menuitem-link {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: .4rem;
-    padding: .5rem .25rem;
+    gap: .3rem;
+    padding: .375rem .1875rem;
     background: var(--surface-card);
     cursor: default;
 }
@@ -154,8 +147,8 @@ body .actae-steps.ui-steps .ui-steps-title {
     overflow-wrap: anywhere;
     text-align: center;
     margin: 0;
-    font-size: var(--tec-fs-sm);
-    color: var(--text-color); font-weight:300; }
+    font-size: var(--tec-fs-xs);
+    color: var(--text-color); font-weight:var(--tec-fw-regular); }
 body .actae-steps.ui-steps .ui-steps-item:not(.ui-state-disabled) .ui-menuitem-link {
     cursor: pointer;
 }
@@ -164,10 +157,10 @@ body .actae-steps.ui-steps .ui-state-highlight .ui-menuitem-link {
     outline-offset: -2px;
 }
 body .actae-steps.ui-steps .ui-steps-number {
-    width: 2rem;
-    height: 2rem;
-    min-width: 2rem;
-    line-height: 2rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    min-width: 1.5rem;
+    line-height: 1.5rem;
     font-size: var(--tec-fs-md);
     background: var(--surface-ground);
     color: var(--text-color-secondary);
@@ -184,14 +177,14 @@ body .actae-steps.ui-steps .actae-step-actual .ui-steps-number {
     background: var(--surface-card);
 }
 body .actae-steps.ui-steps .actae-step-actual .ui-steps-title {
-    font-weight: 500;
+    font-weight: var(--tec-fw-medium);
 }
 body .actae-steps.ui-steps .actae-step-bloqueado .ui-steps-number {
     border-style: dashed;
 }
-@media (max-width: 767px) {
-    body .actae-steps.ui-steps > ul { grid-template-columns: minmax(0, 1fr); gap: .15rem; }
+@media (max-width: 767.98px) {
+    body .actae-steps.ui-steps > ul { grid-template-columns: minmax(0, 1fr); gap: .1125rem; }
     body .actae-steps.ui-steps .ui-steps-item::before { display: none; }
-    body .actae-steps.ui-steps .ui-menuitem-link { flex-direction: row; gap: .75rem; padding: .25rem; }
+    body .actae-steps.ui-steps .ui-menuitem-link { flex-direction: row; gap: .5625rem; padding: .1875rem; }
     body .actae-steps.ui-steps .ui-steps-title { text-align: left; }
 }

@@ -24,10 +24,9 @@
         <h:form id="frmMJRV">
 
             <p:outputPanel rendered="#{jrvController.restringidoAMesaAsignada}" layout="block" styleClass="mb-3">
-                <div class="flex align-items-center gap-2 border-round-lg p-3"
-                     style="background:var(--blue-50);border-left:4px solid var(--blue-500)">
-                    <i class="pi pi-info-circle flex-shrink-0" style="color:var(--blue-500)"/>
-                    <span class="text-700 text-sm">#{msg['mjrv.info.mesa.restringida']}</span>
+                <div class="callout callout--info flex align-items-center gap-2">
+                    <i class="pi pi-info-circle flex-shrink-0"/>
+                    <span>#{msg['mjrv.info.mesa.restringida']}</span>
                 </div>
             </p:outputPanel>
 
@@ -118,7 +117,7 @@
                 <div class="p-3">
                     <p:dataTable id="tblMesas" value="#{jrvController.mesasFiltradas}" var="mesa"
                                  paginator="true" rows="12" first="#{jrvController.primeraFilaMesa}"
-                                 rowsPerPageTemplate="12,25,50" reflow="true" styleClass="ui-datatable-sm mjrv-mesas-table"
+                                 rowsPerPageTemplate="12,25,50" reflow="true" styleClass="ui-datatable-striped ui-datatable-sm tec-table-seleccionable mjrv-mesas-table"
                                  selectionMode="single" selection="#{jrvController.mesaSeleccionada}" rowKey="#{mesa.id}"
                                  rowStyleClass="#{mesa.id eq jrvController.mesaSeleccionada.id ? 'fila-seleccionada' : ''}"
                                  emptyMessage="#{msg['mjrv.empty.mesas']}">
@@ -126,21 +125,21 @@
                                 process="@this"
                                 update=":frmMJRV:tabsMJRV:tblMesas :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:tblDisponibles :frmMJRV:tabsMJRV:tblDesignados"/>
                         <p:column headerText="#{msg['mjrv.label.recinto']}" sortBy="#{mesa.recinto.nombre}"
-                                  style="min-width:12rem">
+                                  style="min-width:9rem">
                             <span class="font-medium text-900">#{mesa.recinto.nombre}</span>
                         </p:column>
                         <p:column headerText="#{msg['mjrv.label.mesa']}" sortBy="#{mesa.nombre}"
-                                  style="width:7rem">
+                                  style="width:5.25rem">
                             #{mesa.nombre}
                         </p:column>
                         <p:column headerText="#{msg['mjrv.tabla.ubicacion']}" sortBy="#{mesa.recinto.cantonNombre}"
-                                  style="min-width:11rem">
+                                  style="min-width:8.25rem">
                             <span class="text-700">#{mesa.recinto.cantonNombre}</span>
                             <small class="block text-500">#{mesa.recinto.ubicacionNombre}</small>
                         </p:column>
                         <p:column headerText="#{msg['mjrv.mesas.estado']}"
                                   sortBy="#{jrvController.resumenMesas[mesa.id].estadoClave}"
-                                  styleClass="text-center" style="width:8.5rem">
+                                  styleClass="text-center" style="width:6.375rem">
                             <p:tag value="#{msg[jrvController.resumenMesas[mesa.id].estadoClave]}"
                                    severity="#{jrvController.resumenMesas[mesa.id].severidad}"/>
                         </p:column>
@@ -148,7 +147,7 @@
                              getProgreso() ya entrega asignados/requeridos. -->
                         <p:column headerText="#{msg['mjrv.mesas.miembros']}"
                                   sortBy="#{jrvController.resumenMesas[mesa.id].miembrosAsignados}"
-                                  styleClass="text-center mjrv-col-num" style="width:7rem">
+                                  styleClass="text-center mjrv-col-num" style="width:5.25rem">
                             <h:outputText value="#{jrvController.resumenMesas[mesa.id].progreso}"
                                           styleClass="font-medium text-900"/>
                         </p:column>
@@ -156,10 +155,10 @@
                              iglesias, y el detalle sigue en el tab de Conformación. -->
                         <p:column headerText="#{msg['mjrv.mesas.iglesias']}"
                                   sortBy="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"
-                                  styleClass="text-center mjrv-col-num" style="width:7rem">
+                                  styleClass="text-center mjrv-col-num" style="width:5.25rem">
                             <h:outputText value="#{jrvController.resumenMesas[mesa.id].iglesiasAsignadas}"
                                           title="#{jrvController.resumenMesas[mesa.id].sinIglesias ? msg['mjrv.mesas.sin.iglesias.etiqueta'] : ''}"
-                                          styleClass="font-medium #{jrvController.resumenMesas[mesa.id].sinIglesias ? 'text-orange-500' : 'text-900'}"/>
+                                          styleClass="font-medium #{jrvController.resumenMesas[mesa.id].sinIglesias ? 'tec-text-warn' : 'text-900'}"/>
                         </p:column>
                     </p:dataTable>
                 </div>
@@ -182,7 +181,7 @@
                                icon="#{jrvController.estadoJuntaIcon}"/>
                     </div>
                 </div>
-                <h:panelGroup layout="block" styleClass="text-orange-700 text-sm mt-3"
+                <h:panelGroup layout="block" styleClass="tec-text-warn text-sm mt-3"
                               rendered="#{jrvController.mesaSeleccionadaValida and not jrvController.juntaCompleta}">
                     <i class="pi pi-info-circle mr-2"></i><h:outputText value="#{jrvController.motivoJuntaIncompleta}"/>
                 </h:panelGroup>
@@ -195,7 +194,7 @@
                      renderizado de los destinos de update. -->
                 <ui:fragment rendered="#{not jrvController.mesaSeleccionadaValida}">
                     <div class="text-center py-4">
-                        <i class="pi pi-inbox text-400" style="font-size:1.75rem"></i>
+                        <i class="pi pi-inbox tec-icon-hero text-400"></i>
                         <div class="text-900 font-medium mt-2">#{msg['mjrv.empty.sin.mesa.titulo']}</div>
                         <p class="text-500 text-sm mt-1 mb-3">#{msg['mjrv.empty.sin.mesa.ayuda']}</p>
                         <p:commandButton value="#{msg['mjrv.boton.ir.mesas']}" icon="pi pi-arrow-left" type="button"
@@ -210,7 +209,7 @@
                                  value="#{msg['mjrv.boton.ver.iglesias']} (#{jrvController.totalIglesiasAsignadas})"
                                  styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
                 <p:overlayPanel id="opIglesiasAsignadas" for="btnIglesiasAsignadas" showEvent="click"
-                                dismissable="true" my="right top" at="right bottom" style="width:min(42rem, calc(100vw - 2rem))">
+                                dismissable="true" my="right top" at="right bottom" style="width:min(31.5rem, calc(100vw - 1.5rem))">
                     <div class="font-semibold text-800 mb-3">#{msg['mjrv.seccion.iglesias']}</div>
                     <p:dataTable id="tblIglesias" var="iglesia" value="#{jrvController.iglesiasAsignadas}"
                                  paginator="true" rows="4" reflow="true"
@@ -282,7 +281,7 @@
                                      paginator="true" rows="8" reflow="true"
                                      emptyMessage="#{msg['mjrv.empty.disponibles']}"
                                      styleClass="ui-datatable-striped ui-datatable-sm">
-                            <p:column headerText="#{msg['mjrv.tabla.identificacion']}" style="width:9rem">
+                            <p:column headerText="#{msg['mjrv.tabla.identificacion']}" style="width:6.75rem">
                                 #{padron.iglesiaPersona.persona.documento}
                             </p:column>
                             <p:column headerText="#{msg['mjrv.tabla.persona']}">
@@ -293,10 +292,10 @@
                                 #{padron.iglesiaPersona.iglesia.nombre}
                                 <small class="block text-500">#{padron.iglesiaPersona.iglesia.comunidad}</small>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:8rem">
+                            <p:column headerText="#{msg['mjrv.tabla.estado']}" style="width:6rem">
                                 <p:tag value="#{msg['mjrv.estado.habilitado']}" severity="success" icon="pi pi-check-circle"/>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:5rem">
+                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="tec-col-actions">
                                 <p:commandButton icon="pi pi-user-plus"
                                                  styleClass="rounded-button ui-button-flat ui-button-secondary"
                                                  title="#{msg['mjrv.tooltip.seleccionar']}"
@@ -359,7 +358,7 @@
                                        severity="#{jrvController.edicionBloqueada ? 'success' : 'warning'}"
                                        icon="#{jrvController.edicionBloqueada ? 'pi pi-check-circle' : 'pi pi-exclamation-circle'}"/>
                             </p:column>
-                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="text-center" style="width:6%">
+                            <p:column headerText="#{msg['mjrv.tabla.acciones']}" styleClass="tec-col-actions">
                                 <p:commandButton icon="pi pi-times" styleClass="rounded-button ui-button-flat ui-button-danger"
                                                  title="#{msg['mjrv.tooltip.quitar']}"
                                                  disabled="#{jrvController.edicionBloqueada}"

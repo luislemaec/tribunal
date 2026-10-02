@@ -40,8 +40,7 @@
                 </div>
 
                 <div style="overflow-x:auto">
-                    <p:treeTable value="#{menuController.root}" var="menu"
-                                 showGridlines="true" editable="true" id="trTblMenuo"
+                    <p:treeTable value="#{menuController.root}" var="menu" editable="true" id="trTblMenuo"
                                  emptyMessage="#{msg['menu.tabla.vacia']}"
                                  styleClass="ui-datatable-striped ui-datatable-sm"
                                  tableStyle="min-width:980px">
@@ -53,7 +52,7 @@
                             <p:cellEditor>
                                 <f:facet name="output">
                                     <div class="flex align-items-start gap-2">
-                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono} text-primary-700 mt-1"/>
+                                        <i class="#{empty menu.icono ? 'pi pi-circle' : menu.icono} tec-text-primary mt-1"/>
                                         <div>
                                             <div class="text-sm font-medium text-900">#{menu.nombre}</div>
                                             <div class="text-xs text-500">#{empty menu.padreNombre ? msg['menu.valor.sinPadre'] : menu.padreNombre}</div>
@@ -124,8 +123,8 @@
                             </p:cellEditor>
                         </p:column>
 
-                        <p:column headerText="#{msg['menu.tabla.acciones']}" style="width:110px" responsivePriority="1"
-                                  styleClass="text-center">
+                        <p:column headerText="#{msg['menu.tabla.acciones']}" responsivePriority="1"
+                                  styleClass="tec-col-actions">
                           <!-- div (no span): p:rowEditor genera un bloque. -->
                           <div class="tec-acciones">
                             <p:rowEditor/>
@@ -159,11 +158,10 @@
 
             </div>
 
-            <p:dialog header="#{msg['menu.dialogo.titulo']}"
+            <p:dialog styleClass="tec-dialog tec-dialog--md" header="#{msg['menu.dialogo.titulo']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgMenuo"
-                      responsive="true" width="640"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -174,7 +172,7 @@
 
                             <div class="field col-12 md:col-8">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['menu.campo.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['menu.campo.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombre" styleClass="w-full"
                                              value="#{menuController.menuSeleccionado.nombre}"
@@ -185,7 +183,7 @@
 
                             <div class="field col-12 md:col-4">
                                 <label for="orden" class="font-medium text-700 text-sm">
-                                    #{msg['menu.campo.orden']} <span class="text-red-500">*</span>
+                                    #{msg['menu.campo.orden']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputNumber id="orden" styleClass="w-full"
                                                value="#{menuController.menuSeleccionado.orden}"

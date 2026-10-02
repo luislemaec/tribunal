@@ -117,11 +117,11 @@
 						value="#{reporteMesaController.resumenesDocumentales}" var="fila"
 						paginator="true" rows="10"
 						first="#{reporteMesaController.primeraFilaDocumental}"
-						rowsPerPageTemplate="10,25,50" reflow="true" size="small" pageLinks="5"
+						rowsPerPageTemplate="10,25,50" reflow="true" pageLinks="5"
 						paginatorPosition="bottom"
 						paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
 						currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} mesas"
-						styleClass="tec-table mesas-table ui-datatable-striped"
+						styleClass="ui-datatable-sm tec-table mesas-table ui-datatable-striped"
 						emptyMessage="#{msg['reportesMesa.documentos.empty']}">
 						<p:column headerText="#{msg['reportesMesa.filtro.mesa']}"
 							sortBy="#{fila.mesa}" styleClass="tec-col-fit mesas-col-mesa">
@@ -288,30 +288,30 @@
 						class="surface-card border-round-lg border-1 surface-border p-3 mt-3 text-sm text-600">
 						<strong class="text-900">#{msg['reportesMesa.simbologia.titulo']}</strong>
 						<div class="flex flex-wrap gap-3 mt-2">
-							<span><i class="pi pi-users text-primary-700" />
+							<span><i class="pi pi-users tec-text-primary" />
 								#{msg['reportesMesa.simbologia.padron']}</span><span><i
-								class="pi pi-file-pdf text-red-500" />
+								class="pi pi-file-pdf tec-text-danger" />
 								#{msg['reportesMesa.simbologia.acta']}</span><span><i
-								class="pi pi-verified text-green-500" />
+								class="pi pi-verified tec-text-success" />
 								#{msg['reportesMesa.simbologia.certificados']}</span><span><i
-								class="pi pi-image text-orange-500" />
+								class="pi pi-image tec-text-warn" />
 								#{msg['reportesMesa.simbologia.actaFisica']}</span><span><i
-								class="pi pi-id-card text-blue-500" />
+								class="pi pi-id-card tec-text-info" />
 								#{msg['reportesMesa.simbologia.mjrv']}</span><span><i
-								class="pi pi-check text-green-500" />
+								class="pi pi-check tec-text-success" />
 								#{msg['reportesMesa.simbologia.documentos.completos']}</span><span><i
-								class="pi pi-info-circle text-cyan-500" />
+								class="pi pi-info-circle tec-text-info" />
 								#{msg['reportesMesa.simbologia.documentos.avanzados']}</span><span><i
-								class="pi pi-exclamation-triangle text-yellow-500" />
+								class="pi pi-exclamation-triangle tec-text-warn" />
 								#{msg['reportesMesa.simbologia.documentos.pendientes']}</span>
 						</div>
 					</div>
 				</p:outputPanel>
 				<p:blockUI block="panelPrincipal" trigger="tablaDocumentosMesas" />
-				<p:dialog id="dlgJunta" widgetVar="dlgJunta" modal="true"
-					responsive="true" width="760"
+				<p:dialog styleClass="tec-dialog tec-dialog--md" id="dlgJunta" widgetVar="dlgJunta" modal="true"
+					responsive="true"
 					header="#{msg['reportesMesa.documento.mjrv']}">
-					<p:dataTable value="#{reporteMesaController.juntaVisualizada}"
+					<p:dataTable styleClass="ui-datatable-striped ui-datatable-sm" value="#{reporteMesaController.juntaVisualizada}"
 						var="miembro" reflow="true"
 						emptyMessage="#{msg['reportesMesa.regla.jrv']}">
 						<p:column headerText="#{msg['mjrv.label.dignidad']}">#{miembro.cargoNombre}</p:column>
@@ -395,14 +395,14 @@
 								<p:outputPanel id="pnlResultadosFinales" layout="block">
 									<p:dataTable
 										value="#{reporteMesaController.resultadosActaFinal}"
-										var="resultado" styleClass="ui-datatable-sm acta-fisica-tabla"
+										var="resultado" styleClass="ui-datatable-striped ui-datatable-sm acta-fisica-tabla"
 										scrollable="true" scrollHeight="34vh">
 										<p:column
 											headerText="#{msg['reportesMesa.actaFisica.categoria']}">
 										#{resultado.categoriaNombre}
 									</p:column>
 										<p:column headerText="#{msg['reportesMesa.actaFisica.votos']}"
-											style="width:10rem">
+											style="width:7.5rem">
 											<p:inputNumber value="#{resultado.totalVotos}" minValue="0"
 												decimalPlaces="0"
 												disabled="#{not reporteMesaController.puedeValidarActaFinal or reporteMesaController.actaFisicaVisualizada.estadoRevision eq 'VALIDADA'}">
@@ -452,7 +452,7 @@
 									</p:selectBooleanCheckbox>
 									<h:outputText value="#{reporteMesaController.motivoActaFinal}"
 										rendered="#{not empty reporteMesaController.motivoActaFinal}"
-										styleClass="block mt-2 text-orange-700" />
+										styleClass="block mt-2 tec-text-warn" />
 									<div class="grid acta-fisica-totales text-sm">
 										<div class="col-6">#{msg['reportesMesa.actaFisica.validos']}</div>
 										<div class="col-6 text-right font-bold">#{reporteMesaController.subtotalValidosActaFinal}</div>
@@ -474,7 +474,7 @@
 					<p:outputPanel layout="block"
 						rendered="#{empty reporteMesaController.actaFisicaVisualizada}">
 						<div class="flex align-items-center gap-2 text-600">
-							<i class="pi pi-clock text-orange-500" /> <span>#{msg['reportesMesa.actaFisica.pendiente']}</span>
+							<i class="pi pi-clock tec-text-warn" /> <span>#{msg['reportesMesa.actaFisica.pendiente']}</span>
 						</div>
 					</p:outputPanel>
 					<f:facet name="footer">

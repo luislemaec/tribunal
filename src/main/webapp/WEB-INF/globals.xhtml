@@ -33,9 +33,9 @@
         <p:idleMonitor timeout="3000000">
             <p:ajax event="idle" oncomplete="PF('dlgIdle').show()"/>
         </p:idleMonitor>
-        <p:dialog widgetVar="dlgIdle" header="#{msg['msg.session.expiring.title']}" modal="true"
-                  closable="false" resizable="false" width="380">
-            <p style="margin:0 0 1rem">#{msg['msg.session.expiring.detail']}</p>
+        <p:dialog styleClass="tec-dialog tec-dialog--sm" widgetVar="dlgIdle" header="#{msg['msg.session.expiring.title']}" modal="true"
+                  closable="false" resizable="false">
+            <p style="margin:0 0 .75rem">#{msg['msg.session.expiring.detail']}</p>
             <p:commandButton value="#{msg['btn.continue']}" icon="pi pi-refresh" ajax="true"
                              onclick="PF('dlgIdle').hide()" process="@this"/>
         </p:dialog>

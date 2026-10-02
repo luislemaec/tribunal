@@ -101,7 +101,6 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="#{msg['mesas.paginador.reporte']}"
                              emptyMessage="#{msg['mesas.empty.listado']}"
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <p:ajax event="rowSelectCheckbox" update=":frmMesas:btnEliminarSeleccionadas"/>
@@ -109,43 +108,43 @@
                     <p:ajax event="toggleSelect" update=":frmMesas:btnEliminarSeleccionadas"/>
 
                     <p:column selectionMode="multiple" exportable="false"
-                              styleClass="text-center" style="width:3rem"/>
+                              styleClass="text-center" style="width:2.25rem"/>
 
                     <p:column headerText="#{msg['mesas.tabla.codigo']}"
                               sortBy="#{mesa.id}" filterBy="#{mesa.id}"
-                              style="width:6rem">
-                        <span class="text-sm text-500">#{mesa.id}</span>
+                              style="width:4.5rem">
+                        <span class="tec-meta text-500">#{mesa.id}</span>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.mesa']}"
                               sortBy="#{mesa.nombre}" filterBy="#{mesa.nombre}"
-                              filterMatchMode="contains" style="min-width:12rem">
-                        <span class="text-sm font-medium text-900">#{mesa.nombre}</span>
+                              filterMatchMode="contains" style="min-width:9rem">
+                        <span class="tec-dato font-medium text-900">#{mesa.nombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.recinto']}"
                               sortBy="#{mesa.recinto.nombre}" filterBy="#{mesa.recinto.nombre}"
-                              filterMatchMode="contains" style="min-width:14rem">
-                        <span class="text-sm text-700">#{mesa.recinto.nombre}</span>
+                              filterMatchMode="contains" style="min-width:10.5rem">
+                        <span class="tec-meta text-700">#{mesa.recinto.nombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.canton']}"
                               sortBy="#{mesa.cantonNombre}" filterBy="#{mesa.cantonNombre}"
-                              filterMatchMode="contains" style="min-width:9rem">
-                        <span class="text-sm text-700">#{mesa.cantonNombre}</span>
+                              filterMatchMode="contains" style="min-width:6.75rem">
+                        <span class="tec-meta text-700">#{mesa.cantonNombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.parroquia']}"
                               sortBy="#{mesa.ubicacionNombre}" filterBy="#{mesa.ubicacionNombre}"
-                              filterMatchMode="contains" style="min-width:11rem">
-                        <span class="text-sm text-700">#{mesa.ubicacionNombre}</span>
+                              filterMatchMode="contains" style="min-width:8.25rem">
+                        <span class="tec-meta text-700">#{mesa.ubicacionNombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.responsable']}"
                               sortBy="#{mesa.responsable}" filterBy="#{mesa.responsable}"
-                              filterMatchMode="contains" style="min-width:11rem">
+                              filterMatchMode="contains" style="min-width:8.25rem">
                         <h:outputText rendered="#{not empty mesa.responsable}" value="#{mesa.responsable}"
-                                      styleClass="text-sm text-700"/>
+                                      styleClass="tec-meta text-700"/>
                         <h:outputText rendered="#{empty mesa.responsable}" value="#{msg['mesas.sin.responsable']}"
-                                      styleClass="text-sm text-500"/>
+                                      styleClass="tec-meta text-500"/>
                     </p:column>
                     <p:column headerText="#{msg['mesas.tabla.acciones']}" exportable="false"
-                              styleClass="text-center" style="width:7rem">
+                              styleClass="tec-col-actions">
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-pencil"
                                              styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -172,11 +171,10 @@
 
             </div>
 
-            <p:dialog header="#{empty mesaController.mesaSeleccionado.id ? msg['mesas.dialog.titulo.nuevo'] : msg['mesas.dialog.titulo.editar']}"
+            <p:dialog styleClass="tec-dialog" header="#{empty mesaController.mesaSeleccionado.id ? msg['mesas.dialog.titulo.nuevo'] : msg['mesas.dialog.titulo.editar']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgMesa"
-                      responsive="true" width="560"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -187,7 +185,7 @@
 
                             <div class="field col-12">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['mesas.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['mesas.label.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombre"
                                              value="#{mesaController.mesaSeleccionado.nombre}"
@@ -199,7 +197,7 @@
 
                             <div class="field col-12">
                                 <label for="cantonSel" class="font-medium text-700 text-sm">
-                                    #{msg['mesas.label.canton']} <span class="text-red-500">*</span>
+                                    #{msg['mesas.label.canton']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="cantonSel"
                                                  value="#{mesaController.cantonSeleccionado.id}"
@@ -216,7 +214,7 @@
 
                             <div class="field col-12 md:col-6">
                                 <label for="parroquiaSel" class="font-medium text-700 text-sm">
-                                    #{msg['mesas.label.parroquia']} <span class="text-red-500">*</span>
+                                    #{msg['mesas.label.parroquia']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="parroquiaSel"
                                                  value="#{mesaController.mesaSeleccionado.ubicacionId}"
@@ -230,7 +228,7 @@
 
                             <div class="field col-12 md:col-6">
                                 <label for="recinto" class="font-medium text-700 text-sm">
-                                    #{msg['mesas.label.recinto']} <span class="text-red-500">*</span>
+                                    #{msg['mesas.label.recinto']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="recinto"
                                                  value="#{mesaController.mesaSeleccionado.recinto.id}"

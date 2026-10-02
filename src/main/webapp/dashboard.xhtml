@@ -51,8 +51,8 @@
             </h:form>
 
             <p:divider rendered="#{not dashboardController.dashboardRestringido}" align="left" type="solid">
-                <span class="p-tag" style="background:var(--orange-50); color:var(--orange-700)">
-                    <i class="pi pi-chart-bar" style="margin-right:.4rem"/>#{msg['form.dashboard.summary']}
+                <span class="tec-section-label">
+                    <i class="pi pi-chart-bar"/>#{msg['form.dashboard.summary']}
                 </span>
             </p:divider>
 
@@ -63,7 +63,7 @@
                 <div class="grid">
                     <div class="col-12">
                         <div class="surface-card shadow-1 border-round-lg p-3 flex flex-wrap align-items-center gap-3">
-                            <i class="pi pi-calendar text-primary-700 text-xl"/>
+                            <i class="pi pi-calendar tec-text-primary text-xl"/>
                             <div class="flex-grow-1 min-w-0">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.proceso.activo']}</span>
                                 <span class="block text-900 font-bold text-lg white-space-normal">
@@ -80,7 +80,7 @@
                 <!-- Resumen general -->
                 <div class="grid mt-1">
                     <div class="col-12 sm:col-6 lg:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid var(--primary-color)">
+                        <div class="tec-kpi h-full">
                             <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.recintos']}</span>
                             <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalRecintos}</span>
                             <span class="block text-500 text-xs mt-1">
@@ -89,7 +89,7 @@
                         </div>
                     </div>
                     <div class="col-12 sm:col-6 lg:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid var(--primary-color)">
+                        <div class="tec-kpi h-full">
                             <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.electores']}</span>
                             <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalElectores}</span>
                             <span class="block text-500 text-xs mt-1">
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <div class="col-12 sm:col-6 lg:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid var(--primary-color)">
+                        <div class="tec-kpi h-full">
                             <span class="block text-500 text-xs font-medium uppercase">#{msg['form.dashboard.kpi.iglesias']}</span>
                             <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.totalIglesias}</span>
                             <span class="block text-500 text-xs mt-1">
@@ -107,7 +107,7 @@
                         </div>
                     </div>
                     <div class="col-12 sm:col-6 lg:col-3">
-                        <div class="surface-card shadow-1 border-round-lg p-3 h-full" style="border-left:4px solid var(--primary-color)">
+                        <div class="tec-kpi h-full">
                             <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.avance.escrutinio']}</span>
                             <span class="block text-900 font-bold text-2xl">#{dashboardController.resumen.porcentajeEscrutinio}%</span>
                             <span class="block text-500 text-xs mt-1">
@@ -131,7 +131,7 @@
                                         <span class="text-700 text-sm">#{avance.etiqueta}</span>
                                         <span class="text-900 font-semibold text-sm">#{avance.porcentaje}%</span>
                                     </div>
-                                    <p:progressBar value="#{avance.porcentaje}" displayOnly="true"/>
+                                    <p:progressBar value="#{avance.porcentaje}" displayOnly="true" styleClass="tec-progress"/>
                                     <span class="block text-500 text-xs mt-1">#{avance.detalle}</span>
                                 </div>
                             </ui:repeat>
@@ -171,7 +171,7 @@
                         <div class="surface-card shadow-1 border-round-lg p-3">
                             <ui:fragment rendered="#{empty dashboardController.resumen.alertas}">
                                 <span class="text-600 text-sm">
-                                    <i class="pi pi-check-circle text-green-500 mr-2"/>#{msg['dashboard.atencion.sinPendientes']}
+                                    <i class="pi pi-check-circle tec-text-success mr-2"/>#{msg['dashboard.atencion.sinPendientes']}
                                 </span>
                             </ui:fragment>
                             <div class="grid">
@@ -183,7 +183,7 @@
                                             <span class="text-700 text-sm flex-grow-1 min-w-0">#{alerta.texto}</span>
                                             <p:link outcome="/#{alerta.pagina}"
                                                     rendered="#{dashboardController.permite(alerta.pagina)}"
-                                                    styleClass="text-primary-700">
+                                                    styleClass="tec-text-primary">
                                                 <i class="pi pi-arrow-right"/>
                                             </p:link>
                                         </div>
@@ -209,7 +209,7 @@
                             </ui:fragment>
                             <p:chart value="#{dashboardController.electoresPorCanton}" extender="tecGraficoTema"
                                      rendered="#{not empty dashboardController.resumen.electoresPorCanton}"
-                                     style="width:100%;height:16rem" canvasStyle="width:100%;height:16rem"/>
+                                     style="width:100%;height:12rem" canvasStyle="width:100%;height:16rem"/>
                         </div>
                     </div>
                 </div>
@@ -217,15 +217,15 @@
 
             <ui:fragment rendered="#{dashboardController.restringidoAPresidenteMesa}">
                 <p:divider align="left" type="solid">
-                    <span class="p-tag" style="background:var(--blue-50); color:var(--blue-700)">
-                        <i class="pi pi-id-card" style="margin-right:.4rem"/>#{msg['dashboard.presidente.summary']}
+                    <span class="tec-section-label">
+                    <i class="pi pi-id-card"/>#{msg['dashboard.presidente.summary']}
                     </span>
                 </p:divider>
 
                 <ui:fragment rendered="#{not dashboardController.tieneMesaAsignada}">
-                    <div class="surface-card shadow-1 border-round-lg p-4" style="border-left:4px solid var(--red-600)">
+                    <div class="tec-kpi tec-kpi--danger p-4">
                         <div class="flex align-items-start gap-3">
-                            <i class="pi pi-exclamation-triangle text-red-600 text-2xl"/>
+                            <i class="pi pi-exclamation-triangle tec-text-danger text-2xl"/>
                             <div>
                                 <h3 class="mt-0 mb-2 text-900">#{msg['dashboard.presidente.sinAsignacion.titulo']}</h3>
                                 <p class="m-0 text-700 line-height-3">#{msg['dashboard.presidente.sinAsignacion.detalle']}</p>
@@ -281,13 +281,13 @@
                                 <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.presidente.alertas']}</span>
                                 <ui:repeat value="#{dashboardController.alertasMesa}" var="alerta">
                                     <div class="flex align-items-start gap-2 mb-3">
-                                        <i class="pi pi-exclamation-circle text-orange-500 mt-1"/>
+                                        <i class="pi pi-exclamation-circle tec-text-warn mt-1"/>
                                         <span class="text-700 line-height-3">#{alerta}</span>
                                     </div>
                                 </ui:repeat>
                                 <ui:fragment rendered="#{empty dashboardController.alertasMesa}">
                                     <div class="flex align-items-center gap-2">
-                                        <i class="pi pi-check-circle text-green-600"/>
+                                        <i class="pi pi-check-circle tec-text-success"/>
                                         <span class="text-700">#{msg['dashboard.presidente.sinPendientes']}</span>
                                     </div>
                                 </ui:fragment>
@@ -297,25 +297,25 @@
 
                     <div class="grid mt-2">
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                            <div class="tec-kpi">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.sufragantes']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.sufragantesAsignados}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                            <div class="tec-kpi">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.habilitados']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.personasHabilitadasMesa}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                            <div class="tec-kpi">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.votos']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalVotosRegistrados}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                            <div class="tec-kpi">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.presidente.kpi.diferencia']}</span>
                                 <span class="block text-900 font-bold text-lg">#{dashboardController.diferenciaMesaTexto}</span>
                             </div>
@@ -388,15 +388,15 @@
 
             <ui:fragment rendered="#{dashboardController.restringidoAIglesia}">
                 <p:divider align="left" type="solid">
-                    <span class="p-tag" style="background:var(--green-50); color:var(--green-700)">
-                        <i class="pi pi-home" style="margin-right:.4rem"/>#{msg['dashboard.iglesia.summary']}
+                    <span class="tec-section-label">
+                    <i class="pi pi-home"/>#{msg['dashboard.iglesia.summary']}
                     </span>
                 </p:divider>
 
                 <ui:fragment rendered="#{not dashboardController.tieneIglesiaAsignada}">
-                    <div class="surface-card shadow-1 border-round-lg p-4" style="border-left:4px solid var(--red-600)">
+                    <div class="tec-kpi tec-kpi--danger p-4">
                         <div class="flex align-items-start gap-3">
-                            <i class="pi pi-exclamation-triangle text-red-600 text-2xl"/>
+                            <i class="pi pi-exclamation-triangle tec-text-danger text-2xl"/>
                             <div>
                                 <h3 class="mt-0 mb-2 text-900">#{msg['dashboard.iglesia.sinAsignacion.titulo']}</h3>
                                 <p class="m-0 text-700 line-height-3">#{msg['dashboard.iglesia.sinAsignacion.detalle']}</p>
@@ -450,13 +450,13 @@
                                 <span class="block text-500 text-xs font-medium uppercase mb-3">#{msg['dashboard.iglesia.alertas']}</span>
                                 <ui:repeat value="#{dashboardController.alertasIglesia}" var="alerta">
                                     <div class="flex align-items-start gap-2 mb-3">
-                                        <i class="pi pi-exclamation-circle text-orange-500 mt-1"/>
+                                        <i class="pi pi-exclamation-circle tec-text-warn mt-1"/>
                                         <span class="text-700 line-height-3">#{alerta}</span>
                                     </div>
                                 </ui:repeat>
                                 <ui:fragment rendered="#{empty dashboardController.alertasIglesia}">
                                     <div class="flex align-items-center gap-2">
-                                        <i class="pi pi-check-circle text-green-600"/>
+                                        <i class="pi pi-check-circle tec-text-success"/>
                                         <span class="text-700">#{msg['dashboard.iglesia.sinPendientes']}</span>
                                     </div>
                                 </ui:fragment>
@@ -466,19 +466,19 @@
 
                     <div class="grid mt-2">
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                            <div class="tec-kpi">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.personas']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.totalPersonasIglesia}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--green-500)">
+                            <div class="tec-kpi tec-kpi--success">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.completas']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.personasInformacionCompleta}</span>
                             </div>
                         </div>
                         <div class="col-12 md:col-6 lg:col-3">
-                            <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--orange-500)">
+                            <div class="tec-kpi tec-kpi--warn">
                                 <span class="block text-500 text-xs font-medium uppercase">#{msg['dashboard.iglesia.kpi.pendientesRevision']}</span>
                                 <span class="block text-900 font-bold text-2xl">#{dashboardController.personasPendientesRevision}</span>
                             </div>

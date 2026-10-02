@@ -20,8 +20,8 @@
 
         <!-- BlockUI: bloquea el formulario durante recálculos de totales -->
         <p:blockUI block="frmActaE" trigger="frmActaE">
-            <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--primary-700)"/>
-            <div style="margin:.5rem 0 0;color:#fff">Calculando escrutinio...</div>
+            <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>
+            <div class="tec-overlay-text">Calculando escrutinio...</div>
         </p:blockUI>
 
         <h:form id="frmActaE">
@@ -84,10 +84,9 @@
             <!-- KPIs -->
             <div class="grid mb-3">
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                            <div class="tec-icon-badge">
                                 <i class="pi pi-map-marker"/>
                             </div>
                             <div>
@@ -98,10 +97,9 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                            <div class="tec-icon-badge">
                                 <i class="pi pi-list"/>
                             </div>
                             <div>
@@ -112,10 +110,9 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div class="flex align-items-center gap-3">
-                            <div class="flex justify-content-center align-items-center border-round-lg"
-                                 style="width:2.75rem;height:2.75rem;background:var(--primary-color);color:var(--primary-color-text);flex-shrink:0">
+                            <div class="tec-icon-badge">
                                 <i class="pi pi-users"/>
                             </div>
                             <div>
@@ -126,12 +123,16 @@
                     </div>
                 </div>
                 <div class="col-12 md:col-6 lg:col-3">
-                    <div class="surface-card shadow-1 border-round-lg p-3" style="border-left:4px solid var(--primary-color)">
+                    <div class="tec-kpi">
                         <div>
                             <span class="block text-500 text-xs font-medium uppercase mb-2">Mesas escrutadas</span>
-                            <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}"
-                                           labelTemplate="{value}%" displayOnly="true"
-                                           title="Porcentaje de mesas con escrutinio completado"/>
+                            <span class="block text-900 font-semibold text-xl mb-2">
+                                <h:outputText value="#{totalVotosController.porcentajeMesasEscrutadas}">
+                                    <f:convertNumber maxFractionDigits="0"/>
+                                </h:outputText>%
+                            </span>
+                            <p:progressBar value="#{totalVotosController.porcentajeMesasEscrutadas}" displayOnly="true"
+                                           styleClass="tec-progress" title="Porcentaje de mesas con escrutinio completado"/>
                         </div>
                     </div>
                 </div>
@@ -142,14 +143,12 @@
                 <p:dataTable id="tblMesas" widgetVar="wdTablaMesas" var="voto"
                              value="#{totalVotosController.votos}" reflow="true"
                              emptyMessage="Seleccione los filtros para ver el escrutinio."
-                             showGridlines="true"
-                             styleClass="ui-datatable-striped ui-datatable-sm"
-                             style="font-size:var(--tec-fs-lg)">
+                             styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <p:column headerText="Categoria">
                         <p:chip label="#{voto[0]}" icon="pi pi-tag"/>
                     </p:column>
-                    <p:column headerText="Numero de votos" styleClass="text-center" style="width:12rem">
+                    <p:column headerText="Numero de votos" styleClass="text-center" style="width:9rem">
                         <p:badge value="#{voto[1]}" severity="info"/>
                     </p:column>
                 </p:dataTable>

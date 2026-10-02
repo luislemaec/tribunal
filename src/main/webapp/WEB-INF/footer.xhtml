@@ -4,13 +4,18 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui">
 
-    <div class="grid">
-        <div class="col-12 md:col-12 lg:col-4 logo-container-outer">
-            <h:link outcome="/dashboard" styleClass="logo-container">
-                <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"/>
-                <span class="app-name">2026</span>
-            </h:link>
-        </div>
+    <!-- Pie institucional: logo a la izquierda; versión del sistema y derechos en texto pequeño a la derecha
+         (centrados y apilados en móvil). Textos en messages_es.properties (footer.*). -->
+    <div class="tec-footer">
+        <h:link outcome="/dashboard" styleClass="logo-container tec-footer__logo">
+            <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"
+                            alt="#{msg['app.sistema.nombre.completo']}"/>
+        </h:link>
 
+        <p class="tec-footer__legal">
+            <span>#{msg['app.sistema']} · #{msg['footer.version']}</span>
+            <span class="tec-footer__sep" aria-hidden="true">|</span>
+            <span>#{msg['footer.copyright']}</span>
+        </p>
     </div>
 </ui:composition>

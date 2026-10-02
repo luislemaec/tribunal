@@ -35,8 +35,7 @@
                 </div>
 
                 <!-- TREE TABLE con inline edit -->
-                <p:treeTable value="#{catalogoController.root}" var="catalogo"
-                             showGridlines="true" editable="true" id="trTblCatalogo"
+                <p:treeTable value="#{catalogoController.root}" var="catalogo" editable="true" id="trTblCatalogo"
                              styleClass="ui-datatable-striped ui-datatable-sm">
                     <p:ajax event="rowEdit" listener="#{catalogoController.onRowEdit}" process="@this"
                             update="trTblCatalogo :frmGlobal:growlGlobal"/>
@@ -100,11 +99,10 @@
             <!-- ======================================================
                  DIALOGO: NUEVO CATALOGO
                  ====================================================== -->
-            <p:dialog header="#{msg['form.catalogos.dialog.title']}"
+            <p:dialog styleClass="tec-dialog" header="#{msg['form.catalogos.dialog.title']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgCatalogo"
-                      responsive="true" width="480"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -116,7 +114,7 @@
 
                             <div class="field col-12">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['form.catalogos.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['form.catalogos.label.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombre"
                                              value="#{catalogoController.catalogoSeleccionado.nombre}"
@@ -127,7 +125,7 @@
 
                             <div class="field col-12 md:col-6">
                                 <label for="orden" class="font-medium text-700 text-sm">
-                                    #{msg['form.catalogos.label.orden']} <span class="text-red-500">*</span>
+                                    #{msg['form.catalogos.label.orden']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputNumber id="orden"
                                                value="#{catalogoController.catalogoSeleccionado.orden}"
@@ -138,7 +136,7 @@
 
                             <div class="field col-12 md:col-6">
                                 <label for="padre" class="font-medium text-700 text-sm">
-                                    #{msg['form.catalogos.label.padre']} <span class="text-red-500">*</span>
+                                    #{msg['form.catalogos.label.padre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:selectOneMenu id="padre"
                                                  value="#{catalogoController.catalogoSeleccionado.padreId}"
@@ -153,7 +151,7 @@
 
                             <div class="field col-12">
                                 <label for="descripcion" class="font-medium text-700 text-sm">
-                                    #{msg['form.catalogos.label.descripcion']} <span class="text-red-500">*</span>
+                                    #{msg['form.catalogos.label.descripcion']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="descripcion"
                                              value="#{catalogoController.catalogoSeleccionado.descripcion}"

@@ -21,8 +21,8 @@
         <h:form id="frmReportePadron">
 
             <p:blockUI block="frmReportePadron" trigger="frmReportePadron">
-                <i class="pi pi-spin pi-spinner" style="font-size:2.5rem;color:var(--primary-700)"/>
-                <div style="margin:.5rem 0 0;color:#fff">#{msg['reportePadron.processing']}</div>
+                <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>
+                <div class="tec-overlay-text">#{msg['reportePadron.processing']}</div>
             </p:blockUI>
 
             <p:outputPanel id="resumenReportePadron" layout="block" styleClass="grid mb-3">
@@ -30,7 +30,7 @@
                     <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                         <div class="flex align-items-center justify-content-between">
                             <span class="text-500 text-sm">#{msg['reportePadron.contador.miembros']}</span>
-                            <i class="pi pi-users text-teal-600"></i>
+                            <i class="pi pi-users tec-text-success"></i>
                         </div>
                         <div class="text-900 font-bold text-3xl mt-2">#{empty padronController.listaPadron ? 0 : padronController.listaPadron.size()}</div>
                     </div>
@@ -39,7 +39,7 @@
                     <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                         <div class="flex align-items-center justify-content-between">
                             <span class="text-500 text-sm">#{msg['reportePadron.contador.iglesias']}</span>
-                            <i class="pi pi-building text-cyan-700"></i>
+                            <i class="pi pi-building tec-text-info"></i>
                         </div>
                         <div class="text-900 font-bold text-3xl mt-2">#{empty padronController.listaIglesiasAsignadas ? 0 : padronController.listaIglesiasAsignadas.size()}</div>
                     </div>
@@ -48,7 +48,7 @@
                     <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                         <div class="flex align-items-center justify-content-between">
                             <span class="text-500 text-sm">#{msg['reportePadron.contador.sufragantes.mesa']}</span>
-                            <i class="pi pi-table text-orange-600"></i>
+                            <i class="pi pi-table tec-text-warn"></i>
                         </div>
                         <div class="text-900 font-bold text-3xl mt-2">#{padronController.totalSufragantesMesaSeleccionada}</div>
                     </div>
@@ -144,51 +144,50 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="#{msg['padron.paginador.reporte']}"
                              emptyMessage="#{msg['reportePadron.empty.listado']}"
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <p:column headerText="#{msg['padron.tabla.id']}"
-                              sortBy="#{padron.id}" style="width:6rem">
-                        <span class="text-sm text-500">#{padron.id}</span>
+                              sortBy="#{padron.id}" style="width:4.5rem">
+                        <span class="tec-meta text-500">#{padron.id}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.proceso']}"
                               sortBy="#{padron.procesoNombre}" filterBy="#{padron.procesoNombre}"
-                              filterMatchMode="contains" style="min-width:10rem">
-                        <span class="text-sm text-700">#{padron.procesoNombre}</span>
+                              filterMatchMode="contains" style="min-width:7.5rem">
+                        <span class="tec-meta text-700">#{padron.procesoNombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.recinto']}"
                               sortBy="#{padron.mesa.recinto.nombre}" filterBy="#{padron.mesa.recinto.nombre}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-800">#{padron.mesa.recinto.nombre}</span>
+                        <span class="tec-meta text-800">#{padron.mesa.recinto.nombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.mesa']}"
                               sortBy="#{padron.mesa.nombre}" filterBy="#{padron.mesa.nombre}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-800">#{padron.mesa.nombre}</span>
+                        <span class="tec-meta text-800">#{padron.mesa.nombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.identificacion']}"
                               sortBy="#{padron.iglesiaPersona.persona.documento}"
                               filterBy="#{padron.iglesiaPersona.persona.documento}"
-                              filterMatchMode="contains" style="min-width:9rem">
-                        <span class="text-sm text-700">#{padron.iglesiaPersona.persona.documento}</span>
+                              filterMatchMode="contains" style="min-width:6.75rem">
+                        <span class="tec-meta text-700">#{padron.iglesiaPersona.persona.documento}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.nombres']}"
                               sortBy="#{padron.iglesiaPersona.persona.nombres}"
                               filterBy="#{padron.iglesiaPersona.persona.nombres}"
                               filterMatchMode="contains">
-                        <span class="text-sm font-medium text-900">#{padron.iglesiaPersona.persona.nombres}</span>
+                        <span class="tec-dato font-medium text-900">#{padron.iglesiaPersona.persona.nombres}</span>
                     </p:column>
                     <p:column headerText="#{msg['reportePadron.tabla.apellidos']}"
                               sortBy="#{padron.iglesiaPersona.persona.apellidos}"
                               filterBy="#{padron.iglesiaPersona.persona.apellidos}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-800">#{padron.iglesiaPersona.persona.apellidos}</span>
+                        <span class="tec-meta text-800">#{padron.iglesiaPersona.persona.apellidos}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.iglesia']}"
                               sortBy="#{padron.iglesiaPersona.iglesia.nombre}"
                               filterBy="#{padron.iglesiaPersona.iglesia.nombre}"
-                              filterMatchMode="contains" style="min-width:12rem">
-                        <span class="text-sm text-800">#{padron.iglesiaPersona.iglesia.nombre}</span>
+                              filterMatchMode="contains" style="min-width:9rem">
+                        <span class="tec-meta text-800">#{padron.iglesiaPersona.iglesia.nombre}</span>
                         <small class="block text-500 mt-1">
                             #{padron.iglesiaPersona.iglesia.comunidad}
                         </small>
@@ -196,15 +195,15 @@
                     <p:column headerText="#{msg['padron.tabla.canton']}"
                               sortBy="#{padron.mesa.cantonNombre}" filterBy="#{padron.mesa.cantonNombre}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-700">#{padron.mesa.cantonNombre}</span>
+                        <span class="tec-meta text-700">#{padron.mesa.cantonNombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.parroquia']}"
                               sortBy="#{padron.mesa.ubicacionNombre}" filterBy="#{padron.mesa.ubicacionNombre}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-700">#{padron.mesa.ubicacionNombre}</span>
+                        <span class="tec-meta text-700">#{padron.mesa.ubicacionNombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['padron.tabla.estado']}"
-                              sortBy="#{padron.sufrago}" styleClass="text-center" style="width:8rem">
+                              sortBy="#{padron.sufrago}" styleClass="text-center" style="width:6rem">
                         <p:tag rendered="#{padron.sufrago}"
                                value="#{msg['padron.tag.activo']}" severity="success" icon="pi pi-check"/>
                         <p:tag rendered="#{not padron.sufrago}"

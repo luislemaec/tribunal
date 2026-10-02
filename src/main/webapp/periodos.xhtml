@@ -66,7 +66,6 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} periodos"
                              emptyMessage="No hay periodos registrados. Use el botón 'Nuevo' para crear uno."
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
 
                     <p:ajax event="rowSelect"           update=":frmPeriodos:btnEliminaRegistros"/>
@@ -75,20 +74,20 @@
                     <p:ajax event="rowUnselectCheckbox" update=":frmPeriodos:btnEliminaRegistros"/>
                     <p:ajax event="toggleSelect"        update=":frmPeriodos:btnEliminaRegistros"/>
 
-                    <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
+                    <p:column selectionMode="multiple" exportable="false" style="width:2.25rem"/>
 
                     <p:column headerText="#{msg['form.periodos.table.header.id']}"
                               sortBy="#{periodo.id}" filterBy="#{periodo.id}"
-                              style="width:6rem">
-                        <span class="text-sm text-500">#{periodo.id}</span>
+                              style="width:4.5rem">
+                        <span class="tec-meta text-500">#{periodo.id}</span>
                     </p:column>
                     <p:column headerText="#{msg['form.periodos.table.header.nombre']}"
                               sortBy="#{periodo.nombre}" filterBy="#{periodo.nombre}"
                               filterMatchMode="contains">
-                        <span class="text-sm font-medium text-900">#{periodo.nombre}</span>
+                        <span class="tec-dato font-medium text-900">#{periodo.nombre}</span>
                     </p:column>
                     <p:column headerText="#{msg['form.periodos.table.header.fechaInicio']}"
-                              sortBy="#{periodo.fechaInicio}" style="width:12rem">
+                              sortBy="#{periodo.fechaInicio}" style="width:9rem">
                         <p:chip icon="pi pi-calendar">
                             <h:outputText value="#{periodo.fechaInicio}">
                                 <f:convertDateTime pattern="dd-MM-yyyy"/>
@@ -96,7 +95,7 @@
                         </p:chip>
                     </p:column>
                     <p:column headerText="#{msg['form.periodos.table.header.fechaFin']}"
-                              sortBy="#{periodo.fechaFin}" style="width:12rem">
+                              sortBy="#{periodo.fechaFin}" style="width:9rem">
                         <p:chip icon="pi pi-calendar-times">
                             <h:outputText value="#{periodo.fechaFin}">
                                 <f:convertDateTime pattern="dd-MM-yyyy"/>
@@ -104,7 +103,7 @@
                         </p:chip>
                     </p:column>
                     <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:7rem">
+                              styleClass="tec-col-actions">
                       <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -134,11 +133,10 @@
             <!-- ======================================================
                  DIALOGO: NUEVO / EDITAR PERIODO
                  ====================================================== -->
-            <p:dialog header="#{msg['form.periodos.dialog.title']}"
+            <p:dialog styleClass="tec-dialog" header="#{msg['form.periodos.dialog.title']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgPeriodo"
-                      responsive="true" width="480"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 

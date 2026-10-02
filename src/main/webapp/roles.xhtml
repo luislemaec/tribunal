@@ -61,7 +61,6 @@
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} roles"
                              emptyMessage="No hay roles registrados. Use el botón 'Nuevo' para crear uno."
-                             showGridlines="true"
                              styleClass="ui-datatable-striped ui-datatable-sm">
                     <p:ajax event="rowSelect"           update=":frmRoles:btnEliminaRegistros"/>
                     <p:ajax event="rowUnselect"         update=":frmRoles:btnEliminaRegistros"/>
@@ -69,12 +68,12 @@
                     <p:ajax event="rowUnselectCheckbox" update=":frmRoles:btnEliminaRegistros"/>
                     <p:ajax event="toggleSelect"        update=":frmRoles:btnEliminaRegistros"/>
 
-                    <p:column selectionMode="multiple" exportable="false" style="width:3rem"/>
+                    <p:column selectionMode="multiple" exportable="false" style="width:2.25rem"/>
 
                     <p:column headerText="#{msg['form.roles.table.header.id']}"
                               sortBy="#{rol.id}" filterBy="#{rol.id}"
-                              style="width:6rem">
-                        <span class="text-sm text-500 font-mono">#{rol.id}</span>
+                              style="width:4.5rem">
+                        <span class="tec-meta text-500 font-mono">#{rol.id}</span>
                     </p:column>
 
                     <p:column headerText="#{msg['form.roles.table.header.nombre']}"
@@ -90,11 +89,11 @@
                     <p:column headerText="#{msg['form.roles.table.header.descripcion']}"
                               sortBy="#{rol.descripcion}" filterBy="#{rol.descripcion}"
                               filterMatchMode="contains">
-                        <span class="text-sm text-800">#{rol.descripcion}</span>
+                        <span class="tec-meta text-800">#{rol.descripcion}</span>
                     </p:column>
 
                     <p:column headerText="Acciones" exportable="false"
-                              styleClass="text-center" style="width:7rem">
+                              styleClass="tec-col-actions">
                       <span class="tec-acciones">
                         <p:commandButton icon="pi pi-pencil"
                                          styleClass="rounded-button ui-button-flat ui-button-secondary"
@@ -123,11 +122,10 @@
             <!-- ======================================================
                  DIALOGO: NUEVO / EDITAR ROL
                  ====================================================== -->
-            <p:dialog header="#{msg['form.roles.dialog.title']}"
+            <p:dialog styleClass="tec-dialog" header="#{msg['form.roles.dialog.title']}"
                       showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgRol"
-                      responsive="true" width="480"
-                      style="max-width:96vw"
+                      responsive="true"
                       contentStyle="overflow-y:auto;max-height:75vh"
                       closeOnEscape="true">
 
@@ -138,7 +136,7 @@
 
                             <div class="field col-12">
                                 <label for="nombre" class="font-medium text-700 text-sm">
-                                    #{msg['form.roles.label.nombre']} <span class="text-red-500">*</span>
+                                    #{msg['form.roles.label.nombre']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="nombre"
                                              value="#{rolController.rolSeleccionado.nombre}"
@@ -153,7 +151,7 @@
 
                             <div class="field col-12">
                                 <label for="descripcion" class="font-medium text-700 text-sm">
-                                    #{msg['form.roles.label.descripcion']} <span class="text-red-500">*</span>
+                                    #{msg['form.roles.label.descripcion']} <span class="tec-text-danger">*</span>
                                 </label>
                                 <p:inputText id="descripcion"
                                              value="#{rolController.rolSeleccionado.descripcion}"

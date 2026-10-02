@@ -80,7 +80,7 @@
 
         // Tipografía del tema: Montserrat, peso base 300 (Light) y 500 en títulos de tooltip.
         var familia = variable('--font-family', 'Montserrat, sans-serif');
-        var xs = tamano('--tec-fs-xs', 11);
+        var xs = tamano('--tec-fs-2xs', 11);
         opciones.font = {family: familia, size: xs, weight: '300'};
         opciones.plugins.tooltip = opciones.plugins.tooltip || {};
         opciones.plugins.tooltip.titleFont = {family: familia, size: xs, weight: '500'};

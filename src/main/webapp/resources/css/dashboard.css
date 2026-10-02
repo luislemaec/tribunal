@@ -2,11 +2,11 @@
    lo compartido entre pantallas vive en tribunal-globals.css. */
 
 /* SpeedDial del dashboard: posición flotante (no choca con scrollTop) */
-.ui-speeddial { position: fixed !important; right: 1.5rem !important; bottom: 5rem !important; z-index: 999; }
+.ui-speeddial { position: fixed !important; right: 1.125rem !important; bottom: 3.75rem !important; z-index: 999; }
 
 .dashboard-speeddial.ui-button {
     background: var(--primary-color) !important; border-color: var(--primary-color) !important;
-    width: 3rem !important; height: 3rem !important;
+    width: 2.25rem !important; height: 2.25rem !important;
     color: var(--primary-color-text) !important;
     box-shadow: var(--tec-shadow-float) !important;
 }

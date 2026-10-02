@@ -429,11 +429,11 @@ PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
     },
 
     isMobile: function( ){
-        return window.innerWidth <= 1024;
+        return window.innerWidth < 992;   // breakpoint lg (≥992px escritorio), igual que layout-tribunal.css
     },
 
     isDesktop: function() {
-        return window.innerWidth > 1024;
+        return window.innerWidth >= 992;
     },
 
     isStaticMenu: function() {

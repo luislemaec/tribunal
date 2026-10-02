@@ -416,8 +416,8 @@
                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords} miembros"
                              rowsPerPageTemplate="10,25,50"
                              emptyMessage="No hay miembros registrados. Seleccione una iglesia o registre un nuevo miembro."
-                             reflow="true" size="small"
-                             styleClass="tec-table personas-table">
+                             reflow="true"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table personas-table">
 
                     <p:ajax event="rowSelect"           update=":frmPersonas:btnEliminaRegistros"/>
                     <p:ajax event="rowUnselect"         update=":frmPersonas:btnEliminaRegistros"/>
@@ -713,9 +713,9 @@
                                  value="#{personaController.resultadosBusquedaPersonas}"
                                  paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
                                  pageLinks="5" paginatorPosition="bottom"
-                                 reflow="true" size="small"
+                                 reflow="true"
                                  emptyMessage="#{msg['form.personas.busqueda.sin.resultados']}"
-                                 styleClass="tec-table tec-table--static">
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
                         <p:column headerText="#{msg['form.personas.busqueda.cedula']}"
                                   styleClass="tec-col-fit">
                             <h:outputText value="#{resultado.persona.documento}" styleClass="tec-mono"/>
@@ -969,8 +969,8 @@
                 <p:dataTable var="h" value="#{personaController.historialPersona}"
                              emptyMessage="#{msg['form.personas.hist.empty']}"
                              reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
-                             styleClass="tec-table tec-table--static">
+                             paginatorAlwaysVisible="false" pageLinks="5"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
                     <p:column headerText="#{msg['form.personas.hist.col.fecha']}" styleClass="tec-col-fit">
                         <h:outputText rendered="#{not empty h.fecha}" value="#{h.fecha}"
                                       styleClass="personas-fecha">
@@ -1060,8 +1060,8 @@
                              id="tblPersonasEliminadas" widgetVar="wdTblPersonasEliminadas"
                              emptyMessage="#{msg['form.personas.eliminadas.empty']}"
                              reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                             paginatorAlwaysVisible="false" pageLinks="5" size="small"
-                             styleClass="tec-table tec-table--static">
+                             paginatorAlwaysVisible="false" pageLinks="5"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
 
                     <p:column headerText="#{msg['form.personas.eliminadas.col.documento']}"
                               styleClass="tec-col-fit">
