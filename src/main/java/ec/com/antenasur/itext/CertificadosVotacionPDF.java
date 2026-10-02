@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -30,6 +29,10 @@ import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfGState;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.PdfFunction;
+import com.itextpdf.text.pdf.PdfShading;
+import com.itextpdf.text.pdf.PdfShadingPattern;
 
 import ec.com.antenasur.dto.CertificadoVotacionDTO;
 import ec.com.antenasur.dto.ReporteMesaDTO;
@@ -43,13 +46,12 @@ final class CertificadosVotacionPDF {
     private static final BaseColor BORDE = TipografiaPdf.BORDE;
     private static final BaseColor TEXTO = new BaseColor(30, 36, 42);
     private static final BaseColor SUAVE = new BaseColor(105, 118, 132);
-    private static final BaseColor CELESTE = new BaseColor(223, 235, 246);
-    /**
-     * Imágenes creadas una sola vez por documento y reutilizadas en cada certificado: iText incrusta
-     * cada instancia de {@link Image} como un objeto propio, así que crearlas por certificado repetía
-     * 30 copias por hoja (162 MB en 100 hojas frente a 2,4 MB reutilizándolas).
-     */
-    private final Image logoTec;
+    private static final BaseColor CELESTE = TipografiaPdf.FONDO_CABECERA;
+    /** SVG fuente y Form XObject vectorial creado una vez por documento y reutilizado en cada tarjeta. */
+    private final byte[] logoSvg;
+    private PdfTemplate logoTec;
+    private final Image marcaAguaTec;
+    private PdfTemplate patronBandas;
 
     /** Pesos de la jerarquía del certificado (fuentes compartidas de {@link TipografiaPdf}). */
     private static final TipografiaPdf.Peso REGULAR = TipografiaPdf.Peso.REGULAR;
@@ -58,7 +60,7 @@ final class CertificadosVotacionPDF {
 
     record Recursos(byte[] logo) {
         static Recursos delProyecto() throws IOException {
-            return new Recursos(grafico("cert-logo.png"));
+            return new Recursos(grafico("logo-tec-azul.svg"));
         }
 
         /**
@@ -74,7 +76,8 @@ final class CertificadosVotacionPDF {
     }
 
     private CertificadosVotacionPDF(Recursos recursos) throws IOException, DocumentException {
-        logoTec = Image.getInstance(recursos.logo());
+        logoSvg = recursos.logo();
+        marcaAguaTec = Image.getInstance(Recursos.grafico("plantilla-a4-marca-agua.png"));
     }
 
     static byte[] generar(ReporteMesaDTO reporte, List<CertificadoVotacionDTO> personas,
@@ -103,8 +106,9 @@ final class CertificadosVotacionPDF {
         PdfInstitucional.aplicarMetadata(pdf, mensaje("titulo"));
         pdf.open();
         Set<String> codigos = new HashSet<>();
-        String fechaTexto = new SimpleDateFormat("dd/MM/yyyy").format(fecha);
         try {
+            logoTec = LogoTecVectorial.crearCompleto(escritor, logoSvg);
+            patronBandas = crearBandasSeguridad(escritor);
             for (int inicio = 0; inicio < personas.size(); inicio += 10) {
                 int cantidad = Math.min(10, personas.size() - inicio);
                 if (inicio > 0) pdf.newPage();
@@ -112,7 +116,7 @@ final class CertificadosVotacionPDF {
                     CertificadoVotacionDTO persona = personas.get(inicio + posicion);
                     String codigo = codigo(reporte.getProceso().getId(), reporte.getMesa().getId(), persona.personaId());
                     if (!codigos.add(codigo)) throw new DocumentException("Identificador de certificado duplicado");
-                    frente(escritor.getDirectContent(), reporte, persona, fechaTexto,
+                    frente(escritor.getDirectContent(), reporte, persona,
                             x(posicion, false), y(posicion));
                 }
                 pdf.newPage();
@@ -171,16 +175,51 @@ final class CertificadosVotacionPDF {
         cb.setColorFill(CELESTE);
         cb.rectangle(x + 3, y + ALTO - 6, ANCHO - 6, 3f);
         cb.fill();
-        cb.setColorStroke(CELESTE);
-        cb.setLineWidth(0.3f);
-        for (int curva = 0; curva < 4; curva++) {
-            cb.moveTo(x + ANCHO - 60, y + ALTO - 7 - curva * 2);
-            cb.curveTo(x + ANCHO - 28, y + ALTO - 7 - curva * 2,
-                    x + ANCHO - 20, y + ALTO - 24 - curva * 2,
-                    x + ANCHO - 5, y + ALTO - 24 - curva * 2);
-            cb.stroke();
+        cb.restoreState();
+        cb.addTemplate(patronBandas, x, y);
+    }
+
+    /** Curvas completas de borde a borde, recortadas al interior de la tarjeta.
+     * Dos familias suaves ocupan el encabezado y la zona inferior de datos;
+     * el reverso deja libre la firma y las zonas silenciosas del código de barras. */
+    private PdfTemplate crearBandasSeguridad(PdfWriter writer) {
+        PdfTemplate cb = writer.getDirectContent().createTemplate(ANCHO, ALTO);
+        float x = 0, y = 0;
+        cb.saveState();
+        cb.rectangle(x + 3, y + 3, ANCHO - 6, ALTO - 6);
+        cb.clip();
+        cb.newPath();
+        // Azul -> azul claro -> azul: luz central suave, sin colores nuevos ni raster.
+        float[] oscuro = rgb(AZUL), claro = rgb(TipografiaPdf.FONDO_CABECERA);
+        PdfFunction degradado = PdfFunction.type3(writer, new float[]{0, 1}, null,
+                new PdfFunction[]{
+                        PdfFunction.type2(writer, new float[]{0, 1}, null, oscuro, claro, 1),
+                        PdfFunction.type2(writer, new float[]{0, 1}, null, claro, oscuro, 1)},
+                new float[]{0.5f}, new float[]{0, 1, 0, 1});
+        PdfShading sombreado = PdfShading.type2(writer, AZUL, new float[]{3, 0, ANCHO - 3, 0},
+                new float[]{0, 1}, degradado, new boolean[]{true, true});
+        cb.setShadingStroke(new PdfShadingPattern(sombreado));
+        PdfGState estado = new PdfGState();
+        estado.setStrokeOpacity(0.18f);
+        cb.setGState(estado);
+        for (int familia = 0; familia < 2; familia++) {
+            float base = familia == 0 ? ALTO - 18 : 43;
+            for (int curva = 0; curva < 3; curva++) {
+                float nivel = y + base - curva * 2.4f;
+                cb.setLineWidth(curva == 1 ? 0.32f : 0.22f);
+                cb.moveTo(x + 3, nivel);
+                cb.curveTo(x + ANCHO * 0.28f, nivel + 9 - familia * 3,
+                        x + ANCHO * 0.67f, nivel - 9 + familia * 3,
+                        x + ANCHO - 3, nivel + 1.5f);
+                cb.stroke();
+            }
         }
         cb.restoreState();
+        return cb;
+    }
+
+    private static float[] rgb(BaseColor color) {
+        return new float[]{color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f};
     }
 
     /*
@@ -195,51 +234,58 @@ final class CertificadosVotacionPDF {
     private static final float TAM_DATO_ELECTORAL = 5.6f;
     private static final float TAM_DATO_TERRITORIAL = 5f;
 
-    /** Franja tricolor medida en la antigua silueta: amarillo, azul y rojo en proporción 60:50:39. */
-    private static final BaseColor[] TRICOLOR = {
-            new BaseColor(0xFA, 0xD4, 0x1D), new BaseColor(0x02, 0x40, 0x88), new BaseColor(0xE1, 0x1C, 0x23)};
-    private static final float[] TRICOLOR_PROPORCION = {60, 50, 39};
-
     /** Pie: colores medidos en la antigua onda (cert-onda.png). */
     private static final BaseColor PIE_OSCURO = new BaseColor(0x09, 0x3F, 0x78);
     private static final BaseColor PIE_CLARO = new BaseColor(0x0D, 0x57, 0xA4);
     private static final BaseColor PIE_LINEA = new BaseColor(0x78, 0xBB, 0xFD);
     private static final float ALTO_PIE = 9f;
 
-    /** Marca de agua: mapa del Ecuador continental en azul institucional al 8 %. */
-    private static final float OPACIDAD_MAPA = 0.08f;
-    private static final float ALTO_MAPA = 96f;
+    /** Conjunto centrado: mapa vectorial y PNG oficial, detrás de los datos del anverso. */
+    private static final float OPACIDAD_LOGO = 0.07f;
+    private static final float ANCHO_MARCA_AGUA = 67.5f;
+    private static final float ALTO_MAPA = 43f;
+    private static final float OPACIDAD_MAPA = 0.035f;
 
     private void frente(PdfContentByte cb, ReporteMesaDTO reporte, CertificadoVotacionDTO persona,
-            String fecha, float x, float y) throws DocumentException {
+            float x, float y) throws DocumentException {
         marco(cb, x, y);
-        mapa(cb, x, y);
+        marcaAgua(cb, x, y);
         pie(cb, x, y);
-        encabezado(cb, reporte, fecha, x, y);
-        datosVotante(cb, reporte, persona, fecha, x, y);
+        encabezado(cb, reporte, x, y);
+        datosVotante(cb, reporte, persona, x, y);
     }
 
-    /** Silueta vectorial del Ecuador continental, centrada y detrás de todo el contenido. */
-    private void mapa(PdfContentByte cb, float x, float y) {
+    private void marcaAgua(PdfContentByte cb, float x, float y) throws DocumentException {
         MapaEcuador mapa = MapaEcuador.instancia();
-        float escala = ALTO_MAPA / mapa.alto();
-        float origenX = x + (ANCHO - mapa.ancho() * escala) / 2;
-        float origenY = y + (ALTO + ALTO_PIE - ALTO_MAPA) / 2 + 1.5f;
-        PdfGState transparencia = new PdfGState();
-        transparencia.setFillOpacity(OPACIDAD_MAPA);
+        float escalaMapa = ALTO_MAPA / mapa.alto();
+        float anchoMapa = mapa.ancho() * escalaMapa;
+        float inicio = x + (ANCHO - anchoMapa - 10 - ANCHO_MARCA_AGUA) / 2;
+        float centroY = y + ALTO / 2;
+        PdfGState tenue = new PdfGState();
+        tenue.setFillOpacity(OPACIDAD_MAPA);
         cb.saveState();
-        cb.setGState(transparencia);
+        cb.setGState(tenue);
         cb.setColorFill(AZUL);
         for (float[] poligono : mapa.poligonos()) {
             for (int i = 0; i < poligono.length; i += 2) {
-                // El SVG crece hacia abajo; el PDF, hacia arriba.
-                float px = origenX + poligono[i] * escala;
-                float py = origenY + (mapa.alto() - poligono[i + 1]) * escala;
+                float px = inicio + poligono[i] * escalaMapa;
+                float py = centroY - ALTO_MAPA / 2 + (mapa.alto() - poligono[i + 1]) * escalaMapa;
                 if (i == 0) cb.moveTo(px, py); else cb.lineTo(px, py);
             }
             cb.closePath();
         }
         cb.fill();
+        cb.restoreState();
+
+        marcaAguaTec.scaleToFit(ANCHO_MARCA_AGUA, ALTO_MAPA);
+        marcaAguaTec.setAbsolutePosition(inicio + anchoMapa + 10,
+                centroY - marcaAguaTec.getScaledHeight() / 2);
+        PdfGState transparencia = new PdfGState();
+        // El PNG ya contiene alfa 23/255: se ajusta para obtener 7 % efectivo.
+        transparencia.setFillOpacity(OPACIDAD_LOGO / (23f / 255f));
+        cb.saveState();
+        cb.setGState(transparencia);
+        cb.addImage(marcaAguaTec);
         cb.restoreState();
     }
 
@@ -281,87 +327,74 @@ final class CertificadosVotacionPDF {
     }
 
     /** Identidad institucional, tipo de certificado, proceso y fórmula de certificación. */
-    private void encabezado(PdfContentByte cb, ReporteMesaDTO reporte, String fecha, float x, float y)
+    private void encabezado(PdfContentByte cb, ReporteMesaDTO reporte, float x, float y)
             throws DocumentException {
-        Image imagen = logoTec;
-        // scaleToFit conserva la proporción original del logotipo.
-        imagen.scaleToFit(30, 12);
-        imagen.setAbsolutePosition(x + 9, y + ALTO - 19);
-        cb.addImage(imagen);
-        cb.saveState();
-        cb.setColorStroke(BORDE);
-        cb.moveTo(x + 42, y + ALTO - 20);
-        cb.lineTo(x + 42, y + ALTO - 8);
-        cb.stroke();
-        cb.restoreState();
-        // Institución (500) → tipo de documento (700) → proceso (500) → fórmula (400).
-        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
-                new Phrase(mensaje("tribunal"), fuente(5f, MEDIUM, AZUL)), x + 45, y + ALTO - 12, 0);
-        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
-                new Phrase(mensaje("organizacion"), fuente(5f, MEDIUM, AZUL)), x + 45, y + ALTO - 18, 0);
-
-        centrar(cb, mensaje("titulo"), x + ANCHO / 2, y + ALTO - 31, 9.4f, BOLD, AZUL);
+        // Logo oficial completo: sus letras sustituyen el texto institucional duplicado.
+        float escalaLogo = 49 / logoTec.getWidth();
+        cb.addTemplate(logoTec, escalaLogo, 0, 0, escalaLogo, x + 9, y + ALTO - 32);
+        float inicioTitulo = x + 67;
+        float anchoTitulo = ANCHO - 79;
+        float centroTitulo = inicioTitulo + anchoTitulo / 2;
+        ajustarYCentrar(cb, mensaje("titulo"), centroTitulo, y + ALTO - 17, anchoTitulo, 7.7f, BOLD, AZUL);
         String proceso = reporte.getProceso() != null ? texto(reporte.getProceso().getNombre()) : "";
-        String subtitulo = proceso.isEmpty() ? fecha : proceso.toUpperCase(Locale.ROOT);
-        ajustarYCentrar(cb, subtitulo, x + ANCHO / 2, y + ALTO - 38, ANCHO - 24, 5.6f, MEDIUM, SUAVE);
-        tricolor(cb, x + ANCHO / 2, y + ALTO - 43.5f, 40f, 1.2f);
-        centrar(cb, mensaje("certifica"), x + ANCHO / 2, y + ALTO - 49.5f, 5f, REGULAR, SUAVE);
-    }
-
-    /** Franja tricolor vectorial centrada en {@code centro}: separa el encabezado del contenido. */
-    private void tricolor(PdfContentByte cb, float centro, float y, float ancho, float alto) {
-        float total = 0;
-        for (float parte : TRICOLOR_PROPORCION) total += parte;
-        float inicio = centro - ancho / 2;
-        cb.saveState();
-        for (int i = 0; i < TRICOLOR.length; i++) {
-            float tramo = ancho * TRICOLOR_PROPORCION[i] / total;
-            cb.setColorFill(TRICOLOR[i]);
-            cb.rectangle(inicio, y, tramo, alto);
-            cb.fill();
-            inicio += tramo;
-        }
-        cb.restoreState();
+        String subtitulo = proceso.toUpperCase(Locale.ROOT);
+        ajustarYCentrar(cb, subtitulo, centroTitulo, y + ALTO - 25, anchoTitulo, 5.1f, MEDIUM, SUAVE);
+        linea(cb, x + 58, y + ALTO - 29,
+                x + ANCHO - MARGEN_TARJETA, AZUL, 0.5f);
+        centrar(cb, mensaje("certifica"), x + ANCHO / 2, y + ALTO - 39, 5f, REGULAR, SUAVE);
     }
 
     /** Persona, información electoral y datos territoriales del recinto, en bloques con etiqueta arriba. */
     private void datosVotante(PdfContentByte cb, ReporteMesaDTO reporte, CertificadoVotacionDTO persona,
-            String fecha, float x, float y) throws DocumentException {
+            float x, float y) throws DocumentException {
         String nombre = (texto(persona.nombres()) + " " + texto(persona.apellidos())).trim();
         var recinto = reporte.getRecinto();
         float izq = x + MARGEN_TARJETA;
+        float columna = ANCHO_UTIL_TARJETA / 3;
+        float separacion = 4;
+        float filaNombre = y + 88;
+        float filaCedula = filaNombre - 20;
+        float filaRecinto = filaCedula - 20;
+        float filaTerritorio = filaRecinto - 20;
 
-        // Persona: nombre destacado a todo el ancho (hasta dos líneas) y cédula.
-        etiqueta(cb, mensaje("nombres"), izq, y + 83.5f);
-        valor(cb, nombre.isEmpty() ? mensaje("sin.dato") : nombre, izq, y + 81.5f, ANCHO_UTIL_TARJETA, 14.5f,
-                TAM_NOMBRE, true);
+        // Persona: una sola línea, conservando únicamente el prefijo que cabe, y cédula.
+        etiqueta(cb, mensaje("nombres"), izq, filaNombre);
+        Font fuenteNombre = fuente(TAM_NOMBRE, MEDIUM, TEXTO);
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(prefijoNombre(nombre.isEmpty() ? mensaje("sin.dato") : nombre,
+                        fuenteNombre, ANCHO_UTIL_TARJETA), fuenteNombre), izq, filaNombre - 8.4f, 0);
         String etiquetaCedula = mensaje("documento").toUpperCase(Locale.ROOT) + ":";
-        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
-                new Phrase(etiquetaCedula, fuente(TAM_ETIQUETA, MEDIUM, AZUL)), izq, y + 59.5f, 0);
-        float anchoEtiqueta = new Chunk(etiquetaCedula, fuente(TAM_ETIQUETA, MEDIUM, AZUL)).getWidthPoint();
-        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
-                new Phrase(texto(persona.documento()), fuente(TAM_DATO_ELECTORAL, MEDIUM, TEXTO)),
-                izq + anchoEtiqueta + 3, y + 59.5f, 0);
+        String documento = texto(persona.documento());
+        String documentoImpreso = documento.substring(0, documento.offsetByCodePoints(0,
+                Math.min(10, documento.codePointCount(0, documento.length()))));
+        bloque(cb, etiquetaCedula, documentoImpreso, izq, filaCedula,
+                ANCHO_UTIL_TARJETA, 12, TAM_DATO_ELECTORAL, true);
 
-        linea(cb, izq, y + 55.5f, x + ANCHO - MARGEN_TARJETA, BORDE, 0.4f);
-
-        // Información electoral: recinto, mesa y fecha de sufragio.
-        float colMesa = izq + 116, colFecha = izq + 138;
-        bloque(cb, mensaje("recinto"), recinto == null ? "" : texto(recinto.getNombre()), izq, y + 50.5f,
-                110, 12, TAM_DATO_ELECTORAL, true);
-        bloque(cb, mensaje("mesa"), texto(reporte.getMesa().getNombre()), colMesa, y + 50.5f,
-                20, 7, TAM_DATO_ELECTORAL, true);
-        bloque(cb, mensaje("fecha"), fecha, colFecha, y + 50.5f,
-                x + ANCHO - MARGEN_TARJETA - colFecha, 7, TAM_DATO_ELECTORAL, true);
+        // Información electoral: recinto y mesa, sin fecha de sufragio.
+        float colMesa = izq + 2 * columna;
+        bloque(cb, mensaje("recinto"), recinto == null ? "" : texto(recinto.getNombre()), izq, filaRecinto,
+                2 * columna - separacion, 14, TAM_DATO_ELECTORAL, true);
+        bloque(cb, mensaje("mesa"), texto(reporte.getMesa().getNombre()), colMesa, filaRecinto,
+                columna, 12, TAM_DATO_ELECTORAL, true);
 
         // Datos territoriales del recinto, en tres columnas.
-        float columna = ANCHO_UTIL_TARJETA / 3;
         bloque(cb, mensaje("provincia"), recinto == null ? "" : texto(recinto.getProvinciaNombre()), izq,
-                y + 30, columna - 4, 12, TAM_DATO_TERRITORIAL, false);
+                filaTerritorio, columna - separacion, 12, TAM_DATO_TERRITORIAL, false);
         bloque(cb, mensaje("canton"), recinto == null ? "" : texto(recinto.getCantonNombre()), izq + columna,
-                y + 30, columna - 4, 12, TAM_DATO_TERRITORIAL, false);
+                filaTerritorio, columna - separacion, 12, TAM_DATO_TERRITORIAL, false);
         bloque(cb, mensaje("parroquia"), recinto == null ? "" : texto(recinto.getUbicacionNombre()),
-                izq + 2 * columna, y + 30, columna - 4, 12, TAM_DATO_TERRITORIAL, false);
+                izq + 2 * columna, filaTerritorio, columna - separacion, 12, TAM_DATO_TERRITORIAL, false);
+    }
+
+    /** Recorta solo la representación impresa, sin reducir el cuerpo ni alterar el DTO. */
+    private static String prefijoNombre(String nombre, Font fuente, float ancho) {
+        String resultado = "";
+        for (String palabra : nombre.split("\\s+")) {
+            String candidato = resultado.isEmpty() ? palabra : resultado + " " + palabra;
+            if (new Chunk(candidato, fuente).getWidthPoint() > ancho) break;
+            resultado = candidato;
+        }
+        return resultado;
     }
 
     /** Etiqueta en mayúsculas (500, azul) sobre su línea base. */

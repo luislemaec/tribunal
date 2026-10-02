@@ -36,7 +36,7 @@ public class CertificadosVotacionPdfCheck {
         mesa.setNombre("12");
         reporte.setMesa(mesa);
         var recursos = new CertificadosVotacionPDF.Recursos(
-                Files.readAllBytes(Path.of("src/main/resources/img/cert-logo.png")));
+                Files.readAllBytes(Path.of("src/main/resources/img/logo-tec-azul.svg")));
         var fecha = new SimpleDateFormat("yyyy-MM-dd").parse("2027-02-21");
         List<CertificadoVotacionDTO> personas = new ArrayList<>();
         for (int i = 1; i <= 21; i++) {
@@ -49,6 +49,19 @@ public class CertificadosVotacionPdfCheck {
             byte[] pdf = CertificadosVotacionPDF.generar(reporte, personas.subList(0, cantidad), fecha, recursos);
             if (args.length > 0) Files.write(Path.of(args[0]), pdf);
             PdfReader lector = new PdfReader(pdf);
+            var objetos = lector.getPageN(1).getAsDict(PdfName.RESOURCES).getAsDict(PdfName.XOBJECT);
+            boolean logoVectorial = false;
+            for (var clave : objetos.getKeys()) {
+                var objeto = (com.itextpdf.text.pdf.PdfDictionary) PdfReader.getPdfObject(objetos.get(clave));
+                if (PdfName.IMAGE.equals(objeto.getAsName(PdfName.SUBTYPE))) {
+                    comprobar(objeto.getAsNumber(PdfName.WIDTH).intValue() == 1580
+                            && objeto.getAsNumber(PdfName.HEIGHT).intValue() == 516,
+                            "Unico raster autorizado: marca de agua oficial");
+                }
+                var recursosObjeto = objeto.getAsDict(PdfName.RESOURCES);
+                if (recursosObjeto != null && recursosObjeto.getAsDict(PdfName.SHADING) != null) logoVectorial = true;
+            }
+            comprobar(logoVectorial, "Logo vectorial con degradado PDF");
             comprobar(lector.getNumberOfPages() == 2 * ((cantidad + 9) / 10), "Pares frente/reverso");
             var preferencias = lector.getCatalog().getAsDict(PdfName.VIEWERPREFERENCES);
             comprobar(PdfName.DUPLEXFLIPLONGEDGE.equals(preferencias.getAsName(PdfName.DUPLEX)), "Duplex borde largo");
@@ -63,12 +76,15 @@ public class CertificadosVotacionPdfCheck {
                 String texto = PdfTextExtractor.getTextFromPage(lector, pagina);
                 if (frente) {
                     comprobar(texto.split("CERTIFICADO DE VOTACI", -1).length - 1 == esperados, "Titulos");
-                    comprobar(texto.split("21/02/2027", -1).length - 1 == esperados, "Fecha cronograma");
+                    comprobar(!texto.contains("21/02/2027") && !texto.contains("FECHA DE SUFRAGIO"), "Sin fecha impresa");
+                    comprobar(texto.contains("MARIA JOSE ALEJANDRA APELLIDO PRIMERO")
+                            && !texto.contains("APEL\n") && !texto.contains("SEGUNDO"),
+                            "Nombre recortado por palabras completas");
                     comprobar(!texto.contains("PRESIDENTA/E") && !texto.contains("Este documento"), "Frente sin texto del reverso");
                     comprobar(texto.contains("Riobamba"), "Ubicacion del recinto en el anverso");
                     for (int fila = 1; fila <= esperados; fila++) {
                         int persona = inicio + fila;
-                        comprobar(Pattern.compile("C\\u00c9DULA:\\s+SN-" + persona + "(?:\\s|$)")
+                        comprobar(Pattern.compile("(?:^|\\s)SN-" + persona + "(?:\\s|$)")
                                 .matcher(texto).find(), "Persona completa en la pagina correspondiente");
                         String codigo = CertificadosVotacionPDF.codigo(7, 12, persona);
                         comprobar(codigos.add(codigo), "Codigo unico por certificado");
@@ -78,8 +94,7 @@ public class CertificadosVotacionPdfCheck {
                             .getAsName(PdfName.BASEFONT).toString()).reduce("", String::concat);
                     comprobar(nombres.contains("Montserrat-Regular") && nombres.contains("Montserrat-Medium")
                             && nombres.contains("Montserrat-Bold") && !nombres.contains("Light"), "Fuentes institucionales");
-                    comprobar(!texto.contains("CONSULTA QR") && lector.getPageN(pagina).getAsDict(PdfName.RESOURCES)
-                            .getAsDict(PdfName.XOBJECT).size() <= 3, "Frente sin QR");
+                    comprobar(!texto.contains("CONSULTA QR"), "Frente sin texto QR");
                 } else {
                     comprobar(texto.split("PRESIDENTA/E", -1).length - 1 == esperados, "Firmas completas");
                     comprobar(texto.split("Este documento acredita", -1).length - 1 == esperados, "Texto reverso");
