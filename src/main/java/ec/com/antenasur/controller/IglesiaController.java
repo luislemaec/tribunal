@@ -224,8 +224,20 @@ public class IglesiaController implements Serializable {
      */
     public boolean isRucToggleHabilitado() {
         if (iglesiaSeleccionado == null) return false;
+        if (isPuedeEditarRucSiempre()) return true;
         String doc = iglesiaSeleccionado.getDocumento();
         return doc == null || doc.trim().isEmpty();
+    }
+
+    /** Tras guardar, el RUC queda bloqueado salvo para Superadministrador, Administrador y Tribunal. */
+    public boolean isRucEditable() {
+        return iglesiaSeleccionado != null
+                && (iglesiaSeleccionado.getId() == null || isPuedeEditarRucSiempre());
+    }
+
+    public boolean isPuedeEditarRucSiempre() {
+        return tieneAlgunRol("SITEC-Superadministrador", "SITEC-SuperAdministrador",
+                "SITEC-Administrador", "SITEC-Tribunal");
     }
 
     @PostConstruct
@@ -734,7 +746,9 @@ public class IglesiaController implements Serializable {
             return;
         }
         String documentoActual = iglesiaSeleccionado.getDocumento();
-        if (documentoActual == null || documentoActual.trim().isEmpty()) {
+        // Un RUC real solo se reemplaza por genérico cuando el rol puede editar el RUC.
+        boolean reemplazarRucReal = !esDocumentoGenerico(documentoActual) && isRucEditable();
+        if (documentoActual == null || documentoActual.trim().isEmpty() || reemplazarRucReal) {
             String documentoGenerico = iglesiaService.generarDocumentoGenerico();
             iglesiaSeleccionado.setDocumento(documentoGenerico);
             log.info("Documento generico asignado a iglesia en edicion: {}", documentoGenerico);
@@ -843,15 +857,26 @@ public class IglesiaController implements Serializable {
                 || iglesiaSeleccionado.getDocumento().trim().isEmpty()) {
             return;
         }
+        IglesiaDTO encontrada = iglesiaService.buscarDTOPorDocumento(iglesiaSeleccionado.getDocumento());
         if (restringidoAIglesia) {
-            cargarIglesiaAsignada();
-            rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
+            // IglesiaAdmin solo edita su propia iglesia: cambiar el RUC es válido
+            // mientras no coincida con el de otra iglesia ya registrada.
+            if (encontrada != null && !esIglesiaPermitida(encontrada.getId())) {
+                rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
+            }
             return;
         }
-        IglesiaDTO encontrada = iglesiaService.buscarDTOPorDocumento(iglesiaSeleccionado.getDocumento());
         if (encontrada != null) {
             if (!esIglesiaPermitida(encontrada.getId())) {
                 rechazarAccesoIglesia();
+                return;
+            }
+            if (iglesiaSeleccionado.getId() != null) {
+                // En edición no se cambia a otra iglesia: se avisa y se deja corregir.
+                if (!iglesiaSeleccionado.getId().equals(encontrada.getId())) {
+                    rechazarConMensaje("El RUC " + encontrada.getDocumento()
+                            + " ya está registrado en la iglesia \"" + encontrada.getNombre() + "\".");
+                }
                 return;
             }
             iglesiaSeleccionado = encontrada;
@@ -911,7 +936,7 @@ public class IglesiaController implements Serializable {
                 return;
             }
             boolean esEdicion = iglesiaSeleccionado.getId() != null;
-            IglesiaDTO persistida = iglesiaService.guardarDesdeDTO(iglesiaSeleccionado);
+            IglesiaDTO persistida = iglesiaService.guardarDesdeDTO(iglesiaSeleccionado, isPuedeEditarRucSiempre());
             if (persistida != null) {
                 JsfUtil.addSuccessMessage(esEdicion ? "Iglesia actualizada correctamente." : "Iglesia registrada correctamente.");
                 iglesiaSeleccionado = persistida;

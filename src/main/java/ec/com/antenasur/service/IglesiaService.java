@@ -183,6 +183,15 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 	 * conflicto).
 	 */
 	public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
+		return guardarDesdeDTO(dto, true);
+	}
+
+	/**
+	 * @param permitirCambioRuc false bloquea el cambio del documento de una
+	 *                          iglesia ya registrada (solo Superadministrador,
+	 *                          Administrador y Tribunal pueden cambiarlo).
+	 */
+	public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto, boolean permitirCambioRuc) {
 		if (dto == null) {
 			return null;
 		}
@@ -226,6 +235,9 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		// Preservar el documento recibido desde la UI; no consumir secuencia al
 		// guardar.
 		String documento = resolverDocumento(dto.getDocumento());
+		if (!permitirCambioRuc && !java.util.Objects.equals(documento, actual.getDocumento())) {
+			throw new NegocioException("No tiene permisos para modificar el RUC de una iglesia ya registrada.");
+		}
 
 		validarRucUnico(documento, dto.getId());
 
@@ -247,11 +259,16 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 	private void validarRucUnico(String documento, Integer idExcluir) {
 		if (documento == null || esDocumentoGenerico(documento))
 			return;
-		Iglesia existente = iglesiaFacade.getIglesiaPorDocumento(documento);
-		if (existente != null && !existente.getId().equals(idExcluir)) {
-			throw new NegocioException(
-					"El RUC " + documento + " ya está registrado en la iglesia \"" + existente.getNombre() + "\".");
+		Object[] existente = iglesiaFacade.getIglesiaPorDocumentoCualquierEstado(documento);
+		if (existente == null || ((Number) existente[0]).intValue() == (idExcluir == null ? -1 : idExcluir)) {
+			return;
 		}
+		if (Boolean.FALSE.equals(existente[2])) {
+			throw new NegocioException("El RUC " + documento + " pertenece a la iglesia eliminada \"" + existente[1]
+					+ "\". Restáurela en lugar de registrar una nueva.");
+		}
+		throw new NegocioException(
+				"El RUC " + documento + " ya está registrado en la iglesia \"" + existente[1] + "\".");
 	}
 
 	/** Delega en {@link IglesiaFacade#generarDocumentoGenerico()}. */

@@ -151,6 +151,26 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 		return super.getEntityManager().find(Iglesia.class, id, LockModeType.PESSIMISTIC_WRITE);
 	}
 
+	/**
+	 * Busca por documento sin importar el estado. SQL nativo para no quedar
+	 * oculto por el filtro de activos: uk_iglesia_documento también cubre a las
+	 * iglesias eliminadas.
+	 *
+	 * @return {id, nombre, estado} o null si no existe
+	 */
+	public Object[] getIglesiaPorDocumentoCualquierEstado(String documento) {
+		try {
+			List<?> result = super.getEntityManager()
+					.createNativeQuery("SELECT igl_id, igl_nombre, estado FROM public.tb_iglesia"
+							+ " WHERE igl_documento = :documento ORDER BY igl_id")
+					.setParameter("documento", documento).setMaxResults(1).getResultList();
+			return result.isEmpty() ? null : (Object[]) result.get(0);
+		} catch (Exception e) {
+			log.error("Error al buscar iglesia por documento (cualquier estado)", e);
+			return null;
+		}
+	}
+
 	public Iglesia getIglesiaPorDocumento(String documento) {
 		try {
 			String sql = HQL + " WHERE documento =:documento AND estado =TRUE ORDER BY id";

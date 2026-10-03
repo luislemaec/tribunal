@@ -740,6 +740,7 @@
                             <p:inputText id="ruc"
                                          rendered="#{iglesiaController.tieneRuc}"
                                          value="#{iglesiaController.iglesiaSeleccionado.documento}"
+                                         readonly="#{not iglesiaController.rucEditable}"
                                          required="true" maxlength="13">
                                 <p:keyFilter mask="num"/>
                                 <p:ajax event="change" update="@form"
