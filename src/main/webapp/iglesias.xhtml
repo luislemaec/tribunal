@@ -687,12 +687,18 @@
              ====================================================== -->
         <h:form id="frmDlgIglesia">
             <p:dialog widgetVar="dlgIglesia"
-                      header="#{iglesiaController.iglesiaSeleccionado.id eq null ? msg['form.iglesias.dialog.title.new'] : msg['form.iglesias.dialog.title.edit']}"
                       modal="true" responsive="true" fitViewport="true"
                       closable="true" closeOnEscape="true"
                       styleClass="tec-dialog tec-dialog--md">
+                <!-- Título como componente con id: el change del RUC lo actualiza sin re-renderizar @form. -->
+                <f:facet name="header">
+                    <h:outputText id="dlgIglesiaTitulo"
+                                  value="#{iglesiaController.iglesiaSeleccionado.id eq null ? msg['form.iglesias.dialog.title.new'] : msg['form.iglesias.dialog.title.edit']}"/>
+                </f:facet>
 
-                <div class="tec-form ui-fluid">
+                <!-- El change del RUC actualiza solo este panel: si re-renderizara @form
+                     reemplazaría el botón Guardar y se perdería el clic que provocó el blur. -->
+                <p:outputPanel id="pnlDatosIglesia" layout="block" styleClass="tec-form ui-fluid">
                     <!-- Sección: Identificación -->
                     <div class="iglesias-seccion">
                         <i class="pi pi-id-card" aria-hidden="true"/>
@@ -743,11 +749,13 @@
                                          readonly="#{not iglesiaController.rucEditable}"
                                          required="true" maxlength="13">
                                 <p:keyFilter mask="num"/>
-                                <p:ajax event="change" update="@form"
+                                <p:ajax event="change" update="pnlDatosIglesia dlgIglesiaTitulo"
                                         listener="#{iglesiaController.buscaIglesiaPorDocumento}"
                                         process="@this"/>
                                 <f:validateLength minimum="13" maximum="13"/>
                             </p:inputText>
+                            <!-- El growl global es globalOnly: sin esto los errores del RUC no se ven. -->
+                            <p:message for="ruc" display="text" styleClass="block mt-1"/>
                             <p:inputText id="rucGenerico"
                                          rendered="#{not iglesiaController.tieneRuc}"
                                          value="#{iglesiaController.iglesiaSeleccionado.documento}"
@@ -839,7 +847,7 @@
                         </div>
 
                     </div>
-                </div>
+                </p:outputPanel>
 
                 <f:facet name="footer">
                     <div class="tec-filter-actions">
