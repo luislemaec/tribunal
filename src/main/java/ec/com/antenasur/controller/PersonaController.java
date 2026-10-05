@@ -9,10 +9,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.el.ValueExpression;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
@@ -23,7 +26,12 @@ import jakarta.inject.Named;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.primefaces.PrimeFaces;
+import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.FileUploadEvent;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 
@@ -31,6 +39,8 @@ import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.FilaPadronImportadaDTO;
 import ec.com.antenasur.dto.EstadoActaActualizacionDTO;
+import ec.com.antenasur.dto.FiltroMiembrosDTO;
+import ec.com.antenasur.dto.GeograpDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
@@ -142,11 +152,15 @@ public class PersonaController implements Serializable {
      */
     @Setter
     @Getter
-    private Integer cantonId, parroquiaId;
+    private Integer provinciaId, cantonId, parroquiaId;
 
-    @Setter
+    /**
+     * Opciones de los filtros dependientes: solo ubicaciones con iglesias activas,
+     * resueltas con DISTINCT en BD (nunca el catálogo geográfico completo).
+     */
     @Getter
-    private List<Geograp> cantones, parroquias;
+    private List<GeograpDTO> provincias = new ArrayList<>(), cantones = new ArrayList<>(),
+            parroquias = new ArrayList<>();
 
     @Setter
     @Getter
@@ -154,11 +168,14 @@ public class PersonaController implements Serializable {
 
     @Setter
     @Getter
-    private List<IglesiaPersonaDTO> listaIglesiaPersona, listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
+    private List<IglesiaPersonaDTO> listaIglesiaPersonaSeleccionados, listaIglesiaPersonaExistente;
 
-    @Setter
+    /**
+     * Tabla de miembros paginada en BD: solo se cargan las filas visibles. Ordenar,
+     * filtrar y contar se resuelven en SQL con el alcance vigente (iglesia o ubicación).
+     */
     @Getter
-    private List<IglesiaPersonaDTO> listaIglesiaPersonaFiltrada;
+    private final MiembrosLazy modeloMiembros = new MiembrosLazy();
 
     @Getter
     private List<IglesiaPersonaDTO> iglesiasActivasPersona = new ArrayList<>();
@@ -263,7 +280,6 @@ public class PersonaController implements Serializable {
     private void init() {
         try {
             listaIglesias = new ArrayList<>();
-            listaIglesiaPersona = new ArrayList<>();
             iglesiaSeleccionado = new IglesiaDTO();
 
             // Cronograma electoral: timeline del módulo personas.
@@ -294,15 +310,20 @@ public class PersonaController implements Serializable {
                 iglesiaSeleccionado = iglesiaService.obtenerDTOPorId(iglesiaId);
                 listaIglesias = new ArrayList<>();
                 listaIglesias.add(iglesiaSeleccionado);
-                listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaId);
                 progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
                 actualizarEstadoActaActualizacion();
                 return;
             }
 
-            // Camino normal (admin global): permite filtrar por cantón/parroquia.
-            cantones = geograpService.findByFatherId(7);
-            listaIglesias = iglesiaService.listarDTOs();
+            // Camino normal (admin global): filtros Provincia → Cantón → Parroquia limitados
+            // a ubicaciones con iglesias activas. Si solo una provincia tiene iglesias queda
+            // seleccionada y se carga su listado; sin provincia el listado queda vacío.
+            provincias = iglesiaService.listarProvinciasConIglesias();
+            if (provincias.size() == 1) {
+                provinciaId = provincias.get(0).getId();
+                cantones = iglesiaService.listarCantonesConIglesias(provinciaId);
+            }
+            recargarIglesiasYListado();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
         }
@@ -371,48 +392,67 @@ public class PersonaController implements Serializable {
     }
 
     /**
-     * Cambio de cantón: reinicia el filtro dependiente (parroquia) igual que
-     * {@code ReporteMesaController.cambiarCantonDocumental()}, recalcula las
-     * parroquias/iglesias del cantón y delega la recarga del listado en
-     * {@link #refrescarListadoMiembrosActual()}, el único punto que aplica los
-     * criterios activos (misma idea que {@code cargarResumenesDocumentales()}).
+     * Cambio de provincia: limpia cantón, parroquia e iglesia y carga los cantones de
+     * la provincia que tienen iglesias activas.
+     */
+    public void obtieneCantones() {
+        cantonId = null;
+        parroquiaId = null;
+        parroquias = new ArrayList<>();
+        cantones = iglesiaService.listarCantonesConIglesias(provinciaId);
+        recargarIglesiasYListado();
+    }
+
+    /**
+     * Cambio de cantón: limpia parroquia e iglesia y carga las parroquias del cantón
+     * que tienen iglesias activas. Si se limpia, conserva el alcance de la provincia.
      */
     public void obtieneParroquias() {
         parroquiaId = null;
-        iglesiaSeleccionado = new IglesiaDTO();
-        if (cantonId != null) {
-            parroquias = geograpService.findByFatherId(cantonId);
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
-            refrescarListadoMiembrosActual();
-        } else {
-            parroquias = new ArrayList<>();
-            listaIglesias.clear();
-            listaIglesiaPersona.clear();
-        }
+        parroquias = iglesiaService.listarParroquiasConIglesias(cantonId);
+        recargarIglesiasYListado();
     }
 
     /** Cambio de parroquia: si se limpia, conserva el alcance del cantón activo. */
     public void obtieneIglesiasPorParroquia() {
-        iglesiaSeleccionado = new IglesiaDTO();
+        recargarIglesiasYListado();
         if (parroquiaId != null) {
-            Geograp parroquia = geograpService.find(parroquiaId);
-            List<Geograp> parroquiaTmp = new ArrayList<>();
-            if (parroquia != null) {
-                parroquiaTmp.add(parroquia);
-            }
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquiaTmp);
-            if (listaIglesias == null || listaIglesias.isEmpty()) {
-                JsfUtil.addWarningMessage("No existe registro de Iglesias en "
-                        + (parroquia != null ? parroquia.getName() : ""));
-            } else {
-                JsfUtil.addInfoMessage(listaIglesias.size() + " Iglesias registradas");
-            }
-        } else if (cantonId != null) {
-            listaIglesias = iglesiaService.listarDTOsPorParroquias(parroquias);
-        } else {
-            listaIglesias = new ArrayList<>();
+            JsfUtil.addInfoMessage(listaIglesias.size() + " Iglesias registradas");
         }
+    }
+
+    /**
+     * Reinicia la iglesia elegida, recarga el combo de iglesias con la ubicación activa
+     * y delega el listado en {@link #refrescarListadoMiembrosActual()}, el único punto
+     * que aplica los criterios activos.
+     */
+    private void recargarIglesiasYListado() {
+        iglesiaSeleccionado = new IglesiaDTO();
+        listaIglesias = iglesiaService.listarDTOsPorUbicacion(provinciaId, cantonId, parroquiaId);
         refrescarListadoMiembrosActual();
+        reiniciarPaginacion();
+    }
+
+    /** Un alcance nuevo empieza en la primera página de la tabla. */
+    private void reiniciarPaginacion() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        UIComponent tabla = contexto == null ? null
+                : contexto.getViewRoot().findComponent("frmPersonas:tblPersonas");
+        if (tabla instanceof DataTable dataTable) {
+            dataTable.setFirst(0);
+        }
+    }
+
+    /** Hay iglesia o ubicación elegida: la tabla y la exportación tienen qué mostrar. */
+    public boolean isListadoConAlcance() {
+        return filtroAlcance().tieneAlcance();
+    }
+
+    /** Alcance vigente del listado; sin filtros de columna. */
+    private FiltroMiembrosDTO filtroAlcance() {
+        Integer iglesiaId = iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null;
+        return iglesiaId != null ? new FiltroMiembrosDTO(iglesiaId, null, null, null)
+                : new FiltroMiembrosDTO(null, provinciaId, cantonId, parroquiaId);
     }
 
     /** Cambio de iglesia: si se limpia, conserva el alcance de parroquia/cantón activo. */
@@ -423,11 +463,13 @@ public class PersonaController implements Serializable {
             iglesiaSeleccionado = new IglesiaDTO();
         }
         refrescarListadoMiembrosActual();
+        reiniciarPaginacion();
         if (iglesiaSeleccionado.getId() != null) {
-            if (listaIglesiaPersona == null || listaIglesiaPersona.isEmpty()) {
+            // progreso[0] es el total de miembros de la iglesia, ya calculado al refrescar.
+            if (getTotalMiembros() == 0) {
                 JsfUtil.addWarningMessage("No existe registro de personas en " + iglesiaSeleccionado.getNombre());
             } else {
-                JsfUtil.addInfoMessage(listaIglesiaPersona.size() + " personas registradas");
+                JsfUtil.addInfoMessage(getTotalMiembros() + " personas registradas");
             }
         }
     }
@@ -436,7 +478,7 @@ public class PersonaController implements Serializable {
         iglesiaPersonaSeleccionado = new IglesiaPersonaDTO();
         iglesiaPersonaSeleccionado.setPersona(new PersonaDTO());
         iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
-        // Por defecto habilitado para padrón: el admin puede desmarcarlo
+        // Por defecto habilitado para participar en las elecciones: el admin puede desmarcarlo
         iglesiaPersonaSeleccionado.setHabilitadoPadron(Boolean.TRUE);
         if (restringidoAIglesia && iglesiaSeleccionado != null
                 && iglesiaSeleccionado.getId() != null) {
@@ -608,7 +650,8 @@ public class PersonaController implements Serializable {
                         && persistido.getPersona().getNombres() != null)
                         ? persistido.getPersona().getNombres() : "";
                 boolean enPadron = Boolean.TRUE.equals(persistido.getHabilitadoPadron());
-                String estadoPadron = enPadron ? " · Habilitado para padrón" : " · No habilitado para padrón";
+                String estadoPadron = " · " + mensaje(enPadron
+                        ? "form.personas.habilitacion.guardado.si" : "form.personas.habilitacion.guardado.no");
                 if (esActualizacion) {
                     JsfUtil.addSuccessMessage("Miembro actualizado correctamente: "
                             + nombreMiembro + estadoPadron);
@@ -723,35 +766,15 @@ public class PersonaController implements Serializable {
     }
 
     private void refrescarListadoMiembrosActual() {
+        // La tabla no guarda filas: MiembrosLazy consulta su página en BD con el
+        // alcance vigente cada vez que se renderiza. Aquí solo se recalcula el
+        // resumen de la iglesia elegida.
         if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorIglesia(iglesiaSeleccionado.getId());
             progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
             if (restringidoAIglesia) {
                 actualizarEstadoActaActualizacion();
             }
-            return;
         }
-        if (parroquiaId != null) {
-            Geograp parroquia = geograpService.find(parroquiaId);
-            List<Geograp> parroquiasFiltro = new ArrayList<>();
-            if (parroquia != null) {
-                parroquiasFiltro.add(parroquia);
-            }
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquiasFiltro);
-            return;
-        }
-        if (cantonId != null) {
-            // Filtro activo: solo cantón (sin parroquia/iglesia puntual). Se
-            // recalcula la lista de parroquias del cantón por si la instancia
-            // en memoria ya no está disponible, en vez de confiar únicamente
-            // en que `parroquias` no esté vacía.
-            if (parroquias == null || parroquias.isEmpty()) {
-                parroquias = geograpService.findByFatherId(cantonId);
-            }
-            listaIglesiaPersona = iglesiaPersonaService.listarDTOsPorParroquias(parroquias);
-            return;
-        }
-        listaIglesiaPersona = iglesiaPersonaService.listarDTOs();
     }
 
     public boolean isPuedeGenerarActaActualizacion() {
@@ -1032,10 +1055,10 @@ public class PersonaController implements Serializable {
 
     public void exportarExcel() {
         try {
-            List<IglesiaPersonaDTO> lista = listaIglesiaPersonaFiltrada != null
-                    ? new ArrayList<>(listaIglesiaPersonaFiltrada)
-                    : (listaIglesiaPersona != null
-                            ? new ArrayList<>(listaIglesiaPersona) : new ArrayList<>());
+            // Todos los miembros del alcance con los filtros y el orden vigentes de la tabla,
+            // no solo la página visible.
+            List<IglesiaPersonaDTO> lista = iglesiaPersonaService.listarMiembrosCompleto(
+                    modeloMiembros.filtroVigente(), modeloMiembros.campoOrden, modeloMiembros.descendente);
             String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
             String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
 
@@ -1262,6 +1285,109 @@ public class PersonaController implements Serializable {
             excelMigracion.close();
         } catch (Exception e) {
             log.error("ERROR AL CARGAR ARCHIVO", e);
+        }
+    }
+
+    /**
+     * Modelo paginado de la tabla de miembros. Traduce filtros y orden de las columnas
+     * de PrimeFaces a {@link FiltroMiembrosDTO} y conserva los últimos aplicados para
+     * que la exportación use exactamente los mismos criterios.
+     */
+    public class MiembrosLazy extends LazyDataModel<IglesiaPersonaDTO> {
+
+        private static final long serialVersionUID = 1L;
+        private static final String VARIABLE_FILA = "iglPers.";
+
+        private List<IglesiaPersonaDTO> pagina = new ArrayList<>();
+        private Map<String, FilterMeta> filtrosColumna = new HashMap<>();
+        private String campoOrden;
+        private boolean descendente;
+
+        @Override
+        public int count(Map<String, FilterMeta> filtros) {
+            FiltroMiembrosDTO filtro = construirFiltro(filtros);
+            return filtro.tieneAlcance() ? (int) iglesiaPersonaService.contarMiembros(filtro) : 0;
+        }
+
+        @Override
+        public List<IglesiaPersonaDTO> load(int primero, int tamanio, Map<String, SortMeta> orden,
+                Map<String, FilterMeta> filtros) {
+            filtrosColumna = filtros == null ? new HashMap<>() : new HashMap<>(filtros);
+            SortMeta activo = orden == null ? null : orden.values().stream()
+                    .filter(s -> s.getOrder() != null && (s.getOrder().isAscending() || s.getOrder().isDescending()))
+                    .findFirst().orElse(null);
+            campoOrden = activo == null ? null : campo(activo.getField(), activo.getSortBy());
+            descendente = activo != null && activo.getOrder() == SortOrder.DESCENDING;
+            FiltroMiembrosDTO filtro = construirFiltro(filtrosColumna);
+            pagina = filtro.tieneAlcance()
+                    ? iglesiaPersonaService.listarMiembros(filtro, primero, tamanio, campoOrden, descendente)
+                    : new ArrayList<>();
+            return pagina;
+        }
+
+        /** Alcance vigente más los últimos filtros de columna aplicados en la tabla. */
+        FiltroMiembrosDTO filtroVigente() {
+            return construirFiltro(filtrosColumna);
+        }
+
+        private FiltroMiembrosDTO construirFiltro(Map<String, FilterMeta> filtros) {
+            FiltroMiembrosDTO filtro = filtroAlcance();
+            if (filtros == null) {
+                return filtro;
+            }
+            for (Map.Entry<String, FilterMeta> entrada : filtros.entrySet()) {
+                FilterMeta meta = entrada.getValue();
+                Object valor = meta == null ? null : meta.getFilterValue();
+                if (valor == null || String.valueOf(valor).isBlank()) {
+                    continue;
+                }
+                String texto = String.valueOf(valor).trim();
+                if (meta.isGlobalFilter() || FilterMeta.GLOBAL_FILTER_KEY.equals(entrada.getKey())) {
+                    filtro.setBusqueda(texto);
+                    continue;
+                }
+                String campo = campo(meta.getField(), meta.getFilterBy());
+                switch (campo == null ? entrada.getKey() : campo) {
+                    case "persona.documento" -> filtro.setDocumento(texto);
+                    case "persona.nombres" -> filtro.setNombres(texto);
+                    case "habilitadoPadron" -> filtro.setHabilitado(Boolean.valueOf(texto));
+                    case "actualizada" -> filtro.setRevisado(Boolean.valueOf(texto));
+                    case "tieneInconsistencia" -> filtro.setInconsistencia(Boolean.valueOf(texto));
+                    default -> { }
+                }
+            }
+            return filtro;
+        }
+
+        /** Campo de la columna: su atributo field o, si falta, la expresión #{iglPers.campo}. */
+        private String campo(String field, ValueExpression expresion) {
+            String valor = field;
+            if ((valor == null || valor.isBlank()) && expresion != null) {
+                valor = expresion.getExpressionString();
+            }
+            if (valor == null) {
+                return null;
+            }
+            valor = valor.trim();
+            if (valor.startsWith("#{") && valor.endsWith("}")) {
+                valor = valor.substring(2, valor.length() - 1);
+            }
+            return valor.startsWith(VARIABLE_FILA) ? valor.substring(VARIABLE_FILA.length()) : valor;
+        }
+
+        @Override
+        public String getRowKey(IglesiaPersonaDTO miembro) {
+            return miembro == null || miembro.getId() == null ? null : miembro.getId().toString();
+        }
+
+        /** La selección puede abarcar varias páginas: se busca en la página y en lo ya seleccionado. */
+        @Override
+        public IglesiaPersonaDTO getRowData(String clave) {
+            List<IglesiaPersonaDTO> seleccion = listaIglesiaPersonaSeleccionados == null
+                    ? List.of() : listaIglesiaPersonaSeleccionados;
+            return java.util.stream.Stream.concat(pagina.stream(), seleccion.stream())
+                    .filter(m -> m.getId() != null && m.getId().toString().equals(clave))
+                    .findFirst().orElse(null);
         }
     }
 }

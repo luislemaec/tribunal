@@ -74,6 +74,38 @@
     }
 }
 
+/* Etiquetas de estado (p:tag): fondo, borde y texto propios, algo más presentes que los fondos de
+   callouts y KPI pero sin llegar a colores sólidos. Intensidades equilibradas entre severidades; el
+   ámbar lleva más porcentaje porque su color base es claro. Contraste texto/fondo ≥ 5:1 (AA) en todas,
+   y el borde mantiene la silueta sobre filas alternas, hover y seleccionadas.
+   Respaldo sin color-mix: fondos suaves de la paleta del tema y texto de la severidad. */
+:root {
+    --tec-tag-neutral-bg:var(--surface-200);  --tec-tag-neutral-border:var(--surface-border); --tec-tag-neutral-text:var(--bluegray-700);
+    --tec-tag-success-bg:var(--green-100);    --tec-tag-success-border:var(--green-100);      --tec-tag-success-text:var(--success-text);
+    --tec-tag-info-bg:var(--blue-100);        --tec-tag-info-border:var(--blue-100);          --tec-tag-info-text:var(--info-text);
+    --tec-tag-warn-bg:var(--yellow-100);      --tec-tag-warn-border:var(--yellow-100);        --tec-tag-warn-text:var(--warning-text);
+    --tec-tag-danger-bg:var(--red-100);       --tec-tag-danger-border:var(--red-100);         --tec-tag-danger-text:var(--danger-text);
+}
+@supports (background: color-mix(in srgb, red 10%, white)) {
+    :root {
+        --tec-tag-neutral-bg:color-mix(in srgb, var(--secondary-color) 12%, var(--surface-card));
+        --tec-tag-neutral-border:color-mix(in srgb, var(--secondary-color) 32%, var(--surface-card));
+        --tec-tag-neutral-text:color-mix(in srgb, var(--secondary-color) 80%, var(--text-strong));
+        --tec-tag-success-bg:color-mix(in srgb, var(--success-color) 12%, var(--surface-card));
+        --tec-tag-success-border:color-mix(in srgb, var(--success-color) 32%, var(--surface-card));
+        --tec-tag-success-text:color-mix(in srgb, var(--success-color) 80%, var(--text-strong));
+        --tec-tag-info-bg:color-mix(in srgb, var(--info-color) 10%, var(--surface-card));
+        --tec-tag-info-border:color-mix(in srgb, var(--info-color) 30%, var(--surface-card));
+        --tec-tag-info-text:color-mix(in srgb, var(--info-color) 82%, var(--text-strong));
+        --tec-tag-warn-bg:color-mix(in srgb, var(--warning-color) 22%, var(--surface-card));
+        --tec-tag-warn-border:color-mix(in srgb, var(--warning-color) 55%, var(--surface-card));
+        --tec-tag-warn-text:color-mix(in srgb, var(--warning-text) 88%, var(--text-strong));
+        --tec-tag-danger-bg:color-mix(in srgb, var(--danger-color) 10%, var(--surface-card));
+        --tec-tag-danger-border:color-mix(in srgb, var(--danger-color) 30%, var(--surface-card));
+        --tec-tag-danger-text:color-mix(in srgb, var(--danger-color) 82%, var(--text-strong));
+    }
+}
+
 /* Selector de tamaño de texto (WEB-INF/config.xhtml): dos botones, A- (reducir) y A+ (aumentar). La A de A+ es mayor que la de A-. */
 .tec-fs-selector { display:flex; gap:.375rem; margin-top:.375rem; }
 .tec-fs-selector .ui-button { flex:1 1 0; min-width:2.25rem; font-weight:var(--tec-fw-medium); line-height:1; }
@@ -705,22 +737,26 @@ html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only:disabled,
 html body :is(.tec-acciones, .ui-datatable) .ui-button.ui-button-flat.ui-button-icon-only.ui-state-disabled { opacity:.4; background:transparent; }
 
-/* Etiquetas de estado (p:tag): un solo aspecto en todo el sistema, fondo suave y texto del color de la
-   severidad (contraste AA). El tema las pinta sólidas y no define 'secondary'; "html body" supera su
-   especificidad. La clase tec-status ya no es necesaria (se conserva sin efecto propio). */
-html body .ui-tag, html body .ui-tag[class*="ui-tag-"] { --tec-tag-bg:var(--tec-secondary-bg); --tec-tag-text:var(--tec-secondary-text);
-    padding:.075rem .3375rem; border-radius:var(--tec-radius-sm); background:var(--tec-tag-bg); color:var(--tec-tag-text);
-    font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); line-height:var(--tec-lh-base); white-space:nowrap; }
+/* Etiquetas de estado (p:tag): un solo aspecto en todo el sistema, fondo suave con borde fino y texto
+   e icono del color de la severidad (tokens --tec-tag-*). Sin severidad o con 'secondary' quedan en el
+   neutral gris azulado. El tema las pinta sólidas y no define 'secondary'; "html body" supera su
+   especificidad. El borde se descuenta del padding para no cambiar la altura. La clase tec-status ya
+   no es necesaria (se conserva sin efecto propio). */
+html body .ui-tag, html body .ui-tag[class*="ui-tag-"] {
+    --tec-tag-bg:var(--tec-tag-neutral-bg); --tec-tag-border:var(--tec-tag-neutral-border); --tec-tag-text:var(--tec-tag-neutral-text);
+    padding:calc(.075rem - 1px) calc(.3375rem - 1px); border:1px solid var(--tec-tag-border); border-radius:var(--tec-radius-sm);
+    background:var(--tec-tag-bg); color:var(--tec-tag-text);
+    font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-base); white-space:nowrap; }
 
-html body .ui-tag.ui-tag-success { --tec-tag-bg:var(--tec-success-bg); --tec-tag-text:var(--tec-success-text); }
+html body .ui-tag.ui-tag-success { --tec-tag-bg:var(--tec-tag-success-bg); --tec-tag-border:var(--tec-tag-success-border); --tec-tag-text:var(--tec-tag-success-text); }
 
-html body .ui-tag.ui-tag-info { --tec-tag-bg:var(--tec-info-bg); --tec-tag-text:var(--tec-info-text); }
+html body .ui-tag.ui-tag-info { --tec-tag-bg:var(--tec-tag-info-bg); --tec-tag-border:var(--tec-tag-info-border); --tec-tag-text:var(--tec-tag-info-text); }
 
-html body .ui-tag.ui-tag-warning { --tec-tag-bg:var(--tec-warn-bg); --tec-tag-text:var(--tec-warn-text); }
+html body .ui-tag.ui-tag-warning { --tec-tag-bg:var(--tec-tag-warn-bg); --tec-tag-border:var(--tec-tag-warn-border); --tec-tag-text:var(--tec-tag-warn-text); }
 
-html body .ui-tag.ui-tag-danger { --tec-tag-bg:var(--tec-danger-bg); --tec-tag-text:var(--tec-danger-text); }
+html body .ui-tag.ui-tag-danger { --tec-tag-bg:var(--tec-tag-danger-bg); --tec-tag-border:var(--tec-tag-danger-border); --tec-tag-text:var(--tec-tag-danger-text); }
 
-html body .ui-tag .ui-tag-icon { font-size:var(--tec-fs-2xs); }
+html body .ui-tag .ui-tag-icon { color:inherit; font-size:var(--tec-fs-2xs); }
 
 /* Estado vacío */
 .tec-empty { display:flex; flex-direction:column; align-items:center; gap:.1875rem; padding:1.5rem .75rem; text-align:center; }

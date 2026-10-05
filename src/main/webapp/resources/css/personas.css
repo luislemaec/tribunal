@@ -159,8 +159,6 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 
 .personas-switch__encabezado > .pi { color:var(--primary-700); font-size:var(--tec-fs-md); }
 
-.personas-switch__ayuda { color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); font-weight:var(--tec-fw-regular); }
-
 .personas-switch__control { display:flex; flex:0 0 auto; align-items:center; gap:.375rem; }
 
 .personas-switch__estado { min-width:1.125rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-medium); text-align:right; }

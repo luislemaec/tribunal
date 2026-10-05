@@ -1,5 +1,6 @@
 package ec.com.antenasur.facade;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -9,6 +10,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
+import ec.com.antenasur.dto.GeograpDTO;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.generic.AbstractFacade;
@@ -22,7 +24,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 
 	static final String HQL = " SELECT ig FROM Iglesia ig";
 	/**
-	 * HQL base con parroquia, cantÃƒÂ³n y provincia (3 niveles) ya cargados eager.
+	 * HQL base con parroquia, cantón y provincia (3 niveles) ya cargados eager.
 	 */
 	static final String HQL_CON_CANTON = " SELECT ig FROM Iglesia ig" + " LEFT JOIN FETCH ig.ubicacion ub"
 			+ " LEFT JOIN FETCH ub.geograp canton" + " LEFT JOIN FETCH canton.geograp provincia";
@@ -32,7 +34,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 	}
 
 	/**
-	 * Carga todas las iglesias activas con parroquia y cantÃƒÂ³n en un solo JOIN,
+	 * Carga todas las iglesias activas con parroquia y cantón en un solo JOIN,
 	 * garantizando que {@code IglesiaDTO.fromEntity()} siempre tenga acceso a
 	 * {@code ubicacion.geograp} sin depender de lazy-load ni del @Filter activo.
 	 */
@@ -63,7 +65,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 	}
 
 	/**
-	 * Carga una iglesia por id con parroquia y cantÃƒÂ³n ya inicializados (evita
+	 * Carga una iglesia por id con parroquia y cantón ya inicializados (evita
 	 * lazy-load posterior).
 	 */
 	public Iglesia findConCanton(Integer id) {
@@ -103,6 +105,54 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 		parametrizarFiltrosAsignacion(query, provinciaId, cantonId, parroquiaId, conAdmin);
 		Long total = query.getSingleResult();
 		return total != null ? total : 0L;
+	}
+
+	/**
+	 * Provincias donde existe al menos una iglesia activa. Se resuelve con un
+	 * {@code DISTINCT} en BD sobre la cadena parroquia → cantón → provincia de
+	 * {@code Iglesia.ubicacion}: no se carga el catálogo geográfico nacional.
+	 */
+	public List<GeograpDTO> listarProvinciasConIglesias() {
+		return listarUbicacionesConIglesias("provincia", null, null);
+	}
+
+	/** Cantones de la provincia indicada donde existe al menos una iglesia activa. */
+	public List<GeograpDTO> listarCantonesConIglesias(Integer provinciaId) {
+		return provinciaId == null ? new ArrayList<>() : listarUbicacionesConIglesias("canton", "provincia", provinciaId);
+	}
+
+	/** Parroquias del cantón indicado donde existe al menos una iglesia activa. */
+	public List<GeograpDTO> listarParroquiasConIglesias(Integer cantonId) {
+		return cantonId == null ? new ArrayList<>() : listarUbicacionesConIglesias("ub", "canton", cantonId);
+	}
+
+	/**
+	 * Devuelve solo id y nombre del nivel pedido. No filtra por el estado del catálogo
+	 * ({@code gelo_status}): una división marcada inactiva que aún tiene iglesias activas
+	 * se muestra para no ocultar esas iglesias. {@code nivel} y {@code padre} son alias
+	 * internos de la consulta, nunca valores del usuario.
+	 */
+	private List<GeograpDTO> listarUbicacionesConIglesias(String nivel, String padre, Integer padreId) {
+		StringBuilder hql = new StringBuilder("SELECT DISTINCT ").append(nivel).append(".id, ").append(nivel)
+				.append(".name FROM Iglesia ig JOIN ig.ubicacion ub JOIN ub.geograp canton")
+				.append(" JOIN canton.geograp provincia WHERE ig.estado = TRUE");
+		if (padre != null) {
+			hql.append(" AND ").append(padre).append(".id = :padreId");
+		}
+		hql.append(" ORDER BY ").append(nivel).append(".name");
+		TypedQuery<Object[]> query = getEntityManager().createQuery(hql.toString(), Object[].class);
+		if (padre != null) {
+			query.setParameter("padreId", padreId);
+		}
+		List<GeograpDTO> resultado = new ArrayList<>();
+		for (Object[] fila : query.getResultList()) {
+			GeograpDTO ubicacion = new GeograpDTO();
+			ubicacion.setId((Integer) fila[0]);
+			ubicacion.setName((String) fila[1]);
+			ubicacion.setPadreId(padreId);
+			resultado.add(ubicacion);
+		}
+		return resultado;
 	}
 
 	private void agregarFiltrosAsignacion(StringBuilder hql, Integer provinciaId, Integer cantonId, Integer parroquiaId,
@@ -232,20 +282,20 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 		}
 	}
 
-	/** Nombre de la secuencia PostgreSQL que genera los cÃƒÂ³digos genÃƒÂ©ricos. */
+	/** Nombre de la secuencia PostgreSQL que genera los códigos genéricos. */
 	private static final String SEQ_CODIGO_GENERICO = "seq_iglesia_codigo_generico";
 
 	/**
-	 * Genera el siguiente cÃƒÂ³digo genÃƒÂ©rico secuencial (13 dÃƒÂ­gitos
+	 * Genera el siguiente código genérico secuencial (13 dígitos
 	 * zero-padded).
 	 *
-	 * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atÃƒÂ³mica por
-	 * diseÃƒÂ±o: elimina race conditions sin advisory locks y garantiza que un
-	 * valor nunca se reuse, incluso si se elimina la Ãƒºltima iglesia con cÃƒÂ³digo
-	 * genÃƒÂ©rico.
+	 * Usa una secuencia PostgreSQL ({@value #SEQ_CODIGO_GENERICO}) atómica por
+	 * diseño: elimina race conditions sin advisory locks y garantiza que un
+	 * valor nunca se reuse, incluso si se elimina la última iglesia con código
+	 * genérico.
 	 *
-	 * La secuencia se crea de forma idempotente en la primera invocaciÃƒÂ³n,
-	 * alineada al mayor cÃƒÂ³digo existente en {@code tb_iglesia} para no
+	 * La secuencia se crea de forma idempotente en la primera invocación,
+	 * alineada al mayor código existente en {@code tb_iglesia} para no
 	 * colisionar con datos previos.
 	 */
 	public String generarDocumentoGenerico() {
@@ -257,11 +307,11 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 
 	/**
 	 * Crea la secuencia si no existe, alineada a {@code MAX(igl_documento) + 1} de
-	 * los cÃƒÂ³digos genÃƒÂ©ricos previos (cualquier documento de 13 dÃƒÂ­gitos
-	 * numÃƒÂ©ricos que empiece con "00" Ã¢â‚¬” los RUC reales ecuatorianos nunca
+	 * los códigos genéricos previos (cualquier documento de 13 dígitos
+	 * numéricos que empiece con "00" — los RUC reales ecuatorianos nunca
 	 * empiezan con 00, provincias 01-24).
 	 *
-	 * Idempotente: tras la primera ejecuciÃƒÂ³n, el bloque DO no hace nada.
+	 * Idempotente: tras la primera ejecución, el bloque DO no hace nada.
 	 */
 	private void asegurarSecuenciaCodigoGenerico() {
 		try {
@@ -279,7 +329,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 	}
 
 	/**
-	 * Cuenta iglesias cuya fecha de actividad (actualizaciÃƒÂ³n o creaciÃƒÂ³n) cae
+	 * Cuenta iglesias cuya fecha de actividad (actualización o creación) cae
 	 * dentro del rango [{@code desde}, {@code hasta}].
 	 */
 	public long countActualizadasEnRango(Date desde, Date hasta) {
@@ -335,7 +385,7 @@ public class IglesiaFacade extends AbstractFacade<Iglesia, Integer> {
 			List<Iglesia> result = query.getResultList();
 			return result.isEmpty() ? null : result.get(0);
 		} catch (Exception e) {
-			log.error("Error al buscar iglesia por nombre/comunidad/ubicaciÃƒÂ³n", e);
+			log.error("Error al buscar iglesia por nombre/comunidad/ubicación", e);
 			return null;
 		}
 	}

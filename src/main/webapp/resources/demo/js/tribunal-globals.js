@@ -114,6 +114,40 @@
     }
 
     // ------------------------------------------------------------------
+    // Mayúsculas al escribir sin mover el cursor.
+    // Reasignar el valor completo (value = value.toUpperCase()) lleva el
+    // cursor al final; aquí se restaura la selección y solo se reescribe
+    // cuando el texto realmente cambia.
+    // Uso: onkeyup="Tribunal.mayusculas(this)"
+    // ------------------------------------------------------------------
+    Tribunal.mayusculas = function (campo) {
+        if (!campo || typeof campo.value !== 'string') { return; }
+        var texto = campo.value.toUpperCase();
+        if (texto === campo.value) { return; }
+        var inicio = campo.selectionStart, fin = campo.selectionEnd, largoOriginal = campo.value.length;
+        campo.value = texto;
+        // Si la conversión cambia la longitud (p. ej. «ß» → «SS») el cursor queda al final.
+        if (inicio !== null && fin !== null && texto.length === largoOriginal) {
+            campo.setSelectionRange(inicio, fin);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // Abre un p:dialog eligiendo el campo que recibe el foco.
+    // Al mostrarse, el diálogo enfoca su primer campo e ignora p:focus; con
+    // cfg.focus (lo que usa el atributo focus del diálogo) se indica otro.
+    // Sin idCampo vuelve al comportamiento por defecto (primer campo), para
+    // que un diálogo compartido por Nuevo y Editar no arrastre el foco anterior.
+    // Uso: oncomplete="Tribunal.mostrarDialogo('dlgPersona', 'frmPersonas:nombres')"
+    // ------------------------------------------------------------------
+    Tribunal.mostrarDialogo = function (widgetVar, idCampo) {
+        var dialogo = global.PF ? PF(widgetVar) : null;
+        if (!dialogo) { return; }
+        dialogo.cfg.focus = idCampo ? '@([id="' + idCampo + '"])' : null;
+        dialogo.show();
+    };
+
+    // ------------------------------------------------------------------
     // Atajos de teclado mínimos (Esc cierra el último p:dialog)
     // ------------------------------------------------------------------
     if (global.jQuery && global.PrimeFaces) {

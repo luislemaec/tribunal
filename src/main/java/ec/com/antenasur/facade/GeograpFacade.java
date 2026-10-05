@@ -110,10 +110,10 @@ public class GeograpFacade extends AbstractFacade<Geograp, Integer> {
 	}
 
 	/**
-	 * Devuelve el Geograp padre (cantÃƒÂ³n) de la parroquia indicada consultando
-	 * directamente la columna {@code gelo_parent_id} vÃƒÂ­a SQL nativo. Se usa SQL
+	 * Devuelve el Geograp padre (cantón) de la parroquia indicada consultando
+	 * directamente la columna {@code gelo_parent_id} vía SQL nativo. Se usa SQL
 	 * nativo para evitar que el {@code @Filter} activo de Hibernate interfiera con
-	 * la navegaciÃƒÂ³n por la relaciÃƒÂ³n {@code @ManyToOne}.
+	 * la navegación por la relación {@code @ManyToOne}.
 	 */
 	@SuppressWarnings("unchecked")
 	public Geograp findParentOf(Integer childId) {

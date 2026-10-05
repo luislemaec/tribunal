@@ -270,11 +270,27 @@
                         <span class="tec-field-label personas-filtros__titulo">
                             <i class="pi pi-filter" aria-hidden="true"/> Filtrar por ubicación e iglesia
                         </span>
+                        <!-- Solo ubicaciones con iglesias activas (DISTINCT en BD). Cambiar un nivel limpia los inferiores. -->
                         <div class="formgrid grid">
-                            <div class="field col-12 md:col-6 xl:col-3">
+                            <div class="field col-12 md:col-4 xl:col-2">
+                                <p:outputLabel for="provincia" value="Provincia"/>
+                                <p:selectOneMenu id="provincia" value="#{personaController.provinciaId}"
+                                                 filter="true" filterMatchMode="startsWith"
+                                                 placeholder="Seleccione provincia..."
+                                                 autoWidth="false" panelStyleClass="tec-select-panel">
+                                    <f:selectItem itemLabel="Todas las provincias" itemValue="#{null}"/>
+                                    <f:selectItems value="#{personaController.provincias}" var="provincia"
+                                                   itemLabel="#{provincia.name}" itemValue="#{provincia.id}"/>
+                                    <p:ajax event="change" listener="#{personaController.obtieneCantones()}"
+                                            process="@this" partialSubmit="true"
+                                            update="canton parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="field col-12 md:col-4 xl:col-2">
                                 <p:outputLabel for="canton" value="Cantón"/>
                                 <p:selectOneMenu id="canton" value="#{personaController.cantonId}"
                                                  filter="true" filterMatchMode="startsWith"
+                                                 disabled="#{empty personaController.cantones}"
                                                  placeholder="Seleccione cantón..."
                                                  autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Todos los cantones" itemValue="#{null}"/>
@@ -282,12 +298,14 @@
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneParroquias()}"
                                             process="@this" partialSubmit="true"
-                                            update="parroquia iglesias tblPersonas panelResumenMiembros"/>
+                                            update="parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 md:col-6 xl:col-3">
+                            <div class="field col-12 md:col-4 xl:col-3">
                                 <p:outputLabel for="parroquia" value="Parroquia"/>
                                 <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaId}"
+                                                 filter="true" filterMatchMode="startsWith"
+                                                 disabled="#{empty personaController.parroquias}"
                                                  placeholder="Seleccione parroquia..."
                                                  autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Todas las parroquias" itemValue="#{null}"/>
@@ -295,10 +313,10 @@
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}"
                                             process="@this" partialSubmit="true"
-                                            update="iglesias tblPersonas panelResumenMiembros"/>
+                                            update="iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 xl:col-6">
+                            <div class="field col-12 xl:col-5">
                                 <p:outputLabel for="iglesias" value="Iglesia"/>
                                 <p:selectOneMenu id="iglesias" value="#{personaController.iglesiaSeleccionado.id}"
                                                  filter="true" filterMatchMode="contains"
@@ -307,10 +325,10 @@
                                                  autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
-                                                   itemLabel="#{iglesia.nombre} - #{iglesia.comunidad}" itemValue="#{iglesia.id}"/>
+                                                   itemLabel="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' - '.concat(iglesia.comunidad)}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}"
                                             process="@this" partialSubmit="true"
-                                            update="tblPersonas panelResumenMiembros"/>
+                                            update="tblPersonas panelResumenMiembros btnExportarExcel"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>
@@ -324,8 +342,9 @@
                                          styleClass="tec-btn"
                                          disabled="#{not personaController.puedeEditarPadron}"
                                          actionListener="#{personaController.nuevaPersona}"
-                                         update="outPnlPersonas"
-                                         oncomplete="PF('dlgPersona').show()">
+                                         process="@this"
+                                         update="outPnlPersonas tituloDlgPersona"
+                                         oncomplete="Tribunal.mostrarDialogo('dlgPersona')">
                             <p:tooltip for="@parent"
                                        value="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
                         </p:commandButton>
@@ -371,11 +390,11 @@
                                       rendered="false"
                                       styleClass="ui-button-raised ui-button-info"/>
 
-                        <p:commandButton value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
+                        <p:commandButton id="btnExportarExcel" value="#{msg['form.personas.exportar.boton']}" icon="pi pi-file-excel"
                                          styleClass="tec-btn ui-button-outlined ui-button-info"
                                          ajax="false"
                                          actionListener="#{personaController.exportarExcel}"
-                                         disabled="#{empty personaController.listaIglesiaPersona}"/>
+                                         disabled="#{not personaController.listadoConAlcance}"/>
 
                         <p:commandButton value="#{msg['form.personas.inconsistencias.reporte.boton']}"
                                          icon="pi pi-exclamation-triangle"
@@ -402,10 +421,10 @@
                     </div>
                 </div>
 
-                <!-- Tabla de miembros: filtrado y orden en memoria de PrimeFaces -->
+                <!-- Tabla de miembros paginada en BD (lazy): solo viajan las filas visibles; orden,
+                     filtros de columna y búsqueda rápida se resuelven en SQL (PersonaController.MiembrosLazy). -->
                 <p:dataTable id="tblPersonas" widgetVar="wdTablaPersonas" var="iglPers"
-                             value="#{personaController.listaIglesiaPersona}"
-                             filteredValue="#{personaController.listaIglesiaPersonaFiltrada}"
+                             value="#{personaController.modeloMiembros}" lazy="true"
                              selection="#{personaController.listaIglesiaPersonaSeleccionados}"
                              rowKey="#{iglPers.id}"
                              selectionDisabled="#{iglPers.inconsistenciaIglesias}"
@@ -478,7 +497,7 @@
                                        icon="pi pi-star" severity="success"
                                        styleClass="tec-status personas-nuevo"/>
                             </span>
-                            <!-- La iglesia solo aporta cuando el listado mezcla iglesias (filtro por cantón o parroquia). -->
+                            <!-- La iglesia solo aporta cuando el listado mezcla iglesias (filtro por provincia, cantón o parroquia). -->
                             <ui:fragment rendered="#{iglPers.persona.sexo eq 'M' or iglPers.persona.sexo eq 'F'
                                                     or (personaController.iglesiaSeleccionado.id eq null and not empty iglPers.iglesia.nombre)}">
                                 <span class="personas-nombre__meta">
@@ -532,11 +551,14 @@
                                             : msg['form.personas.inconsistencia.tooltip.cedula']}"/>
                     </p:column>
 
-                    <p:column headerText="Padrón"
-                              sortBy="#{iglPers.habilitadoPadron}"
+                    <p:column sortBy="#{iglPers.habilitadoPadron}"
                               filterBy="#{iglPers.habilitadoPadron}"
                               filterMatchMode="exact"
                               styleClass="tec-col-fit">
+                        <f:facet name="header">
+                            <h:outputText value="#{msg['form.personas.habilitacion.columna']}"
+                                          title="#{msg['form.personas.habilitacion.tooltip']}"/>
+                        </f:facet>
                         <f:facet name="filter">
                             <p:selectOneMenu onchange="PF('wdTablaPersonas').filter()"
                                              autoWidth="false" styleClass="personas-filtro-estado"
@@ -547,13 +569,13 @@
                             </p:selectOneMenu>
                         </f:facet>
                         <f:facet name="export">
-                            <h:outputText value="#{iglPers.habilitadoPadron ? 'Habilitado' : 'No habilitado'}"/>
+                            <h:outputText value="#{iglPers.habilitadoPadron ? msg['form.personas.exportar.estado.habilitado'] : msg['form.personas.exportar.estado.no.habilitado']}"/>
                         </f:facet>
                         <p:tag rendered="#{iglPers.habilitadoPadron}"
-                               value="Habilitado" severity="success" icon="pi pi-check-circle"
+                               value="#{msg['form.personas.exportar.estado.habilitado']}" severity="success" icon="pi pi-check-circle"
                                styleClass="tec-status"/>
                         <p:tag rendered="#{not iglPers.habilitadoPadron}"
-                               value="No habilitado" severity="secondary" icon="pi pi-ban"
+                               value="#{msg['form.personas.exportar.estado.no.habilitado']}" severity="secondary" icon="pi pi-ban"
                                styleClass="tec-status"/>
                     </p:column>
 
@@ -572,14 +594,14 @@
                             </p:selectOneMenu>
                         </f:facet>
                         <f:facet name="export">
-                            <h:outputText value="#{iglPers.actualizada ? 'Revisado' : 'Pendiente'}"/>
+                            <h:outputText value="#{iglPers.actualizada ? msg['form.personas.exportar.estado.revisado'] : msg['form.personas.exportar.estado.pendiente']}"/>
                         </f:facet>
                         <span class="personas-revision">
                             <p:tag rendered="#{iglPers.actualizada}"
-                                   value="Revisado" severity="success" icon="pi pi-check"
+                                   value="#{msg['form.personas.exportar.estado.revisado']}" severity="success" icon="pi pi-check-circle"
                                    styleClass="tec-status"/>
                             <p:tag rendered="#{not iglPers.actualizada}"
-                                   value="Pendiente" severity="warning" icon="pi pi-clock"
+                                   value="#{msg['form.personas.exportar.estado.pendiente']}" severity="warning" icon="pi pi-clock"
                                    styleClass="tec-status"/>
                             <h:outputText rendered="#{iglPers.actualizada and iglPers.fechaActualiza ne null}"
                                           value="#{iglPers.fechaActualiza}"
@@ -633,8 +655,8 @@
                                              ariaLabel="Editar miembro"
                                              disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
                                              actionListener="#{personaController.prepararEdicion(iglPers)}"
-                                             update=":frmPersonas:outPnlPersonas"
-                                             oncomplete="if (args.dialogReady) PF('dlgPersona').show()"
+                                             update=":frmPersonas:outPnlPersonas :frmPersonas:tituloDlgPersona"
+                                             oncomplete="if (args.dialogReady) Tribunal.mostrarDialogo('dlgPersona', 'frmPersonas:nombres')"
                                              process="@this"/>
                             <p:commandButton icon="pi pi-wrench"
                                              styleClass="rounded-button ui-button-flat ui-button-warning"
@@ -763,18 +785,26 @@
                 </f:facet>
             </p:dialog>
 
-            <p:dialog header="Datos del miembro"
-                      showEffect="fade" hideEffect="fade"
+            <!-- Ancho base de formularios (tec-dialog, 30rem): Cédula y Sexo caben en una fila sin desbordar. -->
+            <p:dialog showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgPersona"
                       responsive="true" fitViewport="true"
                       closeOnEscape="true"
-                      styleClass="tec-dialog tec-dialog--sm personas-dialog-miembro">
+                      styleClass="tec-dialog personas-dialog-miembro">
+                <!-- Título según la acción; los botones Nuevo y Editar lo actualizan junto con el formulario. -->
+                <f:facet name="header">
+                    <h:outputText id="tituloDlgPersona"
+                                  value="#{empty personaController.iglesiaPersonaSeleccionado.id
+                                           ? msg['form.personas.dialogo.nuevo'] : msg['form.personas.dialogo.editar']}"/>
+                </f:facet>
 
                 <p:outputPanel id="outPnlPersonas" layout="block" styleClass="ui-fluid tec-form">
                     <p:defaultCommand target="btnGuardarPersona" scope="outPnlPersonas"/>
                     <p:outputPanel id="reglasPersona" layout="block"/>
                     <p:messages id="mensajesDialogoPersona" for="reglasPersona" closable="true"
                                 showSummary="true" showDetail="false" styleClass="mb-3"/>
+                    <!-- Foco al abrir: lo fija Tribunal.mostrarDialogo (Editar → Apellidos y Nombres; Nuevo →
+                         primer campo). p:focus cubre los errores de validación con el diálogo ya abierto. -->
                     <p:focus context="outPnlPersonas"/>
                     <p:outputPanel rendered="#{not empty personaController.iglesiaPersonaSeleccionado}">
 
@@ -815,7 +845,7 @@
                                              maxlength="100" required="true"
                                              requiredMessage="#{msg['form.personas.error.nombres.requerido']}"
                                              validator="#{personaController.validarNombres}"
-                                             onkeyup="value = value.toUpperCase()">
+                                             onkeyup="Tribunal.mayusculas(this)">
                                     <p:ajax event="blur" process="@this" update="msgNombres"/>
                                 </p:inputText>
                                 <p:message id="msgNombres" for="nombres" display="text" styleClass="block mt-1"/>
@@ -833,7 +863,7 @@
                                                  autoWidth="false" panelStyleClass="tec-select-panel">
                                     <f:selectItem itemLabel="Seleccione iglesia..." itemValue=""/>
                                     <f:selectItems value="#{personaController.listaIglesias}" var="iglesia"
-                                                   itemLabel="#{iglesia.nombre}" itemValue="#{iglesia.id}"/>
+                                                   itemLabel="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' - '.concat(iglesia.comunidad)}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" process="@this" update="msgIglesia"/>
                                 </p:selectOneMenu>
                                 <p:message id="msgIglesia" for="iglesia" display="text" styleClass="block mt-1"/>
@@ -854,19 +884,18 @@
                                         <span class="personas-switch__encabezado">
                                             <i class="pi pi-id-card" aria-hidden="true"/>
                                             <p:outputLabel for="habilitadoPadron"
-                                                           value="Habilitado para padrón electoral"
+                                                           value="#{msg['form.personas.habilitacion.titulo']}"
                                                            styleClass="personas-switch__titulo"/>
                                         </span>
-                                        <span class="personas-switch__ayuda">Solo miembros que participarán en el padrón.</span>
                                     </div>
                                     <div class="personas-switch__control">
                                         <p:outputPanel id="estadoHabilitadoPadron" layout="inline"
                                                        styleClass="personas-switch__estado">
                                             <p:tag rendered="#{personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                                   value="Habilitado" severity="success"
+                                                   value="#{msg['form.personas.exportar.estado.habilitado']}" severity="success"
                                                    icon="pi pi-check-circle" styleClass="tec-status"/>
                                             <p:tag rendered="#{not personaController.iglesiaPersonaSeleccionado.habilitadoPadron}"
-                                                   value="No habilitado" severity="secondary"
+                                                   value="#{msg['form.personas.exportar.estado.no.habilitado']}" severity="secondary"
                                                    icon="pi pi-ban" styleClass="tec-status"/>
                                         </p:outputPanel>
                                         <p:toggleSwitch id="habilitadoPadron"

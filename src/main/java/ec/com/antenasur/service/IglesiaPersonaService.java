@@ -17,6 +17,7 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.dto.FiltroMiembrosDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import ec.com.antenasur.exception.IglesiaPersonaException;
@@ -150,6 +151,51 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 
 	public List<IglesiaPersonaDTO> listarDTOsPorParroquias(List<Geograp> parroquias) {
 		return mapearLista(iglesiaPersonaFacade.getIglesiasPersonasPorParroquias(parroquias));
+	}
+
+	/** Total de miembros del filtro para la tabla paginada de Personas. */
+	public long contarMiembros(FiltroMiembrosDTO filtro) {
+		return iglesiaPersonaFacade.contarMiembros(aplicarAlcanceCaller(filtro));
+	}
+
+	/**
+	 * Una página de miembros. Las inconsistencias se calculan solo para las filas de la
+	 * página (pocas cédulas por consulta).
+	 */
+	public List<IglesiaPersonaDTO> listarMiembros(FiltroMiembrosDTO filtro, int primero, int maximo,
+			String campoOrden, boolean descendente) {
+		return mapearLista(iglesiaPersonaFacade.listarMiembros(aplicarAlcanceCaller(filtro), primero,
+				Math.max(maximo, 1), campoOrden, descendente));
+	}
+
+	/**
+	 * Todos los miembros del filtro (exportación). Las inconsistencias se calculan con el
+	 * filtro como subconsulta, sin enviar una cédula por parámetro.
+	 */
+	public List<IglesiaPersonaDTO> listarMiembrosCompleto(FiltroMiembrosDTO filtro, String campoOrden,
+			boolean descendente) {
+		FiltroMiembrosDTO alcance = aplicarAlcanceCaller(filtro);
+		return mapearLista(iglesiaPersonaFacade.listarMiembros(alcance, 0, 0, campoOrden, descendente),
+				iglesiaPersonaFacade.contarIglesiasActivasPorFiltro(alcance),
+				iglesiaPersonaFacade.contarPersonasActivasPorFiltro(alcance));
+	}
+
+	/**
+	 * IglesiaAdmin solo consulta su iglesia, tomada del principal Elytron y no del
+	 * navegador; Administrador y Tribunal conservan el filtro recibido.
+	 */
+	private FiltroMiembrosDTO aplicarAlcanceCaller(FiltroMiembrosDTO filtro) {
+		if (filtro == null) {
+			return null;
+		}
+		Integer iglesiaAlcance = resolverIglesiaAlcanceBusqueda();
+		if (iglesiaAlcance != null) {
+			filtro.setIglesiaId(iglesiaAlcance);
+			filtro.setProvinciaId(null);
+			filtro.setCantonId(null);
+			filtro.setParroquiaId(null);
+		}
+		return filtro;
 	}
 
 	public List<IglesiaPersonaDTO> listarDTOsPorIglesia(int iglesiaId) {
@@ -691,7 +737,15 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 				}
 			}
 		}
-		Map<String, Integer> cantidadesCedula = personaFacade.contarPersonasActivasPorDocumentos(documentos);
+		return mapearLista(entidades, cantidades, personaFacade.contarPersonasActivasPorDocumentos(documentos));
+	}
+
+	/**
+	 * Mapea con conteos ya calculados. Los documentos históricos especiales nunca
+	 * cuentan como cédula repetida, aunque el mapa los incluya.
+	 */
+	private List<IglesiaPersonaDTO> mapearLista(List<IglesiaPersona> entidades, Map<String, Integer> cantidades,
+			Map<String, Integer> cantidadesCedula) {
 		List<IglesiaPersonaDTO> resultado = new ArrayList<>();
 		if (entidades == null) {
 			return resultado;
@@ -702,7 +756,8 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			int cantidad = cantidades.getOrDefault(documento, 0);
 			dto.setCantidadIglesiasActivas(cantidad);
 			dto.setInconsistenciaIglesias(cantidad > 1);
-			int cantidadCedula = cantidadesCedula.getOrDefault(documento, 0);
+			int cantidadCedula = esDocumentoHistoricoEspecial(documento) ? 0
+					: cantidadesCedula.getOrDefault(documento, 0);
 			dto.setCantidadCedulaDuplicada(cantidadCedula);
 			dto.setInconsistenciaCedula(cantidadCedula > 1);
 			resultado.add(dto);

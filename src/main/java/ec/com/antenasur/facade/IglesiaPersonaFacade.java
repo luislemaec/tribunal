@@ -7,6 +7,7 @@ package ec.com.antenasur.facade;
 
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.IglesiaPersona;
+import ec.com.antenasur.dto.FiltroMiembrosDTO;
 import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -39,9 +40,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 	}
 
 	/**
-	 * Devuelve el vÃƒÂ­nculo iglesia-persona vigente mÃƒ¡s reciente para una
+	 * Devuelve el vínculo iglesia-persona vigente más reciente para una
 	 * persona dada. "Vigente" = estado activo. Si la persona pertenece a varias
-	 * iglesias histÃƒÂ³ricamente, retorna la Ãƒºltima registrada.
+	 * iglesias históricamente, retorna la última registrada.
 	 */
 	public IglesiaPersona getVigentePorPersonaId(Integer personaId) {
 		if (personaId == null) {
@@ -199,15 +200,15 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 
 	/**
 	 * Trae IglesiaPersona activos por parroquia(s) hidratando en una sola query las
-	 * relaciones que la vista/DTO consultan despuÃƒÂ©s ({@code iglesia},
+	 * relaciones que la vista/DTO consultan después ({@code iglesia},
 	 * {@code iglesia.ubicacion}, {@code persona}). Evita N+1: sin estos JOIN FETCH,
 	 * mapear cada IglesiaPersona a DTO disparaba una query por persona y otra por
 	 * iglesia, multiplicando el tiempo de respuesta hasta sobrepasar el timeout JTA
-	 * (300s) y romper la transacciÃƒÂ³n.
+	 * (300s) y romper la transacción.
 	 *
 	 * <p>
 	 * Filtra por {@code ip.estado = TRUE} para excluir soft-deleted y limita por
-	 * relaciÃƒÂ³n con la lista de parroquias.
+	 * relación con la lista de parroquias.
 	 */
 	public List<IglesiaPersona> getIglesiasPersonasPorParroquias(List<Geograp> parroquias) {
 		if (parroquias == null || parroquias.isEmpty()) {
@@ -228,16 +229,238 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 		}
 	}
 
+	// ------------------------------------------------------------------
+	// Listado paginado de miembros (pantalla Personas). Paginación, orden,
+	// filtros y conteo se resuelven en BD: la tabla nunca carga el listado
+	// completo en memoria.
+	// ------------------------------------------------------------------
+
 	/**
-	 * Devuelve el vÃƒÂ­nculo activo mÃƒ¡s reciente para la persona identificada por
-	 * su DOCUMENTO (cÃƒÂ©dula), independiente del id interno de la persona.
+	 * Documentos con más de una iglesia activa: misma regla que
+	 * {@link #contarIglesiasActivasPorDocumentos(Collection)} (relación y persona activas).
+	 */
+	private static final String SUB_DOCUMENTOS_VARIAS_IGLESIAS = "SELECT TRIM(pvi.documento)"
+			+ " FROM IglesiaPersona ipvi JOIN ipvi.iglesia ivi JOIN ipvi.persona pvi"
+			+ " WHERE ipvi.estado = TRUE AND pvi.estado = TRUE"
+			+ " GROUP BY TRIM(pvi.documento) HAVING COUNT(DISTINCT ivi.id) > 1";
+
+	/**
+	 * Documentos repetidos entre personas activas, sin los documentos históricos
+	 * especiales ({@code S/N} y {@code SN-<dígitos>}), igual que el mapeo del servicio.
+	 */
+	private static final String SUB_DOCUMENTOS_CEDULA_REPETIDA = "SELECT TRIM(pcr.documento) FROM Persona pcr"
+			+ " WHERE pcr.estado = TRUE AND pcr.documento IS NOT NULL"
+			+ " AND NOT " + esDocumentoHistoricoEspecial("UPPER(TRIM(pcr.documento))")
+			+ " GROUP BY TRIM(pcr.documento) HAVING COUNT(pcr.id) > 1";
+
+	/** Equivale a {@code S/N} o {@code SN-\d+} sin depender de expresiones regulares de la BD. */
+	private static String esDocumentoHistoricoEspecial(String documento) {
+		String resto = "SUBSTRING(" + documento + ", 4)";
+		for (int digito = 0; digito <= 9; digito++) {
+			resto = "REPLACE(" + resto + ", '" + digito + "', '')";
+		}
+		return "(" + documento + " = 'S/N' OR (" + documento + " LIKE 'SN-%' AND LENGTH(" + documento
+				+ ") > 3 AND LENGTH(" + resto + ") = 0))";
+	}
+
+	private static String inconsistencia(String persona) {
+		return "(TRIM(" + persona + ".documento) IN (" + SUB_DOCUMENTOS_VARIAS_IGLESIAS + ") OR TRIM(" + persona
+				+ ".documento) IN (" + SUB_DOCUMENTOS_CEDULA_REPETIDA + "))";
+	}
+
+	/** Misma regla que {@code IglesiaPersonaDTO.esActualizada}. */
+	private static String revisada(String relacion) {
+		return "(" + relacion + ".fechaActualiza IS NOT NULL AND (" + relacion + ".fechaCrea IS NULL OR " + relacion
+				+ ".fechaActualiza >= " + relacion + ".fechaCrea))";
+	}
+
+	/**
+	 * FROM y WHERE del listado. {@code sufijo} distingue los alias cuando se usa como
+	 * subconsulta; {@code fetch} carga iglesia, ubicación y persona en la misma consulta.
+	 * Solo relaciones activas; el alcance es la iglesia o el nivel geográfico más específico.
+	 */
+	private static String desdeMiembros(FiltroMiembrosDTO f, String sufijo, boolean fetch) {
+		String join = fetch ? " LEFT JOIN FETCH " : " LEFT JOIN ";
+		String ip = "ip" + sufijo;
+		String p = "p" + sufijo;
+		StringBuilder hql = new StringBuilder(" FROM IglesiaPersona ").append(ip)
+				.append(join).append(ip).append(".iglesia igl").append(sufijo)
+				.append(join).append("igl").append(sufijo).append(".ubicacion ub").append(sufijo)
+				.append(join).append("ub").append(sufijo).append(".geograp canton").append(sufijo)
+				.append(join).append("canton").append(sufijo).append(".geograp provincia").append(sufijo)
+				.append(join).append(ip).append(".persona ").append(p)
+				.append(" WHERE ").append(ip).append(".estado = TRUE");
+		if (f.getIglesiaId() != null) {
+			hql.append(" AND igl").append(sufijo).append(".id = :iglesiaId");
+		} else if (f.getParroquiaId() != null) {
+			hql.append(" AND ub").append(sufijo).append(".id = :ubicacionId");
+		} else if (f.getCantonId() != null) {
+			hql.append(" AND canton").append(sufijo).append(".id = :ubicacionId");
+		} else {
+			hql.append(" AND provincia").append(sufijo).append(".id = :ubicacionId");
+		}
+		if (tieneTexto(f.getDocumento())) {
+			hql.append(" AND LOWER(").append(p).append(".documento) LIKE :documento ESCAPE '!'");
+		}
+		if (tieneTexto(f.getNombres())) {
+			hql.append(" AND LOWER(").append(p).append(".nombres) LIKE :nombres ESCAPE '!'");
+		}
+		if (tieneTexto(f.getBusqueda())) {
+			hql.append(" AND (LOWER(").append(p).append(".documento) LIKE :busqueda ESCAPE '!' OR LOWER(")
+					.append(p).append(".nombres) LIKE :busqueda ESCAPE '!')");
+		}
+		if (f.getHabilitado() != null) {
+			hql.append(Boolean.TRUE.equals(f.getHabilitado()) ? " AND " + ip + ".habilitadoPadron = TRUE"
+					: " AND (" + ip + ".habilitadoPadron IS NULL OR " + ip + ".habilitadoPadron = FALSE)");
+		}
+		if (f.getRevisado() != null) {
+			hql.append(Boolean.TRUE.equals(f.getRevisado()) ? " AND " : " AND NOT ").append(revisada(ip));
+		}
+		if (f.getInconsistencia() != null) {
+			hql.append(Boolean.TRUE.equals(f.getInconsistencia()) ? " AND " : " AND NOT ").append(inconsistencia(p));
+		}
+		return hql.toString();
+	}
+
+	private static void parametrizarMiembros(jakarta.persistence.Query query, FiltroMiembrosDTO f) {
+		if (f.getIglesiaId() != null) {
+			query.setParameter("iglesiaId", f.getIglesiaId());
+		} else {
+			query.setParameter("ubicacionId", f.getParroquiaId() != null ? f.getParroquiaId()
+					: f.getCantonId() != null ? f.getCantonId() : f.getProvinciaId());
+		}
+		if (tieneTexto(f.getDocumento())) {
+			query.setParameter("documento", contiene(f.getDocumento()));
+		}
+		if (tieneTexto(f.getNombres())) {
+			query.setParameter("nombres", contiene(f.getNombres()));
+		}
+		if (tieneTexto(f.getBusqueda())) {
+			query.setParameter("busqueda", contiene(f.getBusqueda()));
+		}
+	}
+
+	private static boolean tieneTexto(String valor) {
+		return valor != null && !valor.isBlank();
+	}
+
+	/** Patrón «contiene» sin distinguir mayúsculas; escapa los comodines del usuario. */
+	private static String contiene(String valor) {
+		String limpio = valor.trim().toLowerCase(java.util.Locale.ROOT).replace("!", "!!").replace("%", "!%")
+				.replace("_", "!_");
+		return "%" + limpio + "%";
+	}
+
+	/** Columnas ordenables de la tabla; cualquier otro campo ordena por id. */
+	private static String expresionOrden(String campo) {
+		if (campo == null) {
+			return null;
+		}
+		switch (campo) {
+		case "persona.documento":
+			return "p.documento";
+		case "persona.nombres":
+			return "p.nombres";
+		case "persona.fechaCrea":
+			return "p.fechaCrea";
+		case "habilitadoPadron":
+			return "CASE WHEN ip.habilitadoPadron = TRUE THEN 1 ELSE 0 END";
+		case "actualizada":
+			return "CASE WHEN " + revisada("ip") + " THEN 1 ELSE 0 END";
+		case "tieneInconsistencia":
+			return "CASE WHEN " + inconsistencia("p") + " THEN 1 ELSE 0 END";
+		default:
+			return null;
+		}
+	}
+
+	/** Total de miembros que cumplen el filtro. Sin alcance devuelve 0. */
+	public long contarMiembros(FiltroMiembrosDTO f) {
+		if (f == null || !f.tieneAlcance()) {
+			return 0;
+		}
+		TypedQuery<Long> query = getEntityManager().createQuery("SELECT COUNT(ip)" + desdeMiembros(f, "", false),
+				Long.class);
+		parametrizarMiembros(query, f);
+		Long total = query.getSingleResult();
+		return total != null ? total : 0;
+	}
+
+	/**
+	 * Página de miembros con iglesia, ubicación y persona cargadas en una sola consulta.
+	 * {@code maximo <= 0} devuelve todos (exportación). Una persona con más de una iglesia
+	 * activa aparece una vez por cada relación que cumpla el filtro.
+	 */
+	public List<IglesiaPersona> listarMiembros(FiltroMiembrosDTO f, int primero, int maximo, String campoOrden,
+			boolean descendente) {
+		if (f == null || !f.tieneAlcance()) {
+			return new ArrayList<>();
+		}
+		String orden = expresionOrden(campoOrden);
+		String hql = "SELECT ip" + desdeMiembros(f, "", true) + " ORDER BY "
+				+ (orden == null ? "ip.id" : orden + (descendente ? " DESC" : " ASC") + ", ip.id");
+		TypedQuery<IglesiaPersona> query = getEntityManager().createQuery(hql, IglesiaPersona.class);
+		parametrizarMiembros(query, f);
+		query.setFirstResult(Math.max(primero, 0));
+		if (maximo > 0) {
+			query.setMaxResults(maximo);
+		}
+		return query.getResultList();
+	}
+
+	/**
+	 * Iglesias activas por documento para todos los miembros del filtro. Usa el filtro como
+	 * subconsulta en lugar de una lista de parámetros: no depende del límite de 32.767
+	 * parámetros de PostgreSQL. Misma regla que {@link #contarIglesiasActivasPorDocumentos}.
+	 */
+	public Map<String, Integer> contarIglesiasActivasPorFiltro(FiltroMiembrosDTO f) {
+		Map<String, Integer> resultado = new LinkedHashMap<>();
+		if (f == null || !f.tieneAlcance()) {
+			return resultado;
+		}
+		String hql = "SELECT TRIM(pa.documento), COUNT(DISTINCT ia.id) FROM IglesiaPersona ipa JOIN ipa.iglesia ia"
+				+ " JOIN ipa.persona pa WHERE ipa.estado = TRUE AND pa.estado = TRUE"
+				+ " AND TRIM(pa.documento) IN (SELECT TRIM(p_s.documento)" + desdeMiembros(f, "_s", false) + ")"
+				+ " GROUP BY TRIM(pa.documento)";
+		TypedQuery<Object[]> query = getEntityManager().createQuery(hql, Object[].class);
+		parametrizarMiembros(query, f);
+		for (Object[] fila : query.getResultList()) {
+			resultado.put((String) fila[0], ((Number) fila[1]).intValue());
+		}
+		return resultado;
+	}
+
+	/**
+	 * Personas activas por documento para todos los miembros del filtro (cédula repetida),
+	 * con la misma subconsulta. Misma regla que {@code PersonaFacade.contarPersonasActivasPorDocumentos}.
+	 */
+	public Map<String, Integer> contarPersonasActivasPorFiltro(FiltroMiembrosDTO f) {
+		Map<String, Integer> resultado = new LinkedHashMap<>();
+		if (f == null || !f.tieneAlcance()) {
+			return resultado;
+		}
+		String hql = "SELECT TRIM(pc.documento), COUNT(pc.id) FROM Persona pc"
+				+ " WHERE pc.estado = TRUE AND pc.documento IS NOT NULL"
+				+ " AND TRIM(pc.documento) IN (SELECT TRIM(p_s.documento)" + desdeMiembros(f, "_s", false) + ")"
+				+ " GROUP BY TRIM(pc.documento)";
+		TypedQuery<Object[]> query = getEntityManager().createQuery(hql, Object[].class);
+		parametrizarMiembros(query, f);
+		for (Object[] fila : query.getResultList()) {
+			resultado.put((String) fila[0], ((Number) fila[1]).intValue());
+		}
+		return resultado;
+	}
+
+	/**
+	 * Devuelve el vínculo activo más reciente para la persona identificada por
+	 * su DOCUMENTO (cédula), independiente del id interno de la persona.
 	 *
 	 * <p>
 	 * Pensado para entornos donde existen filas duplicadas en {@code tb_persona}
-	 * con el mismo documento (caso real en producciÃƒÂ³n). El mÃƒÂ©todo
+	 * con el mismo documento (caso real en producción). El método
 	 * {@link #getVigentePorPersonaId(Integer)} requiere conocer el id exacto, pero
-	 * {@code finByPersonaDocument} devuelve la persona con id ASC y el vÃƒÂ­nculo
-	 * en {@code tb_iglesia_persona} podrÃƒÂ­a apuntar al id duplicado mayor Ã¢â‚¬”
+	 * {@code finByPersonaDocument} devuelve la persona con id ASC y el vínculo
+	 * en {@code tb_iglesia_persona} podría apuntar al id duplicado mayor —
 	 * generando "sin iglesia" falso. Esta variante resuelve por documento y evita
 	 * ese problema.
 	 */
@@ -427,9 +650,9 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 	}
 
 	/**
-	 * Devuelve el vÃƒÂ­nculo activo entre la iglesia y la persona indicadas, o
-	 * {@code null} si no existe ninguno. ÃƒÅ¡til para garantizar idempotencia al
-	 * crear el vÃƒÂ­nculo desde el flujo de asignaciÃƒÂ³n de admins.
+	 * Devuelve el vínculo activo entre la iglesia y la persona indicadas, o
+	 * {@code null} si no existe ninguno. Útil para garantizar idempotencia al
+	 * crear el vínculo desde el flujo de asignación de admins.
 	 */
 	public IglesiaPersona findByIglesiaAndPersona(Integer iglesiaId, Integer personaId) {
 		if (iglesiaId == null || personaId == null) {

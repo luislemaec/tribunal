@@ -9,6 +9,7 @@ import java.util.Objects;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.dto.GeograpDTO;
 import ec.com.antenasur.dto.IglesiaAsignacionDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaHistorialDTO;
@@ -111,6 +112,30 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 			return Collections.emptyList();
 		}
 		return mapearLista(iglesiaFacade.getIglesiasPorParroquias(parroquias));
+	}
+
+	/** Provincias con al menos una iglesia activa, para filtros dependientes. */
+	public List<GeograpDTO> listarProvinciasConIglesias() {
+		return iglesiaFacade.listarProvinciasConIglesias();
+	}
+
+	/** Cantones de la provincia con al menos una iglesia activa. */
+	public List<GeograpDTO> listarCantonesConIglesias(Integer provinciaId) {
+		return iglesiaFacade.listarCantonesConIglesias(provinciaId);
+	}
+
+	/** Parroquias del cantón con al menos una iglesia activa. */
+	public List<GeograpDTO> listarParroquiasConIglesias(Integer cantonId) {
+		return iglesiaFacade.listarParroquiasConIglesias(cantonId);
+	}
+
+	/**
+	 * Iglesias activas de la ubicación indicada (cualquier combinación de provincia,
+	 * cantón y parroquia; sin filtros, todas las activas). Reutiliza la consulta de
+	 * asignación, que ya resuelve la ubicación con JOIN en una sola consulta.
+	 */
+	public List<IglesiaDTO> listarDTOsPorUbicacion(Integer provinciaId, Integer cantonId, Integer parroquiaId) {
+		return mapearLista(iglesiaFacade.listarParaAsignacionFiltrada(provinciaId, cantonId, parroquiaId, null));
 	}
 
 	public List<IglesiaDTO> listarDTOsPorParroquia(Geograp parroquia) {
