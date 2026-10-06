@@ -184,6 +184,24 @@ public class DocumentoFacade extends AbstractFacade<Documentos, Integer> {
         }
     }
 
+    /**
+     * Indica si la entidad tiene un documento activo del tipo indicado para el proceso electoral
+     * (p. ej. el acta de actualización de miembros de una iglesia). Una sola consulta COUNT.
+     */
+    public boolean existeActivoPorEntidadTipoYProceso(Integer entidadId, Integer tipoDocId, Integer procesoId) {
+        if (entidadId == null || tipoDocId == null || procesoId == null) {
+            return false;
+        }
+        Long total = super.getEntityManager().createQuery("SELECT COUNT(d) FROM Documentos d"
+                + " WHERE d.entidadId = :entidadId AND d.tipoDocumento.id = :tipoDocId"
+                + " AND d.proceso.id = :procesoId AND d.estado = TRUE", Long.class)
+                .setParameter("entidadId", entidadId)
+                .setParameter("tipoDocId", tipoDocId)
+                .setParameter("procesoId", procesoId)
+                .getSingleResult();
+        return total != null && total > 0L;
+    }
+
     public long contarDocumentosPorEntidadYTipoDoc(Integer entidadId, Integer tipoDocId) {
         if (entidadId == null || tipoDocId == null) {
             return 0L;

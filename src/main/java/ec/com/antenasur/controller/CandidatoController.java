@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -308,11 +309,27 @@ public class CandidatoController implements Serializable {
                     FORMULARIO_ABSOLUTO + ":outPnlAsignaCandidato", FORMULARIO_ABSOLUTO + ":outPnlFooter",
                     GROWL_GLOBAL);
         } catch (NegocioException e) {
-            mostrarErrorValidacion(e.getMessage());
+            mostrarMotivoBusqueda(e.getMessage());
         } catch (Exception e) {
             log.error("ERROR AL BUSCAR PERSONA PARA CANDIDATO", e);
-            mostrarErrorValidacion("No se pudo buscar la persona.");
+            mostrarMotivoBusqueda("No se pudo buscar la persona.");
         }
+    }
+
+    /**
+     * La persona buscada no puede ser candidata: el motivo se muestra junto a la cédula, dentro
+     * del diálogo, y se descarta cualquier selección anterior para que «Guardar» no asigne a otra
+     * persona distinta de la buscada.
+     */
+    private void mostrarMotivoBusqueda(String motivo) {
+        if (candidatoSeleccionado != null) {
+            candidatoSeleccionado.setIglesiaPersona(null);
+        }
+        FacesContext.getCurrentInstance().addMessage(FORMULARIO + ":cedulaBuscar",
+                new FacesMessage(FacesMessage.SEVERITY_WARN, motivo, null));
+        FacesContext.getCurrentInstance().validationFailed();
+        PrimeFaces.current().ajax().update(FORMULARIO_ABSOLUTO + ":outPnlAsignaCandidatoBusca",
+                FORMULARIO_ABSOLUTO + ":outPnlAsignaCandidato", FORMULARIO_ABSOLUTO + ":outPnlFooter");
     }
 
     public void guardarCandidato() {

@@ -13,13 +13,16 @@ import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.tec.CandidatoFacade;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
+import ec.com.antenasur.facade.tec.DocumentoFacade;
 import ec.com.antenasur.facade.tec.ListaFacade;
 import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
+import ec.com.antenasur.facade.tec.TipoDocumentoFacade;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.tec.Candidato;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
+import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.service.AbstractService;
 import ec.com.antenasur.util.Constantes;
 
@@ -42,6 +45,12 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
 
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
+
+    @Inject
+    private DocumentoFacade documentoFacade;
+
+    @Inject
+    private TipoDocumentoFacade tipoDocumentoFacade;
 
     @Override
     protected CandidatoFacade getFacade() {
@@ -188,6 +197,8 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
                 ? iglesiaPersonaFacade.find(dto.getIglesiaPersona().getId()) : null;
 
         validarAsignacion(lista, proceso, cargo, iglesiaPersona);
+        // Defensa en servidor: los datos pudieron cambiar entre la búsqueda y el guardado.
+        validarElegibilidad(iglesiaPersona, proceso.getId());
         if (candidatoFacade.existePersonaActivaEnListaProceso(
                 lista.getId(), proceso.getId(), iglesiaPersona.getId(), dto.getId())) {
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.duplicate.person"));
@@ -241,9 +252,9 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     }
 
     /**
-     * Asigna a un candidato una IglesiaPersona resuelta por su cédula.
-     * Devuelve null si no existe persona con esa cédula. NO persiste — el
-     * caller decide cuándo guardar el candidato completo.
+     * Asigna a un candidato el miembro de iglesia resuelto por su cédula, solo si puede ser
+     * candidato (ver {@link #validarElegibilidad}). Si no, lanza NegocioException con el motivo
+     * concreto. NO persiste: el caller decide cuándo guardar el candidato completo.
      */
     public CandidatoDTO asignarPersonaPorCedula(CandidatoDTO candidatoDto, String cedula) {
         if (candidatoDto == null) {
@@ -252,12 +263,68 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
         if (cedula == null || !cedula.trim().matches("\\d{10}")) {
             throw new NegocioException("Ingrese una cédula válida de 10 dígitos.");
         }
-        IglesiaPersona ip = iglesiaPersonaFacade.buscarPorCedulaPersona(cedula.trim());
-        if (ip == null || ip.getPersona() == null || ip.getIglesia() == null) {
-            throw new NegocioException("No existe un miembro activo de iglesia para la cédula ingresada.");
+        List<IglesiaPersona> relaciones = iglesiaPersonaFacade.listarActivasPorDocumento(cedula.trim());
+        if (relaciones.isEmpty()) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.noExiste", cedula.trim()));
         }
+        IglesiaPersona ip = relaciones.get(0);
+        Integer procesoId = candidatoDto.getProcesoId() != null ? candidatoDto.getProcesoId() : candidatoDto.getPeriodoId();
+        validarElegibilidad(ip, relaciones, procesoId);
         candidatoDto.setIglesiaPersona(ec.com.antenasur.dto.IglesiaPersonaDTO.fromEntity(ip));
         return candidatoDto;
+    }
+
+    /** Versión para el guardado: vuelve a consultar las relaciones activas de la persona. */
+    private void validarElegibilidad(IglesiaPersona ip, Integer procesoId) {
+        String documento = ip.getPersona() != null ? ip.getPersona().getDocumento() : null;
+        validarElegibilidad(ip, iglesiaPersonaFacade.listarActivasPorDocumento(documento), procesoId);
+    }
+
+    /**
+     * Un miembro puede ser candidato solo si, en este orden:
+     * <ol>
+     * <li>su relación con la iglesia y su persona están activas;</li>
+     * <li>no tiene relación activa en más de una iglesia (inconsistencia que regulariza
+     * Administración o el Tribunal);</li>
+     * <li>su iglesia está activa;</li>
+     * <li>su iglesia generó el acta de actualización de miembros del proceso;</li>
+     * <li>fue revisado en Personas (misma regla que la etiqueta «Revisado»);</li>
+     * <li>está habilitado para sufragar ({@code habilitadoPadron = TRUE}, regla del padrón).</li>
+     * </ol>
+     * Cada caso lanza NegocioException con un mensaje específico.
+     */
+    private void validarElegibilidad(IglesiaPersona ip, List<IglesiaPersona> relacionesActivas, Integer procesoId) {
+        String documento = ip != null && ip.getPersona() != null ? ip.getPersona().getDocumento() : "";
+        boolean relacionVigente = ip != null && ip.getPersona() != null && ip.getIglesia() != null
+                && Boolean.TRUE.equals(ip.getEstado()) && Boolean.TRUE.equals(ip.getPersona().getEstado())
+                && relacionesActivas.stream().anyMatch(r -> r.getId().equals(ip.getId()));
+        if (!relacionVigente) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.noExiste",
+                    documento == null ? "" : documento.trim()));
+        }
+        String nombre = ip.getPersona().getNombres() == null ? documento : ip.getPersona().getNombres().trim();
+        if (relacionesActivas.size() > 1) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.variasIglesias", nombre));
+        }
+        String iglesia = ip.getIglesia().getNombre();
+        if (!Boolean.TRUE.equals(ip.getIglesia().getEstado())) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.iglesia.inactiva", iglesia));
+        }
+        if (!tieneActaActualizacion(ip.getIglesia().getId(), procesoId)) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.iglesia.sinActa", iglesia));
+        }
+        if (!Boolean.TRUE.equals(ec.com.antenasur.dto.IglesiaPersonaDTO.fromEntity(ip).getActualizada())) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.pendiente", nombre));
+        }
+        if (!Boolean.TRUE.equals(ip.getHabilitadoPadron())) {
+            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.noHabilitado", nombre));
+        }
+    }
+
+    /** La iglesia generó el acta de actualización de miembros en el proceso del candidato. */
+    private boolean tieneActaActualizacion(Integer iglesiaId, Integer procesoId) {
+        TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(Constantes.TIPO_ACTA_ACTUALIZACION_MIEMBROS);
+        return tipo != null && documentoFacade.existeActivoPorEntidadTipoYProceso(iglesiaId, tipo.getId(), procesoId);
     }
 
     private List<CandidatoDTO> mapearLista(List<Candidato> candidatos) {

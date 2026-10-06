@@ -409,6 +409,8 @@
                                                  process=":frmCandidatos:outPnlAsignaCandidatoBusca @this"/>
                             </div>
                             <small class="text-500">#{msg['form.candidatos.search.hint']}</small>
+                            <!-- Motivo por el que la persona buscada no puede ser candidata (CandidatoService.validarElegibilidad). -->
+                            <p:message for="cedulaBuscar" display="text" styleClass="block mt-2"/>
                         </div></div>
                     </p:outputPanel>
                 </p:outputPanel>
