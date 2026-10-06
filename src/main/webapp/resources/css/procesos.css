@@ -59,6 +59,17 @@
 
 .audit-col-usuario .tec-mono { display:inline-block; max-width:8.25rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
 
+/* Usuario: nombre completo como dato principal (misma jerarquía que el nombre en Personas);
+   "Usuario:" y "Rol:" como metadatos con .tec-meta.
+   Ancho según el contenido: la columna (width:1%) toma el ancho natural del nombre en una
+   línea (width:max-content) hasta un tope; solo los nombres más largos que el tope pasan a
+   dos líneas, por espacios. El espacio restante queda para Detalle, la columna principal. */
+.audit-user { display:flex; flex-direction:column; gap:.075rem; width:max-content; max-width:18rem; }
+
+.audit-user__nombre { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); line-height:var(--tec-lh-tight); overflow-wrap:break-word; }
+
+.audit-user .tec-meta { overflow-wrap:break-word; }
+
 .audit-activity { display:flex; flex-direction:column; gap:.1125rem; min-width:0; }
 
 .audit-activity__head { display:flex; flex-wrap:wrap; align-items:center; gap:.1875rem .375rem; }
@@ -98,10 +109,12 @@
 
 @media (max-width:991.98px) {
     .audit-col-usuario .tec-mono { max-width:6rem; }
+    .audit-user { max-width:13rem; }
 }
 
 @media (max-width:640px) {
     .tec-table.ui-datatable-reflow .audit-col-usuario .tec-mono { max-width:none; white-space:normal; overflow-wrap:anywhere; }
+    .tec-table.ui-datatable-reflow .audit-user { width:auto; max-width:none; }
 }
 
 @media (max-width:575.98px) {

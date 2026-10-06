@@ -27,6 +27,17 @@ public class ActividadAuditoriaDTO implements Serializable {
     private String severidadResultado;
     private String detalle;
     private String actividadOriginal;
+    /** Nombre completo de la persona del usuario; null si u_crea no corresponde a un usuario. */
+    private String nombreUsuario;
+    /** Roles actuales del usuario, separados por coma (la bitácora no guarda el rol histórico). */
+    private String rolesUsuario;
+
+    /** Completa nombre y roles con la identidad resuelta en bloque; sin identidad no cambia nada. */
+    public void aplicarIdentidad(UsuarioAuditoriaDTO identidad) {
+        if (identidad == null) return;
+        nombreUsuario = identidad.getNombre();
+        rolesUsuario = identidad.getRolesTexto();
+    }
 
     public static ActividadAuditoriaDTO fromEntity(Proceso proceso) {
         if (proceso == null) return null;

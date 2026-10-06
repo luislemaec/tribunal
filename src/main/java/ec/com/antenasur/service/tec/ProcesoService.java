@@ -2,6 +2,9 @@ package ec.com.antenasur.service.tec;
 
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.List;
 
 import jakarta.annotation.Resource;
@@ -14,6 +17,7 @@ import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.ActividadAuditoriaDTO;
 import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
+import ec.com.antenasur.dto.UsuarioAuditoriaDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.tec.ProcesoFacade;
 import ec.com.antenasur.model.tec.Proceso;
@@ -97,9 +101,23 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
     public List<ActividadAuditoriaDTO> buscarAuditoria(FiltroActividadAuditoriaDTO filtro,
             int first, int pageSize) {
         String usuarioAlcance = resolverUsuarioAlcance();
-        List<Proceso> registros = procesoFacade.buscarAuditoria(filtro, usuarioAlcance, first, pageSize);
+        return conIdentidad(procesoFacade.buscarAuditoria(filtro, usuarioAlcance, first, pageSize));
+    }
+
+    /**
+     * Convierte las actividades a DTO y completa nombre y roles de sus usuarios con una
+     * sola consulta para todos los usuarios distintos (sin N+1).
+     */
+    private List<ActividadAuditoriaDTO> conIdentidad(List<Proceso> registros) {
         List<ActividadAuditoriaDTO> resultado = new ArrayList<>();
-        for (Proceso registro : registros) resultado.add(ActividadAuditoriaDTO.fromEntity(registro));
+        Set<String> usuarios = new LinkedHashSet<>();
+        for (Proceso registro : registros) {
+            ActividadAuditoriaDTO actividad = ActividadAuditoriaDTO.fromEntity(registro);
+            resultado.add(actividad);
+            if (actividad.getUsuario() != null) usuarios.add(actividad.getUsuario());
+        }
+        Map<String, UsuarioAuditoriaDTO> identidades = procesoFacade.buscarIdentidades(usuarios);
+        for (ActividadAuditoriaDTO actividad : resultado) actividad.aplicarIdentidad(identidades.get(actividad.getUsuario()));
         return resultado;
     }
 
@@ -112,16 +130,25 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
     /** Solo Administrador recibe el catálogo global de usuarios para el filtro. */
     @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
-    public List<String> listarUsuariosAuditoria() {
+    public List<UsuarioAuditoriaDTO> listarUsuariosAuditoria() {
         if (!sessionContext.isCallerInRole("SITEC-Administrador")) return List.of();
-        return procesoFacade.listarUsuariosConActividad();
+        List<String> usuarios = procesoFacade.listarUsuariosConActividad();
+        Map<String, UsuarioAuditoriaDTO> identidades = procesoFacade.buscarIdentidades(usuarios);
+        List<UsuarioAuditoriaDTO> opciones = new ArrayList<>();
+        for (String usuario : usuarios) {
+            UsuarioAuditoriaDTO identidad = identidades.get(usuario);
+            opciones.add(identidad != null ? identidad : new UsuarioAuditoriaDTO(usuario, null));
+        }
+        return opciones;
     }
 
+    /** Todas las actividades del filtro (no solo la página visible), con nombre y roles. */
     @RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal",
         "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa"})
-    public List<Proceso> listarAuditoriaParaReporte(FiltroActividadAuditoriaDTO filtro) {
+    public List<ActividadAuditoriaDTO> listarAuditoriaParaExportar(FiltroActividadAuditoriaDTO filtro) {
         int total = contarAuditoria(filtro);
-        return total == 0 ? List.of() : procesoFacade.buscarAuditoria(filtro, resolverUsuarioAlcance(), 0, total);
+        return total == 0 ? List.of()
+                : conIdentidad(procesoFacade.buscarAuditoria(filtro, resolverUsuarioAlcance(), 0, total));
     }
 
     private String resolverUsuarioAlcance() {

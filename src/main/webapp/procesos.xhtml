@@ -40,7 +40,7 @@
 										<f:selectItem itemLabel="Todos" itemValue="#{null}"
 											noSelectionOption="true" />
 										<f:selectItems value="#{procesoController.usuariosAuditoria}"
-											var="usuario" itemLabel="#{usuario}" itemValue="#{usuario}" />
+											var="usuario" itemLabel="#{usuario.etiqueta}" itemValue="#{usuario.usuario}" />
 									</p:selectOneMenu>
 								</div>
 							</ui:fragment>
@@ -119,10 +119,11 @@
 										styleClass="tec-btn ui-button-outlined ui-button-secondary"
 										action="#{procesoController.limpiarFiltros}" process="@this"
 										update="pnlFiltros tblAuditoria" />
-									<p:commandButton id="btnExportarPdf" value="Exportar PDF"
-										icon="pi pi-file-pdf"
+									<!-- Exporta todas las actividades de los filtros aplicados, no solo la página visible. -->
+									<p:commandButton id="btnExportarExcel" value="Exportar Excel"
+										icon="pi pi-file-excel"
 										styleClass="tec-btn ui-button-outlined ui-button-info"
-										ajax="false" action="#{procesoController.exportaPDF}" />
+										ajax="false" action="#{procesoController.exportarExcel}" />
 								</div>
 							</div>
 						</div>
@@ -174,8 +175,20 @@
 							</span>
 						</p:column>
 
+						<!-- Nombre completo como dato principal; usuario y rol actual como metadatos. Si u_crea no
+						     corresponde a un usuario (intento de acceso, <desconocido>) se muestra solo ese texto. -->
 						<p:column headerText="Usuario" styleClass="audit-col-usuario">
-							<span class="tec-mono" title="#{registro.usuario}">#{empty registro.usuario ? '—' : registro.usuario}</span>
+							<span class="audit-user">
+								<h:outputText value="#{not empty registro.nombreUsuario ? registro.nombreUsuario : (empty registro.usuario ? '—' : registro.usuario)}"
+									title="#{registro.usuario}"
+									styleClass="#{empty registro.nombreUsuario ? 'audit-user__nombre tec-mono' : 'audit-user__nombre'}" />
+								<h:panelGroup rendered="#{not empty registro.nombreUsuario}" styleClass="tec-meta">
+									Usuario: <span class="tec-mono" title="#{registro.usuario}">#{registro.usuario}</span>
+								</h:panelGroup>
+								<h:panelGroup rendered="#{not empty registro.rolesUsuario}" styleClass="tec-meta">
+									Rol: #{registro.rolesUsuario}
+								</h:panelGroup>
+							</span>
 						</p:column>
 
 						<p:column headerText="Módulo" styleClass="audit-col-modulo">
@@ -238,7 +251,20 @@
 								</div>
 								<div>
 									<dt>Usuario</dt>
-									<dd class="tec-mono">#{empty procesoController.registroSeleccionado.usuario ? '—' : procesoController.registroSeleccionado.usuario}</dd>
+									<dd>
+										<span class="audit-user">
+											<h:outputText value="#{procesoController.registroSeleccionado.nombreUsuario}"
+												rendered="#{not empty procesoController.registroSeleccionado.nombreUsuario}"
+												styleClass="audit-user__nombre" />
+											<h:panelGroup styleClass="#{empty procesoController.registroSeleccionado.nombreUsuario ? 'tec-mono' : 'tec-meta'}">
+												<h:outputText value="Usuario: " rendered="#{not empty procesoController.registroSeleccionado.nombreUsuario}" />
+												<span class="tec-mono">#{empty procesoController.registroSeleccionado.usuario ? '—' : procesoController.registroSeleccionado.usuario}</span>
+											</h:panelGroup>
+											<h:panelGroup rendered="#{not empty procesoController.registroSeleccionado.rolesUsuario}" styleClass="tec-meta">
+												Rol: #{procesoController.registroSeleccionado.rolesUsuario}
+											</h:panelGroup>
+										</span>
+									</dd>
 								</div>
 								<div class="audit-detail-list__full">
 									<dt>Registro afectado</dt>

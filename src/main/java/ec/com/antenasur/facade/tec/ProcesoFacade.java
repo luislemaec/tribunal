@@ -13,16 +13,24 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.audit.CatalogoActividades;
 import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
+import ec.com.antenasur.dto.UsuarioAuditoriaDTO;
+import ec.com.antenasur.model.generic.EntidadBase;
+import org.hibernate.Session;
 
 /**
  *
@@ -137,6 +145,69 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
                 "SELECT DISTINCT p.usuarioCrea FROM Proceso p WHERE p.estado = true "
                 + "AND p.usuarioCrea IS NOT NULL ORDER BY p.usuarioCrea", String.class);
         return query.getResultList();
+    }
+
+    /** Usuarios por consulta: muy por debajo del límite de parámetros de PostgreSQL. */
+    private static final int LOTE_IDENTIDADES = 1000;
+
+    /**
+     * Identidad (nombre completo y roles activos) de los nombres de acceso indicados, en
+     * bloques de {@value #LOTE_IDENTIDADES}: una consulta por bloque, nunca una por fila.
+     *
+     * <p>{@code procesos.u_crea} es texto, sin relación JPA con Usuario: se une por
+     * {@code usu_nombre}. Se desactiva el filtro de activos para resolver también usuarios
+     * desactivados (la bitácora es historia); los roles se limitan a los activos. Si un
+     * nombre de acceso se repite entre usuarios, prevalece el activo y, entre iguales, el
+     * de menor id. Los nombres que no corresponden a ningún usuario (intentos de login,
+     * {@code <desconocido>}) no aparecen en el resultado.
+     */
+    public Map<String, UsuarioAuditoriaDTO> buscarIdentidades(Collection<String> usuarios) {
+        Map<String, UsuarioAuditoriaDTO> resultado = new LinkedHashMap<>();
+        List<String> pendientes = new ArrayList<>();
+        if (usuarios != null) {
+            for (String usuario : usuarios) {
+                if (usuario != null && !usuario.isBlank() && !pendientes.contains(usuario)) pendientes.add(usuario);
+            }
+        }
+        if (pendientes.isEmpty()) return resultado;
+
+        // Se reutiliza el mismo EntityManager: getEntityManager() vuelve a activar el filtro.
+        EntityManager em = super.getEntityManager();
+        Session session = em.unwrap(Session.class);
+        boolean filtroActivo = session.getEnabledFilter(EntidadBase.FILTER_ACTIVE) != null;
+        if (filtroActivo) session.disableFilter(EntidadBase.FILTER_ACTIVE);
+        try {
+            for (int desde = 0; desde < pendientes.size(); desde += LOTE_IDENTIDADES) {
+                List<String> lote = pendientes.subList(desde, Math.min(desde + LOTE_IDENTIDADES, pendientes.size()));
+                List<Object[]> filas = em.createQuery(
+                        "SELECT u.id, u.username, per.apellidos, per.nombres, r.nombre FROM Usuario u"
+                        + " LEFT JOIN u.personsa per"
+                        + " LEFT JOIN u.rolUsuarios ru ON ru.estado = TRUE"
+                        + " LEFT JOIN ru.rol r"
+                        + " WHERE u.username IN :usuarios"
+                        + " ORDER BY u.username, CASE WHEN u.estado = TRUE THEN 0 ELSE 1 END, u.id, r.nombre",
+                        Object[].class).setParameter("usuarios", lote).getResultList();
+                Map<String, Integer> usuarioElegido = new HashMap<>();
+                for (Object[] fila : filas) {
+                    Integer id = (Integer) fila[0];
+                    String usuario = (String) fila[1];
+                    // El orden pone primero al usuario que prevalece; las filas de otros ids se ignoran.
+                    if (!id.equals(usuarioElegido.computeIfAbsent(usuario, u -> id))) continue;
+                    UsuarioAuditoriaDTO identidad = resultado.computeIfAbsent(usuario,
+                            u -> new UsuarioAuditoriaDTO(u, nombreCompleto((String) fila[2], (String) fila[3])));
+                    identidad.agregarRol((String) fila[4]);
+                }
+            }
+        } finally {
+            if (filtroActivo) session.enableFilter(EntidadBase.FILTER_ACTIVE);
+        }
+        return resultado;
+    }
+
+    /** Apellidos y nombres, igual que el listado de personas; null si la persona no tiene ninguno. */
+    private static String nombreCompleto(String apellidos, String nombres) {
+        String completo = ((apellidos == null ? "" : apellidos.trim()) + " " + (nombres == null ? "" : nombres.trim())).trim();
+        return completo.isEmpty() ? null : completo;
     }
 
     private Query crearConsultaAuditoria(String seleccion, FiltroActividadAuditoriaDTO filtro, String usuarioAlcance) {

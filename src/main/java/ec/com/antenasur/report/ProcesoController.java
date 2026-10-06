@@ -2,6 +2,7 @@ package ec.com.antenasur.report;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,17 +19,16 @@ import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortMeta;
 
-import com.itextpdf.text.Font;
 
 import ec.com.antenasur.audit.CatalogoActividades;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.ActividadAuditoriaDTO;
 import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
-import ec.com.antenasur.itext.ReportePFD;
-import ec.com.antenasur.model.tec.Proceso;
+import ec.com.antenasur.dto.UsuarioAuditoriaDTO;
+import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.service.tec.ProcesoService;
-import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.JsfUtil;
 
 /** Consulta de la bitácora funcional tec.procesos. */
 @Named
@@ -48,7 +48,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
 
     private FiltroActividadAuditoriaDTO filtro;
     private LazyDataModel<ActividadAuditoriaDTO> auditoriasLazy;
-    private List<String> usuariosAuditoria = Collections.emptyList();
+    private List<UsuarioAuditoriaDTO> usuariosAuditoria = Collections.emptyList();
     private List<ActividadAuditoriaDTO> auditoriasCargadas = Collections.emptyList();
     private int primerRegistro;
     private ActividadAuditoriaDTO registroSeleccionado;
@@ -56,9 +56,12 @@ public class ProcesoController extends ReportTemplateController implements Seria
     private List<SelectItem> accionesAuditoria = Collections.emptyList();
 
     public ProcesoController() {
-        super("ACTIVIDAD INTERNA", new float[]{16, 48, 45, 45, 70, 34, 130, 40},
-                new int[]{1200, 4000, 4000, 4000, 6000, 3000, 12000, 3000},
-                new String[]{"Nro", "FECHA / HORA", "USUARIO", "MÓDULO", "ACCIÓN", "RESULTADO", "DETALLE", "IP"}, 0);
+        // Solo se exporta a Excel: no hay anchos de PDF. Nombre, usuario y rol van en columnas
+        // separadas para poder filtrarlos en la hoja.
+        super("ACTIVIDAD INTERNA", null,
+                new int[]{1200, 4500, 3600, 9000, 5000, 4000, 6000, 3000, 12000, 3600},
+                new String[]{"Nro", "FECHA / HORA", "USUARIO", "NOMBRE", "ROL", "MÓDULO", "ACCIÓN", "RESULTADO",
+                    "DETALLE", "IP"}, 0);
     }
 
     @PostConstruct
@@ -126,35 +129,45 @@ public class ProcesoController extends ReportTemplateController implements Seria
         return Collections.unmodifiableList(grupos);
     }
 
-    public void exportaPDF() {
+    /**
+     * Exporta a Excel todas las actividades que cumplen los filtros (no solo la página
+     * visible), con el mismo alcance que la tabla: Administrador ve todo, los demás roles
+     * solo sus registros. Usa la infraestructura común ReporteXLSX (encabezado institucional,
+     * responsable y total), igual que Personas, Iglesias y Padrón.
+     */
+    public void exportarExcel() {
         try {
-            List<Proceso> registros = procesoService.listarAuditoriaParaReporte(filtro);
-            setListaDatos(new String[registros.size()][getNumeroColumnas()]);
+            List<ActividadAuditoriaDTO> registros = procesoService.listarAuditoriaParaExportar(filtro);
+            String[][] datos = new String[registros.size()][getNumeroColumnas()];
             SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            int fila = 0;
-            for (Proceso item : registros) {
-                ActividadAuditoriaDTO actividad = ActividadAuditoriaDTO.fromEntity(item);
-                getListaDatos()[fila][0] = String.valueOf(fila + 1);
-                getListaDatos()[fila][1] = actividad.getFecha() != null ? formatoFecha.format(actividad.getFecha()) : "";
-                getListaDatos()[fila][2] = valor(actividad.getUsuario());
-                getListaDatos()[fila][3] = actividad.getModulo();
-                getListaDatos()[fila][4] = actividad.getAccion();
-                getListaDatos()[fila][5] = actividad.getResultado();
-                getListaDatos()[fila][6] = actividad.getDetalle();
-                getListaDatos()[fila][7] = valor(actividad.getIp());
-                fila++;
+            for (int fila = 0; fila < registros.size(); fila++) {
+                ActividadAuditoriaDTO actividad = registros.get(fila);
+                datos[fila][0] = String.valueOf(fila + 1);
+                datos[fila][1] = actividad.getFecha() != null ? formatoFecha.format(actividad.getFecha()) : "";
+                datos[fila][2] = valor(actividad.getUsuario());
+                datos[fila][3] = valor(actividad.getNombreUsuario());
+                datos[fila][4] = valor(actividad.getRolesUsuario());
+                datos[fila][5] = actividad.getModulo();
+                datos[fila][6] = actividad.getAccion();
+                datos[fila][7] = actividad.getResultado();
+                datos[fila][8] = actividad.getDetalle();
+                datos[fila][9] = valor(actividad.getIp());
             }
-            Font fuenteCabecera = Constantes.getFuenteCabeceraDefault(9);
-            ReportePFD.nuevoPDFHorizontal(getNombreReporte());
-            ReportePFD.creaTablaCabecera(getNumeroColumnas(), getTamanioColumnasPDF(), getNombreReporte(),
-                    getNombresColumnas(), fuenteCabecera);
-            ReportePFD.creaContenidoTabla(getListaDatos(), getNombresColumnas(), Constantes.getFuenteContenidoDefault(8));
-            ReportePFD.getFinalParagraph(loginBean.getUsuario().getUsername());
-            ReportePFD.descargarPDF(getNombreReporte());
-            procesoBean.okActivityRegister("DESCARGA REPORTE(PDF) " + getNombreReporte(),
+            Date ahora = new Date();
+            synchronized (ReporteXLSX.class) {
+                ReporteXLSX.nuevoExcel(getNombreReporte());
+                ReporteXLSX.creaEspacioInformativo(new SimpleDateFormat("dd/MM/yyyy").format(ahora),
+                        new SimpleDateFormat("HH:mm:ss").format(ahora), ReporteXLSX.getNombreUsuarioAutenticado());
+                ReporteXLSX.creaCabeceraTabla(getNombresColumnas(), getTamanioColumnasXLS());
+                ReporteXLSX.creaContenidoTabla(datos, getNombresColumnas());
+                ReporteXLSX.setFinalParagraph(registros.size());
+                ReporteXLSX.descargarExcel("actividad_interna_" + new SimpleDateFormat("yyyyMMdd_HHmm").format(ahora));
+            }
+            procesoBean.okActivityRegister("DESCARGA REPORTE(XLS) " + getNombreReporte(),
                     "NÚMERO DE REGISTROS: " + registros.size());
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(ProcesoController.class).error("Error al exportar auditoría", e);
+            org.slf4j.LoggerFactory.getLogger(ProcesoController.class).error("Error al exportar auditoría a Excel", e);
+            JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");
         }
     }
 
@@ -167,7 +180,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
     public List<String> getResultadosAuditoria() { return CatalogoActividades.resultados(); }
     public FiltroActividadAuditoriaDTO getFiltro() { return filtro; }
     public LazyDataModel<ActividadAuditoriaDTO> getAuditoriasLazy() { return auditoriasLazy; }
-    public List<String> getUsuariosAuditoria() { return usuariosAuditoria; }
+    public List<UsuarioAuditoriaDTO> getUsuariosAuditoria() { return usuariosAuditoria; }
     public int getPrimerRegistro() { return primerRegistro; }
     public void setPrimerRegistro(int primerRegistro) { this.primerRegistro = primerRegistro; }
     public ActividadAuditoriaDTO getRegistroSeleccionado() { return registroSeleccionado; }
