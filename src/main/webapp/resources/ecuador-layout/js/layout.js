@@ -29,7 +29,12 @@ PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
         this.wrapper = $(document.body).children('.layout-wrapper');
         this.topbar = this.wrapper.children('.layout-topbar');
         this.sidebar = this.wrapper.children('.layout-sidebar');
-        this.menuContainer = this.wrapper.children('.layout-menu-container');
+        // El layout original desplazaba el menú dentro de .layout-menu-container; en la plantilla
+        // del Tribunal ese contenedor no existe y quien tiene el scroll (overflow:auto) es
+        // .layout-sidebar. Sin este respaldo menuContainer quedaba vacío: se guardaba
+        // "href,undefined" como posición y la restauración nunca podía aplicarse.
+        var contenedorMenu = this.wrapper.children('.layout-menu-container');
+        this.menuContainer = contenedorMenu.length ? contenedorMenu : this.sidebar;
         this.menu = this.jq;
         this.menulinks = this.menu.find('a');
         this.expandedMenuitems = this.expandedMenuitems||[];
@@ -350,64 +355,98 @@ PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
         }
     },
 
+    /**
+     * Reabre los ítems guardados en la cookie ecuador_expandeditems.
+     *
+     * La cookie guarda ids de <li> del menú. Un id puede dejar de existir: el menú
+     * cambia según el rol o los permisos del usuario, o una opción se elimina. Antes
+     * se tomaba el último id de la lista aunque no existiera, y restoreScrollState
+     * recibía un jQuery vacío ("elem.position() is undefined"). Ahora solo se
+     * restauran los ids que identifican un único <li> de este menú; los demás se
+     * descartan y la cookie se reescribe con los válidos, en el mismo orden.
+     */
     restoreMenuState: function() {
         var $this = this;
         var menucookie = $.cookie('ecuador_expandeditems');
-        if (menucookie) {
-            this.expandedMenuitems = menucookie.split(',');
-            var menuitem; // se reutiliza para restoreScrollState
-            for (var i = 0; i < this.expandedMenuitems.length; i++) {
-                var id = this.expandedMenuitems[i];
-                if (id) {
-                    // PrimeFaces 15 / Mojarra 4 generan IDs que pueden contener
-                    // muchos caracteres especiales para CSS (':' '-' '|' UUIDs).
-                    // El escape antiguo solo cubría ':' por lo que cualquier ID
-                    // con otros caracteres causaba "Syntax error, unrecognized
-                    // expression". Usamos $.escapeSelector (jQuery 3.0+) que
-                    // escapa correctamente todos los caracteres especiales.
-                    var safeSelector = (typeof $.escapeSelector === 'function')
-                            ? "#" + $.escapeSelector(id)
-                            : "#" + id.replace(/([^\w-])/g, "\\$1"); // fallback
-                    try {
-                        menuitem = $(safeSelector);
-                        menuitem.addClass('active-menuitem');
-                        var submenu = menuitem.children('ul');
-                        if (submenu.length) {
-                            submenu.show();
-                        }
-                    } catch (e) {
-                        // Defensivo: si el selector aún falla, no rompe el resto del init.
-                        if (window.console) {
-                            console.warn('Ecuador menu: no se pudo restaurar item', id, e);
-                        }
-                    }
-                }
-            }
+        if (!menucookie) {
+            return;
+        }
 
+        var validos = [];
+        var ultimoItem = null; // último ítem restaurado: referencia para restoreScrollState
+        $.each(menucookie.split(','), function(i, id) {
+            if (!id || $.inArray(id, validos) !== -1) {
+                return;
+            }
+            var item = $this.buscarItemMenu(id);
+            if (!item) {
+                return;
+            }
+            validos.push(id);
+            item.addClass('active-menuitem');
+            item.children('ul').show();
+            ultimoItem = item;
+        });
+
+        this.expandedMenuitems = validos;
+        if (validos.join(',') !== menucookie) {
+            this.saveMenuState();
+        }
+
+        if (ultimoItem) {
             setTimeout(function() {
-                $this.restoreScrollState(menuitem);
-            }, 100)
+                $this.restoreScrollState(ultimoItem);
+            }, 100);
         }
     },
 
+    /**
+     * <li> de este menú cuyo id es exactamente el indicado, o null. Se compara el id
+     * (sin construir un selector, así no hay que escapar ':' ni otros caracteres de
+     * los ids de JSF) y solo dentro del menú. Un id repetido no identifica un ítem
+     * concreto y se trata como inexistente.
+     */
+    buscarItemMenu: function(id) {
+        var items = this.menu.find('li').filter(function() {
+            return this.id === id;
+        });
+        return items.length === 1 ? items : null;
+    },
+
+    /**
+     * Restaura el desplazamiento del menú. La cookie ecuador_menu_scroll_state guarda
+     * "href,scrollTop" del último enlace pulsado (el href puede contener comas: se
+     * separa por la última).
+     */
     restoreScrollState: function(menuitem) {
+        if (!menuitem || !menuitem.length) {
+            return;
+        }
         var scrollState = $.cookie('ecuador_menu_scroll_state');
         if (scrollState) {
-            var state = scrollState.split(',');
-            if (state[0].startsWith(this.cfg.pathname) || this.isScrolledIntoView(menuitem, state[1])) {
-                this.menuContainer.scrollTop(parseInt(state[1], 10));
+            var corte = scrollState.lastIndexOf(',');
+            var href = corte > 0 ? scrollState.substring(0, corte) : '';
+            var scrollTop = corte > 0 ? parseInt(scrollState.substring(corte + 1), 10) : NaN;
+            if (!isNaN(scrollTop)
+                    && (href.startsWith(this.cfg.pathname) || this.isScrolledIntoView(menuitem, scrollTop))) {
+                this.menuContainer.scrollTop(scrollTop);
             }
             else {
+                // Posición de otra página o inválida (p. ej. "href,undefined" de versiones
+                // anteriores): se muestra el ítem activo y se descarta esa posición.
                 this.scrollIntoView(menuitem.get(0));
                 $.removeCookie('ecuador_menu_scroll_state', { path: '/' });
             }
         }
-        else if (!this.isScrolledIntoView(menuitem, menuitem.scrollTop())){
+        else if (!this.isScrolledIntoView(menuitem, this.menuContainer.scrollTop())) {
             this.scrollIntoView(menuitem.get(0));
         }
     },
 
     scrollIntoView: function(elem) {
+        if (!elem) {
+            return;
+        }
         if (document.documentElement.scrollIntoView) {
             elem.scrollIntoView({ block: "nearest", inline: 'start' });
 
@@ -419,13 +458,34 @@ PrimeFaces.widget.Ecuador = PrimeFaces.widget.BaseWidget.extend({
         }
     },
 
+    /**
+     * Indica si elem quedaría visible con el menú desplazado a scrollTop. Sin elemento,
+     * sin posición válida o sin contenedor medible devuelve false (el llamador hace
+     * entonces scrollIntoView); nunca accede a .top de un valor indefinido.
+     *
+     * La posición se mide respecto al contenedor del menú (offset del ítem menos offset
+     * del contenedor, más su desplazamiento actual) y no con position(), que es relativa
+     * al ancestro posicionado más cercano: en submenús anidados no es el contenedor.
+     */
     isScrolledIntoView: function(elem, scrollTop) {
-        var viewBottom = parseInt(scrollTop, 10) + this.menuContainer.height();
+        var desde = parseInt(scrollTop, 10);
+        var contenedor = this.menuContainer;
+        var alto = contenedor.length ? contenedor.height() : NaN;
+        var posItem = (elem && elem.length) ? elem.offset() : null;
+        var posContenedor = contenedor.length ? contenedor.offset() : null;
+        if (isNaN(desde) || isNaN(alto) || !esPosicionValida(posItem) || !esPosicionValida(posContenedor)) {
+            return false;
+        }
 
-        var elemTop = elem.position().top;
-        var elemBottom = elemTop + elem.height();
+        var elemTop = posItem.top - posContenedor.top + contenedor.scrollTop();
+        var elemBottom = elemTop + elem.outerHeight();
+        var viewBottom = desde + alto;
 
-        return ((elemBottom <= viewBottom) && (elemTop >= scrollTop));
+        return ((elemBottom <= viewBottom) && (elemTop >= desde));
+
+        function esPosicionValida(posicion) {
+            return !!posicion && typeof posicion.top === 'number' && !isNaN(posicion.top);
+        }
     },
 
     isMobile: function( ){

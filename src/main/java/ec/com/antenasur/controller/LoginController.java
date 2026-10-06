@@ -15,6 +15,8 @@ import jakarta.servlet.http.HttpSession;
 import org.primefaces.model.menu.DefaultMenuItem;
 import org.primefaces.model.menu.DefaultMenuModel;
 import org.primefaces.model.menu.DefaultSubMenu;
+import org.primefaces.model.menu.MenuElement;
+import org.primefaces.model.menu.MenuGroup;
 import org.primefaces.model.menu.MenuModel;
 
 import ec.com.antenasur.bean.LoginBean;
@@ -354,14 +356,14 @@ public class LoginController implements Serializable {
             if (menu.getIdMenuParent() != null && menu.getIdMenuParent().equals(parentMenu.getId())) {
                 if (!menu.getEndNode()) {
                     DefaultSubMenu subMenu = new DefaultSubMenu();
-                    subMenu.setId(menu.getComponenteId());
+                    subMenu.setId(idEstable(menu));
                     subMenu.setLabel(menu.getLabelMenu());
                     subMenu.setIcon(menu.getIcon());
                     fillItems(menu, menus, subMenu, null);
                     menuModel.getElements().add(subMenu);
                 } else {
                     DefaultMenuItem menuItem_ = new DefaultMenuItem();
-                    menuItem_.setId(menu.getComponenteId());
+                    menuItem_.setId(idEstable(menu));
                     menuItem_.setValue(menu.getLabelMenu());
                     menuItem_.setIcon(menu.getIcon());
                     menuItem_.setOutcome(menu.getActionMenu());
@@ -372,7 +374,48 @@ public class LoginController implements Serializable {
                 }
             }
         }
+        completarIdsEstables(menuModel.getElements(), null);
         loginBean.inicializarMenuAutorizado(menuModel);
+    }
+
+    /** Prefijo de los ids de menú derivados del id de la opción en BD. */
+    private static final String PREFIJO_ID_MENU = "tec";
+
+    /**
+     * Id de la opción de menú: el componente configurado en BD o, si no tiene, uno
+     * derivado del id de la opción. Sin id, PrimeFaces genera uno con un UUID aleatorio
+     * cada vez que se arma el menú (en cada inicio de sesión); el menú lateral guarda en
+     * cookie los ids de los ítems abiertos y, tras otro login, apuntaba a ítems que ya no
+     * existían ("elem.position() is undefined" en layout.js).
+     */
+    private static String idEstable(MenuVO menu) {
+        String componente = menu.getComponenteId();
+        if (componente != null && !componente.isBlank()) {
+            return componente;
+        }
+        return menu.getIdMenu() != null ? PREFIJO_ID_MENU + menu.getIdMenu() : null;
+    }
+
+    /**
+     * Completa los ids derivados con las coordenadas del elemento, en el mismo formato
+     * que BaseMenuModel.generateUniqueIds de PrimeFaces ("[_]id|coordenadas"; el "_"
+     * solo en el primer nivel): PrimeFaces localiza el ítem por la parte anterior a "|"
+     * o por sus coordenadas, así que se comporta igual que con sus ids, pero el valor no
+     * cambia entre sesiones. Los ids configurados en BD (componente) se conservan tal cual
+     * y los elementos sin id los sigue generando PrimeFaces.
+     */
+    private static void completarIdsEstables(List<MenuElement> elementos, String coordenadasPadre) {
+        for (int i = 0; i < elementos.size(); i++) {
+            MenuElement elemento = elementos.get(i);
+            String coordenadas = coordenadasPadre == null ? String.valueOf(i) : coordenadasPadre + "_" + i;
+            String id = elemento.getId();
+            if (id != null && id.startsWith(PREFIJO_ID_MENU) && !id.contains("|")) {
+                elemento.setId((coordenadasPadre == null ? "_" : "") + id + "|" + coordenadas);
+            }
+            if (elemento instanceof MenuGroup grupo) {
+                completarIdsEstables(grupo.getElements(), coordenadas);
+            }
+        }
     }
 
     private void cargarPaginasCambioClave() {
@@ -387,6 +430,7 @@ public class LoginController implements Serializable {
             if (menu_.getIdMenu().equals(menu.getIdMenuParent())) {
                 if (menu.getEndNode()) {
                     DefaultMenuItem menuItem_ = new DefaultMenuItem();
+                    menuItem_.setId(idEstable(menu));
                     menuItem_.setValue(menu.getLabelMenu());
                     menuItem_.setUrl(("S/N").equals(menu.getUrlMenu()) ? null : menu.getUrlMenu());
                     menuItem_.setCommand(menu.getActionMenu() == null || menu.getActionMenu().isEmpty() ? null
@@ -404,6 +448,7 @@ public class LoginController implements Serializable {
     private void addChildElement(DefaultSubMenu menuParent, MenuVO menu_, List<MenuVO> menus,
             DefaultMenuItem menuItem) {
         DefaultSubMenu submenuChild = new DefaultSubMenu();
+        submenuChild.setId(idEstable(menu_));
         submenuChild.setLabel(menu_.getLabelMenu());
         menuParent.getElements().add(submenuChild);
         submenuChild.setIcon(menu_.getIcon());
