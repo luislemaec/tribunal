@@ -13,16 +13,13 @@ import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.tec.CandidatoFacade;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
-import ec.com.antenasur.facade.tec.DocumentoFacade;
 import ec.com.antenasur.facade.tec.ListaFacade;
 import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
-import ec.com.antenasur.facade.tec.TipoDocumentoFacade;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.tec.Candidato;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.model.tec.Lista;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
-import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.service.AbstractService;
 import ec.com.antenasur.util.Constantes;
 
@@ -46,11 +43,6 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
     @Inject
     private IglesiaPersonaFacade iglesiaPersonaFacade;
 
-    @Inject
-    private DocumentoFacade documentoFacade;
-
-    @Inject
-    private TipoDocumentoFacade tipoDocumentoFacade;
 
     @Override
     protected CandidatoFacade getFacade() {
@@ -198,7 +190,7 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
 
         validarAsignacion(lista, proceso, cargo, iglesiaPersona);
         // Defensa en servidor: los datos pudieron cambiar entre la búsqueda y el guardado.
-        validarElegibilidad(iglesiaPersona, proceso.getId());
+        validarElegibilidad(iglesiaPersona);
         if (candidatoFacade.existePersonaActivaEnListaProceso(
                 lista.getId(), proceso.getId(), iglesiaPersona.getId(), dto.getId())) {
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.duplicate.person"));
@@ -268,16 +260,15 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.noExiste", cedula.trim()));
         }
         IglesiaPersona ip = relaciones.get(0);
-        Integer procesoId = candidatoDto.getProcesoId() != null ? candidatoDto.getProcesoId() : candidatoDto.getPeriodoId();
-        validarElegibilidad(ip, relaciones, procesoId);
+        validarElegibilidad(ip, relaciones);
         candidatoDto.setIglesiaPersona(ec.com.antenasur.dto.IglesiaPersonaDTO.fromEntity(ip));
         return candidatoDto;
     }
 
     /** Versión para el guardado: vuelve a consultar las relaciones activas de la persona. */
-    private void validarElegibilidad(IglesiaPersona ip, Integer procesoId) {
+    private void validarElegibilidad(IglesiaPersona ip) {
         String documento = ip.getPersona() != null ? ip.getPersona().getDocumento() : null;
-        validarElegibilidad(ip, iglesiaPersonaFacade.listarActivasPorDocumento(documento), procesoId);
+        validarElegibilidad(ip, iglesiaPersonaFacade.listarActivasPorDocumento(documento));
     }
 
     /**
@@ -287,13 +278,12 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
      * <li>no tiene relación activa en más de una iglesia (inconsistencia que regulariza
      * Administración o el Tribunal);</li>
      * <li>su iglesia está activa;</li>
-     * <li>su iglesia generó el acta de actualización de miembros del proceso;</li>
      * <li>fue revisado en Personas (misma regla que la etiqueta «Revisado»);</li>
      * <li>está habilitado para sufragar ({@code habilitadoPadron = TRUE}, regla del padrón).</li>
      * </ol>
      * Cada caso lanza NegocioException con un mensaje específico.
      */
-    private void validarElegibilidad(IglesiaPersona ip, List<IglesiaPersona> relacionesActivas, Integer procesoId) {
+    private void validarElegibilidad(IglesiaPersona ip, List<IglesiaPersona> relacionesActivas) {
         String documento = ip != null && ip.getPersona() != null ? ip.getPersona().getDocumento() : "";
         boolean relacionVigente = ip != null && ip.getPersona() != null && ip.getIglesia() != null
                 && Boolean.TRUE.equals(ip.getEstado()) && Boolean.TRUE.equals(ip.getPersona().getEstado())
@@ -310,21 +300,12 @@ public class CandidatoService extends AbstractService<Candidato, Integer, Candid
         if (!Boolean.TRUE.equals(ip.getIglesia().getEstado())) {
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.iglesia.inactiva", iglesia));
         }
-        if (!tieneActaActualizacion(ip.getIglesia().getId(), procesoId)) {
-            throw new NegocioException(Constantes.getMensaje("form.candidatos.error.iglesia.sinActa", iglesia));
-        }
         if (!Boolean.TRUE.equals(ec.com.antenasur.dto.IglesiaPersonaDTO.fromEntity(ip).getActualizada())) {
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.pendiente", nombre));
         }
         if (!Boolean.TRUE.equals(ip.getHabilitadoPadron())) {
             throw new NegocioException(Constantes.getMensaje("form.candidatos.error.miembro.noHabilitado", nombre));
         }
-    }
-
-    /** La iglesia generó el acta de actualización de miembros en el proceso del candidato. */
-    private boolean tieneActaActualizacion(Integer iglesiaId, Integer procesoId) {
-        TipoDocumento tipo = tipoDocumentoFacade.buscarActivoPorNombre(Constantes.TIPO_ACTA_ACTUALIZACION_MIEMBROS);
-        return tipo != null && documentoFacade.existeActivoPorEntidadTipoYProceso(iglesiaId, tipo.getId(), procesoId);
     }
 
     private List<CandidatoDTO> mapearLista(List<Candidato> candidatos) {
