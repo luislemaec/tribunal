@@ -32,9 +32,12 @@ public final class ActaInscripcionPdf {
             List<CandidatoDTO> candidatos, List<TribunalDTO> autoridades,
             String lugar, LocalDateTime fechaGeneracion, String usuario, String codigoDocumento) {
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            // El título solo va a los metadatos del PDF: el acta ya lo lleva en el cuerpo, así que
+            // el encabezado no repite título, código ni fecha. El código del acta se imprime como
+            // Code128 sobre «DOCUMENTO OFICIAL» y en el pie, igual que el Acta de Actualización.
             String tituloDocumento = "Acta de Inscripcion - " + texto(lista.getNombre());
-            PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4(
-                    salida, codigoDocumento, tituloDocumento, fechaGeneracion);
+            PdfInstitucional.Contexto contexto = PdfInstitucional.crearA4ConCodigoBarrasYCodigoEnPie(
+                    salida, tituloDocumento, fechaGeneracion, codigoDocumento);
             Document documento = contexto.documento();
 
             Font titulo = TipografiaPdf.Estilo.TITULO_DOCUMENTO.fuente(15);

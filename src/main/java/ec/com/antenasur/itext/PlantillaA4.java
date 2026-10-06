@@ -343,6 +343,11 @@ public final class PlantillaA4 {
         private final LocalDateTime fechaGeneracion;
         /** Código de barras opcional, impreso sobre el bloque «DOCUMENTO OFICIAL». */
         private final String codigoBarras;
+        /**
+         * Imprime la línea técnica «título | Código | fecha» bajo el encabezado. Las actas que
+         * llevan título y datos en el cuerpo la omiten y conservan el código en el pie.
+         */
+        private final boolean lineaDatos;
         /** Plantilla compuesta una vez y reutilizada en todas las páginas del documento. */
         private PdfTemplate fondo;
         private Image barras;
@@ -354,11 +359,17 @@ public final class PlantillaA4 {
 
         public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
                 LocalDateTime fechaGeneracion, String codigoBarras) {
+            this(codigoDocumento, tituloDocumento, subtitulo, fechaGeneracion, codigoBarras, true);
+        }
+
+        public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
+                LocalDateTime fechaGeneracion, String codigoBarras, boolean lineaDatos) {
             this.codigoDocumento = codigoDocumento;
             this.tituloDocumento = tituloDocumento;
             this.subtitulo = subtitulo;
             this.fechaGeneracion = fechaGeneracion;
             this.codigoBarras = codigoBarras;
+            this.lineaDatos = lineaDatos;
         }
 
         @Override
@@ -366,7 +377,9 @@ public final class PlantillaA4 {
             try {
                 dibujarFondo(writer);
                 dibujarCodigoBarras(writer);
-                dibujarDatosDocumento(writer, document);
+                if (lineaDatos) {
+                    dibujarDatosDocumento(writer, document);
+                }
                 dibujarPaginacion(writer, document);
             } catch (Exception e) {
                 // Un fallo de maquetación no debe impedir la emisión del

@@ -42,9 +42,6 @@ public class ActaActualizacionMiembrosService {
 
     private static final int CARGO_PRESIDENTE_TRIBUNAL = 3;
     private static final int CARGO_SECRETARIO_TRIBUNAL = 5;
-    /** Base 32 de Crockford: sin I, L, O ni U para evitar confusiones al leer el código. */
-    private static final String ALFABETO_CODIGO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-    private static final java.security.SecureRandom GENERADOR_CODIGO = new java.security.SecureRandom();
 
     @Inject private UsuarioService usuarioService;
     @Inject private IglesiaService iglesiaService;
@@ -95,7 +92,8 @@ public class ActaActualizacionMiembrosService {
         LocalDateTime fechaGeneracion = LocalDateTime.now();
         // Mismo identificador para el código de barras del PDF y para el registro del
         // documento, de modo que el papel impreso se puede localizar en el sistema.
-        String codigo = generarCodigoActa();
+        String codigo = ec.com.antenasur.util.CodigoDocumento.generar(
+                ec.com.antenasur.util.CodigoDocumento.PREFIJO_ACTA_ACTUALIZACION);
         byte[] contenido = ActaActualizacionMiembrosPdf.generar(
                 IglesiaDTO.fromEntity(contexto.iglesia()), contexto.proceso().getNombre(), contexto.miembros(),
                 firmantes.presidenteTribunal(), firmantes.secretarioTribunal(),
@@ -243,24 +241,6 @@ public class ActaActualizacionMiembrosService {
         } catch (IOException e) {
             throw new NegocioException(Constantes.getMensaje("actaActualizacion.error.generar"));
         }
-    }
-
-    /**
-     * Identificador único y opaco del acta para el código de barras: prefijo «AM» (acta
-     * de miembros) más 10 caracteres aleatorios de un generador criptográfico, en base
-     * 32 de Crockford —sin I, L, O ni U, que se confunden al leerlos—. Son 50 bits de
-     * entropía: la colisión es despreciable para el volumen de actas, y el código no
-     * se puede adivinar ni revela iglesia, proceso, fecha o personas.
-     *
-     * <p>Doce caracteres es también el límite para que el Code 128 quepa en el ancho
-     * reservado en la cabecera sin reducirse, lo que conserva la legibilidad.</p>
-     */
-    private String generarCodigoActa() {
-        StringBuilder codigo = new StringBuilder("AM");
-        for (int i = 0; i < 10; i++) {
-            codigo.append(ALFABETO_CODIGO.charAt(GENERADOR_CODIGO.nextInt(ALFABETO_CODIGO.length())));
-        }
-        return codigo.toString();
     }
 
     private Path escribirArchivo(byte[] contenido, String nombreArchivo) {

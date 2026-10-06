@@ -33,6 +33,7 @@ import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Lista;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.tec.TipoDocumento;
+import ec.com.antenasur.util.CodigoDocumento;
 import ec.com.antenasur.util.Constantes;
 import ec.com.antenasur.util.RepositorioDocumentos;
 
@@ -110,7 +111,9 @@ public class ActaInscripcionService {
 
         LocalDateTime ahora = LocalDateTime.now();
         String usuario = usuarioActual();
-        String codigoDocumento = UUID.randomUUID().toString();
+        // Mismo formato que el Acta de Actualización de Miembros: código corto que cabe legible
+        // en el Code128 del encabezado y se guarda como código del documento.
+        String codigoDocumento = CodigoDocumento.generar(CodigoDocumento.PREFIJO_ACTA_INSCRIPCION);
         byte[] contenido = ActaInscripcionPdf.generar(
                 ListaDTO.fromEntity(contexto.lista()), contexto.proceso().getNombre(),
                 contexto.candidatos(), contexto.autoridades(), Constantes.getLugarActaInscripcion(), ahora,

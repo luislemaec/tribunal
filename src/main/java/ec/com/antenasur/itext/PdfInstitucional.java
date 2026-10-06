@@ -88,6 +88,23 @@ public final class PdfInstitucional {
     }
 
     /**
+     * Igual que {@link #crearA4ConCodigoBarras}, pero conserva el código en el pie
+     * («Página N | Código de validación: …») para validarlo a simple vista. El código de
+     * barras codifica ese mismo código del documento.
+     */
+    public static Contexto crearA4ConCodigoBarrasYCodigoEnPie(OutputStream salida, String titulo,
+            LocalDateTime fechaGeneracion, String codigoDocumento) throws Exception {
+        LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        Document documento = new Document(PageSize.A4, MARGEN_IZQUIERDO, MARGEN_DERECHO,
+                MARGEN_SUPERIOR, MARGEN_INFERIOR);
+        PdfWriter writer = PdfWriter.getInstance(documento, salida);
+        writer.setPageEvent(new PlantillaA4.Fondo(codigoDocumento, null, null, fecha, codigoDocumento, false));
+        documento.open();
+        aplicarMetadata(documento, titulo);
+        return new Contexto(documento, writer, fecha);
+    }
+
+    /**
      * Formulario manual de acta parcial sobre la plantilla institucional. El
      * código de barras se imprime en el encabezado para no restar espacio al
      * formulario, que debe caber en una sola hoja; el proceso electoral va en el
