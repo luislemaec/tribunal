@@ -782,6 +782,28 @@ html body .ui-tag .ui-tag-icon { color:inherit; font-size:var(--tec-fs-2xs); }
 
 .tec-dialog.ui-dialog .ui-dialog-content { padding-top:.75rem; }
 
+/* Aviso de actualización de miembros (IglesiaAdmin; /WEB-INF/avisoMiembros.xhtml, Dashboard y Personas).
+   Cada indicador es un p:staticMessage con los colores de mensaje del tema: la cantidad (summary)
+   queda destacada y alineada en columna, seguida de la descripción (detail). */
+.tec-aviso-miembros__intro { margin:0 0 .75rem; color:var(--text-color); font-size:var(--tec-fs-md); }
+
+.tec-aviso-miembros__lista { display:flex; flex-direction:column; gap:.375rem; margin:0 0 .9rem; }
+
+html body .tec-aviso-miembros__lista .ui-message { display:flex; align-items:center; gap:.5rem; width:100%; margin:0; padding:.45rem .6rem; border-radius:var(--tec-radius-sm); font-size:var(--tec-fs-md); line-height:var(--tec-lh-tight); }
+
+html body .tec-aviso-miembros__lista .ui-message [class$="-summary"] { flex:0 0 auto; min-width:1.75rem; font-weight:var(--tec-fw-bold); text-align:right; font-variant-numeric:tabular-nums; }
+
+html body .tec-aviso-miembros__lista .ui-message [class$="-detail"] { margin-left:0 !important; }
+
+/* Icono de ancho fijo: cada severidad usa un glifo distinto y así las cantidades quedan alineadas. */
+html body .tec-aviso-miembros__lista .ui-message [class$="-icon"] { flex:0 0 1rem; text-align:center; }
+
+.tec-aviso-miembros__accion { padding:.6rem .75rem; border-radius:var(--tec-radius-sm); background:var(--surface-50); border:1px solid var(--surface-border); }
+
+.tec-aviso-miembros__accion p { margin:.2rem 0 0; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); line-height:var(--tec-lh-base); }
+
+.tec-aviso-miembros__subtitulo { color:var(--text-color); font-size:var(--tec-fs-md); font-weight:var(--tec-fw-medium); }
+
 /* Móvil: PrimeFaces pasa la tabla a tarjetas (reflow) por debajo de 640px.
    La celda marcada con tec-col-primary encabeza la tarjeta. */
 @media (max-width:640px) {

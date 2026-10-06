@@ -73,6 +73,19 @@ public class LoginBean implements Serializable {
     @Getter
     private MenuModel menuModel;
 
+    /**
+     * El aviso de actualización de miembros del Dashboard (IglesiaAdmin) ya se mostró en
+     * esta sesión: se muestra una sola vez por inicio de sesión.
+     */
+    @Getter
+    @Setter
+    private boolean avisoMiembrosMostrado;
+
+    /** El mismo aviso ya se mostró en Personas en esta sesión (marca propia de esa pantalla). */
+    @Getter
+    @Setter
+    private boolean avisoMiembrosPersonasMostrado;
+
     @Getter
     @Setter
     private List<String> roles;
@@ -184,6 +197,8 @@ public class LoginBean implements Serializable {
         menuModel = null;
         content = null;
         accessAuditory = null;
+        avisoMiembrosMostrado = false;
+        avisoMiembrosPersonasMostrado = false;
     }
 
     private void cerrarAutenticacion(HttpServletRequest request) {

@@ -90,6 +90,9 @@ public class DashboardController implements Serializable {
     @Inject
     private ec.com.antenasur.security.menu.AutorizacionMenuService autorizacionMenuService;
 
+    @Inject
+    private ec.com.antenasur.service.tec.CronogramaService cronogramaService;
+
     @Setter
     @Getter
     private float porcentajeMesasEscrutadas;
@@ -166,6 +169,18 @@ public class DashboardController implements Serializable {
 
     @Getter
     private int personasPendientesRevision;
+
+    /** Indicadores de miembros de la iglesia; alimentan el aviso compartido (/WEB-INF/avisoMiembros.xhtml). */
+    @Getter
+    private ResumenMiembrosIglesiaDTO resumenMiembros = new ResumenMiembrosIglesiaDTO(0, 0, 0);
+
+    /** Aviso de actualización de miembros: se muestra una vez por sesión si hay algo que atender. */
+    @Getter
+    private boolean mostrarAvisoMiembros;
+
+    /** La fase vigente del cronograma permite editar miembros (si no, el aviso es solo informativo). */
+    @Getter
+    private boolean permiteEdicionMiembros;
 
     @Getter
     private String mesasAsignadas;
@@ -466,6 +481,23 @@ public class DashboardController implements Serializable {
         personasInformacionCompleta = resumen.getPersonasInformacionCompleta();
         personasPendientesRevision = resumen.getPersonasPendientesRevision();
         personasInformacionIncompleta = Math.max(0, totalPersonasIglesia - personasInformacionCompleta);
+        resumenMiembros = resumen;
+        prepararAvisoMiembros();
+    }
+
+    /**
+     * El aviso aparece una sola vez por inicio de sesión en el Dashboard (la marca vive en
+     * LoginBean, de sesión; Personas tiene la suya) y solo si hay miembros pendientes de
+     * revisión o no habilitados. Se marca como mostrado al presentarlo: «Entendido» solo lo
+     * cierra y recargar el Dashboard no lo repite.
+     */
+    private void prepararAvisoMiembros() {
+        mostrarAvisoMiembros = resumenMiembros.isRequiereAtencion() && loginBean != null
+                && !loginBean.isAvisoMiembrosMostrado();
+        if (mostrarAvisoMiembros) {
+            permiteEdicionMiembros = cronogramaService.permiteEdicionPadron();
+            loginBean.setAvisoMiembrosMostrado(true);
+        }
     }
 
     private void cargarAsignacionElectoral(Integer iglesiaId) {

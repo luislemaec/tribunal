@@ -20,4 +20,18 @@ public class ResumenMiembrosIglesiaDTO implements Serializable {
     private final int totalPersonas;
     private final int personasInformacionCompleta;
     private final int personasPendientesRevision;
+    /** Miembros cuyo vínculo no está habilitado para el padrón (habilitadoPadron distinto de TRUE). */
+    private final int personasNoHabilitadas;
+    /** Miembros con relación activa también en otra iglesia: solo Administrador o Tribunal los regularizan. */
+    private final int personasEnOtraIglesia;
+
+    public ResumenMiembrosIglesiaDTO(int totalPersonas, int personasInformacionCompleta,
+            int personasPendientesRevision) {
+        this(totalPersonas, personasInformacionCompleta, personasPendientesRevision, 0, 0);
+    }
+
+    /** Hay miembros pendientes de revisión o no habilitados: corresponde el aviso de actualización. */
+    public boolean isRequiereAtencion() {
+        return personasPendientesRevision > 0 || personasNoHabilitadas > 0;
+    }
 }

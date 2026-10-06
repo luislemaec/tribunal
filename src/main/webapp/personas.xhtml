@@ -1171,5 +1171,14 @@
             </p:dialog>
         </h:form>
 
+        <!-- Aviso de actualización de miembros (IglesiaAdmin): el mismo del Dashboard, una vez por
+             sesión en esta pantalla. Sin «Revisar miembros»: el usuario ya está en Personas. -->
+        <ui:include src="/WEB-INF/avisoMiembros.xhtml">
+            <ui:param name="mostrar" value="#{personaController.mostrarAvisoMiembros}"/>
+            <ui:param name="resumen" value="#{personaController.resumenAvisoMiembros}"/>
+            <ui:param name="permiteEdicion" value="#{personaController.puedeEditarPadron}"/>
+            <ui:param name="mostrarRevisar" value="#{false}"/>
+        </ui:include>
+
     </ui:define>
 </ui:composition>

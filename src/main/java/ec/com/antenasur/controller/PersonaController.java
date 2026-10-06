@@ -44,6 +44,7 @@ import ec.com.antenasur.dto.GeograpDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
+import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
 import ec.com.antenasur.dto.PersonaEliminadaDTO;
 import ec.com.antenasur.dto.PersonaHistorialDTO;
 import ec.com.antenasur.exception.NegocioException;
@@ -176,6 +177,13 @@ public class PersonaController implements Serializable {
      */
     @Getter
     private final MiembrosLazy modeloMiembros = new MiembrosLazy();
+
+    /** Aviso de actualización de miembros (IglesiaAdmin), una vez por sesión en esta pantalla. */
+    @Getter
+    private boolean mostrarAvisoMiembros;
+
+    @Getter
+    private ResumenMiembrosIglesiaDTO resumenAvisoMiembros = new ResumenMiembrosIglesiaDTO(0, 0, 0);
 
     @Getter
     private List<IglesiaPersonaDTO> iglesiasActivasPersona = new ArrayList<>();
@@ -312,6 +320,7 @@ public class PersonaController implements Serializable {
                 listaIglesias.add(iglesiaSeleccionado);
                 progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
                 actualizarEstadoActaActualizacion();
+                prepararAvisoMiembros(iglesiaId);
                 return;
             }
 
@@ -326,6 +335,23 @@ public class PersonaController implements Serializable {
             recargarIglesiasYListado();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
+        }
+    }
+
+    /**
+     * Mismo aviso de actualización de miembros que el Dashboard (/WEB-INF/avisoMiembros.xhtml),
+     * con marca propia de sesión: aparece la primera vez que el IglesiaAdmin entra a Personas
+     * en la sesión, aunque ya lo haya visto en el Dashboard. Solo consulta los indicadores
+     * (una consulta agregada) cuando todavía no se mostró.
+     */
+    private void prepararAvisoMiembros(Integer iglesiaId) {
+        if (loginBean == null || loginBean.isAvisoMiembrosPersonasMostrado()) {
+            return;
+        }
+        resumenAvisoMiembros = iglesiaPersonaService.obtenerResumenMiembrosActivosPorIglesia(iglesiaId);
+        mostrarAvisoMiembros = resumenAvisoMiembros != null && resumenAvisoMiembros.isRequiereAtencion();
+        if (mostrarAvisoMiembros) {
+            loginBean.setAvisoMiembrosPersonasMostrado(true);
         }
     }
 

@@ -1,0 +1,55 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+    <!--
+        Aviso de actualización de miembros (IglesiaAdmin), compartido por dashboard.xhtml y personas.xhtml.
+        Parámetros (ui:param):
+          mostrar        boolean: se renderiza y abre al cargar la página (cada pantalla lo controla una vez por sesión).
+          resumen        ResumenMiembrosIglesiaDTO de la iglesia del usuario (una sola consulta agregada).
+          permiteEdicion boolean: la fase vigente del cronograma permite editar miembros; si no, es solo informativo.
+          mostrarRevisar boolean: muestra el botón «Revisar miembros» (no tiene sentido dentro de Personas).
+        Cada indicador es un p:staticMessage y aparece solo si su cantidad es mayor que cero.
+    -->
+    <p:dialog widgetVar="dlgAvisoMiembros" header="#{msg['dashboard.aviso.titulo']}"
+              rendered="#{mostrar}" visible="true"
+              modal="true" responsive="true" fitViewport="true" closeOnEscape="true"
+              draggable="false" resizable="false"
+              styleClass="tec-dialog tec-aviso-miembros">
+        <p class="tec-aviso-miembros__intro">#{msg['dashboard.aviso.intro']}</p>
+
+        <div class="tec-aviso-miembros__lista">
+            <p:staticMessage severity="warn" display="both"
+                             rendered="#{resumen.personasPendientesRevision gt 0}"
+                             summary="#{resumen.personasPendientesRevision}"
+                             detail="#{resumen.personasPendientesRevision eq 1
+                                       ? msg['dashboard.aviso.pendientes.uno'] : msg['dashboard.aviso.pendientes']}"/>
+            <p:staticMessage severity="info" display="both"
+                             rendered="#{resumen.personasNoHabilitadas gt 0}"
+                             summary="#{resumen.personasNoHabilitadas}"
+                             detail="#{resumen.personasNoHabilitadas eq 1
+                                       ? msg['dashboard.aviso.noHabilitados.uno'] : msg['dashboard.aviso.noHabilitados']}"/>
+            <p:staticMessage severity="error" display="both"
+                             rendered="#{resumen.personasEnOtraIglesia gt 0}"
+                             summary="#{resumen.personasEnOtraIglesia}"
+                             detail="#{resumen.personasEnOtraIglesia eq 1
+                                       ? msg['dashboard.aviso.otraIglesia.uno'] : msg['dashboard.aviso.otraIglesia']}"/>
+        </div>
+
+        <div class="tec-aviso-miembros__accion">
+            <span class="tec-aviso-miembros__subtitulo">#{msg['dashboard.aviso.queHacer']}</span>
+            <p>#{permiteEdicion ? msg['dashboard.aviso.accion'] : msg['dashboard.aviso.faseCerrada']}</p>
+        </div>
+
+        <f:facet name="footer">
+            <div class="tec-filter-actions">
+                <p:button value="#{msg['dashboard.aviso.entendido']}" icon="pi pi-check"
+                          styleClass="tec-btn #{mostrarRevisar and permiteEdicion ? 'ui-button-outlined ui-button-secondary' : ''}"
+                          onclick="PF('dlgAvisoMiembros').hide(); return false;"/>
+                <p:linkButton outcome="/personas" value="#{msg['dashboard.aviso.revisar']}" icon="pi pi-users"
+                              styleClass="tec-btn" rendered="#{mostrarRevisar and permiteEdicion}"/>
+            </div>
+        </f:facet>
+    </p:dialog>
+</ui:composition>

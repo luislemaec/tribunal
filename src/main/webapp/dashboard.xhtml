@@ -499,6 +499,14 @@
                 </ui:fragment>
             </ui:fragment>
 
+            <!-- Aviso de actualización de miembros (IglesiaAdmin): componente compartido con Personas. -->
+            <ui:include src="/WEB-INF/avisoMiembros.xhtml">
+                <ui:param name="mostrar" value="#{dashboardController.mostrarAvisoMiembros}"/>
+                <ui:param name="resumen" value="#{dashboardController.resumenMiembros}"/>
+                <ui:param name="permiteEdicion" value="#{dashboardController.permiteEdicionMiembros}"/>
+                <ui:param name="mostrarRevisar" value="#{dashboardController.permite('personas')}"/>
+            </ui:include>
+
         </div>
     </ui:define>
 

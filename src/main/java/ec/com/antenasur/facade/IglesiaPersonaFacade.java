@@ -116,16 +116,26 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 				+ " AND NULLIF(BTRIM(p.pers_sexo), '') IS NOT NULL";
 		String revisionPendiente = "ip.f_actualiza IS NULL"
 				+ " OR (ip.f_crea IS NOT NULL AND ip.f_actualiza < ip.f_crea)";
+		// Misma regla que el padrón: solo TRUE habilita; FALSE y NULL son «No habilitado».
+		String noHabilitado = "ip.igpe_habilitado_padron IS NOT TRUE";
+		// Cédulas con relaciones activas en más de una iglesia (misma regla que la columna
+		// Inconsistencia de Personas). Subconsulta independiente: se resuelve una sola vez.
+		String enOtraIglesia = "BTRIM(p.pers_documento) IN (SELECT BTRIM(p2.pers_documento)"
+				+ " FROM public.tb_iglesia_persona ip2 JOIN public.tb_persona p2 ON p2.pers_id = ip2.pers_id"
+				+ " WHERE ip2.estado = TRUE AND p2.estado = TRUE AND NULLIF(BTRIM(p2.pers_documento), '') IS NOT NULL"
+				+ " GROUP BY BTRIM(p2.pers_documento) HAVING COUNT(DISTINCT ip2.igl_id) > 1)";
 		String sql = "SELECT COUNT(DISTINCT " + identidad + "), " + "COUNT(DISTINCT CASE WHEN " + informacionCompleta
 				+ " THEN " + identidad + " END), " + "COUNT(DISTINCT CASE WHEN " + revisionPendiente + " THEN "
-				+ identidad + " END) " + "FROM public.tb_iglesia_persona ip "
+				+ identidad + " END), " + "COUNT(DISTINCT CASE WHEN " + noHabilitado + " THEN " + identidad + " END), "
+				+ "COUNT(DISTINCT CASE WHEN " + enOtraIglesia + " THEN " + identidad + " END) "
+				+ "FROM public.tb_iglesia_persona ip "
 				+ "JOIN public.tb_persona p ON p.pers_id = ip.pers_id " + "WHERE ip.igl_id = :iglesiaId "
 				+ "AND ip.estado = TRUE " + "AND p.estado = TRUE";
 
 		Object[] fila = (Object[]) getEntityManager().createNativeQuery(sql).setParameter("iglesiaId", iglesiaId)
 				.getSingleResult();
 		return new ResumenMiembrosIglesiaDTO(numeroComoEntero(fila[0]), numeroComoEntero(fila[1]),
-				numeroComoEntero(fila[2]));
+				numeroComoEntero(fila[2]), numeroComoEntero(fila[3]), numeroComoEntero(fila[4]));
 	}
 
 	private int numeroComoEntero(Object valor) {
