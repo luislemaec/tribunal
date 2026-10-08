@@ -59,10 +59,9 @@
         <param-name>com.sun.faces.defaultResourceMaxAge</param-name>
         <param-value>604800000</param-value>
     </context-param>
-    <context-param>
-        <param-name>resteasy.servlet.mapping.prefix</param-name>
-        <param-value>/RestServices</param-value>
-    </context-param>
+    <!-- La API REST (App móvil) se publica en /api/v1 mediante @ApplicationPath (ApiMovilAplicacion).
+         Se retiró el prefijo heredado resteasy.servlet.mapping.prefix=/RestServices: no había servicios
+         REST y ese prefijo haría que RESTEasy no encontrara las rutas de /api/v1. -->
 
     <!--INICIO Filtro de inicio de sesion-->
     <filter>

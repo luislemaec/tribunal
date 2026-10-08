@@ -16,6 +16,8 @@ public final class LoginFilterExcluder {
         if (ruta == null) return false;
         return ruta.startsWith("/resources/") || ruta.startsWith("/jakarta.faces.resource/")
                 || ruta.startsWith("/public/") || ruta.startsWith("/errors/")
+                // API móvil: sin sesión web; la protege FiltroApiMovil (token Bearer + identidad Elytron).
+                || ruta.startsWith("/api/")
                 || "/index.html".equals(ruta) || PAGINAS.contains(paginaFaces(ruta));
     }
 

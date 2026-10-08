@@ -27,6 +27,7 @@ import ec.com.antenasur.facade.PersonaFacade;
 import ec.com.antenasur.facade.RolUsuarioFacade;
 import ec.com.antenasur.facade.RolFacade;
 import ec.com.antenasur.facade.UsuarioFacade;
+import ec.com.antenasur.facade.tec.SesionMovilFacade;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Persona;
@@ -35,6 +36,7 @@ import ec.com.antenasur.model.RolUsuario;
 import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.security.qr.ConfiguracionQr;
+import ec.com.antenasur.service.tec.SesionMovilService;
 import ec.com.antenasur.util.Constantes;
 
 @Stateless
@@ -129,6 +131,9 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 
 	@Inject
 	private PasswordService passwordService;
+
+	@Inject
+	private SesionMovilFacade sesionMovilFacade;
 
 	@Resource
 	private SessionContext sessionContext;
@@ -1016,8 +1021,11 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		// clave que ya esta vigente.
 		if (passwordService.verifyBcrypt(claveNueva, usuario.getContrasenia()))
 			throw new NegocioException(Constantes.getMensaje("form.cambioClave.msg.reutilizada"));
-		return usuarioFacade.consumirTokenRecuperacion(usuario.getId(), hashTokenRecuperacion(token),
+		boolean restablecida = usuarioFacade.consumirTokenRecuperacion(usuario.getId(), hashTokenRecuperacion(token),
 				passwordService.hashBcrypt(claveNueva));
+		if (restablecida)
+			revocarSesionesMoviles(usuario.getId());
+		return restablecida;
 	}
 
 	/**
@@ -1045,7 +1053,17 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		usuario.setContrasenia(passwordService.hashBcrypt(claveNueva));
 		usuario.setContraseniaTemp(null);
 		usuario.setPermanente(true);
-		return UsuarioDTO.fromEntity(usuarioFacade.edit(usuario));
+		UsuarioDTO actualizado = UsuarioDTO.fromEntity(usuarioFacade.edit(usuario));
+		revocarSesionesMoviles(usuario.getId());
+		return actualizado;
+	}
+
+	/**
+	 * Una clave nueva invalida las sesiones de la App móvil abiertas con la anterior
+	 * (docs/api-movil.md). El endpoint de la App entrega luego su propia sesión nueva.
+	 */
+	private void revocarSesionesMoviles(Integer usuarioId) {
+		sesionMovilFacade.revocarPorUsuario(usuarioId, Instant.now(), SesionMovilService.MOTIVO_CAMBIO_CLAVE);
 	}
 
 	private String generarTokenRecuperacion() {

@@ -81,6 +81,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Elytron (API programática de SecurityDomain para la API móvil, security/api).
+             WildFly agrega el módulo org.wildfly.security.elytron a todo despliegue. -->
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Hibernate Envers (auditoría) -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
