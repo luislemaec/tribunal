@@ -192,7 +192,7 @@ public class ConsultaMovilService {
                 iglesia.getCantonNombre(), iglesia.getProvinciaNombre(), total,
                 Math.max(0, total - resumen.getPersonasNoHabilitadas()), resumen.getPersonasNoHabilitadas(),
                 resumen.getPersonasInformacionCompleta(), resumen.getPersonasPendientesRevision(),
-                resumen.getPersonasEnOtraIglesia());
+                resumen.getPersonasEnOtraIglesia(), cronogramaService.permiteEdicionPadron());
     }
 
     /**
@@ -214,7 +214,7 @@ public class ConsultaMovilService {
         List<Miembro> elementos = new ArrayList<>();
         for (IglesiaPersonaDTO miembro : iglesiaPersonaService.listarMiembros(filtro, pag * tam, tam,
                 "persona.nombres", false)) {
-            elementos.add(new Miembro(nombre(miembro.getPersona()), Boolean.TRUE.equals(miembro.getHabilitadoPadron()),
+            elementos.add(new Miembro(miembro.getId(), nombre(miembro.getPersona()), Boolean.TRUE.equals(miembro.getHabilitadoPadron()),
                     Boolean.TRUE.equals(miembro.getActualizada())));
         }
         return new Pagina<>(total, pag, tam, elementos);

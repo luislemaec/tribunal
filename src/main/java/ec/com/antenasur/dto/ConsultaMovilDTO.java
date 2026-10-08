@@ -105,11 +105,15 @@ public final class ConsultaMovilDTO {
         int informacionCompleta;
         int pendientesRevision;
         int enOtraIglesia;
+        /** El cronograma vigente permite cambiar la habilitación de los miembros. */
+        boolean permiteEdicion;
     }
 
     @Value
     public static class Miembro implements Serializable {
         private static final long serialVersionUID = 1L;
+        /** Id del vínculo iglesia-persona; TEC vuelve a validar el alcance al usarlo. */
+        Integer id;
         String nombre;
         boolean habilitado;
         boolean revisado;

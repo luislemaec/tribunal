@@ -320,6 +320,8 @@
                             <skip>false</skip>
                             <includes>
                                 <include>**/security/qr/*Test.java</include>
+                                <!-- API móvil: sesiones, filtro, límite de intentos y roles/alcance -->
+                                <include>**/security/api/*Test.java</include>
                             </includes>
                         </configuration>
                     </plugin>

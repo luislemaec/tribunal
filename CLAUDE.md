@@ -22,7 +22,7 @@ mvn wildfly:undeploy
 Tests are **not** run by default — Surefire is configured with `<skip>true</skip>` in `pom.xml`. Test sources exist under `src/test/java/ec/com/antenasur/` (service/`tec` and `security/qr` packages) but only run via the dedicated profile:
 
 ```bash
-mvn -Pqr-tests test          # runs **/security/qr/*Test.java only
+mvn -Pqr-tests test          # runs **/security/qr/*Test.java and **/security/api/*Test.java
 ```
 
 Arquillian profiles exist for container-based tests but need a WildFly instance:

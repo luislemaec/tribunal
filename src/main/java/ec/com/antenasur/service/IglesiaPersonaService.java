@@ -203,6 +203,26 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 	}
 
 	/**
+	 * Cambia solo la habilitación del miembro para participar en las elecciones (App
+	 * móvil). Aplica las mismas reglas que {@link #guardarDesdeDTO}: el cronograma debe
+	 * permitir la edición del padrón, un IglesiaAdmin solo actúa sobre su iglesia y el
+	 * cambio marca al miembro como revisado. No modifica los datos de la persona.
+	 */
+	public IglesiaPersonaDTO cambiarHabilitacion(Integer iglesiaPersonaId, boolean habilitado) {
+		if (!cronogramaService.permiteEdicionPadron()) {
+			throw new IglesiaPersonaException("form.personas.error.cronograma");
+		}
+		IglesiaPersona ip = iglesiaPersonaId != null ? iglesiaPersonaFacade.find(iglesiaPersonaId) : null;
+		if (ip == null || !Boolean.TRUE.equals(ip.getEstado())) {
+			throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
+		}
+		validarAlcanceIglesiaAdmin(ip.getIglesia(), ip);
+		ip.setHabilitadoPadron(habilitado);
+		ip.setFechaActualiza(new Date());
+		return IglesiaPersonaDTO.fromEntity(iglesiaPersonaFacade.edit(ip));
+	}
+
+	/**
 	 * Resumen eficiente para el dashboard de la iglesia. Mantiene el acceso a datos
 	 * en el facade y evita cargar entidades solo para contar indicadores.
 	 */

@@ -82,7 +82,7 @@ Revoca todas las sesiones móviles anteriores del usuario.
 
 204. Revoca la sesión del token presentado.
 
-## Módulo Tribunal (solo lectura, Bearer)
+## Módulo Tribunal (Bearer)
 
 `ConsultaMovilService` autoriza cada método con `@RolesAllowed` y toma el alcance del
 principal Elytron, nunca de la App: la mesa del Presidente sale de su designación JRV como
@@ -94,13 +94,30 @@ Los roles sin funciones en la V1 (Tecnico, Gerencial, Supervisor, Superadministr
 |---|---|---|
 | `GET /tribunal/presidente/mesa` | Presidente-mesa | Proceso, ubicación, estado del escrutinio, electores, junta; `resultados` solo con la mesa `CERRADO`. 404 `SIN_MESA_ASIGNADA` |
 | `GET /tribunal/presidente/padron` | Presidente-mesa | `[{nombre, iglesia, sufrago}]` de su mesa. 404 `SIN_MESA_ASIGNADA` |
-| `GET /tribunal/iglesia` | IglesiaAdmin | Datos de su iglesia y resumen de miembros. 404 `SIN_IGLESIA_ASIGNADA` |
-| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&pagina=0&tamano=30` | IglesiaAdmin | `{total, pagina, tamano, elementos:[{nombre, habilitado, revisado}]}` (máx. 100 por página) |
+| `GET /tribunal/iglesia` | IglesiaAdmin | Datos de su iglesia, resumen de miembros y `permiteEdicion` (el cronograma permite cambiar la habilitación). 404 `SIN_IGLESIA_ASIGNADA` |
+| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&pagina=0&tamano=30` | IglesiaAdmin | `{total, pagina, tamano, elementos:[{id, nombre, habilitado, revisado}]}` (máx. 100 por página) |
+| `PUT /tribunal/iglesia/miembros/{id}/habilitacion` | IglesiaAdmin | Cuerpo `{habilitado: true\|false}` → 200 con el miembro. Ver abajo |
 | `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
 | `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada}]` |
 | `GET /tribunal/proceso/resultados` | Administrador, Tribunal | Consolidado de mesas cerradas (misma caché que la página de resultados) |
 
 Las respuestas no incluyen cédulas, correos ni datos de contacto.
+
+### Habilitación de miembros (escritura)
+
+`GestionMovilService.cambiarHabilitacionMiembro` (solo `SITEC-IglesiaAdmin`) delega en
+`IglesiaPersonaService.cambiarHabilitacion`, con las mismas reglas que la edición web
+(`guardarDesdeDTO`): el cronograma debe permitir la edición del padrón, el miembro debe estar
+activo y pertenecer a la iglesia del usuario, y el cambio lo marca como **revisado**
+(`fechaActualiza`, cuenta para el avance y el acta de actualización). Envers registra el
+cambio con el usuario autenticado. No modifica los datos de la persona.
+
+| Estado | Código | Caso |
+|---|---|---|
+| 409 | `EDICION_CERRADA` | La fase vigente del cronograma no permite editar el padrón |
+| 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
+| 404 | `MIEMBRO_NO_DISPONIBLE` | No existe o ya no está activo |
+| 400 | `SOLICITUD_INVALIDA` | Falta `habilitado` |
 
 ## Despliegue
 

@@ -35,6 +35,12 @@ public final class ContratosApi {
 
     @Data
     @NoArgsConstructor
+    public static class SolicitudHabilitacion {
+        private Boolean habilitado;
+    }
+
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class PerfilUsuario {
         private String usuario;
