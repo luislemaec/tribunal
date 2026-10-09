@@ -86,4 +86,31 @@
         opciones.plugins.tooltip.titleFont = {family: familia, size: xs, weight: '500'};
         opciones.plugins.tooltip.bodyFont = {family: familia, size: xs, weight: '300'};
     };
+
+    /*
+     * Variante para barras horizontales y series apiladas (Rep. Registros). Aplica
+     * tecGraficoTema sin cambiarlo y luego:
+     *  - con indexAxis 'y', las categorías (eje y) usan --text-color, como el eje x vertical;
+     *  - la segunda serie (no habilitados / pendientes) usa --tec-warn para distinguirse.
+     */
+    global.tecGraficoTemaRegistros = function () {
+        global.tecGraficoTema.call(this);
+        var config = this.cfg && this.cfg.config;
+        if (!config) {
+            return;
+        }
+        var opciones = config.options || {};
+        if (opciones.indexAxis === 'y' && opciones.scales) {
+            var rejilla = variable('--surface-border', '#dee2e6');
+            colorearEje(opciones.scales.y, variable('--text-color', '#495057'), rejilla);
+            colorearEje(opciones.scales.x, variable('--text-color-secondary', '#6c757d'), rejilla);
+        }
+        var series = (config.data && config.data.datasets) || [];
+        if (series.length > 1) {
+            var aviso = variable('--tec-warn', variable('--warning-color', '#f59e0b'));
+            series[1].backgroundColor = aviso;
+            series[1].borderColor = aviso;
+            series[1].hoverBackgroundColor = aviso;
+        }
+    };
 }(window));

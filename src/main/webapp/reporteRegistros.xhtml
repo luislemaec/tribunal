@@ -1,0 +1,165 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="title">#{msg['pagina.reporteRegistros.titulo']}</ui:define>
+
+    <ui:param name="tecModulo" value="#{msg['nav.modulo.reportes']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.reporteRegistros.migas']}"/>
+
+    <ui:define name="content">
+        <h:outputScript name="js/graficos-tema.js" library="demo" target="head"/>
+
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-chart-bar"/>
+            <ui:param name="titulo" value="#{msg['pagina.reporteRegistros.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.reporteRegistros.descripcion']}"/>
+        </ui:include>
+
+        <h:form id="frmReporteRegistros">
+
+            <!-- Filtro: el cambio de cantón solo actualiza indicadores, gráficos y tabla. -->
+            <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+                <div class="flex align-items-center gap-2 mb-3">
+                    <i class="pi pi-filter text-500"></i>
+                    <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+                </div>
+                <div class="formgrid grid">
+                    <div class="field col-12 md:col-6 lg:col-4">
+                        <label for="canton" class="font-medium text-700 text-sm">#{msg['reporteRegistros.label.canton']}</label>
+                        <p:selectOneMenu id="canton" value="#{reporteRegistrosController.cantonId}"
+                                         filter="true" filterMatchMode="contains" styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['reporteRegistros.canton.todos']}" itemValue="#{null}"/>
+                            <f:selectItems value="#{reporteRegistrosController.cantones}" var="canton"
+                                           itemLabel="#{canton.etiqueta}" itemValue="#{canton.id}"/>
+                            <p:ajax event="change" listener="#{reporteRegistrosController.cambiarCanton}"
+                                    process="@this" update="pnlKpis pnlGraficos pnlTabla"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicadores: personas distintas; el total no es la suma de las categorías. -->
+            <p:outputPanel id="pnlKpis" layout="block" styleClass="grid mb-1">
+                <div class="col-12 sm:col-6 lg:col-3">
+                    <div class="tec-kpi tec-kpi--success h-full">
+                        <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteRegistros.kpi.habilitados']}</span>
+                        <span class="block text-900 font-bold text-2xl">#{reporteRegistrosController.totales.habilitados}</span>
+                        <span class="block text-500 text-xs mt-1">
+                            <i class="pi pi-map-marker mr-1"/>#{reporteRegistrosController.todosLosCantones ? msg['reporteRegistros.canton.todos'] : reporteRegistrosController.nombreCantonSeleccionado}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-12 sm:col-6 lg:col-3">
+                    <div class="tec-kpi h-full">
+                        <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteRegistros.kpi.registrados']}</span>
+                        <span class="block text-900 font-bold text-2xl">#{reporteRegistrosController.totales.registrados}</span>
+                        <span class="block text-500 text-xs mt-1">
+                            <i class="pi pi-percentage mr-1"/>#{msg['reporteRegistros.kpi.porcentajeHabilitados']}: #{reporteRegistrosController.totales.porcentajeHabilitados}%
+                        </span>
+                    </div>
+                </div>
+                <div class="col-12 sm:col-6 lg:col-3">
+                    <div class="tec-kpi tec-kpi--warn h-full">
+                        <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteRegistros.kpi.noHabilitados']}</span>
+                        <span class="block text-900 font-bold text-2xl">#{reporteRegistrosController.totales.noHabilitados}</span>
+                        <span class="block text-500 text-xs mt-1">
+                            <i class="pi pi-info-circle mr-1"/>#{msg['reporteRegistros.kpi.noHabilitados.ayuda']}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-12 sm:col-6 lg:col-3">
+                    <div class="tec-kpi tec-kpi--info h-full">
+                        <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteRegistros.kpi.pendientes']}</span>
+                        <span class="block text-900 font-bold text-2xl">#{reporteRegistrosController.totales.pendientesRevision}</span>
+                        <span class="block text-500 text-xs mt-1">
+                            <i class="pi pi-check mr-1"/>#{msg['reporteRegistros.kpi.revisados']}: #{reporteRegistrosController.totales.revisados}
+                        </span>
+                    </div>
+                </div>
+            </p:outputPanel>
+
+            <p:outputPanel id="pnlGraficos" layout="block" styleClass="grid">
+                <!-- Gráfico principal: habilitados por cantón o por parroquia del cantón. -->
+                <div class="col-12">
+                    <div class="surface-card shadow-1 border-round-lg p-3">
+                        <span class="block font-semibold text-700 mb-3">
+                            #{reporteRegistrosController.todosLosCantones ? msg['reporteRegistros.grafico.porCanton'] : msg['reporteRegistros.grafico.porParroquia']}
+                            #{reporteRegistrosController.todosLosCantones ? '' : reporteRegistrosController.nombreCantonSeleccionado}
+                        </span>
+                        <ui:fragment rendered="#{empty reporteRegistrosController.categoriasConHabilitados}">
+                            <span class="tec-empty">
+                                <i class="pi pi-chart-bar"/>
+                                <span class="tec-empty__text">#{msg['reporteRegistros.sinDatos']}</span>
+                            </span>
+                        </ui:fragment>
+                        <p:chart value="#{reporteRegistrosController.graficoHabilitados}" extender="tecGraficoTemaRegistros"
+                                 rendered="#{not empty reporteRegistrosController.categoriasConHabilitados}"
+                                 style="width:100%;height:#{reporteRegistrosController.altoGrafico(reporteRegistrosController.categoriasConHabilitados.size())}"/>
+                    </div>
+                </div>
+
+                <!-- Habilitados vs. no habilitados -->
+                <div class="col-12 lg:col-6">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <span class="block font-semibold text-700 mb-3">#{msg['reporteRegistros.grafico.habilitacion']}</span>
+                        <ui:fragment rendered="#{empty reporteRegistrosController.categorias}">
+                            <span class="tec-empty">
+                                <i class="pi pi-chart-bar"/>
+                                <span class="tec-empty__text">#{msg['reporteRegistros.sinDatos']}</span>
+                            </span>
+                        </ui:fragment>
+                        <p:chart value="#{reporteRegistrosController.graficoHabilitacion}" extender="tecGraficoTemaRegistros"
+                                 rendered="#{not empty reporteRegistrosController.categorias}"
+                                 style="width:100%;height:#{reporteRegistrosController.altoGrafico(reporteRegistrosController.categorias.size())}"/>
+                    </div>
+                </div>
+
+                <!-- Revisados vs. pendientes de revisión -->
+                <div class="col-12 lg:col-6">
+                    <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                        <span class="block font-semibold text-700 mb-3">#{msg['reporteRegistros.grafico.revision']}</span>
+                        <ui:fragment rendered="#{empty reporteRegistrosController.categorias}">
+                            <span class="tec-empty">
+                                <i class="pi pi-chart-bar"/>
+                                <span class="tec-empty__text">#{msg['reporteRegistros.sinDatos']}</span>
+                            </span>
+                        </ui:fragment>
+                        <p:chart value="#{reporteRegistrosController.graficoRevision}" extender="tecGraficoTemaRegistros"
+                                 rendered="#{not empty reporteRegistrosController.categorias}"
+                                 style="width:100%;height:#{reporteRegistrosController.altoGrafico(reporteRegistrosController.categorias.size())}"/>
+                    </div>
+                </div>
+            </p:outputPanel>
+
+            <!-- Cifras exactas de los gráficos (misma lista, sin consulta adicional). -->
+            <p:outputPanel id="pnlTabla" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+                <p:dataTable id="tblRegistros" var="fila" value="#{reporteRegistrosController.categorias}"
+                             reflow="true" emptyMessage="#{msg['reporteRegistros.sinDatos']}">
+                    <p:column headerText="#{reporteRegistrosController.todosLosCantones ? msg['reporteRegistros.col.canton'] : msg['reporteRegistros.col.parroquia']}">
+                        <h:outputText value="#{fila.etiqueta}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteRegistros.serie.habilitados']}" styleClass="text-right">
+                        <h:outputText value="#{fila.habilitados}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteRegistros.serie.noHabilitados']}" styleClass="text-right">
+                        <h:outputText value="#{fila.noHabilitados}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteRegistros.kpi.registrados']}" styleClass="text-right">
+                        <h:outputText value="#{fila.registrados}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteRegistros.kpi.porcentajeHabilitados']}" styleClass="text-right">
+                        <h:outputText value="#{fila.porcentajeHabilitados}%"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteRegistros.serie.pendientes']}" styleClass="text-right">
+                        <h:outputText value="#{fila.pendientesRevision}"/>
+                    </p:column>
+                </p:dataTable>
+            </p:outputPanel>
+
+        </h:form>
+    </ui:define>
+</ui:composition>
