@@ -1,0 +1,153 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Pestaña Iglesias (ReporteIglesiasController). Ids con prefijo "igl". -->
+
+    <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+        <div class="flex align-items-center gap-2 mb-3">
+            <i class="pi pi-filter text-500"></i>
+            <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+        </div>
+        <div class="formgrid grid">
+            <div class="field col-12 md:col-6 lg:col-4">
+                <label for="iglCanton" class="font-medium text-700 text-sm">#{msg['reporteRegistros.label.canton']}</label>
+                <p:selectOneMenu id="iglCanton" value="#{reporteIglesiasController.cantonId}"
+                                 filter="true" filterMatchMode="contains" styleClass="w-full">
+                    <f:selectItem itemLabel="#{msg['reporteRegistros.canton.todos']}" itemValue="#{null}"/>
+                    <f:selectItems value="#{reporteIglesiasController.cantones}" var="canton"
+                                   itemLabel="#{canton.etiqueta}" itemValue="#{canton.id}"/>
+                    <p:ajax event="change" listener="#{reporteIglesiasController.cambiarCanton}"
+                            process="@this" update="iglPnlKpis iglPnlGraficos iglPnlTabla iglPnlAtencion"/>
+                </p:selectOneMenu>
+            </div>
+        </div>
+    </div>
+
+    <p:outputPanel id="iglPnlKpis" layout="block" styleClass="grid mb-1">
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.kpi.iglesias']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteIglesiasController.totales.iglesias}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-map-marker mr-1"/>#{reporteIglesiasController.todosLosCantones ? msg['reporteRegistros.canton.todos'] : reporteIglesiasController.nombreCantonSeleccionado}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--warn h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.serie.sinAdministrador']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteIglesiasController.totales.sinAdministrador}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-user mr-1"/>#{msg['reporteIglesias.serie.conAdministrador']}: #{reporteIglesiasController.totales.conAdministrador}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--warn h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.serie.sinLista']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteIglesiasController.totales.sinListaMiembros}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-file mr-1"/>#{msg['reporteIglesias.serie.conLista']}: #{reporteIglesiasController.totales.conListaMiembros}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--danger h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.kpi.sinHabilitados']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteIglesiasController.totales.sinHabilitados}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-info-circle mr-1"/>#{msg['reporteIglesias.kpi.sinHabilitados.ayuda']}
+                </span>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <p:outputPanel id="iglPnlGraficos" layout="block" styleClass="grid">
+        <div class="col-12 lg:col-6">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">#{msg['reporteIglesias.grafico.administrador']}</span>
+                <ui:fragment rendered="#{empty reporteIglesiasController.categorias}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteIglesias.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteIglesiasController.graficoAdministrador}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteIglesiasController.categorias}"
+                         style="width:100%;height:#{reporteIglesiasController.altoGrafico(reporteIglesiasController.categorias.size())}"/>
+            </div>
+        </div>
+        <div class="col-12 lg:col-6">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">#{msg['reporteIglesias.grafico.lista']}</span>
+                <ui:fragment rendered="#{empty reporteIglesiasController.categorias}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteIglesias.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteIglesiasController.graficoListaMiembros}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteIglesiasController.categorias}"
+                         style="width:100%;height:#{reporteIglesiasController.altoGrafico(reporteIglesiasController.categorias.size())}"/>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <p:outputPanel id="iglPnlTabla" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+        <p:dataTable id="iglTabla" var="fila" value="#{reporteIglesiasController.categorias}"
+                     reflow="true" emptyMessage="#{msg['reporteIglesias.sinDatos']}">
+            <p:column headerText="#{reporteIglesiasController.todosLosCantones ? msg['reporteRegistros.col.canton'] : msg['reporteRegistros.col.parroquia']}">
+                <h:outputText value="#{fila.etiqueta}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.kpi.iglesias']}" styleClass="text-right">
+                <h:outputText value="#{fila.iglesias}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.serie.sinAdministrador']}" styleClass="text-right">
+                <h:outputText value="#{fila.sinAdministrador}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.serie.sinLista']}" styleClass="text-right">
+                <h:outputText value="#{fila.sinListaMiembros}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.kpi.sinHabilitados']}" styleClass="text-right">
+                <h:outputText value="#{fila.sinHabilitados}"/>
+            </p:column>
+        </p:dataTable>
+    </p:outputPanel>
+
+    <!-- Lista de acción: iglesias con pendientes, primero las de más miembros por habilitar. -->
+    <p:outputPanel id="iglPnlAtencion" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+        <span class="block font-semibold text-700">#{msg['reporteIglesias.atencion.titulo']}</span>
+        <small class="block text-500 mb-3">#{msg['reporteIglesias.atencion.ayuda']}</small>
+        <p:dataTable id="iglTablaAtencion" var="iglesia" value="#{reporteIglesiasController.iglesiasAtencion}"
+                     reflow="true" paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
+                     paginatorPosition="bottom" emptyMessage="#{msg['reporteIglesias.atencion.vacio']}">
+            <p:column headerText="#{msg['reporteIglesias.col.iglesia']}" sortBy="#{iglesia.nombre}">
+                <h:outputText value="#{iglesia.nombre}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteRegistros.col.parroquia']}" sortBy="#{iglesia.parroquia}">
+                <h:outputText value="#{iglesia.parroquia}"/>
+                <small class="block text-500">#{iglesia.canton}</small>
+            </p:column>
+            <p:column headerText="#{msg['reporteRegistros.serie.noHabilitados']}" sortBy="#{iglesia.noHabilitados}" styleClass="text-right">
+                <h:outputText value="#{iglesia.noHabilitados}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteRegistros.serie.pendientes']}" sortBy="#{iglesia.pendientesRevision}" styleClass="text-right">
+                <h:outputText value="#{iglesia.pendientesRevision}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteRegistros.serie.habilitados']}" sortBy="#{iglesia.habilitados}" styleClass="text-right">
+                <h:outputText value="#{iglesia.habilitados}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.col.administrador']}" styleClass="text-center">
+                <p:tag value="#{iglesia.tieneAdministrador ? msg['reporteIglesias.si'] : msg['reporteIglesias.no']}"
+                       severity="#{iglesia.tieneAdministrador ? 'success' : 'warning'}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.col.lista']}" styleClass="text-center">
+                <p:tag value="#{iglesia.tieneListaMiembros ? msg['reporteIglesias.si'] : msg['reporteIglesias.no']}"
+                       severity="#{iglesia.tieneListaMiembros ? 'success' : 'warning'}"/>
+            </p:column>
+        </p:dataTable>
+    </p:outputPanel>
+</ui:composition>

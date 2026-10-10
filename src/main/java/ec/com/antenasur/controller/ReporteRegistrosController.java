@@ -3,7 +3,6 @@ package ec.com.antenasur.controller;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.ToLongFunction;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
@@ -11,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 import ec.com.antenasur.dto.ConteoRegistrosDTO;
+import ec.com.antenasur.report.GraficoBarrasJson;
 import ec.com.antenasur.service.tec.ReporteRegistrosService;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
@@ -53,13 +53,13 @@ public class ReporteRegistrosController implements Serializable {
     private ConteoRegistrosDTO totales = new ConteoRegistrosDTO(null, null, null, 0L, 0L, 0L);
 
     @Getter
-    private String graficoHabilitados = "{}";
+    private String graficoHabilitados = GraficoBarrasJson.VACIO;
 
     @Getter
-    private String graficoHabilitacion = "{}";
+    private String graficoHabilitacion = GraficoBarrasJson.VACIO;
 
     @Getter
-    private String graficoRevision = "{}";
+    private String graficoRevision = GraficoBarrasJson.VACIO;
 
     @PostConstruct
     public void init() {
@@ -91,53 +91,19 @@ public class ReporteRegistrosController implements Serializable {
 
     private void construirGraficos() {
         List<ConteoRegistrosDTO> conHabilitados = getCategoriasConHabilitados();
-        graficoHabilitados = conHabilitados.isEmpty() ? "{}"
-                : grafico(conHabilitados, false, serie("reporteRegistros.serie.habilitados",
-                        conHabilitados, ConteoRegistrosDTO::getHabilitados));
-        graficoHabilitacion = categorias.isEmpty() ? "{}"
-                : grafico(categorias, true,
-                        serie("reporteRegistros.serie.habilitados", categorias, ConteoRegistrosDTO::getHabilitados),
-                        serie("reporteRegistros.serie.noHabilitados", categorias, ConteoRegistrosDTO::getNoHabilitados));
-        graficoRevision = categorias.isEmpty() ? "{}"
-                : grafico(categorias, true,
-                        serie("reporteRegistros.serie.revisados", categorias, ConteoRegistrosDTO::getRevisados),
-                        serie("reporteRegistros.serie.pendientes", categorias, ConteoRegistrosDTO::getPendientesRevision));
-    }
-
-    /** Barras horizontales: legibles con nombres largos y con muchas categorías. */
-    private static String grafico(List<ConteoRegistrosDTO> filas, boolean apilado, String... series) {
-        StringBuilder etiquetas = new StringBuilder();
-        for (ConteoRegistrosDTO fila : filas) {
-            if (etiquetas.length() > 0) {
-                etiquetas.append(',');
-            }
-            etiquetas.append('"').append(escaparJson(fila.getEtiqueta())).append('"');
-        }
-        String ejes = apilado
-                ? "\"x\":{\"stacked\":true,\"beginAtZero\":true,\"ticks\":{\"precision\":0}},\"y\":{\"stacked\":true}"
-                : "\"x\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0}}";
-        return "{\"type\":\"bar\",\"data\":{\"labels\":[" + etiquetas + "],\"datasets\":["
-                + String.join(",", series) + "]},"
-                + "\"options\":{\"indexAxis\":\"y\",\"maintainAspectRatio\":false,"
-                + "\"plugins\":{\"legend\":{\"display\":" + apilado + "}},"
-                + "\"scales\":{" + ejes + "}}}";
-    }
-
-    private static String serie(String claveEtiqueta, List<ConteoRegistrosDTO> filas,
-            ToLongFunction<ConteoRegistrosDTO> valor) {
-        StringBuilder datos = new StringBuilder();
-        for (ConteoRegistrosDTO fila : filas) {
-            if (datos.length() > 0) {
-                datos.append(',');
-            }
-            datos.append(valor.applyAsLong(fila));
-        }
-        return "{\"label\":\"" + escaparJson(JsfUtil.getMessage(claveEtiqueta)) + "\",\"data\":[" + datos
-                + "],\"borderRadius\":4}";
-    }
-
-    private static String escaparJson(String valor) {
-        return valor == null ? "" : valor.replace("\\", "\\\\").replace("\"", "\\\"");
+        graficoHabilitados = GraficoBarrasJson.barras(conHabilitados, ConteoRegistrosDTO::getEtiqueta,
+                GraficoBarrasJson.serie("reporteRegistros.serie.habilitados", conHabilitados,
+                        ConteoRegistrosDTO::getHabilitados));
+        graficoHabilitacion = GraficoBarrasJson.barras(categorias, ConteoRegistrosDTO::getEtiqueta,
+                GraficoBarrasJson.serie("reporteRegistros.serie.habilitados", categorias,
+                        ConteoRegistrosDTO::getHabilitados),
+                GraficoBarrasJson.serie("reporteRegistros.serie.noHabilitados", categorias,
+                        ConteoRegistrosDTO::getNoHabilitados));
+        graficoRevision = GraficoBarrasJson.barras(categorias, ConteoRegistrosDTO::getEtiqueta,
+                GraficoBarrasJson.serie("reporteRegistros.serie.revisados", categorias,
+                        ConteoRegistrosDTO::getRevisados),
+                GraficoBarrasJson.serie("reporteRegistros.serie.pendientes", categorias,
+                        ConteoRegistrosDTO::getPendientesRevision));
     }
 
     public List<ConteoRegistrosDTO> getCategoriasConHabilitados() {
@@ -155,6 +121,6 @@ public class ReporteRegistrosController implements Serializable {
 
     /** Alto del gráfico según el número de barras, para que ninguna etiqueta se comprima. */
     public String altoGrafico(int barras) {
-        return Math.max(10, 3 + barras * 2) + "rem";
+        return GraficoBarrasJson.alto(barras);
     }
 }

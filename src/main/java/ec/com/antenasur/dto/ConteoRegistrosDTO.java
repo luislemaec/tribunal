@@ -12,7 +12,7 @@ import lombok.Setter;
  * registradas.
  */
 @Getter
-public class ConteoRegistrosDTO implements Serializable {
+public class ConteoRegistrosDTO implements Serializable, CategoriaGeograficaDTO {
 
     private static final long serialVersionUID = 1L;
 

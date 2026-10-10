@@ -1,0 +1,120 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Pestaña Cobertura del padrón (ReporteCoberturaPadronController). Ids con prefijo "cob". -->
+
+    <ui:fragment rendered="#{reporteCoberturaPadronController.sinProceso}">
+        <div class="surface-card shadow-1 border-round-lg p-3">
+            <span class="tec-empty">
+                <i class="pi pi-calendar-times"/>
+                <span class="tec-empty__title">#{msg['reporteCobertura.sinProceso.titulo']}</span>
+                <span class="tec-empty__text">#{msg['reporteCobertura.sinProceso.detalle']}</span>
+            </span>
+        </div>
+    </ui:fragment>
+
+    <ui:fragment rendered="#{not reporteCoberturaPadronController.sinProceso}">
+        <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+            <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-filter text-500"></i>
+                    <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+                </div>
+                <p:tag value="#{msg['reporteCobertura.proceso']}: #{reporteCoberturaPadronController.proceso.nombre}"
+                       icon="pi pi-flag" severity="info" styleClass="tec-status"/>
+            </div>
+            <div class="formgrid grid">
+                <div class="field col-12 md:col-6 lg:col-4">
+                    <label for="cobCanton" class="font-medium text-700 text-sm">#{msg['reporteRegistros.label.canton']}</label>
+                    <p:selectOneMenu id="cobCanton" value="#{reporteCoberturaPadronController.cantonId}"
+                                     filter="true" filterMatchMode="contains" styleClass="w-full">
+                        <f:selectItem itemLabel="#{msg['reporteRegistros.canton.todos']}" itemValue="#{null}"/>
+                        <f:selectItems value="#{reporteCoberturaPadronController.cantones}" var="canton"
+                                       itemLabel="#{canton.etiqueta}" itemValue="#{canton.id}"/>
+                        <p:ajax event="change" listener="#{reporteCoberturaPadronController.cambiarCanton}"
+                                process="@this" update="cobPnlKpis cobPnlGrafico cobPnlTabla"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+        </div>
+
+        <p:outputPanel id="cobPnlKpis" layout="block" styleClass="grid mb-1">
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="tec-kpi h-full">
+                    <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteRegistros.kpi.habilitados']}</span>
+                    <span class="block text-900 font-bold text-2xl">#{reporteCoberturaPadronController.totales.habilitados}</span>
+                    <span class="block text-500 text-xs mt-1">
+                        <i class="pi pi-map-marker mr-1"/>#{reporteCoberturaPadronController.todosLosCantones ? msg['reporteRegistros.canton.todos'] : reporteCoberturaPadronController.nombreCantonSeleccionado}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="tec-kpi tec-kpi--success h-full">
+                    <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteCobertura.kpi.empadronados']}</span>
+                    <span class="block text-900 font-bold text-2xl">#{reporteCoberturaPadronController.totales.empadronados}</span>
+                    <span class="block text-500 text-xs mt-1">
+                        <i class="pi pi-check mr-1"/>#{msg['reporteCobertura.kpi.empadronados.ayuda']}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="tec-kpi tec-kpi--warn h-full">
+                    <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteCobertura.kpi.sinPadron']}</span>
+                    <span class="block text-900 font-bold text-2xl">#{reporteCoberturaPadronController.totales.sinPadron}</span>
+                    <span class="block text-500 text-xs mt-1">
+                        <i class="pi pi-info-circle mr-1"/>#{msg['reporteCobertura.kpi.sinPadron.ayuda']}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 sm:col-6 lg:col-3">
+                <div class="tec-kpi tec-kpi--info h-full">
+                    <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteCobertura.kpi.cobertura']}</span>
+                    <span class="block text-900 font-bold text-2xl">#{reporteCoberturaPadronController.totales.porcentajeCobertura}%</span>
+                    <span class="block text-500 text-xs mt-1">
+                        <i class="pi pi-percentage mr-1"/>#{msg['reporteCobertura.kpi.cobertura.ayuda']}
+                    </span>
+                </div>
+            </div>
+        </p:outputPanel>
+
+        <p:outputPanel id="cobPnlGrafico" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3">
+            <span class="block font-semibold text-700 mb-3">
+                #{reporteCoberturaPadronController.todosLosCantones ? msg['reporteCobertura.grafico.porCanton'] : msg['reporteCobertura.grafico.porParroquia']}
+                #{reporteCoberturaPadronController.todosLosCantones ? '' : reporteCoberturaPadronController.nombreCantonSeleccionado}
+            </span>
+            <ui:fragment rendered="#{empty reporteCoberturaPadronController.categorias}">
+                <span class="tec-empty">
+                    <i class="pi pi-chart-bar"/>
+                    <span class="tec-empty__text">#{msg['reporteCobertura.sinDatos']}</span>
+                </span>
+            </ui:fragment>
+            <p:chart value="#{reporteCoberturaPadronController.grafico}" extender="tecGraficoTemaRegistros"
+                     rendered="#{not empty reporteCoberturaPadronController.categorias}"
+                     style="width:100%;height:#{reporteCoberturaPadronController.altoGrafico(reporteCoberturaPadronController.categorias.size())}"/>
+        </p:outputPanel>
+
+        <p:outputPanel id="cobPnlTabla" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+            <p:dataTable id="cobTabla" var="fila" value="#{reporteCoberturaPadronController.categorias}"
+                         reflow="true" emptyMessage="#{msg['reporteCobertura.sinDatos']}">
+                <p:column headerText="#{reporteCoberturaPadronController.todosLosCantones ? msg['reporteRegistros.col.canton'] : msg['reporteRegistros.col.parroquia']}">
+                    <h:outputText value="#{fila.etiqueta}"/>
+                </p:column>
+                <p:column headerText="#{msg['reporteRegistros.serie.habilitados']}" styleClass="text-right">
+                    <h:outputText value="#{fila.habilitados}"/>
+                </p:column>
+                <p:column headerText="#{msg['reporteCobertura.serie.empadronados']}" styleClass="text-right">
+                    <h:outputText value="#{fila.empadronados}"/>
+                </p:column>
+                <p:column headerText="#{msg['reporteCobertura.serie.sinPadron']}" styleClass="text-right">
+                    <h:outputText value="#{fila.sinPadron}"/>
+                </p:column>
+                <p:column headerText="#{msg['reporteCobertura.kpi.cobertura']}" styleClass="text-right">
+                    <h:outputText value="#{fila.porcentajeCobertura}%"/>
+                </p:column>
+            </p:dataTable>
+        </p:outputPanel>
+    </ui:fragment>
+</ui:composition>
