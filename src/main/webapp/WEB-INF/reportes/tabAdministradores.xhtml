@@ -1,0 +1,196 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Pestaña Administradores (ReporteAdministradoresController). Ids con prefijo "adm". -->
+
+    <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+        <div class="flex align-items-center gap-2 mb-3">
+            <i class="pi pi-filter text-500"></i>
+            <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+        </div>
+        <div class="formgrid grid">
+            <div class="field col-12 md:col-6 lg:col-4">
+                <label for="admCanton" class="font-medium text-700 text-sm">#{msg['reporteRegistros.label.canton']}</label>
+                <p:selectOneMenu id="admCanton" value="#{reporteAdministradoresController.cantonId}"
+                                 filter="true" filterMatchMode="contains" styleClass="w-full">
+                    <f:selectItem itemLabel="#{msg['reporteRegistros.canton.todos']}" itemValue="#{null}"/>
+                    <f:selectItems value="#{reporteAdministradoresController.cantones}" var="canton"
+                                   itemLabel="#{canton.etiqueta}" itemValue="#{canton.id}"/>
+                    <p:ajax event="change" listener="#{reporteAdministradoresController.cambiarFiltro}"
+                            process="@this" update="admPnlKpis admPnlGraficos admPnlTabla admPnlIglesias"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="field col-12 md:col-6 lg:col-3">
+                <label for="admDias" class="font-medium text-700 text-sm">#{msg['reporteAdministradores.label.inactividad']}</label>
+                <p:selectOneMenu id="admDias" value="#{reporteAdministradoresController.diasInactividad}" styleClass="w-full">
+                    <f:selectItems value="#{reporteAdministradoresController.opcionesInactividad}" var="dias"
+                                   itemLabel="#{dias} #{msg['reporteAdministradores.dias']}" itemValue="#{dias}"/>
+                    <p:ajax event="change" listener="#{reporteAdministradoresController.cambiarFiltro}"
+                            process="@this" update="admPnlKpis admPnlTabla admPnlIglesias"/>
+                </p:selectOneMenu>
+            </div>
+        </div>
+    </div>
+
+    <p:outputPanel id="admPnlKpis" layout="block" styleClass="grid mb-1">
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--success h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.serie.conAdministrador']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteAdministradoresController.totales.conAdministrador}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-percentage mr-1"/>#{reporteAdministradoresController.totales.porcentajeConAdministrador}% #{msg['reporteAdministradores.kpi.deIglesias']} #{reporteAdministradoresController.totales.iglesias}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--danger h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteIglesias.serie.sinAdministrador']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteAdministradoresController.totales.sinAdministrador}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-map-marker mr-1"/>#{reporteAdministradoresController.todosLosCantones ? msg['reporteRegistros.canton.todos'] : reporteAdministradoresController.nombreCantonSeleccionado}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--warn h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteAdministradores.serie.pendientes']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteAdministradoresController.totales.pendientesActivar}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-key mr-1"/>#{msg['reporteAdministradores.kpi.pendientes.ayuda']}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--info h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteAdministradores.kpi.sinAcceso']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteAdministradoresController.totales.sinAccesoReciente}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-clock mr-1"/>#{msg['reporteAdministradores.kpi.sinAcceso.ayuda']} #{reporteAdministradoresController.diasInactividad} #{msg['reporteAdministradores.dias']}
+                </span>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <p:outputPanel id="admPnlGraficos" layout="block" styleClass="grid">
+        <div class="col-12 lg:col-6">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">
+                    #{msg['reporteIglesias.grafico.administrador']}
+                    #{reporteAdministradoresController.todosLosCantones ? '' : '— '.concat(reporteAdministradoresController.nombreCantonSeleccionado)}
+                </span>
+                <ui:fragment rendered="#{empty reporteAdministradoresController.categorias}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteIglesias.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteAdministradoresController.graficoAdministrador}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteAdministradoresController.categorias}"
+                         style="width:100%;height:#{reporteAdministradoresController.altoGrafico(reporteAdministradoresController.categorias.size())}"/>
+            </div>
+        </div>
+        <div class="col-12 lg:col-6">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">#{msg['reporteAdministradores.grafico.activacion']}</span>
+                <ui:fragment rendered="#{empty reporteAdministradoresController.categoriasConAdministrador}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteAdministradores.sinAdministradores']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteAdministradoresController.graficoActivacion}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteAdministradoresController.categoriasConAdministrador}"
+                         style="width:100%;height:#{reporteAdministradoresController.altoGrafico(reporteAdministradoresController.categoriasConAdministrador.size())}"/>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="surface-card shadow-1 border-round-lg p-3">
+                <span class="block font-semibold text-700">#{msg['reporteAdministradores.grafico.avance']}</span>
+                <small class="block text-500 mb-3">#{msg['reporteAdministradores.grafico.avance.ayuda']}</small>
+                <ui:fragment rendered="#{empty reporteAdministradoresController.iglesias}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteIglesias.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteAdministradoresController.graficoAvance}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteAdministradoresController.iglesias}"
+                         style="width:100%;height:12rem"/>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <p:outputPanel id="admPnlTabla" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+        <p:dataTable id="admTabla" var="fila" value="#{reporteAdministradoresController.categorias}"
+                     reflow="true" emptyMessage="#{msg['reporteIglesias.sinDatos']}">
+            <p:column headerText="#{reporteAdministradoresController.todosLosCantones ? msg['reporteRegistros.col.canton'] : msg['reporteRegistros.col.parroquia']}">
+                <h:outputText value="#{fila.etiqueta}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.kpi.iglesias']}" styleClass="text-right">
+                <h:outputText value="#{fila.iglesias}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.serie.conAdministrador']}" styleClass="text-right">
+                <h:outputText value="#{fila.conAdministrador} (#{fila.porcentajeConAdministrador}%)"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.serie.sinAdministrador']}" styleClass="text-right">
+                <h:outputText value="#{fila.sinAdministrador}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteAdministradores.serie.activados']}" styleClass="text-right">
+                <h:outputText value="#{fila.activados}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteAdministradores.serie.pendientes']}" styleClass="text-right">
+                <h:outputText value="#{fila.pendientesActivar}"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteAdministradores.kpi.sinAcceso']}" styleClass="text-right">
+                <h:outputText value="#{fila.sinAccesoReciente}"/>
+            </p:column>
+        </p:dataTable>
+    </p:outputPanel>
+
+    <!-- Lista de acción: sin administrador, pendientes de activar, sin acceso reciente y al día. -->
+    <p:outputPanel id="admPnlIglesias" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mt-3">
+        <span class="block font-semibold text-700">#{msg['reporteAdministradores.lista.titulo']}</span>
+        <small class="block text-500 mb-3">#{msg['reporteAdministradores.lista.ayuda']}</small>
+        <p:dataTable id="admTablaIglesias" var="iglesia" value="#{reporteAdministradoresController.iglesias}"
+                     reflow="true" paginator="true" rows="10" rowsPerPageTemplate="10,25,50"
+                     paginatorPosition="bottom" emptyMessage="#{msg['reporteIglesias.sinDatos']}">
+            <p:column headerText="#{msg['reporteIglesias.col.iglesia']}" sortBy="#{iglesia.iglesia}">
+                <h:outputText value="#{iglesia.iglesia}"/>
+                <small class="block text-500">#{iglesia.parroquia} · #{iglesia.canton}</small>
+            </p:column>
+            <p:column headerText="#{msg['reporteIglesias.col.administrador']}" sortBy="#{iglesia.administradorNombre}">
+                <h:outputText value="#{iglesia.administradorNombre}" rendered="#{iglesia.tieneAdministrador}"/>
+                <small class="block text-500">
+                    <h:outputText value="#{iglesia.administradorUsuario}" rendered="#{iglesia.tieneAdministrador}"/>
+                </small>
+                <small class="block text-500">
+                    <h:outputText value="#{empty iglesia.administradorCorreo ? msg['reporteAdministradores.sinCorreo'] : iglesia.administradorCorreo}"
+                                  rendered="#{iglesia.tieneAdministrador}"/>
+                </small>
+            </p:column>
+            <p:column headerText="#{msg['reporteAdministradores.col.estado']}" sortBy="#{iglesia.prioridad}" styleClass="text-center">
+                <p:tag rendered="#{not iglesia.tieneAdministrador}" value="#{msg['reporteIglesias.serie.sinAdministrador']}" severity="danger"/>
+                <p:tag rendered="#{iglesia.tieneAdministrador and not iglesia.administradorActivado}"
+                       value="#{msg['reporteAdministradores.estado.pendiente']}" severity="warning"/>
+                <p:tag rendered="#{iglesia.administradorActivado}"
+                       value="#{msg['reporteAdministradores.estado.activado']}" severity="success"/>
+            </p:column>
+            <p:column headerText="#{msg['reporteAdministradores.col.ultimoAcceso']}" sortBy="#{iglesia.ultimoAcceso}">
+                <ui:fragment rendered="#{iglesia.tieneAdministrador}">
+                    <h:outputText value="#{iglesia.ultimoAcceso}" rendered="#{not empty iglesia.ultimoAcceso}">
+                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                    </h:outputText>
+                    <h:outputText value="#{msg['reporteAdministradores.nunca']}" rendered="#{empty iglesia.ultimoAcceso}"/>
+                    <p:tag rendered="#{iglesia.sinAccesoReciente}" value="#{msg['reporteAdministradores.estado.inactivo']}"
+                           severity="info" styleClass="ml-2"/>
+                </ui:fragment>
+            </p:column>
+            <p:column headerText="#{msg['reporteRegistros.serie.habilitados']}" sortBy="#{iglesia.habilitados}" styleClass="text-right">
+                <h:outputText value="#{iglesia.habilitados} / #{iglesia.registrados}"/>
+            </p:column>
+        </p:dataTable>
+    </p:outputPanel>
+</ui:composition>

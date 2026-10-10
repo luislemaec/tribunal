@@ -767,6 +767,31 @@ html body .ui-tag .ui-tag-icon { color:inherit; font-size:var(--tec-fs-2xs); }
 
 .tec-empty__text { max-width:19.5rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 
+/* Línea de tiempo vertical (Rep. Registros > Actividad): eventos sobre una guía con un punto
+   por evento; el color del punto sigue la severidad del resultado (tec-timeline__punto--*). */
+.tec-timeline { list-style:none; margin:0; padding:0; }
+.tec-timeline__item { position:relative; padding:0 0 .75rem 1.25rem; border-left:2px solid var(--surface-border); margin-left:.375rem; }
+.tec-timeline__item:last-child { border-left-color:transparent; padding-bottom:0; }
+.tec-timeline__punto { position:absolute; left:-.4375rem; top:.125rem; width:.75rem; height:.75rem; border-radius:50%;
+    background:var(--surface-card); border:2px solid var(--tec-primary); }
+.tec-timeline__punto--success { border-color:var(--tec-success); }
+.tec-timeline__punto--danger  { border-color:var(--tec-danger); }
+.tec-timeline__punto--warning { border-color:var(--tec-warn); }
+.tec-timeline__punto--info    { border-color:var(--tec-info); }
+.tec-timeline__fecha { color:var(--text-color-secondary); font-size:var(--tec-fs-2xs); }
+
+/* Chatbot de ayuda (WEB-INF/ayudaWidget.xhtml): botón flotante y panel lateral. */
+.tec-ayuda-boton.ui-button { position:fixed; right:1rem; bottom:1rem; z-index:1000; width:3rem; height:3rem;
+    box-shadow:var(--tec-shadow-float); }
+.tec-ayuda-panel.ui-sidebar { width:min(26rem, 100vw); }
+.tec-ayuda-panel .ui-sidebar-content { height:100%; }
+/* Respuestas en texto plano: conserva los saltos de línea sin interpretar HTML. */
+.tec-ayuda-texto { display:block; white-space:pre-line; color:var(--text-color); font-size:var(--tec-fs-md); line-height:var(--tec-lh-base); }
+.tec-ayuda-contacto { display:flex; align-items:center; gap:.5rem; padding:.25rem 0; color:var(--text-color); text-decoration:none; }
+.tec-ayuda-contacto:hover { color:var(--tec-primary); }
+.tec-ayuda-contacto > .pi { color:var(--tec-primary); }
+@media print { .tec-ayuda-boton.ui-button { display:none; } }
+
 /* Diálogos sin width fijo.
    PrimeFaces fija width:auto en línea al mostrar el diálogo, así que estas
    reglas necesitan !important para imponerse. */

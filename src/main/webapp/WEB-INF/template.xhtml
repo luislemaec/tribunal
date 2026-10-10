@@ -65,6 +65,7 @@
         <h:outputScript name="js/nprogress.min.js"           library="demo"/>
         <h:outputScript name="js/jquery.inputmask.min.js"    library="demo"/>
         <h:outputScript name="js/tribunal-globals.js"        library="demo"/>
+        <h:outputScript name="js/tec-sesion.js"              library="demo"/>
         <!-- =============================================================== -->
 
         <ui:insert name="head"/>
@@ -117,6 +118,8 @@
                 </f:facet>
             </p:ajaxStatus>
         </div>
+        <!-- Chatbot de ayuda: sin consultas hasta que el usuario lo abre. -->
+        <ui:include src="/WEB-INF/ayudaWidget.xhtml"/>
         <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
         <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
     </h:body>

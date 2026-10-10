@@ -67,7 +67,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
     @PostConstruct
     private void init() {
         filtro = new FiltroActividadAuditoriaDTO();
-        if (isAdministrador()) usuariosAuditoria = procesoService.listarUsuariosAuditoria();
+        if (isVistaGlobal()) usuariosAuditoria = procesoService.listarUsuariosAuditoria();
         accionesAuditoria = construirAccionesAuditoria();
         auditoriasLazy = new LazyDataModel<>() {
             private static final long serialVersionUID = 1L;
@@ -119,6 +119,20 @@ public class ProcesoController extends ReportTemplateController implements Seria
                 && loginBean.getRoles().contains("SITEC-Administrador");
     }
 
+    /** Tribunal sin Administrador: ve la bitácora de todos salvo la de los Administradores. */
+    public boolean isTribunal() {
+        return !isAdministrador() && loginBean != null && loginBean.getRoles() != null
+                && loginBean.getRoles().contains("SITEC-Tribunal");
+    }
+
+    /**
+     * Ve actividades de otros usuarios y tiene el filtro Usuario. Solo controla la vista:
+     * el alcance real lo aplica ProcesoService con los roles del principal EJB.
+     */
+    public boolean isVistaGlobal() {
+        return isAdministrador() || isTribunal();
+    }
+
     /** Opciones del filtro Acción agrupadas por módulo, desde el catálogo único. */
     private static List<SelectItem> construirAccionesAuditoria() {
         List<SelectItem> grupos = new ArrayList<>();
@@ -131,8 +145,8 @@ public class ProcesoController extends ReportTemplateController implements Seria
 
     /**
      * Exporta a Excel todas las actividades que cumplen los filtros (no solo la página
-     * visible), con el mismo alcance que la tabla: Administrador ve todo, los demás roles
-     * solo sus registros. Usa la infraestructura común ReporteXLSX (encabezado institucional,
+     * visible), con el mismo alcance que la tabla: Administrador ve todo, Tribunal todo
+     * salvo las actividades de Administradores y los demás roles solo sus registros. Usa la infraestructura común ReporteXLSX (encabezado institucional,
      * responsable y total), igual que Personas, Iglesias y Padrón.
      */
     public void exportarExcel() {

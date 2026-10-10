@@ -1,12 +1,23 @@
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:ui="jakarta.faces.facelets" 
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
       xmlns:p="http://primefaces.org/ui" >
 
     <ui:composition>
-        <!-- HttpSession expresa el tiempo en segundos; PrimeFaces usa milisegundos. -->
-        <p:idleMonitor timeout="#{loginBean.tiempoSession * 1000}"
-                       rendered="#{loginBean.loggedIn and loginBean.tiempoSession gt 0}">
-            <p:ajax event="idle" listener="#{loginBean.cerrarSessionExpirada()}" />
-        </p:idleMonitor>
+        <!-- Inactividad de la sesión: tec-sesion.js (aviso, cierre y mantener viva la sesión).
+             tiempoSession viene de HttpSession (segundos) = session-timeout de web.xml. -->
+        <h:form id="frmSesion" rendered="#{loginBean.loggedIn and loginBean.tiempoSession gt 0}">
+            <p:remoteCommand name="tecCerrarSesionExpirada" action="#{loginBean.cerrarSessionExpirada()}"
+                             process="@this" global="false"/>
+            <h:outputScript>
+                TecSesion.iniciar({
+                    timeoutSegundos: #{loginBean.tiempoSession},
+                    urlPing: '#{request.contextPath}/sesion/ping',
+                    // Sesión QR: su filtro invalida la sesión ante rutas no permitidas; no se hace ping.
+                    conPing: #{sessionScope['tec.contextoQr'] eq null and not request.isUserInRole('TEC-QR')},
+                    urlLogin: '#{request.contextPath}/login.jsf?expirado=1'
+                });
+            </h:outputScript>
+        </h:form>
     </ui:composition>
 </html>

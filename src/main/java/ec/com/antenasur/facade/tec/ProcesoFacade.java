@@ -127,24 +127,63 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         return null;
     }
 
-    public int contarAuditoria(FiltroActividadAuditoriaDTO filtro, String usuarioAlcance) {
-        Query query = crearConsultaAuditoria("SELECT COUNT(p)", filtro, usuarioAlcance);
-        return ((Long) query.getSingleResult()).intValue();
+    /** Rol cuyas actividades no ve Tribunal. */
+    private static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+
+    /**
+     * Excluye las actividades de usuarios con el rol Administrador vigente (asignación y
+     * rol activos). {@code u_crea} es texto: se une por {@code usu_nombre}, lo que cubre
+     * también los intentos de login hechos con el nombre de un Administrador.
+     */
+    private static final String SIN_ADMINISTRADORES = " AND NOT EXISTS (SELECT ru.id FROM RolUsuario ru"
+            + " WHERE ru.usuario.username = p.usuarioCrea AND ru.estado = TRUE AND ru.rol.estado = TRUE"
+            + " AND ru.rol.nombre = :rolAdministrador)";
+
+    public int contarAuditoria(FiltroActividadAuditoriaDTO filtro, String usuarioAlcance,
+            boolean excluirAdministradores) {
+        return conAlcance(excluirAdministradores, em -> ((Long) crearConsultaAuditoria(em, "SELECT COUNT(p)",
+                filtro, usuarioAlcance, excluirAdministradores).getSingleResult()).intValue());
     }
 
+    @SuppressWarnings("unchecked")
     public List<Proceso> buscarAuditoria(FiltroActividadAuditoriaDTO filtro, String usuarioAlcance,
-            int first, int pageSize) {
-        TypedQuery<Proceso> query = (TypedQuery<Proceso>) crearConsultaAuditoria("SELECT p", filtro, usuarioAlcance);
-        query.setFirstResult(Math.max(first, 0));
-        query.setMaxResults(Math.max(pageSize, 1));
-        return query.getResultList();
+            boolean excluirAdministradores, int first, int pageSize) {
+        return conAlcance(excluirAdministradores, em -> {
+            TypedQuery<Proceso> query = (TypedQuery<Proceso>) crearConsultaAuditoria(em, "SELECT p", filtro,
+                    usuarioAlcance, excluirAdministradores);
+            query.setFirstResult(Math.max(first, 0));
+            query.setMaxResults(Math.max(pageSize, 1));
+            return query.getResultList();
+        });
     }
 
-    public List<String> listarUsuariosConActividad() {
-        TypedQuery<String> query = super.getEntityManager().createQuery(
-                "SELECT DISTINCT p.usuarioCrea FROM Proceso p WHERE p.estado = true "
-                + "AND p.usuarioCrea IS NOT NULL ORDER BY p.usuarioCrea", String.class);
-        return query.getResultList();
+    /**
+     * Ejecuta la consulta en un solo EntityManager. Al excluir Administradores se desactiva
+     * el filtro de activos para que un Administrador desactivado también se excluya (la
+     * bitácora es historia); el resto de condiciones de estado son explícitas.
+     */
+    private <T> T conAlcance(boolean excluirAdministradores, java.util.function.Function<EntityManager, T> consulta) {
+        EntityManager em = super.getEntityManager();
+        if (!excluirAdministradores) return consulta.apply(em);
+        Session session = em.unwrap(Session.class);
+        boolean filtroActivo = session.getEnabledFilter(EntidadBase.FILTER_ACTIVE) != null;
+        if (filtroActivo) session.disableFilter(EntidadBase.FILTER_ACTIVE);
+        try {
+            return consulta.apply(em);
+        } finally {
+            if (filtroActivo) session.enableFilter(EntidadBase.FILTER_ACTIVE);
+        }
+    }
+
+    public List<String> listarUsuariosConActividad(boolean excluirAdministradores) {
+        return conAlcance(excluirAdministradores, em -> {
+            TypedQuery<String> query = em.createQuery(
+                    "SELECT DISTINCT p.usuarioCrea FROM Proceso p WHERE p.estado = true "
+                    + "AND p.usuarioCrea IS NOT NULL" + (excluirAdministradores ? SIN_ADMINISTRADORES : "")
+                    + " ORDER BY p.usuarioCrea", String.class);
+            if (excluirAdministradores) query.setParameter("rolAdministrador", ROL_ADMINISTRADOR);
+            return query.getResultList();
+        });
     }
 
     /** Usuarios por consulta: muy por debajo del límite de parámetros de PostgreSQL. */
@@ -204,13 +243,89 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         return resultado;
     }
 
+    /**
+     * Fecha del último inicio de sesión exitoso de cada usuario indicado, con la misma
+     * clasificación que el filtro Acción ("Inició sesión", formatos vigente y antiguo).
+     * Una consulta agregada por bloque de {@value #LOTE_IDENTIDADES} usuarios; los que
+     * nunca iniciaron sesión no aparecen.
+     */
+    public Map<String, java.util.Date> buscarUltimoInicioSesion(Collection<String> usuarios) {
+        Map<String, java.util.Date> resultado = new HashMap<>();
+        List<String> pendientes = usuarios == null ? List.of()
+                : usuarios.stream().filter(u -> u != null && !u.isBlank()).distinct().toList();
+        for (int desde = 0; desde < pendientes.size(); desde += LOTE_IDENTIDADES) {
+            List<ParametroAuditoria> parametros = new ArrayList<>();
+            String login = condicion(CatalogoActividades.criterioPorAccion("Inició sesión"), "log", parametros);
+            Query query = super.getEntityManager().createQuery("SELECT p.usuarioCrea, MAX(p.fechaCrea) FROM Proceso p"
+                    + " WHERE p.estado = true AND p.usuarioCrea IN :usuarios AND " + login
+                    + " GROUP BY p.usuarioCrea");
+            query.setParameter("usuarios", pendientes.subList(desde, Math.min(desde + LOTE_IDENTIDADES, pendientes.size())));
+            for (ParametroAuditoria parametro : parametros) query.setParameter(parametro.nombre(), parametro.valor());
+            for (Object fila : query.getResultList()) {
+                Object[] columnas = (Object[]) fila;
+                if (columnas[1] != null) resultado.put((String) columnas[0], (java.util.Date) columnas[1]);
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Transacciones por día desde {@code desde} (inclusive): {día, total}. Una consulta
+     * agregada; con {@code excluirAdministradores} aplica el mismo alcance que Tribunal en
+     * Actividades.
+     */
+    public List<Object[]> contarPorDia(LocalDate desde, boolean excluirAdministradores) {
+        return conAlcance(excluirAdministradores, em -> {
+            Query query = em.createQuery("SELECT CAST(p.fechaCrea AS LocalDate), COUNT(p) FROM Proceso p"
+                    + " WHERE p.estado = true AND p.fechaCrea >= :desde"
+                    + (excluirAdministradores ? SIN_ADMINISTRADORES : "")
+                    + " GROUP BY CAST(p.fechaCrea AS LocalDate) ORDER BY CAST(p.fechaCrea AS LocalDate)");
+            query.setParameter("desde", Timestamp.valueOf(desde.atStartOfDay()));
+            if (excluirAdministradores) query.setParameter("rolAdministrador", ROL_ADMINISTRADOR);
+            @SuppressWarnings("unchecked")
+            List<Object[]> filas = query.getResultList();
+            return filas;
+        });
+    }
+
+    /**
+     * Transacciones por módulo desde {@code desde}, en una sola consulta: una suma
+     * condicional por módulo con la misma clasificación que el filtro Módulo
+     * (CatalogoActividades). Devuelve los totales en el orden de {@code modulos}.
+     */
+    public long[] contarPorModulo(LocalDate desde, List<String> modulos, boolean excluirAdministradores) {
+        return conAlcance(excluirAdministradores, em -> {
+            List<ParametroAuditoria> parametros = new ArrayList<>();
+            StringBuilder hql = new StringBuilder("SELECT ");
+            for (int i = 0; i < modulos.size(); i++) {
+                if (i > 0) hql.append(", ");
+                hql.append("SUM(CASE WHEN ").append(condicion(CatalogoActividades.criterioPorModulo(modulos.get(i)),
+                        "m" + i + "_", parametros)).append(" THEN 1 ELSE 0 END)");
+            }
+            hql.append(" FROM Proceso p WHERE p.estado = true AND p.fechaCrea >= :desde");
+            if (excluirAdministradores) {
+                hql.append(SIN_ADMINISTRADORES);
+                parametros.add(new ParametroAuditoria("rolAdministrador", ROL_ADMINISTRADOR));
+            }
+            parametros.add(new ParametroAuditoria("desde", Timestamp.valueOf(desde.atStartOfDay())));
+            Query query = em.createQuery(hql.toString());
+            for (ParametroAuditoria parametro : parametros) query.setParameter(parametro.nombre(), parametro.valor());
+            Object resultado = query.getSingleResult();
+            Object[] fila = modulos.size() == 1 ? new Object[] { resultado } : (Object[]) resultado;
+            long[] totales = new long[modulos.size()];
+            for (int i = 0; i < totales.length; i++) totales[i] = fila[i] == null ? 0L : ((Number) fila[i]).longValue();
+            return totales;
+        });
+    }
+
     /** Apellidos y nombres, igual que el listado de personas; null si la persona no tiene ninguno. */
     private static String nombreCompleto(String apellidos, String nombres) {
         String completo = ((apellidos == null ? "" : apellidos.trim()) + " " + (nombres == null ? "" : nombres.trim())).trim();
         return completo.isEmpty() ? null : completo;
     }
 
-    private Query crearConsultaAuditoria(String seleccion, FiltroActividadAuditoriaDTO filtro, String usuarioAlcance) {
+    private Query crearConsultaAuditoria(EntityManager em, String seleccion, FiltroActividadAuditoriaDTO filtro,
+            String usuarioAlcance, boolean excluirAdministradores) {
         FiltroActividadAuditoriaDTO criterio = filtro != null ? filtro : new FiltroActividadAuditoriaDTO();
         StringBuilder hql = new StringBuilder(seleccion).append(" FROM Proceso p WHERE p.estado = true");
         List<ParametroAuditoria> parametros = new ArrayList<>();
@@ -221,6 +336,11 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         } else if (tieneTexto(criterio.getUsuario())) {
             hql.append(" AND p.usuarioCrea = :usuario");
             parametros.add(new ParametroAuditoria("usuario", criterio.getUsuario().trim()));
+        }
+        // Se aplica también al filtro Usuario: elegir a un Administrador no devuelve filas.
+        if (excluirAdministradores) {
+            hql.append(SIN_ADMINISTRADORES);
+            parametros.add(new ParametroAuditoria("rolAdministrador", ROL_ADMINISTRADOR));
         }
         if (criterio.getFechaInicio() != null) {
             hql.append(" AND p.fechaCrea >= :fechaInicio");
@@ -255,7 +375,7 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         }
         if (!seleccion.startsWith("SELECT COUNT")) hql.append(" ORDER BY p.fechaCrea DESC, p.id DESC");
 
-        Query query = super.getEntityManager().createQuery(hql.toString());
+        Query query = em.createQuery(hql.toString());
         for (ParametroAuditoria parametro : parametros) query.setParameter(parametro.nombre(), parametro.valor());
         return query;
     }

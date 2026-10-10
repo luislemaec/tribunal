@@ -51,9 +51,6 @@ public class ReporteIglesiasController implements Serializable {
     private List<IglesiaAtencionDTO> iglesiasAtencion = Collections.emptyList();
 
     @Getter
-    private String graficoAdministrador = GraficoBarrasJson.VACIO;
-
-    @Getter
     private String graficoListaMiembros = GraficoBarrasJson.VACIO;
 
     @PostConstruct
@@ -82,11 +79,6 @@ public class ReporteIglesiasController implements Serializable {
             iglesiasAtencion = Collections.emptyList();
             JsfUtil.addErrorMessage(JsfUtil.getMessage("reporteRegistros.error.carga"));
         }
-        graficoAdministrador = GraficoBarrasJson.barras(categorias, ConteoIglesiasDTO::getEtiqueta,
-                GraficoBarrasJson.serie("reporteIglesias.serie.conAdministrador", categorias,
-                        ConteoIglesiasDTO::getConAdministrador),
-                GraficoBarrasJson.serie("reporteIglesias.serie.sinAdministrador", categorias,
-                        ConteoIglesiasDTO::getSinAdministrador));
         graficoListaMiembros = GraficoBarrasJson.barras(categorias, ConteoIglesiasDTO::getEtiqueta,
                 GraficoBarrasJson.serie("reporteIglesias.serie.conLista", categorias,
                         ConteoIglesiasDTO::getConListaMiembros),

@@ -18,6 +18,8 @@ public final class LoginFilterExcluder {
                 || ruta.startsWith("/public/") || ruta.startsWith("/errors/")
                 // API móvil: sin sesión web; la protege FiltroApiMovil (token Bearer + identidad Elytron).
                 || ruta.startsWith("/api/")
+                // Ping de sesión (PingSesionServlet): ruta exacta; el servlet exige sesión iniciada.
+                || "/sesion/ping".equals(ruta)
                 || "/index.html".equals(ruta) || PAGINAS.contains(paginaFaces(ruta));
     }
 

@@ -1,0 +1,98 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Chatbot de ayuda (AyudaController). Incluido en template.xhtml; no consulta nada hasta
+         que el usuario abre el panel. Las respuestas son texto plano escapado. -->
+    <h:form id="frmAyuda" rendered="#{loginBean.loggedIn}">
+        <p:commandButton id="btnAyuda" icon="pi pi-question" styleClass="tec-ayuda-boton rounded-button"
+                         title="#{msg['ayuda.boton']}" ariaLabel="#{msg['ayuda.boton']}"
+                         action="#{ayudaController.abrir}" process="@this" update="pnlAyuda"
+                         oncomplete="PF('wdAyuda').show()" global="false"/>
+
+        <p:sidebar widgetVar="wdAyuda" position="right" styleClass="tec-ayuda-panel" blockScroll="true"
+                   ariaCloseLabel="#{msg['ayuda.cerrar']}">
+            <p:outputPanel id="pnlAyuda" layout="block" styleClass="flex flex-column gap-3 h-full">
+                <div class="flex align-items-center gap-2">
+                    <span class="tec-icon-badge tec-icon-badge--info"><i class="pi pi-question-circle"/></span>
+                    <div>
+                        <span class="block font-semibold text-900">#{msg['ayuda.titulo']}</span>
+                        <small class="text-500">#{msg['ayuda.subtitulo']}</small>
+                    </div>
+                </div>
+
+                <p:defaultCommand target="btnBuscarAyuda" scope="pnlAyuda"/>
+                <div class="p-inputgroup">
+                    <p:inputText id="txtAyuda" value="#{ayudaController.consulta}" maxlength="150"
+                                 placeholder="#{msg['ayuda.buscar.placeholder']}" ariaLabel="#{msg['ayuda.buscar.placeholder']}">
+                        <p:ajax event="keyup" delay="600" listener="#{ayudaController.buscar}"
+                                process="@this" update="pnlRespuestas" global="false"/>
+                    </p:inputText>
+                    <p:commandButton id="btnBuscarAyuda" icon="pi pi-search" ariaLabel="#{msg['ayuda.buscar']}"
+                                     action="#{ayudaController.buscar}" process="txtAyuda" update="pnlRespuestas"/>
+                </div>
+
+                <p:outputPanel id="pnlRespuestas" layout="block" styleClass="flex-grow-1 overflow-auto">
+                    <span class="block text-500 text-xs font-medium uppercase mb-2">
+                        #{ayudaController.buscado ? msg['ayuda.resultados'] : msg['ayuda.sugeridas']}
+                    </span>
+
+                    <ui:fragment rendered="#{ayudaController.sinResultados}">
+                        <div class="callout callout--info mb-3">
+                            <span class="block font-medium">#{msg['ayuda.sinResultados.titulo']}</span>
+                            <small class="block">#{msg['ayuda.sinResultados.detalle']}</small>
+                        </div>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not ayudaController.buscado and empty ayudaController.sugerencias}">
+                        <small class="block text-500 mb-3">#{msg['ayuda.sinSugerencias']}</small>
+                    </ui:fragment>
+
+                    <p:accordionPanel value="#{ayudaController.respuestas}" var="r" activeIndex="-1"
+                                      rendered="#{not empty ayudaController.respuestas}" styleClass="tec-ayuda-respuestas">
+                        <p:tab title="#{r.pregunta}">
+                            <h:outputText value="#{r.respuesta}" styleClass="tec-ayuda-texto"/>
+                            <div class="flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+                                <h:outputLink value="#{request.contextPath}/#{r.enlacePagina}" rendered="#{not empty r.enlacePagina}"
+                                              styleClass="text-sm font-medium">
+                                    <i class="pi pi-arrow-right mr-1"/>#{msg['ayuda.irPantalla']}
+                                </h:outputLink>
+                                <p:outputPanel id="pnlValorar" styleClass="flex align-items-center gap-2 text-sm">
+                                    <ui:fragment rendered="#{not ayudaController.isValorada(r.id)}">
+                                        <span class="text-500">#{msg['ayuda.util.pregunta']}</span>
+                                        <p:commandLink action="#{ayudaController.valorar(r.id, true)}" process="@this"
+                                                       update="pnlValorar" global="false">#{msg['ayuda.util.si']}</p:commandLink>
+                                        <p:commandLink action="#{ayudaController.valorar(r.id, false)}" process="@this"
+                                                       update="pnlValorar" global="false">#{msg['ayuda.util.no']}</p:commandLink>
+                                    </ui:fragment>
+                                    <h:outputText rendered="#{ayudaController.isValorada(r.id)}" styleClass="text-500"
+                                                  value="#{msg['ayuda.util.gracias']}"/>
+                                </p:outputPanel>
+                            </div>
+                        </p:tab>
+                    </p:accordionPanel>
+                </p:outputPanel>
+
+                <!-- Canales oficiales: siempre visibles al pie del panel. -->
+                <div class="border-top-1 surface-border pt-3">
+                    <span class="block text-500 text-xs font-medium uppercase mb-2">#{msg['ayuda.contacto.titulo']}</span>
+                    <ui:fragment rendered="#{empty ayudaController.contactos}">
+                        <small class="text-600">#{msg['ayuda.contacto.generico']}</small>
+                    </ui:fragment>
+                    <ui:repeat value="#{ayudaController.contactos}" var="c">
+                        <h:outputLink value="#{c.href}" target="#{c.tipo eq 'WHATSAPP' ? '_blank' : null}"
+                                      rel="noopener noreferrer" styleClass="tec-ayuda-contacto">
+                            <i class="#{c.icono}" aria-hidden="true"/>
+                            <span>#{c.tipo eq 'WHATSAPP' ? msg['ayuda.contacto.whatsapp'] : (c.tipo eq 'TELEFONO' ? msg['ayuda.contacto.llamar'] : msg['ayuda.contacto.correo'])}
+                                #{c.valor}#{empty c.etiqueta ? '' : ' · '.concat(c.etiqueta)}</span>
+                        </h:outputLink>
+                        <ui:fragment rendered="#{not empty c.horario}">
+                            <small class="block text-500 ml-4 mb-1">#{c.horario}</small>
+                        </ui:fragment>
+                    </ui:repeat>
+                </div>
+            </p:outputPanel>
+        </p:sidebar>
+    </h:form>
+</ui:composition>

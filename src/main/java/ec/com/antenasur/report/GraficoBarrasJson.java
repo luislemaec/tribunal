@@ -57,6 +57,50 @@ public final class GraficoBarrasJson {
                 + "\"scales\":{" + ejes + "}}}";
     }
 
+    /** Serie con valores ya calculados (por ejemplo, porcentajes de pocos grupos). */
+    public static String serieValores(String claveEtiqueta, long... valores) {
+        StringBuilder datos = new StringBuilder();
+        for (long valor : valores) {
+            if (datos.length() > 0) {
+                datos.append(',');
+            }
+            datos.append(valor);
+        }
+        return "{\"label\":\"" + escapar(JsfUtil.getMessage(claveEtiqueta)) + "\",\"data\":[" + datos
+                + "],\"borderRadius\":4}";
+    }
+
+    /** Barras agrupadas (no apiladas) en escala 0-100 para comparar porcentajes entre grupos. */
+    public static String porcentajesAgrupados(List<String> etiquetas, String... series) {
+        StringBuilder labels = new StringBuilder();
+        for (String etiqueta : etiquetas) {
+            if (labels.length() > 0) {
+                labels.append(',');
+            }
+            labels.append('"').append(escapar(etiqueta)).append('"');
+        }
+        return "{\"type\":\"bar\",\"data\":{\"labels\":[" + labels + "],\"datasets\":["
+                + String.join(",", series) + "]},"
+                + "\"options\":{\"indexAxis\":\"y\",\"maintainAspectRatio\":false,"
+                + "\"plugins\":{\"legend\":{\"display\":true}},"
+                + "\"scales\":{\"x\":{\"beginAtZero\":true,\"max\":100,\"ticks\":{\"precision\":0}}}}}";
+    }
+
+    /** Barras verticales de una serie temporal: el tiempo en el eje x, como se lee habitualmente. */
+    public static String serieTemporal(List<String> etiquetas, String serie) {
+        StringBuilder labels = new StringBuilder();
+        for (String etiqueta : etiquetas) {
+            if (labels.length() > 0) {
+                labels.append(',');
+            }
+            labels.append('"').append(escapar(etiqueta)).append('"');
+        }
+        return "{\"type\":\"bar\",\"data\":{\"labels\":[" + labels + "],\"datasets\":[" + serie + "]},"
+                + "\"options\":{\"maintainAspectRatio\":false,\"plugins\":{\"legend\":{\"display\":false}},"
+                + "\"scales\":{\"x\":{\"ticks\":{\"autoSkip\":true,\"maxRotation\":0}},"
+                + "\"y\":{\"beginAtZero\":true,\"ticks\":{\"precision\":0}}}}}";
+    }
+
     /** Alto del gráfico según el número de barras, para que ninguna etiqueta se comprima. */
     public static String alto(int barras) {
         return Math.max(10, 3 + barras * 2) + "rem";

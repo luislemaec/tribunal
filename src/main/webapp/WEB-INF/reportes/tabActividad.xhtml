@@ -1,0 +1,149 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Pestaña Actividad (ReporteActividadController). Ids con prefijo "act".
+         Mismo alcance que Actividades: Tribunal no ve lo de usuarios Administrador. -->
+
+    <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
+        <div class="flex align-items-center gap-2 mb-3">
+            <i class="pi pi-filter text-500"></i>
+            <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+        </div>
+        <div class="formgrid grid">
+            <div class="field col-12 md:col-6 lg:col-3">
+                <label for="actDias" class="font-medium text-700 text-sm">#{msg['reporteActividad.label.periodo']}</label>
+                <p:selectOneMenu id="actDias" value="#{reporteActividadController.dias}" styleClass="w-full">
+                    <f:selectItems value="#{reporteActividadController.opcionesPeriodo}" var="dias"
+                                   itemLabel="#{msg['reporteActividad.ultimos']} #{dias} #{msg['reporteAdministradores.dias']}" itemValue="#{dias}"/>
+                    <p:ajax event="change" listener="#{reporteActividadController.cambiarPeriodo}"
+                            process="@this" update="actPnlKpis actPnlGraficos"/>
+                </p:selectOneMenu>
+            </div>
+        </div>
+    </div>
+
+    <p:outputPanel id="actPnlKpis" layout="block" styleClass="grid mb-1">
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.transacciones']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteActividadController.totalPeriodo}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-calendar mr-1"/>#{msg['reporteActividad.ultimos']} #{reporteActividadController.dias} #{msg['reporteAdministradores.dias']}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--info h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.modulos']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteActividadController.modulosConActividad}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-th-large mr-1"/>#{msg['reporteActividad.kpi.modulos.ayuda']}
+                </span>
+            </div>
+        </div>
+        <div class="col-12 sm:col-6 lg:col-3">
+            <div class="tec-kpi tec-kpi--success h-full">
+                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.enLinea']}</span>
+                <span class="block text-900 font-bold text-2xl">#{reporteActividadController.usuariosEnLinea.size()}</span>
+                <span class="block text-500 text-xs mt-1">
+                    <i class="pi pi-desktop mr-1"/>#{msg['reporteActividad.web']}: #{reporteActividadController.usuariosWeb}
+                    · <i class="pi pi-mobile mr-1"/>#{msg['reporteActividad.app']}: #{reporteActividadController.usuariosApp}
+                </span>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <p:outputPanel id="actPnlGraficos" layout="block" styleClass="grid">
+        <div class="col-12 lg:col-7">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">#{msg['reporteActividad.grafico.porDia']}</span>
+                <ui:fragment rendered="#{reporteActividadController.totalPeriodo eq 0}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteActividad.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteActividadController.graficoPorDia}" extender="tecGraficoTemaRegistros"
+                         rendered="#{reporteActividadController.totalPeriodo gt 0}" style="width:100%;height:16rem"/>
+            </div>
+        </div>
+        <div class="col-12 lg:col-5">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700 mb-3">#{msg['reporteActividad.grafico.porModulo']}</span>
+                <ui:fragment rendered="#{empty reporteActividadController.porModulo}">
+                    <span class="tec-empty">
+                        <i class="pi pi-chart-bar"/>
+                        <span class="tec-empty__text">#{msg['reporteActividad.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <p:chart value="#{reporteActividadController.graficoPorModulo}" extender="tecGraficoTemaRegistros"
+                         rendered="#{not empty reporteActividadController.porModulo}"
+                         style="width:100%;height:#{reporteActividadController.altoGrafico(reporteActividadController.porModulo.size())}"/>
+            </div>
+        </div>
+    </p:outputPanel>
+
+    <!-- Usuarios en línea y últimos eventos: se refrescan con el botón, sin recargar el resumen. -->
+    <p:outputPanel id="actPnlEnLinea" layout="block" styleClass="grid mt-1">
+        <div class="col-12 lg:col-5">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <div class="flex align-items-center justify-content-between gap-2 mb-1">
+                    <span class="font-semibold text-700">#{msg['reporteActividad.enLinea.titulo']}</span>
+                    <p:commandButton icon="pi pi-refresh" styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                     title="#{msg['reporteActividad.actualizar']}" ariaLabel="#{msg['reporteActividad.actualizar']}"
+                                     action="#{reporteActividadController.actualizarEnLinea}"
+                                     process="@this" update="actPnlEnLinea actPnlKpis"/>
+                </div>
+                <small class="block text-500 mb-3">#{msg['reporteActividad.enLinea.ayuda']}</small>
+                <p:dataTable id="actTablaEnLinea" var="enLinea" value="#{reporteActividadController.usuariosEnLinea}"
+                             reflow="true" paginator="true" rows="10" paginatorAlwaysVisible="false"
+                             emptyMessage="#{msg['reporteActividad.enLinea.vacio']}">
+                    <p:column headerText="#{msg['reporteActividad.col.usuario']}">
+                        <h:outputText value="#{empty enLinea.nombre ? enLinea.usuario : enLinea.nombre}"/>
+                        <small class="block text-500">#{enLinea.usuario}#{empty enLinea.roles ? '' : ' · '.concat(enLinea.roles)}</small>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteActividad.col.canal']}" styleClass="text-center">
+                        <p:tag value="#{enLinea.canalesTexto}" severity="info"/>
+                    </p:column>
+                    <p:column headerText="#{msg['reporteActividad.col.desde']}">
+                        <h:outputText value="#{enLinea.desdeFecha}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </div>
+        </div>
+        <div class="col-12 lg:col-7">
+            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
+                <span class="block font-semibold text-700">#{msg['reporteActividad.eventos.titulo']}</span>
+                <small class="block text-500 mb-3">#{msg['reporteActividad.eventos.ayuda']}</small>
+                <ui:fragment rendered="#{empty reporteActividadController.eventos}">
+                    <span class="tec-empty">
+                        <i class="pi pi-history"/>
+                        <span class="tec-empty__text">#{msg['reporteActividad.sinDatos']}</span>
+                    </span>
+                </ui:fragment>
+                <ol class="tec-timeline">
+                    <ui:repeat value="#{reporteActividadController.eventos}" var="evento">
+                        <li class="tec-timeline__item">
+                            <span class="tec-timeline__punto tec-timeline__punto--#{evento.severidadResultado}"></span>
+                            <span class="tec-timeline__fecha">
+                                <h:outputText value="#{evento.fecha}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"/></h:outputText>
+                                · #{evento.modulo}
+                            </span>
+                            <span class="block text-900 font-medium">#{evento.accion}</span>
+                            <small class="block text-600">
+                                #{empty evento.nombreUsuario ? evento.usuario : evento.nombreUsuario}
+                                <p:tag value="#{evento.resultado}" severity="#{evento.severidadResultado}"
+                                       rendered="#{evento.severidadResultado ne 'secondary'}" styleClass="ml-1"/>
+                            </small>
+                        </li>
+                    </ui:repeat>
+                </ol>
+            </div>
+        </div>
+    </p:outputPanel>
+</ui:composition>

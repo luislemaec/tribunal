@@ -14,10 +14,11 @@
 			        <ui:include src="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-history"/>
             <ui:param name="titulo" value="#{msg['pagina.procesos.titulo']}"/>
-            <ui:param name="descripcion" value="#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : 'Sus actividades registradas en el sistema'}"/>
+            <ui:param name="descripcion" value="#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : (procesoController.tribunal ? 'Actividades del sistema, excepto las de usuarios Administrador' : 'Sus actividades registradas en el sistema')}"/>
             <ui:define name="contexto">
                 <div class="tec-page-header__aside">
                     <p:tag rendered="#{procesoController.administrador}" value="Vista global" severity="info" icon="pi pi-shield" styleClass="tec-status" />
+                    <p:tag rendered="#{procesoController.tribunal}" value="Vista Tribunal" severity="info" icon="pi pi-shield" styleClass="tec-status" />
                 </div>
             </ui:define>
         </ui:include>
@@ -30,7 +31,7 @@
 						styleClass="tec-filters ui-fluid">
 						<p:defaultCommand target="btnBuscar" scope="pnlFiltros" />
 						<div class="formgrid grid">
-							<ui:fragment rendered="#{procesoController.administrador}">
+							<ui:fragment rendered="#{procesoController.vistaGlobal}">
 								<div class="field col-12 md:col-6 xl:col-3">
 									<p:outputLabel for="usuario" value="Usuario" />
 									<p:selectOneMenu id="usuario"
@@ -64,7 +65,7 @@
 								</div>
 							</div>
 
-							<div class="field col-12 md:col-6 #{procesoController.administrador ? 'xl:col-3' : 'xl:col-4'}">
+							<div class="field col-12 md:col-6 #{procesoController.vistaGlobal ? 'xl:col-3' : 'xl:col-4'}">
 								<p:outputLabel for="modulo" value="Módulo" />
 								<p:selectOneMenu id="modulo"
 									value="#{procesoController.filtro.modulo}" autoWidth="false"
@@ -75,7 +76,7 @@
 								</p:selectOneMenu>
 							</div>
 
-							<div class="field col-12 md:col-6 #{procesoController.administrador ? 'xl:col-2' : 'xl:col-4'}">
+							<div class="field col-12 md:col-6 #{procesoController.vistaGlobal ? 'xl:col-2' : 'xl:col-4'}">
 								<p:outputLabel for="resultado" value="Resultado" />
 								<p:selectOneMenu id="resultado"
 									value="#{procesoController.filtro.resultado}" autoWidth="false"
@@ -108,7 +109,7 @@
 								</div>
 							</div>
 
-							<div class="field col-12 #{procesoController.administrador ? '' : 'md:col-6'} xl:col-5 tec-filter-actions-cell">
+							<div class="field col-12 #{procesoController.vistaGlobal ? '' : 'md:col-6'} xl:col-5 tec-filter-actions-cell">
 								<div class="tec-filter-actions">
 									<p:commandButton id="btnBuscar" value="Buscar"
 										icon="pi pi-search" styleClass="tec-btn tec-btn--primary"

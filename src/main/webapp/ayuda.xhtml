@@ -1,0 +1,275 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="title">#{msg['pagina.ayuda.titulo']}</ui:define>
+
+    <ui:param name="tecModulo" value="#{msg['nav.modulo.tribunal']}"/>
+    <ui:param name="tecPagina" value="#{msg['pagina.ayuda.migas']}"/>
+
+    <ui:define name="content">
+
+        <ui:include src="/WEB-INF/pageHeader.xhtml">
+            <ui:param name="icono" value="pi-question-circle"/>
+            <ui:param name="titulo" value="#{msg['pagina.ayuda.titulo']}"/>
+            <ui:param name="descripcion" value="#{msg['pagina.ayuda.descripcion']}"/>
+        </ui:include>
+
+        <h:form id="frmAyudaAdmin">
+            <p:tabView id="tabsAyuda" activeIndex="#{ayudaAdminController.pestanaActiva}">
+                <p:ajax event="tabChange" process="@this"/>
+
+                <!-- ═══════════════════ Preguntas ═══════════════════ -->
+                <p:tab id="tabPreguntas" title="#{msg['ayuda.admin.tab.preguntas']}" titleStyleClass="p-2">
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div class="flex flex-wrap gap-2">
+                            <p:tag value="#{msg['ayuda.admin.activas']}: #{ayudaAdminController.totalActivas}" severity="success"/>
+                            <p:tag value="#{msg['ayuda.admin.borradores']}: #{ayudaAdminController.totalBorradores}" severity="warning"/>
+                        </div>
+                        <p:commandButton value="#{msg['ayuda.admin.nueva']}" icon="pi pi-plus" styleClass="tec-btn"
+                                         action="#{ayudaAdminController.nuevaPregunta}" process="@this"
+                                         update=":frmAyudaAdmin:pnlPregunta" oncomplete="PF('wdDlgPregunta').show()">
+                            <p:resetInput target=":frmAyudaAdmin:pnlPregunta"/>
+                        </p:commandButton>
+                    </div>
+
+                    <p:dataTable id="tblPreguntas" value="#{ayudaAdminController.preguntas}" var="p"
+                                 filteredValue="#{ayudaAdminController.preguntasFiltradas}"
+                                 globalFilterOnly="false" reflow="true" paginator="true" rows="10"
+                                 rowsPerPageTemplate="10,25,50" paginatorPosition="bottom"
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-table"
+                                 emptyMessage="#{msg['ayuda.admin.preguntas.vacio']}">
+                        <p:column headerText="#{msg['ayuda.admin.col.pregunta']}" sortBy="#{p.pregunta}"
+                                  filterBy="#{p.pregunta}" filterMatchMode="contains">
+                            <h:outputText value="#{p.pregunta}" styleClass="font-medium"/>
+                            <small class="block text-500">#{p.palabrasClave}</small>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.pantalla']}" sortBy="#{p.pagina}" filterBy="#{p.pagina}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{empty p.pagina ? msg['ayuda.admin.todas'] : p.pagina}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.fase']}" sortBy="#{p.fase}">
+                            <h:outputText value="#{empty p.fase ? msg['ayuda.admin.todas'] : p.fase}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.roles']}">
+                            <h:outputText value="#{empty p.rolesTexto ? msg['ayuda.admin.todos'] : p.rolesTexto}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.orden']}" sortBy="#{p.orden}" styleClass="text-right">
+                            <h:outputText value="#{p.orden}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.valoracion']}" sortBy="#{p.utilNo}" styleClass="text-center">
+                            <span class="tec-text-success"><i class="pi pi-thumbs-up mr-1"/>#{p.utilSi}</span>
+                            <span class="tec-text-danger ml-2"><i class="pi pi-thumbs-down mr-1"/>#{p.utilNo}</span>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.estado']}" sortBy="#{p.activo}" styleClass="text-center">
+                            <p:tag value="#{p.activo ? msg['ayuda.admin.activa'] : msg['ayuda.admin.borrador']}"
+                                   severity="#{p.activo ? 'success' : 'warning'}"/>
+                        </p:column>
+                        <p:column styleClass="text-center" style="width:4rem">
+                            <p:commandButton icon="pi pi-pencil" styleClass="rounded-button ui-button-flat"
+                                             title="#{msg['ayuda.admin.editar']}" ariaLabel="#{msg['ayuda.admin.editar']}"
+                                             action="#{ayudaAdminController.editarPregunta(p)}" process="@this"
+                                             update=":frmAyudaAdmin:pnlPregunta" oncomplete="PF('wdDlgPregunta').show()">
+                                <p:resetInput target=":frmAyudaAdmin:pnlPregunta"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+
+                <!-- ═══════════════════ Sin respuesta ═══════════════════ -->
+                <p:tab id="tabSinRespuesta" title="#{msg['ayuda.admin.tab.sinRespuesta']}" titleStyleClass="p-2">
+                    <small class="block text-500 mb-3">#{msg['ayuda.admin.sinRespuesta.ayuda']}</small>
+                    <p:dataTable id="tblSinRespuesta" value="#{ayudaAdminController.sinRespuesta}" var="s"
+                                 reflow="true" paginator="true" rows="10" paginatorPosition="bottom"
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-table"
+                                 emptyMessage="#{msg['ayuda.admin.sinRespuesta.vacio']}">
+                        <p:column headerText="#{msg['ayuda.admin.col.consulta']}" sortBy="#{s.texto}">
+                            <h:outputText value="#{s.texto}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.pantalla']}" sortBy="#{s.pagina}">
+                            <h:outputText value="#{empty s.pagina ? '—' : s.pagina}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.veces']}" sortBy="#{s.veces}" styleClass="text-right">
+                            <h:outputText value="#{s.veces}"/>
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.ultima']}" sortBy="#{s.ultimaFecha}">
+                            <h:outputText value="#{s.ultimaFecha}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm"/></h:outputText>
+                        </p:column>
+                        <p:column styleClass="text-center" style="width:7rem">
+                            <p:commandButton icon="pi pi-plus" styleClass="rounded-button ui-button-flat"
+                                             title="#{msg['ayuda.admin.crearDesde']}" ariaLabel="#{msg['ayuda.admin.crearDesde']}"
+                                             action="#{ayudaAdminController.crearDesdeSinRespuesta(s)}" process="@this"
+                                             update=":frmAyudaAdmin:tabsAyuda :frmAyudaAdmin:pnlPregunta"
+                                             oncomplete="PF('wdDlgPregunta').show()"/>
+                            <p:commandButton icon="pi pi-times" styleClass="rounded-button ui-button-flat ui-button-secondary"
+                                             title="#{msg['ayuda.admin.descartar']}" ariaLabel="#{msg['ayuda.admin.descartar']}"
+                                             action="#{ayudaAdminController.descartarSinRespuesta(s)}" process="@this"
+                                             update="tblSinRespuesta"/>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+
+                <!-- ═══════════════════ Contactos ═══════════════════ -->
+                <p:tab id="tabContactos" title="#{msg['ayuda.admin.tab.contactos']}" titleStyleClass="p-2">
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <small class="text-500">#{msg['ayuda.admin.contactos.ayuda']}</small>
+                        <p:commandButton value="#{msg['ayuda.admin.contacto.nuevo']}" icon="pi pi-plus" styleClass="tec-btn"
+                                         action="#{ayudaAdminController.nuevoContacto}" process="@this"
+                                         update=":frmAyudaAdmin:pnlContacto" oncomplete="PF('wdDlgContacto').show()">
+                            <p:resetInput target=":frmAyudaAdmin:pnlContacto"/>
+                        </p:commandButton>
+                    </div>
+                    <p:dataTable id="tblContactos" value="#{ayudaAdminController.contactos}" var="c" reflow="true"
+                                 styleClass="ui-datatable-striped ui-datatable-sm tec-table"
+                                 emptyMessage="#{msg['ayuda.admin.contactos.vacio']}">
+                        <p:column headerText="#{msg['ayuda.admin.col.tipo']}">
+                            <i class="#{c.icono} mr-2" aria-hidden="true"/>#{c.tipo}
+                        </p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.valor']}"><h:outputText value="#{c.valor}"/></p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.etiqueta']}"><h:outputText value="#{c.etiqueta}"/></p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.horario']}"><h:outputText value="#{c.horario}"/></p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.orden']}" styleClass="text-right"><h:outputText value="#{c.orden}"/></p:column>
+                        <p:column headerText="#{msg['ayuda.admin.col.estado']}" styleClass="text-center">
+                            <p:tag value="#{c.activo ? msg['ayuda.admin.activo'] : msg['ayuda.admin.inactivo']}"
+                                   severity="#{c.activo ? 'success' : 'secondary'}"/>
+                        </p:column>
+                        <p:column styleClass="text-center" style="width:4rem">
+                            <p:commandButton icon="pi pi-pencil" styleClass="rounded-button ui-button-flat"
+                                             title="#{msg['ayuda.admin.editar']}" ariaLabel="#{msg['ayuda.admin.editar']}"
+                                             action="#{ayudaAdminController.editarContacto(c)}" process="@this"
+                                             update=":frmAyudaAdmin:pnlContacto" oncomplete="PF('wdDlgContacto').show()">
+                                <p:resetInput target=":frmAyudaAdmin:pnlContacto"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+            </p:tabView>
+
+            <!-- ═══════════════════ Diálogo: pregunta ═══════════════════ -->
+            <p:dialog widgetVar="wdDlgPregunta" header="#{msg['ayuda.admin.dialogo.pregunta']}" modal="true"
+                      responsive="true" fitViewport="true" styleClass="tec-dialog tec-dialog--md">
+                <p:outputPanel id="pnlPregunta" layout="block" styleClass="tec-form ui-fluid">
+                    <div class="formgrid grid">
+                        <div class="field col-12">
+                            <p:outputLabel for="txtPregunta" value="#{msg['ayuda.admin.col.pregunta']}"/>
+                            <p:inputText id="txtPregunta" value="#{ayudaAdminController.pregunta.pregunta}"
+                                         required="true" maxlength="300"/>
+                        </div>
+                        <div class="field col-12">
+                            <p:outputLabel for="txtRespuesta" value="#{msg['ayuda.admin.respuesta']}"/>
+                            <p:inputTextarea id="txtRespuesta" value="#{ayudaAdminController.pregunta.respuesta}"
+                                             required="true" rows="7" maxlength="4000" counter="cntRespuesta"
+                                             counterTemplate="#{msg['ayuda.admin.caracteres']}" autoResize="false"/>
+                            <small class="block text-500"><h:outputText id="cntRespuesta"/> · #{msg['ayuda.admin.respuesta.ayuda']}</small>
+                        </div>
+                        <div class="field col-12">
+                            <p:outputLabel for="txtClaves" value="#{msg['ayuda.admin.palabrasClave']}"/>
+                            <p:inputText id="txtClaves" value="#{ayudaAdminController.pregunta.palabrasClave}" maxlength="500"/>
+                            <small class="block text-500">#{msg['ayuda.admin.palabrasClave.ayuda']}</small>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="selPagina" value="#{msg['ayuda.admin.sugerirEn']}"/>
+                            <p:selectOneMenu id="selPagina" value="#{ayudaAdminController.pregunta.pagina}" filter="true"
+                                             filterMatchMode="contains" autoWidth="false">
+                                <f:selectItem itemLabel="#{msg['ayuda.admin.todas']}" itemValue="#{null}"/>
+                                <f:selectItems value="#{ayudaAdminController.paginas}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="selEnlace" value="#{msg['ayuda.admin.enlace']}"/>
+                            <p:selectOneMenu id="selEnlace" value="#{ayudaAdminController.pregunta.enlacePagina}" filter="true"
+                                             filterMatchMode="contains" autoWidth="false">
+                                <f:selectItem itemLabel="#{msg['ayuda.admin.sinEnlace']}" itemValue="#{null}"/>
+                                <f:selectItems value="#{ayudaAdminController.paginas}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="selFase" value="#{msg['ayuda.admin.col.fase']}"/>
+                            <p:selectOneMenu id="selFase" value="#{ayudaAdminController.pregunta.fase}" filter="true"
+                                             filterMatchMode="contains" autoWidth="false">
+                                <f:selectItem itemLabel="#{msg['ayuda.admin.todas']}" itemValue="#{null}"/>
+                                <f:selectItems value="#{ayudaAdminController.fases}" var="f" itemLabel="#{f}" itemValue="#{f.name()}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="selRoles" value="#{msg['ayuda.admin.col.roles']}"/>
+                            <p:selectCheckboxMenu id="selRoles" value="#{ayudaAdminController.pregunta.rolIds}"
+                                                  emptyLabel="#{msg['ayuda.admin.todos']}" updateLabel="true" multiple="true">
+                                <f:converter converterId="jakarta.faces.Integer"/>
+                                <f:selectItems value="#{ayudaAdminController.roles}" var="r" itemLabel="#{r[1]}" itemValue="#{r[0]}"/>
+                            </p:selectCheckboxMenu>
+                            <small class="block text-500">#{msg['ayuda.admin.roles.ayuda']}</small>
+                        </div>
+                        <div class="field col-6 md:col-3">
+                            <p:outputLabel for="spnOrden" value="#{msg['ayuda.admin.col.orden']}"/>
+                            <p:spinner id="spnOrden" value="#{ayudaAdminController.pregunta.orden}" min="0" max="9999"/>
+                        </div>
+                        <div class="field col-6 md:col-3 flex flex-column">
+                            <p:outputLabel for="chkActiva" value="#{msg['ayuda.admin.activa']}"/>
+                            <p:toggleSwitch id="chkActiva" value="#{ayudaAdminController.pregunta.activo}" styleClass="mt-2"/>
+                        </div>
+                    </div>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
+                                         onclick="PF('wdDlgPregunta').hide()"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check" styleClass="tec-btn"
+                                         action="#{ayudaAdminController.guardarPregunta}" process="pnlPregunta @this"
+                                         update="pnlPregunta tabsAyuda"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+
+            <!-- ═══════════════════ Diálogo: contacto ═══════════════════ -->
+            <p:dialog widgetVar="wdDlgContacto" header="#{msg['ayuda.admin.dialogo.contacto']}" modal="true"
+                      responsive="true" fitViewport="true" styleClass="tec-dialog tec-dialog--md">
+                <p:outputPanel id="pnlContacto" layout="block" styleClass="tec-form ui-fluid">
+                    <div class="formgrid grid">
+                        <div class="field col-12 md:col-5">
+                            <p:outputLabel for="selTipo" value="#{msg['ayuda.admin.col.tipo']}"/>
+                            <p:selectOneMenu id="selTipo" value="#{ayudaAdminController.contacto.tipo}" required="true">
+                                <f:selectItems value="#{ayudaAdminController.tiposContacto}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field col-12 md:col-7">
+                            <p:outputLabel for="txtValor" value="#{msg['ayuda.admin.col.valor']}"/>
+                            <p:inputText id="txtValor" value="#{ayudaAdminController.contacto.valor}" required="true"
+                                         maxlength="150" placeholder="+593..."/>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="txtEtiqueta" value="#{msg['ayuda.admin.col.etiqueta']}"/>
+                            <p:inputText id="txtEtiqueta" value="#{ayudaAdminController.contacto.etiqueta}" maxlength="100"/>
+                        </div>
+                        <div class="field col-12 md:col-6">
+                            <p:outputLabel for="txtHorario" value="#{msg['ayuda.admin.col.horario']}"/>
+                            <p:inputText id="txtHorario" value="#{ayudaAdminController.contacto.horario}" maxlength="100"/>
+                        </div>
+                        <div class="field col-6 md:col-3">
+                            <p:outputLabel for="spnOrdenContacto" value="#{msg['ayuda.admin.col.orden']}"/>
+                            <p:spinner id="spnOrdenContacto" value="#{ayudaAdminController.contacto.orden}" min="0" max="9999"/>
+                        </div>
+                        <div class="field col-6 md:col-3 flex flex-column">
+                            <p:outputLabel for="chkContactoActivo" value="#{msg['ayuda.admin.activo']}"/>
+                            <p:toggleSwitch id="chkContactoActivo" value="#{ayudaAdminController.contacto.activo}" styleClass="mt-2"/>
+                        </div>
+                    </div>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
+                                         onclick="PF('wdDlgContacto').hide()"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"/>
+                        <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check" styleClass="tec-btn"
+                                         action="#{ayudaAdminController.guardarContacto}" process="pnlContacto @this"
+                                         update="pnlContacto tabsAyuda"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+</ui:composition>

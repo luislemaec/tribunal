@@ -55,6 +55,9 @@ public class LoginController implements Serializable {
     private ec.com.antenasur.security.menu.AutorizacionMenuService autorizacionMenu;
 
     @Inject
+    private ec.com.antenasur.security.sesion.SesionesWebEnLinea sesionesWebEnLinea;
+
+    @Inject
     private AccessService accessService;
 
     @Inject
@@ -263,6 +266,16 @@ public class LoginController implements Serializable {
         accessAuditory.setSession(httpSession.getId());
         accessAuditory.setActive(true);
         httpSession.setAttribute("loginBean", loginBean);
+        registrarSesionEnLinea(httpSession);
+    }
+
+    /** Usuarios en línea (Rep. Registros). Un fallo aquí nunca debe impedir el ingreso. */
+    private void registrarSesionEnLinea(HttpSession httpSession) {
+        try {
+            sesionesWebEnLinea.registrar(httpSession, user != null ? user.getUsername() : null);
+        } catch (RuntimeException e) {
+            log.warn("No se pudo registrar la sesion en linea de '{}'", loginBean.getUserName(), e);
+        }
     }
 
     private void redireccionarDespuesDeLogin() throws Throwable {

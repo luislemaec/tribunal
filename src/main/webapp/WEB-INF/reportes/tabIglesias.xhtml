@@ -66,21 +66,8 @@
     </p:outputPanel>
 
     <p:outputPanel id="iglPnlGraficos" layout="block" styleClass="grid">
-        <div class="col-12 lg:col-6">
-            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                <span class="block font-semibold text-700 mb-3">#{msg['reporteIglesias.grafico.administrador']}</span>
-                <ui:fragment rendered="#{empty reporteIglesiasController.categorias}">
-                    <span class="tec-empty">
-                        <i class="pi pi-chart-bar"/>
-                        <span class="tec-empty__text">#{msg['reporteIglesias.sinDatos']}</span>
-                    </span>
-                </ui:fragment>
-                <p:chart value="#{reporteIglesiasController.graficoAdministrador}" extender="tecGraficoTemaRegistros"
-                         rendered="#{not empty reporteIglesiasController.categorias}"
-                         style="width:100%;height:#{reporteIglesiasController.altoGrafico(reporteIglesiasController.categorias.size())}"/>
-            </div>
-        </div>
-        <div class="col-12 lg:col-6">
+        <!-- Con/sin administrador se muestra en la pestaña Administradores. -->
+        <div class="col-12">
             <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                 <span class="block font-semibold text-700 mb-3">#{msg['reporteIglesias.grafico.lista']}</span>
                 <ui:fragment rendered="#{empty reporteIglesiasController.categorias}">
