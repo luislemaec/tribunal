@@ -2,25 +2,30 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+import ec.com.antenasur.bean.AyudaConversacion;
 import ec.com.antenasur.dto.AyudaContactoDTO;
 import ec.com.antenasur.dto.AyudaRespuestaDTO;
+import ec.com.antenasur.dto.MensajeAyudaDTO;
+import ec.com.antenasur.security.menu.PaginasMenu;
 import ec.com.antenasur.service.tec.AyudaService;
+import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Widget del chatbot de ayuda (template.xhtml). No consulta nada al cargar la página:
- * los datos se piden solo cuando el usuario abre el panel o busca.
+ * Asistente de ayuda en formato de conversación (template.xhtml). Por reglas, sin IA:
+ * responde con las preguntas aprobadas por el Tribunal. La conversación vive en la sesión
+ * ({@link AyudaConversacion}) y se conserva al cambiar de pantalla. No consulta nada hasta
+ * que el usuario abre el panel.
  */
 @Named
 @ViewScoped
@@ -29,103 +34,180 @@ public class AyudaController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Tope de búsquedas por vista: evita llenar el registro de consultas sin respuesta. */
-    private static final int MAX_BUSQUEDAS_POR_VISTA = 30;
+    /** Tope de consultas sin respuesta registradas por vista. */
+    private static final int MAX_REGISTROS_POR_VISTA = 30;
+
+    /** Preguntas relacionadas que se ofrecen bajo una respuesta. */
+    private static final int MAX_RELACIONADAS = 3;
 
     @Inject
     private AyudaService ayudaService;
 
-    @Getter
-    private boolean cargado;
+    @Inject
+    private AyudaConversacion conversacion;
 
     @Getter
     @Setter
     private String consulta;
 
     @Getter
-    private boolean buscado;
-
-    @Getter
-    private List<AyudaRespuestaDTO> sugerencias = Collections.emptyList();
-
-    @Getter
-    private List<AyudaRespuestaDTO> resultados = Collections.emptyList();
-
-    @Getter
     private List<AyudaContactoDTO> contactos = Collections.emptyList();
 
-    private final Set<Integer> valoradas = new HashSet<>();
+    private boolean contactosCargados;
 
-    private int busquedas;
+    private int registros;
 
-    /** Al abrir el panel por primera vez en la vista. */
+    /** Al abrir el panel: saludo la primera vez y sugerencias al llegar a otra pantalla. */
     public void abrir() {
-        if (cargado) {
-            return;
+        conversacion.marcarVistos();
+        cargarContactos();
+        String pagina = paginaActual();
+        if (conversacion.isVacia()) {
+            saludar(pagina);
+        } else if (!Objects.equals(pagina, conversacion.getUltimaPaginaSugerida())) {
+            List<AyudaRespuestaDTO> sugerencias = sugerencias(pagina);
+            conversacion.setUltimaPaginaSugerida(pagina);
+            if (!sugerencias.isEmpty()) {
+                MensajeAyudaDTO mensaje = MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.sugerenciasPantalla"));
+                mensaje.getOpciones().addAll(sugerencias);
+                conversacion.agregar(mensaje);
+            }
         }
-        try {
-            sugerencias = ayudaService.sugerencias(paginaActual());
-            contactos = ayudaService.contactos();
-        } catch (Exception e) {
-            log.warn("No se pudo cargar la ayuda", e);
-            sugerencias = Collections.emptyList();
-        }
-        cargado = true;
     }
 
-    public void buscar() {
-        abrir();
+    /** Enviar lo escrito (Enter o botón). */
+    public void enviar() {
         String texto = consulta == null ? "" : consulta.trim();
+        consulta = null;
+        if (texto.isEmpty()) {
+            return;
+        }
+        if (texto.length() > AyudaService.MAX_LONGITUD_CONSULTA) {
+            texto = texto.substring(0, AyudaService.MAX_LONGITUD_CONSULTA);
+        }
+        conversacion.agregar(MensajeAyudaDTO.delUsuario(texto));
         if (texto.length() < AyudaService.MIN_LONGITUD_CONSULTA) {
-            limpiar();
+            conversacion.agregar(MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.muyCorta")));
             return;
         }
-        if (busquedas >= MAX_BUSQUEDAS_POR_VISTA) {
-            return;
-        }
-        busquedas++;
+        boolean registrar = registros < MAX_REGISTROS_POR_VISTA;
+        registros++;
+        List<AyudaRespuestaDTO> encontradas;
         try {
-            resultados = ayudaService.buscar(texto, paginaActual());
+            encontradas = ayudaService.buscar(texto, paginaActual(), registrar);
         } catch (Exception e) {
             log.warn("No se pudo buscar en la ayuda", e);
-            resultados = Collections.emptyList();
+            conversacion.agregar(error());
+            return;
         }
-        buscado = true;
+        responder(encontradas);
     }
 
-    public void limpiar() {
-        consulta = null;
-        resultados = Collections.emptyList();
-        buscado = false;
+    /** Clic en una pregunta sugerida: se muestra como si el usuario la hubiera escrito. */
+    public void elegir(Integer preguntaId) {
+        AyudaRespuestaDTO respuesta;
+        try {
+            respuesta = ayudaService.respuesta(preguntaId);
+        } catch (Exception e) {
+            log.warn("No se pudo obtener la respuesta de ayuda id={}", preguntaId, e);
+            conversacion.agregar(error());
+            return;
+        }
+        if (respuesta == null) {
+            conversacion.agregar(MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.noDisponible")));
+            return;
+        }
+        conversacion.agregar(MensajeAyudaDTO.delUsuario(respuesta.getPregunta()));
+        responder(List.of(respuesta));
     }
 
-    /** Un voto por pregunta y vista. */
-    public void valorar(Integer preguntaId, boolean util) {
-        if (preguntaId == null || !valoradas.add(preguntaId)) {
+    /** «¿Le sirvió?»: un voto por mensaje. */
+    public void valorar(String mensajeId, boolean util) {
+        conversacion.marcarVistos();
+        MensajeAyudaDTO mensaje = buscarMensaje(mensajeId);
+        if (mensaje == null || mensaje.isValorado() || mensaje.getRespuesta() == null) {
+            return;
+        }
+        mensaje.setValorado(true);
+        try {
+            ayudaService.valorar(mensaje.getRespuesta().getId(), util);
+        } catch (Exception e) {
+            log.warn("No se pudo registrar la valoracion de ayuda", e);
+        }
+    }
+
+    public void mostrarContacto() {
+        cargarContactos();
+        MensajeAyudaDTO mensaje = MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.contacto"));
+        mensaje.setConContacto(true);
+        conversacion.agregar(mensaje);
+    }
+
+    public void nuevaConversacion() {
+        conversacion.reiniciar();
+        saludar(paginaActual());
+    }
+
+    public List<MensajeAyudaDTO> getMensajes() {
+        return conversacion.getMensajes();
+    }
+
+    private void responder(List<AyudaRespuestaDTO> encontradas) {
+        if (encontradas.isEmpty()) {
+            MensajeAyudaDTO mensaje = MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.sinRespuesta"));
+            mensaje.setConContacto(true);
+            conversacion.agregar(mensaje);
+            return;
+        }
+        AyudaRespuestaDTO mejor = encontradas.get(0);
+        MensajeAyudaDTO mensaje = MensajeAyudaDTO.delAsistente(mejor.getRespuesta());
+        mensaje.setRespuesta(mejor);
+        encontradas.stream().skip(1).limit(MAX_RELACIONADAS).forEach(mensaje.getOpciones()::add);
+        conversacion.agregar(mensaje);
+    }
+
+    private void saludar(String pagina) {
+        MensajeAyudaDTO saludo = MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.saludo"));
+        saludo.getOpciones().addAll(sugerencias(pagina));
+        conversacion.agregar(saludo);
+        conversacion.setUltimaPaginaSugerida(pagina);
+    }
+
+    private List<AyudaRespuestaDTO> sugerencias(String pagina) {
+        try {
+            return ayudaService.sugerencias(pagina);
+        } catch (Exception e) {
+            log.warn("No se pudieron cargar las sugerencias de ayuda", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private void cargarContactos() {
+        if (contactosCargados) {
             return;
         }
         try {
-            ayudaService.valorar(preguntaId, util);
+            contactos = ayudaService.contactos();
+            contactosCargados = true;
         } catch (Exception e) {
-            log.warn("No se pudo registrar la valoracion de ayuda id={}", preguntaId, e);
+            log.warn("No se pudieron cargar los contactos de ayuda", e);
         }
     }
 
-    public boolean isValorada(Integer preguntaId) {
-        return valoradas.contains(preguntaId);
+    private MensajeAyudaDTO buscarMensaje(String id) {
+        return conversacion.getMensajes().stream().filter(m -> m.getId().equals(id)).findFirst().orElse(null);
     }
 
-    public boolean isSinResultados() {
-        return buscado && resultados.isEmpty();
+    private static MensajeAyudaDTO error() {
+        MensajeAyudaDTO mensaje = MensajeAyudaDTO.delAsistente(JsfUtil.getMessage("ayuda.chat.error"));
+        mensaje.setConContacto(true);
+        return mensaje;
     }
 
-    /** Lista que se muestra: resultados si hubo búsqueda, si no las sugerencias. */
-    public List<AyudaRespuestaDTO> getRespuestas() {
-        return buscado ? resultados : sugerencias;
-    }
-
+    /** Página actual normalizada (p. ej. iglesias.jsf), para sugerencias por pantalla. */
     private static String paginaActual() {
         FacesContext contexto = FacesContext.getCurrentInstance();
-        return contexto == null || contexto.getViewRoot() == null ? null : contexto.getViewRoot().getViewId();
+        String vista = contexto == null || contexto.getViewRoot() == null ? null : contexto.getViewRoot().getViewId();
+        return PaginasMenu.normalizar(vista);
     }
 }

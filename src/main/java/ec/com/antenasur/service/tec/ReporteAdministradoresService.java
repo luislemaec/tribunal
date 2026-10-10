@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
@@ -115,11 +116,14 @@ public class ReporteAdministradoresService {
                 { porcentaje(habilitados[1], registrados[1]), porcentaje(revisados[1], registrados[1]) } };
     }
 
-    /** Lista de acción: sin administrador, pendientes de activar, sin acceso reciente y al día. */
+    /**
+     * Lista de acción: sin administrador, pendientes de activar, sin acceso reciente y al día.
+     * Mutable: p:dataTable con sortBy la ordena en el propio objeto (SortFeature).
+     */
     public List<AdministradorIglesiaDTO> ordenarParaAtencion(List<AdministradorIglesiaDTO> iglesias) {
         return iglesias.stream().sorted(Comparator.comparingInt(AdministradorIglesiaDTO::getPrioridad)
                 .thenComparing(AdministradorIglesiaDTO::getCanton)
-                .thenComparing(AdministradorIglesiaDTO::getIglesia)).toList();
+                .thenComparing(AdministradorIglesiaDTO::getIglesia)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private static List<ConteoAdministradoresDTO> agrupar(List<AdministradorIglesiaDTO> iglesias,

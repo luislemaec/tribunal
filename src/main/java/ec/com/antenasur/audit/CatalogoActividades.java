@@ -89,6 +89,37 @@ public final class CatalogoActividades {
 		}
 	}
 
+	/** Patrones {@code LIKE} de un módulo dentro de la clasificación ordenada. */
+	public record PatronesModulo(String modulo, List<String> patrones) {
+	}
+
+	/**
+	 * Clasificación por módulo en el mismo orden que {@link #normalizar(String)}: primero
+	 * las reglas específicas y luego las auxiliares, en el orden del catálogo; gana la
+	 * primera que coincide y lo que no coincide con ninguna es {@link #SISTEMA}. Sirve para
+	 * un único {@code CASE WHEN ... END} en SQL, que asigna cada actividad a un solo módulo
+	 * y deja de evaluar patrones en la primera coincidencia. Los tramos consecutivos del
+	 * mismo módulo se agrupan.
+	 */
+	public static List<PatronesModulo> clasificacionPorModulo() {
+		List<PatronesModulo> resultado = new ArrayList<>();
+		for (boolean auxiliares : new boolean[] { false, true }) {
+			for (Regla regla : REGLAS) {
+				if (regla.auxiliar() != auxiliares) continue;
+				List<String> patrones = regla.firmas().stream().map(Firma::patronLike).toList();
+				int ultimo = resultado.size() - 1;
+				if (ultimo >= 0 && resultado.get(ultimo).modulo().equals(regla.modulo())) {
+					List<String> unidos = new ArrayList<>(resultado.get(ultimo).patrones());
+					unidos.addAll(patrones);
+					resultado.set(ultimo, new PatronesModulo(regla.modulo(), List.copyOf(unidos)));
+				} else {
+					resultado.add(new PatronesModulo(regla.modulo(), patrones));
+				}
+			}
+		}
+		return List.copyOf(resultado);
+	}
+
 	public static ActividadNormalizada normalizar(String actividad) {
 		String original = comoTrimSql(actividad);
 		String minusculas = original.toLowerCase(Locale.ROOT);

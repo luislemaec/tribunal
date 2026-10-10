@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -26,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Pestaña Actividad de Rep. Registros: transacciones de la bitácora por día y por
  * módulo, últimos eventos en línea de tiempo y usuarios en línea. Se crea solo al
- * abrir la pestaña (tabView dinámico).
+ * abrir la pestaña (tabView dinámico) y no consulta al crearse: ver {@link #cargar()}.
  */
 @Named
 @ViewScoped
@@ -70,19 +69,35 @@ public class ReporteActividadController implements Serializable {
     @Getter
     private List<UsuarioEnLineaDTO> usuariosEnLinea = Collections.emptyList();
 
-    @PostConstruct
-    public void init() {
+    /** false hasta la primera carga: la vista muestra marcadores mientras llegan los datos. */
+    @Getter
+    private boolean cargado;
+
+    /**
+     * Primera carga, en segundo plano: la pestaña se dibuja al instante y un
+     * p:remoteCommand (autoRun) pide los datos justo después.
+     */
+    public void cargar() {
         cargarResumen();
         cargarEnLinea();
+        cargado = true;
     }
 
     /** Cambio de periodo (AJAX): solo el resumen de transacciones. */
     public void cambiarPeriodo() {
+        if (!cargado) {
+            cargar();
+            return;
+        }
         cargarResumen();
     }
 
     /** Botón Actualizar de usuarios en línea y últimos eventos. */
     public void actualizarEnLinea() {
+        if (!cargado) {
+            cargar();
+            return;
+        }
         cargarEnLinea();
     }
 

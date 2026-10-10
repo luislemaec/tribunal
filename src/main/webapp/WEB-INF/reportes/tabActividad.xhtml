@@ -7,6 +7,11 @@
     <!-- Pestaña Actividad (ReporteActividadController). Ids con prefijo "act".
          Mismo alcance que Actividades: Tribunal no ve lo de usuarios Administrador. -->
 
+    <!-- Carga en dos tiempos: la pestaña se dibuja al instante con marcadores y los datos
+         llegan por AJAX justo después (las consultas de la bitácora pueden tardar). -->
+    <p:remoteCommand name="actCargar" action="#{reporteActividadController.cargar}" autoRun="true"
+                     process="@this" update="actPnlKpis actPnlGraficos actPnlEnLinea" global="false"/>
+
     <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
         <div class="flex align-items-center gap-2 mb-3">
             <i class="pi pi-filter text-500"></i>
@@ -19,13 +24,19 @@
                     <f:selectItems value="#{reporteActividadController.opcionesPeriodo}" var="dias"
                                    itemLabel="#{msg['reporteActividad.ultimos']} #{dias} #{msg['reporteAdministradores.dias']}" itemValue="#{dias}"/>
                     <p:ajax event="change" listener="#{reporteActividadController.cambiarPeriodo}"
-                            process="@this" update="actPnlKpis actPnlGraficos"/>
+                            process="@this" update="actPnlKpis actPnlGraficos actPnlEnLinea"/>
                 </p:selectOneMenu>
             </div>
         </div>
     </div>
 
     <p:outputPanel id="actPnlKpis" layout="block" styleClass="grid mb-1">
+        <ui:fragment rendered="#{not reporteActividadController.cargado}">
+            <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
+            <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
+            <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
+        </ui:fragment>
+        <ui:fragment rendered="#{reporteActividadController.cargado}">
         <div class="col-12 sm:col-6 lg:col-3">
             <div class="tec-kpi h-full">
                 <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.transacciones']}</span>
@@ -54,9 +65,15 @@
                 </span>
             </div>
         </div>
+        </ui:fragment>
     </p:outputPanel>
 
     <p:outputPanel id="actPnlGraficos" layout="block" styleClass="grid">
+        <ui:fragment rendered="#{not reporteActividadController.cargado}">
+            <div class="col-12 lg:col-7"><p:skeleton height="19rem" borderRadius="8px"/></div>
+            <div class="col-12 lg:col-5"><p:skeleton height="19rem" borderRadius="8px"/></div>
+        </ui:fragment>
+        <ui:fragment rendered="#{reporteActividadController.cargado}">
         <div class="col-12 lg:col-7">
             <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                 <span class="block font-semibold text-700 mb-3">#{msg['reporteActividad.grafico.porDia']}</span>
@@ -84,10 +101,16 @@
                          style="width:100%;height:#{reporteActividadController.altoGrafico(reporteActividadController.porModulo.size())}"/>
             </div>
         </div>
+        </ui:fragment>
     </p:outputPanel>
 
     <!-- Usuarios en línea y últimos eventos: se refrescan con el botón, sin recargar el resumen. -->
     <p:outputPanel id="actPnlEnLinea" layout="block" styleClass="grid mt-1">
+        <ui:fragment rendered="#{not reporteActividadController.cargado}">
+            <div class="col-12 lg:col-5"><p:skeleton height="14rem" borderRadius="8px"/></div>
+            <div class="col-12 lg:col-7"><p:skeleton height="14rem" borderRadius="8px"/></div>
+        </ui:fragment>
+        <ui:fragment rendered="#{reporteActividadController.cargado}">
         <div class="col-12 lg:col-5">
             <div class="surface-card shadow-1 border-round-lg p-3 h-full">
                 <div class="flex align-items-center justify-content-between gap-2 mb-1">
@@ -145,5 +168,6 @@
                 </ol>
             </div>
         </div>
+        </ui:fragment>
     </p:outputPanel>
 </ui:composition>

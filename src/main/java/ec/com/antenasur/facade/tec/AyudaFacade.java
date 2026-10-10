@@ -68,6 +68,13 @@ public class AyudaFacade extends AbstractFacade<AyudaPregunta, Integer> {
                 .setParameter("pagina", pagina).setParameter("fase", fase).setMaxResults(limite));
     }
 
+    /** Una pregunta activa por id, solo si es visible para los roles del usuario. */
+    public List<Object[]> visiblePorId(Integer id, List<String> roles) {
+        return filas(getEntityManager().createNativeQuery(COLUMNAS + " FROM tec.ayuda_pregunta p"
+                + " WHERE p.estado = TRUE AND p.ayup_id = :id" + VISIBLE_PARA_ROLES)
+                .setParameter("id", id).setParameter("roles", roles));
+    }
+
     /** Suma un voto «me sirvió» o «no me sirvió» sin cargar la entidad ni crear revisión. */
     public void valorar(Integer id, boolean util) {
         getEntityManager().createNativeQuery("UPDATE tec.ayuda_pregunta SET "

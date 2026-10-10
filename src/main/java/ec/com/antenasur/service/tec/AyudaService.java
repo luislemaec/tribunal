@@ -70,9 +70,11 @@ public class AyudaService {
 
     /**
      * Busca primero con todas las palabras y, si no hay resultados, con cualquiera de
-     * ellas. Si tampoco encuentra nada, registra la consulta (anónima y enmascarada).
+     * ellas. Si tampoco encuentra nada y {@code registrarSinRespuesta}, registra la consulta
+     * (anónima y enmascarada). La búsqueda mientras se escribe no registra: guardaría
+     * palabras a medio escribir.
      */
-    public List<AyudaRespuestaDTO> buscar(String texto, String pagina) {
+    public List<AyudaRespuestaDTO> buscar(String texto, String pagina, boolean registrarSinRespuesta) {
         String normalizado = TextoAyuda.normalizar(texto);
         if (normalizado.length() < MIN_LONGITUD_CONSULTA) {
             return List.of();
@@ -90,10 +92,22 @@ public class AyudaService {
                 filas = ayudaFacade.buscar(alternativa, true, roles, paginaSegura, fase, MAX_RESULTADOS);
             }
         }
-        if (filas.isEmpty()) {
+        if (filas.isEmpty() && registrarSinRespuesta) {
             registrarSinRespuesta(texto, paginaSegura);
         }
         return aRespuestas(filas);
+    }
+
+    /**
+     * Respuesta de una pregunta elegida con un clic. Se vuelve a comprobar en el servidor
+     * que sea visible para el rol: el id llega desde el navegador.
+     */
+    public AyudaRespuestaDTO respuesta(Integer preguntaId) {
+        if (preguntaId == null) {
+            return null;
+        }
+        List<AyudaRespuestaDTO> respuestas = aRespuestas(ayudaFacade.visiblePorId(preguntaId, rolesDelUsuario()));
+        return respuestas.isEmpty() ? null : respuestas.get(0);
     }
 
     public void valorar(Integer preguntaId, boolean util) {
@@ -164,8 +178,10 @@ public class AyudaService {
     // ──────────────────────────────────────────────────────── Mantenimiento
 
     @RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+    /** Lista mutable: p:dataTable con sortBy la ordena en el propio objeto (SortFeature). */
     public List<AyudaPreguntaAdminDTO> listarPreguntas() {
-        return ayudaFacade.listarTodas().stream().map(AyudaService::aDTO).toList();
+        return ayudaFacade.listarTodas().stream().map(AyudaService::aDTO)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })

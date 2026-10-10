@@ -1,7 +1,9 @@
 package ec.com.antenasur.service.tec;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
@@ -53,8 +55,10 @@ public class ReporteIglesiasService {
         return reporteIglesiasFacade.totales(Constantes.LISTA_MIEMBROS, cantonId);
     }
 
+    /** Lista mutable: p:dataTable con sortBy la ordena en el propio objeto (SortFeature). */
     public List<IglesiaAtencionDTO> iglesiasQueRequierenAtencion(Integer cantonId) {
         return reporteIglesiasFacade.listarIglesias(Constantes.LISTA_MIEMBROS, cantonId).stream()
-                .filter(IglesiaAtencionDTO::isRequiereAtencion).sorted(MAS_PENDIENTES).toList();
+                .filter(IglesiaAtencionDTO::isRequiereAtencion).sorted(MAS_PENDIENTES)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }

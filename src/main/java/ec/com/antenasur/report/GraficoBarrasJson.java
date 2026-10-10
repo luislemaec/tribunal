@@ -106,7 +106,33 @@ public final class GraficoBarrasJson {
         return Math.max(10, 3 + barras * 2) + "rem";
     }
 
-    private static String escapar(String valor) {
-        return valor == null ? "" : valor.replace("\\", "\\\\").replace("\"", "\\\"");
+    /**
+     * Cadena JSON segura dentro del {@code <script>} que genera p:chart: además de comillas y
+     * barras, escapa controles (un salto de línea invalidaría el JSON) y {@code < > &} (un
+     * {@code </script>} en una etiqueta cerraría el bloque).
+     */
+    static String escapar(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        StringBuilder salida = new StringBuilder(valor.length() + 8);
+        for (char c : valor.toCharArray()) {
+            switch (c) {
+                case '\\' -> salida.append("\\\\");
+                case '"' -> salida.append("\\\"");
+                case '\n' -> salida.append("\\n");
+                case '\r' -> salida.append("\\r");
+                case '\t' -> salida.append("\\t");
+                case '<', '>', '&', ' ', ' ' -> salida.append(String.format("\\u%04x", (int) c));
+                default -> {
+                    if (c < 0x20) {
+                        salida.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        salida.append(c);
+                    }
+                }
+            }
+        }
+        return salida.toString();
     }
 }

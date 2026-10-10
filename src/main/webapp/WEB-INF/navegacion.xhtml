@@ -9,6 +9,9 @@
         <h:form id="frmSesion" rendered="#{loginBean.loggedIn and loginBean.tiempoSession gt 0}">
             <p:remoteCommand name="tecCerrarSesionExpirada" action="#{loginBean.cerrarSessionExpirada()}"
                              process="@this" global="false"/>
+            <!-- Renovación para sesiones QR (sin /sesion/ping): una petición JSF a la página actual. -->
+            <p:remoteCommand name="tecMantenerSesion" process="@this" global="false"
+                             oncomplete="TecSesion.contactoRenovado(xhr)"/>
             <h:outputScript>
                 TecSesion.iniciar({
                     timeoutSegundos: #{loginBean.tiempoSession},

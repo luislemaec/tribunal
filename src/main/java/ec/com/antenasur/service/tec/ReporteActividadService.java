@@ -24,6 +24,7 @@ import ec.com.antenasur.dto.UsuarioEnLineaDTO;
 import ec.com.antenasur.facade.tec.ProcesoFacade;
 import ec.com.antenasur.facade.tec.ReporteActividadFacade;
 import ec.com.antenasur.security.sesion.SesionesWebEnLinea;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Pestaña Actividad de Rep. Registros: resumen de transacciones de la bitácora y
@@ -31,6 +32,7 @@ import ec.com.antenasur.security.sesion.SesionesWebEnLinea;
  * todo y Tribunal todo salvo lo de los usuarios Administrador.
  */
 @Stateless
+@Slf4j
 @DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal" })
 @RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
 public class ReporteActividadService {
@@ -67,11 +69,32 @@ public class ReporteActividadService {
             serie.put(dia, 0L);
         }
         for (Object[] fila : procesoFacade.contarPorDia(desde, excluirAdministradores())) {
-            if (fila[0] instanceof LocalDate dia && serie.containsKey(dia)) {
+            LocalDate dia = comoFecha(fila[0]);
+            if (dia != null && serie.containsKey(dia)) {
                 serie.put(dia, ((Number) fila[1]).longValue());
             }
         }
         return serie;
+    }
+
+    /**
+     * El CAST de HQL puede llegar como LocalDate o como java.sql.Date según el dialecto;
+     * sin esta conversión un tipo inesperado dejaría la serie en ceros sin ningún error.
+     */
+    private static LocalDate comoFecha(Object valor) {
+        if (valor instanceof LocalDate fecha) {
+            return fecha;
+        }
+        if (valor instanceof java.sql.Date fecha) {
+            return fecha.toLocalDate();
+        }
+        if (valor instanceof java.util.Date fecha) {
+            return fecha.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        }
+        if (valor != null) {
+            log.warn("Tipo de fecha inesperado en transacciones por dia: {}", valor.getClass().getName());
+        }
+        return null;
     }
 
     /** Transacciones por módulo del catálogo, de mayor a menor y sin los módulos vacíos. */
