@@ -80,6 +80,52 @@ public final class ConsultaMovilDTO {
         ResultadosMesa resultados;
     }
 
+    /** Una categoría del acta con los votos registrados (0 si aún no hay conteo). */
+    @Value
+    public static class CategoriaConteo implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Integer categoriaId;
+        String nombre;
+        String tipo;
+        /** Papeletas no utilizadas: no son votos emitidos, cuentan para el cuadre. */
+        boolean papeletas;
+        int votos;
+    }
+
+    @Value
+    public static class ActaFisica implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Integer version;
+        /** PENDIENTE_REVISION, VALIDADA, OBSERVADA o RECHAZADA. */
+        String estadoRevision;
+        String observacion;
+    }
+
+    /**
+     * Estado del escrutinio de la mesa del Presidente y lo que puede hacer en él. Los
+     * indicadores {@code puede*} son una ayuda para la App: TEC vuelve a validar cada paso.
+     */
+    @Value
+    public static class ActaPresidente implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Ubicacion ubicacion;
+        String estado;
+        int sufragantes;
+        int votosEmitidos;
+        int papeletasNoUtilizadas;
+        /** Sufragantes − votos emitidos − papeletas no utilizadas; 0 = cuadrado. */
+        int cuadre;
+        String observacionConteo;
+        /** Por qué no se puede abrir la mesa (junta incompleta, sin padrón…); null si se puede. */
+        String motivoBloqueoApertura;
+        boolean puedeAbrir;
+        boolean puedeEditarConteo;
+        boolean puedeCerrar;
+        boolean puedeSubirActaFisica;
+        List<CategoriaConteo> categorias;
+        ActaFisica actaFisica;
+    }
+
     @Value
     public static class Elector implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -130,6 +176,16 @@ public final class ConsultaMovilDTO {
 
     // ---------------------------------------------------------------- Tribunal / Administrador
 
+    /** Pendiente operativo del proceso (mismas alertas que el dashboard web). */
+    @Value
+    public static class Alerta implements Serializable {
+        private static final long serialVersionUID = 1L;
+        String texto;
+        long cantidad;
+        /** danger o warn. */
+        String severidad;
+    }
+
     @Value
     public static class ResumenProceso implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -142,6 +198,41 @@ public final class ConsultaMovilDTO {
         long mesasCerradas;
         int porcentajeEscrutinio;
         java.util.Map<String, Long> mesasPorEstado;
+        List<Alerta> alertas;
+    }
+
+    /** Acta física vigente de una mesa, vista por un revisor (Administrador o Tribunal). */
+    @Value
+    public static class ActaFisicaRevision implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Integer version;
+        String estadoRevision;
+        String observacion;
+        Date cargadaEn;
+    }
+
+    /** Detalle de una mesa del proceso activo para Administrador y Tribunal. */
+    @Value
+    public static class DetalleMesa implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Ubicacion ubicacion;
+        String estado;
+        int electores;
+        Date fechaApertura;
+        Date fechaCierre;
+        List<MiembroJunta> junta;
+        /** Votos registrados por categoría (vacío si aún no hay conteo). */
+        List<VotosCategoria> conteo;
+        Integer votosRegistrados;
+        Integer votosValidos;
+        Integer votosBlancos;
+        Integer votosNulos;
+        /** Sufragantes − votos emitidos − papeletas no utilizadas; null sin conteo. */
+        Integer cuadre;
+        String observacionConteo;
+        ActaFisicaRevision actaFisica;
+        /** Mesa cerrada con acta física vigente aún no validada (misma regla que actaE). */
+        boolean puedeRevisarActa;
     }
 
     @Value

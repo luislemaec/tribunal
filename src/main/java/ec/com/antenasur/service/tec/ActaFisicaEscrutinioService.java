@@ -47,6 +47,8 @@ public class ActaFisicaEscrutinioService {
     @Inject private EscrutinioService escrutinioService;
     @Inject private AccesoDocumentoMesaService accesoDocumental;
     @Inject private DisponibilidadDocumentoMesaService disponibilidadDocumental;
+    /** Avisos push de la App móvil; no hace nada si las notificaciones están desactivadas. */
+    @Inject private NotificacionMovilService notificacionMovil;
     @Resource(lookup = "java:comp/TransactionSynchronizationRegistry")
     private TransactionSynchronizationRegistry transacciones;
     @Resource private SessionContext sessionContext;
@@ -157,7 +159,9 @@ public class ActaFisicaEscrutinioService {
         }
     }
 
-    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    // Decidir la revisión del acta (validar, observar, rechazar, revertir) es solo del Tribunal;
+    // el Administrador conserva la consulta (obtenerVigente, obtenerVigentesPorMesas).
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Tribunal"})
     public Documentos revisar(Integer documentoId, String estadoRevision, String observacion, String usuario) {
         if (!accesoDocumental.esRevisor()) {
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.4"));
@@ -193,17 +197,23 @@ public class ActaFisicaEscrutinioService {
         documento.setUsuarioRevision(usuario);
         documento.setFechaRevision(new java.util.Date());
         documento.setUsuarioActualiza(usuario);
-        return documentoService.actualizar(documento);
+        Documentos revisado = documentoService.actualizar(documento);
+        notificacionMovil.actaFisicaRevisada(documento.getMesa().getId(), documento.getProceso().getId(), estadoRevision);
+        return revisado;
     }
 
-    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    // Decidir la revisión del acta (validar, observar, rechazar, revertir) es solo del Tribunal;
+    // el Administrador conserva la consulta (obtenerVigente, obtenerVigentesPorMesas).
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Tribunal"})
     public void validarActaFinal(Integer documentoId, Integer mesaId, Integer procesoId,
             ec.com.antenasur.dto.RevisionActaFinalDTO revision) {
         escrutinioService.validarResultadosFinalesDTO(documentoId, mesaId, procesoId, revision);
     }
 
     /** Marca como datos oficiales lo registrado, cuando el acta física coincide. */
-    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    // Decidir la revisión del acta (validar, observar, rechazar, revertir) es solo del Tribunal;
+    // el Administrador conserva la consulta (obtenerVigente, obtenerVigentesPorMesas).
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Tribunal"})
     public void validarDatosRegistrados(Integer documentoId, Integer mesaId, Integer procesoId) {
         try {
             escrutinioService.validarDatosRegistradosDTO(documentoId, mesaId, procesoId);
@@ -218,7 +228,9 @@ public class ActaFisicaEscrutinioService {
      * vigente OBSERVADA o RECHAZADA con el motivo (mismas reglas que {@link #revisar}) y
      * reabre el escrutinio, todo en una transacción. La mesa debe estar CERRADA.
      */
-    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    // Decidir la revisión del acta (validar, observar, rechazar, revertir) es solo del Tribunal;
+    // el Administrador conserva la consulta (obtenerVigente, obtenerVigentesPorMesas).
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Tribunal"})
     public void devolverActaFisica(Integer documentoId, String estadoRevision, String motivo) {
         try {
             Documentos documento = documentoService.obtenerEntidad(documentoId);
@@ -244,7 +256,9 @@ public class ActaFisicaEscrutinioService {
      * para que el presidente corrija, en una sola transacción. Los cambios quedan en el
      * historial Envers de documentos y escrutinio_cabecera.
      */
-    @jakarta.annotation.security.RolesAllowed({"SITEC-Administrador", "SITEC-Tribunal"})
+    // Decidir la revisión del acta (validar, observar, rechazar, revertir) es solo del Tribunal;
+    // el Administrador conserva la consulta (obtenerVigente, obtenerVigentesPorMesas).
+    @jakarta.annotation.security.RolesAllowed({"SITEC-Tribunal"})
     public void revertirValidacion(Integer documentoId, String motivo) {
         try {
             if (motivo == null || motivo.isBlank()) {

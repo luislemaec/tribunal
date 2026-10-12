@@ -13,7 +13,10 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.dto.ConsultaMovilDTO.ActaFisicaRevision;
+import ec.com.antenasur.dto.ConsultaMovilDTO.Alerta;
 import ec.com.antenasur.dto.ConsultaMovilDTO.AvanceMesa;
+import ec.com.antenasur.dto.ConsultaMovilDTO.DetalleMesa;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Elector;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Iglesia;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Miembro;
@@ -43,9 +46,11 @@ import ec.com.antenasur.enums.EstadoEscrutinio;
 import ec.com.antenasur.facade.UsuarioFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
 import ec.com.antenasur.model.Usuario;
+import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
+import ec.com.antenasur.util.RepositorioDocumentos;
 
 /**
  * Consultas de solo lectura del módulo Tribunal de la App móvil (docs/api-movil.md).
@@ -104,6 +109,12 @@ public class ConsultaMovilService {
 
     @Inject
     private MesaFacade mesaFacade;
+
+    @Inject
+    private MesaService mesaService;
+
+    @Inject
+    private ActaFisicaEscrutinioService actaFisicaService;
 
     // ---------------------------------------------------------------- Presidente de mesa
 
@@ -200,7 +211,7 @@ public class ConsultaMovilService {
      * alcance lo aplica IglesiaPersonaService desde el principal (no se recibe la iglesia).
      */
     @RolesAllowed(IGLESIA_ADMIN)
-    public Pagina<Miembro> miembros(String busqueda, Boolean habilitado, int pagina, int tamano) {
+    public Pagina<Miembro> miembros(String busqueda, Boolean habilitado, Boolean revisado, int pagina, int tamano) {
         Integer iglesiaId = iglesiaDelUsuario();
         int tam = Math.min(Math.max(tamano, 1), TAMANO_MAXIMO);
         int pag = Math.max(pagina, 0);
@@ -210,6 +221,8 @@ public class ConsultaMovilService {
         FiltroMiembrosDTO filtro = new FiltroMiembrosDTO(iglesiaId, null, null, null);
         filtro.setBusqueda(busqueda == null || busqueda.isBlank() ? null : busqueda.trim());
         filtro.setHabilitado(habilitado);
+        // revisado = false: pendientes de revisión (misma regla que el resumen de la iglesia).
+        filtro.setRevisado(revisado);
         long total = iglesiaPersonaService.contarMiembros(filtro);
         List<Miembro> elementos = new ArrayList<>();
         for (IglesiaPersonaDTO miembro : iglesiaPersonaService.listarMiembros(filtro, pag * tam, tam,
@@ -235,10 +248,80 @@ public class ConsultaMovilService {
             return null;
         }
         ResumenDashboardDTO r = dashboardResumenService.consultar();
+        List<Alerta> alertas = r.getAlertas() == null ? List.of()
+                : r.getAlertas().stream().map(a -> new Alerta(a.getTexto(), a.getCantidad(), a.getSeveridad())).toList();
         return new ResumenProceso(new Proceso(activo.getId(), activo.getNombre(), r.getFaseVigente()),
                 r.getTotalIglesias(), r.getTotalRecintos(), r.getTotalMesas(), r.getTotalElectores(),
                 r.getMesasConJuntaCompleta(), r.getMesasCerradas(), r.getPorcentajeEscrutinio(),
-                r.getMesasPorEstado());
+                r.getMesasPorEstado(), alertas);
+    }
+
+    /**
+     * Detalle de una mesa del proceso activo: junta, estado, conteo, cuadre y acta física
+     * vigente. Solo lectura; todo filtrado por el proceso activo ({@code proce_id}).
+     */
+    @RolesAllowed({ ADMINISTRADOR, TRIBUNAL })
+    public DetalleMesa detalleMesa(Integer mesaId) {
+        ProcesoElectoral activo = procesoElectoralService.getActivo();
+        MesaDTO mesa = mesaId != null ? mesaService.obtenerDTOPorId(mesaId) : null;
+        if (activo == null || activo.getId() == null || mesa == null) {
+            return null;
+        }
+        Integer procesoId = activo.getId();
+        EscrutinioCabeceraDTO cabecera = escrutinioService.buscarCabeceraDTO(mesaId, procesoId);
+        EstadoEscrutinio estado = cabecera != null && cabecera.getEstadoEscrutinio() != null
+                ? cabecera.getEstadoEscrutinio() : EstadoEscrutinio.PENDIENTE;
+        int electores = padronService.contarSufragantesPorMesaYProceso(mesaId, procesoId);
+
+        List<MiembroJunta> junta = new ArrayList<>();
+        for (MiembroJRVDTO miembro : miembroJRVService.listarDTOsPorMesaProceso(mesaId, procesoId)) {
+            junta.add(new MiembroJunta(miembro.getCargoNombre(),
+                    nombre(miembro.getIglesiaPersona() != null ? miembro.getIglesiaPersona().getPersona() : null)));
+        }
+        List<VotosCategoria> conteo = escrutinioService.listarDTOsPorMesaYProceso(mesaId, procesoId).stream()
+                .map(e -> new VotosCategoria(e.getCategoriaNombre(), e.getCategoriaTipo(), e.getTotalVotos()))
+                .toList();
+        Integer cuadre = conteo.isEmpty() ? null
+                : escrutinioService.calcularCuadrePapeletasMesa(mesaId, procesoId,
+                        cabecera != null && cabecera.getTotalSufragantes() != null ? cabecera.getTotalSufragantes()
+                                : electores);
+
+        Documentos vigente = actaFisicaService.obtenerVigente(mesaId, procesoId);
+        ActaFisicaRevision acta = vigente == null ? null
+                : new ActaFisicaRevision(vigente.getVersion(), vigente.getEstadoRevision(),
+                        vigente.getObservacionRevision(), vigente.getFechaCrea());
+        // Decidir la revisión es solo del Tribunal; el Administrador consulta.
+        boolean puedeRevisar = sessionContext != null && sessionContext.isCallerInRole(TRIBUNAL)
+                && estado == EstadoEscrutinio.CERRADO && vigente != null
+                && !ActaFisicaEscrutinioService.VALIDADA.equals(vigente.getEstadoRevision());
+
+        return new DetalleMesa(ubicacion(mesa), estado.name(), electores,
+                cabecera != null ? cabecera.getFechaApertura() : null, cabecera != null ? cabecera.getFechaCierre() : null,
+                junta, conteo,
+                cabecera != null ? cabecera.getTotalVotosRegistrados() : null,
+                cabecera != null ? cabecera.getTotalVotosValidos() : null,
+                cabecera != null ? cabecera.getTotalVotosBlancos() : null,
+                cabecera != null ? cabecera.getTotalVotosNulos() : null,
+                cuadre, cabecera != null ? cabecera.getObservacionConteo() : null, acta, puedeRevisar);
+    }
+
+    /**
+     * Foto (JPEG) del acta física vigente de la mesa, para el revisor. {@code null} si no hay.
+     * La ruta sale del documento en BD y RepositorioDocumentos la resuelve dentro del repositorio.
+     */
+    @RolesAllowed({ ADMINISTRADOR, TRIBUNAL })
+    public byte[] imagenActaFisica(Integer mesaId) throws java.io.IOException {
+        ProcesoElectoral activo = procesoElectoralService.getActivo();
+        if (activo == null || activo.getId() == null || mesaId == null) {
+            return null;
+        }
+        Documentos vigente = actaFisicaService.obtenerVigente(mesaId, activo.getId());
+        if (vigente == null || vigente.getPath() == null) {
+            return null;
+        }
+        try (var entrada = RepositorioDocumentos.abrirLectura(vigente.getPath())) {
+            return entrada.readAllBytes();
+        }
     }
 
     /** Estado de cada mesa activa en el proceso activo (tres consultas en total). */

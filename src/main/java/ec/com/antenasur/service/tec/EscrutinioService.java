@@ -35,6 +35,10 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
     @Inject
     private EscrutinioFacade escrutinioFacade;
 
+    /** Avisos push de la App móvil; no hace nada si las notificaciones están desactivadas. */
+    @Inject
+    private NotificacionMovilService notificacionMovil;
+
     @Inject
     private EscrutinioCabeceraFacade escrutinioCabeceraFacade;
 
@@ -138,6 +142,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         cabecera.setFechaCierre(new Date());
         cabecera.setObservacionCierre("");
         escrutinioCabeceraFacade.edit(cabecera);
+        notificacionMovil.mesaCerrada();
         return mesa;
     }
 
@@ -466,6 +471,7 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
         evidencia.setFechaRevision(new Date());
         evidencia.setUsuarioActualiza(usuario);
         documentoService.actualizar(evidencia);
+        notificacionMovil.actaFisicaRevisada(mesaId, procesoId, ActaFisicaEscrutinioService.VALIDADA);
         return EscrutinioCabeceraDTO.fromEntity(cabecera);
     }
 

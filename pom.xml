@@ -249,6 +249,12 @@
             <version>5.10.3</version>
             <scope>test</scope>
         </dependency>
+        <!-- Implementación de JSON-P para las pruebas (en ejecución la aporta WildFly). -->
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>parsson</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

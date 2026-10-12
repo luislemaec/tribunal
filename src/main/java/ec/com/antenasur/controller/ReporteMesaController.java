@@ -391,8 +391,12 @@ public class ReporteMesaController implements Serializable {
 			}
 			try {
 				disponibilidadDocumental.validarFinal(procesoId, mesa);
-				puedeValidarActaFinal = !ActaFisicaEscrutinioService.VALIDADA
-						.equals(actaFisicaVisualizada.getEstadoRevision());
+				// Validar el acta como dato oficial es solo del Tribunal (ActaFisicaEscrutinioService).
+				boolean validada = ActaFisicaEscrutinioService.VALIDADA.equals(actaFisicaVisualizada.getEstadoRevision());
+				puedeValidarActaFinal = tieneRol("SITEC-Tribunal") && !validada;
+				if (!validada && !tieneRol("SITEC-Tribunal")) {
+					motivoActaFinal = Constantes.getMensaje("reportesMesa.actaFisica.soloTribunal");
+				}
 			} catch (NegocioException e) {
 				motivoActaFinal = e.getMessage();
 			}

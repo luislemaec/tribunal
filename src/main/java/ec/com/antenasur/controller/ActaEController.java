@@ -2042,12 +2042,13 @@ public class ActaEController implements Serializable {
     }
 
     /** Validar o devolver: revisor, mesa cerrada y acta física vigente aún no validada. */
+    /** Validar, observar o rechazar el acta física: solo el Tribunal (ActaFisicaEscrutinioService). */
     public boolean isPuedeRevisarActaFisica() {
-        return isUsuarioRevisorActas() && isMesaCerrada() && actaFisica != null && !isActaFisicaValidada();
+        return isUsuarioTribunal() && isMesaCerrada() && actaFisica != null && !isActaFisicaValidada();
     }
 
     public boolean isPuedeRevertirValidacion() {
-        return isUsuarioRevisorActas() && isMesaCerrada() && isActaFisicaValidada();
+        return isUsuarioTribunal() && isMesaCerrada() && isActaFisicaValidada();
     }
 
     public boolean isModoRevisionActa() {
@@ -2343,6 +2344,15 @@ public class ActaEController implements Serializable {
     public boolean isUsuarioRevisorActas() {
         return !accesoRestringidoPresidenteMesa
                 && (tieneRol("SITEC-Administrador") || tieneRol("SITEC-Tribunal"));
+    }
+
+    /**
+     * Decide la revisión del acta física (validar como dato oficial, observar, rechazar,
+     * revertir): solo el Tribunal, igual que exige ActaFisicaEscrutinioService. El
+     * Administrador sigue siendo revisor para consultar ({@link #isUsuarioRevisorActas()}).
+     */
+    public boolean isUsuarioTribunal() {
+        return !accesoRestringidoPresidenteMesa && tieneRol("SITEC-Tribunal");
     }
 
     private boolean tieneRolConsultaGerencial() {

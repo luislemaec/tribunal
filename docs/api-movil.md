@@ -39,6 +39,10 @@ Cuerpo común: `{"codigo": "...", "mensaje": "..."}`.
 | 403 | `HTTPS_REQUERIDO` | Petición recibida sin HTTPS |
 | 404 | `RECURSO_NO_ENCONTRADO` | Ruta o método inexistente |
 | 404 | `SIN_MESA_ASIGNADA` / `SIN_IGLESIA_ASIGNADA` / `SIN_PROCESO_ACTIVO` | El usuario no tiene el alcance que la consulta requiere |
+| 404 | `MIEMBRO_NO_DISPONIBLE` | El miembro no existe o ya no está activo |
+| 409 | `EDICION_CERRADA` | El cronograma no permite cambiar la habilitación de miembros |
+| 409 | `REGLA_ESCRUTINIO` | Una regla del escrutinio impide el paso (mensaje de TEC) |
+| 413 | `ARCHIVO_DEMASIADO_GRANDE` | La foto del acta física supera 10 MB |
 | 429 | `DEMASIADOS_INTENTOS` | Límite de intentos de login |
 | 500 | `ERROR_INTERNO` | Error no controlado (el detalle queda solo en el log del servidor) |
 
@@ -95,11 +99,15 @@ Los roles sin funciones en la V1 (Tecnico, Gerencial, Supervisor, Superadministr
 | `GET /tribunal/presidente/mesa` | Presidente-mesa | Proceso, ubicación, estado del escrutinio, electores, junta; `resultados` solo con la mesa `CERRADO`. 404 `SIN_MESA_ASIGNADA` |
 | `GET /tribunal/presidente/padron` | Presidente-mesa | `[{nombre, iglesia, sufrago}]` de su mesa. 404 `SIN_MESA_ASIGNADA` |
 | `GET /tribunal/iglesia` | IglesiaAdmin | Datos de su iglesia, resumen de miembros y `permiteEdicion` (el cronograma permite cambiar la habilitación). 404 `SIN_IGLESIA_ASIGNADA` |
-| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&pagina=0&tamano=30` | IglesiaAdmin | `{total, pagina, tamano, elementos:[{id, nombre, habilitado, revisado}]}` (máx. 100 por página) |
+| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&revisado=&pagina=0&tamano=30` | IglesiaAdmin | `revisado=false`: pendientes de revisión (misma regla que el resumen). `{total, pagina, tamano, elementos:[{id, nombre, habilitado, revisado}]}` (máx. 100 por página) |
 | `PUT /tribunal/iglesia/miembros/{id}/habilitacion` | IglesiaAdmin | Cuerpo `{habilitado: true\|false}` → 200 con el miembro. Ver abajo |
-| `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
+| `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales y `alertas` [{texto, cantidad, severidad}] del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
 | `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada}]` |
 | `GET /tribunal/proceso/resultados` | Administrador, Tribunal | Consolidado de mesas cerradas (misma caché que la página de resultados) |
+| `GET /tribunal/proceso/mesas/{mesaId}` | Administrador, Tribunal | Detalle: junta, estado, conteo por categoría, totales, cuadre, acta física vigente y `puedeRevisarActa`. 404 `MESA_NO_ENCONTRADA` |
+| `GET /tribunal/proceso/mesas/{mesaId}/acta-fisica` | Administrador, Tribunal | Foto JPEG del acta física vigente (auditada). 404 `ACTA_NO_DISPONIBLE` |
+| `POST /tribunal/proceso/mesas/{mesaId}/acta-fisica/validacion` | Tribunal | `{cotejoConfirmado: true}` → datos oficiales (VALIDADA). Ver abajo |
+| `POST /tribunal/proceso/mesas/{mesaId}/acta-fisica/devolucion` | Tribunal | `{estado: OBSERVADA|RECHAZADA, motivo}` → la mesa vuelve a REABIERTO. Ver abajo |
 
 Las respuestas no incluyen cédulas, correos ni datos de contacto.
 
@@ -118,6 +126,78 @@ cambio con el usuario autenticado. No modifica los datos de la persona.
 | 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
 | 404 | `MIEMBRO_NO_DISPONIBLE` | No existe o ya no está activo |
 | 400 | `SOLICITUD_INVALIDA` | Falta `habilitado` |
+
+### Revisión del acta física (escritura)
+
+`GestionMovilService.validarActaFisica` / `devolverActaFisica` (**solo Tribunal**; el Administrador
+consulta el detalle y la foto, y en `puedeRevisarActa` recibe `false`)
+reutilizan los servicios de actaE: solo una mesa **CERRADA** con acta física vigente aún no
+validada. Validar exige que el revisor confirme el cotejo (`cotejoConfirmado: true`) y llama a
+`ActaFisicaEscrutinioService.validarDatosRegistrados` (dato oficial, VALIDADA). Devolver exige
+estado OBSERVADA o RECHAZADA y motivo, llama a `devolverActaFisica` y la mesa vuelve a
+REABIERTO para que el Presidente corrija; se le notifica si las notificaciones están activas.
+La bitácora registra `VALIDA ACTA FISICA SIN CAMBIOS`, `DEVUELVE ACTA FISICA …` y
+`DESCARGA ACTA FISICA` con «(App móvil)». Errores: 409 `REGLA_REVISION`, 400 `COTEJO_REQUERIDO`.
+
+### Escrutinio del Presidente (escritura)
+
+`EscrutinioRecurso` → `GestionMovilService` (solo `SITEC-Presidente-mesa`). Solo en línea.
+La mesa sale de la designación JRV como PRESIDENTE en el proceso activo
+(`AccesoDocumentoMesaService.mesaPermitida`), nunca de la App. Las transiciones las valida
+`EscrutinioService`, igual que en `actaE`; el servicio agrega lo que en la web comprueba
+`ActaEController`: mesa propia, acta con **todas** sus categorías (ni faltantes ni ajenas) y
+votos entre 0 y 100 000. Cada paso se registra en la bitácora (`APERTURA MESA`,
+`GUARDA BORRADOR ACTA MESA`, `CIERRE MESA`, `CARGA ACTA FISICA MESA`, con «(App móvil)»).
+
+| Endpoint | Cuerpo | Efecto |
+|---|---|---|
+| `GET /tribunal/presidente/acta` | — | Estado, sufragantes, categorías con votos, cuadre, `motivoBloqueoApertura`, `puedeAbrir/puedeEditarConteo/puedeCerrar/puedeSubirActaFisica`, acta física vigente |
+| `POST /tribunal/presidente/acta/apertura` | `{observacion?}` | PENDIENTE → ABIERTO (TEC valida junta, padrón y documentos) |
+| `PUT /tribunal/presidente/acta/conteo` | `{votos:[{categoriaId, votos}]}` | Borrador: CONTEO_REGISTRADO si el cuadre es 0, si no EN_CONTEO |
+| `POST /tribunal/presidente/acta/cierre` | `{votos:[…]}` | → CERRADO. Exige haber guardado el conteo antes; luego no se modifica |
+| `PUT /tribunal/presidente/acta/acta-fisica` | JPEG (`Content-Type: image/jpeg`, máx. 10 MB) | Foto del acta firmada de la mesa cerrada → PENDIENTE_REVISION para el Tribunal |
+
+Todas responden 200 con el acta actualizada. Errores: 409 `REGLA_ESCRUTINIO` (regla de
+negocio, con el mensaje de TEC), 400 `SOLICITUD_INVALIDA` (categoría repetida o sin votos),
+413 `ARCHIVO_DEMASIADO_GRANDE`, 403 `SIN_PERMISO`. El proxy permite 11 MB solo en el
+endpoint del acta física (`tribunal.nginx.conf`).
+
+## Notificaciones push
+
+Desactivadas por defecto. Con `-Dtec.push.enabled=true` TEC encola avisos en
+`tec.notificacion_movil` **dentro de la transacción del evento** (si se revierte, no hay
+aviso) y `EnvioNotificacionesProgramado` los envía cada minuto por Firebase Cloud Messaging
+(API HTTP v1), con hasta 5 intentos. Un fallo de Firebase nunca afecta a la operación
+electoral. Contenido mínimo, sin nombres ni datos de la mesa: el detalle se ve al abrir la App.
+
+| Evento | Destinatarios | Origen |
+|---|---|---|
+| Acta física validada, observada o rechazada | Presidente de esa mesa | `EscrutinioService.validarResultadosFinalesDTO`, `ActaFisicaEscrutinioService.revisar` |
+| Mesa cerrada | Tribunal y Administrador | `EscrutinioService.guardarActaCompleta` |
+| Inicio de una fase del cronograma | IglesiaAdmin | Proceso programado (cronograma del proceso activo) |
+| Inicio y fin del sufragio (fase SUFRAGIO) | Presidentes de mesa | Proceso programado |
+
+Los eventos del cronograma se avisan una sola vez (`tec.notificacion_evento`) y solo si
+ocurrieron hace menos de una hora: tras un apagado largo no se envían avisos viejos.
+
+| Endpoint | Cuerpo | Efecto |
+|---|---|---|
+| `POST /dispositivos` | `{token, plataforma: "android"\|"ios"}` | 204. Registra o reasigna el token de FCM al usuario autenticado |
+| `POST /dispositivos/baja` | `{token}` | 204. Desactiva el token si es del usuario (al cerrar sesión) |
+
+Un token que FCM declara inválido (`UNREGISTERED`) se desactiva solo; cualquier otro error
+se reintenta, para que un fallo del mensaje no desactive todos los dispositivos.
+
+### Activar en un servidor
+
+1. Aplicar `V12__notificaciones_push.sql`.
+2. En Firebase (consola, cuenta institucional): crear el proyecto CONPOCIIECH, registrar las
+   apps Android (`ec.org.conpociiech.app`) e iOS, y para iOS subir la clave APNs.
+3. En Configuración del proyecto → Cuentas de servicio: generar una clave privada (JSON).
+   **Es un secreto**: guardarla fuera del repositorio y del WAR, p. ej.
+   `/etc/tec/firebase-push.json`, con permisos de lectura solo para el usuario de WildFly.
+4. Propiedades de WildFly: `-Dtec.push.enabled=true -Dtec.push.credenciales=/etc/tec/firebase-push.json`.
+5. Compilar la App con las opciones de Firebase (ver el README de la App).
 
 ## Despliegue
 

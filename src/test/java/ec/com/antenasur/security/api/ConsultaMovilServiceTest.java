@@ -77,7 +77,9 @@ class ConsultaMovilServiceTest {
                 "miembros", Set.of("SITEC-IglesiaAdmin"),
                 "resumenProceso", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
                 "avanceMesas", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
-                "resultadosProceso", Set.of("SITEC-Administrador", "SITEC-Tribunal"));
+                "resultadosProceso", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
+                "detalleMesa", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
+                "imagenActaFisica", Set.of("SITEC-Administrador", "SITEC-Tribunal"));
         List<Method> publicos = Arrays.stream(ConsultaMovilService.class.getDeclaredMethods())
                 .filter(m -> Modifier.isPublic(m.getModifiers()) && !m.isSynthetic()).toList();
         assertEquals(esperado.keySet(), publicos.stream().map(Method::getName).collect(Collectors.toSet()),
@@ -322,17 +324,19 @@ class ConsultaMovilServiceTest {
     void sinIglesiaAsignadaNoHayDatos() {
         usuario.setIglesia(null);
         assertNull(servicio.iglesia());
-        assertEquals(0, servicio.miembros(null, null, 0, 30).getTotal());
+        assertEquals(0, servicio.miembros(null, null, null, 0, 30).getTotal());
         assertNull(filtroRecibido, "no consulta miembros sin iglesia");
     }
 
     @Test
     void losMiembrosSeFiltranPorSuIglesiaConPaginaAcotadaYSinCedula() {
-        ConsultaMovilDTO.Pagina<ConsultaMovilDTO.Miembro> p = servicio.miembros("  rosa ", true, 2, 1_000);
+        ConsultaMovilDTO.Pagina<ConsultaMovilDTO.Miembro> p = servicio.miembros("  rosa ", true, false, 2, 1_000);
         assertEquals(IGLESIA, filtroRecibido.getIglesiaId());
         assertNull(filtroRecibido.getProvinciaId());
         assertEquals("rosa", filtroRecibido.getBusqueda());
         assertEquals(Boolean.TRUE, filtroRecibido.getHabilitado());
+        assertEquals(Boolean.FALSE, filtroRecibido.getRevisado(), "pendientes de revisión");
+        assertEquals(Boolean.FALSE, filtroRecibido.getRevisado(), "pendientes de revisión");
         assertEquals(ConsultaMovilService.TAMANO_MAXIMO, p.getTamano());
         assertTrue(llamadas.contains("miembros:" + 2 * ConsultaMovilService.TAMANO_MAXIMO + ":"
                 + ConsultaMovilService.TAMANO_MAXIMO + ":persona.nombres"));
@@ -343,7 +347,7 @@ class ConsultaMovilServiceTest {
 
     @Test
     void paginaNegativaSeNormaliza() {
-        ConsultaMovilDTO.Pagina<ConsultaMovilDTO.Miembro> p = servicio.miembros(null, null, -3, 0);
+        ConsultaMovilDTO.Pagina<ConsultaMovilDTO.Miembro> p = servicio.miembros(null, null, null, -3, 0);
         assertEquals(0, p.getPagina());
         assertEquals(1, p.getTamano());
     }

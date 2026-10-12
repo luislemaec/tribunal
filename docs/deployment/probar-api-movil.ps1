@@ -42,7 +42,7 @@ try {
 Write-Host "== login: OK  usuario=$($sesion.usuario.usuario)  roles=$($sesion.usuario.roles -join ', ')  cambioClaveObligatorio=$($sesion.cambioClaveObligatorio)"
 $cabeceras = @{ Authorization = "Bearer $($sesion.accessToken)" }
 
-foreach ($ruta in "auth/yo", "tribunal/presidente/mesa", "tribunal/presidente/padron", "tribunal/iglesia",
+foreach ($ruta in "auth/yo", "tribunal/presidente/mesa", "tribunal/presidente/acta", "tribunal/presidente/padron", "tribunal/iglesia",
         "tribunal/iglesia/miembros?pagina=0&tamano=5", "tribunal/proceso/resumen", "tribunal/proceso/mesas",
         "tribunal/proceso/resultados") {
     try {

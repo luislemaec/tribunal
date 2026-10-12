@@ -6,7 +6,9 @@ import java.lang.reflect.Proxy;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -39,12 +41,22 @@ class HabilitacionMiembroTest {
     private IglesiaPersonaService servicio;
 
     @Test
-    void laEscrituraSoloLaPuedeHacerElIglesiaAdmin() {
+    void cadaEscrituraDeclaraSoloSuRol() {
+        Map<String, Set<String>> esperado = Map.of(
+                "cambiarHabilitacionMiembro", Set.of("SITEC-IglesiaAdmin"),
+                "actaPresidente", Set.of("SITEC-Presidente-mesa"),
+                "abrirMesa", Set.of("SITEC-Presidente-mesa"),
+                "guardarConteo", Set.of("SITEC-Presidente-mesa"),
+                "cerrarMesa", Set.of("SITEC-Presidente-mesa"),
+                "subirActaFisica", Set.of("SITEC-Presidente-mesa"),
+                "validarActaFisica", Set.of("SITEC-Tribunal"),
+                "devolverActaFisica", Set.of("SITEC-Tribunal"));
         List<Method> publicos = Arrays.stream(GestionMovilService.class.getDeclaredMethods())
                 .filter(m -> Modifier.isPublic(m.getModifiers()) && !m.isSynthetic()).toList();
-        assertEquals(List.of("cambiarHabilitacionMiembro"), publicos.stream().map(Method::getName).toList());
+        assertEquals(esperado.keySet(), publicos.stream().map(Method::getName).collect(Collectors.toSet()),
+                "toda escritura nueva debe declarar sus roles en esta prueba");
         for (Method m : publicos) {
-            assertEquals(Set.of("SITEC-IglesiaAdmin"), Set.of(m.getAnnotation(RolesAllowed.class).value()));
+            assertEquals(esperado.get(m.getName()), Set.of(m.getAnnotation(RolesAllowed.class).value()), m.getName());
             assertNull(m.getAnnotation(PermitAll.class));
         }
         assertNull(GestionMovilService.class.getAnnotation(RolesAllowed.class));
