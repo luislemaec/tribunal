@@ -15,6 +15,7 @@ import jakarta.inject.Named;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 import org.primefaces.event.FileUploadEvent;
@@ -443,7 +444,7 @@ public class CandidatoController implements Serializable {
     }
 
     private void inicializarModeloListas() {
-        listas = new LazyDataModel<>() {
+        listas = new ModeloLazy<>() {
             private static final long serialVersionUID = 1L;
 
             /**

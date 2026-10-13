@@ -17,6 +17,7 @@ import jakarta.inject.Named;
 
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 
 
@@ -69,7 +70,7 @@ public class ProcesoController extends ReportTemplateController implements Seria
         filtro = new FiltroActividadAuditoriaDTO();
         if (isVistaGlobal()) usuariosAuditoria = procesoService.listarUsuariosAuditoria();
         accionesAuditoria = construirAccionesAuditoria();
-        auditoriasLazy = new LazyDataModel<>() {
+        auditoriasLazy = new ModeloLazy<>() {
             private static final long serialVersionUID = 1L;
 
             @Override

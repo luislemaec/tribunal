@@ -36,6 +36,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 
 @Named(value = "usuarioControlador")
@@ -145,7 +146,7 @@ public class UsuarioControlador implements Serializable {
     }
 
     private void inicializarModeloUsuarios() {
-        usuariosLazy = new LazyDataModel<>() {
+        usuariosLazy = new ModeloLazy<>() {
             private static final long serialVersionUID = 1L;
 
             @Override

@@ -30,6 +30,7 @@ import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 import org.primefaces.model.StreamedContent;
@@ -1319,7 +1320,7 @@ public class PersonaController implements Serializable {
      * de PrimeFaces a {@link FiltroMiembrosDTO} y conserva los últimos aplicados para
      * que la exportación use exactamente los mismos criterios.
      */
-    public class MiembrosLazy extends LazyDataModel<IglesiaPersonaDTO> {
+    public class MiembrosLazy extends ModeloLazy<IglesiaPersonaDTO> {
 
         private static final long serialVersionUID = 1L;
         private static final String VARIABLE_FILA = "iglPers.";

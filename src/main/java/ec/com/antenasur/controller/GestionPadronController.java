@@ -14,6 +14,7 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 import org.primefaces.model.StreamedContent;
@@ -454,7 +455,7 @@ public class GestionPadronController implements Serializable {
                 .map(OpcionPadronDTO::getNombre).findFirst().orElse("");
     }
 
-    private class FilasLazy extends LazyDataModel<FilaPadronDTO> {
+    private class FilasLazy extends ModeloLazy<FilaPadronDTO> {
         private final boolean candidatos;
         private List<FilaPadronDTO> pagina = List.of();
 
@@ -491,7 +492,7 @@ public class GestionPadronController implements Serializable {
         }
     }
 
-    private class MesasLazy extends LazyDataModel<MesaPadronDTO> {
+    private class MesasLazy extends ModeloLazy<MesaPadronDTO> {
         private List<MesaPadronDTO> pagina = List.of();
 
         @Override

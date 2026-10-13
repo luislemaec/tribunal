@@ -328,6 +328,8 @@
                                 <include>**/security/qr/*Test.java</include>
                                 <!-- API móvil: sesiones, filtro, límite de intentos y roles/alcance -->
                                 <include>**/security/api/*Test.java</include>
+                                <!-- Total de páginas de las tablas lazy tras buscar -->
+                                <include>**/util/ModeloLazyTest.java</include>
                             </includes>
                         </configuration>
                     </plugin>
