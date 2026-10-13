@@ -103,6 +103,19 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		return dto;
 	}
 
+	/** Marca en bloque (una consulta) las iglesias que tienen documentos del tipo indicado. */
+	public void marcarDTOsConTieneDocumentos(List<IglesiaDTO> iglesias, Integer tipoDocumentoId) {
+		if (iglesias == null || iglesias.isEmpty() || tipoDocumentoId == null) {
+			return;
+		}
+		java.util.Set<Integer> idsConDocs = documentoFacade.getEntidadesIdsConDocumentos(tipoDocumentoId);
+		for (IglesiaDTO iglesia : iglesias) {
+			if (iglesia != null) {
+				iglesia.setTieneDocumentos(idsConDocs.contains(iglesia.getId()));
+			}
+		}
+	}
+
 	public List<IglesiaDTO> listarDTOs() {
 		return mapearLista(iglesiaFacade.findAll());
 	}

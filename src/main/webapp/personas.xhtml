@@ -785,11 +785,18 @@
                 </f:facet>
             </p:dialog>
 
+            <!-- Al ocultar el diálogo (Cancelar, Escape, la X o tras guardar) se limpia el estado
+                 del formulario en el servidor. Va fuera del diálogo y procesa solo @this: no envía
+                 ni valida los campos del formulario. El listado (filtros, página, orden) no cambia. -->
+            <p:remoteCommand name="tecCerrarFormularioPersona" process="@this" global="false"
+                             actionListener="#{personaController.cerrarFormulario}"/>
+
             <!-- Ancho base de formularios (tec-dialog, 30rem): Cédula y Sexo caben en una fila sin desbordar. -->
             <p:dialog showEffect="fade" hideEffect="fade"
                       modal="true" widgetVar="dlgPersona"
                       responsive="true" fitViewport="true"
                       closeOnEscape="true"
+                      onHide="tecCerrarFormularioPersona()"
                       styleClass="tec-dialog personas-dialog-miembro">
                 <!-- Título según la acción; los botones Nuevo y Editar lo actualizan junto con el formulario. -->
                 <f:facet name="header">

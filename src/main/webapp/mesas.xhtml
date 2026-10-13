@@ -150,7 +150,7 @@
                                              styleClass="rounded-button ui-button-flat ui-button-secondary"
                                              title="#{msg['mesas.tooltip.editar']}"
                                              update=":frmMesas:outPnlMesas"
-                                             oncomplete="PF('dlgMesa').show()"
+                                             oncomplete="if (!args.validationFailed) PF('dlgMesa').show()"
                                              process="@this"
                                              action="#{mesaController.cargaDatosMesaSeleccionado}">
                                 <f:setPropertyActionListener value="#{mesa}" target="#{mesaController.mesaSeleccionado}"/>

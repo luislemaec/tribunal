@@ -113,7 +113,8 @@ public class MesaController implements Serializable {
             this.columnas = new ReflectionColumnModelBuilder(Mesa.class).setExcludedProperties("id", "fechaCrea", "fechaActualiza", "usuarioCrea", "usuarioActualiza",
                     "estado", "seleccionado", "persisted").build();
 
-            this.cantonSeleccionado = parroquiaSeleccionado = new Geograp();
+            this.cantonSeleccionado = new Geograp();
+            this.parroquiaSeleccionado = new Geograp();
             this.recintoSeleccionado = new RecintoDTO();
             this.listaMesasSeleccionados = new ArrayList<>();
             if (esVistaRecintos()) {
@@ -123,7 +124,7 @@ public class MesaController implements Serializable {
                 this.listaRecintos = new ArrayList<>();
             } else {
                 this.cantones = geograpBean.getByFatherId(7);
-                this.listaMesas = mesaService.listarDTOs();
+                this.listaMesas = mesaService.listarDTOsActivasConUbicacion();
                 this.listaRecintos = recintoService.listarDTOs();
             }
             actualizarTotalesPorRecinto();
@@ -342,6 +343,19 @@ public class MesaController implements Serializable {
 
     public void cargaDatosMesaSeleccionado() {
         try {
+            // Se edita una copia leída por id: si se cancela o falla el guardado, la
+            // fila de la tabla no queda con datos sin guardar.
+            if (mesaSeleccionado != null && mesaSeleccionado.getId() != null) {
+                MesaDTO vigente = mesaService.obtenerDTOPorId(mesaSeleccionado.getId());
+                if (vigente == null) {
+                    mesaSeleccionado = null;
+                    JsfUtil.addWarningMessageFromBundle("mesas.mensaje.no.disponible");
+                    FacesContext.getCurrentInstance().validationFailed();
+                    PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+                    return;
+                }
+                mesaSeleccionado = vigente;
+            }
             if (mesaSeleccionado != null && mesaSeleccionado.getId() != null
                     && mesaSeleccionado.getUbicacionId() != null) {
                 Geograp parroquia = geograpBean.getById(mesaSeleccionado.getUbicacionId());
@@ -428,7 +442,7 @@ public class MesaController implements Serializable {
             listaMesas = new ArrayList<>(mesaService.listarDTOsPorRecintos(toRecintoEntities(listaRecintosTmp)));
             return;
         }
-        listaMesas = esVistaRecintos() ? new ArrayList<>() : new ArrayList<>(mesaService.listarDTOs());
+        listaMesas = esVistaRecintos() ? new ArrayList<>() : new ArrayList<>(mesaService.listarDTOsActivasConUbicacion());
     }
 
     private void actualizarTotalesPorRecinto() {

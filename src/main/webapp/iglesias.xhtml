@@ -192,7 +192,7 @@
                                                  title="#{msg['form.iglesias.filters.btn.clear']}"
                                                  ariaLabel="#{msg['form.iglesias.filters.btn.clear']}"
                                                  styleClass="tec-btn ui-button-outlined ui-button-secondary"
-                                                 actionListener="#{iglesiaController.cancelarIglesia}"
+                                                 actionListener="#{iglesiaController.limpiarFiltros}"
                                                  process="@this" update=":frmFiltros :frmIglesias"/>
                             </div>
                         </div>
@@ -277,7 +277,7 @@
                                          title="#{msg['form.iglesias.btn.refresh']}"
                                          ariaLabel="#{msg['form.iglesias.btn.refresh']}"
                                          styleClass="rounded-button ui-button-outlined ui-button-secondary"
-                                         actionListener="#{iglesiaController.cancelarIglesia}"
+                                         actionListener="#{iglesiaController.limpiarFiltros}"
                                          process="@this" update="@form">
                             <p:tooltip for="@parent" value="#{msg['form.iglesias.btn.refresh.tooltip']}"/>
                         </p:commandButton>
@@ -686,7 +686,11 @@
              fuera del form y los inputs no se serializan en AJAX.
              ====================================================== -->
         <h:form id="frmDlgIglesia">
-            <p:dialog widgetVar="dlgIglesia"
+            <!-- Al cerrar (Cancelar, X, Escape o tras guardar) se descarta el formulario
+                 sin recargar la tabla ni perder filtros, página u orden. -->
+            <p:remoteCommand name="tecCerrarFormularioIglesia" process="@this" global="false"
+                             actionListener="#{iglesiaController.cerrarFormulario}"/>
+            <p:dialog widgetVar="dlgIglesia" onHide="tecCerrarFormularioIglesia()"
                       modal="true" responsive="true" fitViewport="true"
                       closable="true" closeOnEscape="true"
                       styleClass="tec-dialog tec-dialog--md">
@@ -853,9 +857,7 @@
                     <div class="tec-filter-actions">
                         <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times"
                                          styleClass="tec-btn ui-button-outlined ui-button-secondary"
-                                         actionListener="#{iglesiaController.cancelarIglesia}"
-                                         oncomplete="PF('dlgIglesia').hide()"
-                                         process="@this" update=":frmIglesias"/>
+                                         type="button" onclick="PF('dlgIglesia').hide()"/>
                         <p:commandButton value="#{msg['btn.save']}" icon="pi pi-check"
                                          styleClass="tec-btn"
                                          actionListener="#{iglesiaController.actualizarIglesia}"

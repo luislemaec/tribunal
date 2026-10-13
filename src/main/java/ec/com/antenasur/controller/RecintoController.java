@@ -83,7 +83,8 @@ public class RecintoController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            cantonSeleccionado = parroquiaSeleccionado = new Geograp();
+            cantonSeleccionado = new Geograp();
+            parroquiaSeleccionado = new Geograp();
             this.listaRecintosSeleccionados = new ArrayList<>();
             this.cantones = geograpBean.getByFatherId(7);
             this.parroquias = new ArrayList<>();

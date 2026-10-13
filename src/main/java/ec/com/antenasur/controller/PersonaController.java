@@ -501,36 +501,53 @@ public class PersonaController implements Serializable {
         }
     }
 
+    /**
+     * Formulario limpio para un miembro nuevo. No toca el listado: la iglesia elegida en
+     * los filtros ({@code iglesiaSeleccionado}) es también el alcance de la tabla, así que
+     * se conserva y se precarga en el formulario (el administrador global puede cambiarla).
+     */
     public void inicializaPersonaSeleccionado() {
+        limpiarFormulario();
         iglesiaPersonaSeleccionado = new IglesiaPersonaDTO();
         iglesiaPersonaSeleccionado.setPersona(new PersonaDTO());
-        iglesiaPersonaSeleccionado.setIglesia(new IglesiaDTO());
         // Por defecto habilitado para participar en las elecciones: el admin puede desmarcarlo
         iglesiaPersonaSeleccionado.setHabilitadoPadron(Boolean.TRUE);
-        if (restringidoAIglesia && iglesiaSeleccionado != null
-                && iglesiaSeleccionado.getId() != null) {
-            // El valor del formulario procede del contexto autenticado, no de
-            // un parámetro enviado por el navegador.
-            iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
-        } else {
-            this.iglesiaSeleccionado = new IglesiaDTO();
+        IglesiaDTO iglesiaFormulario = new IglesiaDTO();
+        if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+            // IglesiaAdmin: procede del contexto autenticado, no de un parámetro del navegador.
+            // Administrador global: la iglesia del filtro, como sugerencia editable. Se copia
+            // para que el formulario no modifique el alcance del listado.
+            iglesiaFormulario.setId(iglesiaSeleccionado.getId());
+            iglesiaFormulario.setNombre(iglesiaSeleccionado.getNombre());
         }
+        iglesiaPersonaSeleccionado.setIglesia(iglesiaFormulario);
         this.personaSeleccionado = new PersonaDTO();
-        limpiarEstadoRegularizacion();
     }
 
     public void nuevaPersona() {
         inicializaPersonaSeleccionado();
     }
 
+    /**
+     * Abre la edición con los datos vigentes del miembro: se consulta por id en este momento
+     * en lugar de usar la fila de la página (que pudo cambiar desde que se mostró y que es
+     * el mismo objeto de la tabla). La consulta trae todo lo que guardar persiste, incluidos
+     * apellidos, tratamiento y fechas desde/hasta, que el formulario no muestra.
+     */
     public void prepararEdicion(IglesiaPersonaDTO miembro) {
+        limpiarFormulario();
         if (Boolean.TRUE.equals(miembro != null ? miembro.getInconsistenciaIglesias() : null)) {
-            iglesiaPersonaSeleccionado = null;
             JsfUtil.addWarningMessage(mensaje("form.personas.inconsistencia.edicion.bloqueada"));
             PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
             return;
         }
-        iglesiaPersonaSeleccionado = miembro;
+        IglesiaPersonaDTO vigente = miembro == null ? null : iglesiaPersonaService.obtenerDTOPorId(miembro.getId());
+        if (vigente == null || !Boolean.TRUE.equals(vigente.getEstadoRelacion()) || vigente.getPersona() == null) {
+            JsfUtil.addWarningMessage(mensaje("form.personas.error.miembro.noDisponible"));
+            PrimeFaces.current().ajax().addCallbackParam("dialogReady", false);
+            return;
+        }
+        iglesiaPersonaSeleccionado = vigente;
         if (restringidoAIglesia && iglesiaSeleccionado != null
                 && iglesiaSeleccionado.getId() != null) {
             // Mantiene el único campo Iglesia alineado al alcance persistido
@@ -611,7 +628,7 @@ public class PersonaController implements Serializable {
             JsfUtil.addWarningMessage("No se encontraron miembros seleccionados para eliminar");
         }
         this.listaIglesiaPersonaSeleccionados = null;
-        this.iglesiaPersonaSeleccionado = null;
+        limpiarFormulario();
         PrimeFaces.current().ajax().update(
                 "frmPersonas:tblPersonas", "frmPersonas:btnEliminaRegistros",
                 "frmPersonas:panelResumenMiembros");
@@ -686,9 +703,7 @@ public class PersonaController implements Serializable {
                     JsfUtil.addSuccessMessage("Miembro registrado correctamente: "
                             + nombreMiembro + estadoPadron);
                 }
-                personaSeleccionado = null;
-                iglesiaPersonaSeleccionado = null;
-                limpiarEstadoRegularizacion();
+                limpiarFormulario();
                 refrescarListadoMiembrosActual();
                 PrimeFaces.current().ajax().update(
                         "frmPersonas:tblPersonas", "frmPersonas:panelResumenMiembros");
@@ -778,6 +793,23 @@ public class PersonaController implements Serializable {
                 iglesiaPersonaSeleccionado.getPersona().getDocumento());
         requiereRegularizacion = iglesiasActivasPersona.stream()
                 .anyMatch(relacion -> Boolean.TRUE.equals(relacion.getInconsistenciaIglesias()));
+    }
+
+    /**
+     * Deja el formulario del miembro listo para la siguiente operación (Nuevo, Editar,
+     * Guardar, Eliminar, Cancelar, Cerrar): descarta el miembro en edición, la persona
+     * temporal y el estado de regularización. NO toca el listado: filtros geográficos,
+     * iglesia elegida, búsqueda, filtros de columna, página y orden se conservan.
+     */
+    private void limpiarFormulario() {
+        iglesiaPersonaSeleccionado = null;
+        personaSeleccionado = null;
+        limpiarEstadoRegularizacion();
+    }
+
+    /** Cancelar o cerrar el diálogo del miembro (botón Cancelar, Escape o la X). */
+    public void cerrarFormulario() {
+        limpiarFormulario();
     }
 
     private void limpiarEstadoRegularizacion() {

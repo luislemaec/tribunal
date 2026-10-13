@@ -243,7 +243,8 @@ public class IglesiaController implements Serializable {
     @PostConstruct
     private void init() {
         try {
-            parroquiaSeleccionado = cantonSeleccionado = new Geograp();
+            parroquiaSeleccionado = new Geograp();
+            cantonSeleccionado = new Geograp();
             cantonDialogoId = null;
             provinciaDialogoId = null;
 
@@ -261,9 +262,7 @@ public class IglesiaController implements Serializable {
             if (restringidoAIglesia) {
                 cargarIglesiaAsignada();
             } else {
-                listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
-                listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
-                enriquecerYAplicarFiltros();
+                aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
             }
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
@@ -299,15 +298,8 @@ public class IglesiaController implements Serializable {
 
         if (provinciaFiltroId != null) {
             cantonesFiltro = geograpService.findByFatherId(provinciaFiltroId);
-            List<Geograp> parroquiasDeProvincia = geograpService.obtenerParroquiasDeCantones(cantonesFiltro);
-            if (parroquiasDeProvincia != null && !parroquiasDeProvincia.isEmpty()) {
-                aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquias(parroquiasDeProvincia));
-            } else {
-                aplicarResultadoFiltroGeografico(Collections.emptyList());
-            }
-        } else {
-            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS));
         }
+        aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
     }
 
     /** Filtro: cuando cambia el cantón carga parroquias y filtra la tabla. */
@@ -321,19 +313,30 @@ public class IglesiaController implements Serializable {
         if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
             cantonSeleccionado = geograpService.find(cantonSeleccionado.getId());
             parroquias = geograpService.findByFatherId(cantonSeleccionado.getId());
-            obtieneIglesiasPorCanton();
+            aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
         } else {
             parroquias = null;
             obtieneCantonesFiltro();
         }
     }
 
-    private void obtieneIglesiasPorCanton() {
-        if (parroquias != null && !parroquias.isEmpty()) {
-            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquias(parroquias));
-        } else {
-            aplicarResultadoFiltroGeografico(Collections.emptyList());
+    /**
+     * Iglesias de la selección geográfica vigente (parroquia, cantón, provincia o
+     * todas). Se usa al filtrar y al recargar tras guardar, eliminar, restaurar o
+     * asignar administrador, para no perder el filtro que eligió el usuario.
+     */
+    private List<IglesiaDTO> consultarSeleccionGeografica() {
+        if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
+            return iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado);
         }
+        if (cantonSeleccionado != null && cantonSeleccionado.getId() != null) {
+            return iglesiaService.listarDTOsPorParroquias(parroquias);
+        }
+        if (provinciaFiltroId != null) {
+            return iglesiaService.listarDTOsPorParroquias(
+                    geograpService.obtenerParroquiasDeCantones(cantonesFiltro));
+        }
+        return iglesiaService.listarDTOs();
     }
 
     public void obtieneIglesiasPorParroquia() {
@@ -344,7 +347,7 @@ public class IglesiaController implements Serializable {
         comunidadFiltro = null;
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null) {
             parroquiaSeleccionado = geograpService.find(parroquiaSeleccionado.getId());
-            aplicarResultadoFiltroGeografico(iglesiaService.listarDTOsPorParroquia(parroquiaSeleccionado));
+            aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
         } else {
             obtieneParroquias();
         }
@@ -720,6 +723,15 @@ public class IglesiaController implements Serializable {
             rechazarAccesoIglesia();
             return;
         }
+        // Se edita una copia leída por id (versión vigente): los cambios del diálogo
+        // no tocan la fila de la tabla hasta guardar, y Cancelar no necesita recargar.
+        IglesiaDTO vigente = iglesiaService.obtenerDTOPorId(iglesiaSeleccionado.getId());
+        if (vigente == null) {
+            rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.no.disponible"));
+            iglesiaSeleccionado = null;
+            return;
+        }
+        iglesiaSeleccionado = vigente;
         esNuevoRegistro = false;
         tieneRuc = !esDocumentoGenerico(iglesiaSeleccionado.getDocumento());
         cargarParroquiasParaDialogo(iglesiaSeleccionado.getUbicacionId());
@@ -969,7 +981,22 @@ public class IglesiaController implements Serializable {
         rechazarConMensaje(JsfUtil.getMessage("form.iglesias.mensaje.acceso.denegado"));
     }
 
-    public void cancelarIglesia() {
+    /**
+     * Cierra el diálogo Nueva / Editar (botón Cancelar, X o Escape): descarta lo no
+     * guardado sin tocar los filtros, la página ni el orden de la tabla.
+     */
+    public void cerrarFormulario() {
+        iglesiaSeleccionado = null;
+        esNuevoRegistro = false;
+        tieneRuc = true;
+        provinciaDialogoId = null;
+        cantonesDialogo = null;
+        cantonDialogoId = null;
+        parroquiasDialogo = null;
+    }
+
+    /** Botones «Limpiar filtros» y «Recargar»: vuelve al listado completo. */
+    public void limpiarFiltros() {
         iglesiaSeleccionado = null;
         provinciaFiltroId = null;
         cantonesFiltro = null;
@@ -996,9 +1023,7 @@ public class IglesiaController implements Serializable {
         if (restringidoAIglesia) {
             cargarIglesiaAsignada();
         } else {
-            listaIglesias = iglesiaService.listarDTOsConFlagDocumentos(Constantes.LISTA_MIEMBROS);
-            listaIglesiasFiltroGeografico = new ArrayList<>(listaIglesias);
-            enriquecerYAplicarFiltros();
+            aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
         }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
         puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
@@ -1170,6 +1195,8 @@ public class IglesiaController implements Serializable {
 
     private void aplicarResultadoFiltroGeografico(List<IglesiaDTO> iglesias) {
         listaIglesiasFiltroGeografico = iglesias != null ? new ArrayList<>(iglesias) : new ArrayList<>();
+        // El indicador de documentos se marca para cualquier filtro, no solo para el listado completo.
+        iglesiaService.marcarDTOsConTieneDocumentos(listaIglesiasFiltroGeografico, Constantes.LISTA_MIEMBROS);
         enriquecerYAplicarFiltros();
     }
 
