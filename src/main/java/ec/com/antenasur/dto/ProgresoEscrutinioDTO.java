@@ -10,8 +10,9 @@ import ec.com.antenasur.enums.EstadoEscrutinio;
 public final class ProgresoEscrutinioDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** Orden oficial: APERTURA → CONTEO → ACTA FÍSICA → CIERRE → VALIDACIÓN (dato oficial). */
     public enum Etapa {
-        APERTURA, CONTEO, CIERRE, ACTA_FISICA, DATO_OFICIAL;
+        APERTURA, CONTEO, ACTA_FISICA, CIERRE, DATO_OFICIAL;
 
         public String getClave() {
             return "actaE.etapa." + name();
@@ -37,6 +38,11 @@ public final class ProgresoEscrutinioDTO implements Serializable {
         this.oficial = oficial;
     }
 
+    /**
+     * Fase y situación de la mesa a partir del estado de la cabecera y de la revisión del
+     * acta física vigente ({@code null} = sin acta). Las reglas de carga y cierre son las de
+     * {@link ec.com.antenasur.service.tec.ReglasFlujoEscrutinio}; aquí solo se proyectan.
+     */
     public static ProgresoEscrutinioDTO determinar(EstadoEscrutinio estado,
             boolean tieneFechaApertura, String revisionActaVigente) {
         if (estado == EstadoEscrutinio.ANULADO || estado == EstadoEscrutinio.OBSERVADO) {
@@ -47,24 +53,34 @@ public final class ProgresoEscrutinioDTO implements Serializable {
         if (estado == null || estado == EstadoEscrutinio.PENDIENTE) {
             return new ProgresoEscrutinioDTO(Etapa.APERTURA, "pendiente", null, false, false);
         }
+        boolean devuelta = "OBSERVADA".equals(revisionActaVigente) || "RECHAZADA".equals(revisionActaVigente);
         if (estado == EstadoEscrutinio.CERRADO) {
             if ("VALIDADA".equals(revisionActaVigente)) {
                 return new ProgresoEscrutinioDTO(Etapa.DATO_OFICIAL, "validado", null, true, true);
             }
-            if (revisionActaVigente == null || "OBSERVADA".equals(revisionActaVigente)
-                    || "RECHAZADA".equals(revisionActaVigente)) {
+            if (revisionActaVigente == null || devuelta) {
+                // Mesas cerradas con el flujo anterior, sin acta física todavía.
                 return new ProgresoEscrutinioDTO(Etapa.ACTA_FISICA,
                         revisionActaVigente == null ? "carga" : "correccion",
                         revisionActaVigente, true, false);
             }
             return new ProgresoEscrutinioDTO(Etapa.DATO_OFICIAL, "validacion", null, true, false);
         }
-        if (estado == EstadoEscrutinio.CONTEO_REGISTRADO) {
-            return new ProgresoEscrutinioDTO(Etapa.CIERRE, "pendiente", null, true, false);
+        if (estado == EstadoEscrutinio.ABIERTO) {
+            return new ProgresoEscrutinioDTO(Etapa.CONTEO, "pendiente", null, true, false);
         }
-        return new ProgresoEscrutinioDTO(Etapa.CONTEO,
-                estado == EstadoEscrutinio.ABIERTO ? "pendiente" : "curso",
-                estado == EstadoEscrutinio.REABIERTO ? "REABIERTO" : null, true, false);
+        // Conteo guardado (EN_CONTEO, CONTEO_REGISTRADO, REABIERTO).
+        String reabierto = estado == EstadoEscrutinio.REABIERTO ? "REABIERTO" : null;
+        if (ec.com.antenasur.service.tec.ReglasFlujoEscrutinio.actaValidaParaCierre(
+                revisionActaVigente != null, revisionActaVigente)) {
+            return new ProgresoEscrutinioDTO(Etapa.CIERRE, "pendiente", reabierto, true, false);
+        }
+        if (estado == EstadoEscrutinio.CONTEO_REGISTRADO) {
+            return new ProgresoEscrutinioDTO(Etapa.ACTA_FISICA, devuelta ? "correccion" : "carga",
+                    devuelta ? revisionActaVigente : null, true, false);
+        }
+        return new ProgresoEscrutinioDTO(Etapa.CONTEO, "curso",
+                reabierto != null ? reabierto : (devuelta ? revisionActaVigente : null), true, false);
     }
 
     public Etapa getEtapa() {

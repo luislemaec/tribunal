@@ -47,6 +47,7 @@ import ec.com.antenasur.model.tec.TipoDocumento;
 import ec.com.antenasur.report.ReportTemplateController;
 import ec.com.antenasur.service.tec.CategoriaVotoService;
 import ec.com.antenasur.service.tec.ActaFisicaEscrutinioService;
+import ec.com.antenasur.service.tec.ReglasFlujoEscrutinio;
 import ec.com.antenasur.service.tec.EscrutinioService;
 import ec.com.antenasur.service.tec.ListaService;
 import ec.com.antenasur.service.tec.MesaService;
@@ -876,6 +877,8 @@ public class ActaEController implements Serializable {
             Integer procesoId = procesoActivo != null ? procesoActivo.getId() : null;
             MesaDTO mesaCerrada = escrutinioService.guardarActaCompletaDTO(
                     mesaSeleccionado.getId(), listaCamposActaE);
+            procesoBean.okActivityRegister("CIERRE MESA " + mesaSeleccionado.getNombre(),
+                    mesaSeleccionado.getId().toString());
             if (mesaCerrada != null) {
                 mesaSeleccionado = mesaCerrada;
             }
@@ -901,8 +904,9 @@ public class ActaEController implements Serializable {
     public void cargarActaFisica() {
         try {
             // Presidente (su mesa), operadores y revisores. El servicio vuelve a validar
-            // autoría, mesa cerrada y que el acta vigente no esté ya validada.
-            if (!mesaSeleccionadaValida() || !isMesaCerrada()
+            // autoría, conteo guardado (o mesa cerrada del flujo anterior) y que el acta
+            // vigente no esté ya validada.
+            if (!mesaSeleccionadaValida() || !isPuedeCargarActaFisica()
                     || !(isUsuarioRevisorActas() || puedeGestionarMesa(mesaSeleccionado.getId()))) {
                 log.warn("ACTA_FISICA causa=CONTEXTO_VISTA_NO_AUTORIZADO");
                 JsfUtil.addErrorMessageFromBundle("actaE.actaFisica.no.autorizada");
@@ -918,8 +922,16 @@ public class ActaEController implements Serializable {
                     archivoActaFisica.getContentType(), archivoActaFisica.getContent());
             archivoActaFisica = null;
             contenidoActaFisica = null;
-            pasoVisible = 4;
-            verActaFisica();
+            procesoBean.okActivityRegister("CARGA ACTA FISICA MESA " + mesaSeleccionado.getNombre(),
+                    mesaSeleccionado.getId().toString());
+            // Orden oficial: con el acta cargada, el paso siguiente es el Cierre. En una mesa
+            // cerrada con el flujo anterior, se pasa directamente a la Validación.
+            if (isMesaCerrada()) {
+                pasoVisible = 4;
+                verActaFisica();
+            } else {
+                pasoVisible = 3;
+            }
             org.primefaces.PrimeFaces.current().ajax().update("frmActaE:tabActaE:contenidoEtapa");
             actualizarActaFisicaEnListado(mesaSeleccionado.getId(), actaFisica);
             actualizarIndicadoresProgreso();
@@ -1305,12 +1317,12 @@ public class ActaEController implements Serializable {
         return mesaSeleccionadaValida() && isPuedeOperarActa() && isMesaAbierta() && !isMesaCerrada();
     }
 
+    /** Orden oficial: conteo guardado y acta física válida cargada (el servicio lo exige). */
     public boolean isPuedeCerrarMesa() {
         return isPuedeEditarConteo()
                 && escrutinioCabecera != null
-                && (EstadoEscrutinio.EN_CONTEO.equals(escrutinioCabecera.getEstadoEscrutinio())
-                || EstadoEscrutinio.CONTEO_REGISTRADO.equals(escrutinioCabecera.getEstadoEscrutinio())
-                || EstadoEscrutinio.REABIERTO.equals(escrutinioCabecera.getEstadoEscrutinio()))
+                && ReglasFlujoEscrutinio.permiteCierre(escrutinioCabecera.getEstadoEscrutinio(),
+                        actaFisica != null, actaFisica != null ? actaFisica.getEstadoRevision() : null)
                 && listaCamposActaE != null && !listaCamposActaE.isEmpty();
     }
 
@@ -1806,7 +1818,7 @@ public class ActaEController implements Serializable {
     }
 
     /** Pasos del flujo de la mesa, en orden; sus rótulos son actaE.paso.&lt;paso&gt;. */
-    private static final String[] PASOS_ESCRUTINIO = {"apertura", "conteo", "cierre", "actaFisica", "validacion"};
+    private static final String[] PASOS_ESCRUTINIO = {"apertura", "conteo", "actaFisica", "cierre", "validacion"};
 
     public String[] getPasosEscrutinio() {
         return PASOS_ESCRUTINIO;
@@ -1908,9 +1920,17 @@ public class ActaEController implements Serializable {
      * Carga o reemplazo del acta física: mesa cerrada, usuario que opera la mesa o
      * revisor, y acta vigente no validada. El servicio vuelve a comprobarlo todo.
      */
+    /** La fase Acta física ya corresponde: conteo guardado o mesa cerrada (consulta y carga). */
+    public boolean isEtapaActaFisicaHabilitada() {
+        return escrutinioCabecera != null
+                && (ReglasFlujoEscrutinio.conteoGuardado(escrutinioCabecera.getEstadoEscrutinio()) || isMesaCerrada());
+    }
+
     public boolean isPuedeCargarActaFisica() {
-        return isMesaCerrada() && (isPuedeOperarActa() || isUsuarioRevisorActas())
-                && (actaFisica == null || !ActaFisicaEscrutinioService.VALIDADA.equals(actaFisica.getEstadoRevision()));
+        return mesaSeleccionadaValida() && escrutinioCabecera != null
+                && (isPuedeOperarActa() || isUsuarioRevisorActas())
+                && ReglasFlujoEscrutinio.permiteCargaActaFisica(escrutinioCabecera.getEstadoEscrutinio(),
+                        actaFisica != null ? actaFisica.getEstadoRevision() : null);
     }
 
     /**

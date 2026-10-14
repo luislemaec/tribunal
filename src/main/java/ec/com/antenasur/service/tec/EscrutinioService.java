@@ -123,10 +123,16 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
                 || EstadoEscrutinio.ANULADO.equals(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("El escrutinio ya se encuentra cerrado.");
         }
-        if (!EstadoEscrutinio.EN_CONTEO.equals(cabecera.getEstadoEscrutinio())
-                && !EstadoEscrutinio.CONTEO_REGISTRADO.equals(cabecera.getEstadoEscrutinio())
-                && !EstadoEscrutinio.REABIERTO.equals(cabecera.getEstadoEscrutinio())) {
+        if (!ReglasFlujoEscrutinio.conteoGuardado(cabecera.getEstadoEscrutinio())) {
             throw new NegocioException("Debe guardar el conteo antes de cerrar la mesa.");
+        }
+        // Orden oficial: ACTA FÍSICA antes del CIERRE. Se comprueba aquí (no solo en la
+        // vista) para la web, la App y el acceso QR, antes de escribir nada.
+        var actaVigente = actaFisicaVigente(mesa.getId(), proceso != null ? proceso.getId() : null);
+        if (!ReglasFlujoEscrutinio.actaValidaParaCierre(actaVigente != null,
+                actaVigente != null ? actaVigente.getEstadoRevision() : null)
+                || !ec.com.antenasur.util.RepositorioDocumentos.estaDisponible(actaVigente.getPath())) {
+            throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("escrutinio.cierre.actaFisica.requerida"));
         }
         for (Escrutinio item : actaItems) {
             validarItemEscrutinio(item);
@@ -766,12 +772,17 @@ public class EscrutinioService extends AbstractService<Escrutinio, Integer, Escr
 
     /** El acta física vigente de la mesa en el proceso está VALIDADA (dato oficial). */
     private boolean tieneActaFisicaValidada(Integer mesaId, Integer procesoId) {
-        var tipo = tipoDocumentoFacade.buscarActivoPorNombre(ActaFisicaEscrutinioService.TIPO_DOCUMENTO);
-        if (tipo == null) {
-            return false;
-        }
-        var vigente = documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
+        var vigente = actaFisicaVigente(mesaId, procesoId);
         return vigente != null && ActaFisicaEscrutinioService.VALIDADA.equals(vigente.getEstadoRevision());
+    }
+
+    /** Acta física activa (versión vigente) de la mesa en el proceso; null si no hay. */
+    private ec.com.antenasur.model.tec.Documentos actaFisicaVigente(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return null;
+        }
+        var tipo = tipoDocumentoFacade.buscarActivoPorNombre(ActaFisicaEscrutinioService.TIPO_DOCUMENTO);
+        return tipo == null ? null : documentoService.buscarActivoPorMesaProcesoTipo(mesaId, procesoId, tipo.getId());
     }
 
     private void validarMotivo(String motivo) {

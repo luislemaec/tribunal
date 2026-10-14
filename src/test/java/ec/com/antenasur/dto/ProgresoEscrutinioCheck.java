@@ -10,13 +10,19 @@ public class ProgresoEscrutinioCheck {
         verificar(PENDIENTE, false, null, 0, 0, false);
         verificar(ABIERTO, true, null, 1, 1, false);
         verificar(EN_CONTEO, true, null, 1, 1, false);
+        // Orden oficial: 0 Apertura, 1 Conteo, 2 Acta fisica, 3 Cierre, 4 Validacion.
         verificar(CONTEO_REGISTRADO, true, null, 2, 2, false);
-        verificar(CERRADO, true, null, 3, 3, false);
+        verificar(CONTEO_REGISTRADO, true, "PENDIENTE_REVISION", 3, 3, false);
+        verificar(EN_CONTEO, true, "PENDIENTE_REVISION", 3, 3, false);
+        verificar(CONTEO_REGISTRADO, true, "OBSERVADA", 2, 2, false);
+        verificar(REABIERTO, true, "PENDIENTE_REVISION", 3, 3, false);
+        verificar(CERRADO, true, null, 2, 2, false);
         verificar(CERRADO, true, "PENDIENTE_REVISION", 4, 4, false);
         verificar(CERRADO, true, "VALIDADA", 4, 5, true);
-        verificar(CERRADO, true, "OBSERVADA", 3, 3, false);
-        verificar(CERRADO, true, "RECHAZADA", 3, 3, false);
+        verificar(CERRADO, true, "OBSERVADA", 2, 2, false);
+        verificar(CERRADO, true, "RECHAZADA", 2, 2, false);
         verificar(REABIERTO, true, "VALIDADA", 1, 1, false);
+        verificar(REABIERTO, true, "OBSERVADA", 1, 1, false);
         verificar(OBSERVADO, true, "VALIDADA", 1, 1, false);
         verificar(OBSERVADO, false, null, 0, 0, false);
         verificar(ANULADO, true, "VALIDADA", 1, 1, false);
@@ -28,9 +34,9 @@ public class ProgresoEscrutinioCheck {
         }
         for (String revision : new String[]{"OBSERVADA", "RECHAZADA"}) {
             var p = ProgresoEscrutinioDTO.determinar(CERRADO, true, revision);
-            exigir(p.isTieneIncidencia() && !p.completado(3), "Acta devuelta no completa");
+            exigir(p.isTieneIncidencia() && !p.completado(2), "Acta devuelta no completa");
         }
-        System.out.println("OK: 16 escenarios; 5 hitos; filtro exacto; incidencias; reapertura y oficializacion.");
+        System.out.println("OK: 22 escenarios; 5 hitos; filtro exacto; incidencias; reapertura y oficializacion.");
     }
 
     private static void verificar(EstadoEscrutinio estado, boolean apertura, String revision,

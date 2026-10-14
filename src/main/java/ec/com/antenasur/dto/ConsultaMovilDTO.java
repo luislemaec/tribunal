@@ -124,6 +124,8 @@ public final class ConsultaMovilDTO {
         boolean puedeSubirActaFisica;
         List<CategoriaConteo> categorias;
         ActaFisica actaFisica;
+        /** Fase y situación calculadas por TEC (mismas que actaE). */
+        FaseEscrutinio fase;
     }
 
     @Value
@@ -256,6 +258,29 @@ public final class ConsultaMovilDTO {
         ActaFisicaRevision actaFisica;
         /** Mesa cerrada con acta física vigente aún no validada (misma regla que actaE). */
         boolean puedeRevisarActa;
+        FaseEscrutinio fase;
+    }
+
+    /**
+     * Fase y situación del escrutinio calculadas por TEC (ProgresoEscrutinioDTO, la misma
+     * proyección que actaE): la App las muestra tal cual, sin reconstruirlas.
+     */
+    @Value
+    public static class FaseEscrutinio implements Serializable {
+        private static final long serialVersionUID = 1L;
+        /** APERTURA, CONTEO, ACTA_FISICA, CIERRE o DATO_OFICIAL (validación). */
+        String fase;
+        /** 1 a 5, en el orden oficial. */
+        int numero;
+        String etiqueta;
+        /** Situación dentro de la fase (Pendiente, En curso, Pendiente de carga, Dato oficial…). */
+        String situacion;
+        /** REABIERTO, OBSERVADO, ANULADO, OBSERVADA o RECHAZADA; null si no hay. */
+        String incidencia;
+        String incidenciaEtiqueta;
+        /** success, info, warning o danger (misma severidad que la web). */
+        String severidad;
+        boolean oficial;
     }
 
     @Value
@@ -264,6 +289,7 @@ public final class ConsultaMovilDTO {
         Ubicacion ubicacion;
         String estado;
         boolean juntaRegistrada;
+        FaseEscrutinio fase;
     }
 
     @Value

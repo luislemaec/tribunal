@@ -320,25 +320,27 @@ public class GestionMovilService {
         }
 
         boolean pendiente = estado == EstadoEscrutinio.PENDIENTE;
-        boolean editable = estado == EstadoEscrutinio.ABIERTO || estado == EstadoEscrutinio.EN_CONTEO
-                || estado == EstadoEscrutinio.CONTEO_REGISTRADO || estado == EstadoEscrutinio.REABIERTO;
-        boolean cerrable = estado == EstadoEscrutinio.EN_CONTEO || estado == EstadoEscrutinio.CONTEO_REGISTRADO
-                || estado == EstadoEscrutinio.REABIERTO;
+        boolean editable = estado == EstadoEscrutinio.ABIERTO || ReglasFlujoEscrutinio.conteoGuardado(estado);
         String bloqueo = pendiente ? disponibilidadDocumental.motivoBloqueoApertura(c.procesoId, mesaId) : null;
 
+        // Orden oficial: el acta física se carga con el conteo guardado y antes del cierre;
+        // las reglas son las mismas que aplica el servicio (ReglasFlujoEscrutinio).
         ActaFisica actaFisica = null;
-        Documentos vigente = estado == EstadoEscrutinio.CERRADO ? actaFisicaService.obtenerVigente(mesaId, c.procesoId) : null;
+        Documentos vigente = pendiente || estado == EstadoEscrutinio.ABIERTO ? null
+                : actaFisicaService.obtenerVigente(mesaId, c.procesoId);
+        String revision = ConsultaMovilService.revision(vigente);
         if (vigente != null) {
             actaFisica = new ActaFisica(vigente.getVersion(), vigente.getEstadoRevision(), vigente.getObservacionRevision());
         }
-        boolean puedeSubir = estado == EstadoEscrutinio.CERRADO
-                && (vigente == null || !ActaFisicaEscrutinioService.VALIDADA.equals(vigente.getEstadoRevision()));
+        boolean puedeSubir = ReglasFlujoEscrutinio.permiteCargaActaFisica(estado, revision);
+        boolean cerrable = ReglasFlujoEscrutinio.permiteCierre(estado, vigente != null, revision);
 
         return new ActaPresidente(ubicacion(c.mesa), estado.name(), sufragantes, emitidos, papeletas,
                 EscrutinioService.calcularCuadrePapeletas(sufragantes, emitidos, papeletas),
                 cabecera != null ? cabecera.getObservacionConteo() : null, bloqueo,
                 pendiente && bloqueo == null, editable && !categorias.isEmpty(), cerrable && !categorias.isEmpty(),
-                puedeSubir, categorias, actaFisica);
+                puedeSubir, categorias, actaFisica,
+                ConsultaMovilService.fase(estado, cabecera != null && cabecera.getFechaApertura() != null, revision));
     }
 
     /** Ítems del acta (existentes o por crear) para las categorías del proceso. */

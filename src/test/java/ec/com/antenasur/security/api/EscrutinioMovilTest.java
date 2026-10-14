@@ -23,6 +23,7 @@ import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.tec.AccesoDocumentoMesaService;
 import ec.com.antenasur.service.tec.ActaFisicaEscrutinioService;
+import ec.com.antenasur.service.tec.ReglasFlujoEscrutinio;
 import ec.com.antenasur.service.tec.CategoriaVotoService;
 import ec.com.antenasur.service.tec.DisponibilidadDocumentoMesaService;
 import ec.com.antenasur.service.tec.EscrutinioService;
@@ -115,7 +116,10 @@ class EscrutinioMovilTest {
             @Override
             public Documentos cargar(Integer mesaId, Integer procesoId, String nombre, String mime, byte[] contenido) {
                 llamadas.add("acta:" + mesaId + ":" + procesoId + ":" + mime + ":" + contenido.length);
-                return null;
+                // Nueva versión vigente, pendiente de revisión (ActaFisicaEscrutinioService.cargar).
+                actaFisica = new Documentos();
+                actaFisica.setEstadoRevision(ActaFisicaEscrutinioService.PENDIENTE_REVISION);
+                return actaFisica;
             }
         });
         inyectar("escrutinioService", new EscrutinioService() {
@@ -169,6 +173,11 @@ class EscrutinioMovilTest {
                 llamadas.add("cierre:" + mesaId);
                 if (estado == EstadoEscrutinio.ABIERTO) {
                     throw new NegocioException("Debe guardar el conteo antes de cerrar la mesa.");
+                }
+                // Misma regla que EscrutinioService.guardarActaCompleta: acta física antes del cierre.
+                if (!ReglasFlujoEscrutinio.actaValidaParaCierre(actaFisica != null,
+                        actaFisica != null ? actaFisica.getEstadoRevision() : null)) {
+                    throw new NegocioException("Antes de cerrar la mesa cargue el acta física firmada.");
                 }
                 items.forEach(i -> guardados.put(i.getCategoriaId(), i.getTotalVotos()));
                 estado = EstadoEscrutinio.CERRADO;
@@ -235,22 +244,61 @@ class EscrutinioMovilTest {
         assertEquals(8, a.getVotosEmitidos());
         assertEquals(2, a.getPapeletasNoUtilizadas());
         assertEquals(0, a.getCuadre());
-        assertTrue(a.isPuedeCerrar());
+        // Orden oficial: con el conteo guardado sigue el acta física; aún no se puede cerrar.
+        assertTrue(a.isPuedeSubirActaFisica());
+        assertFalse(a.isPuedeCerrar(), "falta el acta física");
+        assertEquals("ACTA_FISICA", a.getFase().getFase());
+        assertEquals(3, a.getFase().getNumero());
         assertTrue(a.getCategorias().stream().filter(c -> c.getCategoriaId() == PAPELETAS).findFirst().orElseThrow()
                 .isPapeletas());
     }
 
     @Test
-    void cerrarExigeConteoGuardadoYLuegoPermiteSubirElActa() {
+    void ordenOficial_aperturaConteoActaFisicaCierreValidacion() {
         estado = EstadoEscrutinio.ABIERTO;
-        assertThrows(NegocioException.class, () -> servicio.cerrarMesa(conteo(5, 3, 2)), "regla de EscrutinioService");
+        assertEquals("CONTEO", servicio.actaPresidente().getFase().getFase());
+        assertFalse(servicio.actaPresidente().isPuedeSubirActaFisica(), "sin conteo guardado no hay acta");
+        assertThrows(NegocioException.class, () -> servicio.cerrarMesa(conteo(5, 3, 2)), "conteo sin guardar");
         servicio.guardarConteo(conteo(5, 3, 2));
-        ActaPresidente a = servicio.cerrarMesa(conteo(5, 3, 2));
-        assertEquals("CERRADO", a.getEstado());
-        assertFalse(a.isPuedeEditarConteo());
-        assertTrue(a.isPuedeSubirActaFisica());
-        servicio.subirActaFisica(new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF });
+        assertThrows(NegocioException.class, () -> servicio.cerrarMesa(conteo(5, 3, 2)), "acta física sin cargar");
+        assertFalse(llamadas.contains("cierre-ok"));
+
+        ActaPresidente a = servicio.subirActaFisica(new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF });
         assertTrue(llamadas.contains("acta:" + MESA + ":" + PROCESO + ":image/jpeg:3"));
+        assertEquals("CIERRE", a.getFase().getFase());
+        assertTrue(a.isPuedeCerrar());
+        assertTrue(a.isPuedeEditarConteo(), "el conteo sigue editable; el Tribunal contrasta al validar");
+
+        a = servicio.cerrarMesa(conteo(5, 3, 2));
+        assertEquals("CERRADO", a.getEstado());
+        assertEquals("DATO_OFICIAL", a.getFase().getFase(), "fase Validación");
+        assertFalse(a.isPuedeEditarConteo());
+        assertFalse(a.isPuedeCerrar());
+    }
+
+    @Test
+    void trasDevolverElActa_seExigeUnaNuevaVersionParaCerrar() {
+        estado = EstadoEscrutinio.REABIERTO;
+        actaFisica = new Documentos();
+        actaFisica.setEstadoRevision(ActaFisicaEscrutinioService.OBSERVADA);
+        ActaPresidente a = servicio.actaPresidente();
+        assertEquals("CONTEO", a.getFase().getFase());
+        assertEquals("REABIERTO", a.getFase().getIncidencia());
+        assertTrue(a.isPuedeEditarConteo());
+        assertTrue(a.isPuedeSubirActaFisica());
+        assertFalse(a.isPuedeCerrar(), "el acta devuelta no sirve para cerrar");
+        assertThrows(NegocioException.class, () -> servicio.cerrarMesa(conteo(5, 3, 2)));
+        a = servicio.subirActaFisica(new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF });
+        assertTrue(a.isPuedeCerrar(), "con la nueva versión se puede cerrar");
+    }
+
+    @Test
+    void mesaCerradaSinActa_delFlujoAnterior_puedeCargarla() {
+        estado = EstadoEscrutinio.CERRADO;
+        ActaPresidente a = servicio.actaPresidente();
+        assertTrue(a.isPuedeSubirActaFisica());
+        assertEquals("ACTA_FISICA", a.getFase().getFase());
+        assertFalse(a.isPuedeEditarConteo());
     }
 
     @Test

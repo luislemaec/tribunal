@@ -62,7 +62,9 @@ class IdentidadActaFisicaTest {
             assertNotNull(permiso, m.getName());
             var esperados = switch (m.getName()) {
                 case "cargar", "obtenerVigente" -> java.util.Set.of("SITEC-Administrador", "SITEC-Tribunal", "SITEC-Presidente-mesa");
-                case "revisar", "validarActaFinal" -> java.util.Set.of("SITEC-Administrador", "SITEC-Tribunal");
+                case "obtenerVigentesPorMesas" -> java.util.Set.of("SITEC-Administrador", "SITEC-Tribunal");
+                // Decidir la revisión del acta es exclusivo del Tribunal.
+                case "revisar", "validarActaFinal", "validarDatosRegistrados", "devolverActaFisica", "revertirValidacion" -> java.util.Set.of("SITEC-Tribunal");
                 default -> throw new AssertionError("Definir permisos para " + m.getName());
             };
             assertEquals(esperados, java.util.Set.of(permiso.value()), m.getName());

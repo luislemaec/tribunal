@@ -322,8 +322,8 @@ public class ActaFisicaEscrutinioService {
      *       tenga conserva la restricción a su mesa aunque sume otros roles.</li>
      * </ul>
      *
-     * <p>En ambos casos la mesa debe estar CERRADA: el acta física documenta un
-     * escrutinio ya concluido. El reemplazo de un acta VALIDADA sigue bloqueado en
+     * <p>En ambos casos el conteo debe estar guardado (EN_CONTEO, CONTEO_REGISTRADO, REABIERTO) o,
+     * como transición, la mesa CERRADA sin acta. El reemplazo de un acta VALIDADA sigue bloqueado en
      * {@link #cargar}, y cada carga registra la versión y el usuario real que la subió.</p>
      */
     private Mesa validarMesaCerradaYAutoria(Integer mesaId, Integer procesoId, Integer personaId) {
@@ -337,7 +337,10 @@ public class ActaFisicaEscrutinioService {
         }
         Mesa mesa = mesaFacade.find(mesaId);
         EscrutinioCabecera cabecera = escrutinioCabeceraFacade.buscarPorMesaProceso(mesaId, procesoId);
-        if (mesa == null || cabecera == null || !EstadoEscrutinio.CERRADO.equals(cabecera.getEstadoEscrutinio())) {
+        // Orden oficial: el acta física se carga después del conteo y antes del cierre (o,
+        // como transición, en mesas cerradas con el flujo anterior). VALIDADA se rechaza en cargar.
+        if (mesa == null || cabecera == null
+                || !ReglasFlujoEscrutinio.permiteCargaActaFisica(cabecera.getEstadoEscrutinio(), null)) {
             throw new NegocioException(ec.com.antenasur.util.Constantes.getMensaje("reportesMesa.actaFisica.validacion.10"));
         }
         if (!revisor) {

@@ -16,6 +16,8 @@ import jakarta.inject.Inject;
 import ec.com.antenasur.dto.ConsultaMovilDTO.ActaFisicaRevision;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Alerta;
 import ec.com.antenasur.dto.ConsultaMovilDTO.AvanceMesa;
+import ec.com.antenasur.dto.ConsultaMovilDTO.FaseEscrutinio;
+import ec.com.antenasur.dto.ProgresoEscrutinioDTO;
 import ec.com.antenasur.dto.ConsultaMovilDTO.DetalleMesa;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Elector;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Iglesia;
@@ -52,6 +54,7 @@ import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.util.RepositorioDocumentos;
+import ec.com.antenasur.util.Constantes;
 
 /**
  * Consultas de solo lectura del módulo Tribunal de la App móvil (docs/api-movil.md).
@@ -326,7 +329,8 @@ public class ConsultaMovilService {
                 cabecera != null ? cabecera.getTotalVotosValidos() : null,
                 cabecera != null ? cabecera.getTotalVotosBlancos() : null,
                 cabecera != null ? cabecera.getTotalVotosNulos() : null,
-                cuadre, cabecera != null ? cabecera.getObservacionConteo() : null, acta, puedeRevisar);
+                cuadre, cabecera != null ? cabecera.getObservacionConteo() : null, acta, puedeRevisar,
+                fase(estado, cabecera != null && cabecera.getFechaApertura() != null, revision(vigente)));
     }
 
     /**
@@ -348,7 +352,40 @@ public class ConsultaMovilService {
         }
     }
 
-    /** Estado de cada mesa activa en el proceso activo (tres consultas en total). */
+    /** Claves de actaE.paso.* por fase, para usar los mismos textos que la web. */
+    private static final Map<ProgresoEscrutinioDTO.Etapa, String> PASOS = Map.of(
+            ProgresoEscrutinioDTO.Etapa.APERTURA, "apertura",
+            ProgresoEscrutinioDTO.Etapa.CONTEO, "conteo",
+            ProgresoEscrutinioDTO.Etapa.ACTA_FISICA, "actaFisica",
+            ProgresoEscrutinioDTO.Etapa.CIERRE, "cierre",
+            ProgresoEscrutinioDTO.Etapa.DATO_OFICIAL, "validacion");
+
+    /**
+     * Fase y situación de una mesa con la proyección de actaE ({@link ProgresoEscrutinioDTO})
+     * y sus mismos textos: la web y la App muestran lo mismo para la misma mesa.
+     *
+     * @param revisionActa estado de revisión del acta física vigente; null si no hay acta
+     */
+    static FaseEscrutinio fase(EstadoEscrutinio estado, boolean tieneFechaApertura, String revisionActa) {
+        ProgresoEscrutinioDTO p = ProgresoEscrutinioDTO.determinar(estado, tieneFechaApertura, revisionActa);
+        return new FaseEscrutinio(p.getEtapa().name(), p.getIndice() + 1,
+                Constantes.getMensaje("actaE.paso." + PASOS.get(p.getEtapa())),
+                Constantes.getMensaje(p.getDetalleClave()),
+                p.isTieneIncidencia() ? p.getIncidenciaClave().substring("actaE.avance.incidencia.".length()) : null,
+                p.isTieneIncidencia() ? Constantes.getMensaje(p.getIncidenciaClave()) : null,
+                p.getSeverity(), p.isOficial());
+    }
+
+    /** Revisión del acta física para la proyección: sin estado guardado cuenta como pendiente. */
+    static String revision(Documentos vigente) {
+        if (vigente == null) {
+            return null;
+        }
+        return vigente.getEstadoRevision() != null ? vigente.getEstadoRevision()
+                : ActaFisicaEscrutinioService.PENDIENTE_REVISION;
+    }
+
+    /** Fase de cada mesa del proceso activo, con el mismo universo que actaE (cinco consultas en total). */
     @RolesAllowed({ ADMINISTRADOR, TRIBUNAL })
     public List<AvanceMesa> avanceMesas() {
         ProcesoElectoral activo = procesoElectoralService.getActivo();
@@ -357,19 +394,32 @@ public class ConsultaMovilService {
         }
         List<MesaDocumentosDTO> mesas = mesaFacade.listarResumenDocumentos(activo.getId(), null, null, null);
         Map<Integer, EscrutinioCabeceraDTO> cabeceras = escrutinioService.buscarCabecerasDTOPorProceso(activo.getId());
-        List<Integer> ids = mesas.stream().map(MesaDocumentosDTO::getMesaId).filter(Objects::nonNull).toList();
+        // Mismo universo que la tabla de actaE (consultarEscrutiniosGerenciales): mesas con
+        // padrón en el proceso o con escrutinio ya iniciado; las demás no pueden abrirse y no
+        // cuentan en el avance.
+        List<Integer> todas = mesas.stream().map(MesaDocumentosDTO::getMesaId).filter(Objects::nonNull).toList();
+        Map<Integer, Long> sufragantes = todas.isEmpty() ? Map.of()
+                : padronService.contarSufragantesPorMesas(todas, activo.getId());
+        mesas = mesas.stream().filter(m -> m.getMesaId() != null
+                && (sufragantes.containsKey(m.getMesaId()) || cabeceras.containsKey(m.getMesaId()))).toList();
+        List<Integer> ids = mesas.stream().map(MesaDocumentosDTO::getMesaId).toList();
         Map<Integer, EstadoJuntaDTO> juntas = ids.isEmpty() ? Map.of()
                 : miembroJRVService.consultarEstadosJuntas(activo.getId(), ids);
+        // Acta física vigente de todas las mesas en una consulta, para calcular la fase.
+        Map<Integer, Documentos> actas = actaFisicaService.obtenerVigentesPorMesas(ids, activo.getId());
         List<AvanceMesa> avance = new ArrayList<>();
         for (MesaDocumentosDTO mesa : mesas) {
             EscrutinioCabeceraDTO cabecera = cabeceras.get(mesa.getMesaId());
             EstadoJuntaDTO junta = juntas.get(mesa.getMesaId());
+            EstadoEscrutinio estado = cabecera != null && cabecera.getEstadoEscrutinio() != null
+                    ? cabecera.getEstadoEscrutinio() : EstadoEscrutinio.PENDIENTE;
             avance.add(new AvanceMesa(
                     new Ubicacion(mesa.getMesaId(), mesa.getMesa(), mesa.getRecinto(), mesa.getParroquia(),
                             mesa.getCanton()),
-                    cabecera != null && cabecera.getEstadoEscrutinio() != null ? cabecera.getEstadoEscrutinio().name()
-                            : EstadoEscrutinio.PENDIENTE.name(),
-                    junta != null && junta.isCompleta()));
+                    estado.name(),
+                    junta != null && junta.isCompleta(),
+                    fase(estado, cabecera != null && cabecera.getFechaApertura() != null,
+                            revision(actas.get(mesa.getMesaId())))));
         }
         return avance;
     }

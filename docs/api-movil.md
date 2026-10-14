@@ -104,9 +104,9 @@ Los roles sin funciones en la V1 (Tecnico, Gerencial, Supervisor, Superadministr
 | `GET /tribunal/iglesia/miembros/{id}` | IglesiaAdmin | Datos editables de la persona: `{id, nombre, nombres, documento, sexo, habilitado, revisado, permiteEdicion}` (solo este endpoint envía la cédula). Ver abajo |
 | `PUT /tribunal/iglesia/miembros/{id}/persona` | IglesiaAdmin | Cuerpo `{nombres, documento, sexo, habilitado?}` → 200 con el mismo detalle. Ver abajo |
 | `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales y `alertas` [{texto, cantidad, severidad}] del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
-| `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada}]` |
+| `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada, fase}]`. Mismas mesas que la tabla de actaE: con padrón en el proceso o con escrutinio iniciado |
 | `GET /tribunal/proceso/resultados` | Administrador, Tribunal | Consolidado de mesas cerradas (misma caché que la página de resultados) |
-| `GET /tribunal/proceso/mesas/{mesaId}` | Administrador, Tribunal | Detalle: junta, estado, conteo por categoría, totales, cuadre, acta física vigente y `puedeRevisarActa`. 404 `MESA_NO_ENCONTRADA` |
+| `GET /tribunal/proceso/mesas/{mesaId}` | Administrador, Tribunal | Detalle: junta, estado, conteo por categoría, totales, cuadre, acta física vigente, `puedeRevisarActa` y `fase`. 404 `MESA_NO_ENCONTRADA` |
 | `GET /tribunal/proceso/mesas/{mesaId}/acta-fisica` | Administrador, Tribunal | Foto JPEG del acta física vigente (auditada). 404 `ACTA_NO_DISPONIBLE` |
 | `POST /tribunal/proceso/mesas/{mesaId}/acta-fisica/validacion` | Tribunal | `{cotejoConfirmado: true}` → datos oficiales (VALIDADA). Ver abajo |
 | `POST /tribunal/proceso/mesas/{mesaId}/acta-fisica/devolucion` | Tribunal | `{estado: OBSERVADA|RECHAZADA, motivo}` → la mesa vuelve a REABIERTO. Ver abajo |
@@ -181,16 +181,54 @@ votos entre 0 y 100 000. Cada paso se registra en la bitácora (`APERTURA MESA`,
 
 | Endpoint | Cuerpo | Efecto |
 |---|---|---|
-| `GET /tribunal/presidente/acta` | — | Estado, sufragantes, categorías con votos, cuadre, `motivoBloqueoApertura`, `puedeAbrir/puedeEditarConteo/puedeCerrar/puedeSubirActaFisica`, acta física vigente |
+| `GET /tribunal/presidente/acta` | — | Estado, sufragantes, categorías con votos, cuadre, `motivoBloqueoApertura`, `puedeAbrir/puedeEditarConteo/puedeCerrar/puedeSubirActaFisica`, acta física vigente y `fase` |
 | `POST /tribunal/presidente/acta/apertura` | `{observacion?}` | PENDIENTE → ABIERTO (TEC valida junta, padrón y documentos) |
 | `PUT /tribunal/presidente/acta/conteo` | `{votos:[{categoriaId, votos}]}` | Borrador: CONTEO_REGISTRADO si el cuadre es 0, si no EN_CONTEO |
-| `POST /tribunal/presidente/acta/cierre` | `{votos:[…]}` | → CERRADO. Exige haber guardado el conteo antes; luego no se modifica |
-| `PUT /tribunal/presidente/acta/acta-fisica` | JPEG (`Content-Type: image/jpeg`, máx. 10 MB) | Foto del acta firmada de la mesa cerrada → PENDIENTE_REVISION para el Tribunal |
+| `POST /tribunal/presidente/acta/cierre` | `{votos:[…]}` | → CERRADO. Exige conteo guardado **y** acta física vigente no devuelta; luego no se modifica |
+| `PUT /tribunal/presidente/acta/acta-fisica` | JPEG (`Content-Type: image/jpeg`, máx. 10 MB) | Foto del acta firmada → nueva versión PENDIENTE_REVISION. Con el conteo guardado (EN_CONTEO, CONTEO_REGISTRADO, REABIERTO) o en una mesa CERRADA sin acta validada (flujo anterior) |
 
 Todas responden 200 con el acta actualizada. Errores: 409 `REGLA_ESCRUTINIO` (regla de
 negocio, con el mensaje de TEC), 400 `SOLICITUD_INVALIDA` (categoría repetida o sin votos),
 413 `ARCHIVO_DEMASIADO_GRANDE`, 403 `SIN_PERMISO`. El proxy permite 11 MB solo en el
 endpoint del acta física (`tribunal.nginx.conf`).
+
+### Orden oficial y fase del escrutinio
+
+**Apertura → Conteo → Acta física → Cierre → Validación.** Las reglas están en
+`ReglasFlujoEscrutinio` y las comparten TEC WEB (`actaE`) y la App:
+
+- La carga del acta física se habilita con el conteo guardado; el conteo sigue editable
+  (el Tribunal contrasta al validar).
+- `EscrutinioService.guardarActaCompleta` rechaza el cierre sin un acta física vigente
+  PENDIENTE_REVISION con archivo disponible (`escrutinio.cierre.actaFisica.requerida`).
+  Si el Tribunal la devolvió (OBSERVADA/RECHAZADA) se exige una versión nueva.
+- Una mesa CERRADA sin acta (flujo anterior) todavía puede cargarla.
+
+`fase` es la misma proyección del avance de `actaE` (`ProgresoEscrutinioDTO`); no se guarda en la base
+y no agrega estados. La App la muestra tal cual y no la reconstruye:
+
+```json
+{"fase": "ACTA_FISICA", "numero": 3, "etiqueta": "Acta física",
+ "situacion": "Pendiente de carga", "incidencia": null, "incidenciaEtiqueta": null,
+ "severidad": "info", "oficial": false}
+```
+
+| Campo | Valores |
+|---|---|
+| `fase` | `APERTURA`, `CONTEO`, `ACTA_FISICA`, `CIERRE`, `DATO_OFICIAL` |
+| `numero` | 1–5 (orden oficial) |
+| `incidencia` | `OBSERVADO`, `ANULADO`, `REABIERTO`, `OBSERVADA`, `RECHAZADA` o null |
+| `severidad` | `success`, `info`, `warning`, `danger` (la misma de TEC WEB; la App la traduce a sus tokens semánticos) |
+
+Observado, Anulado y Reabierto (estado del escrutinio) y Observada/Rechazada (revisión del
+acta) **no son fases**: son la `incidencia` de la fase en que está la mesa. Validada es el
+resultado de la validación (`fase=DATO_OFICIAL`, `oficial=true`). Una mesa que no inició está
+en `APERTURA` · Pendiente.
+
+«Avance de mesas» de la App replica la columna Situación de actaE: filtro exacto por `fase`
+(Todas + las cinco fases) con el número de mesas de cada una, contado en el dispositivo sobre
+esta misma respuesta (sin consultas adicionales), y una etiqueta por mesa con la fase, la
+situación y la incidencia.
 
 ## Notificaciones push
 

@@ -430,14 +430,15 @@
                         </div>
                     </p:outputPanel>
 
-                    <!-- Pasos 2 y 3: conteo y cierre en la misma tarjeta, mientras la mesa no
-                         esté cerrada. Cerrada, los votos se consultan junto al acta física. -->
+                    <!-- Orden oficial: 1 Conteo → 2 Acta física → 3 Cierre → 4 Validación.
+                         Conteo (paso 1) y Cierre (paso 3) comparten la tarjeta de votos; en el
+                         Cierre los votos son de solo lectura. Cerrada, se consultan junto al acta. -->
                     <p:outputPanel id="pnlConteo" layout="block"
-                                   rendered="#{(actaEController.pasoVisible eq 1 or actaEController.pasoVisible eq 2) and not empty actaEController.listaCamposActaE}">
+                                   rendered="#{(actaEController.pasoVisible eq 1 or actaEController.pasoVisible eq 3) and not empty actaEController.listaCamposActaE}">
                         <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
                             <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                 <div class="font-semibold text-800">
-                                    <i class="pi pi-calculator text-500 mr-2"></i>#{actaEController.pasoVisible eq 2 ? msg['actaE.paso.cierre'] : msg['actaE.seccion.conteo']}
+                                    <i class="pi pi-calculator text-500 mr-2"></i>#{actaEController.pasoVisible eq 3 ? msg['actaE.paso.cierre'] : msg['actaE.seccion.conteo']}
                                 </div>
                                 <p:tag value="#{actaEController.estadoValidacionCierreTexto}"
                                        severity="#{actaEController.estadoValidacionCierreSeverity}"
@@ -470,7 +471,7 @@
                                                  actionListener="#{actaEController.guardarBorradorConteo}"
                                                  update=":frmActaE"/>
                                 <p:commandButton value="#{msg['actaE.boton.cerrar']}" icon="pi pi-check-circle"
-                                                 rendered="#{actaEController.pasoVisible eq 2 and not actaEController.mesaCerrada}"
+                                                 rendered="#{actaEController.pasoVisible eq 3 and not actaEController.mesaCerrada}"
                                                  styleClass="tec-btn ui-button-success"
                                                  disabled="#{not actaEController.puedeCerrarMesa}"
                                                  process="pnlConteo @this"
@@ -484,28 +485,41 @@
                         </div>
                     </p:outputPanel>
 
-                    <!-- Mesa cerrada: el flujo sigue en Acta física -->
-                    <p:outputPanel rendered="#{actaEController.mesaCerrada and actaEController.pasoVisible eq 2}" layout="block"
+                    <!-- Mesa cerrada: el flujo sigue en la Validación del Tribunal -->
+                    <p:outputPanel rendered="#{actaEController.mesaCerrada and actaEController.pasoVisible eq 3}" layout="block"
                                    styleClass="callout callout--success mb-3 flex align-items-center justify-content-between gap-2 flex-wrap">
                         <span>
-                            <i class="pi pi-check-circle"/>#{msg['actaE.escrutinio.continuar.actaFisica']}
+                            <i class="pi pi-check-circle"/>#{msg['actaE.escrutinio.continuar.validacion']}
                         </span>
-                        <p:commandButton value="#{msg['actaE.tab.actaFisica']}" icon="pi pi-arrow-right"
+                        <p:commandButton value="#{msg['actaE.paso.validacion']}" icon="pi pi-arrow-right"
+                                         iconPos="right" styleClass="tec-btn ui-button-success ui-button-outlined"
+                                         action="#{actaEController.seleccionarPaso(4)}" process="@this"
+                                         update="contenidoEtapa progresoMesa"/>
+                    </p:outputPanel>
+
+                    <!-- Acta física (paso 2) cargada y válida: el flujo sigue en el Cierre -->
+                    <p:outputPanel rendered="#{actaEController.pasoVisible eq 2 and actaEController.puedeCerrarMesa}" layout="block"
+                                   styleClass="callout callout--success mb-3 flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <span>
+                            <i class="pi pi-check-circle"/>#{msg['actaE.escrutinio.continuar.cierre']}
+                        </span>
+                        <p:commandButton value="#{msg['actaE.paso.cierre']}" icon="pi pi-arrow-right"
                                          iconPos="right" styleClass="tec-btn ui-button-success ui-button-outlined"
                                          action="#{actaEController.seleccionarPaso(3)}" process="@this"
                                          update="contenidoEtapa progresoMesa"/>
                     </p:outputPanel>
 
+                    <!-- Paso 2 (carga) y paso 4 (validación, junto a los votos registrados) -->
                     <p:outputPanel id="pnlActaFisica" layout="block">
-                        <ui:fragment rendered="#{actaEController.pasoVisible ge 3}">
-                        <p:outputPanel rendered="#{not actaEController.mesaCerrada}" layout="block"
+                        <ui:fragment rendered="#{actaEController.pasoVisible eq 2 or actaEController.pasoVisible ge 4}">
+                        <p:outputPanel rendered="#{not actaEController.etapaActaFisicaHabilitada}" layout="block"
                                        styleClass="callout callout--warning">
                             <i class="pi pi-info-circle"/>
                             <span>#{msg['actaE.actaFisica.requiere.cierre']}</span>
                         </p:outputPanel>
 
                         <h:panelGroup layout="block" styleClass="grid acta-fisica-contenido"
-                                      rendered="#{actaEController.mesaCerrada}">
+                                      rendered="#{actaEController.etapaActaFisicaHabilitada}">
                             <div class="#{actaEController.pasoVisible eq 4 ? 'col-12 lg:col-6' : 'col-12'}">
                                 <div class="acta-fisica-panel">
                                     <div class="acta-fisica-panel-cabecera">
@@ -573,9 +587,9 @@
                                         </div>
                                     </h:panelGroup>
 
-                                    <!-- Carga o reemplazo: presidente (su mesa), operador o revisor,
-                                         mesa cerrada y acta no validada. El servidor lo revalida. -->
-                                    <h:panelGroup layout="block" rendered="#{actaEController.pasoVisible eq 3 and actaEController.puedeCargarActaFisica}"
+                                    <!-- Carga o reemplazo (paso 2): presidente (su mesa), operador o
+                                         revisor, conteo guardado y acta no validada. El servidor lo revalida. -->
+                                    <h:panelGroup layout="block" rendered="#{actaEController.pasoVisible eq 2 and actaEController.puedeCargarActaFisica}"
                                                   styleClass="border-top-1 surface-border pt-3 mt-3">
                                         <div class="flex align-items-end gap-2 flex-wrap">
                                             <div class="flex-1" style="min-width:10.5rem">

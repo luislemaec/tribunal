@@ -377,6 +377,73 @@ class ConsultaMovilServiceTest {
         return padron;
     }
 
+    @Test
+    void avanceMesas_mismoUniversoQueActaE_yFaseCalculadaPorTec() throws Exception {
+        // Mesa 1: con padrón y sin escrutinio. Mesa 2: sin padrón pero ya cerrada con acta
+        // validada. Mesa 3: sin padrón ni escrutinio (no pertenece al proceso).
+        inyectar("mesaFacade", new ec.com.antenasur.facade.tec.MesaFacade() {
+            @Override
+            public List<ec.com.antenasur.dto.MesaDocumentosDTO> listarResumenDocumentos(Integer procesoId,
+                    Integer cantonId, Integer parroquiaId, Integer mesaPermitida) {
+                llamadas.add("mesas:" + procesoId);
+                return List.of(resumen(1), resumen(2), resumen(3));
+            }
+        });
+        inyectar("escrutinioService", new EscrutinioService() {
+            @Override
+            public java.util.Map<Integer, EscrutinioCabeceraDTO> buscarCabecerasDTOPorProceso(Integer procesoId) {
+                llamadas.add("cabeceras:" + procesoId);
+                EscrutinioCabeceraDTO c = new EscrutinioCabeceraDTO();
+                c.setEstadoEscrutinio(EstadoEscrutinio.CERRADO);
+                c.setFechaApertura(new java.util.Date());
+                return java.util.Map.of(2, c);
+            }
+        });
+        inyectar("padronService", new PadronService() {
+            @Override
+            public java.util.Map<Integer, Long> contarSufragantesPorMesas(List<Integer> mesaIds, Integer procesoId) {
+                llamadas.add("sufragantes:" + mesaIds + ":" + procesoId);
+                return java.util.Map.of(1, 3L);
+            }
+        });
+        inyectar("miembroJRVService", new MiembroJRVService() {
+            @Override
+            public java.util.Map<Integer, ec.com.antenasur.dto.EstadoJuntaDTO> consultarEstadosJuntas(Integer proceso,
+                    List<Integer> mesas) {
+                llamadas.add("juntas:" + proceso + ":" + mesas);
+                return java.util.Map.of();
+            }
+        });
+        inyectar("actaFisicaService", new ec.com.antenasur.service.tec.ActaFisicaEscrutinioService() {
+            @Override
+            public java.util.Map<Integer, ec.com.antenasur.model.tec.Documentos> obtenerVigentesPorMesas(
+                    List<Integer> mesaIds, Integer procesoId) {
+                llamadas.add("actas:" + mesaIds + ":" + procesoId);
+                var acta = new ec.com.antenasur.model.tec.Documentos();
+                acta.setEstadoRevision("VALIDADA");
+                return java.util.Map.of(2, acta);
+            }
+        });
+
+        var avance = servicio.avanceMesas();
+
+        assertEquals(List.of(1, 2), avance.stream().map(a -> a.getUbicacion().getMesaId()).toList(),
+                "sin padrón ni escrutinio la mesa no se lista, igual que en actaE");
+        assertEquals("APERTURA", avance.get(0).getFase().getFase());
+        assertEquals(1, avance.get(0).getFase().getNumero());
+        assertEquals("DATO_OFICIAL", avance.get(1).getFase().getFase());
+        assertTrue(avance.get(1).getFase().isOficial());
+        assertEquals("success", avance.get(1).getFase().getSeveridad());
+        assertTrue(llamadas.containsAll(List.of("sufragantes:[1, 2, 3]:" + PROCESO,
+                "juntas:" + PROCESO + ":[1, 2]", "actas:[1, 2]:" + PROCESO)),
+                "todo se consulta por proceso: " + llamadas);
+    }
+
+    private static ec.com.antenasur.dto.MesaDocumentosDTO resumen(int id) {
+        return new ec.com.antenasur.dto.MesaDocumentosDTO(id, "MESA " + id, 1, "Escuela", 1, "Riobamba", 1,
+                "Lizarzaburu", null, null, null, null, null, 0L);
+    }
+
     private SessionContext contexto(String principal) {
         return (SessionContext) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { SessionContext.class },
                 (p, m, a) -> switch (m.getName()) {
