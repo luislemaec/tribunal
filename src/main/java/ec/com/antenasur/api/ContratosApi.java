@@ -39,6 +39,17 @@ public final class ContratosApi {
         private Boolean habilitado;
     }
 
+    /** Datos de la persona que el IglesiaAdmin puede cambiar desde la App (los demás se ignoran). */
+    @Data
+    @NoArgsConstructor
+    public static class SolicitudPersona {
+        private String nombres;
+        private String documento;
+        private String sexo;
+        /** Opcional: habilitar para el padrón (null = sin cambio). */
+        private Boolean habilitado;
+    }
+
     /** El revisor confirma que el acta física coincide con lo registrado. */
     @Data
     @NoArgsConstructor

@@ -75,6 +75,7 @@ class ConsultaMovilServiceTest {
                 "padronPresidente", Set.of("SITEC-Presidente-mesa"),
                 "iglesia", Set.of("SITEC-IglesiaAdmin"),
                 "miembros", Set.of("SITEC-IglesiaAdmin"),
+                "detalleMiembro", Set.of("SITEC-IglesiaAdmin"),
                 "resumenProceso", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
                 "avanceMesas", Set.of("SITEC-Administrador", "SITEC-Tribunal"),
                 "resultadosProceso", Set.of("SITEC-Administrador", "SITEC-Tribunal"),

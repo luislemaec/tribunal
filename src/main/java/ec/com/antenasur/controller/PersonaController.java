@@ -60,6 +60,7 @@ import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.service.PersonaBajaService;
 import ec.com.antenasur.service.PersonaService;
+import ec.com.antenasur.service.ValidadorPersona;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.service.tec.CronogramaService;
 import ec.com.antenasur.service.tec.ActaActualizacionMiembrosService;
@@ -658,19 +659,23 @@ public class PersonaController implements Serializable {
     public void validarCedula(FacesContext contexto, UIComponent componente, Object valor) {
         String cedula = valor != null ? valor.toString().trim() : "";
         if (cedula.isEmpty()) {
-            return;
+            return; // El campo vacío lo informa required="true".
         }
-        if (!cedula.matches("\\d{10}") || !JsfUtil.validarCedulaORUC(cedula)) {
-            throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    mensaje("form.personas.error.documento.invalido"), null));
-        }
+        validarConRegla(() -> ValidadorPersona.validarCedula(cedula));
     }
 
     /** Evita que un valor compuesto solo por espacios supere la regla requerida. */
     public void validarNombres(FacesContext contexto, UIComponent componente, Object valor) {
-        if (valor == null || valor.toString().trim().isEmpty()) {
+        validarConRegla(() -> ValidadorPersona.validarNombres(valor == null ? null : valor.toString()));
+    }
+
+    /** Reglas compartidas con la API móvil ({@link ValidadorPersona}) como errores de JSF. */
+    private void validarConRegla(Runnable regla) {
+        try {
+            regla.run();
+        } catch (IglesiaPersonaException e) {
             throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    mensaje("form.personas.error.nombres.requerido"), null));
+                    mensaje(e.getMessageKey(), e.getArguments()), null));
         }
     }
 

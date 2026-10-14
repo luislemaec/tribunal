@@ -16,6 +16,7 @@ import ec.com.antenasur.dto.ConsultaMovilDTO.ActaFisica;
 import ec.com.antenasur.dto.ConsultaMovilDTO.ActaPresidente;
 import ec.com.antenasur.dto.ConsultaMovilDTO.CategoriaConteo;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Miembro;
+import ec.com.antenasur.dto.ConsultaMovilDTO.MiembroDetalle;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Ubicacion;
 import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
@@ -23,11 +24,13 @@ import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
 import ec.com.antenasur.enums.EstadoEscrutinio;
+import ec.com.antenasur.exception.IglesiaPersonaException;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.model.tec.CategoriaVoto;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.service.IglesiaPersonaService;
+import ec.com.antenasur.service.ValidadorPersona;
 
 /**
  * Operaciones de la App móvil que modifican datos (docs/api-movil.md). Separadas de las
@@ -83,6 +86,9 @@ public class GestionMovilService {
     @Inject
     private ActaFisicaEscrutinioService actaFisicaService;
 
+    @Inject
+    private CronogramaService cronogramaService;
+
     // ---------------------------------------------------------------- IglesiaAdmin
 
     /**
@@ -97,7 +103,68 @@ public class GestionMovilService {
         String nombre = persona == null ? null
                 : ((persona.getApellidos() == null ? "" : persona.getApellidos().trim()) + " "
                         + (persona.getNombres() == null ? "" : persona.getNombres().trim())).trim();
-        return new Miembro(ip.getId(), nombre, Boolean.TRUE.equals(ip.getHabilitadoPadron()), true);
+        return new Miembro(ip.getId(), nombre, persona != null ? persona.getSexo() : null,
+                Boolean.TRUE.equals(ip.getHabilitadoPadron()), true);
+    }
+
+    /**
+     * El IglesiaAdmin guarda el formulario «Datos de la persona»: los datos propios de la
+     * persona («Apellidos y Nombres», cédula y sexo) y, opcionalmente, la habilitación para el
+     * padrón, como el diálogo de Personas de la web. Cada cambio va al servicio que ya lo
+     * gestiona, sin escrituras artificiales:
+     * <ul>
+     * <li>cambian datos de la persona (con o sin habilitación): {@link
+     * IglesiaPersonaService#guardarDesdeDTO} en una transacción, igual que el botón Guardar web;</li>
+     * <li>solo cambia la habilitación: {@link IglesiaPersonaService#cambiarHabilitacion}, que
+     * modifica únicamente el vínculo iglesia-persona (Persona no se audita);</li>
+     * <li>sin cambios: no se guarda nada.</li>
+     * </ul>
+     * Iglesia, fechas, apellidos y tratamiento se conservan. Cronograma, alcance, cédula
+     * duplicada y una sola iglesia activa los validan esos servicios; los formatos,
+     * {@link ValidadorPersona}.
+     *
+     * @param habilitado null = no cambia la habilitación
+     */
+    @RolesAllowed(IGLESIA_ADMIN)
+    public MiembroDetalle actualizarPersonaMiembro(Integer miembroId, String nombres, String documento,
+            String sexo, Boolean habilitado) {
+        IglesiaPersonaDTO miembro = iglesiaPersonaService.obtenerMiembroParaEdicion(miembroId);
+        boolean cambiaHabilitacion = habilitado != null
+                && habilitado != Boolean.TRUE.equals(miembro.getHabilitadoPadron());
+        PersonaDTO persona = miembro.getPersona();
+        String nuevosNombres = nombres == null ? null : nombres.trim();
+        String nuevoDocumento = documento == null ? null : documento.trim();
+        String nuevoSexo = sexo == null || sexo.isBlank() ? null : sexo.trim().toUpperCase(java.util.Locale.ROOT);
+
+        ValidadorPersona.validarNombres(nuevosNombres);
+        ValidadorPersona.validarSexo(nuevoSexo);
+        String documentoActual = persona.getDocumento() == null ? null : persona.getDocumento().trim();
+        boolean cambiaDocumento = !java.util.Objects.equals(nuevoDocumento, documentoActual);
+        if (cambiaDocumento) {
+            // Solo si cambia: documentos históricos especiales se conservan al editar el nombre.
+            ValidadorPersona.validarCedula(nuevoDocumento);
+        }
+        boolean cambiaPersona = cambiaDocumento || !java.util.Objects.equals(nuevosNombres, persona.getNombres())
+                || !java.util.Objects.equals(nuevoSexo, persona.getSexo());
+        if (!cambiaPersona && !cambiaHabilitacion) {
+            return ConsultaMovilService.detalleDe(miembro, cronogramaService.permiteEdicionPadron());
+        }
+        if (!cambiaPersona) {
+            // Solo la habilitación: únicamente el vínculo iglesia-persona (como el interruptor).
+            return ConsultaMovilService.detalleDe(iglesiaPersonaService.cambiarHabilitacion(miembroId, habilitado),
+                    cronogramaService.permiteEdicionPadron());
+        }
+
+        persona.setNombres(nuevosNombres);
+        persona.setDocumento(nuevoDocumento);
+        persona.setSexo(nuevoSexo);
+        // null: guardarDesdeDTO conserva la habilitación existente si no se cambió.
+        miembro.setHabilitadoPadron(cambiaHabilitacion ? habilitado : null);
+        IglesiaPersonaDTO guardado = iglesiaPersonaService.guardarDesdeDTO(miembro);
+        if (guardado == null) {
+            throw new IglesiaPersonaException("form.personas.error.guardar");
+        }
+        return ConsultaMovilService.detalleDe(guardado, cronogramaService.permiteEdicionPadron());
     }
 
     // ---------------------------------------------------------------- Presidente de mesa

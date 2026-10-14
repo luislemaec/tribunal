@@ -44,6 +44,7 @@ class HabilitacionMiembroTest {
     void cadaEscrituraDeclaraSoloSuRol() {
         Map<String, Set<String>> esperado = Map.of(
                 "cambiarHabilitacionMiembro", Set.of("SITEC-IglesiaAdmin"),
+                "actualizarPersonaMiembro", Set.of("SITEC-IglesiaAdmin"),
                 "actaPresidente", Set.of("SITEC-Presidente-mesa"),
                 "abrirMesa", Set.of("SITEC-Presidente-mesa"),
                 "guardarConteo", Set.of("SITEC-Presidente-mesa"),

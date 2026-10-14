@@ -161,8 +161,31 @@ public final class ConsultaMovilDTO {
         /** Id del vínculo iglesia-persona; TEC vuelve a validar el alcance al usarlo. */
         Integer id;
         String nombre;
+        /** M, F o null (valor almacenado; no se deduce). */
+        String sexo;
         boolean habilitado;
         boolean revisado;
+    }
+
+    /**
+     * Datos editables de la persona de un miembro (solo IglesiaAdmin, su iglesia). Incluye la
+     * cédula porque es un campo editable; las listas siguen sin enviarla.
+     */
+    @Value
+    public static class MiembroDetalle implements Serializable {
+        private static final long serialVersionUID = 1L;
+        Integer id;
+        /** Nombre para mostrar, igual que en la lista (apellidos y nombres). */
+        String nombre;
+        /** «Apellidos y Nombres», igual que el formulario web (persona.nombres). */
+        String nombres;
+        String documento;
+        /** M, F o null. */
+        String sexo;
+        boolean habilitado;
+        boolean revisado;
+        /** El cronograma vigente permite editar el padrón (misma regla que la web). */
+        boolean permiteEdicion;
     }
 
     @Value

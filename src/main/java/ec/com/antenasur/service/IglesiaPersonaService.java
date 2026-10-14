@@ -223,6 +223,20 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 	}
 
 	/**
+	 * Vínculo activo para editar los datos de la persona desde la App. Aplica el mismo
+	 * alcance que {@link #cambiarHabilitacion}: el IglesiaAdmin solo accede a miembros de
+	 * su iglesia, aunque conozca el id de otro vínculo.
+	 */
+	public IglesiaPersonaDTO obtenerMiembroParaEdicion(Integer iglesiaPersonaId) {
+		IglesiaPersona ip = iglesiaPersonaId != null ? iglesiaPersonaFacade.find(iglesiaPersonaId) : null;
+		if (ip == null || !Boolean.TRUE.equals(ip.getEstado()) || ip.getPersona() == null) {
+			throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
+		}
+		validarAlcanceIglesiaAdmin(ip.getIglesia(), ip);
+		return IglesiaPersonaDTO.fromEntity(ip);
+	}
+
+	/**
 	 * Resumen eficiente para el dashboard de la iglesia. Mantiene el acceso a datos
 	 * en el facade y evita cargar entidades solo para contar indicadores.
 	 */

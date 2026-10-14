@@ -99,8 +99,10 @@ Los roles sin funciones en la V1 (Tecnico, Gerencial, Supervisor, Superadministr
 | `GET /tribunal/presidente/mesa` | Presidente-mesa | Proceso, ubicación, estado del escrutinio, electores, junta; `resultados` solo con la mesa `CERRADO`. 404 `SIN_MESA_ASIGNADA` |
 | `GET /tribunal/presidente/padron` | Presidente-mesa | `[{nombre, iglesia, sufrago}]` de su mesa. 404 `SIN_MESA_ASIGNADA` |
 | `GET /tribunal/iglesia` | IglesiaAdmin | Datos de su iglesia, resumen de miembros y `permiteEdicion` (el cronograma permite cambiar la habilitación). 404 `SIN_IGLESIA_ASIGNADA` |
-| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&revisado=&pagina=0&tamano=30` | IglesiaAdmin | `revisado=false`: pendientes de revisión (misma regla que el resumen). `{total, pagina, tamano, elementos:[{id, nombre, habilitado, revisado}]}` (máx. 100 por página) |
+| `GET /tribunal/iglesia/miembros?busqueda=&habilitado=&revisado=&pagina=0&tamano=30` | IglesiaAdmin | `revisado=false`: pendientes de revisión (misma regla que el resumen). `{total, pagina, tamano, elementos:[{id, nombre, sexo, habilitado, revisado}]}` (máx. 100 por página) |
 | `PUT /tribunal/iglesia/miembros/{id}/habilitacion` | IglesiaAdmin | Cuerpo `{habilitado: true\|false}` → 200 con el miembro. Ver abajo |
+| `GET /tribunal/iglesia/miembros/{id}` | IglesiaAdmin | Datos editables de la persona: `{id, nombre, nombres, documento, sexo, habilitado, revisado, permiteEdicion}` (solo este endpoint envía la cédula). Ver abajo |
+| `PUT /tribunal/iglesia/miembros/{id}/persona` | IglesiaAdmin | Cuerpo `{nombres, documento, sexo, habilitado?}` → 200 con el mismo detalle. Ver abajo |
 | `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales y `alertas` [{texto, cantidad, severidad}] del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
 | `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada}]` |
 | `GET /tribunal/proceso/resultados` | Administrador, Tribunal | Consolidado de mesas cerradas (misma caché que la página de resultados) |
@@ -126,6 +128,34 @@ cambio con el usuario autenticado. No modifica los datos de la persona.
 | 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
 | 404 | `MIEMBRO_NO_DISPONIBLE` | No existe o ya no está activo |
 | 400 | `SOLICITUD_INVALIDA` | Falta `habilitado` |
+
+### Edición de la persona de un miembro (escritura)
+
+**«Datos de la persona» + «Habilitar para padrón».** `habilitado` es opcional (null = sin cambio). Cada cambio
+usa el servicio que ya lo gestiona: si cambian datos de la persona (con o sin habilitación),
+`guardarDesdeDTO` en una transacción, igual que el botón Guardar de la web; si solo cambia la
+habilitación, `cambiarHabilitacion` (solo `tb_iglesia_persona`; Persona no se audita); sin cambios,
+nada. Desde la App, la lista de miembros es de solo consulta: este es el único punto de edición.
+
+`GestionMovilService.actualizarPersonaMiembro` (solo `SITEC-IglesiaAdmin`) cambia los mismos campos
+que el formulario web de Personas: «Apellidos y Nombres» (`nombres`), cédula (`documento`) y sexo
+(`M`, `F` o vacío). Parte del vínculo actual (alcance validado por
+`IglesiaPersonaService.obtenerMiembroParaEdicion`) y conserva iglesia, fechas, apellidos,
+tratamiento y habilitación; otros campos del cuerpo se ignoran. Formatos con `ValidadorPersona`
+(compartido con la web) y reglas con `guardarDesdeDTO`: cronograma, alcance, cédula no usada por
+otra persona y una sola iglesia activa. La cédula solo se valida si cambia (se conservan documentos
+históricos especiales). **Sin cambios no se guarda nada.** Con cambios, Envers registra `Persona`
+y `IglesiaPersona` (queda revisado, igual que en la web) con el usuario autenticado, y la bitácora
+`tec.procesos` agrega la actividad.
+
+| Estado | Código | Caso |
+|---|---|---|
+| 400 | `DATOS_INVALIDOS` | Nombres vacíos o de más de 100 caracteres, cédula inválida o sexo distinto de M/F |
+| 409 | `DOCUMENTO_DUPLICADO` | La cédula pertenece a otra persona |
+| 409 | `CONFLICTO_IGLESIA` | La persona tiene otra relación activa que impide guardar |
+| 409 | `EDICION_CERRADA` | La fase vigente del cronograma no permite editar el padrón |
+| 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
+| 404 | `MIEMBRO_NO_DISPONIBLE` | No existe o ya no está activo |
 
 ### Revisión del acta física (escritura)
 

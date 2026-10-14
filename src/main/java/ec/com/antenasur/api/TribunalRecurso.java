@@ -20,6 +20,7 @@ import jakarta.ws.rs.core.Response;
 
 import ec.com.antenasur.api.ContratosApi.SolicitudDevolucionActa;
 import ec.com.antenasur.api.ContratosApi.SolicitudHabilitacion;
+import ec.com.antenasur.api.ContratosApi.SolicitudPersona;
 import ec.com.antenasur.api.ContratosApi.SolicitudValidacionActa;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Elector;
 import ec.com.antenasur.exception.IglesiaPersonaException;
@@ -100,17 +101,62 @@ public class TribunalRecurso {
         try {
             return Response.ok(gestion.cambiarHabilitacionMiembro(id, solicitud.getHabilitado())).build();
         } catch (IglesiaPersonaException e) {
-            String mensaje = Constantes.getMensaje(e.getMessageKey(), e.getArguments());
-            return switch (e.getMessageKey()) {
-                case "form.personas.error.cronograma" ->
-                    AutenticacionRecurso.error(Response.Status.CONFLICT, "EDICION_CERRADA", mensaje);
-                case "form.personas.error.iglesia.no.autorizada" ->
-                    AutenticacionRecurso.error(Response.Status.FORBIDDEN, "SIN_PERMISO", mensaje);
-                case "form.personas.error.miembro.noDisponible" ->
-                    AutenticacionRecurso.error(Response.Status.NOT_FOUND, "MIEMBRO_NO_DISPONIBLE", mensaje);
-                default -> AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "SOLICITUD_INVALIDA", mensaje);
-            };
+            return errorMiembro(e);
         }
+    }
+
+    /** Datos actuales de la persona de un miembro de la iglesia del IglesiaAdmin (para editar). */
+    @GET
+    @Path("/iglesia/miembros/{id}")
+    public Response detalleMiembro(@PathParam("id") Integer id) {
+        try {
+            return Response.ok(consultas.detalleMiembro(id)).build();
+        } catch (IglesiaPersonaException e) {
+            return errorMiembro(e);
+        }
+    }
+
+    /**
+     * Guarda el formulario «Datos de la persona»: «Apellidos y Nombres», cédula, sexo y,
+     * opcionalmente, la habilitación para el padrón. Otros campos del cuerpo se ignoran.
+     */
+    @PUT
+    @Path("/iglesia/miembros/{id}/persona")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response actualizarPersonaMiembro(@PathParam("id") Integer id, SolicitudPersona solicitud) {
+        if (id == null || solicitud == null) {
+            return AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "SOLICITUD_INVALIDA",
+                    "Envíe los datos de la persona.");
+        }
+        try {
+            return Response.ok(gestion.actualizarPersonaMiembro(id, solicitud.getNombres(),
+                    solicitud.getDocumento(), solicitud.getSexo(), solicitud.getHabilitado())).build();
+        } catch (IglesiaPersonaException e) {
+            return errorMiembro(e);
+        }
+    }
+
+    /** Errores de negocio de miembros con los mensajes de la web (messages_es.properties). */
+    private static Response errorMiembro(IglesiaPersonaException e) {
+        String mensaje = Constantes.getMensaje(e.getMessageKey(), e.getArguments());
+        return switch (e.getMessageKey()) {
+            case "form.personas.error.cronograma" ->
+                AutenticacionRecurso.error(Response.Status.CONFLICT, "EDICION_CERRADA", mensaje);
+            case "form.personas.error.iglesia.no.autorizada" ->
+                AutenticacionRecurso.error(Response.Status.FORBIDDEN, "SIN_PERMISO", mensaje);
+            case "form.personas.error.miembro.noDisponible" ->
+                AutenticacionRecurso.error(Response.Status.NOT_FOUND, "MIEMBRO_NO_DISPONIBLE", mensaje);
+            case "form.personas.error.documento.duplicado" ->
+                AutenticacionRecurso.error(Response.Status.CONFLICT, "DOCUMENTO_DUPLICADO", mensaje);
+            case "form.personas.error.varias.iglesias", "form.personas.error.ya.miembro",
+                    "form.personas.error.relacion.persona.inactiva" ->
+                AutenticacionRecurso.error(Response.Status.CONFLICT, "CONFLICTO_IGLESIA", mensaje);
+            case "form.personas.error.documento.requerido", "form.personas.error.documento.invalido",
+                    "form.personas.error.nombres.requerido", "form.personas.error.nombres.largo",
+                    "form.personas.error.sexo.invalido" ->
+                AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "DATOS_INVALIDOS", mensaje);
+            default -> AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "SOLICITUD_INVALIDA", mensaje);
+        };
     }
 
     @GET

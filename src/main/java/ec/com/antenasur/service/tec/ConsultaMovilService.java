@@ -20,6 +20,7 @@ import ec.com.antenasur.dto.ConsultaMovilDTO.DetalleMesa;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Elector;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Iglesia;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Miembro;
+import ec.com.antenasur.dto.ConsultaMovilDTO.MiembroDetalle;
 import ec.com.antenasur.dto.ConsultaMovilDTO.MiembroJunta;
 import ec.com.antenasur.dto.ConsultaMovilDTO.MesaPresidente;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Pagina;
@@ -227,10 +228,33 @@ public class ConsultaMovilService {
         List<Miembro> elementos = new ArrayList<>();
         for (IglesiaPersonaDTO miembro : iglesiaPersonaService.listarMiembros(filtro, pag * tam, tam,
                 "persona.nombres", false)) {
-            elementos.add(new Miembro(miembro.getId(), nombre(miembro.getPersona()), Boolean.TRUE.equals(miembro.getHabilitadoPadron()),
+            elementos.add(new Miembro(miembro.getId(), nombre(miembro.getPersona()),
+                    miembro.getPersona() != null ? miembro.getPersona().getSexo() : null, Boolean.TRUE.equals(miembro.getHabilitadoPadron()),
                     Boolean.TRUE.equals(miembro.getActualizada())));
         }
         return new Pagina<>(total, pag, tam, elementos);
+    }
+
+    /**
+     * Datos actuales de la persona de un miembro, para editarlos desde la App. El alcance
+     * (miembro activo de la iglesia del usuario) lo valida IglesiaPersonaService.
+     */
+    @RolesAllowed(IGLESIA_ADMIN)
+    public MiembroDetalle detalleMiembro(Integer miembroId) {
+        return detalleDe(iglesiaPersonaService.obtenerMiembroParaEdicion(miembroId),
+                cronogramaService.permiteEdicionPadron());
+    }
+
+    /** Respuesta común del detalle y de la actualización (solo campos que la App muestra). */
+    static MiembroDetalle detalleDe(IglesiaPersonaDTO miembro, boolean permiteEdicion) {
+        PersonaDTO persona = miembro.getPersona();
+        return new MiembroDetalle(miembro.getId(), nombre(persona),
+                persona != null ? persona.getNombres() : null,
+                persona != null ? persona.getDocumento() : null,
+                persona != null ? persona.getSexo() : null,
+                Boolean.TRUE.equals(miembro.getHabilitadoPadron()),
+                Boolean.TRUE.equals(miembro.getActualizada()),
+                permiteEdicion);
     }
 
     private Integer iglesiaDelUsuario() {
