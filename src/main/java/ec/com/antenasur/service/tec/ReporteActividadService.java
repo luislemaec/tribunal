@@ -1,7 +1,6 @@
 package ec.com.antenasur.service.tec;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,7 +15,6 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
-import ec.com.antenasur.audit.CatalogoActividades;
 import ec.com.antenasur.dto.ActividadAuditoriaDTO;
 import ec.com.antenasur.dto.FiltroActividadAuditoriaDTO;
 import ec.com.antenasur.dto.UsuarioAuditoriaDTO;
@@ -27,7 +25,7 @@ import ec.com.antenasur.security.sesion.SesionesWebEnLinea;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Pestaña Actividad de Rep. Registros: resumen de transacciones de la bitácora y
+ * Pestaña Actividad de Rep. Registros: últimos eventos de la bitácora y
  * usuarios en línea. Mismo alcance que Actividades (procesos.xhtml): Administrador ve
  * todo y Tribunal todo salvo lo de los usuarios Administrador.
  */
@@ -59,61 +57,6 @@ public class ReporteActividadService {
 
     private boolean excluirAdministradores() {
         return !sessionContext.isCallerInRole(ROL_ADMINISTRADOR);
-    }
-
-    /** Transacciones por día, con los días sin actividad en 0 para no deformar la serie. */
-    public Map<LocalDate, Long> transaccionesPorDia(int dias) {
-        LocalDate desde = LocalDate.now().minusDays(dias - 1L);
-        Map<LocalDate, Long> serie = new LinkedHashMap<>();
-        for (LocalDate dia = desde; !dia.isAfter(LocalDate.now()); dia = dia.plusDays(1)) {
-            serie.put(dia, 0L);
-        }
-        for (Object[] fila : procesoFacade.contarPorDia(desde, excluirAdministradores())) {
-            LocalDate dia = comoFecha(fila[0]);
-            if (dia != null && serie.containsKey(dia)) {
-                serie.put(dia, ((Number) fila[1]).longValue());
-            }
-        }
-        return serie;
-    }
-
-    /**
-     * El CAST de HQL puede llegar como LocalDate o como java.sql.Date según el dialecto;
-     * sin esta conversión un tipo inesperado dejaría la serie en ceros sin ningún error.
-     */
-    private static LocalDate comoFecha(Object valor) {
-        if (valor instanceof LocalDate fecha) {
-            return fecha;
-        }
-        if (valor instanceof java.sql.Date fecha) {
-            return fecha.toLocalDate();
-        }
-        if (valor instanceof java.util.Date fecha) {
-            return fecha.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-        }
-        if (valor != null) {
-            log.warn("Tipo de fecha inesperado en transacciones por dia: {}", valor.getClass().getName());
-        }
-        return null;
-    }
-
-    /** Transacciones por módulo del catálogo, de mayor a menor y sin los módulos vacíos. */
-    public Map<String, Long> transaccionesPorModulo(int dias) {
-        List<String> modulos = CatalogoActividades.modulos();
-        long[] totales = procesoFacade.contarPorModulo(LocalDate.now().minusDays(dias - 1L), modulos,
-                excluirAdministradores());
-        Map<String, Long> resultado = new LinkedHashMap<>();
-        List<Integer> orden = new ArrayList<>();
-        for (int i = 0; i < modulos.size(); i++) {
-            orden.add(i);
-        }
-        orden.sort(Comparator.comparingLong((Integer i) -> totales[i]).reversed());
-        for (int i : orden) {
-            if (totales[i] > 0) {
-                resultado.put(modulos.get(i), totales[i]);
-            }
-        }
-        return resultado;
     }
 
     /** Últimos eventos, con el alcance que ProcesoService aplica en Actividades. */

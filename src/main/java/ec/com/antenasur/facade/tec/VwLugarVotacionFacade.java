@@ -4,7 +4,6 @@ import jakarta.ejb.Stateless;
 
 import ec.com.antenasur.model.generic.AbstractFacade;
 import ec.com.antenasur.model.tec.VwLugarVotacion;
-import ec.com.antenasur.model.tec.VwTotalVotos;
 import java.util.List;
 import jakarta.persistence.TypedQuery;
 

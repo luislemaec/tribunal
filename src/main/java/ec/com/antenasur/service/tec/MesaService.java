@@ -1,7 +1,6 @@
 package ec.com.antenasur.service.tec;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +8,6 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.MesaDTO;
-import ec.com.antenasur.dto.ResumenVotosDTO;
 import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.facade.GeograpFacade;
 import ec.com.antenasur.facade.tec.DocumentoFacade;
@@ -208,36 +206,6 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
             resultado.add(MesaDTO.fromEntity(m));
         }
         return resultado;
-    }
-
-    /**
-     * Construye un resumen para los recintos dados: lista mesas activas, mesas
-     * escrutadas (COMPLETADO), suma {@code totalVotos} de cada mesa y calcula
-     * el porcentaje escrutado. Maneja correctamente el caso de listas vacías
-     * (porcentaje 0, sin {@code ArithmeticException}).
-     *
-     * @param recintos recintos a filtrar; si null/vacío, retorna un resumen vacío
-     */
-    public ResumenVotosDTO calcularResumenVotos(List<Recinto> recintos) {
-        ResumenVotosDTO resumen = new ResumenVotosDTO();
-        if (recintos == null || recintos.isEmpty()) {
-            return resumen;
-        }
-        List<Mesa> mesas = mesaFacade.getMesasPorRecintos(recintos);
-        List<Mesa> mesasEscrutadas = mesaFacade.getMesasEscrutadasPorRecintos(recintos);
-        resumen.setMesas(mesas != null ? mesas : Collections.<Mesa>emptyList());
-        resumen.setMesasEscrutadas(mesasEscrutadas != null ? mesasEscrutadas : Collections.<Mesa>emptyList());
-
-        int totalVotantes = resumen.getMesas().stream()
-                .mapToInt(mesa -> valorEntero(mesa.getTotalVotos()))
-                .sum();
-        resumen.setTotalVotantes(totalVotantes);
-
-        if (!resumen.getMesas().isEmpty() && !resumen.getMesasEscrutadas().isEmpty()) {
-            resumen.setPorcentajeMesasEscrutadas(
-                    (resumen.getMesasEscrutadas().size() * 100f) / resumen.getMesas().size());
-        }
-        return resumen;
     }
 
     private int valorEntero(Integer valor) {

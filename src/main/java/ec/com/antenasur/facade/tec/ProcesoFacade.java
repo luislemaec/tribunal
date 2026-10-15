@@ -271,66 +271,6 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
         return resultado;
     }
 
-    /**
-     * Transacciones por día desde {@code desde} (inclusive): {día, total}. Una consulta
-     * agregada que usa el índice de {@code f_crea}; con {@code excluirAdministradores} aplica
-     * el mismo alcance que Tribunal en Actividades.
-     */
-    public List<Object[]> contarPorDia(LocalDate desde, boolean excluirAdministradores) {
-        List<String> administradores = administradoresExcluidos(excluirAdministradores);
-        Query query = super.getEntityManager().createQuery("SELECT CAST(p.fechaCrea AS LocalDate), COUNT(p)"
-                + " FROM Proceso p WHERE p.estado = true AND p.fechaCrea >= :desde"
-                + sinAdministradores("p.usuarioCrea", administradores)
-                + " GROUP BY CAST(p.fechaCrea AS LocalDate) ORDER BY CAST(p.fechaCrea AS LocalDate)");
-        query.setParameter("desde", Timestamp.valueOf(desde.atStartOfDay()));
-        if (!administradores.isEmpty()) query.setParameter("administradores", administradores);
-        @SuppressWarnings("unchecked")
-        List<Object[]> filas = query.getResultList();
-        return filas;
-    }
-
-    /**
-     * Transacciones por módulo desde {@code desde}, en una sola consulta agregada. Cada
-     * actividad se clasifica con un único {@code CASE} en el orden de
-     * {@link CatalogoActividades#clasificacionPorModulo()} (el mismo que se muestra en
-     * Actividades): PostgreSQL deja de evaluar patrones en la primera coincidencia y
-     * {@code LOWER(TRIM(actividad))} se calcula una sola vez por fila. Devuelve los totales
-     * en el orden de {@code modulos}.
-     */
-    public long[] contarPorModulo(LocalDate desde, List<String> modulos, boolean excluirAdministradores) {
-        List<String> administradores = administradoresExcluidos(excluirAdministradores);
-        List<CatalogoActividades.PatronesModulo> clasificacion = CatalogoActividades.clasificacionPorModulo();
-        List<String> patrones = new ArrayList<>();
-        StringBuilder caso = new StringBuilder("CASE");
-        for (int i = 0; i < clasificacion.size(); i++) {
-            List<String> condiciones = new ArrayList<>();
-            for (String patron : clasificacion.get(i).patrones()) {
-                patrones.add(patron);
-                condiciones.add("a LIKE :p" + (patrones.size() - 1) + " ESCAPE '" + CatalogoActividades.ESCAPE + "'");
-            }
-            // El índice del tramo es un literal generado aquí, no un dato del usuario.
-            caso.append(" WHEN ").append(String.join(" OR ", condiciones)).append(" THEN ").append(i);
-        }
-        caso.append(" ELSE -1 END");
-        Query query = super.getEntityManager().createNativeQuery("SELECT " + caso + " AS tramo, COUNT(*)"
-                + " FROM (SELECT LOWER(TRIM(p.actividad)) AS a FROM tec.procesos p"
-                + " WHERE p.estado = TRUE AND p.f_crea >= :desde"
-                + sinAdministradores("p.u_crea", administradores) + ") t GROUP BY 1");
-        query.setParameter("desde", Timestamp.valueOf(desde.atStartOfDay()));
-        if (!administradores.isEmpty()) query.setParameter("administradores", administradores);
-        for (int i = 0; i < patrones.size(); i++) query.setParameter("p" + i, patrones.get(i));
-
-        long[] totales = new long[modulos.size()];
-        for (Object fila : query.getResultList()) {
-            Object[] columnas = (Object[]) fila;
-            int tramo = ((Number) columnas[0]).intValue();
-            String modulo = tramo < 0 ? CatalogoActividades.SISTEMA : clasificacion.get(tramo).modulo();
-            int posicion = modulos.indexOf(modulo);
-            if (posicion >= 0) totales[posicion] += ((Number) columnas[1]).longValue();
-        }
-        return totales;
-    }
-
     /** Apellidos y nombres, igual que el listado de personas; null si la persona no tiene ninguno. */
     private static String nombreCompleto(String apellidos, String nombres) {
         String completo = ((apellidos == null ? "" : apellidos.trim()) + " " + (nombres == null ? "" : nombres.trim())).trim();

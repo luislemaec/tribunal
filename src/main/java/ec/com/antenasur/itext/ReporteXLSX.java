@@ -360,17 +360,7 @@ public class ReporteXLSX {
         if (facesContext == null || LIBRO == null) {
             throw new IOException("No existe un contexto o libro Excel disponible para descargar.");
         }
-        ExternalContext contexto = facesContext.getExternalContext();
-        String nombreSeguro = tieneTexto(nombreReporte)
-                ? nombreReporte.replaceAll("[\\r\\n\\\"/\\\\]", "_") : "reporte";
-        contexto.responseReset();
-        HttpServletResponse response = (HttpServletResponse) contexto.getResponse();
-        response.setContentType(MIME_XLSX);
-        response.setHeader("Content-Disposition",
-                "attachment; filename=\"" + nombreSeguro + ".xlsx\"");
-        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-        response.setDateHeader("Expires", 0);
-        OutputStream out = response.getOutputStream();
+        OutputStream out = respuestaExcel(facesContext, nombreReporte);
         try {
             LIBRO.write(out);
             out.flush();
@@ -383,6 +373,35 @@ public class ReporteXLSX {
                 HOJA = null;
             }
         }
+    }
+
+    /**
+     * Descarga un Excel ya generado (p. ej. por un generador sin estado estático), con las
+     * mismas cabeceras HTTP que {@link #descargarExcel(String)}.
+     */
+    public static void descargarContenido(byte[] contenido, String nombreReporte) throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || contenido == null) {
+            throw new IOException("No existe un contexto o contenido Excel disponible para descargar.");
+        }
+        OutputStream out = respuestaExcel(facesContext, nombreReporte);
+        out.write(contenido);
+        out.flush();
+        facesContext.responseComplete();
+    }
+
+    private static OutputStream respuestaExcel(FacesContext facesContext, String nombreReporte) throws IOException {
+        ExternalContext contexto = facesContext.getExternalContext();
+        String nombreSeguro = tieneTexto(nombreReporte)
+                ? nombreReporte.replaceAll("[\\r\\n\\\"/\\\\]", "_") : "reporte";
+        contexto.responseReset();
+        HttpServletResponse response = (HttpServletResponse) contexto.getResponse();
+        response.setContentType(MIME_XLSX);
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + nombreSeguro + ".xlsx\"");
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        response.setDateHeader("Expires", 0);
+        return response.getOutputStream();
     }
 
     /** Obtiene el libro actual para almacenamiento institucional sin escribir la respuesta HTTP. */

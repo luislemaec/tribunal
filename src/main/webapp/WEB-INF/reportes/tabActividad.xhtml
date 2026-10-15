@@ -8,53 +8,16 @@
          Mismo alcance que Actividades: Tribunal no ve lo de usuarios Administrador. -->
 
     <!-- Carga en dos tiempos: la pestaña se dibuja al instante con marcadores y los datos
-         llegan por AJAX justo después (las consultas de la bitácora pueden tardar). -->
+         llegan por AJAX justo después. Las transacciones por día y por módulo (con su
+         filtro de período) se retiraron: recorrían la bitácora y demoraban la carga. -->
     <p:remoteCommand name="actCargar" action="#{reporteActividadController.cargar}" autoRun="true"
-                     process="@this" update="actPnlKpis actPnlGraficos actPnlEnLinea" global="false"/>
-
-    <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-        <div class="flex align-items-center gap-2 mb-3">
-            <i class="pi pi-filter text-500"></i>
-            <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
-        </div>
-        <div class="formgrid grid">
-            <div class="field col-12 md:col-6 lg:col-3">
-                <label for="actDias" class="font-medium text-700 text-sm">#{msg['reporteActividad.label.periodo']}</label>
-                <p:selectOneMenu id="actDias" value="#{reporteActividadController.dias}" styleClass="w-full">
-                    <f:selectItems value="#{reporteActividadController.opcionesPeriodo}" var="dias"
-                                   itemLabel="#{msg['reporteActividad.ultimos']} #{dias} #{msg['reporteAdministradores.dias']}" itemValue="#{dias}"/>
-                    <p:ajax event="change" listener="#{reporteActividadController.cambiarPeriodo}"
-                            process="@this" update="actPnlKpis actPnlGraficos actPnlEnLinea"/>
-                </p:selectOneMenu>
-            </div>
-        </div>
-    </div>
+                     process="@this" update="actPnlKpis actPnlEnLinea" global="false"/>
 
     <p:outputPanel id="actPnlKpis" layout="block" styleClass="grid mb-1">
         <ui:fragment rendered="#{not reporteActividadController.cargado}">
             <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
-            <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
-            <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>
         </ui:fragment>
         <ui:fragment rendered="#{reporteActividadController.cargado}">
-        <div class="col-12 sm:col-6 lg:col-3">
-            <div class="tec-kpi h-full">
-                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.transacciones']}</span>
-                <span class="block text-900 font-bold text-2xl">#{reporteActividadController.totalPeriodo}</span>
-                <span class="block text-500 text-xs mt-1">
-                    <i class="pi pi-calendar mr-1"/>#{msg['reporteActividad.ultimos']} #{reporteActividadController.dias} #{msg['reporteAdministradores.dias']}
-                </span>
-            </div>
-        </div>
-        <div class="col-12 sm:col-6 lg:col-3">
-            <div class="tec-kpi tec-kpi--info h-full">
-                <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.modulos']}</span>
-                <span class="block text-900 font-bold text-2xl">#{reporteActividadController.modulosConActividad}</span>
-                <span class="block text-500 text-xs mt-1">
-                    <i class="pi pi-th-large mr-1"/>#{msg['reporteActividad.kpi.modulos.ayuda']}
-                </span>
-            </div>
-        </div>
         <div class="col-12 sm:col-6 lg:col-3">
             <div class="tec-kpi tec-kpi--success h-full">
                 <span class="block text-500 text-xs font-medium uppercase">#{msg['reporteActividad.kpi.enLinea']}</span>
@@ -63,42 +26,6 @@
                     <i class="pi pi-desktop mr-1"/>#{msg['reporteActividad.web']}: #{reporteActividadController.usuariosWeb}
                     · <i class="pi pi-mobile mr-1"/>#{msg['reporteActividad.app']}: #{reporteActividadController.usuariosApp}
                 </span>
-            </div>
-        </div>
-        </ui:fragment>
-    </p:outputPanel>
-
-    <p:outputPanel id="actPnlGraficos" layout="block" styleClass="grid">
-        <ui:fragment rendered="#{not reporteActividadController.cargado}">
-            <div class="col-12 lg:col-7"><p:skeleton height="19rem" borderRadius="8px"/></div>
-            <div class="col-12 lg:col-5"><p:skeleton height="19rem" borderRadius="8px"/></div>
-        </ui:fragment>
-        <ui:fragment rendered="#{reporteActividadController.cargado}">
-        <div class="col-12 lg:col-7">
-            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                <span class="block font-semibold text-700 mb-3">#{msg['reporteActividad.grafico.porDia']}</span>
-                <ui:fragment rendered="#{reporteActividadController.totalPeriodo eq 0}">
-                    <span class="tec-empty">
-                        <i class="pi pi-chart-bar"/>
-                        <span class="tec-empty__text">#{msg['reporteActividad.sinDatos']}</span>
-                    </span>
-                </ui:fragment>
-                <p:chart value="#{reporteActividadController.graficoPorDia}" extender="tecGraficoTemaRegistros"
-                         rendered="#{reporteActividadController.totalPeriodo gt 0}" style="width:100%;height:16rem"/>
-            </div>
-        </div>
-        <div class="col-12 lg:col-5">
-            <div class="surface-card shadow-1 border-round-lg p-3 h-full">
-                <span class="block font-semibold text-700 mb-3">#{msg['reporteActividad.grafico.porModulo']}</span>
-                <ui:fragment rendered="#{empty reporteActividadController.porModulo}">
-                    <span class="tec-empty">
-                        <i class="pi pi-chart-bar"/>
-                        <span class="tec-empty__text">#{msg['reporteActividad.sinDatos']}</span>
-                    </span>
-                </ui:fragment>
-                <p:chart value="#{reporteActividadController.graficoPorModulo}" extender="tecGraficoTemaRegistros"
-                         rendered="#{not empty reporteActividadController.porModulo}"
-                         style="width:100%;height:#{reporteActividadController.altoGrafico(reporteActividadController.porModulo.size())}"/>
             </div>
         </div>
         </ui:fragment>
