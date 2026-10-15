@@ -12,6 +12,7 @@ import jakarta.inject.Named;
 import ec.com.antenasur.dto.ConteoRegistrosDTO;
 import ec.com.antenasur.report.GraficoBarrasJson;
 import ec.com.antenasur.service.tec.ReporteRegistrosService;
+import ec.com.antenasur.itext.ReporteRegistrosXLSX;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -104,6 +105,14 @@ public class ReporteRegistrosController implements Serializable {
                         ConteoRegistrosDTO::getRevisados),
                 GraficoBarrasJson.serie("reporteRegistros.serie.pendientes", categorias,
                         ConteoRegistrosDTO::getPendientesRevision));
+    }
+
+    /** Excel con los datos de la pestaña (sin gráficos), con el cantón elegido. */
+    public void exportarExcel() {
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.registros",
+                logo -> ReporteRegistrosXLSX.registros(ExportacionExcelRegistros.encabezado(
+                        ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado()),
+                        isTodosLosCantones()), totales, categorias, logo));
     }
 
     public List<ConteoRegistrosDTO> getCategoriasConHabilitados() {

@@ -1,10 +1,8 @@
 package ec.com.antenasur.controller;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -268,19 +266,18 @@ public class PadronController implements Serializable {
                 return;
             }
             List<PadronDTO> lista = listaPadron != null ? listaPadron : Collections.emptyList();
-            String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
-            String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
 
-            ReporteXLSX.nuevoExcel("Reporte del Padron Electoral");
-            ReporteXLSX.creaEspacioInformativoPadron(fecha, hora, ReporteXLSX.getNombreUsuarioAutenticado(),
-                    getProcesoReportePadron(), getProvinciaReportePadron(), getCantonReportePadron(), getParroquiaReportePadron(),
-                    getRecintoReportePadron(), getMesaReportePadron());
+            ReporteXLSX.nuevoExcelElectoral("Reporte del Padron Electoral");
 
             String[] columnas = {
                 "NRO.", "IDENTIFICACION", "NOMBRES", "IGLESIA", "COMUNIDAD / BARRIO", "ESTADO"
             };
             int[] anchos = { 1800, 5000, 9000, 10000, 8000, 4000 };
             ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+            // Encabezado compacto: necesita los anchos de la tabla ya definidos.
+            ReporteXLSX.creaEncabezadoElectoral("Reporte del Padrón Electoral", ReporteXLSX.datosElectorales(
+                    getProcesoReportePadron(), getProvinciaReportePadron(), getCantonReportePadron(),
+                    getParroquiaReportePadron(), getRecintoReportePadron(), getMesaReportePadron()));
 
             String[][] datos = new String[lista.size()][columnas.length];
             for (int i = 0; i < lista.size(); i++) {

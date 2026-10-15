@@ -13,6 +13,15 @@
     <p:remoteCommand name="actCargar" action="#{reporteActividadController.cargar}" autoRun="true"
                      process="@this" update="actPnlKpis actPnlEnLinea" global="false"/>
 
+    <!-- Excel con lo que muestra la pestaña (foto del momento), sin gráficos. Descarga normal: sin AJAX. -->
+    <div class="flex justify-content-end mb-2">
+        <p:commandButton id="actExportarExcel" value="#{msg['reporteRegistros.excel.boton']}"
+                         icon="pi pi-file-excel" styleClass="tec-btn ui-button-outlined ui-button-success"
+                         ajax="false" action="#{reporteActividadController.exportarExcel}">
+            <p:tooltip for="@parent" value="#{msg['reporteRegistros.excel.boton.ayuda']}"/>
+        </p:commandButton>
+    </div>
+
     <p:outputPanel id="actPnlKpis" layout="block" styleClass="grid mb-1">
         <ui:fragment rendered="#{not reporteActividadController.cargado}">
             <div class="col-12 sm:col-6 lg:col-3"><p:skeleton height="5.5rem" borderRadius="8px"/></div>

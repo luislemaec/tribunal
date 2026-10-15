@@ -7,9 +7,18 @@
     <!-- Pestaña Iglesias (ReporteIglesiasController). Ids con prefijo "igl". -->
 
     <div class="surface-card shadow-1 border-round-lg p-3 mb-3">
-        <div class="flex align-items-center gap-2 mb-3">
-            <i class="pi pi-filter text-500"></i>
-            <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+        <div class="flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-filter text-500"></i>
+                <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
+            </div>
+            <!-- Excel con los datos de la pestaña (incluida la lista de atención completa) y el
+                 filtro actual, sin gráficos. Descarga normal: sin AJAX. -->
+            <p:commandButton id="iglExportarExcel" value="#{msg['reporteRegistros.excel.boton']}"
+                             icon="pi pi-file-excel" styleClass="tec-btn ui-button-outlined ui-button-success"
+                             ajax="false" action="#{reporteIglesiasController.exportarExcel}">
+                <p:tooltip for="@parent" value="#{msg['reporteRegistros.excel.boton.ayuda']}"/>
+            </p:commandButton>
         </div>
         <div class="formgrid grid">
             <div class="field col-12 md:col-6 lg:col-4">

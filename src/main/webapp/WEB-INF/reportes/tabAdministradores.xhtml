@@ -14,10 +14,10 @@
             </div>
             <!-- Exporta todo el resultado del filtro actual (no solo la página visible), con los
                  datos ya calculados para esta vista. Descarga normal: sin AJAX. -->
-            <p:commandButton id="admExportarExcel" value="#{msg['reporteAdministradores.excel.boton']}"
+            <p:commandButton id="admExportarExcel" value="#{msg['reporteRegistros.excel.boton']}"
                              icon="pi pi-file-excel" styleClass="tec-btn ui-button-outlined ui-button-success"
                              ajax="false" action="#{reporteAdministradoresController.exportarExcel}">
-                <p:tooltip for="@parent" value="#{msg['reporteAdministradores.excel.boton.ayuda']}"/>
+                <p:tooltip for="@parent" value="#{msg['reporteRegistros.excel.boton.ayuda']}"/>
             </p:commandButton>
         </div>
         <div class="formgrid grid">

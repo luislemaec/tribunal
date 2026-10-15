@@ -380,17 +380,17 @@ public class ReporteMesaService {
 	private byte[] generarExcelPadron(ReporteMesaDTO reporte) {
 		synchronized (ReporteXLSX.class) {
 			try {
-				ReporteXLSX.nuevoExcel(mensaje("reportesMesa.padron.titulo"));
-				LocalDateTime ahora = LocalDateTime.now();
-				ReporteXLSX.creaEspacioInformativoPadron(ahora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-						ahora.format(DateTimeFormatter.ofPattern("HH:mm:ss")), usuarioActual(),
-						reporte.getProceso().getNombre(), reporte.getRecinto().getProvinciaNombre(),
-						reporte.getRecinto().getCantonNombre(), reporte.getRecinto().getUbicacionNombre(),
-						reporte.getRecinto().getNombre(), reporte.getMesa().getNombre());
+				ReporteXLSX.nuevoExcelElectoral(mensaje("reportesMesa.padron.titulo"));
 				String[] columnas = { mensaje("reportesMesa.padron.numero"), mensaje("reportesMesa.padron.cedula"),
 						mensaje("reportesMesa.padron.nombres"), mensaje("reportesMesa.padron.iglesia"),
 						mensaje("reportesMesa.padron.comunidad"), mensaje("reportesMesa.padron.estado") };
 				ReporteXLSX.creaCabeceraTabla(columnas, new int[] { 1800, 5000, 9000, 10000, 8000, 4000 });
+				// Encabezado compacto: necesita los anchos de la tabla ya definidos.
+				ReporteXLSX.creaEncabezadoElectoral(mensaje("reportesMesa.padron.titulo"),
+						ReporteXLSX.datosElectorales(reporte.getProceso().getNombre(),
+								reporte.getRecinto().getProvinciaNombre(), reporte.getRecinto().getCantonNombre(),
+								reporte.getRecinto().getUbicacionNombre(), reporte.getRecinto().getNombre(),
+								reporte.getMesa().getNombre()));
 				String[][] datos = new String[reporte.getPadron().size()][columnas.length];
 				for (int i = 0; i < reporte.getPadron().size(); i++) {
 					completarFilaPadron(datos[i], reporte.getPadron().get(i), i + 1);

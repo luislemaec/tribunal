@@ -13,6 +13,7 @@ import ec.com.antenasur.dto.ConteoIglesiasDTO;
 import ec.com.antenasur.dto.IglesiaAtencionDTO;
 import ec.com.antenasur.report.GraficoBarrasJson;
 import ec.com.antenasur.service.tec.ReporteIglesiasService;
+import ec.com.antenasur.itext.ReporteRegistrosXLSX;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -88,6 +89,14 @@ public class ReporteIglesiasController implements Serializable {
 
     private static ConteoIglesiasDTO vacio() {
         return new ConteoIglesiasDTO(null, null, null, 0L, 0L, 0L, 0L);
+    }
+
+    /** Excel con los datos de la pestaña (sin gráficos): resumen y la lista de atención completa. */
+    public void exportarExcel() {
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.iglesias",
+                logo -> ReporteRegistrosXLSX.iglesias(ExportacionExcelRegistros.encabezado(
+                        ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado()),
+                        isTodosLosCantones()), totales, categorias, iglesiasAtencion, logo));
     }
 
     public boolean isTodosLosCantones() {

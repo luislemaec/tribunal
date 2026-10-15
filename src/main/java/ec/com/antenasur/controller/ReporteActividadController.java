@@ -11,6 +11,7 @@ import jakarta.inject.Named;
 import ec.com.antenasur.dto.ActividadAuditoriaDTO;
 import ec.com.antenasur.dto.UsuarioEnLineaDTO;
 import ec.com.antenasur.service.tec.ReporteActividadService;
+import ec.com.antenasur.itext.ReporteRegistrosXLSX;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,20 @@ public class ReporteActividadController implements Serializable {
             eventos = Collections.emptyList();
             JsfUtil.addErrorMessage(JsfUtil.getMessage("reporteRegistros.error.carga"));
         }
+    }
+
+    /**
+     * Excel con lo que muestra la pestaña (usuarios en línea y últimos eventos), tal como se
+     * cargó: es una foto de ese momento; el botón Actualizar la renueva.
+     */
+    public void exportarExcel() {
+        if (!cargado) {
+            cargar();
+        }
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.actividad",
+                logo -> ReporteRegistrosXLSX.actividad(ExportacionExcelRegistros.encabezado(
+                        JsfUtil.getMessage("reporteRegistros.excel.instantanea"), true),
+                        getUsuariosWeb(), getUsuariosApp(), usuariosEnLinea, eventos, logo));
     }
 
     public long getUsuariosWeb() {

@@ -61,6 +61,22 @@ public class ReporteXLSX {
 
     private static final int HEADER_LOGO_MAX_HEIGHT_PX = 108;
 
+    /** Fila (base 0) de los títulos de la tabla en los Excel con encabezado electoral compacto. */
+    public static final int FILA_TABLA_ELECTORAL = 3;
+
+    /** Fila 1 del encabezado electoral: logo y título en una línea (36 pt = 48 px). */
+    private static final float ALTO_TITULO_ELECTORAL = 36f;
+
+    private static final float ALTO_DATO_ELECTORAL = 18f;
+
+    private static final int ALTO_LOGO_ELECTORAL_PX = 42;
+
+    private static final int MARGEN_LOGO_PX = 6;
+
+    private static final int DATOS_POR_FILA = 3;
+
+    private static final String SEPARADOR = "   |   ";
+
     /**
      * Columnas del detalle, en orden. Las que el ambito fija salen de la tabla. No hay
      * columna de estado: el reporte solo trae empadronados activos, asi que el valor
@@ -101,30 +117,37 @@ public class ReporteXLSX {
             java.util.function.Consumer<java.util.function.Consumer<ec.com.antenasur.dto.FilaPadronDTO>> proveedor,
             java.util.Map<String, String> ambito, InputStream logo) throws IOException {
         java.util.Map<String, String> comunes = ambito == null ? java.util.Map.of() : ambito;
+        String[] claves = java.util.Arrays.stream(COLUMNAS_PADRON)
+                .filter(clave -> !comunes.containsKey(clave)).toArray(String[]::new);
         XSSFWorkbook base = new XSSFWorkbook();
         Sheet detalle = base.createSheet("Padron");
-        crearEncabezadoInstitucional(base, detalle, Constantes.getMensaje("gestionPadron.reporte"), logo);
-        crearCabeceraAmbito(base, detalle, comunes);
+        // Anchos antes de la cabecera: el logo y el título se ubican sobre las columnas reales.
+        for (int i = 0; i < claves.length; i++) {
+            detalle.setColumnWidth(i, "nombres".equals(claves[i]) ? 14000 : 7000);
+        }
+        java.util.List<String[]> datosCabecera = new java.util.ArrayList<>();
+        comunes.forEach((clave, valor) -> datosCabecera.add(
+                new String[] { Constantes.getMensaje("gestionPadron." + clave), valor }));
+        crearEncabezadoElectoral(base, detalle, Constantes.getMensaje("gestionPadron.reporte"),
+                logo == null ? null : logo.readAllBytes(), datosCabecera);
         org.apache.poi.xssf.streaming.SXSSFWorkbook libro = new org.apache.poi.xssf.streaming.SXSSFWorkbook(base, 200);
         libro.setCompressTempFiles(true);
         try (libro; ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             Sheet hoja = libro.getSheetAt(0);
-            String[] claves = java.util.Arrays.stream(COLUMNAS_PADRON)
-                    .filter(clave -> !comunes.containsKey(clave)).toArray(String[]::new);
             var cabecera = libro.createCellStyle();
             var fuente = libro.createFont(); fuente.setBold(true); fuente.setColor(IndexedColors.WHITE.index);
             cabecera.setFont(fuente); cabecera.setFillForegroundColor(IndexedColors.DARK_BLUE.index);
             cabecera.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
-            Row titulos = hoja.createRow(5);
+            Row titulos = hoja.createRow(FILA_TABLA_ELECTORAL);
             for (int i = 0; i < claves.length; i++) {
                 Cell celda = titulos.createCell(i); celda.setCellValue(Constantes.getMensaje("gestionPadron." + claves[i]));
-                celda.setCellStyle(cabecera); hoja.setColumnWidth(i, "nombres".equals(claves[i]) ? 14000 : 7000);
+                celda.setCellStyle(cabecera);
             }
-            hoja.createFreezePane(0, 6);
             java.util.Map<String, Long> recintos = new java.util.LinkedHashMap<>();
             java.util.Map<String, Long> mesas = new java.util.LinkedHashMap<>();
             java.util.Map<String, Long> iglesias = new java.util.LinkedHashMap<>();
-            int[] fila = {6};
+            int primeraFila = FILA_TABLA_ELECTORAL + 1;
+            int[] fila = {primeraFila};
             proveedor.accept(p -> {
                 if (fila[0] >= 1_048_576) throw new IllegalStateException(Constantes.getMensaje("gestionPadron.error.reporte.limite"));
                 Row row = hoja.createRow(fila[0]++);
@@ -137,10 +160,11 @@ public class ReporteXLSX {
                 mesas.merge(recinto + " / " + p.getMesa() + " [" + p.getMesaId() + "]", 1L, Long::sum);
                 iglesias.merge(p.getProceso() + " / " + p.getIglesia() + " [" + p.getIglesiaId() + "]", 1L, Long::sum);
             });
-            hoja.setAutoFilter(new CellRangeAddress(5, Math.max(5, fila[0] - 1), 0, claves.length - 1));
+            hoja.setAutoFilter(new CellRangeAddress(FILA_TABLA_ELECTORAL, Math.max(FILA_TABLA_ELECTORAL, fila[0] - 1), 0,
+                    claves.length - 1));
             Sheet resumen = libro.createSheet(Constantes.getMensaje("gestionPadron.totales"));
             Row total = resumen.createRow(0);
-            total.createCell(0).setCellValue(Constantes.getMensaje("gestionPadron.total")); total.createCell(1).setCellValue(fila[0] - 6);
+            total.createCell(0).setCellValue(Constantes.getMensaje("gestionPadron.total")); total.createCell(1).setCellValue(fila[0] - primeraFila);
             int numero = 2;
             for (var grupo : java.util.List.of(recintos, mesas, iglesias)) {
                 for (var entrada : grupo.entrySet()) {
@@ -172,39 +196,165 @@ public class ReporteXLSX {
         };
     }
 
+    // ------------------------------------------------------------------ Encabezado electoral
+
     /**
-     * Datos comunes a todo el padron exportado, bajo el encabezado institucional y
-     * sobre la tabla: dos pares etiqueta/valor por fila en las filas 3 a 5 de la hoja,
-     * que el encabezado deja libres, de modo que el detalle sigue empezando en la
-     * misma fila que antes. Arranca en la columna C porque el logo ocupa A y B.
+     * Encabezado compacto de los Excel electorales (padrón general, padrón de la mesa):
+     * <pre>
+     * Fila 1: [logo]  CONPOCIIECH · nombre del reporte
+     * Fila 2: Proceso electoral: … | Provincia: … | Cantón: …
+     * Fila 3: Parroquia: … | Recinto: … | Mesa: …
+     * Fila 4: títulos de la tabla ({@link #FILA_TABLA_ELECTORAL})
+     * </pre>
+     * Sin celdas combinadas: los datos van en una sola celda por fila desde la columna A,
+     * con las etiquetas en negrita, y se extienden sobre las celdas vacías de la derecha, así
+     * que ningún valor se recorta aunque la tabla tenga pocas columnas. Debe llamarse con los
+     * anchos de columna ya definidos: el logo se escala a la fila 1 y el título empieza en la
+     * primera columna libre a su derecha. Los demás Excel siguen con
+     * {@link #crearEncabezadoInstitucional}.
+     *
+     * @param datos pares {etiqueta, valor}, tres por fila, en el orden en que se muestran
      */
-    private static void crearCabeceraAmbito(XSSFWorkbook workbook, Sheet sheet, java.util.Map<String, String> ambito) {
-        if (ambito == null || ambito.isEmpty()) {
-            return;
-        }
+    public static void crearEncabezadoElectoral(XSSFWorkbook libro, Sheet hoja, String nombreReporte, byte[] logo,
+            java.util.List<String[]> datos) {
+        XSSFSheet sheet = (XSSFSheet) hoja;
+        sheet.setDisplayGridlines(false);
+        Row titulo = filaDe(sheet, 0);
+        titulo.setHeightInPoints(ALTO_TITULO_ELECTORAL);
+        int finLogoPx = MARGEN_LOGO_PX;
         try {
-            XSSFCellStyle etiqueta = workbook.createCellStyle();
-            XSSFFont negrita = workbook.createFont();
-            negrita.setBold(true);
-            negrita.setColor(IndexedColors.DARK_BLUE.index);
-            etiqueta.setFont(negrita);
-            int indice = 0;
-            for (java.util.Map.Entry<String, String> dato : ambito.entrySet()) {
-                int numeroFila = 2 + indice / 2;
-                int columna = indice % 2 == 0 ? 2 : 5;
-                Row fila = sheet.getRow(numeroFila);
-                if (fila == null) {
-                    fila = sheet.createRow(numeroFila);
-                }
-                Cell celdaEtiqueta = fila.createCell(columna);
-                celdaEtiqueta.setCellValue(Constantes.getMensaje("gestionPadron." + dato.getKey()) + ":");
-                celdaEtiqueta.setCellStyle(etiqueta);
-                fila.createCell(columna + 1).setCellValue(dato.getValue() == null ? "" : dato.getValue());
-                indice++;
+            if (logo != null && logo.length > 0) {
+                finLogoPx = insertarLogoCompacto(libro, sheet, logo) + MARGEN_LOGO_PX;
             }
         } catch (Exception ex) {
-            LOG.error("ERROR AL CREAR LA CABECERA DE AMBITO DEL EXCEL" + ex);
+            LOG.error("ERROR AL INSERTAR EL LOGO DEL ENCABEZADO ELECTORAL" + ex);
         }
+
+        XSSFFont institucion = libro.createFont();
+        institucion.setBold(true);
+        institucion.setFontHeightInPoints((short) 16);
+        institucion.setColor(IndexedColors.DARK_BLUE.index);
+        XSSFFont reporte = libro.createFont();
+        reporte.setBold(true);
+        reporte.setFontHeightInPoints((short) 14);
+        reporte.setColor(IndexedColors.GREY_50_PERCENT.index);
+        XSSFRichTextString textoTitulo = new XSSFRichTextString(Constantes.INSTITUCION + "  ·  " + nombreReporte);
+        textoTitulo.applyFont(0, Constantes.INSTITUCION.length(), institucion);
+        textoTitulo.applyFont(Constantes.INSTITUCION.length(), textoTitulo.length(), reporte);
+        XSSFCellStyle centradoVertical = libro.createCellStyle();
+        centradoVertical.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+        Cell celdaTitulo = titulo.createCell(primeraColumnaLibre(sheet, finLogoPx));
+        celdaTitulo.setCellValue(textoTitulo);
+        celdaTitulo.setCellStyle(centradoVertical);
+
+        XSSFFont etiqueta = libro.createFont();
+        etiqueta.setBold(true);
+        etiqueta.setColor(IndexedColors.DARK_BLUE.index);
+        XSSFFont separador = libro.createFont();
+        separador.setColor(IndexedColors.GREY_40_PERCENT.index);
+        java.util.List<String[]> pares = datos == null ? java.util.List.of() : datos;
+        for (int inicio = 0, numeroFila = 1; inicio < pares.size() && numeroFila < FILA_TABLA_ELECTORAL;
+                inicio += DATOS_POR_FILA, numeroFila++) {
+            java.util.List<String[]> enFila = pares.subList(inicio, Math.min(pares.size(), inicio + DATOS_POR_FILA));
+            StringBuilder texto = new StringBuilder();
+            java.util.List<int[]> etiquetas = new java.util.ArrayList<>();
+            java.util.List<int[]> separadores = new java.util.ArrayList<>();
+            for (String[] par : enFila) {
+                if (texto.length() > 0) {
+                    separadores.add(new int[] { texto.length(), texto.length() + SEPARADOR.length() });
+                    texto.append(SEPARADOR);
+                }
+                String rotulo = par[0] + ": ";
+                etiquetas.add(new int[] { texto.length(), texto.length() + rotulo.length() });
+                texto.append(rotulo).append(par[1] == null ? "" : par[1]);
+            }
+            XSSFRichTextString rico = new XSSFRichTextString(texto.toString());
+            etiquetas.forEach(r -> rico.applyFont(r[0], r[1], etiqueta));
+            separadores.forEach(r -> rico.applyFont(r[0], r[1], separador));
+            Row fila = filaDe(sheet, numeroFila);
+            fila.setHeightInPoints(ALTO_DATO_ELECTORAL);
+            Cell celda = fila.createCell(0);
+            celda.setCellValue(rico);
+            celda.setCellStyle(centradoVertical);
+        }
+        sheet.createFreezePane(0, FILA_TABLA_ELECTORAL + 1);
+    }
+
+    /** Pares {etiqueta, valor} del ámbito electoral, en el orden del encabezado compacto. */
+    public static java.util.List<String[]> datosElectorales(String proceso, String provincia, String canton,
+            String parroquia, String recinto, String mesa) {
+        return java.util.List.of(
+                new String[] { Constantes.getMensaje("gestionPadron.proceso"), proceso },
+                new String[] { Constantes.getMensaje("gestionPadron.provincia"), provincia },
+                new String[] { Constantes.getMensaje("gestionPadron.canton"), canton },
+                new String[] { Constantes.getMensaje("gestionPadron.parroquia"), parroquia },
+                new String[] { Constantes.getMensaje("gestionPadron.recinto"), recinto },
+                new String[] { Constantes.getMensaje("gestionPadron.mesa"), mesa });
+    }
+
+    /**
+     * Libro clásico (estado estático) con el encabezado electoral compacto. La tabla va en
+     * {@link #FILA_TABLA_ELECTORAL}; después de {@link #creaCabeceraTabla} (que fija los
+     * anchos) se llama a {@link #creaEncabezadoElectoral}.
+     */
+    public static void nuevoExcelElectoral(String nombreHoja) {
+        inicializa();
+        HOJA = LIBRO.createSheet(nombreHoja);
+        FILA_CABECERA_TABLA = FILA_TABLA_ELECTORAL;
+    }
+
+    /** Encabezado compacto del libro clásico, con el logo institucional configurado. */
+    public static void creaEncabezadoElectoral(String nombreReporte, java.util.List<String[]> datos) {
+        byte[] logo = null;
+        try (InputStream entrada = new FileInputStream(PATH_LOGO)) {
+            logo = entrada.readAllBytes();
+        } catch (Exception ex) {
+            LOG.error("ERROR AL LEER EL LOGO DEL EXCEL" + ex);
+        }
+        crearEncabezadoElectoral(LIBRO, HOJA, nombreReporte, logo, datos);
+    }
+
+    /** Logo escalado al alto de la fila 1; devuelve su borde derecho en píxeles. */
+    private static int insertarLogoCompacto(XSSFWorkbook libro, XSSFSheet hoja, byte[] logo) throws IOException {
+        java.awt.image.BufferedImage imagen = ImageIO.read(new java.io.ByteArrayInputStream(logo));
+        int alto = ALTO_LOGO_ELECTORAL_PX;
+        int ancho = imagen == null ? alto * 3 : Math.round((float) alto * imagen.getWidth() / imagen.getHeight());
+        int finPx = MARGEN_LOGO_PX + ancho;
+        XSSFClientAnchor ancla = new XSSFClientAnchor();
+        ancla.setCol1(0);
+        ancla.setDx1(Units.pixelToEMU(MARGEN_LOGO_PX));
+        ancla.setRow1(0);
+        ancla.setDy1(Units.pixelToEMU(3));
+        int columna = 0;
+        int restante = finPx;
+        while (restante > hoja.getColumnWidthInPixels(columna)) {
+            restante -= Math.round(hoja.getColumnWidthInPixels(columna));
+            columna++;
+        }
+        ancla.setCol2(columna);
+        ancla.setDx2(Units.pixelToEMU(restante));
+        ancla.setRow2(0);
+        ancla.setDy2(Units.pixelToEMU(3 + alto));
+        ancla.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_AND_RESIZE);
+        int indice = libro.addPicture(logo, Workbook.PICTURE_TYPE_PNG);
+        hoja.createDrawingPatriarch().createPicture(ancla, indice);
+        return finPx;
+    }
+
+    /** Primera columna cuyo borde izquierdo queda a la derecha de {@code px}. */
+    private static int primeraColumnaLibre(XSSFSheet hoja, int px) {
+        float izquierda = 0;
+        int columna = 0;
+        while (izquierda < px) {
+            izquierda += hoja.getColumnWidthInPixels(columna);
+            columna++;
+        }
+        return columna;
+    }
+
+    private static Row filaDe(Sheet hoja, int indice) {
+        Row fila = hoja.getRow(indice);
+        return fila != null ? fila : hoja.createRow(indice);
     }
 
     public static String getNombreUsuarioAutenticado() {
@@ -294,36 +444,6 @@ public class ReporteXLSX {
             LOG.error("ERROR AL CREAR ESPACIO INFORMATIVO" + e);
         }
 
-    }
-
-    public static void creaEspacioInformativoPadron(String fecha, String hora, String responsable,
-            String proceso, String provincia, String canton, String parroquia, String recinto, String mesa) {
-        try {
-            //creaEspacioInformativo(fecha, hora, responsable);
-            //(3, "FECHA Y HORA:", fecha + " " + hora, "RESPONSABLE:", responsable);
-            crearFilaInformativa(3, "PROCESO:", proceso, "RECINTO:", recinto);
-            crearFilaInformativa(4, "PROVINCIA:", provincia, "CANTON:", canton);
-            crearFilaInformativa(5, "PARROQUIA:", parroquia, "MESA:", mesa);
-            FILA_CABECERA_TABLA = 7;
-        } catch (Exception e) {
-            LOG.error("ERROR AL CREAR ESPACIO INFORMATIVO DEL PADRON" + e);
-        }
-    }
-
-    private static void crearFilaInformativa(int fila, String etiquetaA, String valorA, String etiquetaB, String valorB) {
-        Row row = HOJA.createRow(fila);
-
-        Cell labelA = row.createCell(1);
-        labelA.setCellValue(etiquetaA);
-
-        Cell valueA = row.createCell(2);
-        valueA.setCellValue(valorA != null ? valorA : "");
-
-        Cell labelB = row.createCell(3);
-        labelB.setCellValue(etiquetaB != null ? etiquetaB : "");
-
-        Cell valueB = row.createCell(4);
-        valueB.setCellValue(valorB != null ? valorB : "");
     }
 
     public static void setFinalParagraph(int tamanioLista) {

@@ -13,6 +13,7 @@ import ec.com.antenasur.dto.ConteoCoberturaDTO;
 import ec.com.antenasur.dto.ProcesoElectoralDTO;
 import ec.com.antenasur.report.GraficoBarrasJson;
 import ec.com.antenasur.service.tec.ReporteCoberturaPadronService;
+import ec.com.antenasur.itext.ReporteRegistrosXLSX;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -91,6 +92,18 @@ public class ReporteCoberturaPadronController implements Serializable {
                         ConteoCoberturaDTO::getEmpadronados),
                 GraficoBarrasJson.serie("reporteCobertura.serie.sinPadron", categorias,
                         ConteoCoberturaDTO::getSinPadron));
+    }
+
+    /** Excel con los datos de la pestaña (sin gráficos): proceso activo y cantón elegido. */
+    public void exportarExcel() {
+        if (isSinProceso()) {
+            return;
+        }
+        String filtro = JsfUtil.getMessage("reporteRegistros.excel.filtroProceso", proceso.getNombre(),
+                isTodosLosCantones() ? JsfUtil.getMessage("reporteRegistros.canton.todos") : getNombreCantonSeleccionado());
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.cobertura",
+                logo -> ReporteRegistrosXLSX.cobertura(ExportacionExcelRegistros.encabezado(filtro, isTodosLosCantones()),
+                        totales, categorias, logo));
     }
 
     public boolean isSinProceso() {

@@ -1,14 +1,10 @@
 package ec.com.antenasur.controller;
 
-import java.io.InputStream;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -16,7 +12,7 @@ import jakarta.inject.Named;
 import ec.com.antenasur.dto.AdministradorIglesiaDTO;
 import ec.com.antenasur.dto.ConteoAdministradoresDTO;
 import ec.com.antenasur.itext.ReporteAdministradoresXLSX;
-import ec.com.antenasur.itext.ReporteXLSX;
+import ec.com.antenasur.itext.ReporteRegistrosXLSX;
 import ec.com.antenasur.report.GraficoBarrasJson;
 import ec.com.antenasur.service.tec.ReporteAdministradoresService;
 import ec.com.antenasur.util.JsfUtil;
@@ -147,23 +143,13 @@ public class ReporteAdministradoresController implements Serializable {
                 : todas.stream().filter(i -> cantonId.equals(i.getCantonId())).toList();
         int[][] avance = filtradas.isEmpty() ? new int[][] { { 0, 0 }, { 0, 0 } }
                 : reporteAdministradoresService.avanceConYSinAdministrador(filtradas);
-        LocalDateTime ahora = LocalDateTime.now();
+        ReporteRegistrosXLSX.Encabezado encabezado = ExportacionExcelRegistros.encabezado(null, isTodosLosCantones());
         ReporteAdministradoresXLSX.Datos datos = new ReporteAdministradoresXLSX.Datos(
                 isTodosLosCantones() ? JsfUtil.getMessage("reporteRegistros.canton.todos") : getNombreCantonSeleccionado(),
-                diasInactividad,
-                JsfUtil.getMessage(isTodosLosCantones() ? "reporteRegistros.col.canton" : "reporteRegistros.col.parroquia"),
-                totales, categorias, avance, iglesias,
-                ahora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-                ReporteXLSX.getNombreUsuarioAutenticado());
-        try (InputStream logo = FacesContext.getCurrentInstance().getExternalContext()
-                .getResourceAsStream("/resources/img/logo_consejo_417x150.png")) {
-            byte[] contenido = ReporteAdministradoresXLSX.generar(datos, logo == null ? null : logo.readAllBytes());
-            ReporteXLSX.descargarContenido(contenido, JsfUtil.getMessage("reporteAdministradores.excel.archivo") + "_"
-                    + ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")));
-        } catch (Exception e) {
-            log.error("Error al exportar el reporte de administradores", e);
-            JsfUtil.addErrorMessage(JsfUtil.getMessage("reporteAdministradores.excel.error"));
-        }
+                diasInactividad, encabezado.columnaCategoria(), totales, categorias, avance, iglesias,
+                encabezado.generado(), encabezado.responsable());
+        ExportacionExcelRegistros.descargar("reporteAdministradores.excel.archivo",
+                logo -> ReporteAdministradoresXLSX.generar(datos, logo));
     }
 
     public List<ConteoAdministradoresDTO> getCategoriasConAdministrador() {

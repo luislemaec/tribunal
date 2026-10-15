@@ -23,8 +23,16 @@
                     <i class="pi pi-filter text-500"></i>
                     <span class="font-semibold text-700">#{msg['reporteRegistros.filtros.titulo']}</span>
                 </div>
-                <p:tag value="#{msg['reporteCobertura.proceso']}: #{reporteCoberturaPadronController.proceso.nombre}"
-                       icon="pi pi-flag" severity="info" styleClass="tec-status"/>
+                <div class="flex align-items-center flex-wrap gap-2">
+                    <p:tag value="#{msg['reporteCobertura.proceso']}: #{reporteCoberturaPadronController.proceso.nombre}"
+                           icon="pi pi-flag" severity="info" styleClass="tec-status"/>
+                    <!-- Excel con los datos de la pestaña y el filtro actual, sin gráficos. Descarga normal: sin AJAX. -->
+                    <p:commandButton id="cobExportarExcel" value="#{msg['reporteRegistros.excel.boton']}"
+                                     icon="pi pi-file-excel" styleClass="tec-btn ui-button-outlined ui-button-success"
+                                     ajax="false" action="#{reporteCoberturaPadronController.exportarExcel}">
+                        <p:tooltip for="@parent" value="#{msg['reporteRegistros.excel.boton.ayuda']}"/>
+                    </p:commandButton>
+                </div>
             </div>
             <div class="formgrid grid">
                 <div class="field col-12 md:col-6 lg:col-4">
