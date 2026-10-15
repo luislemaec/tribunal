@@ -103,6 +103,8 @@ Los roles sin funciones en la V1 (Tecnico, Gerencial, Supervisor, Superadministr
 | `PUT /tribunal/iglesia/miembros/{id}/habilitacion` | IglesiaAdmin | Cuerpo `{habilitado: true\|false}` → 200 con el miembro. Ver abajo |
 | `GET /tribunal/iglesia/miembros/{id}` | IglesiaAdmin | Datos editables de la persona: `{id, nombre, nombres, documento, sexo, habilitado, revisado, permiteEdicion}` (solo este endpoint envía la cédula). Ver abajo |
 | `PUT /tribunal/iglesia/miembros/{id}/persona` | IglesiaAdmin | Cuerpo `{nombres, documento, sexo, habilitado?}` → 200 con el mismo detalle. Ver abajo |
+| `POST /tribunal/iglesia/miembros` | IglesiaAdmin | Cuerpo `{nombres, documento, sexo, habilitado?}` → 201 con el detalle del miembro creado en la iglesia del usuario. Ver abajo |
+| `DELETE /tribunal/iglesia/miembros/{id}` | IglesiaAdmin | Baja lógica del miembro → 204. Ver abajo |
 | `GET /tribunal/proceso/resumen` | Administrador, Tribunal | Totales y `alertas` [{texto, cantidad, severidad}] del dashboard web. 404 `SIN_PROCESO_ACTIVO` |
 | `GET /tribunal/proceso/mesas` | Administrador, Tribunal | `[{ubicacion:{mesaId, mesa, recinto, parroquia, canton}, estado, juntaRegistrada, fase}]`. Mismas mesas que la tabla de actaE: con padrón en el proceso o con escrutinio iniciado |
 | `GET /tribunal/proceso/resultados` | Administrador, Tribunal | Consolidado de mesas cerradas (misma caché que la página de resultados) |
@@ -156,6 +158,39 @@ y `IglesiaPersona` (queda revisado, igual que en la web) con el usuario autentic
 | 409 | `EDICION_CERRADA` | La fase vigente del cronograma no permite editar el padrón |
 | 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
 | 404 | `MIEMBRO_NO_DISPONIBLE` | No existe o ya no está activo |
+
+### Agregar y dar de baja miembros (escritura)
+
+Replican «Nuevo» y la papelera de Personas en la web, con los mismos servicios (solo
+`SITEC-IglesiaAdmin`; Administrador y Tribunal siguen en la web).
+
+**Agregar** (`GestionMovilService.crearMiembro`): la iglesia es siempre la del usuario. Formatos con
+`ValidadorPersona` y reglas con `IglesiaPersonaService.guardarDesdeDTO` en una transacción:
+cronograma, alcance, cédula no usada por otra persona activa y una sola iglesia activa. Si la cédula
+es de una persona activa sin iglesia se reutiliza (como `buscaPersonaPorCedula` en la web): se
+actualizan nombres y sexo, y se conservan apellidos y tratamiento. Una persona dada de baja no se
+reutiliza; la restauran Administrador o Tribunal desde «Ver eliminadas». Sin `habilitado`, queda
+habilitada (igual que la web) y marcada como revisada. La App no consulta personas por cédula: TEC
+responde al guardar.
+
+**Dar de baja** (`GestionMovilService.darDeBajaMiembro`): `IglesiaPersonaService.eliminarPorId`
+pone `estado=false` en el vínculo iglesia-persona y, si la persona no tiene otro vínculo activo,
+también en la persona. **No se borra ninguna fila.** Padrón y JRV conservan su historial (apuntan al
+vínculo); las consultas del padrón filtran vínculos activos, así que el miembro deja de aparecer,
+igual que en la web. A diferencia de la web (que solo deshabilita el botón), aquí el cronograma se
+comprueba en el servidor.
+
+Envers registra `Persona` e `IglesiaPersona` con el usuario autenticado y la bitácora `tec.procesos`
+anota `CREA` / `DESACTIVA`.
+
+| Estado | Código | Caso |
+|---|---|---|
+| 400 | `DATOS_INVALIDOS` | Nombres vacíos o de más de 100 caracteres, cédula inválida o sexo distinto de M/F |
+| 409 | `DOCUMENTO_DUPLICADO` | La cédula pertenece a otra persona activa |
+| 409 | `CONFLICTO_IGLESIA` | Ya es miembro de esta iglesia, pertenece a otra iglesia o tiene varias iglesias activas |
+| 409 | `EDICION_CERRADA` | La fase vigente del cronograma no permite editar el padrón |
+| 403 | `SIN_PERMISO` | El miembro es de otra iglesia, o el rol no es IglesiaAdmin |
+| 404 | `MIEMBRO_NO_DISPONIBLE` | El miembro no existe o ya fue dado de baja |
 
 ### Revisión del acta física (escritura)
 

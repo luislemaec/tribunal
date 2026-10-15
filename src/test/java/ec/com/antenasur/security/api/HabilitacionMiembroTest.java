@@ -42,16 +42,18 @@ class HabilitacionMiembroTest {
 
     @Test
     void cadaEscrituraDeclaraSoloSuRol() {
-        Map<String, Set<String>> esperado = Map.of(
-                "cambiarHabilitacionMiembro", Set.of("SITEC-IglesiaAdmin"),
-                "actualizarPersonaMiembro", Set.of("SITEC-IglesiaAdmin"),
-                "actaPresidente", Set.of("SITEC-Presidente-mesa"),
-                "abrirMesa", Set.of("SITEC-Presidente-mesa"),
-                "guardarConteo", Set.of("SITEC-Presidente-mesa"),
-                "cerrarMesa", Set.of("SITEC-Presidente-mesa"),
-                "subirActaFisica", Set.of("SITEC-Presidente-mesa"),
-                "validarActaFisica", Set.of("SITEC-Tribunal"),
-                "devolverActaFisica", Set.of("SITEC-Tribunal"));
+        Map<String, Set<String>> esperado = Map.ofEntries(
+                Map.entry("cambiarHabilitacionMiembro", Set.of("SITEC-IglesiaAdmin")),
+                Map.entry("actualizarPersonaMiembro", Set.of("SITEC-IglesiaAdmin")),
+                Map.entry("crearMiembro", Set.of("SITEC-IglesiaAdmin")),
+                Map.entry("darDeBajaMiembro", Set.of("SITEC-IglesiaAdmin")),
+                Map.entry("actaPresidente", Set.of("SITEC-Presidente-mesa")),
+                Map.entry("abrirMesa", Set.of("SITEC-Presidente-mesa")),
+                Map.entry("guardarConteo", Set.of("SITEC-Presidente-mesa")),
+                Map.entry("cerrarMesa", Set.of("SITEC-Presidente-mesa")),
+                Map.entry("subirActaFisica", Set.of("SITEC-Presidente-mesa")),
+                Map.entry("validarActaFisica", Set.of("SITEC-Tribunal")),
+                Map.entry("devolverActaFisica", Set.of("SITEC-Tribunal")));
         List<Method> publicos = Arrays.stream(GestionMovilService.class.getDeclaredMethods())
                 .filter(m -> Modifier.isPublic(m.getModifiers()) && !m.isSynthetic()).toList();
         assertEquals(esperado.keySet(), publicos.stream().map(Method::getName).collect(Collectors.toSet()),

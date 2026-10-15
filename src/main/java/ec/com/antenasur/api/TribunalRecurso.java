@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.GET;
@@ -136,6 +137,46 @@ public class TribunalRecurso {
         }
     }
 
+    /**
+     * Agrega una persona a la iglesia del IglesiaAdmin, como «Nuevo» en Personas de la web:
+     * «Apellidos y Nombres», cédula, sexo y habilitación (por defecto habilitada). 201 con el
+     * detalle del miembro creado.
+     */
+    @POST
+    @Path("/iglesia/miembros")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response crearMiembro(SolicitudPersona solicitud) {
+        if (solicitud == null) {
+            return AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "SOLICITUD_INVALIDA",
+                    "Envíe los datos de la persona.");
+        }
+        try {
+            return Response.status(Response.Status.CREATED).entity(gestion.crearMiembro(solicitud.getNombres(),
+                    solicitud.getDocumento(), solicitud.getSexo(), solicitud.getHabilitado())).build();
+        } catch (IglesiaPersonaException e) {
+            return errorMiembro(e);
+        }
+    }
+
+    /**
+     * Da de baja a un miembro de la iglesia del IglesiaAdmin, como la papelera de Personas en
+     * la web: desactiva el vínculo (y la persona si no tiene otra iglesia activa); no borra filas.
+     */
+    @DELETE
+    @Path("/iglesia/miembros/{id}")
+    public Response darDeBajaMiembro(@PathParam("id") Integer id) {
+        if (id == null) {
+            return AutenticacionRecurso.error(Response.Status.BAD_REQUEST, "SOLICITUD_INVALIDA",
+                    "Indique el miembro.");
+        }
+        try {
+            gestion.darDeBajaMiembro(id);
+            return Response.noContent().build();
+        } catch (IglesiaPersonaException e) {
+            return errorMiembro(e);
+        }
+    }
+
     /** Errores de negocio de miembros con los mensajes de la web (messages_es.properties). */
     private static Response errorMiembro(IglesiaPersonaException e) {
         String mensaje = Constantes.getMensaje(e.getMessageKey(), e.getArguments());
@@ -149,6 +190,7 @@ public class TribunalRecurso {
             case "form.personas.error.documento.duplicado" ->
                 AutenticacionRecurso.error(Response.Status.CONFLICT, "DOCUMENTO_DUPLICADO", mensaje);
             case "form.personas.error.varias.iglesias", "form.personas.error.ya.miembro",
+                    "form.personas.error.otra.iglesia",
                     "form.personas.error.relacion.persona.inactiva" ->
                 AutenticacionRecurso.error(Response.Status.CONFLICT, "CONFLICTO_IGLESIA", mensaje);
             case "form.personas.error.documento.requerido", "form.personas.error.documento.invalido",

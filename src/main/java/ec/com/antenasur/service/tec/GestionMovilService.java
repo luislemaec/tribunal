@@ -20,6 +20,7 @@ import ec.com.antenasur.dto.ConsultaMovilDTO.MiembroDetalle;
 import ec.com.antenasur.dto.ConsultaMovilDTO.Ubicacion;
 import ec.com.antenasur.dto.EscrutinioCabeceraDTO;
 import ec.com.antenasur.dto.EscrutinioDTO;
+import ec.com.antenasur.dto.IglesiaDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.PersonaDTO;
@@ -29,7 +30,10 @@ import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.model.tec.CategoriaVoto;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
+import ec.com.antenasur.facade.UsuarioFacade;
+import ec.com.antenasur.model.Usuario;
 import ec.com.antenasur.service.IglesiaPersonaService;
+import ec.com.antenasur.service.PersonaService;
 import ec.com.antenasur.service.ValidadorPersona;
 
 /**
@@ -88,6 +92,12 @@ public class GestionMovilService {
 
     @Inject
     private CronogramaService cronogramaService;
+
+    @Inject
+    private PersonaService personaService;
+
+    @Inject
+    private UsuarioFacade usuarioFacade;
 
     // ---------------------------------------------------------------- IglesiaAdmin
 
@@ -165,6 +175,74 @@ public class GestionMovilService {
             throw new IglesiaPersonaException("form.personas.error.guardar");
         }
         return ConsultaMovilService.detalleDe(guardado, cronogramaService.permiteEdicionPadron());
+    }
+
+    /**
+     * El IglesiaAdmin agrega una persona a su iglesia, como «Nuevo» en Personas de la web:
+     * mismos campos («Apellidos y Nombres», cédula, sexo y habilitación para el padrón,
+     * habilitada por defecto) y mismo servicio, {@link IglesiaPersonaService#guardarDesdeDTO},
+     * que valida cronograma, alcance, cédula única y una sola iglesia activa en una transacción.
+     * La iglesia es siempre la del usuario, nunca un dato de la App.
+     *
+     * <p>Si la cédula ya es de una persona activa sin iglesia, se reutiliza esa persona, como
+     * hace la web al buscarla por cédula ({@code buscaPersonaPorCedula}): se actualizan nombres
+     * y sexo con lo enviado y se conservan apellidos y tratamiento. Una persona dada de baja no
+     * se reutiliza (su restauración es del Administrador o del Tribunal).
+     */
+    @RolesAllowed(IGLESIA_ADMIN)
+    public MiembroDetalle crearMiembro(String nombres, String documento, String sexo, Boolean habilitado) {
+        Integer iglesiaId = iglesiaDelUsuario();
+        if (iglesiaId == null) {
+            throw new IglesiaPersonaException("form.personas.error.iglesia.no.autorizada");
+        }
+        String nuevosNombres = nombres == null ? null : nombres.trim();
+        String nuevoDocumento = documento == null ? null : documento.trim();
+        String nuevoSexo = sexo == null || sexo.isBlank() ? null : sexo.trim().toUpperCase(java.util.Locale.ROOT);
+        ValidadorPersona.validarNombres(nuevosNombres);
+        ValidadorPersona.validarCedula(nuevoDocumento);
+        ValidadorPersona.validarSexo(nuevoSexo);
+
+        PersonaDTO existente = personaService.buscarDTOPorDocumento(nuevoDocumento);
+        PersonaDTO persona = existente != null ? existente : new PersonaDTO();
+        persona.setNombres(nuevosNombres);
+        persona.setDocumento(nuevoDocumento);
+        persona.setSexo(nuevoSexo);
+        IglesiaDTO iglesia = new IglesiaDTO();
+        iglesia.setId(iglesiaId);
+        IglesiaPersonaDTO miembro = new IglesiaPersonaDTO();
+        miembro.setIglesia(iglesia);
+        miembro.setPersona(persona);
+        miembro.setHabilitadoPadron(habilitado == null ? Boolean.TRUE : habilitado);
+        IglesiaPersonaDTO guardado = iglesiaPersonaService.guardarDesdeDTO(miembro);
+        if (guardado == null) {
+            throw new IglesiaPersonaException("form.personas.error.guardar");
+        }
+        return ConsultaMovilService.detalleDe(guardado, cronogramaService.permiteEdicionPadron());
+    }
+
+    /**
+     * El IglesiaAdmin da de baja a un miembro de su iglesia, como la papelera de Personas en la
+     * web: {@link IglesiaPersonaService#eliminarPorId} desactiva el vínculo iglesia-persona
+     * (nunca borra filas) y, si la persona no tiene otro vínculo activo, también la persona.
+     * Padrón y JRV conservan su historial. El cronograma se comprueba aquí, en el servidor,
+     * porque la web solo lo aplica en la pantalla.
+     */
+    @RolesAllowed(IGLESIA_ADMIN)
+    public void darDeBajaMiembro(Integer miembroId) {
+        if (!cronogramaService.permiteEdicionPadron()) {
+            throw new IglesiaPersonaException("form.personas.error.cronograma");
+        }
+        // Vínculo activo y de la iglesia del usuario (MIEMBRO_NO_DISPONIBLE / SIN_PERMISO).
+        iglesiaPersonaService.obtenerMiembroParaEdicion(miembroId);
+        if (iglesiaPersonaService.eliminarPorId(miembroId) == null) {
+            throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
+        }
+    }
+
+    private Integer iglesiaDelUsuario() {
+        String nombre = usuarioActual();
+        Usuario usuario = nombre == null ? null : usuarioFacade.findByUsuarioName(nombre);
+        return usuario != null && usuario.getIglesia() != null ? usuario.getIglesia().getId() : null;
     }
 
     // ---------------------------------------------------------------- Presidente de mesa
