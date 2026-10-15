@@ -53,6 +53,16 @@ class FiltroApiMovilTest {
     }
 
     @Test
+    void laPeticionDeLaAppQuedaMarcadaParaLaAuditoriaYSeDesmarcaAlTerminar() throws Exception {
+        Respuesta r = filtrar("/api/v1/auth/login", null, true, null);
+        assertTrue(r.canalApp, "durante la petición la bitácora sabe que viene de la App");
+        assertEquals("10.0.0.5", r.ipApp);
+        assertFalse(ec.com.antenasur.audit.CanalSolicitud.esApp(), "el hilo queda limpio para la siguiente petición");
+        filtrar("/api/v1/auth/login", null, false, null);
+        assertFalse(ec.com.antenasur.audit.CanalSolicitud.esApp(), "también cuando el filtro corta la petición");
+    }
+
+    @Test
     void sinTokenOConTokenInvalidoResponde401ConDesafioBearer() throws Exception {
         for (String cabecera : new String[] { null, "Bearer " + TOKEN }) {
             Respuesta r = filtrar("/api/v1/tribunal/proceso/resumen", cabecera, true, null);
@@ -89,6 +99,9 @@ class FiltroApiMovilTest {
         final Map<String, String> cabeceras = new HashMap<>();
         final StringWriter cuerpo = new StringWriter();
         boolean continuo;
+        /** Canal e IP que veía la auditoría mientras el recurso atendía la petición. */
+        boolean canalApp;
+        String ipApp;
     }
 
     private Respuesta filtrar(String ruta, String autorizacion, boolean segura, SesionValida sesion) throws Exception {
@@ -111,7 +124,11 @@ class FiltroApiMovilTest {
                     case "setContentType", "setCharacterEncoding" -> null;
                     default -> throw new UnsupportedOperationException(m.getName());
                 });
-        FilterChain cadena = (req, res) -> r.continuo = true;
+        FilterChain cadena = (req, res) -> {
+            r.continuo = true;
+            r.canalApp = ec.com.antenasur.audit.CanalSolicitud.esApp();
+            r.ipApp = ec.com.antenasur.audit.CanalSolicitud.ipApp();
+        };
         filtro.doFilter(peticion(ruta, autorizacion, segura), respuesta, cadena);
         escritor.flush();
         return r;
@@ -123,6 +140,7 @@ class FiltroApiMovilTest {
                     case "isSecure" -> segura;
                     case "getRequestURI" -> ruta;
                     case "getContextPath" -> "";
+                    case "getRemoteAddr" -> "10.0.0.5";
                     case "getHeader" -> "Authorization".equals(a[0]) ? autorizacion : null;
                     default -> throw new UnsupportedOperationException(m.getName());
                 });

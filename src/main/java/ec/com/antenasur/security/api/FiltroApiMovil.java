@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 
+import ec.com.antenasur.audit.CanalSolicitud;
 import ec.com.antenasur.service.tec.SesionMovilService;
 import ec.com.antenasur.service.tec.SesionMovilService.SesionValida;
 
@@ -47,8 +48,22 @@ public class FiltroApiMovil implements Filter {
     @Inject
     private SesionMovilService sesiones;
 
+    /**
+     * Marca la petición como de la App para la bitácora ({@link CanalSolicitud}) mientras dura
+     * y la desmarca siempre al terminar, aunque falle.
+     */
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
+        CanalSolicitud.marcarApp(req.getRemoteAddr());
+        try {
+            filtrar(req, res, chain);
+        } finally {
+            CanalSolicitud.limpiar();
+        }
+    }
+
+    private void filtrar(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
         HttpServletRequest peticion = (HttpServletRequest) req;
         HttpServletResponse respuesta = (HttpServletResponse) res;

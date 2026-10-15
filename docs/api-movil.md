@@ -183,6 +183,17 @@ comprueba en el servidor.
 Envers registra `Persona` e `IglesiaPersona` con el usuario autenticado y la bitácora `tec.procesos`
 anota `CREA` / `DESACTIVA`.
 
+**Canal App en la auditoría.** `FiltroApiMovil` marca cada petición `/api/*` (`CanalSolicitud`) y la
+desmarca al terminar. Con esa marca:
+
+- Las entradas automáticas de `AbstractFacade` (`CREA` / `ACTUALIZA` / `DESACTIVA`) terminan en
+  `; CANAL: App móvil` y guardan la IP del cliente. En Actividades se ven como
+  «Miembro de iglesia: Persona … · Iglesia … · CANAL: App móvil». La web no se marca.
+- `TribunalRecurso` agrega una entrada funcional por acción, catalogada en Actividades:
+  «Agregó miembro de iglesia», «Actualizó datos de persona», «Habilitó / Deshabilitó para el padrón»
+  y «Dio de baja miembro de iglesia», todas «(App móvil)», con `MIEMBRO=id;PERSONA=…`. Editar solo
+  registra lo que cambió (sin cambios, nada).
+
 | Estado | Código | Caso |
 |---|---|---|
 | 400 | `DATOS_INVALIDOS` | Nombres vacíos o de más de 100 caracteres, cédula inválida o sexo distinto de M/F |

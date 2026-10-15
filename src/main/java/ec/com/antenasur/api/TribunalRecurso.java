@@ -100,7 +100,9 @@ public class TribunalRecurso {
                     "Indique si el miembro queda habilitado.");
         }
         try {
-            return Response.ok(gestion.cambiarHabilitacionMiembro(id, solicitud.getHabilitado())).build();
+            var miembro = gestion.cambiarHabilitacionMiembro(id, solicitud.getHabilitado());
+            registrarMiembro(habilitacion(solicitud.getHabilitado()), id, miembro.getNombre());
+            return Response.ok(miembro).build();
         } catch (IglesiaPersonaException e) {
             return errorMiembro(e);
         }
@@ -130,8 +132,19 @@ public class TribunalRecurso {
                     "Envíe los datos de la persona.");
         }
         try {
-            return Response.ok(gestion.actualizarPersonaMiembro(id, solicitud.getNombres(),
-                    solicitud.getDocumento(), solicitud.getSexo(), solicitud.getHabilitado())).build();
+            // Estado previo: la bitácora solo registra lo que realmente cambió (sin cambios no se guarda nada).
+            var antes = consultas.detalleMiembro(id);
+            var despues = gestion.actualizarPersonaMiembro(id, solicitud.getNombres(),
+                    solicitud.getDocumento(), solicitud.getSexo(), solicitud.getHabilitado());
+            if (!java.util.Objects.equals(antes.getNombres(), despues.getNombres())
+                    || !java.util.Objects.equals(antes.getDocumento(), despues.getDocumento())
+                    || !java.util.Objects.equals(antes.getSexo(), despues.getSexo())) {
+                registrarMiembro("ACTUALIZA DATOS PERSONA", id, despues.getNombre());
+            }
+            if (antes.isHabilitado() != despues.isHabilitado()) {
+                registrarMiembro(habilitacion(despues.isHabilitado()), id, despues.getNombre());
+            }
+            return Response.ok(despues).build();
         } catch (IglesiaPersonaException e) {
             return errorMiembro(e);
         }
@@ -151,8 +164,11 @@ public class TribunalRecurso {
                     "Envíe los datos de la persona.");
         }
         try {
-            return Response.status(Response.Status.CREATED).entity(gestion.crearMiembro(solicitud.getNombres(),
-                    solicitud.getDocumento(), solicitud.getSexo(), solicitud.getHabilitado())).build();
+            var creado = gestion.crearMiembro(solicitud.getNombres(), solicitud.getDocumento(), solicitud.getSexo(),
+                    solicitud.getHabilitado());
+            registrarMiembro("AGREGA MIEMBRO IGLESIA", creado.getId(), creado.getNombre()
+                    + ";HABILITADO=" + (creado.isHabilitado() ? "SI" : "NO"));
+            return Response.status(Response.Status.CREATED).entity(creado).build();
         } catch (IglesiaPersonaException e) {
             return errorMiembro(e);
         }
@@ -171,10 +187,26 @@ public class TribunalRecurso {
         }
         try {
             gestion.darDeBajaMiembro(id);
+            // La persona e iglesia quedan en la entrada automática DESACTIVA de la misma operación.
+            registrarMiembro("DA DE BAJA MIEMBRO IGLESIA", id, null);
             return Response.noContent().build();
         } catch (IglesiaPersonaException e) {
             return errorMiembro(e);
         }
+    }
+
+    /**
+     * Entrada funcional de la bitácora para los cambios de miembros desde la App (además de las
+     * automáticas de Envers/AbstractFacade, que ya llevan «CANAL: App móvil»): acción legible en
+     * Actividades, con el miembro y la IP del cliente.
+     */
+    private void registrarMiembro(String accion, Integer miembroId, String persona) {
+        registrar(accion + " (" + ec.com.antenasur.audit.CanalSolicitud.APP_MOVIL + ")", "MIEMBRO=" + miembroId
+                + (persona == null || persona.isBlank() ? "" : ";PERSONA=" + persona));
+    }
+
+    private static String habilitacion(boolean habilitado) {
+        return habilitado ? "HABILITA PARA PADRON" : "DESHABILITA PARA PADRON";
     }
 
     /** Errores de negocio de miembros con los mensajes de la web (messages_es.properties). */

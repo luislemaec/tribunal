@@ -325,6 +325,17 @@ public final class CatalogoActividades {
 		r.add(regla("Intentó eliminar usuario", SEGURIDAD, FALLIDO, ORIGINAL,
 				firma("error al eliminar usuario"), firma("error  al eliminar usuario")));
 		r.add(regla("Registró persona", PERSONAS, SIN_DATO, DESPUES_DE_DOS_PUNTOS, firma("crea persona:")));
+		// Miembros de iglesia desde la App móvil (TribunalRecurso): «ACCIÓN (App móvil) | MIEMBRO=…;PERSONA=…».
+		r.add(regla("Agregó miembro de iglesia (App móvil)", PERSONAS, EXITOSO,
+				resto("agrega miembro iglesia (app móvil)", null, "Detalle"), firma("agrega miembro iglesia ")));
+		r.add(regla("Actualizó datos de persona (App móvil)", PERSONAS, EXITOSO,
+				resto("actualiza datos persona (app móvil)", null, "Detalle"), firma("actualiza datos persona ")));
+		r.add(regla("Habilitó para el padrón (App móvil)", PERSONAS, EXITOSO,
+				resto("habilita para padron (app móvil)", null, "Detalle"), firma("habilita para padron ")));
+		r.add(regla("Deshabilitó para el padrón (App móvil)", PERSONAS, EXITOSO,
+				resto("deshabilita para padron (app móvil)", null, "Detalle"), firma("deshabilita para padron ")));
+		r.add(regla("Dio de baja miembro de iglesia (App móvil)", PERSONAS, EXITOSO,
+				resto("da de baja miembro iglesia (app móvil)", null, "Detalle"), firma("da de baja miembro iglesia ")));
 
 		// Documentos y reportes (okActivityRegister se invoca tras completar la operación).
 		r.add(regla("Descargó documento", DOCUMENTOS, EXITOSO,

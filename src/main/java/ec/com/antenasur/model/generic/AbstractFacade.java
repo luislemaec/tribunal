@@ -22,6 +22,7 @@ import org.hibernate.Filter;
 import org.hibernate.Session;
 import org.hibernate.envers.Audited;
 
+import ec.com.antenasur.audit.CanalSolicitud;
 import ec.com.antenasur.model.tec.Proceso;
 import ec.com.antenasur.model.IglesiaPersona;
 
@@ -144,11 +145,16 @@ public abstract class AbstractFacade<T, E> {
             return;
         }
 
-        Proceso actividad = new Proceso();
+        // Cambios hechos desde la App: canal al final del detalle (se ve en Actividades como
+        // «… · CANAL: App móvil») e IP del cliente. La web y los procesos internos no se marcan.
+        boolean app = CanalSolicitud.esApp();
+        Proceso actividad = new Proceso(app ? CanalSolicitud.ipApp() : null);
         String entidad = entity.getClass().getSimpleName();
         String descripcion = accion + " | MÓDULO: " + resolverModulo(entidad)
                 + "; ENTIDAD: " + entidad + "; REGISTRO: " + identificarRegistro(entity);
-        actividad.setActividad(descripcion.substring(0, Math.min(descripcion.length(), 255)));
+        String canal = app ? "; CANAL: " + CanalSolicitud.APP_MOVIL : "";
+        // El canal nunca se recorta: si hace falta, se acorta el registro.
+        actividad.setActividad(descripcion.substring(0, Math.min(descripcion.length(), 255 - canal.length())) + canal);
         getEntityManager().persist(actividad);
     }
 

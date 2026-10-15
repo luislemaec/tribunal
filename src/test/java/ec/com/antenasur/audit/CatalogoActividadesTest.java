@@ -41,6 +41,13 @@ class CatalogoActividadesTest {
             new Caso("ACTUALIZA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: Iglesia; REGISTRO: Iglesia Central (ID 3)", "Actualizó iglesia", PERSONAS, EXITOSO),
             new Caso("CREA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central", "Asignó persona a iglesia", PERSONAS, EXITOSO),
             new Caso("DESACTIVA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: IglesiaPersona; REGISTRO: ID 9", "Desactivó miembro de iglesia", PERSONAS, EXITOSO),
+            // Cambios desde la App: la entrada automática lleva el canal; la funcional, la acción legible.
+            new Caso("DESACTIVA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central; CANAL: App móvil", "Desactivó miembro de iglesia", PERSONAS, EXITOSO),
+            new Caso("AGREGA MIEMBRO IGLESIA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA;HABILITADO=SI", "Agregó miembro de iglesia (App móvil)", PERSONAS, EXITOSO),
+            new Caso("ACTUALIZA DATOS PERSONA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Actualizó datos de persona (App móvil)", PERSONAS, EXITOSO),
+            new Caso("HABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Habilitó para el padrón (App móvil)", PERSONAS, EXITOSO),
+            new Caso("DESHABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Deshabilitó para el padrón (App móvil)", PERSONAS, EXITOSO),
+            new Caso("DA DE BAJA MIEMBRO IGLESIA (App móvil) | MIEMBRO=12", "Dio de baja miembro de iglesia (App móvil)", PERSONAS, EXITOSO),
             new Caso("CREA | MÓDULO: SEGURIDAD; ENTIDAD: Usuario; REGISTRO: jperez (ID 9)", "Registró usuario", SEGURIDAD, EXITOSO),
             new Caso("ACTUALIZA | MÓDULO: SEGURIDAD; ENTIDAD: Usuario; REGISTRO: jperez (ID 9)", "Actualizó usuario", SEGURIDAD, EXITOSO),
             new Caso("DESACTIVA | MÓDULO: SEGURIDAD; ENTIDAD: Usuario; REGISTRO: jperez (ID 9)", "Desactivó usuario", SEGURIDAD, EXITOSO),
@@ -196,6 +203,10 @@ class CatalogoActividadesTest {
                 normalizar("CREA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: Persona; REGISTRO: ID 55").detalle());
         assertEquals("Miembro de iglesia: Persona 0102030405 · Iglesia Central",
                 normalizar("CREA | MÓDULO: X; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central").detalle());
+        assertEquals("Miembro de iglesia: Persona 0102030405 · Iglesia Central · CANAL: App móvil",
+                normalizar("DESACTIVA | MÓDULO: X; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central; CANAL: App móvil").detalle());
+        assertEquals("Detalle: MIEMBRO=12;PERSONA=PEREZ ANA",
+                normalizar("HABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA").detalle());
         assertEquals("EntidadFutura: ID 1",
                 normalizar("CREA | MÓDULO: X; ENTIDAD: EntidadFutura; REGISTRO: ID 1").detalle());
         assertEquals("Iglesia: Iglesia Central · Administrador: 0102030405 (anterior: 0999999999)",
