@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ReporteActividadService {
 
     /** Una sesión de la App cuenta como en línea si se usó en este plazo (igual que el timeout web). */
-    private static final long MINUTOS_APP_EN_LINEA = 15;
+    public static final long MINUTOS_APP_EN_LINEA = 15;
 
     private static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
 

@@ -20,6 +20,8 @@ public final class LoginFilterExcluder {
                 || ruta.startsWith("/api/")
                 // Ping de sesión (PingSesionServlet): ruta exacta; el servlet exige sesión iniciada.
                 || "/sesion/ping".equals(ruta)
+                // Monitoreo de usuarios en línea (MonitoreoEnLineaServlet): ruta exacta; exige su clave.
+                || "/monitoreo/en-linea".equals(ruta)
                 || "/index.html".equals(ruta) || PAGINAS.contains(paginaFaces(ruta));
     }
 

@@ -137,6 +137,10 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 .personas-estados { display:flex; flex-direction:column; align-items:flex-start; gap:.1875rem; }
 
 .personas-dialog-miembro .tec-form .field { margin-bottom:.5625rem; }
+.personas-estado-reserva { min-height:1.25rem; margin-bottom:.5rem; }
+.personas-estado-ajax { display:flex; align-items:center; gap:.5rem; color:var(--text-color-secondary); font-size:var(--tec-fs-xs); }
+.personas-estado-ajax[hidden] { display:none; }
+.personas-estado-ajax--error { color:var(--red-700, var(--text-color)); }
 
 .personas-dialog-miembro .tec-form .personas-aviso { flex-wrap:nowrap; align-items:flex-start; padding:.375rem .5625rem; font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
 

@@ -527,6 +527,7 @@ public class PersonaController implements Serializable {
 
     public void nuevaPersona() {
         inicializaPersonaSeleccionado();
+        PrimeFaces.current().ajax().addCallbackParam("dialogReady", true);
     }
 
     /**
@@ -643,6 +644,12 @@ public class PersonaController implements Serializable {
         if (encontrada != null) {
             iglesiaPersonaSeleccionado.setPersona(encontrada);
             cargarEstadoRegularizacion();
+            // La consulta sustituye Persona: refrescar solo sus controles y las guardas
+            // de la edición, sin reconstruir el panel ni perder un clic del pie.
+            PrimeFaces.current().resetInputs("frmPersonas:nombres", "frmPersonas:sexo");
+            PrimeFaces.current().ajax().update(
+                    "frmPersonas:nombres", "frmPersonas:sexo", "frmPersonas:msgNombres",
+                    "frmPersonas:avisoRegularizacionPersona", "frmPersonas:btnGuardarPersona");
             if (requiereRegularizacion) {
                 JsfUtil.addWarningMessage(mensaje("form.personas.error.varias.iglesias"));
             } else if (!iglesiasActivasPersona.isEmpty()) {
@@ -712,6 +719,7 @@ public class PersonaController implements Serializable {
                 refrescarListadoMiembrosActual();
                 PrimeFaces.current().ajax().update(
                         "frmPersonas:tblPersonas", "frmPersonas:panelResumenMiembros");
+                PrimeFaces.current().ajax().addCallbackParam("personaGuardada", true);
             } else {
                 rechazarGuardado("form.personas.error.guardar");
             }
