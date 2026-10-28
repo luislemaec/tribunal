@@ -325,6 +325,9 @@ public final class CatalogoActividades {
 		r.add(regla("Intentó eliminar usuario", SEGURIDAD, FALLIDO, ORIGINAL,
 				firma("error al eliminar usuario"), firma("error  al eliminar usuario")));
 		r.add(regla("Registró persona", PERSONAS, SIN_DATO, DESPUES_DE_DOS_PUNTOS, firma("crea persona:")));
+		// Resumen de HabilitacionMasivaService; cada miembro habilitado deja además su ACTUALIZA.
+		r.add(regla("Habilitación masiva de miembros", PERSONAS, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("habilitacion_masiva |", "resultado: exitoso")));
 		// Miembros de iglesia desde la App móvil (TribunalRecurso): «ACCIÓN (App móvil) | MIEMBRO=…;PERSONA=…».
 		r.add(regla("Agregó miembro de iglesia (App móvil)", PERSONAS, EXITOSO,
 				resto("agrega miembro iglesia (app móvil)", null, "Detalle"), firma("agrega miembro iglesia ")));

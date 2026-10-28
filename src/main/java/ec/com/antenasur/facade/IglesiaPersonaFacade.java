@@ -660,6 +660,34 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 	}
 
 	/**
+	 * Vínculos activos de la iglesia con revisión pendiente (el complemento exacto de
+	 * {@link #revisada}): [id del vínculo, nombres, documento], para la habilitación
+	 * masiva y su resumen de rechazos.
+	 */
+	public List<Object[]> listarPendientesRevisionPorIglesia(Integer iglesiaId) {
+		return getEntityManager().createQuery("SELECT ip.id, p.nombres, p.documento FROM IglesiaPersona ip"
+				+ " LEFT JOIN ip.persona p WHERE ip.iglesia.id = :iglesia AND ip.estado = TRUE AND NOT "
+				+ revisada("ip") + " ORDER BY p.nombres, ip.id", Object[].class)
+				.setParameter("iglesia", iglesiaId).getResultList();
+	}
+
+	/**
+	 * Bloqueo de aplicación por iglesia hasta el fin de la transacción (advisory lock de
+	 * PostgreSQL): no toca filas, así que no interfiere con las transacciones propias de
+	 * cada miembro. {@code false} si otra habilitación masiva de la iglesia está en curso.
+	 */
+	public boolean bloquearHabilitacionMasiva(Integer iglesiaId) {
+		Object bloqueado = getEntityManager()
+				.createNativeQuery("SELECT pg_try_advisory_xact_lock(:clase, :iglesia)")
+				.setParameter("clase", CLASE_BLOQUEO_HABILITACION_MASIVA).setParameter("iglesia", iglesiaId)
+				.getSingleResult();
+		return Boolean.TRUE.equals(bloqueado);
+	}
+
+	/** Primer argumento del advisory lock: separa estos bloqueos de cualquier otro uso. */
+	private static final int CLASE_BLOQUEO_HABILITACION_MASIVA = 7301;
+
+	/**
 	 * Devuelve el vínculo activo entre la iglesia y la persona indicadas, o
 	 * {@code null} si no existe ninguno. Útil para garantizar idempotencia al
 	 * crear el vínculo desde el flujo de asignación de admins.

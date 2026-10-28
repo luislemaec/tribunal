@@ -159,6 +159,57 @@
     }
 
     // ------------------------------------------------------------------
+    // Tooltips que quedan pegados.
+    // Los p:tooltip (el global de globals.xhtml y los de cada página) solo se ocultan con
+    // el mouseleave del elemento que los mostró. Si ese elemento se reemplaza por un update
+    // ajax, se hace clic sin mover el mouse o se toca la pantalla, el evento no llega y el
+    // tooltip queda visible. Se ocultan también en esas situaciones; al pasar el mouse
+    // siguen apareciendo igual. hide() de PrimeFaces cancela además el show pendiente.
+    // ------------------------------------------------------------------
+    function tooltips() {
+        if (!global.PrimeFaces || !PrimeFaces.widget || !PrimeFaces.widget.Tooltip) { return []; }
+        var lista = [];
+        for (var clave in PrimeFaces.widgets) {
+            if (PrimeFaces.widgets[clave] instanceof PrimeFaces.widget.Tooltip) {
+                lista.push(PrimeFaces.widgets[clave]);
+            }
+        }
+        return lista;
+    }
+
+    function ocultarTooltip(widget) {
+        try { widget.hide(); } catch (e) { /* widget destruido por un update */ }
+    }
+
+    Tribunal.ocultarTooltips = function () {
+        tooltips().forEach(ocultarTooltip);
+    };
+
+    /** Solo los que apuntan a un elemento que ya no está en la página. */
+    function ocultarTooltipsHuerfanos() {
+        tooltips().forEach(function (widget) {
+            var objetivo = widget.target && widget.target[0];
+            if (objetivo && !document.documentElement.contains(objetivo)) {
+                ocultarTooltip(widget);
+            }
+        });
+    }
+
+    ['mousedown', 'touchstart', 'keydown'].forEach(function (evento) {
+        document.addEventListener(evento, Tribunal.ocultarTooltips, { capture: true, passive: true });
+    });
+    // scroll no burbujea: en captura se detecta también el de tablas y paneles.
+    document.addEventListener('scroll', Tribunal.ocultarTooltips, { capture: true, passive: true });
+    global.addEventListener('blur', Tribunal.ocultarTooltips);
+    document.addEventListener('visibilitychange', Tribunal.ocultarTooltips);
+    if (global.jQuery) {
+        // Antes de que el update reemplace el elemento, y al terminar por si se mostró
+        // uno durante la petición sobre un elemento que el update quitó.
+        jQuery(document).on('pfAjaxSend', Tribunal.ocultarTooltips)
+                .on('pfAjaxComplete', ocultarTooltipsHuerfanos);
+    }
+
+    // ------------------------------------------------------------------
     // Acceso a la App CONPOCIIECH en el topbar: en pantallas angostas el perfil va con
     // posición absoluta y ancho variable (nombre del usuario); el ícono Android se coloca a
     // su izquierda publicando ese ancho en --tec-ancho-perfil (CSS en tribunal-globals.css).

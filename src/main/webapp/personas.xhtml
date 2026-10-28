@@ -259,6 +259,23 @@
                                                      actionListener="#{personaController.generarActaActualizacion}"
                                                      styleClass="tec-btn ui-button-outlined"
                                                      disabled="#{personaController.totalMiembros eq 0}"/>
+                                    <!-- Habilitación masiva: Administrador y Tribunal, iglesia sin miembros
+                                         actualizados. El servicio valida a cada miembro con las reglas de
+                                         la edición individual; los inválidos quedan pendientes. -->
+                                    <p:commandButton id="btnHabilitacionMasiva"
+                                                     rendered="#{personaController.habilitacionMasivaVisible}"
+                                                     value="#{msg['form.personas.masiva.boton']}" icon="pi pi-users"
+                                                     title="#{personaController.ayudaHabilitacionMasiva}"
+                                                     disabled="#{not personaController.habilitacionMasivaDisponible}"
+                                                     actionListener="#{personaController.ejecutarHabilitacionMasiva}"
+                                                     process="@this"
+                                                     update="panelResumenMiembros tblPersonas panelHabilitacionMasiva"
+                                                     oncomplete="if (args &amp;&amp; args.habilitacionMasivaLista) PF('dlgHabilitacionMasiva').show()"
+                                                     styleClass="tec-btn ui-button-outlined ui-button-success">
+                                        <p:confirm header="#{msg['form.personas.masiva.confirm.header']}"
+                                                   message="#{msg['form.personas.masiva.confirm.mensaje']}"
+                                                   icon="pi pi-exclamation-triangle"/>
+                                    </p:commandButton>
                                 </span>
                             </div>
                             <p:progressBar value="#{personaController.porcentajeActualizacion}"
@@ -1011,6 +1028,67 @@
                                          process=":frmPersonas:outPnlRegularizacion @this"
                                          update=":frmPersonas:panelDialogRegularizacion"
                                          oncomplete="if (!args.validationFailed) PF('dlgRegularizarIglesias').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+
+            <!-- Resultado de la habilitación masiva. Los rechazados no se modificaron: siguen
+                 «Pendiente» en la tabla y se corrigen con la edición individual. -->
+            <p:dialog header="#{msg['form.personas.masiva.titulo']}" widgetVar="dlgHabilitacionMasiva"
+                      modal="true" responsive="true" fitViewport="true" appendTo="@(body)"
+                      styleClass="tec-dialog tec-dialog--lg">
+                <p:outputPanel id="panelHabilitacionMasiva" layout="block">
+                    <ui:fragment rendered="#{personaController.resultadoHabilitacionMasiva ne null}">
+                        <p class="mt-0 mb-3">
+                            <span class="tec-field-label">#{msg['form.personas.masiva.iglesia']}</span>
+                            <b><h:outputText value="#{personaController.resultadoHabilitacionMasiva.iglesia}"/></b>
+                        </p>
+                        <div class="grid">
+                            <div class="col-4">
+                                <div class="kpi-card personas-kpi">
+                                    <span class="label">#{msg['form.personas.masiva.total']}</span>
+                                    <h:outputText value="#{personaController.resultadoHabilitacionMasiva.totalPendientes}" styleClass="value"/>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="kpi-card personas-kpi">
+                                    <span class="label">#{msg['form.personas.masiva.habilitados']}</span>
+                                    <h:outputText value="#{personaController.resultadoHabilitacionMasiva.habilitados}" styleClass="value tec-text-success"/>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="kpi-card personas-kpi">
+                                    <span class="label">#{msg['form.personas.masiva.inconsistencias']}</span>
+                                    <h:outputText value="#{personaController.resultadoHabilitacionMasiva.conInconsistencias}" styleClass="value tec-text-warn"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ui:fragment rendered="#{personaController.resultadoHabilitacionMasiva.conInconsistencias gt 0}">
+                            <p class="tec-muted mt-3 mb-2">#{msg['form.personas.masiva.rechazados.ayuda']}</p>
+                            <p:dataTable var="rechazo" value="#{personaController.resultadoHabilitacionMasiva.rechazados}"
+                                         reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                                         paginatorAlwaysVisible="false" pageLinks="5"
+                                         styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
+                                <p:column headerText="#{msg['form.personas.masiva.col.persona']}" styleClass="tec-col-primary">
+                                    <h:outputText value="#{empty rechazo.nombres ? '—' : rechazo.nombres}"/>
+                                </p:column>
+                                <p:column headerText="#{msg['form.personas.masiva.col.cedula']}" styleClass="tec-col-fit">
+                                    <h:outputText value="#{empty rechazo.cedula ? '—' : rechazo.cedula}" styleClass="tec-mono"/>
+                                </p:column>
+                                <p:column headerText="#{msg['form.personas.masiva.col.motivo']}">
+                                    <h:outputText value="#{rechazo.motivo}"/>
+                                </p:column>
+                            </p:dataTable>
+                        </ui:fragment>
+                    </ui:fragment>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgHabilitacionMasiva').hide()"/>
                     </div>
                 </f:facet>
             </p:dialog>

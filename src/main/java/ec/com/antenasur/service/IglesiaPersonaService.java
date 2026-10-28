@@ -15,6 +15,8 @@ import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.FiltroMiembrosDTO;
@@ -326,11 +328,8 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (persona == null) {
 			return null;
 		}
-		validarDocumentoDisponibleParaPersona(documento, persona.getId());
-		// Mismo criterio que el trigger fn_validar_iglesia_activa_persona: se valida
-		// aquí para no depender de la violación 23505 como control del flujo.
-		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarRelacionesActivasPorDocumento(documento, true);
-		validarAsignacionNormal(activas, dto.getId(), iglesia.getId());
+		validarMiembro(iglesia, dto.getId(), persona.getId(), documento,
+				dto.getPersona().getNombres(), dto.getPersona().getSexo());
 		actualizarPersona(persona, dto, documento);
 		persona = persona.getId() != null ? personaFacade.edit(persona) : personaFacade.create(persona);
 
@@ -491,6 +490,65 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		nuevo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
 		IglesiaPersona creado = iglesiaPersonaFacade.create(nuevo);
 		return new ResultadoVinculo(creado, true);
+	}
+
+	/**
+	 * Habilitación masiva, una persona por transacción (la invoca
+	 * {@link HabilitacionMasivaService} a través del proxy del EJB). Equivale a
+	 * abrir el miembro y pulsar Guardar con el switch en Habilitado: aplica
+	 * {@link #validarMiembro} con los datos guardados y, si son válidos, deja el
+	 * vínculo revisado y habilitado para el padrón. Si una regla falla, la
+	 * excepción revierte solo esta transacción y el miembro queda pendiente.
+	 */
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void habilitarPendiente(Integer iglesiaPersonaId, Integer iglesiaId) {
+		if (!esCallerAdministradorOTribunal()) {
+			throw new IglesiaPersonaException("form.personas.masiva.error.permiso");
+		}
+		if (!cronogramaService.permiteEdicionPadron()) {
+			throw new IglesiaPersonaException("form.personas.error.cronograma");
+		}
+		IglesiaPersona ip = iglesiaPersonaId != null ? iglesiaPersonaFacade.find(iglesiaPersonaId) : null;
+		if (ip == null || !Boolean.TRUE.equals(ip.getEstado()) || ip.getPersona() == null
+				|| ip.getIglesia() == null || !ip.getIglesia().getId().equals(iglesiaId)) {
+			throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
+		}
+		// Otro usuario pudo revisarlo mientras corría la operación: no se toca.
+		if (esRevisionCompleta(ip)) {
+			throw new IglesiaPersonaException("form.personas.masiva.error.ya.revisado");
+		}
+		Persona persona = ip.getPersona();
+		String documento = normalizarDocumento(persona.getDocumento());
+		validarMiembro(ip.getIglesia(), ip.getId(), persona.getId(), documento, persona.getNombres(),
+				persona.getSexo());
+		ip.setHabilitadoPadron(Boolean.TRUE);
+		ip.setFechaActualiza(new Date());
+		iglesiaPersonaFacade.edit(ip);
+	}
+
+	/**
+	 * Reglas de negocio de un miembro, comunes a la habilitación individual (web y
+	 * App, vía {@link #guardarDesdeDTO}) y a la masiva ({@link #habilitarPendiente}):
+	 * cronograma, iglesia activa, datos de la persona ({@link ValidadorPersona}),
+	 * cédula no usada por otra persona y pertenencia a una sola iglesia.
+	 */
+	private void validarMiembro(Iglesia iglesia, Integer vinculoActualId, Integer personaId, String documento,
+			String nombres, String sexo) {
+		if (!cronogramaService.permiteEdicionPadron()) {
+			throw new IglesiaPersonaException("form.personas.error.cronograma");
+		}
+		if (iglesia == null || !Boolean.TRUE.equals(iglesia.getEstado())) {
+			throw new IglesiaPersonaException("form.personas.error.iglesia.inactiva");
+		}
+		ValidadorPersona.validarCedula(documento);
+		ValidadorPersona.validarNombres(nombres);
+		ValidadorPersona.validarSexo(sexo);
+		validarDocumentoDisponibleParaPersona(documento, personaId);
+		// Mismo criterio que el trigger fn_validar_iglesia_activa_persona: se valida
+		// aquí para no depender de la violación 23505 como control del flujo.
+		List<IglesiaPersona> activas = iglesiaPersonaFacade.listarRelacionesActivasPorDocumento(documento, true);
+		validarAsignacionNormal(activas, vinculoActualId, iglesia.getId());
 	}
 
 	/**

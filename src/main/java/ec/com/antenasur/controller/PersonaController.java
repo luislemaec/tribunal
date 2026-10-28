@@ -55,7 +55,9 @@ import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.TipoDocumento;
+import ec.com.antenasur.dto.ResultadoHabilitacionMasivaDTO;
 import ec.com.antenasur.service.GeograpService;
+import ec.com.antenasur.service.HabilitacionMasivaService;
 import ec.com.antenasur.service.IglesiaPersonaService;
 import ec.com.antenasur.service.IglesiaService;
 import ec.com.antenasur.service.PersonaBajaService;
@@ -117,6 +119,13 @@ public class PersonaController implements Serializable {
 
     @Inject
     private ActaActualizacionMiembrosService actaActualizacionMiembrosService;
+
+    @Inject
+    private HabilitacionMasivaService habilitacionMasivaService;
+
+    /** Resumen de la última habilitación masiva, para el diálogo de resultado. */
+    @Getter
+    private ResultadoHabilitacionMasivaDTO resultadoHabilitacionMasiva;
 
     @Setter
     @Getter
@@ -793,6 +802,58 @@ public class PersonaController implements Serializable {
             JsfUtil.addErrorMessage(mensaje("form.personas.error.guardar"));
             PrimeFaces.current().ajax().addCallbackParam("validationFailed", true);
         }
+    }
+
+    /**
+     * Botón de habilitación masiva: Administrador o Tribunal, cronograma abierto y una
+     * iglesia con miembros y ninguno actualizado. Usa el progreso ya calculado de la
+     * iglesia elegida; el servicio vuelve a comprobar todo antes de modificar.
+     */
+    public boolean isHabilitacionMasivaVisible() {
+        return !restringidoAIglesia && (esUsuarioTribunal() || esUsuarioAdministrador())
+                && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null;
+    }
+
+    public boolean isHabilitacionMasivaDisponible() {
+        return isHabilitacionMasivaVisible() && puedeEditarPadron
+                && getTotalMiembros() > 0 && getMiembrosActualizados() == 0;
+    }
+
+    public String getAyudaHabilitacionMasiva() {
+        if (!puedeEditarPadron) {
+            return mensaje("form.personas.error.cronograma");
+        }
+        if (getTotalMiembros() == 0) {
+            return mensaje("form.personas.masiva.ayuda.sin.miembros");
+        }
+        return mensaje(getMiembrosActualizados() > 0
+                ? "form.personas.masiva.ayuda.con.actualizados" : "form.personas.masiva.ayuda");
+    }
+
+    public void ejecutarHabilitacionMasiva() {
+        resultadoHabilitacionMasiva = null;
+        try {
+            if (!isHabilitacionMasivaVisible()) {
+                throw new IglesiaPersonaException("form.personas.masiva.error.permiso");
+            }
+            resultadoHabilitacionMasiva = habilitacionMasivaService.habilitar(
+                    iglesiaSeleccionado.getId(), JsfUtil.getIPAddress());
+            if (resultadoHabilitacionMasiva.getConInconsistencias() == 0) {
+                JsfUtil.addSuccessMessage(mensaje("form.personas.masiva.exito",
+                        resultadoHabilitacionMasiva.getHabilitados()));
+            } else {
+                JsfUtil.addWarningMessage(mensaje("form.personas.masiva.parcial",
+                        resultadoHabilitacionMasiva.getHabilitados(),
+                        resultadoHabilitacionMasiva.getConInconsistencias()));
+            }
+            PrimeFaces.current().ajax().addCallbackParam("habilitacionMasivaLista", true);
+        } catch (IglesiaPersonaException e) {
+            JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));
+        } catch (Exception e) {
+            log.error("Error en la habilitación masiva de la iglesia", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.masiva.error.general"));
+        }
+        refrescarListadoMiembrosActual();
     }
 
     private void cargarEstadoRegularizacion() {
