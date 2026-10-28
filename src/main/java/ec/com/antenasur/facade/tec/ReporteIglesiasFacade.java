@@ -81,7 +81,7 @@ public class ReporteIglesiasFacade extends AbstractFacade<Iglesia, Integer> {
      * conteos de personas distintas. Filas agregadas: tantas como iglesias.
      */
     public List<IglesiaAtencionDTO> listarIglesias(Integer tipoLista, Integer cantonId) {
-        String jpql = "SELECT new ec.com.antenasur.dto.IglesiaAtencionDTO(i.id, i.nombre, pa.name, ca.name,"
+        String jpql = "SELECT new ec.com.antenasur.dto.IglesiaAtencionDTO(i.id, i.nombre, i.comunidad, pa.name, ca.name,"
                 + " COUNT(DISTINCT pr.id),"
                 + " COUNT(DISTINCT CASE WHEN ip.habilitadoPadron = TRUE THEN pr.id ELSE NULL END),"
                 + " COUNT(DISTINCT CASE WHEN ip.fechaActualiza IS NULL"
@@ -92,7 +92,7 @@ public class ReporteIglesiasFacade extends AbstractFacade<Iglesia, Integer> {
                 + " LEFT JOIN IglesiaPersona ip ON ip.iglesia = i AND ip.estado = TRUE"
                 + " LEFT JOIN Persona pr ON pr = ip.persona AND pr.estado = TRUE"
                 + " WHERE i.estado = TRUE" + (cantonId == null ? "" : " AND ca.id = :canton")
-                + " GROUP BY i.id, i.nombre, pa.name, ca.name";
+                + " GROUP BY i.id, i.nombre, i.comunidad, pa.name, ca.name";
         TypedQuery<IglesiaAtencionDTO> query = parametros(
                 getEntityManager().createQuery(jpql, IglesiaAtencionDTO.class), tipoLista);
         if (cantonId != null) {

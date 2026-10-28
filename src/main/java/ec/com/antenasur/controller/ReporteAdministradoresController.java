@@ -148,8 +148,9 @@ public class ReporteAdministradoresController implements Serializable {
                 isTodosLosCantones() ? JsfUtil.getMessage("reporteRegistros.canton.todos") : getNombreCantonSeleccionado(),
                 diasInactividad, encabezado.columnaCategoria(), totales, categorias, avance, iglesias,
                 encabezado.generado(), encabezado.responsable());
-        ExportacionExcelRegistros.descargar("reporteAdministradores.excel.archivo",
-                logo -> ReporteAdministradoresXLSX.generar(datos, logo));
+        String filtro = JsfUtil.getMessage("reporteAdministradores.excel.filtros", datos.ambito(), datos.diasInactividad());
+        ExportacionExcelRegistros.descargar("reporteAdministradores.excel.archivo", "reporteRegistros.tab.administradores",
+                filtro, logo -> ReporteAdministradoresXLSX.generar(datos, logo));
     }
 
     public List<ConteoAdministradoresDTO> getCategoriasConAdministrador() {

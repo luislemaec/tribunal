@@ -109,10 +109,10 @@ public class ReporteRegistrosController implements Serializable {
 
     /** Excel con los datos de la pestaña (sin gráficos), con el cantón elegido. */
     public void exportarExcel() {
-        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.registros",
-                logo -> ReporteRegistrosXLSX.registros(ExportacionExcelRegistros.encabezado(
-                        ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado()),
-                        isTodosLosCantones()), totales, categorias, logo));
+        String filtro = ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado());
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.registros", "reporteRegistros.tab.registros",
+                filtro, logo -> ReporteRegistrosXLSX.registros(
+                        ExportacionExcelRegistros.encabezado(filtro, isTodosLosCantones()), totales, categorias, logo));
     }
 
     public List<ConteoRegistrosDTO> getCategoriasConHabilitados() {

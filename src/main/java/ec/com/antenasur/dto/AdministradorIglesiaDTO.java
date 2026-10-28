@@ -17,6 +17,8 @@ public class AdministradorIglesiaDTO implements Serializable {
 
     private final Integer iglesiaId;
     private final String iglesia;
+    /** Comunidad / barrio de la iglesia (Iglesia.comunidad, igl_comunidad_barrio), como en Iglesias. */
+    private final String comunidad;
     private final Integer parroquiaId;
     private final String parroquia;
     private final Integer cantonId;
@@ -42,11 +44,12 @@ public class AdministradorIglesiaDTO implements Serializable {
     @Setter
     private boolean sinAccesoReciente;
 
-    public AdministradorIglesiaDTO(Integer iglesiaId, String iglesia, Integer parroquiaId, String parroquia,
+    public AdministradorIglesiaDTO(Integer iglesiaId, String iglesia, String comunidad, Integer parroquiaId, String parroquia,
             Integer cantonId, String canton, String provincia, Long registrados, Long habilitados,
             Long pendientesRevision) {
         this.iglesiaId = iglesiaId;
         this.iglesia = iglesia == null ? "" : iglesia;
+        this.comunidad = comunidad;
         this.parroquiaId = parroquiaId;
         this.parroquia = parroquia == null ? "" : parroquia;
         this.cantonId = cantonId;

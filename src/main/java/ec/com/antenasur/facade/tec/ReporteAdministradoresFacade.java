@@ -29,7 +29,7 @@ public class ReporteAdministradoresFacade extends AbstractFacade<Iglesia, Intege
      */
     public List<AdministradorIglesiaDTO> listarIglesias() {
         return getEntityManager().createQuery("SELECT new ec.com.antenasur.dto.AdministradorIglesiaDTO("
-                + "i.id, i.nombre, pa.id, pa.name, ca.id, ca.name, pv.name,"
+                + "i.id, i.nombre, i.comunidad, pa.id, pa.name, ca.id, ca.name, pv.name,"
                 + " COUNT(DISTINCT pr.id),"
                 + " COUNT(DISTINCT CASE WHEN ip.habilitadoPadron = TRUE THEN pr.id ELSE NULL END),"
                 + " COUNT(DISTINCT CASE WHEN ip.fechaActualiza IS NULL"
@@ -38,7 +38,7 @@ public class ReporteAdministradoresFacade extends AbstractFacade<Iglesia, Intege
                 + " LEFT JOIN IglesiaPersona ip ON ip.iglesia = i AND ip.estado = TRUE"
                 + " LEFT JOIN Persona pr ON pr = ip.persona AND pr.estado = TRUE"
                 + " WHERE i.estado = TRUE"
-                + " GROUP BY i.id, i.nombre, pa.id, pa.name, ca.id, ca.name, pv.name", AdministradorIglesiaDTO.class)
+                + " GROUP BY i.id, i.nombre, i.comunidad, pa.id, pa.name, ca.id, ca.name, pv.name", AdministradorIglesiaDTO.class)
                 .getResultList();
     }
 

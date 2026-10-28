@@ -101,8 +101,8 @@ public class ReporteCoberturaPadronController implements Serializable {
         }
         String filtro = JsfUtil.getMessage("reporteRegistros.excel.filtroProceso", proceso.getNombre(),
                 isTodosLosCantones() ? JsfUtil.getMessage("reporteRegistros.canton.todos") : getNombreCantonSeleccionado());
-        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.cobertura",
-                logo -> ReporteRegistrosXLSX.cobertura(ExportacionExcelRegistros.encabezado(filtro, isTodosLosCantones()),
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.cobertura", "reporteRegistros.tab.cobertura",
+                filtro, logo -> ReporteRegistrosXLSX.cobertura(ExportacionExcelRegistros.encabezado(filtro, isTodosLosCantones()),
                         totales, categorias, logo));
     }
 

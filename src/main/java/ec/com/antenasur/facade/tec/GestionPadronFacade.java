@@ -151,6 +151,22 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
         return q.getResultList();
     }
 
+    /** Cantones de la provincia con al menos un recinto activo (mismo criterio que {@link #recintos}). */
+    public List<OpcionPadronDTO> cantonesConRecintos(Integer provincia) {
+        return getEntityManager().createQuery("SELECT DISTINCT new ec.com.antenasur.dto.OpcionPadronDTO(ca.id,ca.name)"
+                + " FROM Recinto r JOIN r.ubicacion pa JOIN pa.geograp ca"
+                + " WHERE r.estado = TRUE AND ca.status = TRUE AND ca.geograp.id = :provincia ORDER BY ca.name", OpcionPadronDTO.class)
+                .setParameter("provincia", provincia).getResultList();
+    }
+
+    /** Parroquias del cantón con al menos un recinto activo. */
+    public List<OpcionPadronDTO> parroquiasConRecintos(Integer canton) {
+        return getEntityManager().createQuery("SELECT DISTINCT new ec.com.antenasur.dto.OpcionPadronDTO(pa.id,pa.name)"
+                + " FROM Recinto r JOIN r.ubicacion pa"
+                + " WHERE r.estado = TRUE AND pa.status = TRUE AND pa.geograp.id = :canton ORDER BY pa.name", OpcionPadronDTO.class)
+                .setParameter("canton", canton).getResultList();
+    }
+
     public List<OpcionPadronDTO> recintos(FiltroPadronDTO f) {
         Consulta c = geografia(f);
         return c.aplicar(getEntityManager().createQuery("SELECT new ec.com.antenasur.dto.OpcionPadronDTO(r.id,r.nombre)"
@@ -172,7 +188,8 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
     }
 
     public List<ec.com.antenasur.dto.IglesiaPadronDTO> resumenIglesias(Integer mesa, Integer proceso, boolean asignadas) {
-        String campos = "SELECT new ec.com.antenasur.dto.IglesiaPadronDTO(i.id, i.nombre, COUNT(";
+        // Comunidad / barrio en la misma consulta agregada (sin una consulta por iglesia).
+        String campos = "SELECT new ec.com.antenasur.dto.IglesiaPadronDTO(i.id, i.nombre, i.comunidad, COUNT(";
         String jpql = asignadas
                 ? campos + "p.id)) FROM Padron p JOIN p.iglesiaPersona ip JOIN ip.iglesia i"
                     + " WHERE p.estado = TRUE AND p.mesa.id = :mesa AND p.proceso.id = :proceso"
@@ -183,7 +200,7 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
                     + " AND p.iglesiaPersona.iglesia.id = i.id AND p.mesa.id <> :mesa)"
                     + " AND NOT EXISTS (SELECT p.id FROM Padron p WHERE p.estado = TRUE AND p.proceso.id = :proceso"
                     + " AND p.iglesiaPersona.persona.id = ip.persona.id AND p.mesa.id = :mesa)";
-        return getEntityManager().createQuery(jpql + " GROUP BY i.id, i.nombre ORDER BY i.nombre", ec.com.antenasur.dto.IglesiaPadronDTO.class)
+        return getEntityManager().createQuery(jpql + " GROUP BY i.id, i.nombre, i.comunidad ORDER BY i.nombre", ec.com.antenasur.dto.IglesiaPadronDTO.class)
                 .setParameter("mesa", mesa).setParameter("proceso", proceso).getResultList();
     }
 

@@ -158,5 +158,24 @@
         });
     }
 
+    // ------------------------------------------------------------------
+    // Acceso a la App CONPOCIIECH en el topbar: en pantallas angostas el perfil va con
+    // posición absoluta y ancho variable (nombre del usuario); el ícono Android se coloca a
+    // su izquierda publicando ese ancho en --tec-ancho-perfil (CSS en tribunal-globals.css).
+    // ------------------------------------------------------------------
+    function ubicarAccesoApp() {
+        var perfil = document.getElementById('topbar-profile-menu-button');
+        var acceso = document.getElementById('topbar-app-android');
+        if (perfil && acceso) {
+            acceso.style.setProperty('--tec-ancho-perfil', perfil.offsetWidth + 'px');
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ubicarAccesoApp);
+    } else {
+        ubicarAccesoApp();
+    }
+    global.addEventListener('resize', ubicarAccesoApp);
+
     global.Tribunal = Tribunal;
 }(window));

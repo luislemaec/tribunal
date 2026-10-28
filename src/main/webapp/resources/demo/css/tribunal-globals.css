@@ -929,3 +929,114 @@ html body .sun-editor .se-tooltip:hover .se-tooltip-inner, html body .sun-editor
     .tec-footer__legal { justify-content:center; }
     .tec-footer__sep { display:none; }
 }
+
+/* ------------------------------------------------------------------
+   App CONPOCIIECH para Android
+   - Acceso permanente del topbar (toopbar.xhtml): ícono discreto a la izquierda del perfil,
+     mismo alto y color que el resto de la barra. En móvil el perfil va con posición absoluta y
+     ancho variable: tribunal-globals.js publica su ancho en --tec-ancho-perfil.
+   - Aviso tras el ingreso (avisoApp.xhtml): diálogo pequeño y centrado, sin encabezado.
+   ------------------------------------------------------------------ */
+.layout-wrapper .layout-topbar #topbar-app-android {
+    float: right;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 60px;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.layout-wrapper .layout-topbar #topbar-app-android i { font-size: var(--tec-fs-xl); }
+
+.layout-wrapper .layout-topbar #topbar-app-android:hover { background-color: #092556; }
+
+.layout-wrapper .layout-topbar #topbar-app-android:focus-visible { outline: 2px solid #ffffff; outline-offset: -4px; }
+
+@media (max-width: 991.98px) {
+    .layout-wrapper .layout-topbar #topbar-app-android {
+        position: absolute;
+        top: 0;
+        right: var(--tec-ancho-perfil, 4.5rem);
+    }
+}
+
+.tec-aviso-app.ui-dialog { max-width: calc(100vw - 2rem); border-radius: var(--tec-radius); box-shadow: var(--tec-shadow-float); }
+
+.tec-aviso-app .ui-dialog-content { padding: 0 !important; border-radius: var(--tec-radius); }
+
+.tec-aviso-app__cuerpo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    padding: 1.75rem 1.5rem 1.25rem;
+    text-align: center;
+}
+
+.tec-aviso-app__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: .25rem;
+    border-radius: 50%;
+    background: var(--tec-primary-bg);
+    color: var(--primary-color);
+}
+
+.tec-aviso-app__icono i { font-size: 1.75rem; }
+
+.tec-aviso-app__titulo {
+    color: var(--primary-color);
+    font-size: var(--tec-fs-xl);
+    font-weight: var(--tec-fw-bold);
+    letter-spacing: var(--tec-ls-caps);
+}
+
+.tec-aviso-app__lema {
+    margin: 0;
+    color: var(--text-color);
+    font-size: var(--tec-fs-lg);
+    font-weight: var(--tec-fw-medium);
+    line-height: var(--tec-lh-title);
+}
+
+.tec-aviso-app__texto {
+    margin: 0 0 .5rem;
+    color: var(--text-color-secondary);
+    font-size: var(--tec-fs-md);
+    line-height: var(--tec-lh-base);
+}
+
+/* Aviso de acceso exclusivo (prueba cerrada): informativo, sin tono de error. */
+.tec-aviso-app__exclusivo {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    margin: 0 0 .75rem;
+    padding: .625rem .75rem;
+    border-left: 3px solid var(--tec-primary);
+    border-radius: 4px;
+    background: var(--tec-primary-bg);
+    color: var(--text-color);
+    font-size: var(--tec-fs-md);
+    line-height: var(--tec-lh-base);
+    text-align: left;
+}
+
+.tec-aviso-app__exclusivo .pi {
+    margin-top: .2rem;
+    color: var(--tec-primary);
+    font-size: var(--tec-fs-md);
+}
+
+.tec-aviso-app__exclusivo strong {
+    display: block;
+    font-weight: var(--tec-fw-bold);
+}
+
+.tec-aviso-app__descargar,
+.tec-aviso-app__despues { width: 100%; justify-content: center; }

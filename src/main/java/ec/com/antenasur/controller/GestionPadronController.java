@@ -119,7 +119,7 @@ public class GestionPadronController implements Serializable {
                 .findFirst()
                 .ifPresent(provincia -> {
                     filtro.setProvinciaId(provincia.getId());
-                    cantones = service.geografia(provincia.getId());
+                    cantones = service.cantonesConRecintos(provincia.getId());
                 });
     }
 
@@ -127,14 +127,14 @@ public class GestionPadronController implements Serializable {
         filtro.setCantonId(null);
         filtro.setParroquiaId(null);
         parroquias = List.of();
-        cantones = filtro.getProvinciaId() == null ? List.of() : service.geografia(filtro.getProvinciaId());
+        cantones = filtro.getProvinciaId() == null ? List.of() : service.cantonesConRecintos(filtro.getProvinciaId());
         recargarRecintos();
         actualizarConsulta();
     }
 
     public void cambiarCanton() {
         filtro.setParroquiaId(null);
-        parroquias = filtro.getCantonId() == null ? List.of() : service.geografia(filtro.getCantonId());
+        parroquias = filtro.getCantonId() == null ? List.of() : service.parroquiasConRecintos(filtro.getCantonId());
         recargarRecintos();
         actualizarConsulta();
     }
@@ -155,7 +155,7 @@ public class GestionPadronController implements Serializable {
         filtro.setIglesiaNombre(null);
         filtro.setConPadron(null);
         parroquias = List.of();
-        cantones = filtro.getProvinciaId() == null ? List.of() : service.geografia(filtro.getProvinciaId());
+        cantones = filtro.getProvinciaId() == null ? List.of() : service.cantonesConRecintos(filtro.getProvinciaId());
         limpiarMesa();
         recargarRecintos();
         actualizarConsulta();

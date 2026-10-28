@@ -15,6 +15,8 @@ public class IglesiaAtencionDTO implements Serializable {
 
     private final Integer id;
     private final String nombre;
+    /** Comunidad / barrio de la iglesia (Iglesia.comunidad, igl_comunidad_barrio), como en Iglesias. */
+    private final String comunidad;
     private final String parroquia;
     private final String canton;
     private final long registrados;
@@ -23,10 +25,11 @@ public class IglesiaAtencionDTO implements Serializable {
     private final boolean tieneAdministrador;
     private final boolean tieneListaMiembros;
 
-    public IglesiaAtencionDTO(Integer id, String nombre, String parroquia, String canton, Long registrados,
+    public IglesiaAtencionDTO(Integer id, String nombre, String comunidad, String parroquia, String canton, Long registrados,
             Long habilitados, Long pendientesRevision, Integer tieneAdministrador, Integer tieneListaMiembros) {
         this.id = id;
         this.nombre = nombre == null ? "" : nombre;
+        this.comunidad = comunidad;
         this.parroquia = parroquia;
         this.canton = canton;
         this.registrados = registrados == null ? 0L : registrados;

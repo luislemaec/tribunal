@@ -288,6 +288,9 @@ public class LoginController implements Serializable {
                 return;
             }
             String destino = resolverDestinoUsuarioPermanente();
+            // Ingreso completo: la primera página con el layout muestra el aviso de la App.
+            // No aplica al cambio obligatorio de clave (rama de abajo).
+            loginBean.setAvisoAppPendiente(true);
             log.info("Redireccionando a {}", destino);
             JsfUtil.redirect(destino);
             return;

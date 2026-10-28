@@ -60,6 +60,32 @@ public class LoginBean implements Serializable {
     @Getter
     private boolean loggedIn;
 
+    /**
+     * Aviso de la App CONPOCIIECH (/WEB-INF/avisoApp.xhtml): se activa al completar el ingreso
+     * de un usuario con clave definitiva y se apaga apenas el diálogo se muestra, así aparece
+     * una sola vez por sesión. Un nuevo inicio de sesión crea otra sesión y lo vuelve a mostrar.
+     */
+    @Setter
+    @Getter
+    private boolean avisoAppPendiente;
+
+    /** El diálogo de la App ya se mostró en esta sesión (p:remoteCommand al cargar la página). */
+    public void marcarAvisoAppVisto() {
+        avisoAppPendiente = false;
+    }
+
+    /**
+     * La App está en prueba cerrada de Google Play: solo la ven las cuentas Google cargadas como
+     * probadores. La promoción (diálogo y acceso del topbar) se limita a usuarios con correo Gmail.
+     */
+    public boolean isPromocionAppDisponible() {
+        if (!loggedIn || usuario == null || usuario.getCorreo() == null) {
+            return false;
+        }
+        String correo = usuario.getCorreo().trim().toLowerCase(java.util.Locale.ROOT);
+        return correo.endsWith("@gmail.com") || correo.endsWith("@googlemail.com");
+    }
+
     /** Guarda de sesión contra envíos concurrentes del formulario de login. */
     @Setter
     @Getter

@@ -147,25 +147,27 @@ public final class ReporteRegistrosXLSX {
 
             // Lista de acción completa (en la web va paginada).
             ReporteTabularXLSX.Hoja a = libro.hoja(m("hoja.atencion"));
-            a.limites(0, 22, 45).limites(1, 14, 28).limites(2, 12, 24);
-            a.cabecera(FILA, txt("reporteIglesias.col.iglesia"), txt("reporteRegistros.col.parroquia"),
-                    txt("reporteRegistros.col.canton"), txt("reporteRegistros.serie.noHabilitados"),
-                    txt("reporteRegistros.serie.pendientes"), txt("reporteRegistros.serie.habilitados"),
-                    txt("reporteIglesias.col.administrador"), txt("reporteIglesias.col.lista"));
+            a.limites(0, 22, 45).limites(1, 16, 32).limites(2, 14, 28).limites(3, 12, 24);
+            a.cabecera(FILA, txt("reporteIglesias.col.iglesia"), txt("form.iglesias.label.comunidad"),
+                    txt("reporteRegistros.col.parroquia"), txt("reporteRegistros.col.canton"),
+                    txt("reporteRegistros.serie.noHabilitados"), txt("reporteRegistros.serie.pendientes"),
+                    txt("reporteRegistros.serie.habilitados"), txt("reporteIglesias.col.administrador"),
+                    txt("reporteIglesias.col.lista"));
             int f = FILA + 1;
             for (IglesiaAtencionDTO i : atencion) {
                 Row r = a.fila(f++);
                 a.texto(r, 0, i.getNombre());
-                a.texto(r, 1, i.getParroquia());
-                a.texto(r, 2, i.getCanton());
-                a.numero(r, 3, i.getNoHabilitados());
-                a.numero(r, 4, i.getPendientesRevision());
-                a.numero(r, 5, i.getHabilitados());
-                a.centrado(r, 6, txt(i.isTieneAdministrador() ? "reporteIglesias.si" : "reporteIglesias.no"));
-                a.centrado(r, 7, txt(i.isTieneListaMiembros() ? "reporteIglesias.si" : "reporteIglesias.no"));
+                a.texto(r, 1, i.getComunidad());
+                a.texto(r, 2, i.getParroquia());
+                a.texto(r, 3, i.getCanton());
+                a.numero(r, 4, i.getNoHabilitados());
+                a.numero(r, 5, i.getPendientesRevision());
+                a.numero(r, 6, i.getHabilitados());
+                a.centrado(r, 7, txt(i.isTieneAdministrador() ? "reporteIglesias.si" : "reporteIglesias.no"));
+                a.centrado(r, 8, txt(i.isTieneListaMiembros() ? "reporteIglesias.si" : "reporteIglesias.no"));
             }
             sinFilas(a, atencion.isEmpty(), f, "reporteIglesias.atencion.vacio");
-            a.autofiltro(FILA, f - 1, 8);
+            a.autofiltro(FILA, f - 1, 9);
             a.cerrar();
             return libro.bytes();
         }

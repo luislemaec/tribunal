@@ -34,6 +34,18 @@
             <i class="pi pi-caret-down"/>
         </a>
 
+        <!-- Acceso permanente a la App CONPOCIIECH (mismo enlace que el aviso de avisoApp.xhtml).
+             Después del perfil: con float:right queda a su izquierda; en móvil se ubica junto al
+             perfil midiendo su ancho (tribunal-globals.js). Solo para correos Gmail: la App está
+             en prueba cerrada de Google Play (LoginBean.promocionAppDisponible). -->
+        <ui:fragment rendered="#{loginBean.promocionAppDisponible}">
+            <a id="topbar-app-android" href="#{msg['app.movil.playStore.url']}" target="_blank" rel="noopener"
+               aria-label="#{msg['app.movil.tooltip']}">
+                <i class="pi pi-android" aria-hidden="true"/>
+            </a>
+            <p:tooltip for="@(#topbar-app-android)" value="#{msg['app.movil.tooltip']}" position="bottom"/>
+        </ui:fragment>
+
         <ul id="topbar-usermenu" class="fadeInDown animated">
             <li>
                 <h:form id="formLogoutBar" rendered="#{loginBean.loggedIn}">

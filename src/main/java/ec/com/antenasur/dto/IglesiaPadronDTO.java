@@ -9,5 +9,7 @@ import lombok.Getter;
 public class IglesiaPadronDTO implements Serializable {
     private Integer id;
     private String nombre;
+    /** Comunidad / barrio de la iglesia (Iglesia.comunidad, igl_comunidad_barrio), como en Iglesias. */
+    private String comunidad;
     private Long total;
 }

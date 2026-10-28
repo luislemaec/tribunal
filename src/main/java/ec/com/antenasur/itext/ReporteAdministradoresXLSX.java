@@ -135,11 +135,12 @@ public final class ReporteAdministradoresXLSX {
         ReporteTabularXLSX.Hoja h = libro.hoja(m(claveHoja));
         // Mínimo y máximo de cada columna, en caracteres: el máximo deja los nombres en dos líneas
         // como mucho; ubicación, estado y fechas caben en una.
-        h.limites(0, 22, 45).limites(1, 14, 28).limites(2, 12, 24).limites(3, 20, 40).limites(4, 12, 26)
-                .limites(5, 18, 38).limites(6, 14, 24).limites(7, 16, 18).limites(8, 10, 14);
-        String[] columnas = { txt("reporteIglesias.col.iglesia"), txt("reporteRegistros.col.parroquia"),
-                txt("reporteRegistros.col.canton"), txt("reporteIglesias.col.administrador"), m("col.usuario"),
-                m("col.correo"), txt("reporteAdministradores.col.estado"), txt("reporteAdministradores.col.ultimoAcceso"),
+        h.limites(0, 22, 45).limites(1, 16, 32).limites(2, 14, 28).limites(3, 12, 24).limites(4, 20, 40)
+                .limites(5, 12, 26).limites(6, 18, 38).limites(7, 14, 24).limites(8, 16, 18).limites(9, 10, 14);
+        String[] columnas = { txt("reporteIglesias.col.iglesia"), txt("form.iglesias.label.comunidad"),
+                txt("reporteRegistros.col.parroquia"), txt("reporteRegistros.col.canton"),
+                txt("reporteIglesias.col.administrador"), m("col.usuario"), m("col.correo"),
+                txt("reporteAdministradores.col.estado"), txt("reporteAdministradores.col.ultimoAcceso"),
                 txt("reporteAdministradores.kpi.sinAcceso"), txt("reporteRegistros.serie.habilitados"), m("col.registrados") };
         h.cabecera(FILA, columnas);
         int fila = FILA + 1;
@@ -149,22 +150,23 @@ public final class ReporteAdministradoresXLSX {
             }
             Row r = h.fila(fila++);
             h.texto(r, 0, i.getIglesia());
-            h.texto(r, 1, i.getParroquia());
-            h.texto(r, 2, i.getCanton());
+            h.texto(r, 1, i.getComunidad());
+            h.texto(r, 2, i.getParroquia());
+            h.texto(r, 3, i.getCanton());
             boolean tiene = i.isTieneAdministrador();
-            h.texto(r, 3, tiene ? i.getAdministradorNombre() : "");
-            h.texto(r, 4, tiene ? i.getAdministradorUsuario() : "");
-            h.texto(r, 5, !tiene ? "" : (i.getAdministradorCorreo() == null || i.getAdministradorCorreo().isBlank()
+            h.texto(r, 4, tiene ? i.getAdministradorNombre() : "");
+            h.texto(r, 5, tiene ? i.getAdministradorUsuario() : "");
+            h.texto(r, 6, !tiene ? "" : (i.getAdministradorCorreo() == null || i.getAdministradorCorreo().isBlank()
                     ? txt("reporteAdministradores.sinCorreo") : i.getAdministradorCorreo()));
-            h.centrado(r, 6, estado(i));
+            h.centrado(r, 7, estado(i));
             if (tiene && i.getUltimoAcceso() != null) {
-                h.fecha(r, 7, i.getUltimoAcceso());
+                h.fecha(r, 8, i.getUltimoAcceso());
             } else {
-                h.centrado(r, 7, tiene ? txt("reporteAdministradores.nunca") : "");
+                h.centrado(r, 8, tiene ? txt("reporteAdministradores.nunca") : "");
             }
-            h.centrado(r, 8, tiene ? m(i.isSinAccesoReciente() ? "si" : "no") : "");
-            h.numero(r, 9, i.getHabilitados());
-            h.numero(r, 10, i.getRegistrados());
+            h.centrado(r, 9, tiene ? m(i.isSinAccesoReciente() ? "si" : "no") : "");
+            h.numero(r, 10, i.getHabilitados());
+            h.numero(r, 11, i.getRegistrados());
         }
         if (fila == FILA + 1) {
             h.nota(fila, m("sinRegistros"));

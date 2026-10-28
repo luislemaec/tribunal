@@ -198,6 +198,10 @@
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
                                 </p:column>
+                                <!-- Mismo dato que Iglesias (Iglesia.comunidad): distingue iglesias de nombre parecido. -->
+                                <p:column headerText="#{msg['form.iglesias.label.comunidad']}" filterBy="#{iglesia.comunidad}" filterMatchMode="contains" sortBy="#{iglesia.comunidad}">
+                                    <h:outputText value="#{iglesia.comunidad}"/>
+                                </p:column>
                                 <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="info"/>
                                 </p:column>
@@ -207,7 +211,7 @@
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"
                                                      update=":frmPadron:pnlAvance :frmPadron:tabsPadron:consulta :frmPadron:tabsPadron:iglesiasDisponibles :frmPadron:tabsPadron:iglesiasAsignadas :frmPadron:contexto :frmGlobal:growlGlobal">
                                         <p:confirm header="#{msg['gestionPadron.confirmar']}"
-                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.asignar']}"
+                                                   message="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' ('.concat(iglesia.comunidad).concat(')')}: #{msg['gestionPadron.simple.confirmar.asignar']}"
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                 </p:column>
@@ -224,6 +228,10 @@
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
                                 </p:column>
+                                <!-- Mismo dato que Iglesias (Iglesia.comunidad): distingue iglesias de nombre parecido. -->
+                                <p:column headerText="#{msg['form.iglesias.label.comunidad']}" filterBy="#{iglesia.comunidad}" filterMatchMode="contains" sortBy="#{iglesia.comunidad}">
+                                    <h:outputText value="#{iglesia.comunidad}"/>
+                                </p:column>
                                 <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="success"/>
                                 </p:column>
@@ -233,7 +241,7 @@
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"
                                                      update=":frmPadron:pnlAvance :frmPadron:tabsPadron:consulta :frmPadron:tabsPadron:iglesiasDisponibles :frmPadron:tabsPadron:iglesiasAsignadas :frmPadron:contexto :frmGlobal:growlGlobal">
                                         <p:confirm header="#{msg['gestionPadron.confirmar']}"
-                                                   message="#{iglesia.nombre}: #{msg['gestionPadron.simple.confirmar.retirar']}"
+                                                   message="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' ('.concat(iglesia.comunidad).concat(')')}: #{msg['gestionPadron.simple.confirmar.retirar']}"
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                 </p:column>

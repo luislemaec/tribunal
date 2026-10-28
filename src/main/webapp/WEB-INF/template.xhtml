@@ -121,6 +121,8 @@
         </div>
         <!-- Chatbot de ayuda: sin consultas hasta que el usuario lo abre. -->
         <ui:include src="/WEB-INF/ayudaWidget.xhtml"/>
+        <!-- Aviso de la App CONPOCIIECH: una vez por sesión, tras el ingreso. -->
+        <ui:include src="/WEB-INF/avisoApp.xhtml"/>
         <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout" />
         <h:outputStylesheet name="css/layout-#{guestPreferences.theme}.css" library="ecuador-layout" />
     </h:body>

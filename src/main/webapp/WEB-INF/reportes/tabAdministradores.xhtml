@@ -170,6 +170,10 @@
                 <h:outputText value="#{iglesia.iglesia}"/>
                 <small class="block text-500">#{iglesia.parroquia} · #{iglesia.canton}</small>
             </p:column>
+            <!-- Mismo dato que Iglesias (Iglesia.comunidad, igl_comunidad_barrio). -->
+            <p:column headerText="#{msg['form.iglesias.label.comunidad']}" sortBy="#{iglesia.comunidad}">
+                <h:outputText value="#{iglesia.comunidad}"/>
+            </p:column>
             <p:column headerText="#{msg['reporteIglesias.col.administrador']}" sortBy="#{iglesia.administradorNombre}">
                 <h:outputText value="#{iglesia.administradorNombre}" rendered="#{iglesia.tieneAdministrador}"/>
                 <small class="block text-500">

@@ -37,6 +37,8 @@ public class GestionPadronService {
     }
 
     public List<OpcionPadronDTO> geografia(Integer padre) { return facade.geografia(padre); }
+    public List<OpcionPadronDTO> cantonesConRecintos(Integer provincia) { return facade.cantonesConRecintos(provincia); }
+    public List<OpcionPadronDTO> parroquiasConRecintos(Integer canton) { return facade.parroquiasConRecintos(canton); }
     public List<OpcionPadronDTO> recintos(FiltroPadronDTO f) { return facade.recintos(f); }
     public List<OpcionPadronDTO> mesas(Integer recinto) { return facade.opcionesMesas(recinto); }
     public List<OpcionPadronDTO> iglesias(Integer mesa, Integer proceso) { return facade.iglesias(mesa, proceso); }

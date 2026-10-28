@@ -344,6 +344,9 @@ public final class CatalogoActividades {
 				resto("descarga reporte(pdf)", "Reporte", null), firma("descarga reporte(pdf)")));
 		r.add(regla("Exportó reporte Excel", DOCUMENTOS, EXITOSO,
 				resto("descarga reporte(xls)", "Reporte", null), firma("descarga reporte(xls)")));
+		// Formato estructurado (Rep. Registros): se registra solo tras escribir el archivo sin error.
+		r.add(regla("Exportó reporte Excel", DOCUMENTOS, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("exportar_reporte_excel |", "resultado: exitoso")));
 		r.add(regla("Exportó reporte PDF", DOCUMENTOS, SIN_DATO, ORIGINAL, firma("descarga pdf, lista procesos")));
 		r.add(regla("Exportó reporte Excel", DOCUMENTOS, SIN_DATO, ORIGINAL, firma("descarga excel, selecci")));
 		r.add(regla("Intentó exportar reporte PDF", DOCUMENTOS, FALLIDO, ORIGINAL,

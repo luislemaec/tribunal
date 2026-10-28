@@ -93,9 +93,9 @@ public class ReporteIglesiasController implements Serializable {
 
     /** Excel con los datos de la pestaña (sin gráficos): resumen y la lista de atención completa. */
     public void exportarExcel() {
-        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.iglesias",
-                logo -> ReporteRegistrosXLSX.iglesias(ExportacionExcelRegistros.encabezado(
-                        ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado()),
+        String filtro = ExportacionExcelRegistros.filtroCanton(isTodosLosCantones(), getNombreCantonSeleccionado());
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.iglesias", "reporteRegistros.tab.iglesias",
+                filtro, logo -> ReporteRegistrosXLSX.iglesias(ExportacionExcelRegistros.encabezado(filtro,
                         isTodosLosCantones()), totales, categorias, iglesiasAtencion, logo));
     }
 

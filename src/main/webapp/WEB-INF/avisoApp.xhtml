@@ -1,0 +1,43 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Aviso de la App CONPOCIIECH para Android. Solo se dibuja en la primera página con el
+         layout tras un ingreso completo (LoginBean.avisoAppPendiente) y el remoteCommand lo marca
+         como visto al cargar: no vuelve a aparecer al navegar ni al recargar durante la sesión.
+         El acceso permanente está en el topbar (toopbar.xhtml). -->
+    <ui:fragment rendered="#{loginBean.promocionAppDisponible and loginBean.avisoAppPendiente}">
+        <h:form id="frmAvisoApp">
+            <p:remoteCommand name="tecAvisoAppVisto" action="#{loginBean.marcarAvisoAppVisto}"
+                             process="@this" update="@none" global="false" autoRun="true"/>
+
+            <p:dialog id="dlgAvisoApp" widgetVar="dlgAvisoApp" visible="true" modal="true"
+                      resizable="false" draggable="false" closeOnEscape="true" showHeader="false"
+                      responsive="true" width="22rem" styleClass="tec-aviso-app">
+                <div class="tec-aviso-app__cuerpo">
+                    <span class="tec-aviso-app__icono" aria-hidden="true"><i class="pi pi-android"/></span>
+                    <span id="tecAvisoAppTitulo" class="tec-aviso-app__titulo">#{msg['app.movil.titulo']}</span>
+                    <p class="tec-aviso-app__lema">#{msg['app.movil.lema']}</p>
+                    <p class="tec-aviso-app__texto">#{msg['app.movil.descripcion']}</p>
+                    <!-- Prueba cerrada de Google Play: solo cuentas habilitadas y en Android. -->
+                    <div class="tec-aviso-app__exclusivo" role="note">
+                        <i class="pi pi-lock" aria-hidden="true"/>
+                        <span>
+                            <strong>#{msg['app.movil.exclusivo.titulo']}</strong>
+                            #{msg['app.movil.exclusivo.texto']}
+                        </span>
+                    </div>
+                    <p:linkButton href="#{msg['app.movil.playStore.url']}" target="_blank"
+                                  value="#{msg['app.movil.descargar']}" icon="pi pi-download"
+                                  styleClass="tec-btn tec-aviso-app__descargar"
+                                  onclick="PF('dlgAvisoApp').hide();"/>
+                    <p:commandButton type="button" value="#{msg['app.movil.ahoraNo']}"
+                                     styleClass="tec-btn ui-button-flat ui-button-secondary tec-aviso-app__despues"
+                                     onclick="PF('dlgAvisoApp').hide();"/>
+                </div>
+            </p:dialog>
+        </h:form>
+    </ui:fragment>
+</ui:composition>

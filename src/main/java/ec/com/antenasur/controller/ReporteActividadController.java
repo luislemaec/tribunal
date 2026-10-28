@@ -78,9 +78,9 @@ public class ReporteActividadController implements Serializable {
         if (!cargado) {
             cargar();
         }
-        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.actividad",
-                logo -> ReporteRegistrosXLSX.actividad(ExportacionExcelRegistros.encabezado(
-                        JsfUtil.getMessage("reporteRegistros.excel.instantanea"), true),
+        String filtro = JsfUtil.getMessage("reporteRegistros.excel.instantanea");
+        ExportacionExcelRegistros.descargar("reporteRegistros.excel.archivo.actividad", "reporteRegistros.tab.actividad",
+                filtro, logo -> ReporteRegistrosXLSX.actividad(ExportacionExcelRegistros.encabezado(filtro, true),
                         getUsuariosWeb(), getUsuariosApp(), usuariosEnLinea, eventos, logo));
     }
 
