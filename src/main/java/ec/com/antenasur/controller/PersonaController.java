@@ -816,12 +816,18 @@ public class PersonaController implements Serializable {
 
     public boolean isHabilitacionMasivaDisponible() {
         return isHabilitacionMasivaVisible() && puedeEditarPadron
+                && HabilitacionMasivaService.esIglesiaIdentificada(
+                        iglesiaSeleccionado.getNombre(), iglesiaSeleccionado.getComunidad())
                 && HabilitacionMasivaService.esApta(getTotalMiembros(), getMiembrosActualizados());
     }
 
     public String getAyudaHabilitacionMasiva() {
         if (!puedeEditarPadron) {
             return mensaje("form.personas.error.cronograma");
+        }
+        if (iglesiaSeleccionado != null && !HabilitacionMasivaService.esIglesiaIdentificada(
+                iglesiaSeleccionado.getNombre(), iglesiaSeleccionado.getComunidad())) {
+            return mensaje("form.personas.masiva.error.iglesia.sin.nombre");
         }
         if (getTotalMiembros() == 0) {
             return mensaje("form.personas.masiva.ayuda.sin.miembros");

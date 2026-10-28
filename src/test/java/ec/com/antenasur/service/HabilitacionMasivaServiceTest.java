@@ -32,6 +32,18 @@ class HabilitacionMasivaServiceTest {
     }
 
     @Test
+    void iglesiaConNombreYComunidadReales() {
+        assertTrue(HabilitacionMasivaService.esIglesiaIdentificada("CAMINO A LA VICTORIA", "SHUMID"));
+        for (String noReal : new String[] { null, "", "   ", "N/D", "n/d", " N / D ", "ND", "N.D.", "n.d" }) {
+            assertFalse(HabilitacionMasivaService.esIglesiaIdentificada(noReal, "SHUMID"), "nombre " + noReal);
+            assertFalse(HabilitacionMasivaService.esIglesiaIdentificada("CAMINO A LA VICTORIA", noReal),
+                    "comunidad " + noReal);
+        }
+        // Solo el valor completo es N/D: un nombre que lo contiene sigue siendo real.
+        assertTrue(HabilitacionMasivaService.esIglesiaIdentificada("ANDES", "N/D NORTE"));
+    }
+
+    @Test
     void soloAdministradorYTribunal() throws Exception {
         RolesAllowed clase = HabilitacionMasivaService.class.getAnnotation(RolesAllowed.class);
         assertTrue(java.util.Set.of(clase.value()).equals(java.util.Set.of("SITEC-Administrador", "SITEC-Tribunal")));

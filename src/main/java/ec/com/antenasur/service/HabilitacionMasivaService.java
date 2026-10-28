@@ -77,6 +77,22 @@ public class HabilitacionMasivaService {
         return esApta(total, actualizados, Constantes.getPorcentajeMaximoHabilitacionMasiva());
     }
 
+    /**
+     * La iglesia registró nombre y comunidad reales: ninguno vacío ni «N/D», que es lo que
+     * cargaron quienes no registraron nombres reales. N/D se reconoce sin distinguir
+     * mayúsculas, espacios, puntos ni barra («n/d», «N / D», «ND», «N.D.»).
+     */
+    public static boolean esIglesiaIdentificada(String nombre, String comunidad) {
+        return esNombreReal(nombre) && esNombreReal(comunidad);
+    }
+
+    static boolean esNombreReal(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return false;
+        }
+        return !"ND".equals(valor.replaceAll("[\\s./]", "").toUpperCase(java.util.Locale.ROOT));
+    }
+
     public ResultadoHabilitacionMasivaDTO habilitar(Integer iglesiaId, String ip) {
         String rol = rolCaller();
         if (rol == null) {
@@ -88,6 +104,9 @@ public class HabilitacionMasivaService {
         Iglesia iglesia = iglesiaId != null ? iglesiaFacade.find(iglesiaId) : null;
         if (iglesia == null || !Boolean.TRUE.equals(iglesia.getEstado())) {
             throw new IglesiaPersonaException("form.personas.error.iglesia.inactiva");
+        }
+        if (!esIglesiaIdentificada(iglesia.getNombre(), iglesia.getComunidad())) {
+            throw new IglesiaPersonaException("form.personas.masiva.error.iglesia.sin.nombre");
         }
         if (!iglesiaPersonaFacade.bloquearHabilitacionMasiva(iglesiaId)) {
             throw new IglesiaPersonaException("form.personas.masiva.error.en.curso");
