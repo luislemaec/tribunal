@@ -18,6 +18,8 @@ public class ResultadoHabilitacionMasivaDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String iglesia;
+    /** Miembros que ya estaban revisados al iniciar: no se procesan ni se modifican. */
+    private final int revisadosPrevios;
     private final int totalPendientes;
     private final int habilitados;
     private final List<Rechazo> rechazados;

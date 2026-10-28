@@ -259,9 +259,10 @@
                                                      actionListener="#{personaController.generarActaActualizacion}"
                                                      styleClass="tec-btn ui-button-outlined"
                                                      disabled="#{personaController.totalMiembros eq 0}"/>
-                                    <!-- Habilitación masiva: Administrador y Tribunal, iglesia sin miembros
-                                         actualizados. El servicio valida a cada miembro con las reglas de
-                                         la edición individual; los inválidos quedan pendientes. -->
+                                    <!-- Habilitación masiva: Administrador y Tribunal, iglesia con actualizados
+                                         hasta el porcentaje configurado (40 % por defecto). Solo procesa los
+                                         pendientes, con las reglas de la edición individual; los ya revisados
+                                         y los inválidos no se modifican. -->
                                     <p:commandButton id="btnHabilitacionMasiva"
                                                      rendered="#{personaController.habilitacionMasivaVisible}"
                                                      value="#{msg['form.personas.masiva.boton']}" icon="pi pi-users"
@@ -1044,19 +1045,25 @@
                             <b><h:outputText value="#{personaController.resultadoHabilitacionMasiva.iglesia}"/></b>
                         </p>
                         <div class="grid">
-                            <div class="col-4">
+                            <div class="col-6 md:col-3">
+                                <div class="kpi-card personas-kpi">
+                                    <span class="label">#{msg['form.personas.masiva.revisados']}</span>
+                                    <h:outputText value="#{personaController.resultadoHabilitacionMasiva.revisadosPrevios}" styleClass="value"/>
+                                </div>
+                            </div>
+                            <div class="col-6 md:col-3">
                                 <div class="kpi-card personas-kpi">
                                     <span class="label">#{msg['form.personas.masiva.total']}</span>
                                     <h:outputText value="#{personaController.resultadoHabilitacionMasiva.totalPendientes}" styleClass="value"/>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6 md:col-3">
                                 <div class="kpi-card personas-kpi">
                                     <span class="label">#{msg['form.personas.masiva.habilitados']}</span>
                                     <h:outputText value="#{personaController.resultadoHabilitacionMasiva.habilitados}" styleClass="value tec-text-success"/>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6 md:col-3">
                                 <div class="kpi-card personas-kpi">
                                     <span class="label">#{msg['form.personas.masiva.inconsistencias']}</span>
                                     <h:outputText value="#{personaController.resultadoHabilitacionMasiva.conInconsistencias}" styleClass="value tec-text-warn"/>

@@ -805,8 +805,8 @@ public class PersonaController implements Serializable {
     }
 
     /**
-     * Botón de habilitación masiva: Administrador o Tribunal, cronograma abierto y una
-     * iglesia con miembros y ninguno actualizado. Usa el progreso ya calculado de la
+     * Botón de habilitación masiva: Administrador o Tribunal, cronograma abierto y la regla
+     * de {@link HabilitacionMasivaService#esApta} sobre el progreso ya calculado de la
      * iglesia elegida; el servicio vuelve a comprobar todo antes de modificar.
      */
     public boolean isHabilitacionMasivaVisible() {
@@ -816,7 +816,7 @@ public class PersonaController implements Serializable {
 
     public boolean isHabilitacionMasivaDisponible() {
         return isHabilitacionMasivaVisible() && puedeEditarPadron
-                && getTotalMiembros() > 0 && getMiembrosActualizados() == 0;
+                && HabilitacionMasivaService.esApta(getTotalMiembros(), getMiembrosActualizados());
     }
 
     public String getAyudaHabilitacionMasiva() {
@@ -826,8 +826,14 @@ public class PersonaController implements Serializable {
         if (getTotalMiembros() == 0) {
             return mensaje("form.personas.masiva.ayuda.sin.miembros");
         }
-        return mensaje(getMiembrosActualizados() > 0
-                ? "form.personas.masiva.ayuda.con.actualizados" : "form.personas.masiva.ayuda");
+        if (getMiembrosActualizados() >= getTotalMiembros()) {
+            return mensaje("form.personas.masiva.error.sin.pendientes");
+        }
+        if (!HabilitacionMasivaService.esApta(getTotalMiembros(), getMiembrosActualizados())) {
+            return mensaje("form.personas.masiva.ayuda.con.actualizados",
+                    Constantes.getPorcentajeMaximoHabilitacionMasiva(), getMiembrosActualizados(), getTotalMiembros());
+        }
+        return mensaje("form.personas.masiva.ayuda");
     }
 
     public void ejecutarHabilitacionMasiva() {

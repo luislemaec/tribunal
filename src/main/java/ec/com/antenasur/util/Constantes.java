@@ -205,6 +205,27 @@ public class Constantes {
         return 3;
     }
 
+    /**
+     * Porcentaje máximo de miembros ya actualizados con el que una iglesia todavía admite
+     * la habilitación masiva (Personas): apta si actualizados × 100 ≤ total × porcentaje.
+     * Configurable con {@code tec.habilitacion.masiva.porcentaje.maximo}; si no está
+     * definido, no es un número o está fuera de 0–100, se usa 40.
+     */
+    public static int getPorcentajeMaximoHabilitacionMasiva() {
+        String valor = loadFromMessages("tec.habilitacion.masiva.porcentaje.maximo");
+        if (valor != null) {
+            try {
+                int porcentaje = Integer.parseInt(valor.trim());
+                if (porcentaje >= 0 && porcentaje <= 100) {
+                    return porcentaje;
+                }
+            } catch (NumberFormatException e) {
+                // Configuración inválida: se mantiene el valor por defecto.
+            }
+        }
+        return 40;
+    }
+
     public static String getMensaje(String clave, Object... argumentos) {
         String mensaje = loadFromMessages(clave);
         if (mensaje == null) {

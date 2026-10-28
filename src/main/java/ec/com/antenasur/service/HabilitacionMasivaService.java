@@ -23,8 +23,9 @@ import ec.com.antenasur.util.Constantes;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Habilitación masiva de los miembros pendientes de una iglesia que todavía no actualizó
- * ninguno. Solo Administrador y Tribunal. Cada miembro se procesa con
+ * Habilitación masiva de los miembros pendientes de una iglesia que actualizó como máximo
+ * el porcentaje configurado de su listado ({@link #esApta}). Los ya revisados no se tocan.
+ * Solo Administrador y Tribunal. Cada miembro se procesa con
  * {@link IglesiaPersonaService#habilitarPendiente} en su propia transacción y con las
  * mismas reglas que la edición individual: los válidos quedan revisados y habilitados, y
  * un miembro inválido no revierte a los demás; queda pendiente con su motivo.
@@ -63,12 +64,17 @@ public class HabilitacionMasivaService {
     private SessionContext sessionContext;
 
     /**
-     * La iglesia es candidata si tiene miembros y ninguno actualizado, con la misma
-     * cuenta que el indicador «Miembros actualizados» de Personas.
+     * Regla única de la habilitación masiva, usada por el botón y por {@link #habilitar}:
+     * la iglesia tiene miembros, le quedan pendientes y sus actualizados (la cuenta del
+     * indicador «Miembros actualizados» de Personas) no superan el porcentaje máximo.
+     * Comparación exacta, sin el redondeo del porcentaje que muestra la pantalla.
      */
-    public boolean esIglesiaApta(Integer iglesiaId) {
-        int[] progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
-        return progreso[0] > 0 && progreso[1] == 0;
+    public static boolean esApta(int total, int actualizados, int porcentajeMaximo) {
+        return total > 0 && actualizados < total && (long) actualizados * 100 <= (long) total * porcentajeMaximo;
+    }
+
+    public static boolean esApta(int total, int actualizados) {
+        return esApta(total, actualizados, Constantes.getPorcentajeMaximoHabilitacionMasiva());
     }
 
     public ResultadoHabilitacionMasivaDTO habilitar(Integer iglesiaId, String ip) {
@@ -87,9 +93,15 @@ public class HabilitacionMasivaService {
             throw new IglesiaPersonaException("form.personas.masiva.error.en.curso");
         }
         // Se vuelve a evaluar ya con el bloqueo: la vista pudo quedar desactualizada.
-        if (!esIglesiaApta(iglesiaId)) {
-            throw new IglesiaPersonaException("form.personas.masiva.error.no.disponible");
+        int[] progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
+        int porcentajeMaximo = Constantes.getPorcentajeMaximoHabilitacionMasiva();
+        if (!esApta(progreso[0], progreso[1], porcentajeMaximo)) {
+            throw progreso[0] > 0 && progreso[1] >= progreso[0]
+                    ? new IglesiaPersonaException("form.personas.masiva.error.sin.pendientes")
+                    : new IglesiaPersonaException("form.personas.masiva.error.no.disponible",
+                            porcentajeMaximo, progreso[1], progreso[0]);
         }
+        int revisadosPrevios = progreso[1];
 
         List<Object[]> pendientes = iglesiaPersonaFacade.listarPendientesRevisionPorIglesia(iglesiaId);
         List<Rechazo> rechazados = new ArrayList<>();
@@ -111,8 +123,10 @@ public class HabilitacionMasivaService {
                         ? "form.personas.error.relacion.activa" : "form.personas.error.guardar")));
             }
         }
-        registrarBitacora(iglesia.getNombre(), rol, pendientes.size(), habilitados, rechazados.size(), ip);
-        return new ResultadoHabilitacionMasivaDTO(iglesia.getNombre(), pendientes.size(), habilitados, rechazados);
+        registrarBitacora(iglesia.getNombre(), rol, revisadosPrevios, porcentajeMaximo, pendientes.size(),
+                habilitados, rechazados.size(), ip);
+        return new ResultadoHabilitacionMasivaDTO(iglesia.getNombre(), revisadosPrevios, pendientes.size(),
+                habilitados, rechazados);
     }
 
     private static Rechazo rechazo(Object[] fila, String motivo) {
@@ -134,10 +148,11 @@ public class HabilitacionMasivaService {
      * habilitado deja además su entrada ACTUALIZA y su revisión de Envers. Si no cabe en
      * la columna, se acorta el nombre de la iglesia y nunca los totales.
      */
-    private void registrarBitacora(String iglesia, String rol, int procesados, int habilitados, int rechazados,
-            String ip) {
+    private void registrarBitacora(String iglesia, String rol, int revisadosPrevios, int porcentajeMaximo,
+            int procesados, int habilitados, int rechazados, String ip) {
         String prefijo = ACTIVIDAD + " | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: ";
-        String sufijo = "; Rol: " + rol + "; Procesados: " + procesados + "; Habilitados: " + habilitados
+        String sufijo = "; Rol: " + rol + "; Revisados previos: " + revisadosPrevios + "; Umbral: "
+                + porcentajeMaximo + " %; Procesados: " + procesados + "; Habilitados: " + habilitados
                 + "; Rechazados: " + rechazados;
         String nombre = iglesia == null ? "" : iglesia.replaceAll("[\\r\\n\\t]", " ");
         int disponible = Math.max(0, LARGO_ACTIVIDAD - prefijo.length() - sufijo.length());

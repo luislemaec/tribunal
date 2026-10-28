@@ -44,7 +44,7 @@ class CatalogoActividadesTest {
             // Cambios desde la App: la entrada automática lleva el canal; la funcional, la acción legible.
             new Caso("DESACTIVA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central; CANAL: App móvil", "Desactivó miembro de iglesia", PERSONAS, EXITOSO),
             new Caso("EXPORTAR_REPORTE_EXCEL | MÓDULO: REPORTES; RESULTADO: EXITOSO; DETALLE: Reporte de registros – Iglesias; Filtro: Todos los cantones; Archivo: iglesias_20261028_1030.xlsx", "Exportó reporte Excel", DOCUMENTOS, EXITOSO),
-            new Caso("HABILITACION_MASIVA | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Procesados: 120; Habilitados: 112; Rechazados: 8", "Habilitación masiva de miembros", PERSONAS, EXITOSO),
+            new Caso("HABILITACION_MASIVA | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Revisados previos: 30; Umbral: 40 %; Procesados: 120; Habilitados: 112; Rechazados: 8", "Habilitación masiva de miembros", PERSONAS, EXITOSO),
             new Caso("AGREGA MIEMBRO IGLESIA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA;HABILITADO=SI", "Agregó miembro de iglesia (App móvil)", PERSONAS, EXITOSO),
             new Caso("ACTUALIZA DATOS PERSONA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Actualizó datos de persona (App móvil)", PERSONAS, EXITOSO),
             new Caso("HABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Habilitó para el padrón (App móvil)", PERSONAS, EXITOSO),
@@ -209,8 +209,8 @@ class CatalogoActividadesTest {
                 normalizar("DESACTIVA | MÓDULO: X; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central; CANAL: App móvil").detalle());
         assertEquals("Reporte de registros – Iglesias; Filtro: Todos los cantones; Archivo: iglesias_20261028_1030.xlsx",
                 normalizar("EXPORTAR_REPORTE_EXCEL | MÓDULO: REPORTES; RESULTADO: EXITOSO; DETALLE: Reporte de registros – Iglesias; Filtro: Todos los cantones; Archivo: iglesias_20261028_1030.xlsx").detalle());
-        assertEquals("Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Procesados: 120; Habilitados: 112; Rechazados: 8",
-                normalizar("HABILITACION_MASIVA | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Procesados: 120; Habilitados: 112; Rechazados: 8").detalle());
+        assertEquals("Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Revisados previos: 30; Umbral: 40 %; Procesados: 120; Habilitados: 112; Rechazados: 8",
+                normalizar("HABILITACION_MASIVA | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Revisados previos: 30; Umbral: 40 %; Procesados: 120; Habilitados: 112; Rechazados: 8").detalle());
         assertEquals("Detalle: MIEMBRO=12;PERSONA=PEREZ ANA",
                 normalizar("HABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA").detalle());
         assertEquals("EntidadFutura: ID 1",
