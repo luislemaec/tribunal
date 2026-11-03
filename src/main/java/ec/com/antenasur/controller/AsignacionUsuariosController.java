@@ -12,6 +12,7 @@ import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.bean.ProcesoBean;
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.dto.IglesiaAsignacionDTO;
@@ -139,6 +140,10 @@ public class AsignacionUsuariosController implements Serializable {
     @Getter
     private boolean puedeAsignar;
 
+    /** Administrador o Tribunal asignan aunque la fase vigente no lo habilite. */
+    @Getter
+    private boolean asignacionFueraDeFase;
+
     /** [total, conAdmin, porcentaje] para la barra de progreso. */
     @Getter
     private int[] progresoAsignacion = {0, 0, 0};
@@ -160,7 +165,8 @@ public class AsignacionUsuariosController implements Serializable {
 
             recargarListaCompleta();
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
-            puedeAsignar = cronogramaService.permiteAsignacionUsuarios();
+            puedeAsignar = cronogramaService.permite(OperacionCronograma.ASIGNACION_ADMINISTRADORES);
+            asignacionFueraDeFase = puedeAsignar && !cronogramaService.permiteAsignacionUsuarios();
             progresoAsignacion = iglesiaService.calcularProgresoAsignacionUsuarios();
         } catch (Exception e) {
             log.error("Error al inicializar AsignacionUsuariosController", e);
@@ -293,7 +299,8 @@ public class AsignacionUsuariosController implements Serializable {
     /** Refresca el estado de fase desde la BD; útil antes de validar al guardar. */
     private void refrescarEstadoFase() {
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
-        puedeAsignar = cronogramaService.permiteAsignacionUsuarios();
+        puedeAsignar = cronogramaService.permite(OperacionCronograma.ASIGNACION_ADMINISTRADORES);
+        asignacionFueraDeFase = puedeAsignar && !cronogramaService.permiteAsignacionUsuarios();
     }
 
     // â”€â”€ Diálogo de asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

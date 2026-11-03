@@ -251,8 +251,20 @@
                     </div>
                 </p:outputPanel>
 
+                <!-- Excepción del cronograma (Administrador/Tribunal): asigna fuera de la fase. -->
+                <p:outputPanel rendered="#{asignacionUsuariosController.asignacionFueraDeFase}"
+                               styleClass="mb-3" layout="block">
+                    <div class="callout callout--info flex align-items-center gap-2">
+                        <i class="pi pi-shield flex-shrink-0"/>
+                        <span>
+                            <strong>#{msg['cronograma.excepcion.titulo']}</strong>
+                            #{msg['asignacion.banner.fueraDeFase']}
+                        </span>
+                    </div>
+                </p:outputPanel>
+
                 <!-- Banner fase activa -->
-                <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar}"
+                <p:outputPanel rendered="#{asignacionUsuariosController.puedeAsignar and not asignacionUsuariosController.asignacionFueraDeFase}"
                                styleClass="mb-3" layout="block">
                     <div class="callout callout--success flex align-items-center gap-2">
                         <i class="pi pi-unlock flex-shrink-0"/>

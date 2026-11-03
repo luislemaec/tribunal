@@ -10,6 +10,7 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.dto.ResultadoHabilitacionMasivaDTO;
 import ec.com.antenasur.dto.ResultadoHabilitacionMasivaDTO.Rechazo;
 import ec.com.antenasur.exception.IglesiaPersonaException;
@@ -98,7 +99,7 @@ public class HabilitacionMasivaService {
         if (rol == null) {
             throw new IglesiaPersonaException("form.personas.masiva.error.permiso");
         }
-        if (!cronogramaService.permiteEdicionPadron()) {
+        if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
             throw new IglesiaPersonaException("form.personas.error.cronograma");
         }
         Iglesia iglesia = iglesiaId != null ? iglesiaFacade.find(iglesiaId) : null;

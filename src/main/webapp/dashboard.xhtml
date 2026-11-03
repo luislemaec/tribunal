@@ -393,6 +393,26 @@
                     </span>
                 </p:divider>
 
+                <!-- Cierre de la fase Actualización de miembros: agradecimiento al IglesiaAdmin. -->
+                <ui:fragment rendered="#{dashboardController.tieneIglesiaAsignada and dashboardController.actualizacionMiembrosFinalizada}">
+                    <div class="callout callout--success flex align-items-start gap-2 mb-3" role="status">
+                        <i class="pi pi-check-circle text-xl flex-shrink-0" aria-hidden="true"/>
+                        <div class="flex flex-column gap-1">
+                            <span class="font-semibold text-900">#{msg['dashboard.cierreActualizacion.titulo']}</span>
+                            <span>
+                                <h:outputText value="#{msg['dashboard.cierreActualizacion.fecha']} "
+                                              rendered="#{not empty dashboardController.fechaFinActualizacionMiembros}"/>
+                                <h:outputText value="#{dashboardController.fechaFinActualizacionMiembros}"
+                                              rendered="#{not empty dashboardController.fechaFinActualizacionMiembros}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                                <h:outputText value=". " rendered="#{not empty dashboardController.fechaFinActualizacionMiembros}"/>
+                                #{msg['dashboard.cierreActualizacion.agradecimiento']}
+                            </span>
+                        </div>
+                    </div>
+                </ui:fragment>
+
                 <ui:fragment rendered="#{not dashboardController.tieneIglesiaAsignada}">
                     <div class="tec-kpi tec-kpi--danger p-4">
                         <div class="flex align-items-start gap-3">
@@ -492,8 +512,10 @@
                                           styleClass=""/>
                             <p:linkButton outcome="/personas" value="#{msg['dashboard.iglesia.accion.gestionarPersonas']}" icon="pi pi-users"
                                           styleClass="ui-button-info"/>
+                            <!-- Con la fase Actualización de miembros terminada ya no hay pendientes que revisar. -->
                             <p:linkButton outcome="/personas" value="#{msg['dashboard.iglesia.accion.revisarPendientes']}" icon="pi pi-list-check"
-                                          styleClass="ui-button-secondary"/>
+                                          styleClass="ui-button-secondary"
+                                          rendered="#{not dashboardController.actualizacionMiembrosFinalizada}"/>
                         </div>
                     </div>
                 </ui:fragment>

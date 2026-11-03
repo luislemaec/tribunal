@@ -147,14 +147,15 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
         if (dto == null) {
             throw new NegocioException("catalogo.mensaje.no.seleccionado");
         }
-        if (!tieneTexto(dto.getNombre()) || !tieneTexto(dto.getDescripcion()) || dto.getOrden() == null) {
+        // La descripción es opcional: los catálogos antiguos (p. ej. el raíz) no la tienen.
+        if (!tieneTexto(dto.getNombre()) || dto.getOrden() == null) {
             throw new NegocioException("catalogo.mensaje.campos.obligatorios");
         }
     }
 
     private void aplicarValoresNormalizados(CatalogoGeneral catalogo, CatalogoGeneralDTO dto) {
         catalogo.setNombre(normalizar(dto.getNombre()));
-        catalogo.setDescripcion(normalizar(dto.getDescripcion()));
+        catalogo.setDescripcion(tieneTexto(dto.getDescripcion()) ? normalizar(dto.getDescripcion()) : null);
         catalogo.setHistorial(dto.getHistorial());
         catalogo.setOrden(dto.getOrden());
         catalogo.setInfo(tieneTexto(dto.getInfo()) ? dto.getInfo().trim() : null);

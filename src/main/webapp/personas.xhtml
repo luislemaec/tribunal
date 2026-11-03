@@ -14,21 +14,28 @@
         <h:outputStylesheet library="css" name="personas.css"/>
         <h:outputScript library="demo" name="js/tec-personas.js" target="head"/>
 
-                <ui:include src="/WEB-INF/pageHeader.xhtml">
+                <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-users"/>
             <ui:param name="titulo" value="#{msg['pagina.personas.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.personas.descripcion']}"/>
             <ui:define name="contexto">
                 <div class="tec-page-header__aside">
-                        <p:tag rendered="#{personaController.puedeEditarPadron}"
+                        <p:tag rendered="#{personaController.puedeEditarPadron and not personaController.edicionFueraDeFase}"
                                value="Edición habilitada" icon="pi pi-pencil" severity="success"
                                styleClass="tec-status"/>
+                        <!-- Excepción del cronograma (Administrador/Tribunal). -->
+                        <!-- p:tag no admite title: la ayuda va en el contenedor. -->
+                        <h:panelGroup rendered="#{personaController.edicionFueraDeFase}"
+                                      title="#{msg['form.personas.tag.fueraDeFase.ayuda']}">
+                            <p:tag value="#{msg['form.personas.tag.fueraDeFase']}" icon="pi pi-shield" severity="info"
+                                   styleClass="tec-status"/>
+                        </h:panelGroup>
                         <p:tag rendered="#{not personaController.puedeEditarPadron}"
                                value="Edición bloqueada" icon="pi pi-lock" severity="warning"
                                styleClass="tec-status"/>
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
         <h:form id="frmPersonas">
             <span id="personasTextosCliente" hidden="hidden"
@@ -295,21 +302,8 @@
                         </span>
                         <!-- Solo ubicaciones con iglesias activas (DISTINCT en BD). Cambiar un nivel limpia los inferiores. -->
                         <div class="formgrid grid">
-                            <div class="field col-12 md:col-4 xl:col-2">
-                                <p:outputLabel for="provincia" value="Provincia"/>
-                                <p:selectOneMenu id="provincia" value="#{personaController.provinciaId}"
-                                                 filter="true" filterMatchMode="startsWith"
-                                                 placeholder="Seleccione provincia..."
-                                                 autoWidth="false" panelStyleClass="tec-select-panel">
-                                    <f:selectItem itemLabel="Todas las provincias" itemValue="#{null}"/>
-                                    <f:selectItems value="#{personaController.provincias}" var="provincia"
-                                                   itemLabel="#{provincia.name}" itemValue="#{provincia.id}"/>
-                                    <p:ajax event="change" listener="#{personaController.obtieneCantones()}"
-                                            process="@this" partialSubmit="true"
-                                            update="canton parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
-                                </p:selectOneMenu>
-                            </div>
-                            <div class="field col-12 md:col-4 xl:col-2">
+                            <!-- Sin filtro de provincia: el módulo trabaja solo con Chimborazo (PersonaController). -->
+                            <div class="field col-12 md:col-6 xl:col-3">
                                 <p:outputLabel for="canton" value="Cantón"/>
                                 <p:selectOneMenu id="canton" value="#{personaController.cantonId}"
                                                  filter="true" filterMatchMode="startsWith"
@@ -324,7 +318,7 @@
                                             update="parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 md:col-4 xl:col-3">
+                            <div class="field col-12 md:col-6 xl:col-3">
                                 <p:outputLabel for="parroquia" value="Parroquia"/>
                                 <p:selectOneMenu id="parroquia" value="#{personaController.parroquiaId}"
                                                  filter="true" filterMatchMode="startsWith"
@@ -339,7 +333,7 @@
                                             update="iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
                                 </p:selectOneMenu>
                             </div>
-                            <div class="field col-12 xl:col-5">
+                            <div class="field col-12 xl:col-6">
                                 <p:outputLabel for="iglesias" value="Iglesia"/>
                                 <p:selectOneMenu id="iglesias" value="#{personaController.iglesiaSeleccionado.id}"
                                                  filter="true" filterMatchMode="contains"

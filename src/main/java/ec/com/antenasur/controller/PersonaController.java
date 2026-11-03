@@ -30,6 +30,7 @@ import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
@@ -295,6 +296,10 @@ public class PersonaController implements Serializable {
     @Getter
     private boolean puedeEditarPadron;
 
+    /** Administrador o Tribunal editan miembros aunque la fase vigente no lo habilite. */
+    @Getter
+    private boolean edicionFueraDeFase;
+
     @PostConstruct
     private void init() {
         try {
@@ -310,7 +315,9 @@ public class PersonaController implements Serializable {
             faseActualizacionMiembros = cronogramaService.getFaseActualizacionMiembros();
             faseAnterior = cronogramaService.getFaseAnteriorAActualizacion();
             faseSiguiente = cronogramaService.getFaseSiguienteAActualizacion();
-            puedeEditarPadron = cronogramaService.permiteEdicionPadron();
+            // Política central: la fase vigente o la excepción de Administrador/Tribunal.
+            puedeEditarPadron = cronogramaService.permite(OperacionCronograma.EDICION_PADRON);
+            edicionFueraDeFase = puedeEditarPadron && !cronogramaService.permiteEdicionPadron();
             // Tribunal conserva su alcance actual y Administrador puede
             // regularizar inconsistencias entre iglesias desde el mismo flujo.
             puedeRegularizarIglesias = esUsuarioTribunal() || esUsuarioAdministrador();
@@ -335,14 +342,11 @@ public class PersonaController implements Serializable {
                 return;
             }
 
-            // Camino normal (admin global): filtros Provincia → Cantón → Parroquia limitados
-            // a ubicaciones con iglesias activas. Si solo una provincia tiene iglesias queda
-            // seleccionada y se carga su listado; sin provincia el listado queda vacío.
-            provincias = iglesiaService.listarProvinciasConIglesias();
-            if (provincias.size() == 1) {
-                provinciaId = provincias.get(0).getId();
-                cantones = iglesiaService.listarCantonesConIglesias(provinciaId);
-            }
+            // Camino normal (admin global): sin filtro de provincia, igual que Iglesias; el
+            // módulo trabaja con la provincia operativa (Chimborazo). Cantón → Parroquia →
+            // Iglesia se limitan a ubicaciones con iglesias activas de esa provincia.
+            provinciaId = IglesiaController.PROVINCIA_OPERATIVA_ID;
+            cantones = iglesiaService.listarCantonesConIglesias(provinciaId);
             recargarIglesiasYListado();
         } catch (Exception e) {
             log.error("ERROR AL INICIALIZAR OBJETOS", e);
@@ -357,6 +361,10 @@ public class PersonaController implements Serializable {
      */
     private void prepararAvisoMiembros(Integer iglesiaId) {
         if (loginBean == null || loginBean.isAvisoMiembrosPersonasMostrado()) {
+            return;
+        }
+        // Mismo criterio que el Dashboard: terminada la fase Actualización de miembros no se muestra.
+        if (cronogramaService.actualizacionMiembrosFinalizada()) {
             return;
         }
         resumenAvisoMiembros = iglesiaPersonaService.obtenerResumenMiembrosActivosPorIglesia(iglesiaId);
@@ -705,7 +713,7 @@ public class PersonaController implements Serializable {
                     && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
                 iglesiaPersonaSeleccionado.setIglesia(iglesiaSeleccionado);
             }
-            if (!cronogramaService.permiteEdicionPadron()) {
+            if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
                 rechazarGuardado("form.personas.error.cronograma");
                 return;
             }

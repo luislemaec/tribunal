@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.CronogramaFaseDTO;
 import ec.com.antenasur.enums.FaseElectoral;
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.facade.tec.CronogramaFaseFacade;
 import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.model.tec.CronogramaFase;
@@ -28,6 +33,11 @@ import ec.com.antenasur.service.AbstractService;
  * deben rechazar escrituras.
  */
 @Stateless
+// WildFly niega por defecto los métodos sin anotación de un EJB con seguridad
+// (default-missing-method-permissions-deny-access): @PermitAll mantiene abiertas las lecturas del cronograma,
+// usadas también por páginas públicas y por la App. @DeclareRoles solo habilita isCallerInRole.
+@PermitAll
+@DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin" })
 public class CronogramaService extends AbstractService<CronogramaFase, Integer, CronogramaFaseFacade> {
 
     @Inject
@@ -35,6 +45,9 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
 
     @Inject
     private ProcesoElectoralFacade procesoElectoralFacade;
+
+    @Resource
+    private SessionContext sessionContext;
 
     @Override
     protected CronogramaFaseFacade getFacade() {
@@ -97,6 +110,17 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
      * @return DTO de la fase anterior, o {@code null} si no hay proceso
      *         activo, no existe ACTUALIZACION_MIEMBROS, o no hay fase previa.
      */
+    /**
+     * La fase {@link FaseElectoral#ACTUALIZACION_MIEMBROS} del proceso activo ya terminó
+     * (hoy es posterior a su fecha de fin). Sin proceso activo o sin esa fase configurada
+     * devuelve {@code false}. Lo usan Dashboard y Personas para dejar de mostrar el aviso
+     * de miembros pendientes cuando ya no es posible actualizarlos.
+     */
+    public boolean actualizacionMiembrosFinalizada() {
+        CronogramaFaseDTO fase = getFaseActualizacionMiembros();
+        return fase != null && Boolean.TRUE.equals(fase.getPasada());
+    }
+
     public CronogramaFaseDTO getFaseAnteriorAActualizacion() {
         ProcesoElectoral activo = procesoElectoralFacade.getActivo();
         if (activo == null) {
@@ -186,6 +210,50 @@ public class CronogramaService extends AbstractService<CronogramaFase, Integer, 
         }
         return false;
     }
+
+    // ── Política de escritura según cronograma y rol ──────────────────────────
+
+    /**
+     * Única política para las escrituras sujetas al cronograma: la operación está permitida
+     * si la fase vigente la habilita (regla de siempre) o si el usuario está exento
+     * ({@link #exentoDeCronograma()}). Solo excusa la restricción temporal: el servicio que
+     * la consulta sigue aplicando todas sus demás validaciones.
+     *
+     * <p>Las consultas informativas (banner de fase, indicadores de la App) siguen usando
+     * {@link #permiteRegistroIglesias()}, {@link #permiteAsignacionUsuarios()} y
+     * {@link #permiteEdicionPadron()}, que describen la fase, no el permiso del usuario.</p>
+     */
+    public boolean permite(OperacionCronograma operacion) {
+        if (operacion == null) {
+            return false;
+        }
+        boolean fasePermite = switch (operacion) {
+            case REGISTRO_IGLESIAS -> permiteRegistroIglesias();
+            case ASIGNACION_ADMINISTRADORES -> permiteAsignacionUsuarios();
+            case EDICION_PADRON -> permiteEdicionPadron();
+        };
+        return fasePermite || exentoDeCronograma();
+    }
+
+    /**
+     * SITEC-Administrador y SITEC-Tribunal operan fuera de las fases del cronograma, siempre
+     * que haya un proceso electoral activo. Un usuario que además tiene SITEC-IglesiaAdmin
+     * se trata como IglesiaAdmin y sigue sujeto al cronograma. Se decide con el principal
+     * EJB, no con datos de la vista.
+     */
+    public boolean exentoDeCronograma() {
+        if (sessionContext == null || sessionContext.isCallerInRole(ROL_IGLESIA_ADMIN)) {
+            return false;
+        }
+        if (!sessionContext.isCallerInRole(ROL_ADMINISTRADOR) && !sessionContext.isCallerInRole(ROL_TRIBUNAL)) {
+            return false;
+        }
+        return procesoElectoralFacade.getActivo() != null;
+    }
+
+    private static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+    private static final String ROL_TRIBUNAL = "SITEC-Tribunal";
+    private static final String ROL_IGLESIA_ADMIN = "SITEC-IglesiaAdmin";
 
     public CronogramaFaseDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;

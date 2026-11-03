@@ -99,6 +99,10 @@ public class CatalogoController implements Serializable {
             }
             catalogoService.guardarDesdeDTO(catalogoSeleccionado);
             JsfUtil.addSuccessMessageFromBundle("catalogo.mensaje.actualizado");
+            // Solo al guardar se recarga el árbol. Si falla, la fila sigue en edición con lo
+            // escrito (validationFailed) para corregirlo; Cancelar descarta los cambios.
+            cargarArbolCatalogos();
+            PrimeFaces.current().ajax().update(TABLA);
         } catch (NegocioException e) {
             manejarErrorNegocio(e);
         } catch (Exception e) {
@@ -107,8 +111,7 @@ public class CatalogoController implements Serializable {
             JsfUtil.addErrorMessageFromBundle("catalogo.mensaje.error");
         } finally {
             catalogoSeleccionado = null;
-            cargarArbolCatalogos();
-            PrimeFaces.current().ajax().update(TABLA, GROWL_GLOBAL);
+            PrimeFaces.current().ajax().update(GROWL_GLOBAL);
         }
     }
 
@@ -118,7 +121,9 @@ public class CatalogoController implements Serializable {
         JsfUtil.addWarningMessageFromBundle("catalogo.mensaje.edicion.cancelada",
                 catalogoSeleccionado != null ? catalogoSeleccionado.getNombre() : "");
         catalogoSeleccionado = null;
-        PrimeFaces.current().ajax().update(GROWL_GLOBAL);
+        // La fila pudo quedar con valores no guardados (validación fallida): se vuelven a leer.
+        cargarArbolCatalogos();
+        PrimeFaces.current().ajax().update(TABLA, GROWL_GLOBAL);
     }
 
     public void nuevoCatalogo() {

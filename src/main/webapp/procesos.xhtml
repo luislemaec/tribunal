@@ -11,7 +11,7 @@
 		<h:outputStylesheet library="css" name="procesos.css"/>
 		<div class="audit-page">
 
-			        <ui:include src="/WEB-INF/pageHeader.xhtml">
+			        <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-history"/>
             <ui:param name="titulo" value="#{msg['pagina.procesos.titulo']}"/>
             <ui:param name="descripcion" value="#{procesoController.administrador ? 'Bitácora global de actividades del sistema' : (procesoController.tribunal ? 'Actividades del sistema, excepto las de usuarios Administrador' : 'Sus actividades registradas en el sistema')}"/>
@@ -21,7 +21,7 @@
                     <p:tag rendered="#{procesoController.tribunal}" value="Vista Tribunal" severity="info" icon="pi pi-shield" styleClass="tec-status" />
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
 			<h:form id="frmProcesos">
 				<div class="surface-card border-round-lg tec-card">

@@ -38,7 +38,7 @@
                  ================================================================= -->
             <div class="flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
 
-                        <ui:include src="/WEB-INF/pageHeader.xhtml">
+                        <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-calendar-plus"/>
             <ui:param name="titulo" value="#{msg['pagina.cronograma.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.cronograma.descripcion']}"/>
@@ -47,7 +47,7 @@
                     <p:tag rendered="#{hayProceso and proceso.activo}" value="ACTIVO" severity="success" icon="pi pi-check-circle"/>
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
                 <!-- Selector de proceso (posición prominente) -->
                 <div class="flex align-items-center gap-2 flex-wrap">

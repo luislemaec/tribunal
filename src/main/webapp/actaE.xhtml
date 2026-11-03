@@ -14,7 +14,7 @@
         <h:outputStylesheet library="css" name="acta-fisica.css"/>
         <h:outputStylesheet library="css" name="actaE.css"/>
 
-                <ui:include src="/WEB-INF/pageHeader.xhtml">
+                <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-file-edit"/>
             <ui:param name="titulo" value="#{msg['pagina.actaE.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.actaE.descripcion']}"/>
@@ -23,7 +23,7 @@
                     <p:tag value="#{msg['reportesMesa.proceso.activo']}: #{actaEController.procesoActivo.nombre}" severity="info" rendered="#{not empty actaEController.procesoActivo}"/>
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
         <h:form id="frmActaE" enctype="multipart/form-data">
 

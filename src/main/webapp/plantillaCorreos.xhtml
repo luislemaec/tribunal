@@ -13,7 +13,7 @@
 
     <ui:define name="content">
 
-                <ui:include src="/WEB-INF/pageHeader.xhtml">
+                <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-envelope"/>
             <ui:param name="titulo" value="#{msg['pagina.plantillaCorreos.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.plantillaCorreos.descripcion']}"/>
@@ -22,7 +22,7 @@
                     <p:tag value="#{empty plantillaCorreoController.plantillasCorreos ? 0 : plantillaCorreoController.plantillasCorreos.size()} #{msg['plantillaCorreos.tag.total']}" icon="pi pi-list" severity="info"/>
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
         <p:blockUI block="frmPlantillaCorreo" trigger="frmPlantillaCorreo">
             <i class="pi pi-spin pi-spinner tec-overlay-spinner"/>

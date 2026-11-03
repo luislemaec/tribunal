@@ -15,6 +15,7 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.dto.IglesiaEliminadaDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.IglesiaBajaFacade;
@@ -47,6 +48,10 @@ import lombok.extern.slf4j.Slf4j;
 @DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal" })
 @RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
 public class IglesiaBajaService {
+
+	/** Fase INSCRIPCION_IGLESIAS para eliminar; restaurar y regularizar no dependen de ella. */
+	@Inject
+	private ec.com.antenasur.service.tec.CronogramaService cronogramaService;
 
 	@Inject
 	private IglesiaBajaFacade bajaFacade;
@@ -94,6 +99,10 @@ public class IglesiaBajaService {
 	 */
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Resultado eliminar(Integer iglesiaId) {
+		// Antes solo lo comprobaba IglesiaController: se aplica también en el servidor.
+		if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
+			throw new NegocioException("El registro de iglesias no está habilitado en la fase electoral vigente.");
+		}
 		Iglesia iglesia = bajaFacade.buscarSinFiltro(iglesiaId);
 		if (iglesia == null) {
 			throw new NegocioException("La iglesia ya no existe; actualice la lista.");

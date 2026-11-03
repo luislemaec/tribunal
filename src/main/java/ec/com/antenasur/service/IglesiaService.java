@@ -6,9 +6,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.dto.GeograpDTO;
 import ec.com.antenasur.dto.IglesiaAsignacionDTO;
 import ec.com.antenasur.dto.IglesiaDTO;
@@ -21,14 +27,37 @@ import ec.com.antenasur.facade.tec.DocumentoFacade;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.Iglesia;
 import ec.com.antenasur.model.Usuario;
+import ec.com.antenasur.service.tec.CronogramaService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Las escrituras exigen rol con @RolesAllowed por método. WildFly niega por defecto los métodos sin anotación de un EJB con seguridad
+ * (default-missing-method-permissions-deny-access): @PermitAll mantiene abiertas las lecturas
+ * (Dashboard, reportes, App y demás roles las usan), igual que antes de restringir las escrituras.
+ */
 @Stateless
 @Slf4j
+@PermitAll
+@DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin" })
 public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFacade> {
+
+	private static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+	private static final String ROL_TRIBUNAL = "SITEC-Tribunal";
+	private static final String ROL_IGLESIA_ADMIN = "SITEC-IglesiaAdmin";
+
+	/** Mismos textos que IglesiaController, que los muestra tal cual. */
+	private static final String MSG_FASE_NO_PERMITE = "El registro de iglesias no está habilitado en la fase electoral vigente.";
+	private static final String MSG_SOLO_IGLESIA_ASIGNADA = "El usuario IglesiaAdmin solo puede gestionar la iglesia asignada.";
+	private static final String MSG_ACCESO_DENEGADO = "No tiene permisos para consultar o gestionar esta iglesia.";
+
+	@Resource
+	private SessionContext sessionContext;
+
+	@Inject
+	private CronogramaService cronogramaService;
 
 	@Inject
 	private IglesiaFacade iglesiaFacade;
@@ -220,6 +249,7 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 	 * detectar ediciones concurrentes (lanzará {@link NegocioException} si hay
 	 * conflicto).
 	 */
+	@RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL, ROL_IGLESIA_ADMIN })
 	public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto) {
 		return guardarDesdeDTO(dto, true);
 	}
@@ -229,10 +259,14 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 	 *                          iglesia ya registrada (solo Superadministrador,
 	 *                          Administrador y Tribunal pueden cambiarlo).
 	 */
+	@RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL, ROL_IGLESIA_ADMIN })
 	public IglesiaDTO guardarDesdeDTO(IglesiaDTO dto, boolean permitirCambioRuc) {
 		if (dto == null) {
 			return null;
 		}
+		validarRegistroPermitido(dto);
+		// El servidor decide con el principal EJB: el booleano del llamador no basta.
+		permitirCambioRuc = permitirCambioRuc && esCallerAdministradorOTribunal();
 		Geograp ubicacion = (dto.getUbicacionId() != null) ? geograpFacade.find(dto.getUbicacionId()) : null;
 		if (ubicacion == null) {
 			log.warn("guardarDesdeDTO: ubicacionId={} no encontrado", dto.getUbicacionId());
@@ -334,15 +368,49 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		return resultado;
 	}
 
+	@RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
 	public IglesiaDTO eliminarPorId(Integer id) {
 		if (id == null) {
 			return null;
+		}
+		if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
+			throw new NegocioException(MSG_FASE_NO_PERMITE);
 		}
 		Iglesia i = iglesiaFacade.find(id);
 		if (i == null) {
 			return null;
 		}
 		return IglesiaDTO.fromEntity(iglesiaFacade.delete(i));
+	}
+
+	/**
+	 * Reglas vigentes del registro de iglesias, aplicadas en el servidor (antes solo las
+	 * comprobaba IglesiaController): la fase vigente debe permitir el registro
+	 * (INSCRIPCION_IGLESIAS) y un IglesiaAdmin no crea iglesias y solo edita la asignada.
+	 * Un usuario que además tiene otro rol se trata como IglesiaAdmin, igual que en la
+	 * pantalla.
+	 */
+	private void validarRegistroPermitido(IglesiaDTO dto) {
+		if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
+			throw new NegocioException(MSG_FASE_NO_PERMITE);
+		}
+		if (!sessionContext.isCallerInRole(ROL_IGLESIA_ADMIN)) {
+			return;
+		}
+		if (dto.getId() == null) {
+			throw new NegocioException(MSG_SOLO_IGLESIA_ASIGNADA);
+		}
+		Usuario usuario = sessionContext.getCallerPrincipal() == null ? null
+				: usuarioFacade.findByUsuarioName(sessionContext.getCallerPrincipal().getName());
+		Integer iglesiaAsignadaId = usuario != null && usuario.getIglesia() != null ? usuario.getIglesia().getId() : null;
+		if (iglesiaAsignadaId == null || !iglesiaAsignadaId.equals(dto.getId())) {
+			throw new NegocioException(MSG_ACCESO_DENEGADO);
+		}
+	}
+
+	/** Misma regla que IglesiaController.isPuedeEditarRucSiempre (con doble rol también cuenta). */
+	private boolean esCallerAdministradorOTribunal() {
+		return sessionContext.isCallerInRole(ROL_ADMINISTRADOR) || sessionContext.isCallerInRole(ROL_TRIBUNAL);
 	}
 
 	public IglesiaDTO buscarDTOPorDocumento(String documento) {

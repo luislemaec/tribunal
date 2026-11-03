@@ -114,6 +114,11 @@
     </security-role>
     <session-config>
         <session-timeout>15</session-timeout>
+        <!-- Sesión solo por cookie, nunca ;jsessionid en las URL: LoginFilterExcluder rechaza
+             rutas con ';' y, en la primera visita, el CSS/JS de la página se redirigía al login.
+             Es además lo recomendado por seguridad (el id de sesión no queda en URLs ni logs).
+             ArranqueQr ya lo aplicaba, pero solo con el acceso QR habilitado. -->
+        <tracking-mode>COOKIE</tracking-mode>
     </session-config>
     <error-page>
         <error-code>404</error-code>

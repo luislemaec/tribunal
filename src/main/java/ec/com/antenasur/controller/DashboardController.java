@@ -110,6 +110,13 @@ public class DashboardController implements Serializable {
     @Getter
     private boolean tieneIglesiaAsignada;
 
+    /** IglesiaAdmin: terminó la fase Actualización de miembros (mensaje de cierre y agradecimiento). */
+    @Getter
+    private boolean actualizacionMiembrosFinalizada;
+
+    @Getter
+    private java.util.Date fechaFinActualizacionMiembros;
+
     @Getter
     private boolean tieneMesaAsignada;
 
@@ -469,6 +476,7 @@ public class DashboardController implements Serializable {
         }
 
         tieneIglesiaAsignada = true;
+        cargarCierreActualizacion();
         cargarIndicadoresIglesia(iglesiaId);
         cargarAsignacionElectoral(iglesiaId);
         cargarAlertasIglesia();
@@ -492,8 +500,10 @@ public class DashboardController implements Serializable {
      * cierra y recargar el Dashboard no lo repite.
      */
     private void prepararAvisoMiembros() {
+        // Terminada la fase Actualización de miembros el aviso ya no tiene acción posible.
         mostrarAvisoMiembros = resumenMiembros.isRequiereAtencion() && loginBean != null
-                && !loginBean.isAvisoMiembrosMostrado();
+                && !loginBean.isAvisoMiembrosMostrado()
+                && !cronogramaService.actualizacionMiembrosFinalizada();
         if (mostrarAvisoMiembros) {
             permiteEdicionMiembros = cronogramaService.permiteEdicionPadron();
             loginBean.setAvisoMiembrosMostrado(true);
@@ -526,12 +536,23 @@ public class DashboardController implements Serializable {
         recintosAsignados = String.join(", ", recintos);
     }
 
+    /** Misma regla que oculta el aviso de miembros: la fase ya terminó (CronogramaService). */
+    private void cargarCierreActualizacion() {
+        actualizacionMiembrosFinalizada = cronogramaService.actualizacionMiembrosFinalizada();
+        var fase = actualizacionMiembrosFinalizada ? cronogramaService.getFaseActualizacionMiembros() : null;
+        fechaFinActualizacionMiembros = fase != null ? fase.getFechaFin() : null;
+    }
+
     private void cargarAlertasIglesia() {
-        if (personasInformacionIncompleta > 0) {
-            alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.personasIncompletas"));
-        }
-        if (personasPendientesRevision > 0) {
-            alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.revisionPendiente"));
+        // Terminada la fase Actualización de miembros ya no se pueden corregir: solo se
+        // mantiene el mensaje de cierre y las alertas que siguen siendo útiles (mesa).
+        if (!actualizacionMiembrosFinalizada) {
+            if (personasInformacionIncompleta > 0) {
+                alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.personasIncompletas"));
+            }
+            if (personasPendientesRevision > 0) {
+                alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.revisionPendiente"));
+            }
         }
         if (mesasAsignadas == null || mesasAsignadas.isBlank()) {
             alertasIglesia.add(JsfUtil.getMessage("dashboard.iglesia.alerta.sinMesa"));

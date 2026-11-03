@@ -19,6 +19,7 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.dto.FiltroMiembrosDTO;
 import ec.com.antenasur.dto.IglesiaPersonaDTO;
 import ec.com.antenasur.dto.ResumenMiembrosIglesiaDTO;
@@ -211,7 +212,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 	 * cambio marca al miembro como revisado. No modifica los datos de la persona.
 	 */
 	public IglesiaPersonaDTO cambiarHabilitacion(Integer iglesiaPersonaId, boolean habilitado) {
-		if (!cronogramaService.permiteEdicionPadron()) {
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		IglesiaPersona ip = iglesiaPersonaId != null ? iglesiaPersonaFacade.find(iglesiaPersonaId) : null;
@@ -310,7 +311,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		// Validación dura por cronograma electoral: rechazamos saves si la
 		// fase vigente no permite edición del padrón. UI también lo bloquea
 		// pero esta capa protege contra requests fuera de flujo.
-		if (!cronogramaService.permiteEdicionPadron()) {
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		Iglesia iglesia = (dto.getIglesia().getId() != null) ? iglesiaFacade.find(dto.getIglesia().getId()) : null;
@@ -376,7 +377,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (dto == null || dto.getPersona() == null) {
 			return null;
 		}
-		if (!cronogramaService.permiteEdicionPadron()) {
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		if (vinculoDefinitivoId == null) {
@@ -506,7 +507,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (!esCallerAdministradorOTribunal()) {
 			throw new IglesiaPersonaException("form.personas.masiva.error.permiso");
 		}
-		if (!cronogramaService.permiteEdicionPadron()) {
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		IglesiaPersona ip = iglesiaPersonaId != null ? iglesiaPersonaFacade.find(iglesiaPersonaId) : null;
@@ -535,7 +536,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 	 */
 	private void validarMiembro(Iglesia iglesia, Integer vinculoActualId, Integer personaId, String documento,
 			String nombres, String sexo) {
-		if (!cronogramaService.permiteEdicionPadron()) {
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		if (iglesia == null || !Boolean.TRUE.equals(iglesia.getEstado())) {
@@ -767,6 +768,10 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (id == null) {
 			return null;
 		}
+		// Antes la web solo lo aplicaba en la pantalla (disabled); la App ya lo validaba.
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
+			throw new IglesiaPersonaException("form.personas.error.cronograma");
+		}
 		IglesiaPersona ip = iglesiaPersonaFacade.find(id);
 		if (ip == null) {
 			return null;
@@ -794,6 +799,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 	public int eliminarPorIds(List<Integer> ids) {
 		if (ids == null || ids.isEmpty()) {
 			return 0;
+		}
+		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
+			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
 		int count = 0;
 		for (Integer id : ids) {

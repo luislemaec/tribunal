@@ -12,7 +12,7 @@
 
     <ui:define name="content">
 
-                <ui:include src="/WEB-INF/pageHeader.xhtml">
+                <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-star"/>
             <ui:param name="titulo" value="#{msg['pagina.autoridades.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.autoridades.descripcion']}"/>
@@ -21,7 +21,7 @@
                     <p:tag value="#{empty tribunalController.periodoSeleccionado ? msg['form.autoridades.estado.sinProceso'] : tribunalController.periodoSeleccionado.nombre}" severity="#{empty tribunalController.periodoSeleccionado ? 'warning' : 'info'}" icon="pi pi-calendar"/>
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 
         <h:form id="frmPeriodos">
 

@@ -17,6 +17,7 @@ import jakarta.inject.Named;
 
 import org.primefaces.PrimeFaces;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.itext.ReporteXLSX;
@@ -104,6 +105,13 @@ public class IglesiaController implements Serializable {
     @Setter
     @Getter
     private Integer provinciaFiltroId;
+
+    /**
+     * Provincia operativa del módulo (Chimborazo), el mismo identificador geográfico que
+     * usan ActaEController, MesaController y RecintoController. Iglesias no ofrece filtro
+     * de provincia: el listado, los cantones y los totales se limitan a ella.
+     */
+    static final int PROVINCIA_OPERATIVA_ID = 7;
 
     @Setter
     @Getter
@@ -201,6 +209,14 @@ public class IglesiaController implements Serializable {
     @Getter
     private boolean puedeAsignarAdministradores;
 
+    /** Administrador o Tribunal registran iglesias aunque la fase vigente no lo habilite. */
+    @Getter
+    private boolean registroFueraDeFase;
+
+    /** Administrador o Tribunal asignan administradores aunque la fase vigente no lo habilite. */
+    @Getter
+    private boolean asignacionFueraDeFase;
+
     /** [total, procesadas, porcentaje] para la barra de progreso de la fase activa. */
     @Getter
     private int[] progresoRegistro = {0, 0, 0};
@@ -262,12 +278,16 @@ public class IglesiaController implements Serializable {
             if (restringidoAIglesia) {
                 cargarIglesiaAsignada();
             } else {
+                fijarProvinciaOperativa();
                 aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
             }
             esNuevoRegistro = false;
             faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
-            puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
-            puedeAsignarAdministradores = cronogramaService.permiteAsignacionUsuarios();
+            // Política central: la fase vigente o la excepción de Administrador/Tribunal.
+            puedeRegistrarIglesia = cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS);
+            puedeAsignarAdministradores = cronogramaService.permite(OperacionCronograma.ASIGNACION_ADMINISTRADORES);
+            registroFueraDeFase = puedeRegistrarIglesia && !cronogramaService.permiteRegistroIglesias();
+            asignacionFueraDeFase = puedeAsignarAdministradores && !cronogramaService.permiteAsignacionUsuarios();
             if (!restringidoAIglesia && faseVigente != null) {
                 progresoRegistro = iglesiaService.calcularProgresoRegistro(
                         faseVigente.getFechaInicio(), faseVigente.getFechaFin());
@@ -698,8 +718,9 @@ public class IglesiaController implements Serializable {
             return;
         }
         iglesiaSeleccionado = new IglesiaDTO();
-        provinciaDialogoId = null;
-        cantonesDialogo = null;
+        // El diálogo no ofrece provincia: toda iglesia nueva se registra en la provincia operativa.
+        provinciaDialogoId = PROVINCIA_OPERATIVA_ID;
+        cantonesDialogo = geograpService.findByFatherId(PROVINCIA_OPERATIVA_ID);
         cantonDialogoId = null;
         parroquiasDialogo = null;
         esNuevoRegistro = true;
@@ -784,7 +805,7 @@ public class IglesiaController implements Serializable {
             iglesiaSeleccionado = null;
             return;
         }
-        if (!cronogramaService.permiteRegistroIglesias()) {
+        if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
             JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             iglesiaSeleccionado = null;
             return;
@@ -829,7 +850,7 @@ public class IglesiaController implements Serializable {
             JsfUtil.addErrorMessage("El usuario IglesiaAdmin no puede eliminar iglesias.");
             return;
         }
-        if (!cronogramaService.permiteRegistroIglesias()) {
+        if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
             JsfUtil.addErrorMessage("El registro de iglesias no está habilitado en la fase electoral vigente.");
             return;
         }
@@ -901,7 +922,7 @@ public class IglesiaController implements Serializable {
 
     public void actualizarIglesia() {
         try {
-            if (!cronogramaService.permiteRegistroIglesias()) {
+            if (!cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS)) {
                 rechazarConMensaje("El registro de iglesias no está habilitado en la fase electoral vigente.");
                 return;
             }
@@ -995,11 +1016,10 @@ public class IglesiaController implements Serializable {
         parroquiasDialogo = null;
     }
 
-    /** Botones «Limpiar filtros» y «Recargar»: vuelve al listado completo. */
+    /** Botones «Limpiar filtros» y «Recargar»: vuelve al listado completo de la provincia operativa. */
     public void limpiarFiltros() {
         iglesiaSeleccionado = null;
-        provinciaFiltroId = null;
-        cantonesFiltro = null;
+        fijarProvinciaOperativa();
         cantonSeleccionado = new Geograp();
         parroquias = null;
         parroquiaSeleccionado = new Geograp();
@@ -1026,7 +1046,8 @@ public class IglesiaController implements Serializable {
             aplicarResultadoFiltroGeografico(consultarSeleccionGeografica());
         }
         faseVigente = cronogramaService.getFaseVigenteDelProcesoActivo();
-        puedeRegistrarIglesia = cronogramaService.permiteRegistroIglesias();
+        puedeRegistrarIglesia = cronogramaService.permite(OperacionCronograma.REGISTRO_IGLESIAS);
+        registroFueraDeFase = puedeRegistrarIglesia && !cronogramaService.permiteRegistroIglesias();
         if (!restringidoAIglesia && faseVigente != null) {
             progresoRegistro = iglesiaService.calcularProgresoRegistro(
                     faseVigente.getFechaInicio(), faseVigente.getFechaFin());
@@ -1039,8 +1060,21 @@ public class IglesiaController implements Serializable {
         return restringidoAIglesia || listaIglesias == null ? 0 : listaIglesias.size();
     }
 
-    public int getTotalProvinciasIndicador() {
-        return restringidoAIglesia || provincias == null ? 0 : provincias.size();
+    /** Cantones de la provincia operativa (antes se contaban las provincias del país). */
+    public int getTotalCantonesIndicador() {
+        return restringidoAIglesia || cantonesFiltro == null ? 0 : cantonesFiltro.size();
+    }
+
+    /** Filtro activo: cantón, parroquia o comunidad (la provincia es fija). */
+    public boolean isFiltroGeograficoActivo() {
+        return (cantonSeleccionado != null && cantonSeleccionado.getId() != null)
+                || (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null)
+                || comunidadFiltro != null;
+    }
+
+    private void fijarProvinciaOperativa() {
+        provinciaFiltroId = PROVINCIA_OPERATIVA_ID;
+        cantonesFiltro = geograpService.findByFatherId(PROVINCIA_OPERATIVA_ID);
     }
 
     /**

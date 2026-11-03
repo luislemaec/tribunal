@@ -44,8 +44,8 @@
                         <div class="iglesias-kpi">
                             <span class="iglesias-kpi__icon" aria-hidden="true"><i class="pi pi-map-marker"/></span>
                             <span class="min-w-0">
-                                <span class="iglesias-kpi__label">#{msg['form.iglesias.kpi.provincias']}</span>
-                                <h:outputText value="#{iglesiaController.totalProvinciasIndicador}"
+                                <span class="iglesias-kpi__label">#{msg['form.iglesias.kpi.cantones']}</span>
+                                <h:outputText value="#{iglesiaController.totalCantonesIndicador}"
                                               styleClass="iglesias-kpi__value"/>
                             </span>
                         </div>
@@ -110,25 +110,12 @@
                         <span class="tec-field-label">
                             <i class="pi pi-filter" aria-hidden="true"/> #{msg['form.iglesias.filters.title']}
                         </span>
-                        <p:tag rendered="#{iglesiaController.provinciaFiltroId ne null or iglesiaController.comunidadFiltro ne null}"
+                        <p:tag rendered="#{iglesiaController.filtroGeograficoActivo}"
                                value="#{msg['form.iglesias.filters.activo']}" severity="info" icon="pi pi-check-circle"
                                styleClass="tec-status"/>
                     </div>
                     <div class="formgrid grid">
-                        <div class="field col-12 md:col-4 xl:col-2">
-                            <label for="provinciaSel" class="tec-field-label">#{msg['form.iglesias.filters.label.provincia']}</label>
-                            <p:selectOneMenu id="provinciaSel" value="#{iglesiaController.provinciaFiltroId}"
-                                             filter="true" filterMatchMode="contains"
-                                             placeholder="#{msg['form.iglesias.filters.placeholder.provincia']}"
-                                             autoWidth="false" panelStyleClass="tec-select-panel">
-                                <f:selectItem itemLabel="#{msg['form.iglesias.filters.option.todos']}"
-                                              itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{iglesiaController.provincias}" var="prov"
-                                               itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
-                                <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesFiltro()}"
-                                        process="@this" update=":frmFiltros :frmIglesias:tblIglesia"/>
-                            </p:selectOneMenu>
-                        </div>
+                        <!-- Sin filtro de provincia: el módulo trabaja solo con Chimborazo (IglesiaController). -->
                         <div class="field col-12 md:col-4 xl:col-2">
                             <label for="canton" class="tec-field-label">#{msg['form.iglesias.filters.label.canton']}</label>
                             <p:selectOneMenu id="canton" value="#{iglesiaController.cantonSeleccionado.id}"
@@ -231,6 +218,20 @@
                                       value=" #{msg['form.iglesias.banner.fase.vigente']} #{iglesiaController.faseVigente.titulo}."/>
                         <h:outputText rendered="#{iglesiaController.faseVigente eq null}"
                                       value=" #{msg['form.iglesias.banner.fase.ninguna']}"/>
+                    </span>
+                </p:outputPanel>
+
+                <!-- Excepción del cronograma (Administrador/Tribunal): informa que se opera fuera de fase. -->
+                <p:outputPanel rendered="#{iglesiaController.registroFueraDeFase or iglesiaController.asignacionFueraDeFase}"
+                               layout="block" styleClass="callout callout--info iglesias-aviso mb-3">
+                    <i class="pi pi-shield" aria-hidden="true"/>
+                    <span>
+                        <strong>#{msg['cronograma.excepcion.titulo']}</strong>
+                        #{iglesiaController.registroFueraDeFase and iglesiaController.asignacionFueraDeFase
+                          ? msg['form.iglesias.banner.fueraDeFase.ambos']
+                          : (iglesiaController.registroFueraDeFase
+                             ? msg['form.iglesias.banner.fueraDeFase.registro']
+                             : msg['form.iglesias.banner.fueraDeFase.asignacion'])}
                     </span>
                 </p:outputPanel>
 
@@ -802,25 +803,11 @@
 
                     <div class="formgrid grid">
 
-                        <!-- Provincia (estado exclusivo del diálogo).
-                             NO usar filter="true" — bug PrimeFaces 11 concatena etiquetas tras update AJAX. -->
-                        <div class="field col-12 md:col-4 mb-0">
-                            <label for="provinciaDlg" class="tec-field-label">
-                                #{msg['form.iglesias.label.provincia']} <span class="tec-requerido">*</span>
-                            </label>
-                            <p:selectOneMenu id="provinciaDlg" value="#{iglesiaController.provinciaDialogoId}"
-                                             autoWidth="false" panelStyleClass="tec-select-panel">
-                                <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.provincia']}"
-                                              itemValue="#{null}" noSelectionOption="true"/>
-                                <f:selectItems value="#{iglesiaController.provincias}" var="prov"
-                                               itemLabel="#{prov.name}" itemValue="#{prov.id}"/>
-                                <p:ajax event="change" listener="#{iglesiaController.obtieneCantonesDialogo()}"
-                                        process="@this" update="cantonSel parroquiaSel"/>
-                            </p:selectOneMenu>
-                        </div>
+                        <!-- Sin provincia: las iglesias nuevas se registran en Chimborazo; al editar se
+                             conservan los cantones de la provincia de la iglesia (IglesiaController). -->
 
                         <!-- Cantón (estado exclusivo del diálogo) -->
-                        <div class="field col-12 md:col-4 mb-0">
+                        <div class="field col-12 md:col-6 mb-0">
                             <label for="cantonSel" class="tec-field-label">
                                 #{msg['form.iglesias.label.canton']} <span class="tec-requerido">*</span>
                             </label>
@@ -836,7 +823,7 @@
                         </div>
 
                         <!-- Parroquia (estado exclusivo del diálogo) -->
-                        <div class="field col-12 md:col-4 mb-0">
+                        <div class="field col-12 md:col-6 mb-0">
                             <label for="parroquiaSel" class="tec-field-label">
                                 #{msg['form.iglesias.label.parroquia']} <span class="tec-requerido">*</span>
                             </label>

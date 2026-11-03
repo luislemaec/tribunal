@@ -15,6 +15,7 @@ import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 
+import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.dto.ResultadoProvisionUsuarioDTO;
 import ec.com.antenasur.dto.DiagnosticoAsignacionAdministradorDTO;
 import ec.com.antenasur.exception.NegocioException;
@@ -113,7 +114,7 @@ public class AsignacionAdministradorIglesiaService {
 	}
 
 	private IglesiaPersona validarAsignacionBase(Integer iglesiaId, Integer iglesiaPersonaId) {
-		if (!cronogramaService.permiteAsignacionUsuarios()) {
+		if (!cronogramaService.permite(OperacionCronograma.ASIGNACION_ADMINISTRADORES)) {
 			throw new NegocioException("iglesias.admin.error.fase.no.permite");
 		}
 		Iglesia iglesia = iglesiaFacade.findForAdminAssignment(iglesiaId);

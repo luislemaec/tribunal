@@ -37,8 +37,9 @@
                 <!-- TREE TABLE con inline edit -->
                 <p:treeTable value="#{catalogoController.root}" var="catalogo" editable="true" id="trTblCatalogo"
                              styleClass="ui-datatable-striped ui-datatable-sm">
+                    <!-- Sin actualizar la tabla: si falla, la fila sigue en edición (ver onRowEdit). -->
                     <p:ajax event="rowEdit" listener="#{catalogoController.onRowEdit}" process="@this"
-                            update="trTblCatalogo :frmGlobal:growlGlobal"/>
+                            update=":frmGlobal:growlGlobal"/>
                     <p:ajax event="rowEditCancel" listener="#{catalogoController.onRowCancel}" process="@this"
                             update=":frmGlobal:growlGlobal"/>
 
@@ -62,7 +63,8 @@
                               sortBy="#{catalogo.orden}" style="width:6%" responsivePriority="3">
                         <p:cellEditor>
                             <f:facet name="output"><p:badge value="#{catalogo.orden}" severity="info"/></f:facet>
-                            <f:facet name="input"><p:inputText value="#{catalogo.orden}" style="width:100%"/></f:facet>
+                            <f:facet name="input"><p:inputNumber value="#{catalogo.orden}" decimalPlaces="0" minValue="0"
+                                                                    inputStyle="width:100%"/></f:facet>
                         </p:cellEditor>
                     </p:column>
 
@@ -151,12 +153,11 @@
 
                             <div class="field col-12">
                                 <label for="descripcion" class="font-medium text-700 text-sm">
-                                    #{msg['form.catalogos.label.descripcion']} <span class="tec-text-danger">*</span>
+                                    #{msg['form.catalogos.label.descripcion']}
                                 </label>
                                 <p:inputText id="descripcion"
                                              value="#{catalogoController.catalogoSeleccionado.descripcion}"
-                                             maxlength="150" required="true" styleClass="w-full"
-                                             requiredMessage="#{msg['catalogo.mensaje.campos.obligatorios']}"
+                                             maxlength="150" styleClass="w-full"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
 

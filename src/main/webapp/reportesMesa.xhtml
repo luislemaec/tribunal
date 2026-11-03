@@ -12,7 +12,7 @@
 		<h:outputStylesheet library="css" name="acta-fisica.css"/>
 		<h:outputStylesheet library="css" name="reportesMesa.css"/>
 		<div class="surface-ground p-2 md:p-4">
-			        <ui:include src="/WEB-INF/pageHeader.xhtml">
+			        <ui:decorate template="/WEB-INF/pageHeader.xhtml">
             <ui:param name="icono" value="pi-file"/>
             <ui:param name="titulo" value="#{msg['pagina.reportesMesa.titulo']}"/>
             <ui:param name="descripcion" value="#{msg['pagina.reportesMesa.descripcion']}"/>
@@ -21,7 +21,7 @@
                     <p:tag value="#{msg['reportesMesa.proceso.activo']}: #{reporteMesaController.procesoActivo.nombre}" severity="info" rendered="#{not empty reporteMesaController.procesoActivo}" />
                 </div>
             </ui:define>
-        </ui:include>
+        </ui:decorate>
 			<h:form id="frmReportesMesa">
 				<p:outputPanel id="panelPrincipal">
 					<div class="surface-card border-round-lg shadow-1 p-3 mb-3">
