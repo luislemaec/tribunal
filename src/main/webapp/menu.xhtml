@@ -123,10 +123,11 @@
                             </p:cellEditor>
                         </p:column>
 
+                        <!-- p:rowEditor debe ser hijo directo de la celda: PrimeFaces solo escucha el
+                             lápiz con el selector «> tr > td > div.ui-row-editor». Sin envoltorios;
+                             la alineación la da td.tec-col-actions (tribunal-globals.css). -->
                         <p:column headerText="#{msg['menu.tabla.acciones']}" responsivePriority="1"
                                   styleClass="tec-col-actions">
-                          <!-- div (no span): p:rowEditor genera un bloque. -->
-                          <div class="tec-acciones">
                             <p:rowEditor/>
                             <p:commandButton icon="pi pi-trash"
                                              styleClass="rounded-button ui-button-flat ui-button-danger"
@@ -135,7 +136,6 @@
                                              oncomplete="PF('dlgEliminaRegistro').show()">
                                 <f:setPropertyActionListener value="#{menu}" target="#{menuController.menuSeleccionado}"/>
                             </p:commandButton>
-                          </div>
                         </p:column>
                     </p:treeTable>
                 </div>

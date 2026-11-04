@@ -9,6 +9,7 @@ import java.util.Map;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.Persona;
@@ -28,8 +29,11 @@ import org.hibernate.Session;
 @Stateless
 public class PersonaBajaFacade {
 
-	/** Tope de filas del listado de eliminados: es una consulta de revisión, no un reporte. */
-	public static final int MAX_ELIMINADAS = 500;
+	/**
+	 * Tope de filas por consulta: la tabla pide 10, 25 o 50 y la exportación a Excel
+	 * recorre todas las bajas en lotes de este tamaño.
+	 */
+	public static final int MAX_FILAS_CONSULTA = 500;
 
 	@PersistenceContext(unitName = "tribunalPU")
 	private EntityManager em;
@@ -47,15 +51,39 @@ public class PersonaBajaFacade {
 		return id == null ? null : emSinFiltro().find(Persona.class, id);
 	}
 
+	/** Total de personas inactivas que coinciden con la búsqueda (cédula o nombres). */
+	public long contarInactivas(String busqueda) {
+		TypedQuery<Long> consulta = emSinFiltro().createQuery(
+				"SELECT COUNT(p) FROM Persona p WHERE p.estado = FALSE" + condicionBusqueda(busqueda), Long.class);
+		return aplicarBusqueda(consulta, busqueda).getSingleResult();
+	}
+
 	/**
-	 * Personas inactivas, acotadas a {@link #MAX_ELIMINADAS}: se consulta solo al
-	 * abrir «Ver eliminadas».
+	 * Una página de personas inactivas, de la baja más reciente a la más antigua. Se
+	 * consulta solo con «Ver eliminadas» abierto y solo las filas visibles: los datos de
+	 * auditoría de cada fila se completan después, para esa página.
 	 */
-	public List<Persona> listarInactivas() {
-		return emSinFiltro()
-				.createQuery("SELECT p FROM Persona p WHERE p.estado = FALSE"
-						+ " ORDER BY p.fechaActualiza DESC NULLS LAST, p.id DESC", Persona.class)
-				.setMaxResults(MAX_ELIMINADAS).getResultList();
+	public List<Persona> listarInactivas(String busqueda, int primero, int cantidad) {
+		TypedQuery<Persona> consulta = emSinFiltro().createQuery("SELECT p FROM Persona p WHERE p.estado = FALSE"
+				+ condicionBusqueda(busqueda) + " ORDER BY p.fechaActualiza DESC NULLS LAST, p.id DESC", Persona.class);
+		return aplicarBusqueda(consulta, busqueda).setFirstResult(Math.max(0, primero))
+				.setMaxResults(Math.max(1, Math.min(cantidad, MAX_FILAS_CONSULTA))).getResultList();
+	}
+
+	private static String condicionBusqueda(String busqueda) {
+		return busqueda == null || busqueda.isBlank() ? ""
+				: " AND (LOWER(p.documento) LIKE :patron ESCAPE '\\' OR LOWER(p.nombres) LIKE :patron ESCAPE '\\'"
+						+ " OR LOWER(p.apellidos) LIKE :patron ESCAPE '\\')";
+	}
+
+	/** Coincidencia parcial sin distinguir mayúsculas; %, _ y \ se buscan como texto. */
+	private static <T> TypedQuery<T> aplicarBusqueda(TypedQuery<T> consulta, String busqueda) {
+		if (busqueda == null || busqueda.isBlank()) {
+			return consulta;
+		}
+		String texto = busqueda.trim().toLowerCase(java.util.Locale.ROOT)
+				.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+		return consulta.setParameter("patron", "%" + texto + "%");
 	}
 
 	/**

@@ -600,6 +600,14 @@ body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; colo
 
 body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 
+/* Celdas con p:rowEditor: el editor debe ser hijo directo del td (PrimeFaces escucha el lápiz
+   con «> tr > td > div.ui-row-editor»), así que no puede ir dentro de .tec-acciones. Mismo
+   aspecto en una línea: el editor (bloque con clearfix) pasa a flex y los botones lo siguen. */
+body td.tec-col-actions { white-space:nowrap; }
+body td.tec-col-actions > .ui-row-editor { display:inline-flex; align-items:center; gap:.2812rem; vertical-align:middle; }
+body td.tec-col-actions > .ui-row-editor::after { content:none; }
+body td.tec-col-actions > .ui-row-editor ~ .ui-button { display:inline-flex; vertical-align:middle; margin:0 0 0 .2812rem; }
+
 /* Separador vertical entre grupos de acciones de una barra */
 .tec-toolbar-sep { display:inline-block; flex:0 0 auto; align-self:center; width:1px; height:1.125rem; margin:0 .1875rem; background:var(--surface-200); }
 

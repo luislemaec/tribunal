@@ -76,9 +76,17 @@ final class ExportacionExcelRegistros {
      * Un fallo al registrar no afecta a la descarga, que ya se entregó.
      */
     private static void registrarExportacion(String clavePestana, String filtro, String archivo) {
-        String datos = "MÓDULO: REPORTES; RESULTADO: EXITOSO; DETALLE: ";
-        String detalle = JsfUtil.getMessage("pagina.reporteRegistros.titulo") + " – " + JsfUtil.getMessage(clavePestana)
-                + (filtro == null || filtro.isBlank() ? "" : "; " + filtro) + "; Archivo: " + archivo;
+        registrar("REPORTES", JsfUtil.getMessage("pagina.reporteRegistros.titulo") + " – "
+                + JsfUtil.getMessage(clavePestana) + (filtro == null || filtro.isBlank() ? "" : "; " + filtro), archivo);
+    }
+
+    /**
+     * Misma entrada EXPORTAR_REPORTE_EXCEL para cualquier exportación de TEC (también fuera
+     * de Reportes, p. ej. Personas eliminadas), con el módulo que corresponda.
+     */
+    static void registrar(String modulo, String descripcion, String archivo) {
+        String datos = "MÓDULO: " + modulo + "; RESULTADO: EXITOSO; DETALLE: ";
+        String detalle = descripcion + "; Archivo: " + archivo;
         // tec.procesos.actividad admite 255 caracteres: se acorta el detalle, nunca el formato.
         int disponible = 255 - ACCION_EXPORTAR.length() - 3 - datos.length();
         if (detalle.length() > disponible) {

@@ -1,6 +1,7 @@
 package ec.com.antenasur.controller;
 
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -34,6 +35,7 @@ import ec.com.antenasur.enums.OperacionCronograma;
 import ec.com.antenasur.util.ModeloLazy;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
+import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 
@@ -149,9 +151,19 @@ public class PersonaController implements Serializable {
     @Getter
     private List<PersonaHistorialDTO> historialPersona = Collections.emptyList();
 
-    /** Personas eliminadas; se llena solo al abrir el panel y se libera al cerrarlo. */
+    /**
+     * Personas eliminadas, paginadas en BD sin tope: solo consulta con el panel abierto y
+     * solo la página visible, con la búsqueda por cédula o nombres.
+     */
     @Getter
-    private List<PersonaEliminadaDTO> personasEliminadas = Collections.emptyList();
+    private final EliminadasLazy modeloEliminadas = new EliminadasLazy();
+
+    @Setter
+    @Getter
+    private String busquedaEliminadas;
+
+    /** El panel está abierto: sin esto, un update del formulario cerrado volvería a consultar. */
+    private boolean eliminadasAbiertas;
 
     @Setter
     @Getter
@@ -1073,24 +1085,111 @@ public class PersonaController implements Serializable {
      * esta lista no se consulta durante la carga inicial de la pantalla.
      */
     public void abrirEliminadas() {
-        personasEliminadas = Collections.emptyList();
+        eliminadasAbiertas = false;
+        busquedaEliminadas = null;
         personaEliminadaSeleccionada = null;
         if (!isPuedeGestionarEliminadas()) {
             JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.permiso"));
             return;
         }
-        try {
-            personasEliminadas = personaBajaService.listarEliminadas();
-        } catch (Exception e) {
-            log.error("Error al listar personas eliminadas", e);
-            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.carga"));
+        eliminadasAbiertas = true;
+        reiniciarPaginaEliminadas();
+    }
+
+    /** Búsqueda por cédula o nombres: vuelve a la primera página. */
+    public void buscarEliminadas() {
+        reiniciarPaginaEliminadas();
+    }
+
+    private void reiniciarPaginaEliminadas() {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+        UIComponent tabla = contexto == null ? null
+                : contexto.getViewRoot().findComponent("frmPersonasEliminadas:tblPersonasEliminadas");
+        if (tabla instanceof DataTable dataTable) {
+            dataTable.setFirst(0);
         }
     }
 
-    /** Libera la lista al cerrar el panel para no retenerla en la vista. */
+    /**
+     * Excel de todas las personas eliminadas que coinciden con la búsqueda vigente (no solo
+     * la página visible), con la misma presentación que la exportación de miembros. El
+     * servicio exige Administrador o Tribunal; la exportación queda en la bitácora.
+     */
+    public StreamedContent exportarEliminadasExcel() {
+        if (!isPuedeGestionarEliminadas()) {
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.permiso"));
+            return null;
+        }
+        try {
+            List<PersonaEliminadaDTO> lista = personaBajaService.listarEliminadasCompleto(busquedaEliminadas);
+            String[] columnas = {
+                mensaje("form.personas.exportar.col.numero"),
+                mensaje("form.personas.eliminadas.col.documento"),
+                mensaje("form.personas.eliminadas.col.nombres"),
+                mensaje("form.personas.exportar.col.sexo"),
+                mensaje("form.personas.eliminadas.col.iglesia"),
+                mensaje("form.personas.eliminadas.col.baja"),
+                mensaje("form.personas.eliminadas.col.usuario"),
+                mensaje("form.personas.eliminadas.col.estado")
+            };
+            int[] anchos = {1800, 4500, 9500, 2500, 9000, 5000, 5500, 12000};
+
+            String[][] datos = new String[lista.size()][columnas.length];
+            SimpleDateFormat fmtFechaHora = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            for (int i = 0; i < lista.size(); i++) {
+                PersonaEliminadaDTO eliminada = lista.get(i);
+                datos[i][0] = String.valueOf(i + 1);
+                datos[i][1] = safe(eliminada.getDocumento());
+                datos[i][2] = (safe(eliminada.getApellidos()) + " " + safe(eliminada.getNombres())).trim();
+                // Igual que el diálogo: Masculino / Femenino.
+                datos[i][3] = "M".equals(eliminada.getSexo()) ? "Masculino"
+                        : "F".equals(eliminada.getSexo()) ? "Femenino" : safe(eliminada.getSexo());
+                datos[i][4] = safe(eliminada.getIglesiaNombre());
+                datos[i][5] = eliminada.getFechaBaja() != null ? fmtFechaHora.format(eliminada.getFechaBaja()) : "";
+                datos[i][6] = safe(eliminada.getUsuarioBaja());
+                // Misma situación que muestra el diálogo.
+                datos[i][7] = eliminada.isBloqueada() ? eliminada.getMotivoBloqueo()
+                        : eliminada.getRevisionBaja() == null ? mensaje("form.personas.eliminadas.sin.revision")
+                        : mensaje("form.personas.eliminadas.restaurable");
+            }
+
+            Date ahora = new Date();
+            byte[] contenido;
+            synchronized (ReporteXLSX.class) {
+                try {
+                    ReporteXLSX.nuevoExcel(mensaje("form.personas.eliminadas.exportar.titulo"));
+                    ReporteXLSX.creaEspacioInformativo(new SimpleDateFormat("dd/MM/yyyy").format(ahora),
+                            new SimpleDateFormat("HH:mm:ss").format(ahora), ReporteXLSX.getNombreUsuarioAutenticado());
+                    ReporteXLSX.creaCabeceraTabla(columnas, anchos);
+                    ReporteXLSX.creaContenidoTabla(datos, columnas);
+                    ReporteXLSX.setFinalParagraph(lista.size());
+                    contenido = ReporteXLSX.obtenerContenidoExcel();
+                } finally {
+                    ReporteXLSX.cerrarExcel();
+                }
+            }
+            String archivo = "personas_eliminadas_" + new SimpleDateFormat("yyyyMMdd_HHmm").format(ahora) + ".xlsx";
+            String busqueda = busquedaEliminadas == null || busquedaEliminadas.isBlank()
+                    ? mensaje("form.personas.eliminadas.exportar.todas") : busquedaEliminadas.trim();
+            ExportacionExcelRegistros.registrar("PERSONAS E IGLESIAS",
+                    mensaje("form.personas.eliminadas.exportar.titulo") + "; Búsqueda: " + busqueda
+                            + "; Registros: " + lista.size(), archivo);
+            return DefaultStreamedContent.builder().name(archivo)
+                    .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .stream(() -> new ByteArrayInputStream(contenido)).build();
+        } catch (Exception e) {
+            log.error("Error al exportar personas eliminadas a Excel", e);
+            JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.exportar.error"));
+            return null;
+        }
+    }
+
+    /** Libera la página al cerrar el panel para no retenerla en la vista. */
     public void cerrarEliminadas() {
-        personasEliminadas = Collections.emptyList();
+        eliminadasAbiertas = false;
+        busquedaEliminadas = null;
         personaEliminadaSeleccionada = null;
+        modeloEliminadas.pagina = new ArrayList<>();
     }
 
     /** Restaura la persona seleccionada junto con lo que su baja desactivó. */
@@ -1113,8 +1212,8 @@ public class PersonaController implements Serializable {
                 JsfUtil.addWarningMessage(describirOmitidas(resultado.omitidas()));
             }
             personaEliminadaSeleccionada = null;
-            abrirEliminadas();
-            // El botón declara el update de :frmPersonas; aquí solo se recarga el modelo.
+            // La tabla de eliminadas se vuelve a consultar al redibujarse (update del botón),
+            // conservando la búsqueda y la página. El update de :frmPersonas recarga miembros.
             refrescarListadoMiembrosActual();
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
@@ -1540,6 +1639,59 @@ public class PersonaController implements Serializable {
                     ? List.of() : listaIglesiaPersonaSeleccionados;
             return java.util.stream.Stream.concat(pagina.stream(), seleccion.stream())
                     .filter(m -> m.getId() != null && m.getId().toString().equals(clave))
+                    .findFirst().orElse(null);
+        }
+    }
+
+    /**
+     * Personas eliminadas paginadas en BD: cuenta todas las que coinciden con la búsqueda
+     * y solo completa (con su auditoría de baja) las filas de la página visible.
+     */
+    public class EliminadasLazy extends ModeloLazy<PersonaEliminadaDTO> {
+
+        private static final long serialVersionUID = 1L;
+
+        private List<PersonaEliminadaDTO> pagina = new ArrayList<>();
+
+        @Override
+        public int count(Map<String, FilterMeta> filtros) {
+            if (!eliminadasAbiertas) {
+                return 0;
+            }
+            try {
+                return (int) Math.min(Integer.MAX_VALUE, personaBajaService.contarEliminadas(busquedaEliminadas));
+            } catch (Exception e) {
+                log.error("Error al contar personas eliminadas", e);
+                JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.carga"));
+                return 0;
+            }
+        }
+
+        @Override
+        public List<PersonaEliminadaDTO> load(int primero, int tamanio, Map<String, SortMeta> orden,
+                Map<String, FilterMeta> filtros) {
+            if (!eliminadasAbiertas) {
+                pagina = new ArrayList<>();
+                return pagina;
+            }
+            try {
+                pagina = new ArrayList<>(personaBajaService.listarEliminadas(busquedaEliminadas, primero, tamanio));
+            } catch (Exception e) {
+                log.error("Error al listar personas eliminadas", e);
+                JsfUtil.addErrorMessage(mensaje("form.personas.eliminadas.error.carga"));
+                pagina = new ArrayList<>();
+            }
+            return pagina;
+        }
+
+        @Override
+        public String getRowKey(PersonaEliminadaDTO eliminada) {
+            return eliminada == null || eliminada.getId() == null ? null : eliminada.getId().toString();
+        }
+
+        @Override
+        public PersonaEliminadaDTO getRowData(String clave) {
+            return pagina.stream().filter(e -> e.getId() != null && e.getId().toString().equals(clave))
                     .findFirst().orElse(null);
         }
     }

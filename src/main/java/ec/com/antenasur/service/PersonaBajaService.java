@@ -75,14 +75,36 @@ public class PersonaBajaService {
 	// Consulta bajo demanda
 	// =====================================================================
 
+	/** Total de personas dadas de baja que coinciden con la búsqueda (cédula o nombres). */
+	public long contarEliminadas(String busqueda) {
+		return bajaFacade.contarInactivas(busqueda);
+	}
+
 	/**
-	 * Personas dadas de baja, con la fecha y el usuario de la eliminación y el
-	 * motivo por el que, si es el caso, no pueden restaurarse. Se invoca solo al
-	 * abrir «Ver eliminadas»: la pantalla principal nunca consulta esta
+	 * Todas las personas dadas de baja que coinciden con la búsqueda, para exportar a
+	 * Excel. Se recorren en lotes para que cada consulta de auditoría sea acotada.
+	 */
+	public List<PersonaEliminadaDTO> listarEliminadasCompleto(String busqueda) {
+		List<PersonaEliminadaDTO> todas = new ArrayList<>();
+		int lote = PersonaBajaFacade.MAX_FILAS_CONSULTA;
+		for (int primero = 0;; primero += lote) {
+			List<PersonaEliminadaDTO> pagina = listarEliminadas(busqueda, primero, lote);
+			todas.addAll(pagina);
+			if (pagina.size() < lote) {
+				return todas;
+			}
+		}
+	}
+
+	/**
+	 * Una página de personas dadas de baja, con la fecha y el usuario de la
+	 * eliminación y el motivo por el que, si es el caso, no pueden restaurarse. Los
+	 * datos de auditoría se resuelven solo para las filas de la página. Se invoca
+	 * solo con «Ver eliminadas» abierto: la pantalla principal nunca consulta esta
 	 * información.
 	 */
-	public List<PersonaEliminadaDTO> listarEliminadas() {
-		List<Persona> personas = bajaFacade.listarInactivas();
+	public List<PersonaEliminadaDTO> listarEliminadas(String busqueda, int primero, int cantidad) {
+		List<Persona> personas = bajaFacade.listarInactivas(busqueda, primero, cantidad);
 		if (personas.isEmpty()) {
 			return Collections.emptyList();
 		}

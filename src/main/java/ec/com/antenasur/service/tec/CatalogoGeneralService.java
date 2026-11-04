@@ -3,6 +3,8 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
@@ -12,8 +14,25 @@ import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
 import ec.com.antenasur.model.tec.CatalogoGeneral;
 import ec.com.antenasur.service.AbstractService;
 
+/**
+ * Catálogos generales. La lectura queda para los roles autenticados del sistema (la usan
+ * Catálogos, Candidatos, JRV y Autoridades); toda escritura exige Administrador o Tribunal
+ * en el propio EJB, además del control de CatalogoController.
+ *
+ * <p>La anotación de clase es obligatoria: con cualquier regla de seguridad en el bean,
+ * WildFly niega los métodos sin anotar (default-missing-method-permissions-deny-access).</p>
+ */
 @Stateless
+@DeclareRoles({ CatalogoGeneralService.ROL_ADMINISTRADOR, CatalogoGeneralService.ROL_TRIBUNAL,
+        CatalogoGeneralService.ROL_IGLESIA_ADMIN, CatalogoGeneralService.ROL_PRESIDENTE_MESA })
+@RolesAllowed({ CatalogoGeneralService.ROL_ADMINISTRADOR, CatalogoGeneralService.ROL_TRIBUNAL,
+        CatalogoGeneralService.ROL_IGLESIA_ADMIN, CatalogoGeneralService.ROL_PRESIDENTE_MESA })
 public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Integer, CatalogoGeneralFacade> {
+
+    static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+    static final String ROL_TRIBUNAL = "SITEC-Tribunal";
+    static final String ROL_IGLESIA_ADMIN = "SITEC-IglesiaAdmin";
+    static final String ROL_PRESIDENTE_MESA = "SITEC-Presidente-mesa";
 
     @Inject
     private CatalogoGeneralFacade catalogoFacade;
@@ -21,6 +40,52 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
     @Override
     protected CatalogoGeneralFacade getFacade() {
         return catalogoFacade;
+    }
+
+    // Lecturas heredadas: redeclaradas para que las cubra la anotación de clase (los métodos
+    // de AbstractService no la heredan y WildFly los negaría).
+    @Override
+    public CatalogoGeneral find(Integer id) {
+        return super.find(id);
+    }
+
+    @Override
+    public List<CatalogoGeneral> findAll() {
+        return super.findAll();
+    }
+
+    @Override
+    public List<CatalogoGeneral> findRange(int[] range) {
+        return super.findRange(range);
+    }
+
+    @Override
+    public int count() {
+        return super.count();
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public CatalogoGeneral create(CatalogoGeneral entity) {
+        return super.create(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public CatalogoGeneral edit(CatalogoGeneral entity) {
+        return super.edit(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public CatalogoGeneral delete(CatalogoGeneral entity) {
+        return super.delete(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public void remove(CatalogoGeneral entity) {
+        super.remove(entity);
     }
 
     public List<CatalogoGeneral> findByFatherCatalogue(CatalogoGeneral generalCatalogue) {
@@ -95,6 +160,7 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
         return CatalogoGeneralDTO.fromEntity(catalogoFacade.findByName(nombre));
     }
 
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public CatalogoGeneralDTO guardarDesdeDTO(CatalogoGeneralDTO dto) {
         validarCatalogo(dto);
         CatalogoGeneral padre = (dto.getPadreId() != null) ? catalogoFacade.find(dto.getPadreId()) : null;
@@ -122,6 +188,7 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
         return CatalogoGeneralDTO.fromEntity(catalogoFacade.edit(actual));
     }
 
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public CatalogoGeneralDTO deshabilitarPorId(Integer id) {
         if (id == null) {
             throw new NegocioException("catalogo.mensaje.no.seleccionado");
@@ -139,6 +206,7 @@ public class CatalogoGeneralService extends AbstractService<CatalogoGeneral, Int
         return CatalogoGeneralDTO.fromEntity(catalogoFacade.delete(c));
     }
 
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public CatalogoGeneralDTO eliminarPorId(Integer id) {
         return deshabilitarPorId(id);
     }

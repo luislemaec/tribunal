@@ -217,5 +217,16 @@ body .ui-datatable.tec-table thead th.personas-col-cedula .ui-column-filter { mi
 
 .personas-eliminadas__col-situacion { width:32%; min-width:6.75rem; }
 
+/* Barra superior del diálogo: búsqueda flexible y Exportar a su derecha. Por debajo de
+   576px la búsqueda ocupa su línea y el botón baja a la siguiente, a todo el ancho. */
+.personas-eliminadas__barra { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+.personas-eliminadas__buscar { display:block; flex:1 1 16rem; min-width:0; }
+.personas-eliminadas__buscar .ui-inputfield { width:100%; }
+.personas-eliminadas__exportar { flex:0 0 auto; }
+@media (max-width:575.98px) {
+    .personas-eliminadas__buscar { flex-basis:100%; }
+    .personas-eliminadas__exportar { flex:1 1 100%; justify-content:center; }
+}
+
 /* Nombre y sexo en la misma línea cuando caben: el metadato no añade una fila más de altura. */
 .personas-eliminadas__col-nombre .personas-nombre { flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:.375rem; }

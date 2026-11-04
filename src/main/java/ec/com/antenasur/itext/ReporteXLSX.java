@@ -524,6 +524,23 @@ public class ReporteXLSX {
         return response.getOutputStream();
     }
 
+    /**
+     * Libera el libro estático después de {@link #obtenerContenidoExcel()}: sin esto queda en
+     * memoria del servidor hasta la siguiente exportación ({@link #descargarExcel} ya lo cierra).
+     */
+    public static void cerrarExcel() {
+        try {
+            if (LIBRO != null) {
+                LIBRO.close();
+            }
+        } catch (IOException e) {
+            LOG.error("ERROR AL CERRAR EL LIBRO EXCEL" + e);
+        } finally {
+            LIBRO = null;
+            HOJA = null;
+        }
+    }
+
     /** Obtiene el libro actual para almacenamiento institucional sin escribir la respuesta HTTP. */
     public static byte[] obtenerContenidoExcel() throws IOException {
         if (LIBRO == null) {

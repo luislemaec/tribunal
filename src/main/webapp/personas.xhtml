@@ -3,6 +3,7 @@
                 xmlns:f="jakarta.faces.core"
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="http://primefaces.org/ui"
+                xmlns:pt="jakarta.faces.passthrough"
                 template="/WEB-INF/template.xhtml">
 
     <ui:define name="title">#{msg['pagina.personas.titulo']}</ui:define>
@@ -1203,11 +1204,44 @@
                 <p:messages id="msgsPersonasEliminadas" globalOnly="false" showDetail="false"
                             closable="true" styleClass="mb-2"/>
 
-                <p:dataTable var="eliminada" value="#{personaController.personasEliminadas}"
+                <!-- Barra superior: búsqueda en BD por cédula o nombres (vuelve a la primera página)
+                     y exportación de lo que coincide. En pantallas angostas el botón baja a su
+                     propia línea a todo el ancho (personas.css). -->
+                <div class="personas-eliminadas__barra">
+                <span class="ui-input-icon-left personas-eliminadas__buscar">
+                    <i class="pi pi-search" aria-hidden="true"/>
+                    <p:inputText id="busquedaEliminadas" value="#{personaController.busquedaEliminadas}"
+                                 placeholder="#{msg['form.personas.eliminadas.buscar']}"
+                                 aria-label="#{msg['form.personas.eliminadas.buscar']}"
+                                 maxlength="100" styleClass="w-full" pt:form="frmPersonasEliminadas">
+                        <!-- partialSubmit: el diálogo está en el body, fuera del <form>, y sin él
+                             PrimeFaces no envía el texto (solo serializa lo que está dentro del form). -->
+                        <p:ajax event="keyup" delay="400" listener="#{personaController.buscarEliminadas}"
+                                process="@this" partialSubmit="true" update="tblPersonasEliminadas" global="false"/>
+                    </p:inputText>
+                </span>
+                <!-- Descarga normal (no ajax), en la misma petición: la descarga ajax de PrimeFaces
+                     pide el archivo en un GET aparte, donde este bean @ViewScoped no existe, y
+                     entregaba la página de error como .xlsx. Como el diálogo se mueve al body
+                     (appendTo) fuera del <form>, el atributo HTML5 form asocia el botón (y la
+                     búsqueda) al formulario por su id para que el envío funcione. -->
+                <p:commandButton id="btnExportarEliminadas" value="#{msg['form.personas.eliminadas.exportar']}"
+                                 icon="pi pi-file-excel" title="#{msg['form.personas.eliminadas.exportar.tooltip']}"
+                                 styleClass="tec-btn ui-button-outlined ui-button-success personas-eliminadas__exportar"
+                                 ajax="false" pt:form="frmPersonasEliminadas">
+                    <p:fileDownload value="#{personaController.exportarEliminadasExcel()}"/>
+                </p:commandButton>
+                </div>
+
+                <!-- Paginada en BD sin tope: solo se consultan y completan las filas visibles. -->
+                <p:dataTable var="eliminada" value="#{personaController.modeloEliminadas}" lazy="true"
                              id="tblPersonasEliminadas" widgetVar="wdTblPersonasEliminadas"
                              emptyMessage="#{msg['form.personas.eliminadas.empty']}"
                              reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
-                             paginatorAlwaysVisible="false" pageLinks="5"
+                             paginatorAlwaysVisible="true" pageLinks="5"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="#{msg['form.personas.eliminadas.paginador']}"
+                             rowsPerPageTemplate="10,25,50"
                              styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
 
                     <p:column headerText="#{msg['form.personas.eliminadas.col.documento']}"

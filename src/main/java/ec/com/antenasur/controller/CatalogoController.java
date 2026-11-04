@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.context.FacesContext;
@@ -21,6 +22,7 @@ import ec.com.antenasur.dto.CatalogoGeneralDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.service.tec.CatalogoGeneralService;
 import ec.com.antenasur.util.Constantes;
+import ec.com.antenasur.util.EstadoArbol;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -206,11 +208,14 @@ public class CatalogoController implements Serializable {
     }
 
     private void cargarArbolCatalogos() {
+        // Sin conservar la expansión, la siguiente edición en línea se guardaría sin sus valores.
+        Set<Object> expandidos = EstadoArbol.expandidos(root, CatalogoGeneralDTO::getId);
         try {
             listaCatalogoPadres = catalogoService.listarDTOsPorPadre();
             catalogosPadreDisponibles = catalogoService.listarDTOs();
             root = new CheckboxTreeNode<>(new CatalogoGeneralDTO(), null);
             crearNodoRecursivo(listaCatalogoPadres, root);
+            EstadoArbol.restaurar(root, expandidos, CatalogoGeneralDTO::getId);
         } catch (Exception e) {
             log.error("Error al inicializar catalogos", e);
             root = new CheckboxTreeNode<>(new CatalogoGeneralDTO(), null);

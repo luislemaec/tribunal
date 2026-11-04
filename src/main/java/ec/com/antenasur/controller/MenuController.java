@@ -2,6 +2,7 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
@@ -15,6 +16,7 @@ import org.primefaces.model.TreeNode;
 
 import ec.com.antenasur.dto.MenuDTO;
 import ec.com.antenasur.service.MenuService;
+import ec.com.antenasur.util.EstadoArbol;
 import ec.com.antenasur.util.JsfUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,6 +59,9 @@ public class MenuController implements Serializable {
 
     @PostConstruct
     private void init() {
+        // También se llama tras guardar: sin conservar la expansión, la siguiente edición en
+        // línea se guardaría sin sus valores (ver EstadoArbol).
+        Set<Object> expandidos = EstadoArbol.expandidos(root, MenuDTO::getId);
         try {
             listaMenuPadres = menuService.listarDTOsPadres();
             listaOpcionesPadre = menuService.listarDTOs();
@@ -64,6 +69,7 @@ public class MenuController implements Serializable {
             if (listaMenuPadres != null && !listaMenuPadres.isEmpty()) {
                 crearNodoRecursivo(listaMenuPadres, root);
             }
+            EstadoArbol.restaurar(root, expandidos, MenuDTO::getId);
         } catch (Exception e) {
             log.error("Error al inicializar valores del menu", e);
             JsfUtil.addErrorMessageFromBundle("menu.mensaje.errorInicializar");
