@@ -28,3 +28,9 @@
 @media (max-width: 640px) {
     .padron-vista .padron-filtros .ui-panel-titlebar { flex-wrap: wrap; row-gap: .1875rem; }
 }
+
+/* Iglesias de otras parroquias del cantón: casilla sobre la tabla y fila con fondo azul muy suave
+   (token del tema, también en modo oscuro). La diferencia no depende solo del color: la etiqueta
+   «Otra parroquia» de Procedencia y la columna Ubicación la dicen en texto. */
+.padron-vista .padron-otras-parroquias { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; margin-bottom: .5rem; }
+.padron-vista .ui-datatable tbody.ui-datatable-data > tr.padron-fila--otra-parroquia > td { background: var(--tec-primary-bg); }

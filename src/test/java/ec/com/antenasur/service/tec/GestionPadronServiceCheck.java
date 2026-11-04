@@ -23,6 +23,11 @@ public class GestionPadronServiceCheck {
         inyectar(service, "mesaFacade", new MesaFacade() {
             @Override public Mesa buscarDetallePorId(Integer id) { return id == 20 ? repo.mesa : null; }
         });
+        // Cronograma simulado: abierto salvo en el caso que comprueba el bloqueo.
+        boolean[] cronogramaAbierto = {true};
+        inyectar(service, "cronogramaService", new CronogramaService() {
+            @Override public boolean permite(ec.com.antenasur.enums.OperacionCronograma operacion) { return cronogramaAbierto[0]; }
+        });
         repo.miembros.get(3).setHabilitadoPadron(false);
         verificar(service.asignarIglesia(1, 10, 20, 30) == 3, "iglesia completa solo habilitados");
         rechaza(() -> service.asignarIglesia(1, 10, 20, 30), "iglesia sin pendientes");
@@ -59,6 +64,9 @@ public class GestionPadronServiceCheck {
         repo.otraMesa = true;
         rechaza(() -> service.asignar(1, 10, 20, 30, List.of(4)), "iglesia en otra mesa");
         repo.otraMesa = false;
+        cronogramaAbierto[0] = false;
+        rechaza(() -> service.retirar(1, 10, 20, List.of(1)), "cronograma cerrado");
+        cronogramaAbierto[0] = true;
         repo.proceso.setActivo(false);
         rechaza(() -> service.retirar(1, 10, 20, List.of(1)), "proceso inactivo");
         System.out.println("OK: asignacion/retiro individual y multiple, baja/reactivacion, duplicados, habilitacion, JRV y contexto.");

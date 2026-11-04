@@ -600,6 +600,14 @@ body .ui-datatable .ui-paginator .ui-paginator-current { margin-right:auto; colo
 
 body .tec-acciones .ui-button { flex:0 0 auto; margin:0; }
 
+/* Ubicación geográfica en tablas (Iglesias y Padrón): líneas apiladas; la primera con ícono
+   de mapa y en tono secundario, las siguientes en texto normal o secundario. */
+.tec-ubicacion { display:flex; flex-direction:column; gap:.0375rem; line-height:var(--tec-lh-tight); }
+.tec-ubicacion__encabezado { display:inline-flex; align-items:center; gap:.225rem; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+.tec-ubicacion__encabezado > .pi { font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+.tec-ubicacion__linea { color:var(--text-color); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+.tec-ubicacion__linea--secundaria { color:var(--text-color-secondary); }
+
 /* Celdas con p:rowEditor: el editor debe ser hijo directo del td (PrimeFaces escucha el lápiz
    con «> tr > td > div.ui-row-editor»), así que no puede ir dentro de .tec-acciones. Mismo
    aspecto en una línea: el editor (bloque con clearfix) pasa a flex y los botones lo siguen. */

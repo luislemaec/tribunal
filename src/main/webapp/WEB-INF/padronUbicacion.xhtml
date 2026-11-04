@@ -1,0 +1,15 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets">
+
+    <!-- Ubicación de una iglesia en Padrón (IglesiaPadronDTO): misma presentación que la columna
+         Ubicación de Iglesias (.tec-ubicacion, tribunal-globals.css) con cantón y parroquia; la
+         provincia se omite porque el módulo trabaja solo con Chimborazo. -->
+    <span class="tec-ubicacion">
+        <span class="tec-ubicacion__encabezado">
+            <i class="pi pi-map-marker" aria-hidden="true"/>
+            <h:outputText value="#{empty iglesia.canton ? '—' : iglesia.canton}"/>
+        </span>
+        <h:outputText value="#{empty iglesia.parroquia ? '—' : iglesia.parroquia}" styleClass="tec-ubicacion__linea"/>
+    </span>
+</ui:composition>

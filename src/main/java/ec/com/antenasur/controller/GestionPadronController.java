@@ -88,8 +88,21 @@ public class GestionPadronController implements Serializable {
     @Setter
     private int tabActivo;
 
+    /**
+     * «Mostrar iglesias de otras parroquias»: amplía Iglesias disponibles a las otras parroquias
+     * del cantón del recinto. Solo cambia el listado; el servicio valida la regla al asignar.
+     */
+    @Getter
+    @Setter
+    private boolean incluirOtrasParroquias;
+
+    /** El cronograma permite asignar y retirar para este usuario (se evalúa al abrir la vista). */
+    @Getter
+    private boolean edicionPermitida;
+
     @PostConstruct
     public void init() {
+        edicionPermitida = service.permiteEdicion();
         procesoActivo = procesoService.getActivoDTO();
         if (procesoActivo != null) {
             filtro.setProcesoId(procesoActivo.getId());
@@ -235,9 +248,16 @@ public class GestionPadronController implements Serializable {
     }
 
     private void cargarIglesias() {
-        iglesiasDisponibles = new ArrayList<>(
-                service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), false));
-        iglesiasAsignadas = new ArrayList<>(service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(), true));
+        iglesiasDisponibles = new ArrayList<>(service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(),
+                false, incluirOtrasParroquias));
+        iglesiasAsignadas = new ArrayList<>(service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(),
+                true, false));
+    }
+
+    /** Casilla de otras parroquias: recarga solo las disponibles; la mesa sigue seleccionada. */
+    public void cambiarIncluirOtrasParroquias() {
+        iglesiasDisponibles = new ArrayList<>(service.resumenIglesias(filtro.getMesaId(), filtro.getProcesoId(),
+                false, incluirOtrasParroquias));
     }
 
     public void asignarIglesia(Integer id) {
@@ -300,7 +320,7 @@ public class GestionPadronController implements Serializable {
     }
 
     public boolean isPuedeEditar() {
-        return procesoActivo != null && procesoActivo.getId().equals(filtro.getProcesoId())
+        return edicionPermitida && procesoActivo != null && procesoActivo.getId().equals(filtro.getProcesoId())
                 && filtro.getMesaId() != null && filtro.getRecintoId() != null;
     }
 

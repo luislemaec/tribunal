@@ -374,13 +374,14 @@
                         <f:facet name="export">
                             <h:outputText value="#{iglesia.provinciaNombre} / #{iglesia.cantonNombre} / #{iglesia.ubicacionNombre}"/>
                         </f:facet>
-                        <span class="iglesias-ubicacion">
-                            <span class="iglesias-ubicacion__provincia">
+                        <!-- Estilos compartidos con Padrón (.tec-ubicacion, tribunal-globals.css). -->
+                        <span class="tec-ubicacion">
+                            <span class="tec-ubicacion__encabezado">
                                 <i class="pi pi-map-marker" aria-hidden="true"/>
                                 <h:outputText value="#{iglesia.provinciaNombre}"/>
                             </span>
-                            <h:outputText value="#{iglesia.cantonNombre}" styleClass="iglesias-ubicacion__canton"/>
-                            <h:outputText value="#{iglesia.ubicacionNombre}" styleClass="iglesias-ubicacion__parroquia"/>
+                            <h:outputText value="#{iglesia.cantonNombre}" styleClass="tec-ubicacion__linea"/>
+                            <h:outputText value="#{iglesia.ubicacionNombre}" styleClass="tec-ubicacion__linea tec-ubicacion__linea--secundaria"/>
                         </span>
                     </p:column>
 
@@ -1133,13 +1134,13 @@
 
                     <p:column headerText="#{msg['form.iglesias.table.header.ubicacion']}"
                               styleClass="iglesias-col-ubicacion">
-                        <span class="iglesias-ubicacion">
-                            <span class="iglesias-ubicacion__provincia">
+                        <span class="tec-ubicacion">
+                            <span class="tec-ubicacion__encabezado">
                                 <i class="pi pi-map-marker" aria-hidden="true"/>
                                 <h:outputText value="#{eliminada.provinciaNombre}"/>
                             </span>
-                            <h:outputText value="#{eliminada.cantonNombre}" styleClass="iglesias-ubicacion__canton"/>
-                            <h:outputText value="#{eliminada.ubicacionNombre}" styleClass="iglesias-ubicacion__parroquia"/>
+                            <h:outputText value="#{eliminada.cantonNombre}" styleClass="tec-ubicacion__linea"/>
+                            <h:outputText value="#{eliminada.ubicacionNombre}" styleClass="tec-ubicacion__linea tec-ubicacion__linea--secundaria"/>
                         </span>
                     </p:column>
 

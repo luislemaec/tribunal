@@ -187,21 +187,52 @@ public class GestionPadronFacade extends AbstractFacade<Padron, Integer> {
                 .setParameter("mesa", mesa).setParameter("proceso", proceso).getResultList();
     }
 
-    public List<ec.com.antenasur.dto.IglesiaPadronDTO> resumenIglesias(Integer mesa, Integer proceso, boolean asignadas) {
-        // Comunidad / barrio en la misma consulta agregada (sin una consulta por iglesia).
-        String campos = "SELECT new ec.com.antenasur.dto.IglesiaPadronDTO(i.id, i.nombre, i.comunidad, COUNT(";
+    /**
+     * Iglesias de la mesa: las asignadas, o las disponibles con miembros habilitados pendientes.
+     * Disponibles: por defecto solo las de la parroquia del recinto; con {@code incluirOtrasParroquias}
+     * también las de otras parroquias del mismo cantón (la regla que valida
+     * GestionPadronService.ubicacionPermitida). Cantón, parroquia y procedencia salen de la misma
+     * consulta agregada, sin una consulta por iglesia; las de la parroquia del recinto van primero.
+     */
+    public List<ec.com.antenasur.dto.IglesiaPadronDTO> resumenIglesias(Integer mesa, Integer proceso, boolean asignadas,
+            boolean incluirOtrasParroquias) {
+        Object[] ubicacion = ubicacionRecinto(mesa);
+        if (ubicacion == null || ubicacion[0] == null) {
+            return List.of();
+        }
+        Integer parroquia = (Integer) ubicacion[0];
+        Integer canton = (Integer) ubicacion[1];
+        boolean porCanton = !asignadas && incluirOtrasParroquias && canton != null;
+        String campos = "SELECT new ec.com.antenasur.dto.IglesiaPadronDTO(i.id, i.nombre, i.comunidad, ca.name, pa.name,"
+                + " CASE WHEN pa.id = :parroquia THEN TRUE ELSE FALSE END, COUNT(";
+        String geografia = " LEFT JOIN i.ubicacion pa LEFT JOIN pa.geograp ca";
         String jpql = asignadas
-                ? campos + "p.id)) FROM Padron p JOIN p.iglesiaPersona ip JOIN ip.iglesia i"
+                ? campos + "p.id)) FROM Padron p JOIN p.iglesiaPersona ip JOIN ip.iglesia i" + geografia
                     + " WHERE p.estado = TRUE AND p.mesa.id = :mesa AND p.proceso.id = :proceso"
-                : campos + "ip.id)) FROM IglesiaPersona ip JOIN ip.iglesia i"
+                : campos + "ip.id)) FROM IglesiaPersona ip JOIN ip.iglesia i" + geografia
                     + " WHERE ip.estado = TRUE AND ip.habilitadoPadron = TRUE AND ip.persona.estado = TRUE AND i.estado = TRUE"
-                    + " AND i.ubicacion.id = (SELECT m.recinto.ubicacion.id FROM Mesa m WHERE m.id = :mesa)"
+                    + (porCanton ? " AND ca.id = :canton" : " AND pa.id = :parroquia")
                     + " AND NOT EXISTS (SELECT p.id FROM Padron p WHERE p.estado = TRUE AND p.proceso.id = :proceso"
                     + " AND p.iglesiaPersona.iglesia.id = i.id AND p.mesa.id <> :mesa)"
                     + " AND NOT EXISTS (SELECT p.id FROM Padron p WHERE p.estado = TRUE AND p.proceso.id = :proceso"
                     + " AND p.iglesiaPersona.persona.id = ip.persona.id AND p.mesa.id = :mesa)";
-        return getEntityManager().createQuery(jpql + " GROUP BY i.id, i.nombre, i.comunidad ORDER BY i.nombre", ec.com.antenasur.dto.IglesiaPadronDTO.class)
-                .setParameter("mesa", mesa).setParameter("proceso", proceso).getResultList();
+        var consulta = getEntityManager().createQuery(jpql
+                + " GROUP BY i.id, i.nombre, i.comunidad, ca.name, pa.name, pa.id"
+                + " ORDER BY CASE WHEN pa.id = :parroquia THEN 0 ELSE 1 END, i.nombre",
+                ec.com.antenasur.dto.IglesiaPadronDTO.class)
+                .setParameter("mesa", mesa).setParameter("proceso", proceso).setParameter("parroquia", parroquia);
+        if (porCanton) {
+            consulta.setParameter("canton", canton);
+        }
+        return consulta.getResultList();
+    }
+
+    /** [parroquia, cantón] del recinto de la mesa; null si la mesa no existe. */
+    private Object[] ubicacionRecinto(Integer mesa) {
+        List<Object[]> filas = getEntityManager().createQuery("SELECT pa.id, ca.id FROM Mesa m JOIN m.recinto r"
+                + " JOIN r.ubicacion pa LEFT JOIN pa.geograp ca WHERE m.id = :mesa", Object[].class)
+                .setParameter("mesa", mesa).getResultList();
+        return filas.isEmpty() ? null : filas.get(0);
     }
 
     /**

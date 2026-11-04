@@ -104,15 +104,7 @@ body .iglesias-barra--baja.ui-progressbar .ui-progressbar-value { background:var
 
 .iglesias-col-ubicacion { min-width:7.5rem; }
 
-.iglesias-ubicacion { display:flex; flex-direction:column; gap:.0375rem; line-height:var(--tec-lh-tight); }
-
-.iglesias-ubicacion__provincia { display:inline-flex; align-items:center; gap:.225rem; color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
-
-.iglesias-ubicacion__provincia > .pi { font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
-
-.iglesias-ubicacion__canton { color:var(--text-color); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
-
-.iglesias-ubicacion__parroquia { color:var(--text-color-secondary); font-size:var(--tec-fs-meta); font-weight:var(--tec-fw-regular); }
+/* Ubicación: estilos compartidos .tec-ubicacion (tribunal-globals.css). */
 
 /* Miembros activos: el total y, si está bajo el mínimo, la marca de revisión */
 .iglesias-miembros { display:flex; flex-direction:column; align-items:flex-start; gap:.1125rem; }

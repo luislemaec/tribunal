@@ -5,9 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import ec.com.antenasur.dto.FiltroPadronDTO;
+import ec.com.antenasur.enums.OperacionCronograma;
+import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.Iglesia;
+import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.dto.FilaPadronDTO;
 import ec.com.antenasur.dto.MesaPadronDTO;
 import ec.com.antenasur.dto.OpcionPadronDTO;
@@ -21,14 +27,54 @@ import ec.com.antenasur.model.tec.Padron;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.util.Constantes;
 
-/** Operaciones atomicas de gestion; consultas y reportes no dependen del estado de JSF. */
+/**
+ * Operaciones atomicas de gestion; consultas y reportes no dependen del estado de JSF.
+ *
+ * <p>Roles: los mismos que acceden a Padron por menu (el filtro de paginas decide quien entra);
+ * aqui se exige ademas una identidad autenticada en el EJB. Las escrituras respetan el
+ * cronograma con la misma politica que Personas (EDICION_PADRON, con la excepcion de
+ * Administrador y Tribunal de CronogramaService).</p>
+ */
 @Stateless
+@DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
+@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
 public class GestionPadronService {
     @Inject private GestionPadronFacade facade;
     @Inject private MesaFacade mesaFacade;
+    @Inject private CronogramaService cronogramaService;
 
-    public List<ec.com.antenasur.dto.IglesiaPadronDTO> resumenIglesias(Integer mesa, Integer proceso, boolean asignadas) {
-        return mesa == null || proceso == null ? List.of() : facade.resumenIglesias(mesa, proceso, asignadas);
+    /**
+     * @param incluirOtrasParroquias solo amplia el listado de disponibles a las parroquias
+     *        permitidas por {@link #ubicacionPermitida}; la autorizacion la decide esa regla.
+     */
+    public List<ec.com.antenasur.dto.IglesiaPadronDTO> resumenIglesias(Integer mesa, Integer proceso, boolean asignadas,
+            boolean incluirOtrasParroquias) {
+        return mesa == null || proceso == null ? List.of()
+                : facade.resumenIglesias(mesa, proceso, asignadas, incluirOtrasParroquias);
+    }
+
+    /** Las escrituras del padron estan permitidas para el usuario actual segun el cronograma. */
+    public boolean permiteEdicion() {
+        return cronogramaService.permite(OperacionCronograma.EDICION_PADRON);
+    }
+
+    /**
+     * Regla de ubicacion de la asignacion: la iglesia esta en la parroquia del recinto o en
+     * otra parroquia del mismo canton. Evita crear un recinto y una mesa solo para una iglesia
+     * pequena, sin abrir la asignacion a cualquier parroquia de la provincia.
+     */
+    static boolean ubicacionPermitida(Iglesia iglesia, Recinto recinto) {
+        Geograp parroquiaIglesia = iglesia == null ? null : iglesia.getUbicacion();
+        Geograp parroquiaRecinto = recinto == null ? null : recinto.getUbicacion();
+        if (parroquiaIglesia == null || parroquiaRecinto == null) {
+            return false;
+        }
+        if (parroquiaIglesia.getId().equals(parroquiaRecinto.getId())) {
+            return true;
+        }
+        Geograp cantonIglesia = parroquiaIglesia.getGeograp();
+        Geograp cantonRecinto = parroquiaRecinto.getGeograp();
+        return cantonIglesia != null && cantonRecinto != null && cantonIglesia.getId().equals(cantonRecinto.getId());
     }
 
     /** Avance global del padron del proceso; vacio si todavia no hay proceso activo. */
@@ -69,6 +115,7 @@ public class GestionPadronService {
 
     private ProcesoElectoral validarContexto(Integer procesoId, Integer recintoId, Integer mesaId) {
         if (procesoId == null || recintoId == null || mesaId == null) error("seleccion");
+        if (!permiteEdicion()) error("cronograma");
         ProcesoElectoral proceso = facade.bloquearProceso(procesoId);
         if (proceso == null || !Boolean.TRUE.equals(proceso.getEstado()) || !Boolean.TRUE.equals(proceso.getActivo())) error("proceso.inactivo");
         Mesa mesa = mesaFacade.buscarDetallePorId(mesaId);
@@ -108,8 +155,7 @@ public class GestionPadronService {
                     || ip.getPersona() == null || !Boolean.TRUE.equals(ip.getPersona().getEstado())
                     || ip.getIglesia() == null || !Boolean.TRUE.equals(ip.getIglesia().getEstado())
                     || !iglesiaId.equals(ip.getIglesia().getId())
-                    || ip.getIglesia().getUbicacion() == null || mesa.getRecinto().getUbicacion() == null
-                    || !ip.getIglesia().getUbicacion().getId().equals(mesa.getRecinto().getUbicacion().getId())) error("miembro.invalido");
+                    || !ubicacionPermitida(ip.getIglesia(), mesa.getRecinto())) error("miembro.invalido");
         }
         List<Integer> personas = miembros.stream().map(ip -> ip.getPersona().getId()).distinct().toList();
         if (personas.size() != miembros.size()) error("duplicado");

@@ -1,0 +1,11 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Procedencia de una iglesia respecto de la parroquia del recinto de la mesa. Texto e ícono,
+         no solo color: «Otra parroquia» se lee igual sin distinguir el fondo de la fila. -->
+    <p:tag rendered="#{iglesia.otraParroquia}" value="#{msg['padron.procedencia.otra']}"
+           icon="pi pi-directions" severity="info" styleClass="tec-status"/>
+    <p:tag rendered="#{not iglesia.otraParroquia}" value="#{msg['padron.procedencia.misma']}"
+           icon="pi pi-map-marker" severity="secondary" styleClass="tec-status"/>
+</ui:composition>

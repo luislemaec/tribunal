@@ -34,8 +34,11 @@ public class GestionPadronQueriesCheck {
                 Object resultado;
                 try { resultado = method.invoke(real, valores); }
                 catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
+                // Las consultas de filas (Object[]) devuelven una fila de ejemplo: resumenIglesias
+                // necesita la parroquia y el cantón del recinto para construir su consulta principal.
+                boolean filas = valores != null && valores.length == 2 && valores[1] == Object[].class;
                 if (resultado instanceof TypedQuery<?> query) return Proxy.newProxyInstance(TypedQuery.class.getClassLoader(), new Class[]{TypedQuery.class}, (p, m, a) -> {
-                    if (m.getName().equals("getResultList")) return List.of();
+                    if (m.getName().equals("getResultList")) return filas ? List.<Object[]>of(new Object[]{1, 2}) : List.of();
                     if (m.getName().equals("getSingleResult")) return 0L;
                     Object r;
                     try { r = m.invoke(query, a); }
@@ -53,7 +56,7 @@ public class GestionPadronQueriesCheck {
             filtro.setBusqueda("texto_100%"); filtro.setIglesiaNombre("iglesia");
             f.listar(filtro, false, 0, 500, null, false, 0); f.contar(filtro, false);
             f.recintos(filtro); f.opcionesMesas(1); f.iglesias(1, 1); f.geografia(null); f.geografia(1);
-            f.resumenIglesias(1, 1, false); f.resumenIglesias(1, 1, true);
+            f.resumenIglesias(1, 1, false, false); f.resumenIglesias(1, 1, false, true); f.resumenIglesias(1, 1, true, false);
             f.habilitadosPendientes(1, 1, 1); f.empadronadosIglesia(1, 1, 1);
             for (Boolean estado : new Boolean[]{null, true, false}) {
                 filtro.setConPadron(estado); f.listarMesas(filtro, 0, 20); f.contarMesas(filtro, estado);

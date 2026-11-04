@@ -129,6 +129,9 @@
                         <p:tag value="#{msg['gestionPadron.total']}: #{gestionPadronController.totalMiembrosMesa}" severity="info" rendered="#{not empty gestionPadronController.filtro.mesaId}"/>
                         <p:tag value="#{msg['padron.contador.iglesias.asignadas']}: #{gestionPadronController.iglesiasAsignadas.size()}"
                                rendered="#{not empty gestionPadronController.filtro.mesaId}" severity="success"/>
+                        <!-- Asignar y Retirar quedan deshabilitados: se explica por qué. -->
+                        <p:tag value="#{msg['padron.cronograma.bloqueado']}" icon="pi pi-lock" severity="warning"
+                               rendered="#{not empty gestionPadronController.filtro.mesaId and not gestionPadronController.edicionPermitida}"/>
                     </div>
                 </div>
             </p:outputPanel>
@@ -192,8 +195,20 @@
                         <div class="p-3 pt-0">
                             <h3 class="mt-0">#{msg['padron.seccion.iglesias.disponibles']}</h3>
                             <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
+                            <!-- Amplía el listado a otras parroquias del cantón del recinto; recarga solo esta
+                                 tabla y la mesa sigue seleccionada. El servicio valida la misma regla al asignar. -->
+                            <div class="padron-otras-parroquias">
+                                <p:selectBooleanCheckbox id="incluirOtrasParroquias"
+                                                         value="#{gestionPadronController.incluirOtrasParroquias}"
+                                                         itemLabel="#{msg['padron.otras.parroquias']}">
+                                    <p:ajax listener="#{gestionPadronController.cambiarIncluirOtrasParroquias}" process="@this"
+                                            update="iglesiasDisponibles"/>
+                                </p:selectBooleanCheckbox>
+                                <small class="text-600">#{msg['padron.otras.parroquias.ayuda']}</small>
+                            </div>
                             <p:dataTable id="iglesiasDisponibles" value="#{gestionPadronController.iglesiasDisponibles}" var="iglesia"
                                          rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
+                                         rowStyleClass="#{iglesia.otraParroquia ? 'padron-fila--otra-parroquia' : null}"
                                          emptyMessage="#{msg['padron.empty.iglesias.disponibles']}" styleClass="ui-datatable-striped ui-datatable-sm">
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
@@ -201,6 +216,20 @@
                                 <!-- Mismo dato que Iglesias (Iglesia.comunidad): distingue iglesias de nombre parecido. -->
                                 <p:column headerText="#{msg['form.iglesias.label.comunidad']}" filterBy="#{iglesia.comunidad}" filterMatchMode="contains" sortBy="#{iglesia.comunidad}">
                                     <h:outputText value="#{iglesia.comunidad}"/>
+                                </p:column>
+                                <!-- Misma presentación que la columna Ubicación de Iglesias (cantón y parroquia
+                                     apilados; la provincia es fija). El filtro sirve para buscar la parroquia de origen. -->
+                                <p:column headerText="#{msg['form.iglesias.table.header.ubicacion']}" filterBy="#{iglesia.parroquia}"
+                                          filterMatchMode="contains" sortBy="#{iglesia.parroquia}">
+                                    <ui:include src="/WEB-INF/padronUbicacion.xhtml">
+                                        <ui:param name="iglesia" value="#{iglesia}"/>
+                                    </ui:include>
+                                </p:column>
+                                <p:column headerText="#{msg['padron.col.procedencia']}" rendered="#{gestionPadronController.incluirOtrasParroquias}"
+                                          sortBy="#{iglesia.otraParroquia}" style="width:9rem">
+                                    <ui:include src="/WEB-INF/padronProcedencia.xhtml">
+                                        <ui:param name="iglesia" value="#{iglesia}"/>
+                                    </ui:include>
                                 </p:column>
                                 <p:column headerText="#{msg['padron.tabla.miembros.habilitados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="info"/>
@@ -211,7 +240,7 @@
                                                      process="@this" disabled="#{not gestionPadronController.puedeEditar}"
                                                      update=":frmPadron:pnlAvance :frmPadron:tabsPadron:consulta :frmPadron:tabsPadron:iglesiasDisponibles :frmPadron:tabsPadron:iglesiasAsignadas :frmPadron:contexto :frmGlobal:growlGlobal">
                                         <p:confirm header="#{msg['gestionPadron.confirmar']}"
-                                                   message="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' ('.concat(iglesia.comunidad).concat(')')}: #{msg['gestionPadron.simple.confirmar.asignar']}"
+                                                   message="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' ('.concat(iglesia.comunidad).concat(')')}: #{msg['gestionPadron.simple.confirmar.asignar']}#{iglesia.otraParroquia and not empty iglesia.parroquia ? ' '.concat(msg['padron.confirmar.otra.parroquia']).concat(' ').concat(iglesia.parroquia).concat('.') : ''}"
                                                    icon="pi pi-exclamation-triangle"/>
                                     </p:commandButton>
                                 </p:column>
@@ -224,6 +253,7 @@
                             <p class="text-600 mt-0">#{msg['gestionPadron.simple.iglesias.ayuda']}</p>
                             <p:dataTable id="iglesiasAsignadas" value="#{gestionPadronController.iglesiasAsignadas}" var="iglesia"
                                          rowKey="#{iglesia.id}" paginator="true" rows="8" paginatorPosition="bottom" reflow="true"
+                                         rowStyleClass="#{iglesia.otraParroquia ? 'padron-fila--otra-parroquia' : null}"
                                          emptyMessage="#{msg['padron.empty.iglesias.asignadas']}" styleClass="ui-datatable-striped ui-datatable-sm">
                                 <p:column headerText="#{msg['gestionPadron.iglesia']}" filterBy="#{iglesia.nombre}" filterMatchMode="contains" sortBy="#{iglesia.nombre}">
                                     <h:outputText value="#{iglesia.nombre}"/>
@@ -231,6 +261,19 @@
                                 <!-- Mismo dato que Iglesias (Iglesia.comunidad): distingue iglesias de nombre parecido. -->
                                 <p:column headerText="#{msg['form.iglesias.label.comunidad']}" filterBy="#{iglesia.comunidad}" filterMatchMode="contains" sortBy="#{iglesia.comunidad}">
                                     <h:outputText value="#{iglesia.comunidad}"/>
+                                </p:column>
+                                <!-- Siempre visibles aquí: una iglesia de otra parroquia ya asignada se identifica
+                                     antes de retirarla. -->
+                                <p:column headerText="#{msg['form.iglesias.table.header.ubicacion']}" filterBy="#{iglesia.parroquia}"
+                                          filterMatchMode="contains" sortBy="#{iglesia.parroquia}">
+                                    <ui:include src="/WEB-INF/padronUbicacion.xhtml">
+                                        <ui:param name="iglesia" value="#{iglesia}"/>
+                                    </ui:include>
+                                </p:column>
+                                <p:column headerText="#{msg['padron.col.procedencia']}" sortBy="#{iglesia.otraParroquia}" style="width:9rem">
+                                    <ui:include src="/WEB-INF/padronProcedencia.xhtml">
+                                        <ui:param name="iglesia" value="#{iglesia}"/>
+                                    </ui:include>
                                 </p:column>
                                 <p:column headerText="#{msg['gestionPadron.empadronados']}" style="width:6rem">
                                     <p:badge value="#{iglesia.total}" severity="success"/>
