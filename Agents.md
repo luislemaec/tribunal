@@ -254,6 +254,7 @@ Notas:
 - Los logos en reportes deben conservar proporcion y no distorsionarse.
 - `ReportePFD.guardarDocumentosActasEObligatorio(...)` debe fallar si no existe contenido PDF o no se puede escribir el archivo.
 - En `actaE.xhtml`, el cierre de mesa debe generar/guardar el PDF antes de marcar el escrutinio como `CERRADO`.
+- Toda exportacion Excel con datos personales se registra en la bitacora como `EXPORTAR_REPORTE_EXCEL` con `ExportacionExcelRegistros.registrar(modulo, descripcion, registros, archivo)`, solo tras la descarga completada y con datos: Personas (miembros e inconsistencias), Personas eliminadas, Iglesias, Padron (mesa y general), Reporte de padron y Rep. Registros. Formato y limite de 255 en `specs/001-auditoria-exportaciones-excel/contracts/entrada-bitacora.md`; una exportacion nueva con datos personales debe seguir la misma regla.
 
 ## Pantallas Electorales Clave
 

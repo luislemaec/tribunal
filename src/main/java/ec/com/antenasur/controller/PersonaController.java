@@ -1309,8 +1309,9 @@ public class PersonaController implements Serializable {
         try {
             // Todos los miembros del alcance con los filtros y el orden vigentes de la tabla,
             // no solo la página visible.
+            FiltroMiembrosDTO filtroExportacion = modeloMiembros.filtroVigente();
             List<IglesiaPersonaDTO> lista = iglesiaPersonaService.listarMiembrosCompleto(
-                    modeloMiembros.filtroVigente(), modeloMiembros.campoOrden, modeloMiembros.descendente);
+                    filtroExportacion, modeloMiembros.campoOrden, modeloMiembros.descendente);
             String fecha = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
             String hora = new SimpleDateFormat("HH:mm:ss").format(new Date());
 
@@ -1366,11 +1367,62 @@ public class PersonaController implements Serializable {
                 ReporteXLSX.creaContenidoTabla(datos, columnas);
                 ReporteXLSX.setFinalParagraph(lista.size());
                 String marcaTiempo = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date());
-                ReporteXLSX.descargarExcel("personas_" + marcaTiempo);
+                String archivo = "personas_" + marcaTiempo;
+                ReporteXLSX.descargarExcel(archivo);
+                // Solo tras la descarga completada y con datos (spec 001, FR-001/FR-006).
+                if (!lista.isEmpty()) {
+                    ExportacionExcelRegistros.registrar("PERSONAS E IGLESIAS",
+                            "Personas – Miembros; Filtro: " + describirFiltrosMiembros(filtroExportacion),
+                            lista.size(), archivo + ".xlsx");
+                }
             }
         } catch (Exception e) {
             log.error("Error al exportar listado de personas a Excel", e);
             JsfUtil.addErrorMessage(mensaje("form.personas.exportar.error"));
+        }
+    }
+
+    /**
+     * Filtros vigentes del listado en texto legible para la bitácora: el alcance (iglesia, o
+     * provincia/cantón/parroquia) y los filtros de columna activos; «Todos» si no hay ninguno.
+     */
+    private String describirFiltrosMiembros(FiltroMiembrosDTO filtro) {
+        List<String> partes = new ArrayList<>();
+        if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
+            partes.add("Iglesia: " + safe(iglesiaSeleccionado.getNombre()));
+        } else {
+            agregarUbicacion(partes, "Provincia", provincias, provinciaId);
+            agregarUbicacion(partes, "Cantón", cantones, cantonId);
+            agregarUbicacion(partes, "Parroquia", parroquias, parroquiaId);
+        }
+        if (filtro != null) {
+            agregarTexto(partes, "Búsqueda", filtro.getBusqueda());
+            agregarTexto(partes, "Cédula", filtro.getDocumento());
+            agregarTexto(partes, "Nombres", filtro.getNombres());
+            if (filtro.getHabilitado() != null) {
+                partes.add("Habilitado: " + (filtro.getHabilitado() ? "Sí" : "No"));
+            }
+            if (filtro.getRevisado() != null) {
+                partes.add("Actualizado: " + (filtro.getRevisado() ? "Revisado" : "Pendiente"));
+            }
+            if (filtro.getInconsistencia() != null) {
+                partes.add("Inconsistencia: " + (filtro.getInconsistencia() ? "Sí" : "No"));
+            }
+        }
+        return partes.isEmpty() ? "Todos" : String.join("; ", partes);
+    }
+
+    private static void agregarUbicacion(List<String> partes, String etiqueta, List<GeograpDTO> opciones, Integer id) {
+        if (id == null || opciones == null) {
+            return;
+        }
+        opciones.stream().filter(o -> id.equals(o.getId())).findFirst()
+                .ifPresent(o -> partes.add(etiqueta + ": " + o.getName()));
+    }
+
+    private static void agregarTexto(List<String> partes, String etiqueta, String valor) {
+        if (valor != null && !valor.isBlank()) {
+            partes.add(etiqueta + ": " + valor.trim());
         }
     }
 
@@ -1497,7 +1549,11 @@ public class PersonaController implements Serializable {
                 ReporteXLSX.creaContenidoTabla(datos, columnas);
                 ReporteXLSX.setFinalParagraph(relaciones.size());
                 String marcaTiempo = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date());
-                ReporteXLSX.descargarExcel("personas_inconsistencias_" + marcaTiempo);
+                String archivo = "personas_inconsistencias_" + marcaTiempo;
+                ReporteXLSX.descargarExcel(archivo);
+                // Reporte global (sin filtros); solo tras la descarga completada (spec 001, FR-010).
+                ExportacionExcelRegistros.registrar("PERSONAS E IGLESIAS",
+                        "Personas – Inconsistencias; Filtro: Todas", relaciones.size(), archivo + ".xlsx");
             }
         } catch (IglesiaPersonaException e) {
             JsfUtil.addErrorMessage(mensaje(e.getMessageKey(), e.getArguments()));

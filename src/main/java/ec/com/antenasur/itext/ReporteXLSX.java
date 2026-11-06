@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.util.Units;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -52,6 +53,18 @@ public class ReporteXLSX {
     private static XSSFWorkbook LIBRO;// Libro
 
     private static XSSFSheet HOJA;// Hoja
+
+    /**
+     * Libro por flujo que envuelve a {@link #LIBRO} desde {@link #creaContenidoTabla}: las filas
+     * de datos se escriben a disco por bloques en lugar de quedar todas en memoria (evita
+     * OutOfMemoryError en exportaciones grandes). Logo, encabezado y cabecera quedan en LIBRO.
+     */
+    private static SXSSFWorkbook FLUJO;
+
+    private static Sheet HOJA_FLUJO;
+
+    /** Filas de datos que se mantienen en memoria al escribir por flujo. */
+    private static final int FILAS_EN_MEMORIA = 200;
 
     private static FileInputStream stream;
 
@@ -370,6 +383,7 @@ public class ReporteXLSX {
         try {
             /* Agrega logo institucional a la cabecera del documento. */
             PATH_LOGO = Constantes.getPathLogo();
+            cerrarExcel(); // libera un libro anterior que no se haya cerrado
             LIBRO = new XSSFWorkbook();
             FILA_CABECERA_TABLA = 5;
         } catch (Exception e) {
@@ -451,7 +465,7 @@ public class ReporteXLSX {
             String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
             String pieDePagina = " Documento generado por: " + getNombreUsuarioAutenticado() + " Fecha: " + date.substring(0, 10) + " Hora: "
                     + date.substring(11, 19);
-            Row pie = HOJA.createRow(tamanioLista + FILA_CABECERA_TABLA + 2);
+            Row pie = hojaActual().createRow(tamanioLista + FILA_CABECERA_TABLA + 2);
             Cell celda = pie.createCell(3);
             celda.setCellValue(pieDePagina);
         } catch (Exception e) {
@@ -461,9 +475,10 @@ public class ReporteXLSX {
 
     public static void creaContenidoTabla(String[][] listaDatos, String[] listColumnNames) {
         try {
+            Sheet hoja = activarFlujo();
             int posRow = 1;
             for (String[] medio : listaDatos) {
-                Row fila = HOJA.createRow(posRow + FILA_CABECERA_TABLA);
+                Row fila = hoja.createRow(posRow + FILA_CABECERA_TABLA);
                 for (int i = 0; i < medio.length; i++) {
                     Cell celda = fila.createCell(i);
                     celda.setCellValue(medio[i]);
@@ -482,17 +497,33 @@ public class ReporteXLSX {
         }
         OutputStream out = respuestaExcel(facesContext, nombreReporte);
         try {
-            LIBRO.write(out);
+            libroActual().write(out);
             out.flush();
             facesContext.responseComplete();
         } finally {
-            try {
-                LIBRO.close();
-            } finally {
-                LIBRO = null;
-                HOJA = null;
-            }
+            cerrarExcel();
         }
+    }
+
+    /**
+     * Envuelve el libro clásico en uno por flujo (una sola vez). Las filas ya creadas
+     * (encabezado y cabecera) se conservan; las nuevas deben ir debajo de ellas.
+     */
+    private static Sheet activarFlujo() {
+        if (FLUJO == null) {
+            FLUJO = new SXSSFWorkbook(LIBRO, FILAS_EN_MEMORIA);
+            FLUJO.setCompressTempFiles(true);
+            HOJA_FLUJO = FLUJO.getSheet(HOJA.getSheetName());
+        }
+        return HOJA_FLUJO;
+    }
+
+    private static Sheet hojaActual() {
+        return HOJA_FLUJO != null ? HOJA_FLUJO : HOJA;
+    }
+
+    private static Workbook libroActual() {
+        return FLUJO != null ? FLUJO : LIBRO;
     }
 
     /**
@@ -530,12 +561,21 @@ public class ReporteXLSX {
      */
     public static void cerrarExcel() {
         try {
+            if (FLUJO != null) {
+                try {
+                    FLUJO.close();
+                } finally {
+                    FLUJO.dispose(); // borra los temporales de disco
+                }
+            }
             if (LIBRO != null) {
                 LIBRO.close();
             }
         } catch (IOException e) {
             LOG.error("ERROR AL CERRAR EL LIBRO EXCEL" + e);
         } finally {
+            FLUJO = null;
+            HOJA_FLUJO = null;
             LIBRO = null;
             HOJA = null;
         }
@@ -547,7 +587,7 @@ public class ReporteXLSX {
             throw new IOException("No existe un libro Excel inicializado.");
         }
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
-            LIBRO.write(salida);
+            libroActual().write(salida);
             return salida.toByteArray();
         }
     }

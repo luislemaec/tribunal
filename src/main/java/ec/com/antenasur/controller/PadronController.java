@@ -301,6 +301,13 @@ public class PadronController implements Serializable {
             ReporteXLSX.creaContenidoTabla(datos, columnas);
             ReporteXLSX.setFinalParagraph(lista.size());
             ReporteXLSX.descargarExcel("reporte_padron_electoral");
+            // Solo tras la descarga completada y con datos (spec 001, FR-003/FR-006); los filtros son los
+            // mismos datos de la cabecera del archivo.
+            if (!lista.isEmpty()) {
+                ExportacionExcelRegistros.registrar("PADRÓN", "Reporte de padrón; Filtro: Proceso: "
+                        + getProcesoReportePadron() + "; Recinto: " + getRecintoReportePadron() + "; Mesa: "
+                        + getMesaReportePadron(), lista.size(), "reporte_padron_electoral.xlsx");
+            }
         } catch (Exception e) {
             log.error("Error al exportar Excel del reporte de padron", e);
             JsfUtil.addErrorMessageFromBundle("reportePadron.mensaje.exportar.excel.error");

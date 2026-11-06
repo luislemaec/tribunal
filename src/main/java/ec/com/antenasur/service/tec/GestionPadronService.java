@@ -203,6 +203,18 @@ public class GestionPadronService {
      *               la cabecera del archivo en lugar de repetirse en cada fila.
      */
     public byte[] reporte(FiltroPadronDTO filtro, java.util.Map<String, String> ambito) {
+        return reporteConConteo(filtro, ambito).contenido();
+    }
+
+    /** Excel del padron y cantidad de filas que contiene, para la bitacora de la exportacion. */
+    public record ResultadoReporte(byte[] contenido, long registros) {
+    }
+
+    /**
+     * Igual que {@link #reporte(FiltroPadronDTO, java.util.Map)}, pero devuelve tambien la cantidad de
+     * filas escritas, contadas mientras se genera el archivo (sin consultas adicionales).
+     */
+    public ResultadoReporte reporteConConteo(FiltroPadronDTO filtro, java.util.Map<String, String> ambito) {
         if (filtro == null || filtro.getProcesoId() == null) {
             error("proceso.sin.activo");
         }
@@ -212,14 +224,16 @@ public class GestionPadronService {
         }
         if (facade.contar(filtro, false) == 0) error("reporte.vacio");
         try {
-            return ReporteXLSX.generarPadronGeneral(consumir -> {
+            long[] escritas = {0};
+            byte[] contenido = ReporteXLSX.generarPadronGeneral(consumir -> {
                 int ultimo = 0;
                 List<FilaPadronDTO> lote;
                 do {
                     lote = facade.listar(filtro, false, 0, 500, null, false, ultimo);
-                    for (FilaPadronDTO fila : lote) { consumir.accept(fila); ultimo = fila.getId(); }
+                    for (FilaPadronDTO fila : lote) { consumir.accept(fila); ultimo = fila.getId(); escritas[0]++; }
                 } while (lote.size() == 500);
             }, ambito);
+            return new ResultadoReporte(contenido, escritas[0]);
         } catch (java.io.IOException e) {
             throw new NegocioException(Constantes.getMensaje("gestionPadron.error.reporte"));
         }

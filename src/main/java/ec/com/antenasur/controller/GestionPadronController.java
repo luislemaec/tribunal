@@ -372,10 +372,16 @@ public class GestionPadronController implements Serializable {
             FiltroPadronDTO reporte = new FiltroPadronDTO(filtro);
             reporte.setProcesoId(procesoActivo.getId());
             reporte.setIglesiaNombre(nombreIglesiaReporte);
-            byte[] contenido = service.reporte(reporte, ambitoReporteGeneral());
-            return DefaultStreamedContent.builder().name("empadronados_" + java.time.LocalDate.now() + ".xlsx")
+            GestionPadronService.ResultadoReporte resultado = service.reporteConConteo(reporte, ambitoReporteGeneral());
+            byte[] contenido = resultado.contenido();
+            String archivo = "empadronados_" + java.time.LocalDate.now() + ".xlsx";
+            StreamedContent descarga = DefaultStreamedContent.builder().name(archivo)
                     .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     .stream(() -> new ByteArrayInputStream(contenido)).build();
+            // Archivo generado y entregado en esta misma petición no-ajax (spec 001, FR-003).
+            ExportacionExcelRegistros.registrar("PADRÓN", "Padrón – General; Filtro: " + describirFiltrosPadron(),
+                    resultado.registros(), archivo);
+            return descarga;
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
@@ -406,10 +412,16 @@ public class GestionPadronController implements Serializable {
             reporte.setMesaId(mesa.getId());
             reporte.setIglesiaNombre(null);
             reporte.setBusqueda(null);
-            byte[] contenido = service.reporte(reporte, ambitoDeMesa(mesa));
-            return DefaultStreamedContent.builder().name(nombreArchivoMesa(mesa))
+            GestionPadronService.ResultadoReporte resultado = service.reporteConConteo(reporte, ambitoDeMesa(mesa));
+            byte[] contenido = resultado.contenido();
+            String archivo = nombreArchivoMesa(mesa);
+            StreamedContent descarga = DefaultStreamedContent.builder().name(archivo)
                     .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     .stream(() -> new ByteArrayInputStream(contenido)).build();
+            // Archivo generado y entregado en esta misma petición no-ajax (spec 001, FR-002).
+            ExportacionExcelRegistros.registrar("PADRÓN", "Padrón – Mesa; Filtro: Recinto: " + mesa.getRecinto()
+                    + "; Mesa: " + mesa.getNombre(), resultado.registros(), archivo);
+            return descarga;
         } catch (NegocioException e) {
             JsfUtil.addErrorMessage(e.getMessage());
         } catch (Exception e) {
@@ -465,6 +477,29 @@ public class GestionPadronController implements Serializable {
         ambito.put("proceso", procesoActivo == null ? "" : procesoActivo.getNombre());
         ambito.put("provincia", nombreOpcion(provincias, filtro.getProvinciaId()));
         return ambito;
+    }
+
+    /**
+     * Filtros vigentes del reporte general en texto legible para la bitácora (spec 001):
+     * ubicación, estado, iglesia y búsqueda; «Todos» si no hay ninguno.
+     */
+    private String describirFiltrosPadron() {
+        List<String> partes = new ArrayList<>();
+        agregarFiltro(partes, "Cantón", nombreOpcion(cantones, filtro.getCantonId()));
+        agregarFiltro(partes, "Parroquia", nombreOpcion(parroquias, filtro.getParroquiaId()));
+        agregarFiltro(partes, "Recinto", nombreOpcion(recintos, filtro.getRecintoId()));
+        if (filtro.getConPadron() != null) {
+            partes.add("Estado: " + (filtro.getConPadron() ? "Con empadronados" : "Sin empadronados"));
+        }
+        agregarFiltro(partes, "Iglesia", nombreIglesiaReporte);
+        agregarFiltro(partes, "Búsqueda", filtro.getBusqueda());
+        return partes.isEmpty() ? "Todos" : String.join("; ", partes);
+    }
+
+    private static void agregarFiltro(List<String> partes, String etiqueta, String valor) {
+        if (valor != null && !valor.isBlank()) {
+            partes.add(etiqueta + ": " + valor.trim());
+        }
     }
 
     private String nombreOpcion(List<OpcionPadronDTO> opciones, Integer id) {

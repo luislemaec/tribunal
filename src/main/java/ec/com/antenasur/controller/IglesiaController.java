@@ -1121,6 +1121,32 @@ public class IglesiaController implements Serializable {
         }
     }
 
+    /**
+     * Filtros vigentes del listado en texto legible para la bitácora (spec 001): la iglesia
+     * asignada (IglesiaAdmin) o cantón, parroquia y comunidad elegidos; «Todos» si no hay ninguno.
+     * Los combos guardan solo el id: el nombre se toma de sus opciones.
+     */
+    private String describirFiltrosIglesias() {
+        if (restringidoAIglesia) {
+            return "Iglesia asignada";
+        }
+        List<String> partes = new ArrayList<>();
+        nombreZona(cantonesFiltro, cantonSeleccionado).ifPresent(n -> partes.add("Cantón: " + n));
+        nombreZona(parroquias, parroquiaSeleccionado).ifPresent(n -> partes.add("Parroquia: " + n));
+        if (comunidadFiltro != null && !comunidadFiltro.isBlank()) {
+            partes.add("Comunidad: " + comunidadFiltro.trim());
+        }
+        return partes.isEmpty() ? "Todos" : String.join("; ", partes);
+    }
+
+    private static java.util.Optional<String> nombreZona(List<Geograp> opciones, Geograp elegida) {
+        if (elegida == null || elegida.getId() == null || opciones == null) {
+            return java.util.Optional.empty();
+        }
+        return opciones.stream().filter(o -> elegida.getId().equals(o.getId())).map(Geograp::getName)
+                .filter(n -> n != null && !n.isBlank()).findFirst();
+    }
+
     public void exportarExcel() {
         try {
             if (restringidoAIglesia) {
@@ -1167,6 +1193,11 @@ public class IglesiaController implements Serializable {
             ReporteXLSX.creaContenidoTabla(datos, columnas);
             ReporteXLSX.setFinalParagraph(lista.size());
             ReporteXLSX.descargarExcel("iglesias");
+            // Solo tras la descarga completada y con datos (spec 001, FR-004/FR-006).
+            if (!lista.isEmpty()) {
+                ExportacionExcelRegistros.registrar("PERSONAS E IGLESIAS",
+                        "Iglesias – Listado; Filtro: " + describirFiltrosIglesias(), lista.size(), "iglesias.xlsx");
+            }
         } catch (Exception e) {
             log.error("Error al exportar Excel de iglesias", e);
             JsfUtil.addErrorMessage("No se pudo generar el archivo Excel.");

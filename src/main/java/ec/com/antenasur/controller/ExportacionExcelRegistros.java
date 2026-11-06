@@ -88,12 +88,46 @@ final class ExportacionExcelRegistros {
         String datos = "MÓDULO: " + modulo + "; RESULTADO: EXITOSO; DETALLE: ";
         String detalle = descripcion + "; Archivo: " + archivo;
         // tec.procesos.actividad admite 255 caracteres: se acorta el detalle, nunca el formato.
-        int disponible = 255 - ACCION_EXPORTAR.length() - 3 - datos.length();
+        int disponible = LARGO_ACTIVIDAD - ACCION_EXPORTAR.length() - 3 - datos.length();
         if (detalle.length() > disponible) {
             detalle = detalle.substring(0, Math.max(0, disponible));
         }
+        escribir(datos + detalle, archivo);
+    }
+
+    /**
+     * Exportación con la cantidad de registros (exportaciones con datos personales: Personas,
+     * Iglesias y Padrón). Ver {@link #componerDetalle}: la cantidad y el archivo nunca se recortan.
+     */
+    static void registrar(String modulo, String descripcion, long registros, String archivo) {
+        escribir(componerDetalle(modulo, descripcion, registros, archivo), archivo);
+    }
+
+    /** tec.procesos.actividad admite 255 caracteres. */
+    static final int LARGO_ACTIVIDAD = 255;
+
+    /**
+     * Texto posterior a «EXPORTAR_REPORTE_EXCEL | » (contrato de la bitácora, ver
+     * specs/001-auditoria-exportaciones-excel/contracts/entrada-bitacora.md):
+     * <pre>MÓDULO: X; RESULTADO: EXITOSO; DETALLE: &lt;descripción&gt;; Registros: N; Archivo: f.xlsx</pre>
+     * Si la actividad completa supera 255 caracteres se acorta solo la descripción (título y
+     * filtros): el formato, la cantidad y el nombre del archivo se conservan íntegros.
+     */
+    static String componerDetalle(String modulo, String descripcion, long registros, String archivo) {
+        String prefijo = "MÓDULO: " + modulo + "; RESULTADO: EXITOSO; DETALLE: ";
+        String sufijo = "; Registros: " + registros + "; Archivo: " + archivo;
+        String texto = descripcion == null ? "" : descripcion.replaceAll("[\\r\\n\\t]+", " ").trim();
+        int disponible = LARGO_ACTIVIDAD - ACCION_EXPORTAR.length() - 3 - prefijo.length() - sufijo.length();
+        if (texto.length() > disponible) {
+            texto = texto.substring(0, Math.max(0, disponible));
+        }
+        return prefijo + texto + sufijo;
+    }
+
+    /** Un fallo al registrar no afecta a la descarga, que ya se entregó (FR-008). */
+    private static void escribir(String datos, String archivo) {
         try {
-            CDI.current().select(ProcesoBean.class).get().okActivityRegister(ACCION_EXPORTAR, datos + detalle);
+            CDI.current().select(ProcesoBean.class).get().okActivityRegister(ACCION_EXPORTAR, datos);
         } catch (RuntimeException e) {
             log.error("No se pudo registrar la exportación en la bitácora ({})", archivo, e);
         }
