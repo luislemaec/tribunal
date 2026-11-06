@@ -39,6 +39,7 @@ import ec.com.antenasur.facade.tec.DocumentoFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
 import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.facade.tec.TipoDocumentoFacade;
+import ec.com.antenasur.itext.PadronMesaPdf;
 import ec.com.antenasur.itext.ReportePFD;
 import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.tec.Documentos;
@@ -51,6 +52,8 @@ import ec.com.antenasur.util.RepositorioDocumentos;
 /** Reglas de consulta y generación documental por proceso, recinto y mesa. */
 @Stateless
 public class ReporteMesaService {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ReporteMesaService.class);
+
 	@Inject
 	private EmisionAccesoQrService emisionQr;
 
@@ -284,13 +287,22 @@ public class ReporteMesaService {
 			return toDocumentoDisponible(existente);
 		}
 
+		int version = documentoFacade.siguienteVersionMesaProcesoTipo(mesaId, procesoId, tipo.getId());
 		LocalDateTime ahora = LocalDateTime.now();
 		String codigo = "PADRON-" + procesoId + "-M" + mesaId + "-"
 				+ ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + "-" + sufijo();
-		byte[] contenido = generarExcelPadron(reporte);
-		return almacenar(reporte, tipo, codigo, ".xlsx",
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", contenido, "padrones-mesa",
-				contexto, regenerar);
+		byte[] contenido = generarPdfPadron(reporte, codigo, ahora);
+		return almacenar(reporte, tipo, codigo, ".pdf", "application/pdf", contenido, "padrones-mesa", contexto,
+				regenerar, version, null, nombrePadron(reporte, version));
+	}
+
+	/** Nombre de descarga: Padron_Mesa_<mesa>_V<n> (el código único queda como código de validación). */
+	static String nombrePadron(ReporteMesaDTO reporte, int version) {
+		String mesa = reporte.getMesa() != null && reporte.getMesa().getNombre() != null
+				? reporte.getMesa().getNombre() : String.valueOf(reporte.getMesa() != null ? reporte.getMesa().getId() : "");
+		mesa = java.text.Normalizer.normalize(mesa.trim(), java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "")
+				.replaceAll("\\s+", "-").replaceAll("[^A-Za-z0-9_-]", "").replaceAll("-+", "-");
+		return "Padron_Mesa_" + (mesa.isEmpty() ? "SN" : mesa) + "_V" + version;
 	}
 
 	public DocumentoDTO generarCertificados(Integer procesoId, Integer recintoId, Integer mesaId, Integer personaId,
@@ -377,33 +389,38 @@ public class ReporteMesaService {
 		return documentos;
 	}
 
-	private byte[] generarExcelPadron(ReporteMesaDTO reporte) {
-		synchronized (ReporteXLSX.class) {
-			try {
-				ReporteXLSX.nuevoExcelElectoral(mensaje("reportesMesa.padron.titulo"));
-				String[] columnas = { mensaje("reportesMesa.padron.numero"), mensaje("reportesMesa.padron.cedula"),
-						mensaje("reportesMesa.padron.nombres"), mensaje("reportesMesa.padron.iglesia"),
-						mensaje("reportesMesa.padron.comunidad"), mensaje("reportesMesa.padron.estado") };
-				ReporteXLSX.creaCabeceraTabla(columnas, new int[] { 1800, 5000, 9000, 10000, 8000, 4000 });
-				// Encabezado compacto: necesita los anchos de la tabla ya definidos.
-				ReporteXLSX.creaEncabezadoElectoral(mensaje("reportesMesa.padron.titulo"),
-						ReporteXLSX.datosElectorales(reporte.getProceso().getNombre(),
-								reporte.getRecinto().getProvinciaNombre(), reporte.getRecinto().getCantonNombre(),
-								reporte.getRecinto().getUbicacionNombre(), reporte.getRecinto().getNombre(),
-								reporte.getMesa().getNombre()));
-				String[][] datos = new String[reporte.getPadron().size()][columnas.length];
-				for (int i = 0; i < reporte.getPadron().size(); i++) {
-					completarFilaPadron(datos[i], reporte.getPadron().get(i), i + 1);
-				}
-				ReporteXLSX.creaContenidoTabla(datos, columnas);
-				ReporteXLSX.setFinalParagraph(reporte.getPadron().size());
-				return ReporteXLSX.obtenerContenidoExcel();
-			} catch (Exception e) {
-				throw new NegocioException(mensaje("reportesMesa.error.generar.padron"));
+	/**
+	 * Padrón de la mesa en PDF (A4 horizontal) con los mismos datos, orden y encabezado que tenía
+	 * el Excel; la última columna ESTADO se sustituye por FIRMA, siempre en blanco.
+	 */
+	private byte[] generarPdfPadron(ReporteMesaDTO reporte, String codigo, LocalDateTime ahora) {
+		try {
+			String[] columnas = { mensaje("reportesMesa.padron.numero"), mensaje("reportesMesa.padron.cedula"),
+					mensaje("reportesMesa.padron.nombres"), mensaje("reportesMesa.padron.iglesia"),
+					mensaje("reportesMesa.padron.comunidad"), mensaje("reportesMesa.padron.firma") };
+			List<String[]> filas = new ArrayList<>(reporte.getPadron().size());
+			for (int i = 0; i < reporte.getPadron().size(); i++) {
+				String[] fila = new String[PadronMesaPdf.COLUMNAS_DATOS];
+				completarFilaPadron(fila, reporte.getPadron().get(i), i + 1);
+				filas.add(fila);
 			}
+			String[] fechaHora = PadronMesaPdf.fechaHora(ahora);
+			PadronMesaPdf.Textos textos = new PadronMesaPdf.Textos(mensaje("reportesMesa.padron.titulo"), columnas,
+					ReporteXLSX.datosElectorales(reporte.getProceso().getNombre(),
+							reporte.getRecinto().getProvinciaNombre(), reporte.getRecinto().getCantonNombre(),
+							reporte.getRecinto().getUbicacionNombre(), reporte.getRecinto().getNombre(),
+							reporte.getMesa().getNombre()),
+					Constantes.getMensaje("reportesMesa.padron.pdf.contexto", texto(reporte.getRecinto().getNombre()),
+							texto(reporte.getMesa().getNombre())),
+					Constantes.getMensaje("reportesMesa.padron.pdf.pie", usuarioActual(), fechaHora[0], fechaHora[1]));
+			return PadronMesaPdf.generar(filas, textos, codigo, ahora);
+		} catch (Exception e) {
+			LOG.error("ERROR AL GENERAR EL PDF DEL PADRON DE LA MESA {}", reporte.getMesa().getId(), e);
+			throw new NegocioException(mensaje("reportesMesa.error.generar.padron"));
 		}
 	}
 
+	/** Columnas del padrón (Nro., identificación, nombres, iglesia, comunidad), sin el estado de sufragio. */
 	private void completarFilaPadron(String[] fila, PadronDTO padron, int numero) {
 		fila[0] = String.valueOf(numero);
 		if (padron.getIglesiaPersona() != null) {
@@ -417,8 +434,6 @@ public class ReporteMesaService {
 				fila[4] = texto(padron.getIglesiaPersona().getIglesia().getComunidad());
 			}
 		}
-		fila[5] = Boolean.TRUE.equals(padron.getSufrago()) ? mensaje("reportesMesa.padron.sufrago")
-				: mensaje("reportesMesa.padron.pendiente");
 		for (int i = 0; i < fila.length; i++) {
 			if (fila[i] == null) {
 				fila[i] = "";
@@ -440,6 +455,14 @@ public class ReporteMesaService {
 	private DocumentoDTO almacenar(ReporteMesaDTO reporte, TipoDocumento tipo, String codigo, String extension,
 			String mime, byte[] contenido, String subdirectorio, String contexto, boolean nuevaVersion, Integer version,
 			String folio) {
+		return almacenar(reporte, tipo, codigo, extension, mime, contenido, subdirectorio, contexto, nuevaVersion,
+				version, folio, codigo);
+	}
+
+	/** {@code nombre}: nombre de descarga; el archivo en disco conserva el código único. */
+	private DocumentoDTO almacenar(ReporteMesaDTO reporte, TipoDocumento tipo, String codigo, String extension,
+			String mime, byte[] contenido, String subdirectorio, String contexto, boolean nuevaVersion, Integer version,
+			String folio, String nombre) {
 		Path archivo = null;
 		try {
 			archivo = RepositorioDocumentos.escribirAtomico(subdirectorio, codigo + extension, contenido);
@@ -456,7 +479,7 @@ public class ReporteMesaService {
 					}
 				}
 			});
-			Documentos documento = new Documentos(codigo, RepositorioDocumentos.rutaRelativaParaPersistir(archivo),
+			Documentos documento = new Documentos(nombre, RepositorioDocumentos.rutaRelativaParaPersistir(archivo),
 					tipo, reporte.getMesa().getId(), extension, mime, codigo);
 			documento.setProceso(procesoFacade.find(reporte.getProceso().getId()));
 			documento.setRecinto(mesaFacade.buscarDetallePorId(reporte.getMesa().getId()).getRecinto());
@@ -547,8 +570,11 @@ public class ReporteMesaService {
 
 	private String hashContextoPadron(ReporteMesaDTO reporte) {
 		StringBuilder fuente = contextoBase(reporte);
+		// Formato PDF con FIRMA: un Excel anterior nunca se reutiliza como vigente, y el estado de
+		// sufragio no forma parte del documento, así que no lo marca como desactualizado.
+		fuente.append("|PDF-FIRMA");
 		for (PadronDTO padron : reporte.getPadron()) {
-			fuente.append("|P:").append(padron.getId()).append(':').append(padron.getSufrago());
+			fuente.append("|P:").append(padron.getId());
 			fuente.append(':').append(padron.getIglesiaPersona());
 		}
 		return hash(fuente.toString());

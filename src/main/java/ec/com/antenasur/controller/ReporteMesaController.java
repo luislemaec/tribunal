@@ -180,7 +180,7 @@ public class ReporteMesaController implements Serializable {
 			DocumentoDTO documento = reporteMesaService.generarDocumentoMesa(tipoDocumento, regenerar, procesoId,
 					recinto, mesa, personaId(), presidenteRestringido);
 			procesoBean.okActivityRegister((regenerar ? "REGENERA " : "GENERA ") + tipoDocumento.name(),
-					documento.getCodigo());
+					datosBitacora(tipoDocumento, documento));
 			actualizarResumenDocumental(mesa);
 			JsfUtil.addSuccessMessage(Constantes
 					.getMensaje(regenerar ? "reportesMesa.documento.regenerado" : "reportesMesa.documento.generado"));
@@ -227,7 +227,7 @@ public class ReporteMesaController implements Serializable {
 			try {
 				DocumentoDTO documento = reporteMesaService.generarDocumentoMesa(tipo, false, procesoId, recinto, mesa,
 						personaId(), presidenteRestringido);
-				procesoBean.okActivityRegister("GENERA " + tipo.name(), documento.getCodigo());
+				procesoBean.okActivityRegister("GENERA " + tipo.name(), datosBitacora(tipo, documento));
 				generados.add(nombre);
 			} catch (NegocioException e) {
 				omitidos.add(motivoOmision(nombre, e.getMessage()));
@@ -238,6 +238,22 @@ public class ReporteMesaController implements Serializable {
 		}
 		actualizarResumenDocumental(mesa);
 		informarGeneracionConjunta(generados, existentes, omitidos);
+	}
+
+	/**
+	 * Datos de la bitácora tras una generación exitosa. El padrón identifica además el formato y
+	 * el archivo (PDF con columna FIRMA); los demás documentos conservan solo su código.
+	 */
+	public static String datosBitacora(TipoDocumentoMesa tipo, DocumentoDTO documento) {
+		if (tipo != TipoDocumentoMesa.PADRON_MESA) {
+			return documento.getCodigo();
+		}
+		String extension = documento.getExtension() == null ? "" : documento.getExtension().trim();
+		String nombre = documento.getNombre() == null ? "" : documento.getNombre();
+		String archivo = !extension.isEmpty() && !nombre.toLowerCase().endsWith(extension.toLowerCase())
+				? nombre + extension : nombre;
+		String formato = extension.replace(".", "").toUpperCase(java.util.Locale.ROOT);
+		return documento.getCodigo() + "; Formato: " + (formato.isEmpty() ? "N/D" : formato) + "; Archivo: " + archivo;
 	}
 
 	/** Estado ya calculado por el servicio de disponibilidad para esa mesa y tipo. */
@@ -612,7 +628,8 @@ public class ReporteMesaController implements Serializable {
 			DocumentoDTO documento = reporteMesaService.generarPadron(procesoId, recintoId, mesaId, personaId(),
 					presidenteRestringido);
 			consultar();
-			procesoBean.okActivityRegister("GENERA PADRON ELECTORAL DE MESA", documento.getCodigo());
+			procesoBean.okActivityRegister("GENERA PADRON ELECTORAL DE MESA",
+					datosBitacora(TipoDocumentoMesa.PADRON_MESA, documento));
 			JsfUtil.addSuccessMessage(Constantes.getMensaje("reportesMesa.exito.padron", documento.getNombre()));
 		} catch (NegocioException e) {
 			JsfUtil.addErrorMessage(e.getMessage());

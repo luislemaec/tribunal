@@ -23,13 +23,13 @@ public final class PdfInstitucional {
     public static final float MARGEN_INFERIOR = PlantillaA4.MARGEN_INFERIOR;
 
     /**
-     * A4 apaisado: no existe versión horizontal de la plantilla, por lo que
-     * conserva el encabezado gráfico propio y sus márgenes.
+     * A4 apaisado sobre la versión horizontal de la plantilla institucional
+     * ({@link PlantillaA4#componerHorizontal}); sus márgenes también los define la plantilla.
      */
-    public static final float MARGEN_IZQUIERDO_HORIZONTAL = 36f;
-    public static final float MARGEN_DERECHO_HORIZONTAL = 36f;
-    public static final float MARGEN_SUPERIOR_HORIZONTAL = 92f;
-    public static final float MARGEN_INFERIOR_HORIZONTAL = 48f;
+    public static final float MARGEN_IZQUIERDO_HORIZONTAL = PlantillaA4.MARGEN_IZQUIERDO;
+    public static final float MARGEN_DERECHO_HORIZONTAL = PlantillaA4.MARGEN_DERECHO;
+    public static final float MARGEN_SUPERIOR_HORIZONTAL = PlantillaA4.MARGEN_SUPERIOR_HORIZONTAL;
+    public static final float MARGEN_INFERIOR_HORIZONTAL = PlantillaA4.MARGEN_INFERIOR;
 
     private PdfInstitucional() {
     }
@@ -52,16 +52,34 @@ public final class PdfInstitucional {
     }
 
     /**
-     * A4 apaisado: sin plantilla (no existe versión horizontal), conserva el
-     * encabezado gráfico propio.
+     * A4 apaisado sobre la plantilla institucional horizontal, con la línea técnica
+     * «título | Código | fecha» bajo el encabezado, como {@link #crearA4}.
      */
     public static Contexto crearA4Horizontal(OutputStream salida, String codigo, String titulo,
             LocalDateTime fechaGeneracion) throws Exception {
         LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        return abrirHorizontal(salida, titulo, fecha, new PlantillaA4.Fondo(codigo, titulo, null, fecha, null, true, true));
+    }
+
+    /**
+     * A4 apaisado con el encabezado de las actas: plantilla institucional horizontal y código de
+     * barras sobre «DOCUMENTO OFICIAL», sin la línea técnica (el documento lleva su título en el
+     * cuerpo) y con «Página N | Código de validación: …» en el pie. El código de barras codifica
+     * el mismo código del documento.
+     */
+    public static Contexto crearA4HorizontalConCodigoBarras(OutputStream salida, String titulo,
+            LocalDateTime fechaGeneracion, String codigoDocumento) throws Exception {
+        LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        return abrirHorizontal(salida, titulo, fecha,
+                new PlantillaA4.Fondo(codigoDocumento, null, null, fecha, codigoDocumento, false, true));
+    }
+
+    private static Contexto abrirHorizontal(OutputStream salida, String titulo, LocalDateTime fecha,
+            PlantillaA4.Fondo fondo) throws Exception {
         Document documento = new Document(PageSize.A4.rotate(), MARGEN_IZQUIERDO_HORIZONTAL,
                 MARGEN_DERECHO_HORIZONTAL, MARGEN_SUPERIOR_HORIZONTAL, MARGEN_INFERIOR_HORIZONTAL);
         PdfWriter writer = PdfWriter.getInstance(documento, salida);
-        writer.setPageEvent(new HeaderFooterPageEvent(codigo, titulo, fecha));
+        writer.setPageEvent(fondo);
         documento.open();
         aplicarMetadata(documento, titulo);
         return new Contexto(documento, writer, fecha);

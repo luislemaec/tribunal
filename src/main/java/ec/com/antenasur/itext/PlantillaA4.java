@@ -126,6 +126,45 @@ public final class PlantillaA4 {
     private static final float PX_X = PageSize.A4.getWidth() / DISENO_ANCHO;
     private static final float PX_Y = PageSize.A4.getHeight() / DISENO_ALTO;
 
+    /* ------------------------------------------------------------------
+     * A4 horizontal ({@link #componerHorizontal}): la misma plantilla reacomodada con un
+     * encabezado compacto (logotipo más pequeño y código de barras más grande), para dejar
+     * más alto a las tablas apaisadas. Va después de PX_X/PX_Y porque los usa.
+     * ------------------------------------------------------------------ */
+
+    /** Página A4 apaisada (841,89 × 595,28 pt). */
+    public static final float ANCHO_HORIZONTAL = PageSize.A4.rotate().getWidth();
+    public static final float ALTO_HORIZONTAL = PageSize.A4.rotate().getHeight();
+
+    /** Lo que se desplazan a la derecha los elementos anclados al margen derecho. */
+    private static final float DESPLAZAMIENTO_HORIZONTAL = ANCHO_HORIZONTAL - PageSize.A4.getWidth();
+
+    /** Escala del logotipo con su identificación y del bloque «DOCUMENTO OFICIAL». */
+    private static final float ESCALA_IDENTIFICACION_HORIZONTAL = 0.72f;
+    private static final float ESCALA_OFICIAL_HORIZONTAL = 0.85f;
+
+    /** Borde superior del logotipo, desde abajo (26 pt bajo el borde de la hoja). */
+    private static final float TOPE_ENCABEZADO_HORIZONTAL = ALTO_HORIZONTAL - 26f;
+
+    /** Línea base de «CONPOCIIECH» y de «Elecciones 2026» en el encabezado compacto. */
+    private static final float BASE_ENCABEZADO_HORIZONTAL = TOPE_ENCABEZADO_HORIZONTAL
+            - ESCALA_IDENTIFICACION_HORIZONTAL * ((DISENO_ALTO - 169) - (DISENO_ALTO - 468)) * PX_Y;
+
+    /** Borde inferior de la línea del encabezado horizontal, desde abajo (≈ 90 pt desde arriba). */
+    private static final float LINEA_ENCABEZADO_HORIZONTAL = BASE_ENCABEZADO_HORIZONTAL - 12f;
+
+    /** Margen superior horizontal: 14 pt bajo la línea; los laterales e inferior son los del vertical. */
+    public static final float MARGEN_SUPERIOR_HORIZONTAL = ALTO_HORIZONTAL - LINEA_ENCABEZADO_HORIZONTAL + 14f;
+
+    /** Código de barras horizontal: más ancho y alto que en vertical, alineado con el logotipo. */
+    private static final float ANCHO_BARRAS_HORIZONTAL = 250f;
+    private static final float ALTO_BARRAS_HORIZONTAL = 30f;
+    private static final float BASE_BARRAS_HORIZONTAL = TOPE_ENCABEZADO_HORIZONTAL - ALTO_BARRAS_HORIZONTAL;
+
+    /** Centro de la marca de agua en píxeles de diseño (x 503–2118, y 1378–2186). */
+    private static final float CENTRO_MARCA_AGUA_X = 1310.5f;
+    private static final float CENTRO_MARCA_AGUA_Y = 1782f;
+
     /** Texto institucional de la plantilla. */
     private static final BaseColor COLOR_INSTITUCIONAL = new BaseColor(0x00, 0x43, 0x85);
     /** Texto de la marca de agua (#004285 al 9 %). */
@@ -212,36 +251,129 @@ public final class PlantillaA4 {
         rectangulo(t, x(480), y(584), x(1809), 7 * PX_Y, COLOR_LINEA_ENCABEZADO, 1f);
         rectangulo(t, x(480), y(3379), x(1809), 7 * PX_Y, COLOR_LINEA_PIE, OPACIDAD_LINEA_PIE);
 
-        // Logotipos (los píxeles de la marca de agua ya traen su transparencia).
+        marcaAgua(t);
+        identificacion(t);
+        documentoOficial(t);
+        pieInstitucional(t);
+        contacto(t);
+        return t;
+    }
+
+    /**
+     * La misma plantilla institucional en A4 horizontal (841,89 × 595,28 pt).
+     *
+     * <p>Reutiliza cada grupo del diseño vertical sin redibujarlo: el logotipo y su
+     * identificación se mantienen arriba a la izquierda, «DOCUMENTO OFICIAL» arriba a la
+     * derecha, el pie abajo (el contacto a la derecha), la marca de agua centrada en el área
+     * de contenido y la banda con su degradado a lo alto de la página. Las líneas se
+     * alargan hasta el margen derecho. El encabezado es compacto (logotipo al 72 % y
+     * bloque oficial al 85 %) y su línea queda a unos 90 pt del borde, para ganar filas
+     * en las tablas apaisadas.
+     */
+    static PdfTemplate componerHorizontal(PdfWriter writer) throws Exception {
+        float ancho = ANCHO_HORIZONTAL, alto = ALTO_HORIZONTAL;
+        PdfTemplate t = writer.getDirectContent().createTemplate(ancho, alto);
+
+        // Banda: el degradado vertical, escalado a la altura apaisada.
+        t.saveState();
+        t.rectangle(0, 0, x(210), alto);
+        t.clip();
+        t.newPath();
+        t.concatCTM(1, 0, 0, alto / PageSize.A4.getHeight(), 0, 0);
+        t.paintShading(sombreadoBanda(writer));
+        t.restoreState();
+
+        rectangulo(t, CENTRO_LINEA_VERTICAL - GROSOR_LINEA_VERTICAL / 2, 0, GROSOR_LINEA_VERTICAL, alto,
+                COLOR_LINEA_VERTICAL, OPACIDAD_LINEA_VERTICAL);
+        float largoLineas = x(1809) + DESPLAZAMIENTO_HORIZONTAL;
+        rectangulo(t, x(480), LINEA_ENCABEZADO_HORIZONTAL, largoLineas, 7 * PX_Y, COLOR_LINEA_ENCABEZADO, 1f);
+        rectangulo(t, x(480), y(3379), largoLineas, 7 * PX_Y, COLOR_LINEA_PIE, OPACIDAD_LINEA_PIE);
+
+        // Marca de agua centrada en el área de contenido (entre las dos líneas).
+        float centroX = (MARGEN_IZQUIERDO + ancho - MARGEN_DERECHO) / 2;
+        float centroY = (LINEA_ENCABEZADO_HORIZONTAL + LIMITE_PIE) / 2;
+        trasladar(t, centroX - x(CENTRO_MARCA_AGUA_X), centroY - y(CENTRO_MARCA_AGUA_Y), PlantillaA4::marcaAgua);
+
+        // Encabezado compacto: logotipo reducido anclado arriba a la izquierda (su esquina
+        // superior izquierda, x 449 px / y 169 px) y bloque oficial anclado a la derecha, con
+        // «Elecciones 2026» sobre la misma línea base que «CONPOCIIECH».
+        escalar(t, x(449), y(169), MARGEN_IZQUIERDO_LOGO, TOPE_ENCABEZADO_HORIZONTAL,
+                ESCALA_IDENTIFICACION_HORIZONTAL, PlantillaA4::identificacion);
+        escalar(t, x(2276), y(466), ancho - MARGEN_DERECHO, BASE_ENCABEZADO_HORIZONTAL,
+                ESCALA_OFICIAL_HORIZONTAL, PlantillaA4::documentoOficial);
+
+        // Pie: anclado abajo; el contacto, a la derecha.
+        pieInstitucional(t);
+        trasladar(t, DESPLAZAMIENTO_HORIZONTAL, 0, PlantillaA4::contacto);
+        return t;
+    }
+
+    /** Grupo de la plantilla dibujado con las coordenadas del diseño vertical. */
+    @FunctionalInterface
+    private interface Grupo {
+        void dibujar(PdfTemplate t) throws Exception;
+    }
+
+    private static void trasladar(PdfTemplate t, float dx, float dy, Grupo grupo) throws Exception {
+        escalar(t, 0, 0, dx, dy, 1f, grupo);
+    }
+
+    /** Dibuja el grupo escalado, llevando su punto de anclaje (origenX, origenY) a (destinoX, destinoY). */
+    private static void escalar(PdfTemplate t, float origenX, float origenY, float destinoX, float destinoY,
+            float escala, Grupo grupo) throws Exception {
+        t.saveState();
+        t.concatCTM(escala, 0, 0, escala, destinoX - escala * origenX, destinoY - escala * origenY);
+        grupo.dibujar(t);
+        t.restoreState();
+    }
+
+    /** El logotipo horizontal conserva la posición horizontal del vertical (x 449 px). */
+    private static final float MARGEN_IZQUIERDO_LOGO = 449 * PX_X;
+
+    /*
+     * Pesos de Montserrat equivalentes a los de la plantilla: Light (300) para «TRIBUNAL
+     * ELECTORAL», Medium (500) para los textos regulares y Bold (700) para los destacados.
+     */
+
+    /** Marca de agua: logotipo (sus píxeles ya traen la transparencia) e identificación. */
+    private static void marcaAgua(PdfTemplate t) throws Exception {
         imagen(t, recurso(RUTA_MARCA_AGUA), 538, 1378, 1580, 516);
+        texto(t, TipografiaPdf.Peso.LIGHT.baseFont(), TEXTO_TRIBUNAL, 503, 2093, 2045, 81, COLOR_MARCA_AGUA,
+                OPACIDAD_MARCA_AGUA);
+        texto(t, TipografiaPdf.Peso.BOLD.baseFont(), TEXTO_CONPOCIIECH, 796, 1796, 2186, 75, COLOR_MARCA_AGUA,
+                OPACIDAD_MARCA_AGUA);
+    }
+
+    /** Encabezado izquierdo: logotipo e identificación bajo él. */
+    private static void identificacion(PdfTemplate t) throws Exception {
         imagen(t, recurso(RUTA_LOGO), 462, 169, 586, 194);
+        texto(t, TipografiaPdf.Peso.LIGHT.baseFont(), TEXTO_TRIBUNAL, 449, 1037, 416, 29, COLOR_INSTITUCIONAL, 1f);
+        texto(t, TipografiaPdf.Peso.BOLD.baseFont(), TEXTO_CONPOCIIECH, 558, 927, 468, 27, COLOR_INSTITUCIONAL, 1f);
+    }
 
-        // Pesos de Montserrat equivalentes a los de la plantilla: Light (300) para «TRIBUNAL
-        // ELECTORAL», Medium (500) para los textos regulares y Bold (700) para los destacados.
-        BaseFont light = TipografiaPdf.Peso.LIGHT.baseFont();
-        BaseFont medium = TipografiaPdf.Peso.MEDIUM.baseFont();
-        BaseFont bold = TipografiaPdf.Peso.BOLD.baseFont();
+    /** Encabezado derecho: bloque «DOCUMENTO OFICIAL» y proceso. */
+    private static void documentoOficial(PdfTemplate t) {
+        texto(t, TipografiaPdf.Peso.BOLD.baseFont(), TEXTO_DOCUMENTO_OFICIAL, 1827, 2254, 418, 30,
+                COLOR_INSTITUCIONAL, 1f);
+        texto(t, TipografiaPdf.Peso.MEDIUM.baseFont(), TEXTO_PROCESO, 1804, 2276, 466, 29, COLOR_INSTITUCIONAL, 1f);
+    }
 
-        // Marca de agua: identificación bajo el logotipo.
-        texto(t, light, TEXTO_TRIBUNAL, 503, 2093, 2045, 81, COLOR_MARCA_AGUA, OPACIDAD_MARCA_AGUA);
-        texto(t, bold, TEXTO_CONPOCIIECH, 796, 1796, 2186, 75, COLOR_MARCA_AGUA, OPACIDAD_MARCA_AGUA);
-
-        // Encabezado: identificación bajo el logotipo y bloque «DOCUMENTO OFICIAL».
-        texto(t, light, TEXTO_TRIBUNAL, 449, 1037, 416, 29, COLOR_INSTITUCIONAL, 1f);
-        texto(t, bold, TEXTO_CONPOCIIECH, 558, 927, 468, 27, COLOR_INSTITUCIONAL, 1f);
-        texto(t, bold, TEXTO_DOCUMENTO_OFICIAL, 1827, 2254, 418, 30, COLOR_INSTITUCIONAL, 1f);
-        texto(t, medium, TEXTO_PROCESO, 1804, 2276, 466, 29, COLOR_INSTITUCIONAL, 1f);
-
-        // Pie: institución • lema, y contacto.
-        texto(t, bold, TEXTO_PIE_INSTITUCION, 480, 856, 3418, 20, COLOR_INSTITUCIONAL, 1f);
+    /** Pie izquierdo: institución • lema. */
+    private static void pieInstitucional(PdfTemplate t) {
+        texto(t, TipografiaPdf.Peso.BOLD.baseFont(), TEXTO_PIE_INSTITUCION, 480, 856, 3418, 20,
+                COLOR_INSTITUCIONAL, 1f);
         t.saveState();
         t.setColorFill(COLOR_INSTITUCIONAL);
         t.circle(x(874.5f), y(3411.5f), 5.5f * PX_X);
         t.fill();
         t.restoreState();
-        texto(t, medium, TEXTO_PIE_LEMA, 889, 1314, 3421, 18, COLOR_INSTITUCIONAL, 1f);
-        texto(t, medium, TEXTO_PIE_CONTACTO, 1826, 2271, 3424, 18, COLOR_INSTITUCIONAL, 1f);
-        return t;
+        texto(t, TipografiaPdf.Peso.MEDIUM.baseFont(), TEXTO_PIE_LEMA, 889, 1314, 3421, 18, COLOR_INSTITUCIONAL, 1f);
+    }
+
+    /** Pie derecho: contacto. */
+    private static void contacto(PdfTemplate t) {
+        texto(t, TipografiaPdf.Peso.MEDIUM.baseFont(), TEXTO_PIE_CONTACTO, 1826, 2271, 3424, 18,
+                COLOR_INSTITUCIONAL, 1f);
     }
 
 
@@ -364,12 +496,25 @@ public final class PlantillaA4 {
 
         public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
                 LocalDateTime fechaGeneracion, String codigoBarras, boolean lineaDatos) {
+            this(codigoDocumento, tituloDocumento, subtitulo, fechaGeneracion, codigoBarras, lineaDatos, false);
+        }
+
+        /** {@code horizontal}: usa la plantilla A4 apaisada ({@link PlantillaA4#componerHorizontal}). */
+        public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
+                LocalDateTime fechaGeneracion, String codigoBarras, boolean lineaDatos, boolean horizontal) {
             this.codigoDocumento = codigoDocumento;
             this.tituloDocumento = tituloDocumento;
             this.subtitulo = subtitulo;
             this.fechaGeneracion = fechaGeneracion;
             this.codigoBarras = codigoBarras;
             this.lineaDatos = lineaDatos;
+            this.horizontal = horizontal;
+        }
+
+        private final boolean horizontal;
+
+        private float anchoPagina() {
+            return horizontal ? ANCHO_HORIZONTAL : PageSize.A4.getWidth();
         }
 
         @Override
@@ -391,7 +536,7 @@ public final class PlantillaA4 {
 
         private void dibujarFondo(PdfWriter writer) throws Exception {
             if (fondo == null) {
-                fondo = componer(writer);
+                fondo = horizontal ? componerHorizontal(writer) : componer(writer);
             }
             // El mismo XObject en todas las páginas: la plantilla se incrusta una
             // sola vez y el peso del PDF no crece con el número de páginas.
@@ -418,11 +563,17 @@ public final class PlantillaA4 {
                 codigo.setX(0.9f);
                 codigo.setFont(null);
                 barras = codigo.createImageWithBarcode(writer.getDirectContent(), BaseColor.BLACK, BaseColor.BLACK);
-                barras.scaleToFit(ANCHO_BARRAS, ALTO_BARRAS);
+                if (horizontal) {
+                    // Ancho y alto independientes: las barras ganan altura de lectura sin
+                    // estrecharse más de lo necesario para caber en el encabezado.
+                    barras.scaleAbsolute(Math.min(barras.getWidth(), ANCHO_BARRAS_HORIZONTAL), ALTO_BARRAS_HORIZONTAL);
+                } else {
+                    barras.scaleToFit(ANCHO_BARRAS, ALTO_BARRAS);
+                }
             }
-            float x = PageSize.A4.getWidth() - MARGEN_DERECHO - barras.getScaledWidth();
+            float x = anchoPagina() - MARGEN_DERECHO - barras.getScaledWidth();
             try {
-                barras.setAbsolutePosition(x, BASE_BARRAS);
+                barras.setAbsolutePosition(x, horizontal ? BASE_BARRAS_HORIZONTAL : BASE_BARRAS);
                 writer.getDirectContent().addImage(barras);
             } catch (Exception e) {
                 java.util.logging.Logger.getLogger(PlantillaA4.class.getName())
@@ -439,7 +590,9 @@ public final class PlantillaA4 {
             PdfContentByte lienzo = writer.getDirectContent();
             Font fuenteTitulo = TipografiaPdf.fuente(TipografiaPdf.Peso.MEDIUM, 9.5f, COLOR_TEXTO);
             Font fuenteDatos = TipografiaPdf.fuente(TipografiaPdf.Peso.REGULAR, TipografiaPdf.TAM_METADATO, COLOR_TEXTO);
-            float baseTitulo = LINEA_DATOS;
+            // Misma distancia bajo la línea del encabezado que en vertical.
+            float baseTitulo = horizontal ? LINEA_ENCABEZADO_HORIZONTAL - (LIMITE_ENCABEZADO - LINEA_DATOS)
+                    : LINEA_DATOS;
 
             if (tituloDocumento != null && !tituloDocumento.isBlank()) {
                 ColumnText.showTextAligned(lienzo, Element.ALIGN_LEFT,
@@ -448,7 +601,7 @@ public final class PlantillaA4 {
             String datos = subtitulo != null && !subtitulo.isBlank() ? subtitulo : construirDatos();
             if (datos != null && !datos.isBlank()) {
                 ColumnText.showTextAligned(lienzo, Element.ALIGN_RIGHT,
-                        new Phrase(datos, fuenteDatos), PageSize.A4.getWidth() - MARGEN_DERECHO, baseTitulo, 0);
+                        new Phrase(datos, fuenteDatos), anchoPagina() - MARGEN_DERECHO, baseTitulo, 0);
             }
         }
 
@@ -474,7 +627,7 @@ public final class PlantillaA4 {
                 texto = texto + "  |  Código de validación: " + codigoDocumento;
             }
             ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
-                    new Phrase(texto, fuente), PageSize.A4.getWidth() - MARGEN_DERECHO, LINEA_PAGINACION, 0);
+                    new Phrase(texto, fuente), anchoPagina() - MARGEN_DERECHO, LINEA_PAGINACION, 0);
         }
     }
 }
