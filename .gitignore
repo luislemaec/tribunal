@@ -9,3 +9,7 @@
 .claude/worktrees/agitated-davinci-669cba
 .claude/worktrees/agitated-davinci-669cba
 .claude/worktrees/agitated-davinci-669cba
+# Claude Code: configuración personal y datos locales (pueden contener credenciales o rutas propias).
+# Sí se versionan las habilidades compartidas de Spec Kit en .claude/skills/.
+.claude/settings.local.json
+.claude/worktrees/
