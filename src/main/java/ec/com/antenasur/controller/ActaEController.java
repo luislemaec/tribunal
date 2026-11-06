@@ -661,6 +661,27 @@ public class ActaEController implements Serializable {
         // Solo las mesas del proceso: con padrón, o con escrutinio ya iniciado (para no ocultar
         // actividad registrada). Las demás no pueden abrirse y no cuentan en el avance.
         mesaIds.removeIf(id -> !sufragantes.containsKey(id) && !cabeceras.containsKey(id));
+        // Solo mesas con la junta JRV completa: las cuatro dignidades válidas (una consulta para
+        // todas, la misma regla de Miembros JRV) y registrada como completada (con Presidente
+        // responsable). Una mesa sin junta no tiene quién abra ni cierre el acta. Se conservan las
+        // que ya iniciaron el escrutinio, para no ocultar actividad registrada.
+        Map<Integer, String> responsables = new HashMap<>();
+        for (MesaDTO mesa : mesas) {
+            if (mesa != null && mesa.getId() != null) {
+                responsables.put(mesa.getId(), mesa.getResponsable());
+            }
+        }
+        Map<Integer, ec.com.antenasur.dto.EstadoJuntaDTO> juntas = mesaIds.isEmpty() ? Map.of()
+                : miembroJRVService.consultarEstadosJuntas(procesoId, mesaIds);
+        mesaIds.removeIf(id -> {
+            ec.com.antenasur.dto.EstadoJuntaDTO junta = juntas.get(id);
+            String responsable = responsables.get(id);
+            boolean juntaCompleta = junta != null && junta.isCompleta() && responsable != null && !responsable.isBlank();
+            EscrutinioCabeceraDTO cabecera = cabeceras.get(id);
+            boolean escrutinioIniciado = cabecera != null && cabecera.getEstadoEscrutinio() != null
+                    && cabecera.getEstadoEscrutinio() != EstadoEscrutinio.PENDIENTE;
+            return !juntaCompleta && !escrutinioIniciado;
+        });
         mesas.removeIf(mesa -> mesa == null || mesa.getId() == null || !mesaIds.contains(mesa.getId()));
         mesasValidadasProceso = new java.util.HashSet<>(resumenEscrutinioService.mesasValidadas(procesoId, mesaIds));
         Map<Integer, List<Documentos>> actas = documentoBean.getDocumentosPorEntidadesYTipoDoc(

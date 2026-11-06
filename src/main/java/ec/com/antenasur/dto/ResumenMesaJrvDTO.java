@@ -9,16 +9,12 @@ public class ResumenMesaJrvDTO implements Serializable {
     int miembrosAsignados;
     int miembrosRequeridos;
     long iglesiasAsignadas;
+    /**
+     * Las cuatro dignidades están asignadas y son válidas. No basta para mostrar «Completado»: el
+     * estado visible (con «Lista para completar» y la junta registrada) lo decide
+     * JrvController.estadoJrv, único punto para la tabla, el filtro y la mesa seleccionada.
+     */
     boolean completa;
-
-    public String getEstadoClave() {
-        return completa ? "mjrv.mesas.estado.completado"
-                : miembrosAsignados == 0 ? "mjrv.mesas.estado.pendiente" : "mjrv.mesas.estado.parcial";
-    }
-
-    public String getSeveridad() {
-        return completa ? "success" : miembrosAsignados == 0 ? "secondary" : "warning";
-    }
 
     public String getProgreso() { return miembrosAsignados + "/" + miembrosRequeridos; }
     public boolean isSinIglesias() { return iglesiasAsignadas == 0; }

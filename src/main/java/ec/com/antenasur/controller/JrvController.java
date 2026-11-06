@@ -238,6 +238,7 @@ public class JrvController implements Serializable {
 		parroquiaMesaId = null;
 		recintoMesaId = null;
 		busquedaMesa = null;
+		estadoJrvFiltro = ESTADO_SIN_COMPLETAR;
 		filtrarMesasSeleccionables();
 	}
 
@@ -349,34 +350,31 @@ public class JrvController implements Serializable {
 		return getTotalDignidadesObligatoriasAsignadas() + " de " + MiembroJRVService.DIGNIDADES_OBLIGATORIAS.size();
 	}
 
-	public String getEstadoJuntaTexto() {
+	/**
+	 * Estado de la junta de la mesa seleccionada, con los datos recién consultados. Usa los
+	 * mismos estados, textos, colores e íconos que la tabla de mesas y el filtro (claveEstado,
+	 * severidadEstado, iconoEstado), para que la pantalla no muestre dos nombres para lo mismo.
+	 */
+	private String estadoJuntaActual() {
 		if (juntaRegistradaComoCompletada) {
-			return JsfUtil.getProperty("mjrv.estado.completa", true);
+			return ESTADO_COMPLETADO;
 		}
 		if (isJuntaCompleta()) {
-			return JsfUtil.getProperty("mjrv.estado.lista.completar", true);
+			return ESTADO_LISTA;
 		}
-		if (getTotalMiembrosDesignados() > 0) {
-			return JsfUtil.getProperty("mjrv.estado.incompleta", true);
-		}
-		return JsfUtil.getProperty("mjrv.estado.pendiente", true);
+		return getTotalMiembrosDesignados() > 0 ? ESTADO_PARCIAL : ESTADO_PENDIENTE;
+	}
+
+	public String getEstadoJuntaTexto() {
+		return JsfUtil.getProperty(claveEstado(estadoJuntaActual()), true);
 	}
 
 	public String getEstadoJuntaSeverity() {
-		if (juntaRegistradaComoCompletada) {
-			return "success";
-		}
-		if (isJuntaCompleta()) {
-			return "info";
-		}
-		return getTotalMiembrosDesignados() > 0 ? "warning" : "secondary";
+		return severidadEstado(estadoJuntaActual());
 	}
 
 	public String getEstadoJuntaIcon() {
-		if (juntaRegistradaComoCompletada) {
-			return "pi pi-check";
-		}
-		return isJuntaCompleta() ? "pi pi-flag" : "pi pi-clock";
+		return iconoEstado(estadoJuntaActual());
 	}
 
 	public boolean isMesaSeleccionadaValida() {
@@ -431,7 +429,18 @@ public class JrvController implements Serializable {
 		estadoJunta = mjrvService.consultarEstadoJunta(mesaSeleccionada.getId(), procesoSeleccionado.getId());
 		iglesiasAsignadas = obtenerIglesiasAsignadas(padronMesa);
 		resumenMesas.putAll(mjrvService.consultarResumenMesas(procesoSeleccionado.getId(), mesaIds));
-		org.primefaces.PrimeFaces.current().ajax().update("frmMJRV:tabsMJRV:tblMesas");
+		// El estado «Completado» depende del responsable (junta registrada): tras completar o
+		// reabrir, la fila del listado toma el de la mesa recién consultada. La fila no desaparece
+		// hasta el próximo cambio de filtro, para no perder de vista la mesa en la que se trabaja.
+		if (mesasDisponibles != null) {
+			for (MesaDTO mesa : mesasDisponibles) {
+				if (mesa.getId() != null && mesa.getId().equals(mesaSeleccionada.getId())) {
+					mesa.setResponsable(mesaSeleccionada.getResponsable());
+				}
+			}
+		}
+		recalcularAvanceJrv();
+		org.primefaces.PrimeFaces.current().ajax().update("frmMJRV:tabsMJRV:tblMesas", "frmMJRV:pnlAvanceJrv");
 		Set<Integer> designadas = mjrvService.obtenerIglesiaPersonaIdsDesignadas(procesoSeleccionado.getId());
 		personasDisponibles = new ArrayList<>();
 		for (PadronDTO padron : padronMesa) {
@@ -520,6 +529,7 @@ public class JrvController implements Serializable {
 			cantonesMesas = new ArrayList<>();
 			parroquiasMesas = new ArrayList<>();
 			recintosMesas = new ArrayList<>();
+			recalcularAvanceJrv();
 			return;
 		}
 		mesasDisponibles = new ArrayList<>(mesaService.listarDTOsActivasConUbicacion());
@@ -535,6 +545,7 @@ public class JrvController implements Serializable {
 			ec.com.antenasur.dto.ResumenMesaJrvDTO resumen = resumenMesas.get(mesa.getId());
 			return resumen == null || (resumen.getIglesiasAsignadas() == 0 && resumen.getMiembrosAsignados() == 0);
 		});
+		recalcularAvanceJrv();
 		filtrarMesasSeleccionables();
 	}
 
@@ -565,6 +576,128 @@ public class JrvController implements Serializable {
 		recintosMesas = recintos.entrySet().stream().map(e -> new OpcionPadronDTO(e.getKey(), e.getValue())).toList();
 	}
 
+	/**
+	 * Avance de conformación de juntas del proceso vigente, como el avance de Padrón: global
+	 * (no depende de los filtros) y calculado en memoria sobre las mesas con padrón ya cargadas
+	 * y su resumen, sin consultas adicionales. Se recalcula al cargar las mesas y tras cada
+	 * cambio en la junta de la mesa seleccionada.
+	 */
+	@Getter
+	private int avanceTotalMesas, avanceCompletadas, avanceListas, avanceParciales, avancePendientes,
+			avancePorcentaje;
+
+	private void recalcularAvanceJrv() {
+		avanceTotalMesas = avanceCompletadas = avanceListas = avanceParciales = avancePendientes = 0;
+		if (mesasDisponibles != null) {
+			for (MesaDTO mesa : mesasDisponibles) {
+				avanceTotalMesas++;
+				switch (estadoJrv(mesa)) {
+				case ESTADO_COMPLETADO -> avanceCompletadas++;
+				case ESTADO_LISTA -> avanceListas++;
+				case ESTADO_PARCIAL -> avanceParciales++;
+				default -> avancePendientes++;
+				}
+			}
+		}
+		avancePorcentaje = avanceTotalMesas == 0 ? 0 : (int) Math.floor(avanceCompletadas * 100.0 / avanceTotalMesas);
+	}
+
+	/** Mesas con trabajo iniciado sin completar: parciales y listas para completar. */
+	public int getAvanceEnProceso() {
+		return avanceParciales + avanceListas;
+	}
+
+	public boolean isAvanceCompleto() {
+		return avanceTotalMesas > 0 && avanceCompletadas == avanceTotalMesas;
+	}
+
+	/** Filtro «Estado de JRV»: por defecto «Sin completar» (sin miembros, parciales y listas para completar). */
+	public static final String ESTADO_SIN_COMPLETAR = "SIN_COMPLETAR";
+	public static final String ESTADO_PENDIENTE = "PENDIENTE";
+	public static final String ESTADO_PARCIAL = "PARCIAL";
+	public static final String ESTADO_LISTA = "LISTA";
+	public static final String ESTADO_COMPLETADO = "COMPLETADO";
+	public static final String ESTADO_TODOS = "TODOS";
+
+	@Getter
+	@Setter
+	private String estadoJrvFiltro = ESTADO_SIN_COMPLETAR;
+
+	public void cambiarEstadoJrv() {
+		filtrarMesasSeleccionables();
+	}
+
+	/**
+	 * Estado de la junta de la mesa: COMPLETADO solo si tiene las cuatro dignidades y además
+	 * fue registrada como completada (con Presidente responsable, como en Miembros asignados);
+	 * con las dignidades pero sin completar, LISTA; con algunos miembros, PARCIAL; sin miembros,
+	 * PENDIENTE.
+	 */
+	public String estadoJrv(MesaDTO mesa) {
+		ec.com.antenasur.dto.ResumenMesaJrvDTO resumen = mesa == null ? null : resumenMesas.get(mesa.getId());
+		if (resumen == null || resumen.getMiembrosAsignados() == 0) {
+			return ESTADO_PENDIENTE;
+		}
+		if (resumen.isCompleta()) {
+			return mesa.getResponsable() != null && !mesa.getResponsable().isBlank() ? ESTADO_COMPLETADO : ESTADO_LISTA;
+		}
+		return ESTADO_PARCIAL;
+	}
+
+	public String estadoJrvClave(MesaDTO mesa) {
+		return claveEstado(estadoJrv(mesa));
+	}
+
+	public String estadoJrvSeveridad(MesaDTO mesa) {
+		return severidadEstado(estadoJrv(mesa));
+	}
+
+	public String estadoJrvIcono(MesaDTO mesa) {
+		return iconoEstado(estadoJrv(mesa));
+	}
+
+	// Única tabla estado → texto, color e ícono: la usan la tabla de mesas, el filtro «Estado de
+	// JRV» (mismas claves en sus opciones) y la etiqueta de la mesa seleccionada.
+
+	private static String claveEstado(String estado) {
+		return switch (estado) {
+		case ESTADO_COMPLETADO -> "mjrv.mesas.estado.completado";
+		case ESTADO_LISTA -> "mjrv.estado.lista.completar";
+		case ESTADO_PARCIAL -> "mjrv.mesas.estado.parcial";
+		default -> "mjrv.mesas.estado.pendiente";
+		};
+	}
+
+	private static String severidadEstado(String estado) {
+		return switch (estado) {
+		case ESTADO_COMPLETADO -> "success";
+		case ESTADO_LISTA -> "info";
+		case ESTADO_PARCIAL -> "warning";
+		default -> "secondary";
+		};
+	}
+
+	private static String iconoEstado(String estado) {
+		return switch (estado) {
+		case ESTADO_COMPLETADO -> "pi pi-check";
+		case ESTADO_LISTA -> "pi pi-flag";
+		case ESTADO_PARCIAL -> "pi pi-clock";
+		default -> "pi pi-user-minus";
+		};
+	}
+
+	private boolean cumpleEstadoJrv(MesaDTO mesa) {
+		String estado = estadoJrv(mesa);
+		return switch (estadoJrvFiltro == null ? ESTADO_SIN_COMPLETAR : estadoJrvFiltro) {
+		case ESTADO_TODOS -> true;
+		case ESTADO_COMPLETADO -> ESTADO_COMPLETADO.equals(estado);
+		// Cada opción individual equivale a una etiqueta de la tabla; «Sin completar» agrupa las
+		// tres que no son Completado (sin miembros, parcial y lista para completar).
+		case ESTADO_PENDIENTE, ESTADO_PARCIAL, ESTADO_LISTA -> estadoJrvFiltro.equals(estado);
+		default -> !ESTADO_COMPLETADO.equals(estado);
+		};
+	}
+
 	private void filtrarMesasSeleccionables() {
 		primeraFilaMesa = 0;
 		cargarOpcionesMesas();
@@ -576,6 +709,9 @@ public class JrvController implements Serializable {
 			if (recinto == null)
 				return false;
 			if (mesaRestringida != null && !mesaRestringida.equals(mesa.getId()))
+				return false;
+			// La mesa del Presidente se muestra siempre, sea cual sea su estado.
+			if (mesaRestringida == null && !cumpleEstadoJrv(mesa))
 				return false;
 			if (cantonMesaId != null && !cantonMesaId.equals(recinto.getCantonId()))
 				return false;

@@ -74,10 +74,9 @@ public class ActaEGerencialDTO implements Serializable {
     }
 
     /**
-     * Clave del rótulo de la acción principal de la fila, según el estado. Mismo patrón
-     * que ResumenMesaJrvDTO.getEstadoClave(): el DTO decide la clave y la vista la
-     * resuelve contra el bundle. No altera ninguna regla del escrutinio; solo nombra la
-     * acción que ya permite el estado.
+     * Clave del rótulo de la acción principal de la fila, según el estado: el DTO decide
+     * la clave y la vista la resuelve contra el bundle. No altera ninguna regla del
+     * escrutinio; solo nombra la acción que ya permite el estado.
      */
     public String getAccionClave() {
         if (estadoEscrutinio == null) {

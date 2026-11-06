@@ -30,29 +30,84 @@
                 </div>
             </p:outputPanel>
 
+            <!-- Avance de conformación de juntas, con la misma estructura que el avance de Padrón:
+                 global del proceso vigente (no depende de los filtros). Oculto para el Presidente
+                 de Mesa, que solo opera su mesa. -->
+            <p:outputPanel id="pnlAvanceJrv" layout="block"
+                           styleClass="#{jrvController.restringidoAMesaAsignada ? '' : 'surface-card shadow-1 border-round-lg p-3 mb-3'}">
+                <ui:fragment rendered="#{not jrvController.restringidoAMesaAsignada}">
+                <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-2 mb-3">
+                    <div>
+                        <span class="block text-900 font-semibold">#{msg['mjrv.avance.titulo']}</span>
+                        <small class="text-500">#{msg['mjrv.avance.ayuda']}</small>
+                    </div>
+                    <div class="flex flex-wrap align-items-center gap-2">
+                        <span class="text-2xl font-semibold text-900">#{jrvController.avancePorcentaje}%</span>
+                        <p:tag value="#{msg['mjrv.avance.completo']}" severity="success" icon="pi pi-check-circle"
+                               rendered="#{jrvController.avanceCompleto}"/>
+                        <p:tag value="#{msg['mjrv.estado.lista.completar']}: #{jrvController.avanceListas}" severity="info"
+                               icon="pi pi-flag" rendered="#{jrvController.avanceListas gt 0}"/>
+                    </div>
+                </div>
+
+                <p:progressBar value="#{jrvController.avancePorcentaje}" displayOnly="true"
+                               labelTemplate="{value}%" styleClass="tec-progress mb-3"/>
+
+                <div class="grid text-center">
+                    <div class="col-6 md:col-3">
+                        <span class="block text-2xl font-semibold text-900">#{jrvController.avanceTotalMesas}</span>
+                        <small class="text-500">#{msg['mjrv.avance.mesas']}</small>
+                    </div>
+                    <div class="col-6 md:col-3">
+                        <span class="block text-2xl font-semibold tec-text-success">#{jrvController.avanceCompletadas}</span>
+                        <small class="text-500">#{msg['mjrv.avance.completadas']}</small>
+                    </div>
+                    <div class="col-6 md:col-3">
+                        <span class="block text-2xl font-semibold tec-text-warn">#{jrvController.avanceEnProceso}</span>
+                        <small class="text-500">#{msg['mjrv.avance.enProceso']}</small>
+                    </div>
+                    <div class="col-6 md:col-3">
+                        <span class="block text-2xl font-semibold text-900">#{jrvController.avancePendientes}</span>
+                        <small class="text-500">#{msg['mjrv.avance.pendientes']}</small>
+                    </div>
+                </div>
+                </ui:fragment>
+            </p:outputPanel>
+
             <!-- Filtros generales de la vista: viven fuera del tabView porque definen el
                  contexto de los tres tabs. Los updates nombran los combos hijos y las
                  tablas, nunca este panel ni el tabView, que son contenedores del propio
                  origen del evento. El filtrado de mesas es en memoria: ningún cambio de
                  filtro consulta la base. -->
             <p:outputPanel id="filtrosMJRV" layout="block" styleClass="surface-card shadow-1 border-round-lg p-3 mb-3 tec-form">
-                <div class="flex align-items-center gap-2 mb-2">
-                    <i class="pi pi-filter text-500 text-sm"></i>
-                    <span class="font-semibold text-700 text-sm">#{msg['mjrv.seccion.seleccion']}</span>
+                <!-- El módulo trabaja solo con el proceso electoral vigente: se muestra como dato,
+                     sin selector (JrvController lo carga del proceso activo al abrir). -->
+                <div class="flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <span class="flex align-items-center gap-2">
+                        <i class="pi pi-filter text-500 text-sm"></i>
+                        <span class="font-semibold text-700 text-sm">#{msg['mjrv.seccion.seleccion']}</span>
+                    </span>
+                    <p:tag rendered="#{not empty jrvController.procesoSeleccionado.id}"
+                           value="#{msg['mjrv.label.proceso.vigente']}: #{jrvController.procesoSeleccionado.nombre}"
+                           severity="info" icon="pi pi-calendar"/>
+                    <p:tag rendered="#{empty jrvController.procesoSeleccionado.id}"
+                           value="#{msg['mjrv.mensaje.sin.proceso.activo']}" severity="warning"/>
                 </div>
                 <div class="formgrid grid align-items-end">
+                    <!-- Estado de la junta: por defecto «Sin completar» (sin miembros, parciales y listas para completar);
+                         filtrado en memoria, sin consultar la base. -->
                     <div class="field col-12 md:col-6 lg:col-3 mb-2">
-                        <p:outputLabel for="proceso" styleClass="tec-field-label" value="#{msg['mjrv.label.proceso']}"/>
-                        <p:selectOneMenu id="proceso" value="#{jrvController.procesoSeleccionado.id}"
-                                         disabled="#{jrvController.restringidoAMesaAsignada}"
-                                         styleClass="w-full" filter="true" filterMatchMode="contains">
-                            <f:selectItem itemLabel="#{msg['padron.placeholder.select']}" itemValue=""/>
-                            <f:selectItems value="#{jrvController.procesos}" var="proceso"
-                                           itemLabel="#{proceso.nombre}" itemValue="#{proceso.id}"/>
-                            <!-- Cambiar de proceso descarta la mesa: los tres tabs se refrescan. -->
-                            <p:ajax event="change" listener="#{jrvController.onProcesoChange}"
-                                    process="@this"
-                                    update=":frmMJRV:cantonMesa :frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:busquedaMesa :frmMJRV:tabsMJRV:tblMesas :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:btnIglesiasAsignadas :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"/>
+                        <p:outputLabel for="estadoJrv" styleClass="tec-field-label" value="#{msg['mjrv.filtro.estado']}"/>
+                        <p:selectOneMenu id="estadoJrv" value="#{jrvController.estadoJrvFiltro}"
+                                         disabled="#{jrvController.restringidoAMesaAsignada}" styleClass="w-full">
+                            <f:selectItem itemLabel="#{msg['mjrv.filtro.estado.sinCompletar']}" itemValue="SIN_COMPLETAR"/>
+                            <f:selectItem itemLabel="#{msg['mjrv.mesas.estado.pendiente']}" itemValue="PENDIENTE"/>
+                            <f:selectItem itemLabel="#{msg['mjrv.mesas.estado.parcial']}" itemValue="PARCIAL"/>
+                            <f:selectItem itemLabel="#{msg['mjrv.estado.lista.completar']}" itemValue="LISTA"/>
+                            <f:selectItem itemLabel="#{msg['mjrv.mesas.estado.completado']}" itemValue="COMPLETADO"/>
+                            <f:selectItem itemLabel="#{msg['mjrv.filtro.todos']}" itemValue="TODOS"/>
+                            <p:ajax event="change" listener="#{jrvController.cambiarEstadoJrv}" process="@this"
+                                    update=":frmMJRV:tabsMJRV:tblMesas"/>
                         </p:selectOneMenu>
                     </div>
                     <div class="field col-12 md:col-6 lg:col-2 mb-2">
@@ -107,7 +162,7 @@
                                              ariaLabel="#{msg['mjrv.filtros.limpiar']}"
                                              styleClass="ui-button-outlined ui-button-secondary"
                                              action="#{jrvController.limpiarFiltrosMesas}" process="@this"
-                                             update=":frmMJRV:cantonMesa :frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:busquedaMesa :frmMJRV:tabsMJRV:tblMesas"/>
+                                             update=":frmMJRV:estadoJrv :frmMJRV:cantonMesa :frmMJRV:parroquiaMesa :frmMJRV:recintoMesa :frmMJRV:busquedaMesa :frmMJRV:tabsMJRV:tblMesas"/>
                         </div>
                     </div>
                 </div>
@@ -139,11 +194,13 @@
                             <span class="text-700">#{mesa.recinto.cantonNombre}</span>
                             <small class="block text-500">#{mesa.recinto.ubicacionNombre}</small>
                         </p:column>
+                        <!-- Mismo estado que el filtro: «Completado» solo con la junta registrada como
+                             completada; con las cuatro dignidades sin completar, «Lista para completar». -->
                         <p:column headerText="#{msg['mjrv.mesas.estado']}"
-                                  sortBy="#{jrvController.resumenMesas[mesa.id].estadoClave}"
+                                  sortBy="#{jrvController.estadoJrvClave(mesa)}"
                                   styleClass="text-center" style="width:6.375rem">
-                            <p:tag value="#{msg[jrvController.resumenMesas[mesa.id].estadoClave]}"
-                                   severity="#{jrvController.resumenMesas[mesa.id].severidad}"/>
+                            <p:tag value="#{msg[jrvController.estadoJrvClave(mesa)]}" icon="#{jrvController.estadoJrvIcono(mesa)}"
+                                   severity="#{jrvController.estadoJrvSeveridad(mesa)}"/>
                         </p:column>
                         <!-- Solo la cifra: la leyenda repetía el encabezado en cada fila.
                              getProgreso() ya entrega asignados/requeridos. -->
