@@ -488,6 +488,11 @@ public class ActaEController implements Serializable {
                     || !esCargoPresidenteMesa(designacion.getCargoNombre())) {
                 return null;
             }
+            // Junta reabierta en JRV (sin responsable): el Presidente no opera la mesa hasta que
+            // la junta se vuelva a completar.
+            if (designacion.getMesa().getResponsable() == null || designacion.getMesa().getResponsable().isBlank()) {
+                return null;
+            }
             sincronizarResponsableMesa(designacion.getMesa());
             return designacion.getMesa();
         } catch (Exception e) {
@@ -501,7 +506,10 @@ public class ActaEController implements Serializable {
                 || loginBean.getUserName() == null || loginBean.getUserName().isBlank()) {
             return;
         }
-        if (!loginBean.getUserName().equals(mesa.getResponsable())) {
+        // Sin responsable la junta no está completada (o fue reabierta en JRV): asignarlo aquí
+        // la volvería a cerrar. Solo se corrige el usuario de una junta ya completada.
+        if (mesa.getResponsable() != null && !mesa.getResponsable().isBlank()
+                && !loginBean.getUserName().equals(mesa.getResponsable())) {
             MesaDTO mesaActualizada = mesaService.asignarResponsable(mesa.getId(), loginBean.getUserName());
             if (mesaActualizada != null) {
                 mesa.setResponsable(mesaActualizada.getResponsable());

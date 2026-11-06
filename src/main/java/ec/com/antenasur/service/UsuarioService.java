@@ -333,6 +333,39 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 		return creado;
 	}
 
+	/** Resultado de {@link #retirarRolPresidenteMesa}: qué acceso se retiró a la cuenta. */
+	public enum AccesoRetirado { NINGUNO, ROL, USUARIO }
+
+	/**
+	 * Un Presidente retirado de su junta no debe conservar acceso: se quita el rol
+	 * SITEC-Presidente-mesa a su cuenta y, si no le queda otro rol activo, se desactiva el
+	 * usuario. Si tiene otro rol (p. ej. IglesiaAdmin) la cuenta sigue activa con ese rol.
+	 * Bajas lógicas con su entrada DESACTIVA en la bitácora.
+	 */
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+	@ec.com.antenasur.security.menu.AccesoPagina({"mjrv"})
+	public AccesoRetirado retirarRolPresidenteMesa(Persona persona, Rol rol) {
+		if (persona == null || persona.getDocumento() == null || rol == null || rol.getId() == null) {
+			return AccesoRetirado.NINGUNO;
+		}
+		Usuario usuario = usuarioFacade.findByUsuarioNameIncluyendoInactivos(persona.getDocumento());
+		if (usuario == null) {
+			return AccesoRetirado.NINGUNO;
+		}
+		RolUsuario relacion = buscarRelacionPorRol(usuario.getId(), rol.getId());
+		boolean teniaRol = relacion != null && Boolean.TRUE.equals(relacion.getEstado());
+		if (teniaRol) {
+			rolUsuarioFacade.delete(relacion);
+		}
+		boolean otrosRoles = rolUsuarioFacade.findByUsuarioIdIncluyendoInactivos(usuario.getId()).stream()
+				.anyMatch(r -> Boolean.TRUE.equals(r.getEstado()) && r.getRol() != null && !rol.getId().equals(r.getRol().getId()));
+		if (!otrosRoles && Boolean.TRUE.equals(usuario.getEstado())) {
+			usuarioFacade.delete(usuario);
+			return AccesoRetirado.USUARIO;
+		}
+		return teniaRol ? AccesoRetirado.ROL : AccesoRetirado.NINGUNO;
+	}
+
 	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
 	@ec.com.antenasur.security.menu.AccesoPagina({"mjrv"})
 	public Usuario asegurarUsuarioConRol(Persona persona, Rol rol) {

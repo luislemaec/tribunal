@@ -325,6 +325,9 @@ public final class CatalogoActividades {
 		r.add(regla("Intentó eliminar usuario", SEGURIDAD, FALLIDO, ORIGINAL,
 				firma("error al eliminar usuario"), firma("error  al eliminar usuario")));
 		r.add(regla("Registró persona", PERSONAS, SIN_DATO, DESPUES_DE_DOS_PUNTOS, firma("crea persona:")));
+		// Reapertura de una junta completada (MiembroJRVService.reabrirJunta), con su motivo.
+		r.add(regla("Reabrió junta JRV", JRV, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("reabre_junta_jrv |", "resultado: exitoso")));
 		// Resumen de HabilitacionMasivaService; cada miembro habilitado deja además su ACTUALIZA.
 		r.add(regla("Habilitación masiva de miembros", PERSONAS, EXITOSO, DETALLE_ESTRUCTURADO,
 				firma("habilitacion_masiva |", "resultado: exitoso")));

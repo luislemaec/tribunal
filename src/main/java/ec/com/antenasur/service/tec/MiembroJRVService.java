@@ -16,6 +16,7 @@ import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.IglesiaPersonaFacade;
 import ec.com.antenasur.facade.RolFacade;
 import ec.com.antenasur.facade.tec.CatalogoGeneralFacade;
+import ec.com.antenasur.facade.tec.GestionPadronFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
 import ec.com.antenasur.facade.tec.MiembroJRVFacade;
 import ec.com.antenasur.facade.tec.PadronFacade;
@@ -33,8 +34,60 @@ import ec.com.antenasur.service.AbstractService;
 import ec.com.antenasur.service.UsuarioService;
 import ec.com.antenasur.util.Constantes;
 
+/**
+ * Designacion de la JRV. Sin restriccion de clase (@PermitAll mantiene el comportamiento de
+ * siempre para JRV, el acta y la App): solo la reapertura de una junta exige Administrador o
+ * Tribunal. WildFly niega los metodos sin anotar de un EJB con seguridad, por eso la clase.
+ */
 @Stateless
+@jakarta.annotation.security.PermitAll
+@jakarta.annotation.security.DeclareRoles({ "SITEC-Administrador", "SITEC-Tribunal" })
 public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, MiembroJRVFacade> {
+
+    /** Accion de bitacora de la reapertura (CatalogoActividades la muestra como "Reabrio junta JRV"). */
+    static final String ACTIVIDAD_REABRIR = "REABRE_JUNTA_JRV";
+
+    @Inject
+    private GestionPadronFacade gestionPadronFacade;
+
+    @Inject
+    private ProcesoService procesoService;
+
+    /**
+     * Reabre una junta completada para corregir sus designaciones (p. ej. reemplazar al
+     * Presidente). Solo Administrador o Tribunal, con motivo, y solo si el escrutinio de la mesa
+     * no ha iniciado. Limpia el responsable de la mesa (el usuario del Presidente), que es lo
+     * que marca la junta como completada, y deja la accion en la bitacora.
+     */
+    @jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+    public void reabrirJunta(Integer mesaId, Integer procesoId, String motivo, String ip) {
+        if (mesaId == null || procesoId == null) {
+            throw new NegocioException("Debe seleccionar una mesa y un proceso electoral activo.");
+        }
+        String motivoLimpio = motivo == null ? "" : motivo.trim().replaceAll("[\\r\\n\\t]+", " ");
+        if (motivoLimpio.isEmpty()) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.reabrir.motivo.requerido"));
+        }
+        if (!juntaCompletadaRegistrada(mesaId, procesoId)) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.reabrir.no.completada"));
+        }
+        if (gestionPadronFacade.escrutinioIniciado(mesaId, procesoId)) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.reabrir.escrutinio"));
+        }
+        Mesa mesa = mesaFacade.find(mesaId);
+        String presidenteAnterior = mesa.getResponsable();
+        mesa.setResponsable(null);
+        mesaFacade.edit(mesa);
+
+        String recinto = mesa.getRecinto() != null ? mesa.getRecinto().getNombre() : "";
+        String prefijo = ACTIVIDAD_REABRIR + " | M\u00d3DULO: JRV; RESULTADO: EXITOSO; DETALLE: Mesa: " + mesa.getNombre()
+                + "; Recinto: " + recinto + "; Presidente anterior: " + presidenteAnterior + "; Motivo: ";
+        // tec.procesos.actividad admite 255 caracteres: se acorta el motivo, nunca el formato.
+        int disponible = Math.max(0, 255 - prefijo.length());
+        ec.com.antenasur.model.tec.Proceso actividad = new ec.com.antenasur.model.tec.Proceso(ip);
+        actividad.setActividad(prefijo + motivoLimpio.substring(0, Math.min(motivoLimpio.length(), disponible)));
+        procesoService.create(actividad);
+    }
 
     public static final List<String> DIGNIDADES_OBLIGATORIAS = List.of("PRESIDENTE", "SECRETARIO", "TESORERO", "VOCAL");
 
@@ -82,6 +135,40 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         if (ms == null) return resultado;
         for (MiembroJRV m : ms) resultado.add(MiembroJRVDTO.fromEntity(m));
         return resultado;
+    }
+
+    /** Miembro retirado y, si era el Presidente, el acceso que se retiró a su cuenta. */
+    public record ResultadoRetiro(MiembroJRVDTO miembro, ec.com.antenasur.service.UsuarioService.AccesoRetirado acceso,
+            String usuario) {
+    }
+
+    /**
+     * Retira un miembro de una junta abierta. Si era el Presidente y no preside otra mesa del
+     * proceso, su cuenta pierde el rol SITEC-Presidente-mesa y, si no le queda otro rol, se
+     * desactiva: no tiene sentido un acceso sin responsabilidad. UsuarioService exige
+     * Administrador o Tribunal para esa baja.
+     */
+    public ResultadoRetiro retirarMiembro(Integer id) {
+        MiembroJRV m = id == null ? null : miembroJRVFacade.find(id);
+        if (m == null) {
+            return null;
+        }
+        boolean eraPresidente = m.getCargo() != null && "PRESIDENTE".equals(normalizarCargo(m.getCargo().getNombre()));
+        Persona persona = m.getIglesiaPersona() != null ? m.getIglesiaPersona().getPersona() : null;
+        Integer procesoId = m.getProceso() != null ? m.getProceso().getId() : null;
+        MiembroJRVDTO retirado = eliminarPorId(id);
+        var ninguno = ec.com.antenasur.service.UsuarioService.AccesoRetirado.NINGUNO;
+        if (!eraPresidente || persona == null) {
+            return new ResultadoRetiro(retirado, ninguno, null);
+        }
+        if (miembroJRVFacade.buscarPresidentePorPersonaProceso(persona.getId(), procesoId) != null) {
+            return new ResultadoRetiro(retirado, ninguno, null);
+        }
+        Rol rol = obtenerRolPresidenteMesa();
+        if (rol == null) {
+            return new ResultadoRetiro(retirado, ninguno, null);
+        }
+        return new ResultadoRetiro(retirado, usuarioService.retirarRolPresidenteMesa(persona, rol), persona.getDocumento());
     }
 
     public MiembroJRVDTO eliminarPorId(Integer id) {

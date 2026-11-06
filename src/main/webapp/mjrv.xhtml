@@ -241,6 +241,15 @@
                                layout="block" styleClass="callout callout--success">
                     <i class="pi pi-lock" aria-hidden="true"/>#{msg['mjrv.junta.registrada.completa']}
                 </p:outputPanel>
+                <!-- Reapertura de una junta completada: solo Administrador o Tribunal, con motivo y sin
+                     escrutinio iniciado (lo valida el servicio). Fuera del bloque de edición, que se
+                     oculta justamente cuando la junta está completa. -->
+                <p:commandButton value="#{msg['mjrv.reabrir.boton']}" icon="pi pi-lock-open"
+                                 styleClass="tec-btn ui-button-outlined ui-button-warning mt-2"
+                                 rendered="#{jrvController.puedeReabrirJunta}"
+                                 actionListener="#{jrvController.prepararReapertura}" process="@this"
+                                 update=":frmMJRV:pnlReapertura"
+                                 oncomplete="PF('dlgReabrirJunta').show()"/>
                 <ui:fragment rendered="#{not jrvController.edicionBloqueada}">
                 <div class="grid align-items-end">
                     <div class="col-12"><span class="font-semibold text-800">#{msg['mjrv.seccion.designacion']}</span></div>
@@ -363,6 +372,32 @@
                 </div>
                 </p:tab>
             </p:tabView>
+
+            <!-- Motivo de la reapertura: queda en la bitácora (REABRE_JUNTA_JRV). -->
+            <p:dialog header="#{msg['mjrv.reabrir.titulo']}" widgetVar="dlgReabrirJunta" modal="true"
+                      responsive="true" styleClass="tec-dialog" closeOnEscape="true">
+                <p:outputPanel id="pnlReapertura" layout="block" styleClass="ui-fluid">
+                    <p class="mt-0 text-700">#{msg['mjrv.reabrir.ayuda']}</p>
+                    <p:outputLabel for="motivoReapertura" value="#{msg['mjrv.reabrir.motivo']}"/>
+                    <p:inputTextarea id="motivoReapertura" value="#{jrvController.motivoReapertura}"
+                                     rows="3" maxlength="180" autoResize="false" required="true"
+                                     requiredMessage="#{msg['mjrv.reabrir.motivo.requerido']}"/>
+                    <p:message for="motivoReapertura" display="text"/>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgReabrirJunta').hide()"/>
+                        <p:commandButton value="#{msg['mjrv.reabrir.confirmar']}" icon="pi pi-lock-open"
+                                         styleClass="tec-btn ui-button-warning"
+                                         actionListener="#{jrvController.reabrirJunta}"
+                                         process=":frmMJRV:pnlReapertura @this"
+                                         update=":frmMJRV:pnlReapertura :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"
+                                         oncomplete="if (args &amp;&amp; args.juntaReabierta) PF('dlgReabrirJunta').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
 
         </h:form>
 

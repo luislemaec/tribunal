@@ -415,15 +415,17 @@
                                              placeholder="#{msg['recintos.mesas.placeholder.nombre']}"
                                              onkeyup="this.value = this.value.toUpperCase()"/>
                             </div>
+                            <!-- Solo lectura: el responsable es el usuario del Presidente de Mesa y lo asigna
+                                 Miembros JRV al completar la junta. Editarlo aquí reabría la junta o quitaba
+                                 el acceso del Presidente sin auditoría. -->
                             <div class="field col-12">
-                                <label for="responsableMesa" class="font-medium text-700 text-sm">
+                                <label class="font-medium text-700 text-sm">
                                     #{msg['recintos.mesas.label.responsable']}
                                 </label>
-                                <p:inputText id="responsableMesa"
-                                             value="#{mesaController.mesaSeleccionado.responsable}"
-                                             maxlength="100" styleClass="w-full"
-                                             placeholder="#{msg['recintos.mesas.placeholder.responsable']}"
-                                             onkeyup="this.value = this.value.toUpperCase()"/>
+                                <div class="surface-100 border-round p-2 text-700 text-sm">
+                                    #{empty mesaController.mesaSeleccionado.responsable ? msg['recintos.mesas.sin.responsable'] : mesaController.mesaSeleccionado.responsable}
+                                </div>
+                                <small class="text-600">#{msg['recintos.mesas.responsable.ayuda']}</small>
                             </div>
                         </div>
                     </p:outputPanel>

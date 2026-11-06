@@ -142,6 +142,46 @@ public class JrvController implements Serializable {
 	@Getter
 	private boolean juntaRegistradaComoCompletada;
 
+	/** Motivo de la reapertura de una junta completada (obligatorio). */
+	@Getter
+	@Setter
+	private String motivoReapertura;
+
+	/**
+	 * «Reabrir junta»: junta completada y usuario Administrador o Tribunal. El servicio vuelve a
+	 * exigir el rol, el motivo y que el escrutinio de la mesa no haya iniciado.
+	 */
+	public boolean isPuedeReabrirJunta() {
+		if (!isMesaSeleccionadaValida() || !juntaRegistradaComoCompletada || restringidoAMesaAsignada
+				|| loginBean == null || loginBean.getRoles() == null) {
+			return false;
+		}
+		return loginBean.getRoles().contains("SITEC-" + Constantes.getRolAdministrador())
+				|| loginBean.getRoles().contains("SITEC-" + Constantes.getRolTribunal());
+	}
+
+	public void prepararReapertura() {
+		motivoReapertura = null;
+	}
+
+	public void reabrirJunta() {
+		try {
+			Integer procesoId = procesoSeleccionado != null ? procesoSeleccionado.getId() : null;
+			Integer mesaId = mesaSeleccionada != null ? mesaSeleccionada.getId() : null;
+			mjrvService.reabrirJunta(mesaId, procesoId, motivoReapertura, JsfUtil.getIPAddress());
+			JsfUtil.addSuccessMessageFromBundle("mjrv.reabrir.ok");
+			motivoReapertura = null;
+			mesaSeleccionada = mesaService.obtenerDTOPorId(mesaId);
+			cargarDatosMesaSeleccionada();
+			org.primefaces.PrimeFaces.current().ajax().addCallbackParam("juntaReabierta", true);
+		} catch (NegocioException e) {
+			JsfUtil.addErrorMessage(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error al reabrir junta JRV", e);
+			JsfUtil.addErrorMessageFromBundle("mjrv.mensaje.error");
+		}
+	}
+
 	@PostConstruct
 	private void init() {
 		procesoSeleccionado = procesoElectoralService.getActivoDTO();
@@ -242,8 +282,15 @@ public class JrvController implements Serializable {
 			return;
 		}
 		try {
-			if (mjrvService.eliminarPorId(miembro.getId()) != null) {
+			MiembroJRVService.ResultadoRetiro retiro = mjrvService.retirarMiembro(miembro.getId());
+			if (retiro != null && retiro.miembro() != null) {
 				JsfUtil.addSuccessMessageFromBundle("mjrv.mensaje.retirado");
+				// Presidente retirado: se informa el acceso que perdió su cuenta.
+				switch (retiro.acceso()) {
+				case USUARIO -> JsfUtil.addInfoMessageFromBundle("mjrv.retiro.usuario.desactivado", retiro.usuario());
+				case ROL -> JsfUtil.addInfoMessageFromBundle("mjrv.retiro.rol.retirado", retiro.usuario());
+				default -> { }
+				}
 			}
 			cargarDatosMesaSeleccionada();
 		} catch (NegocioException e) {

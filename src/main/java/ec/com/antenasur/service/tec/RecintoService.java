@@ -3,18 +3,36 @@ package ec.com.antenasur.service.tec;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.RecintoDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.GeograpFacade;
+import ec.com.antenasur.facade.tec.MesaFacade;
+import ec.com.antenasur.facade.tec.ProcesoElectoralFacade;
 import ec.com.antenasur.facade.tec.RecintoFacade;
 import ec.com.antenasur.model.Geograp;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.service.AbstractService;
+import ec.com.antenasur.util.Constantes;
 
+/**
+ * Recintos electorales. Lecturas abiertas (@PermitAll: acta, padrón, reportes, App); escrituras
+ * solo Administrador o Tribunal en el EJB. WildFly niega los métodos sin anotar de un EJB con
+ * seguridad, por eso la anotación de clase.
+ */
 @Stateless
+@PermitAll
+@DeclareRoles({ RecintoService.ROL_ADMINISTRADOR, RecintoService.ROL_TRIBUNAL })
 public class RecintoService extends AbstractService<Recinto, Integer, RecintoFacade> {
+
+    static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+    static final String ROL_TRIBUNAL = "SITEC-Tribunal";
 
     @Inject
     private RecintoFacade recintoFacade;
@@ -22,9 +40,39 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
     @Inject
     private GeograpFacade geograpFacade;
 
+    @Inject
+    private MesaFacade mesaFacade;
+
+    @Inject
+    private ProcesoElectoralFacade procesoElectoralFacade;
+
     @Override
     protected RecintoFacade getFacade() {
         return recintoFacade;
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Recinto create(Recinto entity) {
+        return super.create(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Recinto edit(Recinto entity) {
+        return super.edit(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Recinto delete(Recinto entity) {
+        return super.delete(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public void remove(Recinto entity) {
+        super.remove(entity);
     }
 
     public Recinto buscaRecintoPorNombre(String nombreRecinto) {
@@ -68,6 +116,7 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
      * contra {@link GeograpFacade}. Si el id es null crea, si no, hidrata la
      * entidad existente con los campos del DTO (preservando auditoría).
      */
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public RecintoDTO guardarDesdeDTO(RecintoDTO dto) {
         if (dto == null) {
             return null;
@@ -87,12 +136,22 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
         if (actual == null) {
             return null;
         }
+        boolean cambiaParroquia = actual.getUbicacion() == null || !actual.getUbicacion().getId().equals(ubicacion.getId());
+        if (cambiaParroquia) {
+            // Cambiar la parroquia movería de ubicación todas sus mesas y su padrón, sin pasar por la
+            // regla de ubicación del padrón: no se permite si el proceso activo ya usa el recinto.
+            ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+            if (activo != null && mesaFacade.recintoEnUso(actual.getId(), activo.getId())) {
+                throw new NegocioException(Constantes.getMensaje("recintos.mensaje.parroquia.en.uso", actual.getNombre()));
+            }
+        }
         actual.setNombre(dto.getNombre());
         actual.setUbicacion(ubicacion);
         actual.setEstadoTarea(dto.getEstadoTarea());
         return RecintoDTO.fromEntity(recintoFacade.edit(actual));
     }
 
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public RecintoDTO eliminarPorId(Integer id) {
         if (id == null) {
             return null;

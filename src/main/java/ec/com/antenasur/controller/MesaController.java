@@ -21,6 +21,7 @@ import ec.com.antenasur.bean.DocumentoBean;
 import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.MesaDTO;
+import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.dto.RecintoDTO;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Documentos;
@@ -251,6 +252,10 @@ public class MesaController implements Serializable {
             recargarListaMesasActual();
             actualizarTotalesPorRecinto();
             JsfUtil.addInfoMessageFromBundle(MENSAJE_ELIMINA_OK);
+        } catch (NegocioException e) {
+            // La mesa está en uso en el proceso activo (padrón, JRV o escrutinio).
+            JsfUtil.addWarningMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
         } catch (Exception e) {
             log.error("ERROR AL ELIMINAR MESA id={}", mesa.getId(), e);
             JsfUtil.addErrorMessageFromBundle("mesas.mensaje.error");
@@ -327,10 +332,16 @@ public class MesaController implements Serializable {
 
     public void eliminarMesasSeleccionados() {
         int eliminados = 0;
+        List<String> omitidas = new ArrayList<>();
         if (listaMesasSeleccionados != null) {
             for (MesaDTO item : listaMesasSeleccionados) {
-                if (item.getId() != null && mesaService.eliminarPorId(item.getId()) != null) {
-                    eliminados++;
+                try {
+                    if (item.getId() != null && mesaService.eliminarPorId(item.getId()) != null) {
+                        eliminados++;
+                    }
+                } catch (NegocioException e) {
+                    // En uso en el proceso activo: se omite y se informa; las demás continúan.
+                    omitidas.add(item.getNombre());
                 }
             }
         }
@@ -338,6 +349,9 @@ public class MesaController implements Serializable {
         recargarListaMesasActual();
         actualizarTotalesPorRecinto();
         JsfUtil.addInfoMessageFromBundle("mesas.mensaje.eliminadas", eliminados);
+        if (!omitidas.isEmpty()) {
+            JsfUtil.addWarningMessageFromBundle("mesas.mensaje.eliminar.omitidas", String.join(", ", omitidas));
+        }
         PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
     }
 

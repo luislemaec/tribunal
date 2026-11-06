@@ -320,4 +320,47 @@ public class MesaFacade extends AbstractFacade<Mesa, Integer> {
         return resultado.isEmpty() ? null : resultado.get(0);
     }
 
+    // Uso de la mesa en un proceso: impide eliminarla mientras el proceso la necesita.
+
+    /** Personas con padrón activo en la mesa y proceso. */
+    public long contarPadronActivo(Integer mesaId, Integer procesoId) {
+        return contar("SELECT COUNT(p.id) FROM Padron p WHERE p.estado = TRUE"
+                + " AND p.mesa.id = :mesa AND p.proceso.id = :proceso", mesaId, procesoId);
+    }
+
+    /** Miembros de JRV activos designados en la mesa y proceso. */
+    public long contarMiembrosJrvActivos(Integer mesaId, Integer procesoId) {
+        return contar("SELECT COUNT(j.id) FROM MiembroJRV j WHERE j.estado = TRUE"
+                + " AND j.mesa.id = :mesa AND j.proceso.id = :proceso", mesaId, procesoId);
+    }
+
+    /** Escrutinios registrados (en cualquier etapa) de la mesa y proceso. */
+    public long contarEscrutinios(Integer mesaId, Integer procesoId) {
+        return contar("SELECT COUNT(e.id) FROM EscrutinioCabecera e WHERE e.estado = TRUE"
+                + " AND e.mesa.id = :mesa AND e.proceso.id = :proceso", mesaId, procesoId);
+    }
+
+    /**
+     * Alguna mesa activa del recinto tiene padrón activo, miembros de JRV o escrutinio en el
+     * proceso: el recinto está en uso y no puede cambiar de parroquia.
+     */
+    public boolean recintoEnUso(Integer recintoId, Integer procesoId) {
+        String mesas = "(SELECT m.id FROM Mesa m WHERE m.recinto.id = :recinto AND m.estado = TRUE)";
+        for (String jpql : new String[] {
+                "SELECT COUNT(p.id) FROM Padron p WHERE p.estado = TRUE AND p.proceso.id = :proceso AND p.mesa.id IN " + mesas,
+                "SELECT COUNT(j.id) FROM MiembroJRV j WHERE j.estado = TRUE AND j.proceso.id = :proceso AND j.mesa.id IN " + mesas,
+                "SELECT COUNT(e.id) FROM EscrutinioCabecera e WHERE e.estado = TRUE AND e.proceso.id = :proceso AND e.mesa.id IN " + mesas }) {
+            if (getEntityManager().createQuery(jpql, Long.class).setParameter("recinto", recintoId)
+                    .setParameter("proceso", procesoId).getSingleResult() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private long contar(String jpql, Integer mesaId, Integer procesoId) {
+        return getEntityManager().createQuery(jpql, Long.class)
+                .setParameter("mesa", mesaId).setParameter("proceso", procesoId).getSingleResult();
+    }
+
 }

@@ -45,6 +45,7 @@ class CatalogoActividadesTest {
             new Caso("DESACTIVA | MÓDULO: PERSONAS E IGLESIAS; ENTIDAD: IglesiaPersona; REGISTRO: Persona 0102030405; Iglesia Central; CANAL: App móvil", "Desactivó miembro de iglesia", PERSONAS, EXITOSO),
             new Caso("EXPORTAR_REPORTE_EXCEL | MÓDULO: REPORTES; RESULTADO: EXITOSO; DETALLE: Reporte de registros – Iglesias; Filtro: Todos los cantones; Archivo: iglesias_20261028_1030.xlsx", "Exportó reporte Excel", DOCUMENTOS, EXITOSO),
             new Caso("HABILITACION_MASIVA | MÓDULO: PERSONAS E IGLESIAS; RESULTADO: EXITOSO; DETALLE: Iglesia: Iglesia Central; Rol: SITEC-Tribunal; Revisados previos: 30; Umbral: 40 %; Procesados: 120; Habilitados: 112; Rechazados: 8", "Habilitación masiva de miembros", PERSONAS, EXITOSO),
+            new Caso("REABRE_JUNTA_JRV | MÓDULO: JRV; RESULTADO: EXITOSO; DETALLE: Mesa: 1; Recinto: ESCUELA CENTRAL; Presidente anterior: 0601234567; Motivo: Presidente no puede asistir", "Reabrió junta JRV", JRV, EXITOSO),
             new Caso("AGREGA MIEMBRO IGLESIA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA;HABILITADO=SI", "Agregó miembro de iglesia (App móvil)", PERSONAS, EXITOSO),
             new Caso("ACTUALIZA DATOS PERSONA (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Actualizó datos de persona (App móvil)", PERSONAS, EXITOSO),
             new Caso("HABILITA PARA PADRON (App móvil) | MIEMBRO=12;PERSONA=PEREZ ANA", "Habilitó para el padrón (App móvil)", PERSONAS, EXITOSO),

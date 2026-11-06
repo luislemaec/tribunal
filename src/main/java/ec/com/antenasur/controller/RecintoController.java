@@ -257,6 +257,12 @@ public class RecintoController implements Serializable {
                 PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
                 return;
             }
+        } catch (ec.com.antenasur.exception.NegocioException e) {
+            // Regla del servicio, p. ej. cambiar la parroquia de un recinto en uso.
+            JsfUtil.addWarningMessage(e.getMessage());
+            FacesContext.getCurrentInstance().validationFailed();
+            PrimeFaces.current().ajax().update(JsfUtil.GROWL_MESSAGES);
+            return;
         } catch (Exception e) {
             log.error("ERROR AL GUARDAR RECINTO", e);
             JsfUtil.addErrorMessageFromBundle("recintos.mensaje.error");

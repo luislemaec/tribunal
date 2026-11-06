@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
@@ -15,11 +18,50 @@ import ec.com.antenasur.facade.tec.MesaFacade;
 import ec.com.antenasur.facade.tec.RecintoFacade;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.model.tec.Mesa;
+import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.model.tec.Recinto;
 import ec.com.antenasur.service.AbstractService;
+import ec.com.antenasur.exception.NegocioException;
+import ec.com.antenasur.util.Constantes;
 
+/**
+ * Mesas electorales. Las lecturas quedan abiertas (@PermitAll): las usan el acta, la App, JRV,
+ * reportes y la página pública de resultados. Las escrituras exigen Administrador o Tribunal en
+ * el EJB; asignarResponsable también el Presidente de Mesa (el acta la usa al resolver su mesa).
+ * WildFly niega los métodos sin anotar de un EJB con seguridad, por eso la anotación de clase.
+ */
 @Stateless
+@PermitAll
+@DeclareRoles({ MesaService.ROL_ADMINISTRADOR, MesaService.ROL_TRIBUNAL, MesaService.ROL_PRESIDENTE_MESA })
 public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
+
+    static final String ROL_ADMINISTRADOR = "SITEC-Administrador";
+    static final String ROL_TRIBUNAL = "SITEC-Tribunal";
+    static final String ROL_PRESIDENTE_MESA = "SITEC-Presidente-mesa";
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Mesa create(Mesa entity) {
+        return super.create(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Mesa edit(Mesa entity) {
+        return super.edit(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public Mesa delete(Mesa entity) {
+        return super.delete(entity);
+    }
+
+    @Override
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public void remove(Mesa entity) {
+        super.remove(entity);
+    }
 
     @Inject
     private MesaFacade mesaFacade;
@@ -32,6 +74,9 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
 
     @Inject
     private GeograpFacade geograpFacade;
+
+    @Inject
+    private ec.com.antenasur.facade.tec.ProcesoElectoralFacade procesoElectoralFacade;
 
     @Override
     protected MesaFacade getFacade() {
@@ -75,6 +120,7 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         return mesaFacade.getMesaPorUsuario(usuario);
     }
 
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL, ROL_PRESIDENTE_MESA })
     public MesaDTO asignarResponsable(Integer mesaId, String responsable) {
         if (mesaId == null || responsable == null || responsable.isBlank()) {
             return null;
@@ -147,6 +193,7 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
      * {@code ubicacion} a partir de los ids embebidos. Si el id es null crea,
      * si no hidrata la entidad existente con los campos del DTO.
      */
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public MesaDTO guardarDesdeDTO(MesaDTO dto) {
         if (dto == null) {
             return null;
@@ -160,25 +207,29 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
             Mesa nueva = dto.toEntity();
             nueva.setRecinto(recinto);
             nueva.setUbicacion(ubicacion);
+            // El responsable es el usuario del Presidente de Mesa: lo asigna JRV al completar la junta.
+            nueva.setResponsable(null);
             return MesaDTO.fromEntity(mesaFacade.create(nueva));
         }
         Mesa actual = mesaFacade.find(dto.getId());
         if (actual == null) {
             return null;
         }
+        // Recintos solo edita el nombre. El recinto no cambia desde aquí (la pantalla no lo ofrece y
+        // movería el padrón a otra ubicación); el responsable lo administra JRV (de él depende que la
+        // junta figure completada y el acceso del Presidente); estado, votos, ausentismo y
+        // observación son del escrutinio y no deben pisarse con datos del diálogo.
         actual.setNombre(dto.getNombre());
-        actual.setRecinto(recinto);
-        actual.setUbicacion(ubicacion);
-        actual.setEstadoTarea(dto.getEstadoTarea());
-        actual.setTotalVotos(valorEntero(dto.getTotalVotos()));
-        actual.setTotalPapetelasUso(dto.getTotalPapetelasUso());
-        actual.setTotalAusentismo(dto.getTotalAusentismo());
-        actual.setTieneErrorConteo(dto.getTieneErrorConteo());
-        actual.setObservacion(dto.getObservacion());
-        actual.setResponsable(dto.getResponsable());
         return MesaDTO.fromEntity(mesaFacade.edit(actual));
     }
 
+    /**
+     * Baja lógica de la mesa. Se rechaza si el proceso electoral activo la usa: con padrón
+     * activo (sus electores quedarían sin mesa), con miembros de JRV designados o con un
+     * escrutinio registrado (actas y resultados). Primero hay que retirar el padrón y la JRV;
+     * una mesa con escrutinio no se elimina.
+     */
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
     public MesaDTO eliminarPorId(Integer id) {
         if (id == null) {
             return null;
@@ -187,7 +238,26 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
         if (m == null) {
             return null;
         }
+        validarSinUsoEnProcesoActivo(m);
         return MesaDTO.fromEntity(mesaFacade.delete(m));
+    }
+
+    private void validarSinUsoEnProcesoActivo(Mesa mesa) {
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        if (activo == null) {
+            return;
+        }
+        String nombre = mesa.getNombre() == null ? "" : mesa.getNombre();
+        if (mesaFacade.contarEscrutinios(mesa.getId(), activo.getId()) > 0) {
+            throw new NegocioException(Constantes.getMensaje("mesas.mensaje.eliminar.con.escrutinio", nombre));
+        }
+        if (mesaFacade.contarMiembrosJrvActivos(mesa.getId(), activo.getId()) > 0) {
+            throw new NegocioException(Constantes.getMensaje("mesas.mensaje.eliminar.con.jrv", nombre));
+        }
+        long empadronados = mesaFacade.contarPadronActivo(mesa.getId(), activo.getId());
+        if (empadronados > 0) {
+            throw new NegocioException(Constantes.getMensaje("mesas.mensaje.eliminar.con.padron", nombre, empadronados));
+        }
     }
 
     public MesaDTO buscarDTOPorNombre(String nombre) {
@@ -206,10 +276,6 @@ public class MesaService extends AbstractService<Mesa, Integer, MesaFacade> {
             resultado.add(MesaDTO.fromEntity(m));
         }
         return resultado;
-    }
-
-    private int valorEntero(Integer valor) {
-        return valor != null ? valor : 0;
     }
 
     /**
