@@ -248,12 +248,11 @@ public class ReporteMesaService {
 		String codigo = "ACTA-PARCIAL-" + procesoId + "-R" + recintoId + "-M" + mesaId + "-"
 				+ ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + "-" + sufijo();
 		String folio = String.format("AP-PE%02d-R%03d-M%03d-V%02d", procesoId, recintoId, mesaId, version);
-		String codigoBarras = "ACTA_PARCIAL|" + procesoId + "|" + recintoId + "|" + mesaId + "|" + version + "|"
-				+ codigo.substring(codigo.lastIndexOf('-') + 1);
 		byte[] contenido;
 		String tokenQr = ec.com.antenasur.security.qr.TokenActaQr.generar();
 		try {
-			contenido = ReportePFD.generarFormularioActaParcial(reporte, folio, codigoBarras, ahora, usuarioActual(),
+			// El código de barras lleva el folio: corto y sin símbolos que los lectores alteran.
+			contenido = ReportePFD.generarFormularioActaParcial(reporte, folio, folio, ahora, usuarioActual(),
 					ec.com.antenasur.security.qr.TokenActaQr.url(origenQr, tokenQr).toASCIIString());
 		} catch (Exception e) {
 			throw new NegocioException(mensaje("reportesMesa.error.generar.acta"));
@@ -396,8 +395,8 @@ public class ReporteMesaService {
 	private byte[] generarPdfPadron(ReporteMesaDTO reporte, String codigo, LocalDateTime ahora) {
 		try {
 			String[] columnas = { mensaje("reportesMesa.padron.numero"), mensaje("reportesMesa.padron.cedula"),
-					mensaje("reportesMesa.padron.nombres"), mensaje("reportesMesa.padron.iglesia"),
-					mensaje("reportesMesa.padron.comunidad"), mensaje("reportesMesa.padron.firma") };
+					mensaje("reportesMesa.padron.nombres"), mensaje("reportesMesa.padron.iglesia.comunidad"),
+					mensaje("reportesMesa.padron.firma") };
 			List<String[]> filas = new ArrayList<>(reporte.getPadron().size());
 			for (int i = 0; i < reporte.getPadron().size(); i++) {
 				String[] fila = new String[PadronMesaPdf.COLUMNAS_DATOS];

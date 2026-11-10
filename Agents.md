@@ -377,6 +377,7 @@ mvn -DskipTests compile
 - `V5__canje_qr_elytron.sql` agrega el puente BCrypt efimero y la vista JDBC sin cambiar claves de usuarios.
 - Endpoint `/acceso-acta`: QR HTTPS con consulta token opaco; GET redirige a fragmento temporal sin consumir, POST automatico/CSRF sin clic, limitador y sesion de 15 minutos. Proteger logs del proxy antes de habilitar. Una vista previa que ejecute JavaScript puede consumir el QR.
 - Acta Parcial exige QR y configuracion habilitada; no generar documentos silenciosamente sin QR. PDF valida una pagina y firmas Presidente/Secretario.
+- Por decision del Tribunal el QR NO se imprime en el PDF (`ReportePFD.QR_VISIBLE_ACTA_PARCIAL = false`): la emision y sus validaciones siguen activas, pero el acceso por QR desde el papel no esta disponible; el Presidente ingresa con su usuario.
 - ReporteMesaService coordina PDF, registro, emision y revocacion en la transaccion documental.
 - Elytron conserva el principal `TECQR:username`; el realm consulta el username real. Exigir roles `TEC-QR` y `SITEC-Presidente-mesa`.
 - AlcanceSesionQrService y el interceptor de Escrutinio validan mesa/proceso/detalles y deniegan comandos no autorizados.

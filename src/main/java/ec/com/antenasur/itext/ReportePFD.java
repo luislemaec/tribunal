@@ -63,6 +63,20 @@ public class ReportePFD {
     private static final BaseColor COLOR_TOTAL = new BaseColor(235, 241, 247);
     private static final float[] ANCHOS_ACTA_PARCIAL = new float[]{50, 18, 32};
     private static final int MAX_LISTAS_ACTA_PARCIAL = 9;
+    /** Delegados de lista que firman el acta parcial. */
+    private static final int DELEGADOS_ACTA_PARCIAL = 2;
+    /**
+     * El QR de acceso no se imprime en el acta (decisión del Tribunal): la emisión y sus
+     * validaciones siguen activas y el Presidente ingresa con su usuario. En true vuelve a imprimirse.
+     */
+    private static final boolean QR_VISIBLE_ACTA_PARCIAL = false;
+    /** Alto (≈ 8,5 mm) reservado para firmar sobre la línea. */
+    private static final float ESPACIO_FIRMA_ACTA_PARCIAL = 24f;
+    /** Letra de los bloques de firma y ancho común de sus líneas de llenado. */
+    private static final float TAM_FIRMA_ACTA_PARCIAL = 7f;
+    private static final float ANCHO_LINEA_FIRMA_ACTA_PARCIAL = 125f;
+    /** Reintentos con casillas y espacios de firma menores cuando el acta no cabe en una hoja. */
+    private static final int MAX_COMPACTACION_ACTA_PARCIAL = 2;
     /** Los documentos del acta se redactan en español, con independencia del servidor. */
     private static final java.util.Locale LOCALE_ES = new java.util.Locale("es", "EC");
     /**
@@ -208,6 +222,19 @@ public class ReportePFD {
         if (firmantes.size() != 2 || firmantes.stream()
                 .filter(m -> m.getCargoNombre().trim().toUpperCase(java.util.Locale.ROOT).startsWith("PRESIDENTE")).count() != 1)
             throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.firmantes"));
+        // Si los datos reales (p. ej. nombres muy largos) no caben, se compone de nuevo más compacta.
+        for (int compactacion = 0; compactacion <= MAX_COMPACTACION_ACTA_PARCIAL; compactacion++) {
+            byte[] contenido = componerFormularioActaParcial(reporte, codigoBarras, fechaGeneracion, accesoQr,
+                    compactacion);
+            if (paginas(contenido) == 1) {
+                return contenido;
+            }
+        }
+        throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.paginas"));
+    }
+
+    private static byte[] componerFormularioActaParcial(ReporteMesaDTO reporte, String codigoBarras,
+            LocalDateTime fechaGeneracion, String accesoQr, int compactacion) throws DocumentException {
         ByteArrayOutputStream salida = new ByteArrayOutputStream();
         PdfInstitucional.Contexto contexto;
         try {
@@ -220,23 +247,24 @@ public class ReportePFD {
         Document pdf = contexto.documento();
         try {
             agregarInformacionActaParcial(pdf, reporte);
-            agregarResultadosActaParcial(pdf, reporte, accesoQr != null);
-            agregarFirmasJrv(pdf, reporte, accesoQr);
+            agregarResultadosActaParcial(pdf, reporte, accesoQr != null && QR_VISIBLE_ACTA_PARCIAL, compactacion);
+            agregarFirmasJrv(pdf, reporte, accesoQr, compactacion);
         } finally {
             pdf.close();
         }
-        byte[] contenido = salida.toByteArray();
+        return salida.toByteArray();
+    }
+
+    private static int paginas(byte[] contenido) throws DocumentException {
         com.itextpdf.text.pdf.PdfReader comprobacion = null;
         try {
             comprobacion = new com.itextpdf.text.pdf.PdfReader(contenido);
-            if (comprobacion.getNumberOfPages() != 1)
-                throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.paginas"));
+            return comprobacion.getNumberOfPages();
         } catch (java.io.IOException e) {
             throw new DocumentException(Constantes.getMensaje("actaQr.error.pdf.obligatorio"));
         } finally {
             if (comprobacion != null) comprobacion.close();
         }
-        return contenido;
     }
 
     /**
@@ -249,14 +277,8 @@ public class ReportePFD {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.titulo"),
                 TipografiaPdf.Estilo.TITULO_DOCUMENTO.fuente(15));
         titulo.setAlignment(Element.ALIGN_CENTER);
-        titulo.setSpacingAfter(3f);
+        titulo.setSpacingAfter(8f);
         pdf.add(titulo);
-
-        Paragraph proceso = new Paragraph(texto(reporte.getProceso().getNombre()),
-                TipografiaPdf.Estilo.SUBTITULO.fuente(9));
-        proceso.setAlignment(Element.ALIGN_CENTER);
-        proceso.setSpacingAfter(9f);
-        pdf.add(proceso);
 
         pdf.add(construirIntroduccionActa(reporte));
     }
@@ -330,8 +352,8 @@ public class ReportePFD {
                 + texto(reporte.getRecinto().getUbicacionNombre());
     }
 
-    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean conQr)
-            throws DocumentException {
+    private static void agregarResultadosActaParcial(Document pdf, ReporteMesaDTO reporte, boolean conQr,
+            int compactacion) throws DocumentException {
         Paragraph titulo = new Paragraph(Constantes.getMensaje("reportesMesa.acta.resultados.titulo"),
                 TipografiaPdf.Estilo.SECCION.fuente(10));
         titulo.setSpacingAfter(8f);
@@ -341,7 +363,7 @@ public class ReportePFD {
         if (cantidadListas > MAX_LISTAS_ACTA_PARCIAL) {
             throw new DocumentException(Constantes.getMensaje("reportesMesa.acta.error.listas.exceso"));
         }
-        float alturaCasilla = alturaCasillaActaParcial(cantidadListas) - (conQr ? 4f : 0f);
+        float alturaCasilla = alturaCasillaActaParcial(cantidadListas) - (conQr ? 4f : 0f) - 3f * compactacion;
         PdfPTable resultados = new PdfPTable(3);
         resultados.setWidthPercentage(100);
         resultados.setWidths(ANCHOS_ACTA_PARCIAL);
@@ -402,8 +424,8 @@ public class ReportePFD {
     }
 
     /**
-     * «Observaciones:» con la primera línea a continuación del texto y dos
-     * líneas completas debajo.
+     * «Observaciones:» con la primera línea a continuación del texto y una
+     * línea completa debajo: dos líneas en total.
      */
     private static void agregarObservacionActaParcial(Document pdf) throws DocumentException {
         String etiqueta = Constantes.getMensaje("reportesMesa.acta.observacion") + ":";
@@ -414,9 +436,7 @@ public class ReportePFD {
         PdfPTable lineas = new PdfPTable(1);
         lineas.setWidthPercentage(100);
         lineas.setSpacingAfter(8f);
-        for (int indice = 0; indice < 2; indice++) {
-            lineas.addCell(crearCeldaLinea(18f));
-        }
+        lineas.addCell(crearCeldaLinea(18f));
         pdf.add(lineas);
     }
 
@@ -502,7 +522,8 @@ public class ReportePFD {
         return altura >= 24f ? 5f : 2.5f;
     }
 
-    private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr) throws DocumentException {
+    private static void agregarFirmasJrv(Document pdf, ReporteMesaDTO reporte, String accesoQr, int compactacion)
+            throws DocumentException {
         // Fórmula de cierre del acta, en lugar de un rótulo de sección: da fe de
         // lo actuado e incorpora la hora de suscripción que se completa a mano.
         Font normal = TipografiaPdf.Estilo.TEXTO.fuente(9);
@@ -517,52 +538,101 @@ public class ReportePFD {
         cierre.add(new Chunk(" " + Constantes.getMensaje("reportesMesa.acta.firmas.cierre.fin"), normal));
         pdf.add(cierre);
 
-        PdfPTable firmas = new PdfPTable(accesoQr == null ? 2 : 3);
-        firmas.setWidthPercentage(100);
-        firmas.setWidths(accesoQr == null ? new float[]{50, 50} : new float[]{40, 40, 20});
-        firmas.setSpacingBefore(6f);
-        int firmantesAgregados = 0;
-        for (MiembroJRVDTO miembro : reporte.getMiembrosJrv()) {
-            if (!esFirmanteActaParcial(miembro)) {
-                continue;
-            }
-            String nombre = "";
-            if (miembro.getIglesiaPersona() != null) {
-                if (miembro.getIglesiaPersona().getPersona() != null) {
-                    nombre = texto(miembro.getIglesiaPersona().getPersona().getNombres()) + " "
-                            + texto(miembro.getIglesiaPersona().getPersona().getApellidos());
-                }
-            }
-            Paragraph contenido = new Paragraph("", TipografiaPdf.Estilo.TEXTO.fuente(8));
-            contenido.add(new Chunk("\n________________________\n",
-                    Constantes.fuentePdf(8, Font.NORMAL, BaseColor.BLACK)));
-            // Firma: el nombre de quien firma (500) sobre su cargo (400).
-            contenido.add(new Chunk(nombre.trim() + "\n", TipografiaPdf.Estilo.FIRMA.fuente(8)));
-            contenido.add(new Chunk(texto(miembro.getCargoNombre()), TipografiaPdf.Estilo.TEXTO.fuente(8)));
-            PdfPCell celda = new PdfPCell(contenido);
-            celda.setBorder(PdfPCell.NO_BORDER);
-            celda.setHorizontalAlignment(Element.ALIGN_CENTER);
-            celda.setMinimumHeight(56f);
-            celda.setVerticalAlignment(Element.ALIGN_BOTTOM);
-            celda.setPadding(4f);
-            firmas.addCell(celda);
-            firmantesAgregados++;
+        // Todos los integrantes de la mesa y los dos delegados, en tres columnas.
+        PdfPTable bloques = new PdfPTable(3);
+        bloques.setWidthPercentage(100);
+        bloques.getDefaultCell().setBorder(PdfPCell.NO_BORDER);
+        float espacioFirma = ESPACIO_FIRMA_ACTA_PARCIAL - 6f * compactacion;
+        reporte.getMiembrosJrv().stream()
+                .filter(miembro -> miembro != null && miembro.getCargoNombre() != null)
+                .sorted(java.util.Comparator.comparingInt(ReportePFD::ordenCargoMesa))
+                .forEach(miembro -> bloques.addCell(bloqueFirmaMiembro(miembro, espacioFirma)));
+        for (int lista = 1; lista <= DELEGADOS_ACTA_PARCIAL; lista++) {
+            bloques.addCell(bloqueFirmaDelegado(lista, espacioFirma));
         }
-        if (firmantesAgregados % 2 != 0) {
-            PdfPCell vacia = new PdfPCell();
-            vacia.setBorder(PdfPCell.NO_BORDER);
-            firmas.addCell(vacia);
-        }
-        if (accesoQr != null) {
+        bloques.completeRow();
+
+        PdfPTable firmas = bloques;
+        if (accesoQr != null && QR_VISIBLE_ACTA_PARCIAL) {
+            firmas = new PdfPTable(2);
+            firmas.setWidthPercentage(100);
+            firmas.setWidths(new float[]{82, 18});
+            PdfPCell celdaBloques = new PdfPCell(bloques);
+            celdaBloques.setBorder(PdfPCell.NO_BORDER);
+            celdaBloques.setPadding(0f);
+            firmas.addCell(celdaBloques);
             Image qr = new BarcodeQRCode(accesoQr, 320, 320, null).getImage();
             qr.scaleAbsolute(78f, 78f);
             qr.setAlignment(Element.ALIGN_CENTER);
             PdfPCell celdaQr = new PdfPCell();
             celdaQr.setBorder(PdfPCell.NO_BORDER);
+            celdaQr.setVerticalAlignment(Element.ALIGN_MIDDLE);
             celdaQr.addElement(qr);
             firmas.addCell(celdaQr);
         }
+        firmas.setSpacingBefore(4f);
         pdf.add(firmas);
+    }
+
+    /** Firma de un integrante: el nombre impreso (500) sobre su cargo (400). */
+    private static PdfPCell bloqueFirmaMiembro(MiembroJRVDTO miembro, float espacioFirma) {
+        String nombre = "";
+        if (miembro.getIglesiaPersona() != null && miembro.getIglesiaPersona().getPersona() != null) {
+            nombre = texto(miembro.getIglesiaPersona().getPersona().getNombres()) + " "
+                    + texto(miembro.getIglesiaPersona().getPersona().getApellidos());
+        }
+        Font fuente = TipografiaPdf.Estilo.TEXTO.fuente(TAM_FIRMA_ACTA_PARCIAL);
+        Paragraph contenido = new Paragraph("", fuente);
+        contenido.add(new Chunk(lineaLlenado("", fuente) + "\n", fuente));
+        contenido.add(new Chunk(nombre.trim() + "\n", TipografiaPdf.Estilo.FIRMA.fuente(TAM_FIRMA_ACTA_PARCIAL)));
+        contenido.add(new Chunk(texto(miembro.getCargoNombre()), fuente));
+        return celdaFirma(contenido, 9.5f, espacioFirma);
+    }
+
+    /** Firma de un delegado de lista: nombres y cédula se completan a mano. */
+    private static PdfPCell bloqueFirmaDelegado(int lista, float espacioFirma) {
+        Font fuente = TipografiaPdf.Estilo.TEXTO.fuente(TAM_FIRMA_ACTA_PARCIAL);
+        Paragraph contenido = new Paragraph("", fuente);
+        contenido.add(new Chunk(lineaLlenado("", fuente) + "\n", fuente));
+        contenido.add(new Chunk(lineaLlenado(Constantes.getMensaje("reportesMesa.acta.firmas.nombres") + ": ", fuente)
+                + "\n", fuente));
+        contenido.add(new Chunk(lineaLlenado(Constantes.getMensaje("reportesMesa.acta.firmas.cedula") + ": ", fuente)
+                + "\n", fuente));
+        contenido.add(new Chunk(Constantes.getMensaje("reportesMesa.acta.firmas.delegado", String.valueOf(lista)),
+                TipografiaPdf.Estilo.FIRMA.fuente(TAM_FIRMA_ACTA_PARCIAL)));
+        return celdaFirma(contenido, 11f, espacioFirma);
+    }
+
+    /** Etiqueta seguida de guiones bajos hasta un mismo ancho, para que las líneas queden alineadas. */
+    private static String lineaLlenado(String etiqueta, Font fuente) {
+        float anchoEtiqueta = fuente.getBaseFont().getWidthPoint(etiqueta, fuente.getSize());
+        float anchoGuion = fuente.getBaseFont().getWidthPoint("_", fuente.getSize());
+        return etiqueta + "_".repeat(Math.max(1, Math.round((ANCHO_LINEA_FIRMA_ACTA_PARCIAL - anchoEtiqueta) / anchoGuion)));
+    }
+
+    /** Bloque de firma: el relleno superior deja el espacio para firmar sobre la línea. */
+    private static PdfPCell celdaFirma(Paragraph contenido, float interlineadoFijo, float espacioFirma) {
+        PdfPCell celda = new PdfPCell(contenido);
+        celda.setBorder(PdfPCell.NO_BORDER);
+        celda.setHorizontalAlignment(Element.ALIGN_CENTER);
+        celda.setVerticalAlignment(Element.ALIGN_BOTTOM);
+        // Interlineado fijo: la separación es igual entre todas las líneas del bloque.
+        celda.setLeading(interlineadoFijo, 0f);
+        celda.setPaddingTop(espacioFirma);
+        celda.setPaddingBottom(3f);
+        celda.setPaddingLeft(3f);
+        celda.setPaddingRight(3f);
+        return celda;
+    }
+
+    /** Presidente, Secretario, Tesorero y Vocal; cualquier otro cargo va al final. */
+    private static int ordenCargoMesa(MiembroJRVDTO miembro) {
+        String cargo = miembro.getCargoNombre().trim().toUpperCase(java.util.Locale.ROOT);
+        if (cargo.contains("PRESIDENTE")) return 0;
+        if (cargo.contains("SECRETARIO")) return 1;
+        if (cargo.contains("TESORER") || cargo.contains("TESOREO")) return 2;
+        if (cargo.contains("VOCAL")) return 3;
+        return 4;
     }
 
     private static boolean esFirmanteActaParcial(MiembroJRVDTO miembro) {

@@ -29,7 +29,7 @@ public final class PdfInstitucional {
     public static final float MARGEN_IZQUIERDO_HORIZONTAL = PlantillaA4.MARGEN_IZQUIERDO;
     public static final float MARGEN_DERECHO_HORIZONTAL = PlantillaA4.MARGEN_DERECHO;
     public static final float MARGEN_SUPERIOR_HORIZONTAL = PlantillaA4.MARGEN_SUPERIOR_HORIZONTAL;
-    public static final float MARGEN_INFERIOR_HORIZONTAL = PlantillaA4.MARGEN_INFERIOR;
+    public static final float MARGEN_INFERIOR_HORIZONTAL = PlantillaA4.MARGEN_INFERIOR_HORIZONTAL;
 
     private PdfInstitucional() {
     }
@@ -64,14 +64,14 @@ public final class PdfInstitucional {
     /**
      * A4 apaisado con el encabezado de las actas: plantilla institucional horizontal y código de
      * barras sobre «DOCUMENTO OFICIAL», sin la línea técnica (el documento lleva su título en el
-     * cuerpo) y con «Página N | Código de validación: …» en el pie. El código de barras codifica
-     * el mismo código del documento.
+     * cuerpo) y con «Página N» en el pie. El código de barras codifica el código del documento.
+     * {@code contexto} se repite en cada página, apoyado sobre la línea del encabezado.
      */
     public static Contexto crearA4HorizontalConCodigoBarras(OutputStream salida, String titulo,
-            LocalDateTime fechaGeneracion, String codigoDocumento) throws Exception {
+            LocalDateTime fechaGeneracion, String codigoDocumento, String contexto) throws Exception {
         LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
         return abrirHorizontal(salida, titulo, fecha,
-                new PlantillaA4.Fondo(codigoDocumento, null, null, fecha, codigoDocumento, false, true));
+                new PlantillaA4.Fondo(codigoDocumento, null, null, fecha, codigoDocumento, false, true, contexto));
     }
 
     private static Contexto abrirHorizontal(OutputStream salida, String titulo, LocalDateTime fecha,
@@ -130,7 +130,14 @@ public final class PdfInstitucional {
      */
     public static Contexto crearA4ActaParcial(OutputStream salida, String titulo,
             String procesoElectoral, LocalDateTime fechaGeneracion, String codigoBarras) throws Exception {
-        return crearA4ConCodigoBarras(salida, titulo, fechaGeneracion, codigoBarras);
+        LocalDateTime fecha = fechaGeneracion != null ? fechaGeneracion : LocalDateTime.now();
+        Document documento = new Document(PageSize.A4, MARGEN_IZQUIERDO, MARGEN_DERECHO,
+                PlantillaA4.MARGEN_SUPERIOR_ACTA, MARGEN_INFERIOR);
+        PdfWriter writer = PdfWriter.getInstance(documento, salida);
+        writer.setPageEvent(PlantillaA4.Fondo.actaParcial(fecha, codigoBarras));
+        documento.open();
+        aplicarMetadata(documento, titulo);
+        return new Contexto(documento, writer, fecha);
     }
 
     public static void aplicarMetadata(Document documento, String titulo) {

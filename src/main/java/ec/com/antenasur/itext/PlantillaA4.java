@@ -100,6 +100,13 @@ public final class PlantillaA4 {
     private static final float ALTO_BARRAS = 26f;
     private static final float BASE_BARRAS = 756f;
 
+    /** Acta parcial: módulo de 0,72 pt (≈ 0,25 mm), el mínimo cómodo para lectores, y barras más altas. */
+    private static final float MODULO_BARRAS_ACTA = 0.72f;
+    private static final float ALTO_BARRAS_ACTA = 32f;
+
+    /** Acta parcial: la fecha va sobre la línea, así que el título arranca 10 pt más arriba. */
+    public static final float MARGEN_SUPERIOR_ACTA = 146f;
+
     /** Borde inferior de la línea del encabezado de la plantilla, desde abajo. */
     public static final float LIMITE_ENCABEZADO = 701.9f;
 
@@ -153,8 +160,18 @@ public final class PlantillaA4 {
     /** Borde inferior de la línea del encabezado horizontal, desde abajo (≈ 90 pt desde arriba). */
     private static final float LINEA_ENCABEZADO_HORIZONTAL = BASE_ENCABEZADO_HORIZONTAL - 12f;
 
-    /** Margen superior horizontal: 14 pt bajo la línea; los laterales e inferior son los del vertical. */
-    public static final float MARGEN_SUPERIOR_HORIZONTAL = ALTO_HORIZONTAL - LINEA_ENCABEZADO_HORIZONTAL + 14f;
+    /** Margen superior horizontal: 8 pt bajo la línea; los laterales son los del vertical. */
+    public static final float MARGEN_SUPERIOR_HORIZONTAL = ALTO_HORIZONTAL - LINEA_ENCABEZADO_HORIZONTAL + 8f;
+
+    /** Margen inferior horizontal: la paginación va bajo la línea del pie, así que el contenido baja hasta ella. */
+    public static final float MARGEN_INFERIOR_HORIZONTAL = 40f;
+
+    /** Línea base del texto de contexto, apoyado sobre la línea del encabezado horizontal. */
+    private static final float BASE_CONTEXTO_HORIZONTAL = LINEA_ENCABEZADO_HORIZONTAL + 7 * PX_Y + 3f;
+
+    /** Paginación horizontal: centrada entre el lema (hasta x 1314 px) y el contacto, en la línea del pie. */
+    private static final float CENTRO_PAGINACION_HORIZONTAL = (1314 * PX_X + 1826 * PX_X + DESPLAZAMIENTO_HORIZONTAL) / 2;
+    private static final float BASE_PAGINACION_HORIZONTAL = (DISENO_ALTO - 3421) * PX_Y;
 
     /** Código de barras horizontal: más ancho y alto que en vertical, alineado con el logotipo. */
     private static final float ANCHO_BARRAS_HORIZONTAL = 250f;
@@ -502,6 +519,15 @@ public final class PlantillaA4 {
         /** {@code horizontal}: usa la plantilla A4 apaisada ({@link PlantillaA4#componerHorizontal}). */
         public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
                 LocalDateTime fechaGeneracion, String codigoBarras, boolean lineaDatos, boolean horizontal) {
+            this(codigoDocumento, tituloDocumento, subtitulo, fechaGeneracion, codigoBarras, lineaDatos, horizontal,
+                    null);
+        }
+
+        /** {@code contexto}: texto repetido en cada página, apoyado sobre la línea del encabezado horizontal. */
+        public Fondo(String codigoDocumento, String tituloDocumento, String subtitulo,
+                LocalDateTime fechaGeneracion, String codigoBarras, boolean lineaDatos, boolean horizontal,
+                String contexto) {
+            this.contexto = contexto;
             this.codigoDocumento = codigoDocumento;
             this.tituloDocumento = tituloDocumento;
             this.subtitulo = subtitulo;
@@ -512,6 +538,16 @@ public final class PlantillaA4 {
         }
 
         private final boolean horizontal;
+        private final String contexto;
+        /** Acta parcial: código de barras a tamaño legible y fecha sobre la línea del encabezado. */
+        private boolean actaParcial;
+
+        /** Fondo del Acta parcial de escrutinio. */
+        public static Fondo actaParcial(LocalDateTime fechaGeneracion, String codigoBarras) {
+            Fondo fondo = new Fondo(null, null, null, fechaGeneracion, codigoBarras);
+            fondo.actaParcial = true;
+            return fondo;
+        }
 
         private float anchoPagina() {
             return horizontal ? ANCHO_HORIZONTAL : PageSize.A4.getWidth();
@@ -522,6 +558,7 @@ public final class PlantillaA4 {
             try {
                 dibujarFondo(writer);
                 dibujarCodigoBarras(writer);
+                dibujarContexto(writer);
                 if (lineaDatos) {
                     dibujarDatosDocumento(writer, document);
                 }
@@ -559,15 +596,16 @@ public final class PlantillaA4 {
                 Barcode128 codigo = new Barcode128();
                 codigo.setCodeType(Barcode.CODE128);
                 codigo.setCode(codigoBarras);
-                codigo.setBarHeight(22f);
-                codigo.setX(0.9f);
+                codigo.setBarHeight(actaParcial ? ALTO_BARRAS_ACTA : 22f);
+                codigo.setX(actaParcial ? MODULO_BARRAS_ACTA : 0.9f);
                 codigo.setFont(null);
                 barras = codigo.createImageWithBarcode(writer.getDirectContent(), BaseColor.BLACK, BaseColor.BLACK);
+                // El acta parcial no se escala: el ancho de cada barra es el módulo legible por los lectores.
                 if (horizontal) {
                     // Ancho y alto independientes: las barras ganan altura de lectura sin
                     // estrecharse más de lo necesario para caber en el encabezado.
                     barras.scaleAbsolute(Math.min(barras.getWidth(), ANCHO_BARRAS_HORIZONTAL), ALTO_BARRAS_HORIZONTAL);
-                } else {
+                } else if (!actaParcial) {
                     barras.scaleToFit(ANCHO_BARRAS, ALTO_BARRAS);
                 }
             }
@@ -592,7 +630,7 @@ public final class PlantillaA4 {
             Font fuenteDatos = TipografiaPdf.fuente(TipografiaPdf.Peso.REGULAR, TipografiaPdf.TAM_METADATO, COLOR_TEXTO);
             // Misma distancia bajo la línea del encabezado que en vertical.
             float baseTitulo = horizontal ? LINEA_ENCABEZADO_HORIZONTAL - (LIMITE_ENCABEZADO - LINEA_DATOS)
-                    : LINEA_DATOS;
+                    : actaParcial ? LIMITE_ENCABEZADO + 7 * PX_Y + 3f : LINEA_DATOS;
 
             if (tituloDocumento != null && !tituloDocumento.isBlank()) {
                 ColumnText.showTextAligned(lienzo, Element.ALIGN_LEFT,
@@ -623,11 +661,30 @@ public final class PlantillaA4 {
         private void dibujarPaginacion(PdfWriter writer, Document document) {
             Font fuente = TipografiaPdf.fuente(TipografiaPdf.Peso.REGULAR, TipografiaPdf.TAM_PIE, COLOR_TEXTO);
             String texto = "Página " + writer.getPageNumber();
-            if (codigoDocumento != null && !codigoDocumento.isBlank()) {
+            // El A4 horizontal (padrón) solo pagina: el código queda en el código de barras.
+            if (!horizontal && codigoDocumento != null && !codigoDocumento.isBlank()) {
                 texto = texto + "  |  Código de validación: " + codigoDocumento;
+            }
+            if (horizontal) {
+                // Bajo la línea del pie, centrada entre el lema y el contacto de la plantilla.
+                ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER,
+                        new Phrase(texto, fuente), CENTRO_PAGINACION_HORIZONTAL, BASE_PAGINACION_HORIZONTAL, 0);
+                return;
             }
             ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
                     new Phrase(texto, fuente), anchoPagina() - MARGEN_DERECHO, LINEA_PAGINACION, 0);
+        }
+
+        /** Texto de contexto a la derecha, apoyado sobre la línea del encabezado: no resta alto al contenido. */
+        private void dibujarContexto(PdfWriter writer) {
+            if (!horizontal || contexto == null || contexto.isBlank()) {
+                return;
+            }
+            // Termina antes del bloque «DOCUMENTO OFICIAL / Elecciones 2026» para no encimarse con él.
+            float fin = anchoPagina() - MARGEN_DERECHO - ESCALA_OFICIAL_HORIZONTAL * (2276 - 1804) * PX_X - 12f;
+            ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                    new Phrase(contexto, TipografiaPdf.Estilo.SUBTITULO.fuente(TipografiaPdf.TAM_METADATO)),
+                    fin, BASE_CONTEXTO_HORIZONTAL, 0);
         }
     }
 }
