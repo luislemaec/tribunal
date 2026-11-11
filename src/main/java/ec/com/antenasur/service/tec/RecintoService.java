@@ -141,8 +141,7 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
         if (cambiaParroquia) {
             // Cambiar la parroquia movería de ubicación todas sus mesas y su padrón, sin pasar por la
             // regla de ubicación del padrón: no se permite si el proceso activo ya usa el recinto.
-            ProcesoElectoral activo = procesoElectoralFacade.getActivo();
-            if (activo != null && mesaFacade.recintoEnUso(actual.getId(), activo.getId())) {
+            if (recintoEnUsoProcesoActivo(actual.getId())) {
                 throw new NegocioException(Constantes.getMensaje("recintos.mensaje.parroquia.en.uso", actual.getNombre()));
             }
         }
@@ -162,6 +161,18 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
             return null;
         }
         return RecintoDTO.fromEntity(recintoFacade.delete(r));
+    }
+
+    /**
+     * El recinto tiene padrón, JRV o escrutinio en alguna de sus mesas en el proceso activo: no puede
+     * cambiar de parroquia. Lo usan el guardado (regla) y el diálogo (bloqueo y aviso).
+     */
+    public boolean recintoEnUsoProcesoActivo(Integer recintoId) {
+        if (recintoId == null) {
+            return false;
+        }
+        ProcesoElectoral activo = procesoElectoralFacade.getActivo();
+        return activo != null && mesaFacade.recintoEnUso(recintoId, activo.getId());
     }
 
     /**

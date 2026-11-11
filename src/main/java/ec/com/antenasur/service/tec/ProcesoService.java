@@ -71,6 +71,15 @@ public class ProcesoService extends AbstractService<Proceso, Integer, ProcesoFac
      * fija y el usuario proviene de una solicitud previamente validada por la
      * capa de usuarios; nunca recibe correo, token ni texto libre.
      */
+    /**
+     * Canal público y acotado para la consulta de lugar de votación: registra solo el bloqueo por
+     * abuso (límite de consultas por IP superado), con texto fijo y sin la cédula consultada.
+     */
+    @PermitAll
+    public void registrarConsultaLugarVotacionBloqueada(String ip) {
+        procesoFacade.registrarConsultaLugarVotacionBloqueada(normalizarIp(ip));
+    }
+
     @PermitAll
     public void registrarSolicitudRecuperacionClavePreautenticacion(String usuarioValidado, String ip) {
         String usuario = usuarioValidado == null ? "<anonimo>" : normalizarUsuarioIntentado(usuarioValidado);

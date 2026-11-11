@@ -29,9 +29,6 @@ public class VwLugarVotacionService {
         return vwLugarVotacionFacade.count();
     }
 
-    public List<VwLugarVotacion> buscaLugarVotacion(String nombreCedula) {
-        return vwLugarVotacionFacade.buscaLugarVotacion(nombreCedula);
-    }
 
     public VwLugarVotacionDTO obtenerDTOPorId(Integer id) {
         if (id == null) return null;
@@ -42,9 +39,6 @@ public class VwLugarVotacionService {
         return mapearLista(vwLugarVotacionFacade.findAll());
     }
 
-    public List<VwLugarVotacionDTO> buscarDTOsPorNombreOCedula(String nombreCedula) {
-        return mapearLista(vwLugarVotacionFacade.buscaLugarVotacion(nombreCedula));
-    }
 
     private List<VwLugarVotacionDTO> mapearLista(List<VwLugarVotacion> entidades) {
         List<VwLugarVotacionDTO> resultado = new ArrayList<>();

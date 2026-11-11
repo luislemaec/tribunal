@@ -21,18 +21,25 @@ public class VwLugarVotacionFacade extends AbstractFacade<VwLugarVotacion, Integ
         super(VwLugarVotacion.class, Integer.class);
     }
 
-    public List<VwLugarVotacion> buscaLugarVotacion(String nombreCedula) {
-        try {
-            String sql = HQL + " WHERE (l.nombres = :nombreCedula OR l.cedula=:nombreCedula) ";
-            TypedQuery<VwLugarVotacion> query = super.getEntityManager().createQuery(sql, VwLugarVotacion.class);
-            query.setParameter("nombreCedula", nombreCedula);
-            List<VwLugarVotacion> result = query.getResultList();
-            if (result != null) {
-                return result;
-            }
-        } catch (Exception e) {
-            return null;
+    /**
+     * Lugar de votación de una cédula en el proceso electoral activo, para la consulta pública.
+     * Solo registros vigentes (padrón, membresía, persona, mesa y recinto) del proceso activo;
+     * no consulta la vista {@code vw_lugar_votacion}, que no filtra por proceso. Columnas: nombres,
+     * apellidos, id y nombre del proceso, mesa, recinto, parroquia y cantón. No devuelve la
+     * iglesia: la afiliación religiosa es un dato sensible y no se expone públicamente.
+     */
+    public List<Object[]> buscarLugarProcesoActivo(String cedula) {
+        if (cedula == null || cedula.isBlank()) {
+            return java.util.Collections.emptyList();
         }
-        return null;
+        TypedQuery<Object[]> query = getEntityManager().createQuery(
+                "SELECT per.nombres, per.apellidos, pr.id, pr.nombre, m.nombre, r.nombre, pa.name, ca.name"
+                        + " FROM Padron p JOIN p.proceso pr JOIN p.mesa m JOIN m.recinto r JOIN r.ubicacion pa"
+                        + " LEFT JOIN pa.geograp ca JOIN p.iglesiaPersona ip JOIN ip.persona per"
+                        + " WHERE p.estado = TRUE AND pr.estado = TRUE AND pr.activo = TRUE"
+                        + " AND ip.estado = TRUE AND per.estado = TRUE AND m.estado = TRUE AND r.estado = TRUE"
+                        + " AND per.documento = :cedula ORDER BY p.id",
+                Object[].class);
+        return query.setParameter("cedula", cedula).setMaxResults(2).getResultList();
     }
 }

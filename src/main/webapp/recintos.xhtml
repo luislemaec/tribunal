@@ -349,6 +349,7 @@
                                 </label>
                                 <p:selectOneMenu id="cantonSel"
                                                  value="#{recintoController.cantonEdicionId}"
+                                                 disabled="#{recintoController.parroquiaBloqueadaPorUso}"
                                                  filter="true" filterMatchMode="startsWith"
                                                  required="true" styleClass="w-full"
                                                  requiredMessage="#{msg['recintos.validacion.canton.requerido']}">
@@ -367,6 +368,7 @@
                                 </label>
                                 <p:selectOneMenu id="parroquiaSel"
                                                  value="#{recintoController.recintoSeleccionado.ubicacionId}"
+                                                 disabled="#{recintoController.parroquiaBloqueadaPorUso}"
                                                  required="true" styleClass="w-full"
                                                  requiredMessage="#{msg['recintos.validacion.parroquia.requerido']}">
                                     <f:selectItem itemLabel="#{msg['recintos.placeholder.select']}" itemValue=""/>
@@ -374,6 +376,17 @@
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                 </p:selectOneMenu>
                             </div>
+
+                            <!-- Recinto en uso en el proceso activo: la ubicación queda fija
+                                 (RecintoService.guardarDesdeDTO lo valida igualmente). -->
+                            <ui:fragment rendered="#{recintoController.parroquiaBloqueadaPorUso}">
+                                <div class="field col-12 mb-0">
+                                    <div class="callout callout--warning mb-0" role="status">
+                                        <i class="pi pi-lock" aria-hidden="true"/>
+                                        <span>#{msg['recintos.dialog.parroquia.bloqueada']}</span>
+                                    </div>
+                                </div>
+                            </ui:fragment>
                         </div>
                     </p:outputPanel>
                 </p:outputPanel>

@@ -297,6 +297,9 @@ public final class CatalogoActividades {
 				firma("logout |", "resultado: cancelado")));
 		r.add(regla("Solicitó recuperación de contraseña", ACCESO, SOLICITADO, DETALLE_ESTRUCTURADO,
 				firma("recuperacion_clave |")));
+		// Consulta pública de lugar de votación: solo se registra el bloqueo por exceso de consultas.
+		r.add(regla("Consulta pública de lugar de votación bloqueada", SEGURIDAD, FALLIDO, DETALLE_ESTRUCTURADO,
+				firma("consulta_lugar_votacion |", "resultado: fallido")));
 		// Acceso: textos históricos.
 		r.add(regla("Inició sesión", ACCESO, EXITOSO, ORIGINAL, firma("ingresa al sistema")));
 		r.add(regla("Cerró sesión", ACCESO, EXITOSO, ORIGINAL, firma("sale del ")));

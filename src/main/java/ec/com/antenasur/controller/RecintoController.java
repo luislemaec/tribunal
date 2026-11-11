@@ -98,6 +98,7 @@ public class RecintoController implements Serializable {
 
     public void inicializaRecintoSeleccionado() {
         this.recintoSeleccionado = new RecintoDTO();
+        this.parroquiaBloqueadaPorUso = false;
         if (parroquiaSeleccionado != null && parroquiaSeleccionado.getId() != null
                 && !OPCION_TODOS.equals(parroquiaSeleccionado.getId())) {
             this.recintoSeleccionado.setUbicacionId(parroquiaSeleccionado.getId());
@@ -318,8 +319,16 @@ public class RecintoController implements Serializable {
         this.recintoSeleccionado = copiarRecinto(recinto);
         this.indiceFilaEdicion = indiceFila;
         this.cantonEdicionId = recinto == null ? null : recinto.getCantonId();
+        this.parroquiaBloqueadaPorUso = recinto != null && recintoService.recintoEnUsoProcesoActivo(recinto.getId());
         cargarParroquiasEdicion();
     }
+
+    /**
+     * El recinto en edición tiene padrón, JRV o escrutinio en el proceso activo: el diálogo bloquea
+     * cantón y parroquia (el servicio lo valida igualmente al guardar). Solo aplica a una edición.
+     */
+    @Getter
+    private boolean parroquiaBloqueadaPorUso;
 
     private void liberarContextoRecintoMesa() {
         this.recintoSeleccionado = null;

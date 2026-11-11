@@ -86,6 +86,22 @@ public class ProcesoFacade extends AbstractFacade<Proceso, Integer> {
                 .executeUpdate();
     }
 
+    /**
+     * Bloqueo de la consulta pública de lugar de votación por exceso de consultas desde una IP.
+     * Valores fijos: no admite contenido del cliente (ni la cédula consultada).
+     */
+    @PermitAll
+    public void registrarConsultaLugarVotacionBloqueada(String ip) {
+        super.getEntityManager().createNativeQuery("INSERT INTO tec.procesos "
+                + "(actividad, ip, estado, f_crea, u_crea) "
+                + "VALUES (:actividad, :ip, TRUE, CURRENT_TIMESTAMP, :usuario)")
+                .setParameter("actividad", "CONSULTA_LUGAR_VOTACION | MÓDULO: PADRÓN; RESULTADO: FALLIDO; "
+                        + "DETALLE: Límite de consultas públicas por IP superado")
+                .setParameter("ip", ip)
+                .setParameter("usuario", "<anonimo>")
+                .executeUpdate();
+    }
+
     public ProcesoFacade() {
         super(Proceso.class, Integer.class);
     }
