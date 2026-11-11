@@ -313,6 +313,16 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 
 		validarRucUnico(documento, dto.getId());
 
+		// Misma regla que los miembros: una iglesia ya agregada al padrón del proceso activo no
+		// cambia de parroquia (movería a sus electores fuera de la ubicación de su recinto). La
+		// baja ya la impide IglesiaBajaService. Para cambiarla, se retira antes del padrón.
+		boolean cambiaParroquia = actual.getUbicacion() == null
+				|| !ubicacion.getId().equals(actual.getUbicacion().getId());
+		if (cambiaParroquia && iglesiaEnPadronActivo(actual.getId())) {
+			throw new NegocioException(ec.com.antenasur.util.Constantes
+					.getMensaje("form.iglesias.error.parroquia.en.padron", actual.getNombre()));
+		}
+
 		actual.setNombre(nombre);
 		actual.setComunidad(comunidad);
 		actual.setDocumento(documento);
@@ -320,6 +330,11 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		actual.setUbicacion(ubicacion);
 		iglesiaFacade.edit(actual);
 		return IglesiaDTO.fromEntity(iglesiaFacade.findConCanton(actual.getId()));
+	}
+
+	/** La iglesia tiene miembros empadronados en el proceso electoral activo. */
+	public boolean iglesiaEnPadronActivo(Integer iglesiaId) {
+		return iglesiaId != null && !iglesiaPersonaFacade.iglesiasEnPadronActivo(List.of(iglesiaId)).isEmpty();
 	}
 
 	/**

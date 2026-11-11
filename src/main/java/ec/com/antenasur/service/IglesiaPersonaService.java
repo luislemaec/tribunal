@@ -127,6 +127,8 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 				? iglesiaPersonaFacade.find(iglesiaPersona.getId())
 				: null;
 		validarAlcanceIglesiaAdmin(iglesiaPersona.getIglesia(), vinculoActual);
+		validarIglesiasFueraDelPadron(iglesiaPersona.getIglesia(),
+				vinculoActual != null ? vinculoActual.getIglesia() : null);
 		Persona persona = iglesiaPersona.getPersona();
 		String documento = normalizarDocumento(persona.getDocumento());
 		validarDocumentoDisponibleParaPersona(documento, persona.getId());
@@ -220,6 +222,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
 		}
 		validarAlcanceIglesiaAdmin(ip.getIglesia(), ip);
+		validarIglesiasFueraDelPadron(ip.getIglesia());
 		ip.setHabilitadoPadron(habilitado);
 		ip.setFechaActualiza(new Date());
 		return IglesiaPersonaDTO.fromEntity(iglesiaPersonaFacade.edit(ip));
@@ -325,6 +328,8 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			return null;
 		}
 		validarAlcanceIglesiaAdmin(iglesia, ip);
+		// Destino y, si el miembro cambia de iglesia, también el origen.
+		validarIglesiasFueraDelPadron(iglesia, ip != null ? ip.getIglesia() : null);
 		Persona persona = resolverPersona(dto, ip, documento);
 		if (persona == null) {
 			return null;
@@ -411,6 +416,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (definitiva == null) {
 			throw new IglesiaPersonaException("form.personas.regularizacion.error.seleccion.invalida");
 		}
+		// La regularización da de baja vínculos y conserva uno: ninguna de las iglesias
+		// involucradas puede estar en el padrón.
+		validarIglesiasFueraDelPadron(activas.stream().map(IglesiaPersona::getIglesia).toArray(Iglesia[]::new));
 
 		Date ahora = new Date();
 		Map<Integer, Persona> personasDescartadas = new LinkedHashMap<>();
@@ -487,6 +495,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			}
 			throw conflictoOtraIglesia(existente);
 		}
+		validarIglesiasFueraDelPadron(iglesia);
 		IglesiaPersona nuevo = new IglesiaPersona(iglesia, persona);
 		nuevo.setDesde(new java.sql.Timestamp(System.currentTimeMillis()));
 		IglesiaPersona creado = iglesiaPersonaFacade.create(nuevo);
@@ -515,6 +524,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 				|| ip.getIglesia() == null || !ip.getIglesia().getId().equals(iglesiaId)) {
 			throw new IglesiaPersonaException("form.personas.error.miembro.noDisponible");
 		}
+		validarIglesiasFueraDelPadron(ip.getIglesia());
 		// Otro usuario pudo revisarlo mientras corría la operación: no se toca.
 		if (esRevisionCompleta(ip)) {
 			throw new IglesiaPersonaException("form.personas.masiva.error.ya.revisado");
@@ -764,6 +774,39 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		return resultado;
 	}
 
+	/**
+	 * Iglesias (de las indicadas) que ya están en el padrón del proceso electoral activo: sus
+	 * miembros no se pueden modificar. La pantalla lo usa para avisar y deshabilitar acciones.
+	 */
+	public Set<Integer> iglesiasEnPadronActivo(Collection<Integer> iglesiaIds) {
+		return iglesiaPersonaFacade.iglesiasEnPadronActivo(iglesiaIds);
+	}
+
+	public boolean iglesiaEnPadronActivo(Integer iglesiaId) {
+		return iglesiaId != null && !iglesiaPersonaFacade.iglesiasEnPadronActivo(java.util.List.of(iglesiaId)).isEmpty();
+	}
+
+	/**
+	 * Regla única: si una iglesia ya fue agregada al padrón del proceso activo, sus miembros no
+	 * se pueden agregar, editar, habilitar, deshabilitar, revisar, regularizar ni dar de baja,
+	 * para ningún rol (incluidos Administrador y Tribunal), desde la web o la App. Para
+	 * corregirlos hay que retirar primero la iglesia del padrón.
+	 */
+	private void validarIglesiasFueraDelPadron(Iglesia... iglesias) {
+		Map<Integer, Iglesia> porId = new LinkedHashMap<>();
+		for (Iglesia iglesia : iglesias) {
+			if (iglesia != null && iglesia.getId() != null) {
+				porId.putIfAbsent(iglesia.getId(), iglesia);
+			}
+		}
+		Set<Integer> enPadron = iglesiaPersonaFacade.iglesiasEnPadronActivo(porId.keySet());
+		for (Map.Entry<Integer, Iglesia> entrada : porId.entrySet()) {
+			if (enPadron.contains(entrada.getKey())) {
+				throw new IglesiaPersonaException("form.personas.error.iglesia.en.padron", entrada.getValue().getNombre());
+			}
+		}
+	}
+
 	public IglesiaPersonaDTO eliminarPorId(Integer id) {
 		if (id == null) {
 			return null;
@@ -777,6 +820,7 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 			return null;
 		}
 		validarAlcanceIglesiaAdmin(ip.getIglesia(), ip);
+		validarIglesiasFueraDelPadron(ip.getIglesia());
 		String documento = ip.getPersona() != null ? ip.getPersona().getDocumento() : null;
 		if (documento != null
 				&& contarIglesiasDistintas(iglesiaPersonaFacade.listarActivasPorDocumento(documento, true)) > 1) {
@@ -803,6 +847,9 @@ public class IglesiaPersonaService extends AbstractService<IglesiaPersona, Integ
 		if (!cronogramaService.permite(OperacionCronograma.EDICION_PADRON)) {
 			throw new IglesiaPersonaException("form.personas.error.cronograma");
 		}
+		// Se valida toda la selección antes de dar de baja a nadie.
+		validarIglesiasFueraDelPadron(ids.stream().filter(java.util.Objects::nonNull).map(iglesiaPersonaFacade::find)
+				.filter(java.util.Objects::nonNull).map(IglesiaPersona::getIglesia).toArray(Iglesia[]::new));
 		int count = 0;
 		for (Integer id : ids) {
 			if (eliminarPorId(id) != null) {

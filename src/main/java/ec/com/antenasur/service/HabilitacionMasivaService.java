@@ -109,6 +109,11 @@ public class HabilitacionMasivaService {
         if (!esIglesiaIdentificada(iglesia.getNombre(), iglesia.getComunidad())) {
             throw new IglesiaPersonaException("form.personas.masiva.error.iglesia.sin.nombre");
         }
+        // Iglesia ya agregada al padrón del proceso activo: sus miembros no se modifican
+        // (cada miembro lo vuelve a validar habilitarPendiente).
+        if (iglesiaPersonaService.iglesiaEnPadronActivo(iglesiaId)) {
+            throw new IglesiaPersonaException("form.personas.error.iglesia.en.padron", iglesia.getNombre());
+        }
         if (!iglesiaPersonaFacade.bloquearHabilitacionMasiva(iglesiaId)) {
             throw new IglesiaPersonaException("form.personas.masiva.error.en.curso");
         }

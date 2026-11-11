@@ -170,6 +170,10 @@
                                       filterMatchMode="contains" style="min-width:9rem">
                                 <h:outputText id="nombreRecintoFila" value="#{recinto.nombre}"
                                               styleClass="tec-dato font-medium text-900"/>
+                                <!-- «Nuevo»: mismo criterio y etiqueta que Iglesias (RecintoDTO.isNuevo) -->
+                                <p:tag rendered="#{recinto.nuevo}" value="#{msg['recintos.tag.nuevo']}"
+                                       icon="pi pi-star" severity="success"
+                                       styleClass="tec-status tec-etiqueta-nuevo"/>
                             </p:column>
                             <p:column headerText="#{msg['recintos.tabla.canton']}"
                                       sortBy="#{recinto.cantonNombre}" filterBy="#{recinto.cantonNombre}"
@@ -204,6 +208,15 @@
                                                      action="#{recintoController.prepararEdicion(recinto, indiceFilaRecinto)}">
                                         <p:resetInput target=":frmRecintos:outPnlRecintos"/>
                                     </p:commandButton>
+                                    <p:commandButton icon="pi pi-history"
+                                                     styleClass="rounded-button ui-button-flat ui-button-info"
+                                                     title="#{msg['recintos.tooltip.historial']}"
+                                                     ariaLabel="#{msg['recintos.tooltip.historial']}"
+                                                     rendered="#{recintoController.puedeVerHistorial}"
+                                                     action="#{recintoController.verHistorialRecinto(recinto)}"
+                                                     process="@this" partialSubmit="true"
+                                                     update=":frmHistorialRecinto :frmGlobal:growlGlobal"
+                                                     oncomplete="if (!args.validationFailed) PF('dlgHistorialRecinto').show()"/>
                                     <p:commandButton icon="pi pi-trash"
                                                      styleClass="rounded-button ui-button-flat ui-button-danger"
                                                      title="#{msg['recintos.tooltip.eliminar']}"
@@ -454,6 +467,65 @@
                 </f:facet>
             </p:dialog>
 
+        </h:form>
+
+        <!-- ======================================================
+             DIÁLOGO: HISTORIAL DE CAMBIOS (auditoría Envers existente; mismo esquema que Iglesias)
+             ====================================================== -->
+        <h:form id="frmHistorialRecinto">
+            <p:dialog header="#{msg['recintos.hist.titulo']} — #{recintoController.recintoHistorial.nombre}"
+                      widgetVar="dlgHistorialRecinto" closable="true" modal="true" responsive="true"
+                      fitViewport="true" dynamic="true" appendTo="@(body)"
+                      styleClass="tec-dialog tec-dialog--lg">
+
+                <p:dataTable var="h" value="#{recintoController.historialRecinto}"
+                             emptyMessage="#{msg['recintos.hist.vacio']}"
+                             reflow="true" rows="10" paginator="true" paginatorPosition="bottom"
+                             paginatorAlwaysVisible="false" pageLinks="5"
+                             styleClass="ui-datatable-striped ui-datatable-sm tec-table tec-table--static">
+                    <p:column headerText="#{msg['recintos.hist.col.fecha']}" styleClass="tec-col-fit">
+                        <h:outputText value="#{h.fecha}" styleClass="tec-hist__col">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="#{msg['recintos.hist.col.usuario']}" styleClass="tec-col-fit tec-hist__col">
+                        <h:outputText value="#{empty h.usuario ? '—' : h.usuario}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['recintos.hist.col.accion']}" styleClass="tec-col-fit">
+                        <p:tag value="#{msg['recintos.hist.accion.'.concat(h.accion)]}"
+                               severity="#{h.accion eq 'CREA' ? 'success' : (h.accion eq 'DESACTIVA' or h.accion eq 'ELIMINA' ? 'danger' : 'info')}"
+                               styleClass="tec-status"/>
+                    </p:column>
+                    <!-- Un campo auditado por columna: se resalta (con el valor anterior en el tooltip) si cambió -->
+                    <p:column headerText="#{msg['recintos.hist.col.nombre']}" styleClass="tec-hist__col">
+                        <span class="tec-hist__valor #{h.cambio('nombre') ? 'tec-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('nombre') ? msg['recintos.hist.anterior'].concat(' ').concat(empty h.nombreAnterior ? '—' : h.nombreAnterior) : ''}">
+                            #{empty h.nombre ? '—' : h.nombre}
+                        </span>
+                    </p:column>
+                    <!-- Provincia y cantón no se auditan: se derivan de la parroquia de la revisión -->
+                    <p:column headerText="#{msg['recintos.hist.col.provincia']}" styleClass="tec-hist__col tec-hist__col--geo">
+                        <h:outputText value="#{empty h.provincia ? '—' : h.provincia}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['recintos.hist.col.canton']}" styleClass="tec-hist__col tec-hist__col--geo">
+                        <h:outputText value="#{empty h.canton ? '—' : h.canton}"/>
+                    </p:column>
+                    <p:column headerText="#{msg['recintos.hist.col.parroquia']}" styleClass="tec-hist__col tec-hist__col--geo">
+                        <span class="tec-hist__valor #{h.cambio('parroquia') ? 'tec-hist__valor--cambio' : ''}"
+                              title="#{h.cambio('parroquia') ? msg['recintos.hist.anterior'].concat(' ').concat(empty h.parroquiaAnterior ? '—' : h.parroquiaAnterior) : ''}">
+                            #{empty h.parroquia ? '—' : h.parroquia}
+                        </span>
+                    </p:column>
+                </p:dataTable>
+
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.close']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgHistorialRecinto').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
         </h:form>
 
     </ui:define>

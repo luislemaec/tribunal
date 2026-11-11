@@ -92,4 +92,28 @@ public class RecintoFacade extends AbstractFacade<Recinto, Integer> {
         return query.getResultList();
     }
 
+    /**
+     * Revisiones Envers de un recinto ({@code tec.recintos_aud} unida a {@code tec.tec_auditoria})
+     * en orden cronológico, en una sola consulta nativa para incluir bajas sin depender del filtro
+     * de estado. Columnas: rev, revtype, fecha, nombre, parroquia, estado, usuario, cantón y
+     * provincia. Igual que en Iglesias, la fecha y el usuario salen de la revisión (Envers no
+     * escribe f_crea/u_crea en la tabla _AUD) y cantón/provincia se derivan de la parroquia.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> listarRevisionesAuditoria(Integer recintoId) {
+        if (recintoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = "SELECT a.rev, a.revtype, COALESCE(r.audit_date, r.create_date),"
+                + " a.rec_nombre, g.gelo_name, a.estado, COALESCE(r.update_user, r.create_user),"
+                + " gc.gelo_name, gp.gelo_name"
+                + " FROM tec.recintos_aud a"
+                + " LEFT JOIN tec.tec_auditoria r ON r.aud_id = a.rev"
+                + " LEFT JOIN public.tb_geograp g ON g.gelo_id = a.gelo_id"
+                + " LEFT JOIN public.tb_geograp gc ON gc.gelo_id = g.gelo_parent_id"
+                + " LEFT JOIN public.tb_geograp gp ON gp.gelo_id = gc.gelo_parent_id"
+                + " WHERE a.rec_id = :id ORDER BY a.rev";
+        return getEntityManager().createNativeQuery(sql).setParameter("id", recintoId).getResultList();
+    }
+
 }

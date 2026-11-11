@@ -1,6 +1,9 @@
 package ec.com.antenasur.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 import ec.com.antenasur.enums.EstadoTarea;
 import ec.com.antenasur.model.tec.Recinto;
@@ -28,6 +31,21 @@ public class RecintoDTO implements Serializable {
     private Integer provinciaId;
     private String provinciaNombre;
     private EstadoTarea estadoTarea;
+    /** Fecha real de registro (f_crea): define la marca «Nuevo». */
+    private Date fechaCrea;
+
+    /**
+     * true si el recinto se registró desde {@link IglesiaDTO#INICIO_IDENTIFICADOR_NUEVA} y aún no
+     * transcurren {@link IglesiaDTO#MESES_VIGENCIA_NUEVA} meses: el mismo criterio que Iglesias.
+     */
+    public boolean isNuevo() {
+        if (fechaCrea == null) {
+            return false;
+        }
+        LocalDateTime registro = LocalDateTime.ofInstant(fechaCrea.toInstant(), ZoneId.systemDefault());
+        return !registro.toLocalDate().isBefore(IglesiaDTO.INICIO_IDENTIFICADOR_NUEVA)
+                && LocalDateTime.now().isBefore(registro.plusMonths(IglesiaDTO.MESES_VIGENCIA_NUEVA));
+    }
 
     public static RecintoDTO fromEntity(Recinto r) {
         if (r == null) {
@@ -37,6 +55,7 @@ public class RecintoDTO implements Serializable {
         dto.setId(r.getId());
         dto.setNombre(r.getNombre());
         dto.setEstadoTarea(r.getEstadoTarea());
+        dto.setFechaCrea(r.getFechaCrea());
         if (r.getUbicacion() != null) {
             dto.setUbicacionId(r.getUbicacion().getId());
             dto.setUbicacionNombre(r.getUbicacion().getName());

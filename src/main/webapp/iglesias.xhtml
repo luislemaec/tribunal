@@ -813,6 +813,7 @@
                                 #{msg['form.iglesias.label.canton']} <span class="tec-requerido">*</span>
                             </label>
                             <p:selectOneMenu id="cantonSel" value="#{iglesiaController.cantonDialogoId}"
+                                             disabled="#{iglesiaController.parroquiaBloqueadaPorPadron}"
                                              autoWidth="false" panelStyleClass="tec-select-panel">
                                 <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.canton']}"
                                               itemValue="#{null}" noSelectionOption="true"/>
@@ -830,6 +831,7 @@
                             </label>
                             <p:selectOneMenu id="parroquiaSel"
                                              value="#{iglesiaController.iglesiaSeleccionado.ubicacionId}"
+                                             disabled="#{iglesiaController.parroquiaBloqueadaPorPadron}"
                                              autoWidth="false" panelStyleClass="tec-select-panel">
                                 <f:selectItem itemLabel="#{msg['form.iglesias.placeholder.parroquia']}"
                                               itemValue="#{null}" noSelectionOption="true"/>
@@ -837,6 +839,17 @@
                                                itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                             </p:selectOneMenu>
                         </div>
+
+                        <!-- Iglesia ya en el padrón del proceso activo: la ubicación queda fija
+                             (IglesiaService.guardarDesdeDTO lo valida igualmente). -->
+                        <ui:fragment rendered="#{iglesiaController.parroquiaBloqueadaPorPadron}">
+                            <div class="field col-12 mb-0">
+                                <div class="callout callout--warning mb-0" role="status">
+                                    <i class="pi pi-lock" aria-hidden="true"/>
+                                    <span>#{msg['form.iglesias.dialog.parroquia.bloqueada']}</span>
+                                </div>
+                            </div>
+                        </ui:fragment>
 
                     </div>
                 </p:outputPanel>

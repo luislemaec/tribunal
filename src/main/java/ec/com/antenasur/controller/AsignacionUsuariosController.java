@@ -505,6 +505,19 @@ public class AsignacionUsuariosController implements Serializable {
                 }
             }
 
+            // Si la persona aún no es miembro de esta iglesia, el paso 3 la vincula como miembro:
+            // una iglesia ya agregada al padrón del proceso activo no admite miembros nuevos. Se
+            // rechaza aquí, antes de desasignar al anterior o crear el usuario.
+            Iglesia iglesiaActual = iglesiaPersonaService.obtenerIglesiaDePersonaPorDocumento(
+                    nuevoAdmin.getPersonaDocumento().trim());
+            boolean requiereVinculo = iglesiaActual == null || iglesiaActual.getId() == null
+                    || !iglesiaActual.getId().equals(iglesiaSeleccionada.getId());
+            if (requiereVinculo && iglesiaPersonaService.iglesiaEnPadronActivo(iglesiaSeleccionada.getId())) {
+                rechazar(Constantes.getMensaje("form.personas.error.iglesia.en.padron",
+                        iglesiaSeleccionada.getNombre()));
+                return;
+            }
+
             boolean esReasignacion = Boolean.TRUE.equals(iglesiaSeleccionada.getTieneAdmin());
 
             // 1) Desasignar admin previo si aplica

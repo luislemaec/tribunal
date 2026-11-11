@@ -10,6 +10,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import ec.com.antenasur.dto.RecintoDTO;
+import ec.com.antenasur.dto.RecintoHistorialDTO;
 import ec.com.antenasur.exception.NegocioException;
 import ec.com.antenasur.facade.GeograpFacade;
 import ec.com.antenasur.facade.tec.MesaFacade;
@@ -161,6 +162,74 @@ public class RecintoService extends AbstractService<Recinto, Integer, RecintoFac
             return null;
         }
         return RecintoDTO.fromEntity(recintoFacade.delete(r));
+    }
+
+    /**
+     * Historial de cambios del recinto (auditoría Envers existente), de la revisión más reciente a
+     * la más antigua. Lo consultan Administrador y Tribunal.
+     */
+    @RolesAllowed({ ROL_ADMINISTRADOR, ROL_TRIBUNAL })
+    public List<RecintoHistorialDTO> obtenerHistorial(Integer recintoId) {
+        return construirHistorial(recintoFacade.listarRevisionesAuditoria(recintoId));
+    }
+
+    /** Índices de la consulta {@code RecintoFacade.listarRevisionesAuditoria}. */
+    private static final int REV = 0, TIPO = 1, FECHA = 2, NOMBRE = 3, PARROQUIA = 4, ESTADO = 5, USUARIO = 6,
+            CANTON = 7, PROVINCIA = 8;
+
+    /**
+     * Interpreta las revisiones en orden cronológico: tipo 0 es alta y 2 eliminación; en una
+     * modificación, el cambio de estado es baja o reactivación y, si no, actualización. La primera
+     * revisión de un recinto cargado por migración (sin alta auditada) se muestra como «registro
+     * auditado». Se marcan los campos que difieren de la revisión anterior.
+     */
+    static List<RecintoHistorialDTO> construirHistorial(List<Object[]> filas) {
+        List<RecintoHistorialDTO> resultado = new ArrayList<>();
+        if (filas == null) {
+            return resultado;
+        }
+        Object[] previa = null;
+        for (Object[] fila : filas) {
+            int tipo = fila[TIPO] == null ? 1 : ((Number) fila[TIPO]).intValue();
+            RecintoHistorialDTO h = new RecintoHistorialDTO();
+            h.setRevision(fila[REV] == null ? null : ((Number) fila[REV]).intValue());
+            h.setFecha((java.util.Date) fila[FECHA]);
+            h.setUsuario(textoHistorial(fila[USUARIO]));
+            h.setNombre(textoHistorial(fila[NOMBRE]));
+            h.setParroquia(textoHistorial(fila[PARROQUIA]));
+            h.setCanton(textoHistorial(fila[CANTON]));
+            h.setProvincia(textoHistorial(fila[PROVINCIA]));
+            if (tipo == 0) {
+                h.setAccion(RecintoHistorialDTO.ACCION_CREA);
+            } else if (tipo == 2) {
+                h.setAccion(RecintoHistorialDTO.ACCION_ELIMINA);
+            } else if (previa == null) {
+                h.setAccion(RecintoHistorialDTO.ACCION_BASE);
+            } else if (!java.util.Objects.equals(previa[ESTADO], fila[ESTADO])) {
+                h.setAccion(Boolean.FALSE.equals(fila[ESTADO]) ? RecintoHistorialDTO.ACCION_DESACTIVA
+                        : RecintoHistorialDTO.ACCION_REACTIVA);
+            } else {
+                h.setAccion(RecintoHistorialDTO.ACCION_ACTUALIZA);
+            }
+            if (previa != null && tipo != 0) {
+                if (!java.util.Objects.equals(textoHistorial(previa[NOMBRE]), h.getNombre())) {
+                    h.getCambiados().add(RecintoHistorialDTO.CAMPO_NOMBRE);
+                    h.setNombreAnterior(textoHistorial(previa[NOMBRE]));
+                }
+                if (!java.util.Objects.equals(textoHistorial(previa[PARROQUIA]), h.getParroquia())) {
+                    h.getCambiados().add(RecintoHistorialDTO.CAMPO_PARROQUIA);
+                    h.setParroquiaAnterior(textoHistorial(previa[PARROQUIA]));
+                }
+            }
+            resultado.add(h);
+            previa = fila;
+        }
+        java.util.Collections.reverse(resultado);
+        return resultado;
+    }
+
+    private static String textoHistorial(Object valor) {
+        return valor == null ? null : valor.toString();
     }
 
     private List<RecintoDTO> mapearLista(List<Recinto> recintos) {

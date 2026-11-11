@@ -1056,3 +1056,15 @@ html body .sun-editor .se-tooltip:hover .se-tooltip-inner, html body .sun-editor
 
 .tec-aviso-app__descargar,
 .tec-aviso-app__despues { width: 100%; justify-content: center; }
+
+/* Historial de cambios (auditoría Envers) compartido por módulos: una columna por campo y resaltado de lo que cambió. */
+.tec-hist__col { font-size:var(--tec-fs-xs); font-weight:var(--tec-fw-regular); }
+
+.tec-hist__col--geo { color:var(--text-color-secondary); }
+
+.tec-hist__valor { display:inline-block; overflow-wrap:anywhere; }
+
+.tec-hist__valor--cambio { padding:.0375rem .2625rem; border-radius:.1875rem; background:var(--tec-success-bg); color:var(--tec-success-text); font-weight:var(--tec-fw-medium); cursor:help; }
+
+/* Etiqueta «Nuevo» junto al nombre de un registro (Recintos). */
+.tec-etiqueta-nuevo { margin-left:.3rem; vertical-align:middle; }

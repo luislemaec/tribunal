@@ -226,6 +226,13 @@ public class IglesiaController implements Serializable {
     @Getter
     private boolean tieneRuc = true;
 
+    /**
+     * La iglesia en edición ya está en el padrón del proceso activo: el diálogo bloquea cantón y
+     * parroquia (el servicio lo valida igualmente al guardar).
+     */
+    @Getter
+    private boolean parroquiaBloqueadaPorPadron;
+
     @Getter
     private boolean restringidoAIglesia;
 
@@ -718,6 +725,7 @@ public class IglesiaController implements Serializable {
             return;
         }
         iglesiaSeleccionado = new IglesiaDTO();
+        parroquiaBloqueadaPorPadron = false;
         // El diálogo no ofrece provincia: toda iglesia nueva se registra en la provincia operativa.
         provinciaDialogoId = PROVINCIA_OPERATIVA_ID;
         cantonesDialogo = geograpService.findByFatherId(PROVINCIA_OPERATIVA_ID);
@@ -754,6 +762,7 @@ public class IglesiaController implements Serializable {
         }
         iglesiaSeleccionado = vigente;
         esNuevoRegistro = false;
+        parroquiaBloqueadaPorPadron = iglesiaService.iglesiaEnPadronActivo(iglesiaSeleccionado.getId());
         tieneRuc = !esDocumentoGenerico(iglesiaSeleccionado.getDocumento());
         cargarParroquiasParaDialogo(iglesiaSeleccionado.getUbicacionId());
     }

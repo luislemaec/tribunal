@@ -181,6 +181,9 @@ public class PersonaBajaService {
 		// restauración nunca provoque la excepción del trigger de base ni deje la
 		// transacción a medias.
 		Map<Integer, String> conflictos = conflictos(idsDesactivados);
+		// Una iglesia ya agregada al padrón del proceso activo no recibe miembros.
+		java.util.Set<Integer> iglesiasEnPadron = iglesiaPersonaFacade.iglesiasEnPadronActivo(membresias.stream()
+				.filter(m -> m.getIglesia() != null).map(m -> m.getIglesia().getId()).distinct().toList());
 
 		int membresiasRestauradas = 0;
 		List<String> omitidas = new ArrayList<>();
@@ -193,6 +196,11 @@ public class PersonaBajaService {
 			if (membresia.getIglesia() == null || !Boolean.TRUE.equals(membresia.getIglesia().getEstado())) {
 				omitidas.add(Constantes.getMensaje("form.personas.eliminadas.omitida.iglesia.inactiva",
 						membresia.getIglesia() == null ? "" : membresia.getIglesia().getNombre()));
+				continue;
+			}
+			if (iglesiasEnPadron.contains(membresia.getIglesia().getId())) {
+				omitidas.add(Constantes.getMensaje("form.personas.eliminadas.omitida.iglesia.en.padron",
+						membresia.getIglesia().getNombre()));
 				continue;
 			}
 			if (!Boolean.TRUE.equals(membresia.getEstado())) {

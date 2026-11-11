@@ -2,6 +2,7 @@ package ec.com.antenasur.controller;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -16,6 +17,7 @@ import ec.com.antenasur.bean.GeograpBean;
 import ec.com.antenasur.bean.LoginBean;
 import ec.com.antenasur.dto.MesaDTO;
 import ec.com.antenasur.dto.RecintoDTO;
+import ec.com.antenasur.dto.RecintoHistorialDTO;
 import ec.com.antenasur.model.Geograp;
 import ec.com.antenasur.service.tec.MesaService;
 import ec.com.antenasur.service.tec.RecintoService;
@@ -392,6 +394,43 @@ public class RecintoController implements Serializable {
         destino.setProvinciaId(origen.getProvinciaId());
         destino.setProvinciaNombre(origen.getProvinciaNombre());
         destino.setEstadoTarea(origen.getEstadoTarea());
+        destino.setFechaCrea(origen.getFechaCrea());
+    }
+
+    /** Recinto cuyo historial se muestra en el diálogo. */
+    @Getter
+    private RecintoDTO recintoHistorial;
+
+    @Getter
+    private List<RecintoHistorialDTO> historialRecinto = Collections.emptyList();
+
+    /** El historial de cambios lo consultan Administrador y Tribunal. */
+    public boolean isPuedeVerHistorial() {
+        return loginBean != null && loginBean.getRoles() != null
+                && (loginBean.getRoles().contains("SITEC-Administrador")
+                        || loginBean.getRoles().contains("SITEC-Tribunal"));
+    }
+
+    /**
+     * Carga el historial de cambios del recinto (auditoría Envers existente) al abrir el diálogo.
+     * El botón solo se muestra a los roles autorizados; el permiso se valida igualmente aquí y en
+     * el EJB, para no depender solo de la vista.
+     */
+    public void verHistorialRecinto(RecintoDTO recinto) {
+        historialRecinto = Collections.emptyList();
+        recintoHistorial = recinto;
+        if (!isPuedeVerHistorial() || recinto == null || recinto.getId() == null) {
+            JsfUtil.addErrorMessageFromBundle("recintos.hist.no.permitido");
+            FacesContext.getCurrentInstance().validationFailed();
+            return;
+        }
+        try {
+            historialRecinto = recintoService.obtenerHistorial(recinto.getId());
+        } catch (Exception e) {
+            log.error("Error al obtener historial del recinto id={}", recinto.getId(), e);
+            JsfUtil.addErrorMessageFromBundle("recintos.hist.error");
+            FacesContext.getCurrentInstance().validationFailed();
+        }
     }
 
     public int getTotalRecintos() {

@@ -351,6 +351,7 @@ public class PersonaController implements Serializable {
                 progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaId);
                 actualizarEstadoActaActualizacion();
                 prepararAvisoMiembros(iglesiaId);
+                actualizarBloqueoPadron();
                 return;
             }
 
@@ -834,8 +835,36 @@ public class PersonaController implements Serializable {
                 && iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null;
     }
 
+    /** Iglesias de la página visible que ya están en el padrón del proceso activo. */
+    private java.util.Set<Integer> iglesiasEnPadron = new java.util.HashSet<>();
+
+    /** Iglesia elegida a la que corresponde {@link #iglesiaEnPadron}. */
+    private Integer iglesiaEnPadronId;
+    private boolean iglesiaEnPadron;
+
+    /** Recalcula si la iglesia elegida ya está en el padrón (al elegirla o refrescar). */
+    private void actualizarBloqueoPadron() {
+        iglesiaEnPadronId = iglesiaSeleccionado != null ? iglesiaSeleccionado.getId() : null;
+        iglesiaEnPadron = iglesiaEnPadronId != null && iglesiaPersonaService.iglesiaEnPadronActivo(iglesiaEnPadronId);
+    }
+
+    /**
+     * La iglesia elegida ya fue agregada al padrón del proceso activo: sus miembros no se pueden
+     * modificar (regla de {@code IglesiaPersonaService}, que el servidor valida siempre).
+     */
+    public boolean isIglesiaEnPadron() {
+        return iglesiaEnPadron && iglesiaSeleccionado != null
+                && java.util.Objects.equals(iglesiaEnPadronId, iglesiaSeleccionado.getId());
+    }
+
+    /** El miembro pertenece a una iglesia que ya está en el padrón: sus acciones se deshabilitan. */
+    public boolean miembroEnPadron(IglesiaPersonaDTO miembro) {
+        return miembro != null && miembro.getIglesia() != null && miembro.getIglesia().getId() != null
+                && iglesiasEnPadron.contains(miembro.getIglesia().getId());
+    }
+
     public boolean isHabilitacionMasivaDisponible() {
-        return isHabilitacionMasivaVisible() && puedeEditarPadron
+        return isHabilitacionMasivaVisible() && puedeEditarPadron && !isIglesiaEnPadron()
                 && HabilitacionMasivaService.esIglesiaIdentificada(
                         iglesiaSeleccionado.getNombre(), iglesiaSeleccionado.getComunidad())
                 && HabilitacionMasivaService.esApta(getTotalMiembros(), getMiembrosActualizados());
@@ -844,6 +873,9 @@ public class PersonaController implements Serializable {
     public String getAyudaHabilitacionMasiva() {
         if (!puedeEditarPadron) {
             return mensaje("form.personas.error.cronograma");
+        }
+        if (isIglesiaEnPadron()) {
+            return mensaje("form.personas.error.iglesia.en.padron", iglesiaSeleccionado.getNombre());
         }
         if (iglesiaSeleccionado != null && !HabilitacionMasivaService.esIglesiaIdentificada(
                 iglesiaSeleccionado.getNombre(), iglesiaSeleccionado.getComunidad())) {
@@ -934,6 +966,7 @@ public class PersonaController implements Serializable {
         // La tabla no guarda filas: MiembrosLazy consulta su página en BD con el
         // alcance vigente cada vez que se renderiza. Aquí solo se recalcula el
         // resumen de la iglesia elegida.
+        actualizarBloqueoPadron();
         if (iglesiaSeleccionado != null && iglesiaSeleccionado.getId() != null) {
             progreso = iglesiaPersonaService.calcularProgresoActualizacion(iglesiaSeleccionado.getId());
             if (restringidoAIglesia) {
@@ -1630,6 +1663,10 @@ public class PersonaController implements Serializable {
             pagina = filtro.tieneAlcance()
                     ? iglesiaPersonaService.listarMiembros(filtro, primero, tamanio, campoOrden, descendente)
                     : new ArrayList<>();
+            // Una consulta por página: iglesias de las filas visibles que ya están en el padrón.
+            iglesiasEnPadron = iglesiaPersonaService.iglesiasEnPadronActivo(pagina.stream()
+                    .filter(m -> m.getIglesia() != null && m.getIglesia().getId() != null)
+                    .map(m -> m.getIglesia().getId()).distinct().toList());
             return pagina;
         }
 

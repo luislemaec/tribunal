@@ -213,6 +213,17 @@
 
                 <!-- Resumen de actualización de la iglesia seleccionada -->
                 <p:outputPanel id="panelResumenMiembros" layout="block">
+                    <!-- Iglesia ya agregada al padrón del proceso activo: sus miembros no se modifican
+                         (regla validada en IglesiaPersonaService para todos los roles). -->
+                    <ui:fragment rendered="#{personaController.iglesiaEnPadron}">
+                        <div class="callout callout--warning personas-aviso mb-3" role="status">
+                            <i class="pi pi-lock" aria-hidden="true"/>
+                            <span>
+                                <b>#{msg['form.personas.padron.aviso.titulo']}</b>
+                                #{msg['form.personas.padron.aviso']}
+                            </span>
+                        </div>
+                    </ui:fragment>
                     <ui:fragment rendered="#{personaController.iglesiaSeleccionado.id ne null}">
                         <div class="personas-resumen">
                             <div class="grid">
@@ -316,7 +327,7 @@
                                                    itemLabel="#{canton.name}" itemValue="#{canton.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneParroquias()}"
                                             process="@this" partialSubmit="true"
-                                            update="parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
+                                            update="parroquia iglesias tblPersonas panelResumenMiembros btnExportarExcel btnNuevoMiembro"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 md:col-6 xl:col-3">
@@ -331,7 +342,7 @@
                                                    itemLabel="#{parroquia.name}" itemValue="#{parroquia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtieneIglesiasPorParroquia()}"
                                             process="@this" partialSubmit="true"
-                                            update="iglesias tblPersonas panelResumenMiembros btnExportarExcel"/>
+                                            update="iglesias tblPersonas panelResumenMiembros btnExportarExcel btnNuevoMiembro"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field col-12 xl:col-6">
@@ -346,7 +357,7 @@
                                                    itemLabel="#{iglesia.nombre}#{empty iglesia.comunidad ? '' : ' - '.concat(iglesia.comunidad)}" itemValue="#{iglesia.id}"/>
                                     <p:ajax event="change" listener="#{personaController.obtienePersonasPorIglesias()}"
                                             process="@this" partialSubmit="true"
-                                            update="tblPersonas panelResumenMiembros btnExportarExcel"/>
+                                            update="tblPersonas panelResumenMiembros btnExportarExcel btnNuevoMiembro"/>
                                 </p:selectOneMenu>
                             </div>
                         </div>
@@ -356,9 +367,9 @@
                 <!-- Acciones -->
                 <div class="personas-toolbar">
                     <div class="personas-toolbar__grupo">
-                        <p:commandButton value="Nuevo" icon="pi pi-plus"
+                        <p:commandButton id="btnNuevoMiembro" value="Nuevo" icon="pi pi-plus"
                                          styleClass="tec-btn"
-                                         disabled="#{not personaController.puedeEditarPadron}"
+                                         disabled="#{not personaController.puedeEditarPadron or personaController.iglesiaEnPadron}"
                                          actionListener="#{personaController.nuevaPersona}"
                                          process="@this"
                                          update="outPnlPersonas tituloDlgPersona btnGuardarPersona"
@@ -367,7 +378,7 @@
                                          onerror="TecPersonas.errorApertura()"
                                          oncomplete="if (args &amp;&amp; args.dialogReady) Tribunal.mostrarDialogo('dlgPersona')">
                             <p:tooltip for="@parent"
-                                       value="#{personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma'}"/>
+                                       value="#{personaController.iglesiaEnPadron ? msg['form.personas.padron.bloqueado'] : (personaController.puedeEditarPadron ? 'Registrar nuevo miembro' : 'Edición bloqueada por cronograma')}"/>
                         </p:commandButton>
 
                         <span class="tec-toolbar-sep" aria-hidden="true"/>
@@ -672,9 +683,9 @@
                         <span class="tec-acciones">
                             <p:commandButton icon="pi pi-pencil"
                                              styleClass="rounded-button ui-button-flat ui-button-secondary"
-                                             title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma')}"
+                                             title="#{personaController.miembroEnPadron(iglPers) ? msg['form.personas.padron.bloqueado'] : (iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Editar miembro' : 'Edición bloqueada por cronograma'))}"
                                              ariaLabel="Editar miembro"
-                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
+                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias or personaController.miembroEnPadron(iglPers)}"
                                              actionListener="#{personaController.prepararEdicion(iglPers)}"
                                              update=":frmPersonas:outPnlPersonas :frmPersonas:tituloDlgPersona :frmPersonas:btnGuardarPersona"
                                              resetValues="true"
@@ -687,7 +698,7 @@
                                              title="#{msg['form.personas.regularizacion.accion']}"
                                              ariaLabel="#{msg['form.personas.regularizacion.accion']}"
                                              rendered="#{iglPers.inconsistenciaIglesias and personaController.puedeRegularizarIglesias}"
-                                             disabled="#{not personaController.puedeEditarPadron}"
+                                             disabled="#{not personaController.puedeEditarPadron or personaController.miembroEnPadron(iglPers)}"
                                              actionListener="#{personaController.prepararRegularizacion(iglPers)}"
                                              process="@this" partialSubmit="true"
                                              update=":frmPersonas:panelDialogRegularizacion"
@@ -703,9 +714,9 @@
                                              oncomplete="PF('dlgPersonaHistorial').show()"/>
                             <p:commandButton icon="pi pi-trash"
                                              styleClass="rounded-button ui-button-flat ui-button-danger"
-                                             title="#{iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma')}"
+                                             title="#{personaController.miembroEnPadron(iglPers) ? msg['form.personas.padron.bloqueado'] : (iglPers.inconsistenciaIglesias ? msg['form.personas.inconsistencia.edicion.bloqueada'] : (personaController.puedeEditarPadron ? 'Eliminar miembro' : 'Edición bloqueada por cronograma'))}"
                                              ariaLabel="Eliminar miembro"
-                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias}"
+                                             disabled="#{not personaController.puedeEditarPadron or iglPers.inconsistenciaIglesias or personaController.miembroEnPadron(iglPers)}"
                                              action="#{personaController.eliminarIglesiaPersonaSeleccionada}"
                                              process="@this" partialSubmit="true"
                                              update=":frmGlobal:growlGlobal :frmPersonas:btnEliminaRegistros">

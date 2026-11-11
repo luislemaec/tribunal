@@ -726,4 +726,18 @@ public class IglesiaPersonaFacade extends AbstractFacade<IglesiaPersona, Integer
 		return null;
 	}
 
+	/**
+	 * Iglesias (de las indicadas) con al menos un miembro empadronado vigente en el proceso
+	 * electoral activo. Una sola consulta para cualquier cantidad de iglesias.
+	 */
+	public java.util.Set<Integer> iglesiasEnPadronActivo(Collection<Integer> iglesiaIds) {
+		if (iglesiaIds == null || iglesiaIds.isEmpty()) {
+			return java.util.Collections.emptySet();
+		}
+		return new java.util.HashSet<>(getEntityManager().createQuery(
+				"SELECT DISTINCT ig.id FROM Padron p JOIN p.iglesiaPersona ip JOIN ip.iglesia ig JOIN p.proceso pr"
+						+ " WHERE p.estado = TRUE AND pr.estado = TRUE AND pr.activo = TRUE AND ig.id IN :ids",
+				Integer.class).setParameter("ids", iglesiaIds).getResultList());
+	}
+
 }
