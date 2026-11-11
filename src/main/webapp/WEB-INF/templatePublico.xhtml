@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- Plantilla de las páginas públicas (sin sesión): mismo aspecto que template.xhtml (barra superior,
+     migas, contenido y pie institucional) sin menú, perfil, sesión ni acceso al sistema.
+     - Vista sin estado (f:view transient): no guarda estado por visitante.
+     - No usa beans de sesión (loginBean, guestPreferences): el tema y el modo de menú son los
+       predeterminados del sistema (tribunal, menú claro), fijados aquí.
+     - layout-menu-overlay: sin barra lateral; el contenido ocupa todo el ancho.
+     Parámetros: tecPagina (miga actual). Bloques: title, head (recursos propios) y content. -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<f:view transient="true">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <meta name="robots" content="noindex, nofollow"/>
+            <link rel="preload" as="font" type="font/woff2" crossorigin="anonymous" href="#{resource['ecuador-layout:fonts/montserrat-v12-latin-ext_latin-regular.woff2']}"/>
+            <link rel="preload" as="font" type="font/woff2" crossorigin="anonymous" href="#{resource['ecuador-layout:fonts/montserrat-latin-ext_latin-500.woff2']}"/>
+        </f:facet>
+        <title><ui:insert name="title">#{msg['app.sistema.nombre.completo']}</ui:insert></title>
+        <ui:include src="/WEB-INF/favicon.xhtml"/>
+        <h:outputStylesheet name="css/primeflex.min.css" library="ecuador-layout"/>
+        <h:outputStylesheet name="css/layout-tribunal.css" library="ecuador-layout"/>
+        <h:outputStylesheet name="css/tribunal-globals.css" library="demo"/>
+        <ui:insert name="head"/>
+    </h:head>
+    <h:body>
+        <div class="layout-wrapper layout-menu-overlay layout-menu-light tec-publico">
+            <div class="layout-topbar">
+                <span class="logo-container">
+                    <p:graphicImage name="images/ecuador-logo.png" library="ecuador-layout"
+                                    alt="#{msg['app.sistema.nombre.completo']}"/>
+                </span>
+            </div>
+
+            <div class="layout-main">
+                <div class="route-bar">
+                    <div class="route-bar-breadcrumb" role="navigation" aria-label="#{msg['nav.migas']}">
+                        <ul>
+                            <li><i class="pi pi-globe" aria-hidden="true"/> #{msg['publico.migas.modulo']}</li>
+                            <ui:fragment rendered="#{not empty tecPagina}"><li aria-current="page">#{tecPagina}</li></ui:fragment>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="layout-content">
+                    <ui:insert name="content"/>
+                </div>
+
+                <div class="layout-footer">
+                    <ui:include src="/WEB-INF/footer.xhtml">
+                        <ui:param name="piePublico" value="true"/>
+                    </ui:include>
+                </div>
+            </div>
+        </div>
+    </h:body>
+</f:view>
+</html>

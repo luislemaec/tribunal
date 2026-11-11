@@ -28,6 +28,14 @@ public class GestionPadronServiceCheck {
         inyectar(service, "cronogramaService", new CronogramaService() {
             @Override public boolean permite(ec.com.antenasur.enums.OperacionCronograma operacion) { return cronogramaAbierto[0]; }
         });
+        // Bitácora simulada: registra la actividad de cada operación del padrón.
+        List<String> bitacora = new java.util.ArrayList<>();
+        inyectar(service, "procesoService", new ProcesoService() {
+            @Override public ec.com.antenasur.model.tec.Proceso create(ec.com.antenasur.model.tec.Proceso p) {
+                bitacora.add(p.getActividad());
+                return p;
+            }
+        });
         repo.miembros.get(3).setHabilitadoPadron(false);
         verificar(service.asignarIglesia(1, 10, 20, 30) == 3, "iglesia completa solo habilitados");
         rechaza(() -> service.asignarIglesia(1, 10, 20, 30), "iglesia sin pendientes");
@@ -69,7 +77,17 @@ public class GestionPadronServiceCheck {
         cronogramaAbierto[0] = true;
         repo.proceso.setActivo(false);
         rechaza(() -> service.retirar(1, 10, 20, List.of(1)), "proceso inactivo");
-        System.out.println("OK: asignacion/retiro individual y multiple, baja/reactivacion, duplicados, habilitacion, JRV y contexto.");
+        // Bitácora: una entrada por operación exitosa (ninguna por las rechazadas), con su resumen.
+        verificar(bitacora.stream().anyMatch(a -> a.startsWith("ASIGNA_IGLESIA_PADRON | MÓDULO: PADRÓN; RESULTADO: EXITOSO")
+                && a.endsWith("Electores: 3")), "bitacora asignar iglesia");
+        verificar(bitacora.stream().anyMatch(a -> a.startsWith("RETIRA_IGLESIA_PADRON |") && a.endsWith("Electores: 3")),
+                "bitacora retirar iglesia");
+        verificar(bitacora.stream().anyMatch(a -> a.startsWith("ASIGNA_PADRON |")), "bitacora asignar seleccion");
+        verificar(bitacora.stream().anyMatch(a -> a.startsWith("RETIRA_PADRON |")), "bitacora retirar seleccion");
+        // 7 exitosas: asignar y retirar iglesia, asignar(1), asignar(2,3), retirar(1), retirar(2,3), asignar(1,2,3).
+        verificar(bitacora.size() == 7, "una entrada por operacion exitosa: " + bitacora.size());
+        verificar(bitacora.stream().allMatch(a -> a.length() <= 255), "bitacora dentro de 255");
+        System.out.println("OK: asignacion/retiro individual y multiple, baja/reactivacion, duplicados, habilitacion, JRV, contexto y bitacora.");
     }
 
     private static void inyectar(Object bean, String campo, Object valor) throws Exception {

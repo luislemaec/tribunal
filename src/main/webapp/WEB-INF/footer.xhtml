@@ -6,11 +6,16 @@
 
     <!-- Pie institucional: logo a la izquierda; versión del sistema y derechos en texto pequeño a la derecha
          (centrados y apilados en móvil). Textos en messages_es.properties (footer.*). -->
+    <!-- piePublico (templatePublico.xhtml): el logo no enlaza al escritorio, que exige sesión. -->
     <div class="tec-footer">
-        <h:link outcome="/dashboard" styleClass="logo-container tec-footer__logo">
+        <h:link outcome="/dashboard" styleClass="logo-container tec-footer__logo" rendered="#{not piePublico}">
             <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"
                             alt="#{msg['app.sistema.nombre.completo']}"/>
         </h:link>
+        <h:panelGroup styleClass="logo-container tec-footer__logo" rendered="#{piePublico}">
+            <p:graphicImage name="images/ecuador-orange-logo.png" library="ecuador-layout"
+                            alt="#{msg['app.sistema.nombre.completo']}"/>
+        </h:panelGroup>
 
         <p class="tec-footer__legal">
             <span>#{msg['app.sistema']} · #{msg['footer.version']}</span>

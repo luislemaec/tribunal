@@ -79,6 +79,17 @@ public class IglesiaService extends AbstractService<Iglesia, Integer, IglesiaFac
 		return iglesiaFacade;
 	}
 
+	/**
+	 * Lectura abierta como el resto del servicio. El @PermitAll de la clase no cubre los métodos
+	 * heredados de AbstractService: sin esta sobrescritura WildFly negaba find (p. ej. al evaluar el
+	 * acta de actualización de miembros para un IglesiaAdmin en Personas).
+	 */
+	@Override
+	@PermitAll
+	public Iglesia find(Integer id) {
+		return super.find(id);
+	}
+
 	public List<Iglesia> getIglesiasPorParroquia(Geograp parroquia) {
 		return iglesiaFacade.getIglesiasPorParroquia(parroquia);
 	}

@@ -7,19 +7,28 @@ import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Límite de consultas públicas de lugar de votación por IP, en ventanas de un minuto (mismo
- * esquema que LimiteIntentosApi y LimiteIntentosQr). Frena la consulta masiva de cédulas;
- * acotado a un nodo, el proxy debe limitar también las solicitudes.
+ * Límites de la consulta pública de lugar de votación, en dos capas:
+ * <ul>
+ * <li>por IP, en ventanas de un minuto (mismo esquema que LimiteIntentosApi y LimiteIntentosQr).
+ * Holgado porque muchas personas comparten IP (red móvil, router de una comunidad) y los robots
+ * ya los frena el desafío anti-robot: propiedad {@code tec.consulta.limite.ip}, 30 por minuto;</li>
+ * <li>global por segundo, para proteger al servidor y a la base ante picos o ataques
+ * distribuidos: propiedad {@code tec.consulta.limite.global}, 20 por segundo.</li>
+ * </ul>
+ * Acotado a un nodo; Nginx limita además la página (docs/deployment/tribunal.nginx.conf).
  */
 @ApplicationScoped
 public class LimiteConsultaLugarVotacion {
 
-    static final int MAX_POR_IP = 15;
+    static final int MAX_POR_IP = Integer.getInteger("tec.consulta.limite.ip", 30);
+    static final int MAX_GLOBAL_POR_SEGUNDO = Integer.getInteger("tec.consulta.limite.global", 20);
     private static final long VENTANA_MS = 60_000L;
     private static final int MAX_CLAVES = 10_000;
 
     private final Map<String, Ventana> ventanas = new HashMap<>();
     private final Clock reloj;
+    private long segundoGlobal = -1;
+    private int consultasGlobales;
 
     public LimiteConsultaLugarVotacion() {
         this(Clock.systemUTC());
@@ -46,6 +55,16 @@ public class LimiteConsultaLugarVotacion {
             ventanas.put(clave, ventana);
         }
         return ++ventana.consultas;
+    }
+
+    /** Tope global: true si la consulta cabe en el cupo del segundo actual. */
+    public synchronized boolean permitirGlobal() {
+        long segundo = reloj.millis() / 1000;
+        if (segundo != segundoGlobal) {
+            segundoGlobal = segundo;
+            consultasGlobales = 0;
+        }
+        return ++consultasGlobales <= MAX_GLOBAL_POR_SEGUNDO;
     }
 
     public static boolean permitida(int consultas) {

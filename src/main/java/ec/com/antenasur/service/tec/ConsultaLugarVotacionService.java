@@ -21,9 +21,14 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>Reglas de privacidad: solo cédula exacta de 10 dígitos (sin búsqueda por nombre), solo el
  * padrón vigente del proceso electoral activo, nombre enmascarado, sin cédula completa ni iglesia
- * en la respuesta, límite de consultas por IP y registro en el log con la cédula enmascarada. La
- * bitácora guarda solo el primer bloqueo por abuso de cada IP y minuto (una entrada por consulta
- * la desbordaría el día del sufragio).
+ * en la respuesta y registro en el log con la cédula enmascarada. La bitácora guarda solo el
+ * primer bloqueo por abuso de cada IP y minuto (una entrada por consulta la desbordaría el día del
+ * sufragio).
+ *
+ * <p>Personas y no robots: desafío de prueba de trabajo verificado en el servidor
+ * ({@link DesafioAntiRobot}), campo trampa y tiempo mínimo. Carga: límites por IP y global
+ * ({@link LimiteConsultaLugarVotacion}), caché breve por cédula ({@link CacheConsultaLugarVotacion}),
+ * página sin sesión e índice por cédula (V13).
  */
 @Slf4j
 @Stateless
@@ -32,12 +37,24 @@ public class ConsultaLugarVotacionService {
 
     private static final Pattern CEDULA = Pattern.compile("\\d{10}");
 
-    public enum Estado { ENCONTRADO, NO_ENCONTRADO, CEDULA_INVALIDA, LIMITE, SIN_PROCESO }
+    public enum Estado { ENCONTRADO, NO_ENCONTRADO, CEDULA_INVALIDA, LIMITE, OCUPADO, VERIFICACION, SIN_PROCESO }
 
     public record Resultado(Estado estado, LugarVotacionPublicoDTO lugar) {
         static Resultado de(Estado estado) {
             return new Resultado(estado, null);
         }
+    }
+
+    /**
+     * Respuesta del navegador al desafío anti-robot y el campo trampa (invisible para una persona;
+     * si llega con contenido, lo llenó un robot).
+     */
+    public record Verificacion(String challenge, String salt, String firma, String numero, String trampa) {
+    }
+
+    /** Desafío anti-robot nuevo para la página. */
+    public DesafioAntiRobot.Desafio nuevoDesafio() {
+        return desafio.crear();
     }
 
     @Inject
@@ -55,7 +72,17 @@ public class ConsultaLugarVotacionService {
     @Inject
     private LimiteConsultaLugarVotacion limite;
 
-    public Resultado consultar(String cedulaIngresada, String ip) {
+    @Inject
+    private DesafioAntiRobot desafio;
+
+    @Inject
+    private CacheConsultaLugarVotacion cache;
+
+    /**
+     * Orden de las capas: límites (antes de cualquier trabajo), verificación anti-robot y campo
+     * trampa, formato de la cédula, caché y, por último, la base.
+     */
+    public Resultado consultar(String cedulaIngresada, String ip, Verificacion verificacion) {
         int consultas = limite.registrar(ip);
         if (!LimiteConsultaLugarVotacion.permitida(consultas)) {
             if (LimiteConsultaLugarVotacion.primerRechazo(consultas)) {
@@ -64,9 +91,22 @@ public class ConsultaLugarVotacionService {
             }
             return Resultado.de(Estado.LIMITE);
         }
+        if (!limite.permitirGlobal()) {
+            return Resultado.de(Estado.OCUPADO);
+        }
+        if (verificacion == null || (verificacion.trampa() != null && !verificacion.trampa().isBlank())
+                || !desafio.verificar(verificacion.challenge(), verificacion.salt(), verificacion.firma(),
+                        verificacion.numero())) {
+            log.info("Consulta pública de lugar de votación rechazada por la verificación anti-robot desde {}", ip);
+            return Resultado.de(Estado.VERIFICACION);
+        }
         String cedula = normalizarCedula(cedulaIngresada);
         if (cedula == null) {
             return Resultado.de(Estado.CEDULA_INVALIDA);
+        }
+        Resultado guardado = cache.obtener(cedula);
+        if (guardado != null) {
+            return guardado;
         }
         if (procesoFacade.getActivo() == null) {
             return Resultado.de(Estado.SIN_PROCESO);
@@ -74,17 +114,22 @@ public class ConsultaLugarVotacionService {
         List<Object[]> filas = lugarFacade.buscarLugarProcesoActivo(cedula);
         log.info("Consulta pública de lugar de votación: cédula {} desde {} -> {}", enmascararCedula(cedula), ip,
                 filas.isEmpty() ? "sin resultado" : "encontrada");
+        Resultado resultado;
         if (filas.isEmpty()) {
-            return Resultado.de(Estado.NO_ENCONTRADO);
+            resultado = Resultado.de(Estado.NO_ENCONTRADO);
+        } else {
+            if (filas.size() > 1) {
+                // No debería ocurrir (una persona, un padrón por proceso): se informa el primero y se avisa.
+                log.warn("La cédula {} figura más de una vez en el padrón del proceso activo",
+                        enmascararCedula(cedula));
+            }
+            Object[] f = filas.get(0);
+            resultado = new Resultado(Estado.ENCONTRADO, new LugarVotacionPublicoDTO(
+                    enmascararNombre((String) f[0], (String) f[1]), (String) f[3], fechaSufragio((Integer) f[2]),
+                    (String) f[5], (String) f[4], (String) f[6], (String) f[7]));
         }
-        if (filas.size() > 1) {
-            // No debería ocurrir (una persona, un padrón por proceso): se informa el primero y se avisa.
-            log.warn("La cédula {} figura más de una vez en el padrón del proceso activo", enmascararCedula(cedula));
-        }
-        Object[] f = filas.get(0);
-        return new Resultado(Estado.ENCONTRADO, new LugarVotacionPublicoDTO(
-                enmascararNombre((String) f[0], (String) f[1]), (String) f[3], fechaSufragio((Integer) f[2]),
-                (String) f[5], (String) f[4], (String) f[6], (String) f[7]));
+        cache.guardar(cedula, resultado);
+        return resultado;
     }
 
     /** Fecha de la fase SUFRAGIO vigente del proceso, o null si no está configurada. */

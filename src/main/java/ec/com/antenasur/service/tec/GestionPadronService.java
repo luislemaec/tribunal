@@ -24,6 +24,7 @@ import ec.com.antenasur.itext.ReporteXLSX;
 import ec.com.antenasur.model.IglesiaPersona;
 import ec.com.antenasur.model.tec.Mesa;
 import ec.com.antenasur.model.tec.Padron;
+import ec.com.antenasur.model.tec.Proceso;
 import ec.com.antenasur.model.tec.ProcesoElectoral;
 import ec.com.antenasur.util.Constantes;
 
@@ -40,6 +41,7 @@ import ec.com.antenasur.util.Constantes;
 @RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
 public class GestionPadronService {
     @Inject private GestionPadronFacade facade;
+    @Inject private ProcesoService procesoService;
     @Inject private MesaFacade mesaFacade;
     @Inject private CronogramaService cronogramaService;
 
@@ -131,7 +133,9 @@ public class GestionPadronService {
         if (facade.iglesiaEnOtraMesa(iglesia, mesa, proceso)) error("iglesia.otra.mesa");
         List<Integer> ids = facade.habilitadosPendientes(iglesia, mesa, proceso);
         if (ids.isEmpty()) error("iglesia.sin.pendientes");
-        return asignar(proceso, recinto, mesa, iglesia, ids).size();
+        List<Padron> registros = asignarRegistros(proceso, recinto, mesa, iglesia, ids);
+        registrarBitacora("ASIGNA_IGLESIA_PADRON", registros, registros.size());
+        return registros.size();
     }
 
     public int retirarIglesia(Integer proceso, Integer recinto, Integer mesa, Integer iglesia) {
@@ -140,10 +144,71 @@ public class GestionPadronService {
         // Incluye todos los empadronados, aunque posteriormente hayan dejado de estar habilitados.
         List<Integer> ids = facade.empadronadosIglesia(iglesia, mesa, proceso);
         if (ids.isEmpty()) error("iglesia.sin.padron");
-        return retirar(proceso, recinto, mesa, ids);
+        List<Padron> retirados = retirarRegistros(proceso, recinto, mesa, ids);
+        registrarBitacora("RETIRA_IGLESIA_PADRON", retirados, retirados.size());
+        return retirados.size();
     }
 
+    /** Asigna una selección de miembros a la mesa y deja una entrada de bitácora con el resumen. */
     public List<Padron> asignar(Integer procesoId, Integer recintoId, Integer mesaId, Integer iglesiaId, List<Integer> ids) {
+        List<Padron> registros = asignarRegistros(procesoId, recintoId, mesaId, iglesiaId, ids);
+        registrarBitacora("ASIGNA_PADRON", registros, registros.size());
+        return registros;
+    }
+
+    /**
+     * Bitácora funcional del padrón (tec.procesos): una entrada por operación con iglesia, recinto,
+     * mesa y cantidad de electores, no una por elector. El padrón se guarda fuera de
+     * AbstractFacade (en bloque), por eso no se registraba; el detalle por registro sigue en
+     * Envers (padron_aud). Solo tras completar la operación; si falla, la transacción se revierte.
+     */
+    private void registrarBitacora(String accion, List<Padron> registros, int cantidad) {
+        if (registros == null || registros.isEmpty()) {
+            return;
+        }
+        Padron primero = registros.get(0);
+        java.util.Set<String> iglesias = new java.util.LinkedHashSet<>();
+        for (Padron p : registros) {
+            if (p.getIglesiaPersona() != null && p.getIglesiaPersona().getIglesia() != null) {
+                iglesias.add(texto(p.getIglesiaPersona().getIglesia().getNombre()));
+            }
+        }
+        String iglesia = iglesias.isEmpty() ? "—" : iglesias.size() == 1 ? iglesias.iterator().next()
+                : iglesias.size() + " iglesias";
+        String mesa = primero.getMesa() != null ? texto(primero.getMesa().getNombre()) : "—";
+        String recinto = primero.getMesa() != null && primero.getMesa().getRecinto() != null
+                ? texto(primero.getMesa().getRecinto().getNombre()) : "—";
+        String prefijo = accion + " | MÓDULO: PADRÓN; RESULTADO: EXITOSO; DETALLE: Iglesia: ";
+        String sufijo = "; Recinto: " + recinto + "; Mesa: " + mesa + "; Electores: " + cantidad;
+        int disponible = Math.max(0, LARGO_ACTIVIDAD - prefijo.length() - sufijo.length());
+        if (disponible < 10) {
+            // Recinto muy largo: se acorta el recinto y nunca la cantidad.
+            sufijo = "; Mesa: " + mesa + "; Electores: " + cantidad;
+            disponible = Math.max(0, LARGO_ACTIVIDAD - prefijo.length() - sufijo.length());
+        }
+        Proceso actividad = new Proceso(ipActual());
+        actividad.setActividad(prefijo + iglesia.substring(0, Math.min(iglesia.length(), disponible)) + sufijo);
+        procesoService.create(actividad);
+    }
+
+    private static final int LARGO_ACTIVIDAD = 255;
+
+    private static String texto(String valor) {
+        return valor == null ? "" : valor.replaceAll("[\\r\\n\\t]", " ").trim();
+    }
+
+    /** IP del cliente si la operación viene de la web; la bitácora la muestra junto al usuario. */
+    private static String ipActual() {
+        try {
+            return jakarta.faces.context.FacesContext.getCurrentInstance() != null
+                    ? ec.com.antenasur.util.JsfUtil.getIPAddress() : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private List<Padron> asignarRegistros(Integer procesoId, Integer recintoId, Integer mesaId, Integer iglesiaId,
+            List<Integer> ids) {
         ProcesoElectoral proceso = validarContexto(procesoId, recintoId, mesaId);
         validarIds(ids);
         if (iglesiaId == null) error("seleccion");
@@ -177,7 +242,14 @@ public class GestionPadronService {
         return registros;
     }
 
+    /** Retira una selección de empadronados y deja una entrada de bitácora con el resumen. */
     public int retirar(Integer proceso, Integer recinto, Integer mesa, List<Integer> ids) {
+        List<Padron> retirados = retirarRegistros(proceso, recinto, mesa, ids);
+        registrarBitacora("RETIRA_PADRON", retirados, retirados.size());
+        return retirados.size();
+    }
+
+    private List<Padron> retirarRegistros(Integer proceso, Integer recinto, Integer mesa, List<Integer> ids) {
         validarContexto(proceso, recinto, mesa);
         validarIds(ids);
         List<Padron> padrones = facade.seleccion(ids, mesa, proceso);
@@ -186,7 +258,7 @@ public class GestionPadronService {
         if (facade.tieneJrv(padrones.stream().map(p -> p.getIglesiaPersona().getId()).toList(), proceso)) error("jrv");
         for (Padron p : padrones) p.setEstado(false);
         facade.guardar(padrones);
-        return padrones.size();
+        return padrones;
     }
 
     private void validarIds(List<Integer> ids) {

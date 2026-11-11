@@ -297,6 +297,15 @@ public final class CatalogoActividades {
 				firma("logout |", "resultado: cancelado")));
 		r.add(regla("Solicitó recuperación de contraseña", ACCESO, SOLICITADO, DETALLE_ESTRUCTURADO,
 				firma("recuperacion_clave |")));
+		// Padrón (GestionPadronService): una entrada por operación con iglesia, recinto, mesa y electores.
+		r.add(regla("Asignó iglesia al padrón", PADRON, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("asigna_iglesia_padron |", "resultado: exitoso")));
+		r.add(regla("Retiró iglesia del padrón", PADRON, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("retira_iglesia_padron |", "resultado: exitoso")));
+		r.add(regla("Asignó electores al padrón", PADRON, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("asigna_padron |", "resultado: exitoso")));
+		r.add(regla("Retiró electores del padrón", PADRON, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("retira_padron |", "resultado: exitoso")));
 		// Consulta pública de lugar de votación: solo se registra el bloqueo por exceso de consultas.
 		r.add(regla("Consulta pública de lugar de votación bloqueada", SEGURIDAD, FALLIDO, DETALLE_ESTRUCTURADO,
 				firma("consulta_lugar_votacion |", "resultado: fallido")));

@@ -1068,3 +1068,6 @@ html body .sun-editor .se-tooltip:hover .se-tooltip-inner, html body .sun-editor
 
 /* Etiqueta «Nuevo» junto al nombre de un registro (Recintos). */
 .tec-etiqueta-nuevo { margin-left:.3rem; vertical-align:middle; }
+
+/* Páginas públicas (templatePublico.xhtml): campo trampa anti-robot, fuera de la vista y de los lectores de pantalla. */
+.tec-campo-trampa { position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
