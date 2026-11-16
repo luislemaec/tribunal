@@ -33,8 +33,11 @@ class FiltroApiMovilTest {
     }
 
     @Test
-    void soloLoginYRefreshSonPublicos() {
-        assertEquals(java.util.Set.of("/api/v1/auth/login", "/api/v1/auth/refresh"), FiltroApiMovil.RUTAS_PUBLICAS);
+    void soloLoginRefreshYConsultaPublicaSonPublicos() {
+        // La consulta pública de lugar de votación tiene su propio control (desafío anti-robot y límites).
+        assertEquals(java.util.Set.of("/api/v1/auth/login", "/api/v1/auth/refresh",
+                "/api/v1/publico/lugar-votacion", "/api/v1/publico/lugar-votacion/desafio"),
+                FiltroApiMovil.RUTAS_PUBLICAS);
     }
 
     @Test

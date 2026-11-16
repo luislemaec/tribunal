@@ -41,7 +41,12 @@ public class FiltroApiMovil implements Filter {
     public static final String ATRIBUTO_SESION = FiltroApiMovil.class.getName() + ".sesion";
 
     static final String PREFIJO = "/api/v1";
-    static final Set<String> RUTAS_PUBLICAS = Set.of(PREFIJO + "/auth/login", PREFIJO + "/auth/refresh");
+    /**
+     * Sin token: login y refresh (con su propio límite) y la consulta pública de lugar de votación
+     * (desafío anti-robot, límites por IP y global en ConsultaLugarVotacionService).
+     */
+    static final Set<String> RUTAS_PUBLICAS = Set.of(PREFIJO + "/auth/login", PREFIJO + "/auth/refresh",
+            PREFIJO + "/publico/lugar-votacion", PREFIJO + "/publico/lugar-votacion/desafio");
     static final Set<String> RUTAS_CAMBIO_CLAVE = Set.of(PREFIJO + "/auth/cambiar-clave", PREFIJO + "/auth/yo",
             PREFIJO + "/auth/logout");
 

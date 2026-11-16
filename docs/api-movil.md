@@ -86,6 +86,30 @@ Revoca todas las sesiones móviles anteriores del usuario.
 
 204. Revoca la sesión del token presentado.
 
+## Consulta pública de lugar de votación (sin sesión)
+
+La misma consulta de la página `consultar.jsf` (`ConsultaLugarVotacionService`): solo cédula
+exacta de 10 dígitos, padrón vigente del proceso activo, iniciales enmascaradas, sin cédula
+completa ni iglesia. Protección: desafío anti-robot ALTCHA (prueba de trabajo firmada con HMAC,
+de un solo uso, vence a los 10 minutos y exige al menos 1,5 s entre emitirlo y usarlo), 30
+consultas por minuto por IP y 20 por segundo en total (`tec.consulta.*`), caché de 60 s por
+cédula y `limit_req` en Nginx. La bitácora registra solo el bloqueo por abuso.
+
+### `GET /publico/lugar-votacion/desafio` (público)
+
+200 `{"algoritmo":"SHA-256","challenge":"…","salt":"…?expires=…&t=…","firma":"…","maximo":30000}`.
+La App busca `n` entre 0 y `maximo` tal que `SHA-256(salt + n)` (hexadecimal) sea `challenge`.
+
+### `POST /publico/lugar-votacion` (público)
+
+Cuerpo: `{"cedula":"0600000000","challenge":"…","salt":"…","firma":"…","numero":"12345"}`.
+
+- 200 `{"estado":"ENCONTRADO","lugar":{"elector":"J*** P****","proceso":"…","fechaSufragio":"2026-12-06","recinto":"…","mesa":"…","parroquia":"…","canton":"…"}}`
+  (`fechaSufragio` es `null` si la fase SUFRAGIO no está configurada).
+- 200 `{"estado":"NO_ENCONTRADO","mensaje":"…"}` o `{"estado":"SIN_PROCESO","mensaje":"…"}`.
+- 400 `CEDULA_INVALIDA` o `VERIFICACION_FALLIDA` (desafío inválido, usado, vencido o enviado
+  demasiado pronto: pedir uno nuevo), 429 `DEMASIADAS_CONSULTAS`, 503 `SERVICIO_OCUPADO`.
+
 ## Módulo Tribunal (Bearer)
 
 `ConsultaMovilService` autoriza cada método con `@RolesAllowed` y toma el alcance del

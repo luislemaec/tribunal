@@ -117,6 +117,56 @@ public final class ContratosApi {
         private PerfilUsuario usuario;
     }
 
+    /** Desafío anti-robot de la consulta pública de lugar de votación (protocolo ALTCHA). */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DesafioApi {
+        private String algoritmo;
+        private String challenge;
+        private String salt;
+        private String firma;
+        private long maximo;
+    }
+
+    /** Consulta pública: cédula y la respuesta al desafío resuelto por la App. */
+    @Data
+    @NoArgsConstructor
+    public static class SolicitudLugarVotacion {
+        private String cedula;
+        private String challenge;
+        private String salt;
+        private String firma;
+        private String numero;
+    }
+
+    /**
+     * Respuesta de la consulta pública. {@code estado}: ENCONTRADO, NO_ENCONTRADO o SIN_PROCESO;
+     * {@code lugar} solo cuando se encontró. Sin cédula completa ni iglesia.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RespuestaLugarVotacion {
+        private String estado;
+        private String mensaje;
+        private LugarVotacionApi lugar;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LugarVotacionApi {
+        private String elector;
+        private String proceso;
+        /** Fecha del sufragio (yyyy-MM-dd) si está configurada; null si no. */
+        private String fechaSufragio;
+        private String recinto;
+        private String mesa;
+        private String parroquia;
+        private String canton;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
