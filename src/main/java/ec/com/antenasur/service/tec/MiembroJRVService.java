@@ -192,6 +192,114 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
     }
 
     public MiembroJRVDTO designarMiembro(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId, Integer cargoId) {
+        validarDesignacion(iglesiaPersonaId, mesaId, procesoId, cargoId);
+        if (!perteneceAPadronDeMesa(iglesiaPersonaId, mesaId, procesoId)) {
+            throw new NegocioException("La persona seleccionada no pertenece a una iglesia asignada a esta mesa.");
+        }
+        return guardarDesignacion(iglesiaPersonaId, mesaId, procesoId, cargoId, null);
+    }
+
+    /**
+     * Busca por cédula a una persona habilitada en el padrón del proceso (en cualquier mesa) para
+     * designarla en la JRV de la mesa indicada. Solo Administrador o Tribunal.
+     */
+    @jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+    public ec.com.antenasur.dto.CandidatoJrvDTO buscarCandidatoPorCedula(String cedula, Integer mesaId,
+            Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            throw new NegocioException("Debe seleccionar una mesa y un proceso electoral activo.");
+        }
+        String limpia = cedula == null ? "" : cedula.trim();
+        if (!limpia.matches("\\d{10}")) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.cedula.invalida"));
+        }
+        List<Padron> registros = padronFacade.buscarHabilitadoPorCedulaProceso(limpia, procesoId);
+        if (registros.isEmpty()) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.no.empadronado"));
+        }
+        if (registros.size() > 1) {
+            // Una persona en dos registros del padrón del mismo proceso: no se elige por el usuario.
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.padron.duplicado"));
+        }
+        Padron padron = registros.get(0);
+        IglesiaPersona ip = padron.getIglesiaPersona();
+        MiembroJRV existente = miembroJRVFacade.buscarPorIglesiaPersonaProceso(ip.getId(), procesoId);
+        if (existente != null) {
+            String mesaExistente = existente.getMesa() != null ? existente.getMesa().getNombre() : "";
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.ya.designado", mesaExistente));
+        }
+        Persona persona = ip.getPersona();
+        Mesa mesaVoto = padron.getMesa();
+        return new ec.com.antenasur.dto.CandidatoJrvDTO(ip.getId(), persona.getDocumento(),
+                (texto(persona.getNombres()) + " " + texto(persona.getApellidos())).trim(),
+                ip.getIglesia() != null ? texto(ip.getIglesia().getNombre()) : "",
+                texto(mesaVoto.getNombre()),
+                mesaVoto.getRecinto() != null ? texto(mesaVoto.getRecinto().getNombre()) : "",
+                mesaId.equals(mesaVoto.getId()));
+    }
+
+    /**
+     * Designa en la JRV de la mesa a una persona empadronada en otra mesa del mismo proceso. Exige
+     * la aceptación expresa de la condición; la persona sigue votando en su mesa (no se toca el
+     * padrón). Se aplican las demás reglas de la designación. Solo Administrador o Tribunal.
+     */
+    @jakarta.annotation.security.RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal" })
+    public MiembroJRVDTO designarMiembroOtraMesa(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId,
+            Integer cargoId, boolean condicionAceptada, String ip) {
+        validarDesignacion(iglesiaPersonaId, mesaId, procesoId, cargoId);
+        Padron padron = padronFacade.buscaPorPersonaProcesoIglesia(iglesiaPersonaId, procesoId);
+        IglesiaPersona persona = iglesiaPersonaFacade.find(iglesiaPersonaId);
+        if (padron == null || persona == null || !Boolean.TRUE.equals(persona.getEstado())
+                || !Boolean.TRUE.equals(persona.getHabilitadoPadron())) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.no.empadronado"));
+        }
+        if (perteneceAPadronDeMesa(iglesiaPersonaId, mesaId, procesoId)) {
+            // Es de esta mesa: designación normal, sin marca ni advertencia.
+            return guardarDesignacion(iglesiaPersonaId, mesaId, procesoId, cargoId, null);
+        }
+        if (!condicionAceptada) {
+            throw new NegocioException(Constantes.getMensaje("mjrv.otra.condicion.requerida"));
+        }
+        String usuario = usuarioActual();
+        MiembroJRVDTO designado = guardarDesignacion(iglesiaPersonaId, mesaId, procesoId, cargoId,
+                usuario == null ? "" : usuario);
+        registrarDesignacionOtraMesa(designado, padron, ip);
+        return designado;
+    }
+
+    @jakarta.annotation.Resource
+    private jakarta.ejb.SessionContext sessionContext;
+
+    private String usuarioActual() {
+        try {
+            return sessionContext != null && sessionContext.getCallerPrincipal() != null
+                    ? sessionContext.getCallerPrincipal().getName()
+                    : null;
+        } catch (IllegalStateException e) {
+            return null;
+        }
+    }
+
+    /** Bitácora de la designación desde otra mesa (CatalogoActividades: "Designó miembro JRV de otra mesa"). */
+    private void registrarDesignacionOtraMesa(MiembroJRVDTO designado, Padron padron, String ip) {
+        Mesa mesa = designado.getMesa() != null ? mesaFacade.find(designado.getMesa().getId()) : null;
+        Mesa mesaVoto = padron.getMesa();
+        String cedula = designado.getIglesiaPersona() != null && designado.getIglesiaPersona().getPersona() != null
+                ? designado.getIglesiaPersona().getPersona().getDocumento()
+                : "";
+        String detalle = "DESIGNA_JRV_OTRA_MESA | MÓDULO: JRV; RESULTADO: EXITOSO; DETALLE: Mesa: "
+                + (mesa != null ? mesa.getNombre() : "") + "; Recinto: "
+                + (mesa != null && mesa.getRecinto() != null ? mesa.getRecinto().getNombre() : "")
+                + "; Dignidad: " + texto(designado.getCargoNombre()) + "; Miembro: " + cedula
+                + "; Vota en: " + (mesaVoto != null ? mesaVoto.getNombre() : "") + " ("
+                + (mesaVoto != null && mesaVoto.getRecinto() != null ? mesaVoto.getRecinto().getNombre() : "") + ")";
+        ec.com.antenasur.model.tec.Proceso actividad = new ec.com.antenasur.model.tec.Proceso(ip);
+        actividad.setActividad(detalle.length() > 255 ? detalle.substring(0, 255) : detalle);
+        procesoService.create(actividad);
+    }
+
+    /** Reglas comunes de toda designación, salvo la pertenencia al padrón de la mesa. */
+    private void validarDesignacion(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId, Integer cargoId) {
         validarParametros(iglesiaPersonaId, mesaId, procesoId, cargoId);
         if (padronFacade.contarIglesiasPorMesas(procesoId, List.of(mesaId)).getOrDefault(mesaId, 0L) == 0) {
             throw new NegocioException(Constantes.getMensaje("mjrv.mesas.sin.iglesias"));
@@ -205,10 +313,18 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         if (miembroJRVFacade.buscarPorMesaCargoProceso(mesaId, cargoId, procesoId) != null) {
             throw new NegocioException("La dignidad seleccionada ya se encuentra asignada.");
         }
-        if (!perteneceAPadronDeMesa(iglesiaPersonaId, mesaId, procesoId)) {
-            throw new NegocioException("La persona seleccionada no pertenece a una iglesia asignada a esta mesa.");
-        }
+    }
 
+    private static String texto(String valor) {
+        return valor == null ? "" : valor.trim();
+    }
+
+    /**
+     * Guarda la designación ya validada. {@code aceptaUsuario} distinto de null marca la designación
+     * desde otra mesa (con quién y cuándo la aceptó); null la deja como designación normal.
+     */
+    private MiembroJRVDTO guardarDesignacion(Integer iglesiaPersonaId, Integer mesaId, Integer procesoId,
+            Integer cargoId, String aceptaUsuario) {
         IglesiaPersona iglesiaPersona = iglesiaPersonaFacade.find(iglesiaPersonaId);
         Mesa mesa = mesaFacade.find(mesaId);
         ProcesoElectoral proceso = procesoElectoralFacade.find(procesoId);
@@ -218,12 +334,14 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         }
         MiembroJRV registroLogico = miembroJRVFacade.buscarPorMesaCargoProcesoIncluyeInactivos(
                 mesaId, cargoId, procesoId);
+        boolean otraMesa = aceptaUsuario != null;
         if (registroLogico != null && !Boolean.TRUE.equals(registroLogico.getEstado())) {
             registroLogico.setIglesiaPersona(iglesiaPersona);
             registroLogico.setMesa(mesa);
             registroLogico.setProceso(proceso);
             registroLogico.setCargo(cargo);
             registroLogico.setEstado(true);
+            marcarOtraMesa(registroLogico, otraMesa, aceptaUsuario);
             return MiembroJRVDTO.fromEntity(miembroJRVFacade.edit(registroLogico));
         }
         MiembroJRV nuevo = new MiembroJRV();
@@ -231,10 +349,40 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
         nuevo.setMesa(mesa);
         nuevo.setProceso(proceso);
         nuevo.setCargo(cargo);
+        marcarOtraMesa(nuevo, otraMesa, aceptaUsuario);
         return MiembroJRVDTO.fromEntity(miembroJRVFacade.create(nuevo));
     }
 
-    public MiembroJRVDTO completarJunta(Integer mesaId, Integer procesoId) {
+    /** Un registro reutilizado no conserva la marca de una designación anterior. */
+    private static void marcarOtraMesa(MiembroJRV miembro, boolean otraMesa, String aceptaUsuario) {
+        miembro.setOtraMesa(otraMesa);
+        miembro.setAceptaUsuario(otraMesa ? aceptaUsuario : null);
+        miembro.setAceptaFecha(otraMesa ? new java.util.Date() : null);
+    }
+
+    /** Resultado de completar la junta: datos para el correo al Presidente. */
+    public record ResultadoCompletar(MiembroJRVDTO presidente, String usuario, String correo, String nombres,
+            String mesa, String recinto, String proceso, boolean cuentaNueva) implements java.io.Serializable {
+    }
+
+    /** Correo actual de la cuenta del Presidente designado (para precargar el diálogo), o null. */
+    public String obtenerCorreoPresidente(Integer mesaId, Integer procesoId) {
+        if (mesaId == null || procesoId == null) {
+            return null;
+        }
+        MiembroJRV presidente = obtenerMiembroPorDignidad(miembroJRVFacade.listarPorMesaProceso(mesaId, procesoId),
+                "PRESIDENTE");
+        if (presidente == null || presidente.getIglesiaPersona() == null) {
+            return null;
+        }
+        return usuarioService.obtenerCorreoDePersona(presidente.getIglesiaPersona().getPersona());
+    }
+
+    /**
+     * Completa la junta: crea o reutiliza la cuenta del Presidente con el rol SITEC-Presidente-mesa
+     * y registra su correo (obligatorio). El correo de aviso lo envía el controlador después.
+     */
+    public ResultadoCompletar completarJunta(Integer mesaId, Integer procesoId, String correo) {
         if (mesaId == null || procesoId == null) {
             throw new NegocioException("Debe seleccionar una mesa y un proceso electoral activo.");
         }
@@ -255,10 +403,29 @@ public class MiembroJRVService extends AbstractService<MiembroJRV, Integer, Miem
             throw new NegocioException("El rol SITEC-Presidente-mesa no esta configurado en el modulo de roles.");
         }
         Persona personaPresidente = presidente.getIglesiaPersona().getPersona();
-        Usuario usuario = usuarioService.asegurarUsuarioConRol(personaPresidente, rolPresidenteMesa);
+        ec.com.antenasur.dto.ResultadoProvisionUsuarioDTO cuenta = usuarioService.asegurarUsuarioConRol(
+                personaPresidente, rolPresidenteMesa, correo);
+        Usuario usuario = cuenta.getUsuario();
         mesa.setResponsable(usuario.getUsername());
         mesaFacade.edit(mesa);
-        return MiembroJRVDTO.fromEntity(presidente);
+        ProcesoElectoral proceso = procesoElectoralFacade.find(procesoId);
+        return new ResultadoCompletar(MiembroJRVDTO.fromEntity(presidente), usuario.getUsername(), usuario.getCorreo(),
+                (texto(personaPresidente.getNombres()) + " " + texto(personaPresidente.getApellidos())).trim(),
+                texto(mesa.getNombre()), mesa.getRecinto() != null ? texto(mesa.getRecinto().getNombre()) : "",
+                proceso != null ? texto(proceso.getNombre()) : "", !cuenta.isReutilizado());
+    }
+
+    /** Bitácora del correo al Presidente (CatalogoActividades: "Notificó al Presidente de Mesa"). */
+    public void registrarNotificacionPresidente(ResultadoCompletar resultado, boolean enviado, String ip) {
+        if (resultado == null) {
+            return;
+        }
+        String detalle = "NOTIFICA_PRESIDENTE_MESA | MÓDULO: JRV; RESULTADO: " + (enviado ? "EXITOSO" : "FALLIDO")
+                + "; DETALLE: Usuario: " + resultado.usuario() + "; Mesa: " + resultado.mesa() + "; Recinto: "
+                + resultado.recinto() + (enviado ? "" : "; Correo no enviado");
+        ec.com.antenasur.model.tec.Proceso actividad = new ec.com.antenasur.model.tec.Proceso(ip);
+        actividad.setActividad(detalle.length() > 255 ? detalle.substring(0, 255) : detalle);
+        procesoService.create(actividad);
     }
 
     public MiembroJRVDTO obtenerDesignacionPorPersonaProceso(Integer personaId, Integer procesoId) {

@@ -27,6 +27,8 @@ public class MiembroJRVDTO implements Serializable {
     private String periodoNombre;
     private Integer cargoId;
     private String cargoNombre;
+    /** Designado desde otra mesa del padrón (vota en su propia mesa). */
+    private boolean otraMesa;
 
     public static MiembroJRVDTO fromEntity(MiembroJRV m) {
         if (m == null) {
@@ -49,6 +51,7 @@ public class MiembroJRVDTO implements Serializable {
             dto.setCargoId(m.getCargo().getId());
             dto.setCargoNombre(m.getCargo().getNombre());
         }
+        dto.setOtraMesa(Boolean.TRUE.equals(m.getOtraMesa()));
         return dto;
     }
 }

@@ -308,20 +308,179 @@ public class JrvController implements Serializable {
 		}
 	}
 
+	// ---------------------------------------------------------------------------------------
+	// Completar junta: pide el correo del Presidente (obligatorio) y le envía su acceso.
+	// ---------------------------------------------------------------------------------------
+
+	/** Correo del Presidente de Mesa que se registrará en su usuario al completar la junta. */
+	@Getter
+	@Setter
+	private String correoPresidente;
+
+	/** Abre el diálogo de completar con el correo actual de la cuenta del Presidente, si tiene. */
+	public void prepararCompletarJunta() {
+		correoPresidente = null;
+		try {
+			correoPresidente = mjrvService.obtenerCorreoPresidente(
+					mesaSeleccionada != null ? mesaSeleccionada.getId() : null,
+					procesoSeleccionado != null ? procesoSeleccionado.getId() : null);
+		} catch (Exception e) {
+			log.warn("No se pudo precargar el correo del Presidente de Mesa", e);
+		}
+	}
+
 	public void completarJunta() {
 		try {
 			Integer procesoId = procesoSeleccionado != null ? procesoSeleccionado.getId() : null;
 			Integer mesaId = mesaSeleccionada != null ? mesaSeleccionada.getId() : null;
-			MiembroJRVDTO presidente = mjrvService.completarJunta(mesaId, procesoId);
-			if (presidente != null) {
+			MiembroJRVService.ResultadoCompletar resultado = mjrvService.completarJunta(mesaId, procesoId,
+					correoPresidente);
+			if (resultado != null) {
 				JsfUtil.addSuccessMessageFromBundle("mjrv.mensaje.completada");
+				notificarPresidente(resultado);
+				org.primefaces.PrimeFaces.current().ajax().addCallbackParam("juntaCompletada", true);
 			}
+			correoPresidente = null;
 			mesaSeleccionada = mesaService.obtenerDTOPorId(mesaId);
 			cargarDatosMesaSeleccionada();
 		} catch (NegocioException e) {
-			JsfUtil.addErrorMessage(e.getMessage());
+			// Las validaciones del correo llegan como clave de mensajes; el resto, como texto.
+			JsfUtil.addErrorMessage(Constantes.getMensaje(e.getMessage()));
+		} catch (jakarta.ejb.EJBAccessException e) {
+			JsfUtil.addErrorMessageFromBundle("mjrv.otra.sin.permiso");
 		} catch (Exception e) {
 			log.error("Error al completar junta JRV", e);
+			JsfUtil.addErrorMessageFromBundle("mjrv.mensaje.error");
+		}
+	}
+
+	/**
+	 * Correo al Presidente con su usuario. Una cuenta nueva usa la cédula como clave inicial y el
+	 * sistema le exige cambiarla al ingresar; una cuenta existente conserva su clave. Un fallo del
+	 * correo no deshace la junta: se avisa y queda en la bitácora.
+	 */
+	private void notificarPresidente(MiembroJRVService.ResultadoCompletar r) {
+		boolean enviado = false;
+		try {
+			String clave = r.cuentaNueva()
+					? "<p><strong>Contrase&ntilde;a inicial:</strong> su n&uacute;mero de c&eacute;dula. "
+							+ "Al ingresar por primera vez el sistema le pedir&aacute; cambiarla por una nueva.</p>"
+					: "<p><strong>Contrase&ntilde;a:</strong> la que usa actualmente en el sistema. Si no la "
+							+ "recuerda, use la opci&oacute;n &laquo;&iquest;Olvid&oacute; su contrase&ntilde;a?&raquo; "
+							+ "en la pantalla de ingreso.</p>";
+			String html = "<p><strong>Estimado/a " + html(r.nombres()) + "</strong></p>"
+					+ "<p>Ha sido designado/a <strong>Presidente/a de la Junta Receptora del Voto</strong> de la "
+					+ "<strong>" + html(r.mesa()) + "</strong> del recinto <strong>" + html(r.recinto())
+					+ "</strong> para el proceso electoral <strong>" + html(r.proceso()) + "</strong>.</p>"
+					+ "<p>Con su usuario podr&aacute; registrar la apertura, el escrutinio y el cierre de su mesa "
+					+ "en el Sistema del Tribunal Electoral (TEC).</p>"
+					+ "<p><strong>Usuario:</strong> " + html(r.usuario()) + "</p>" + clave
+					+ "<p>Por su seguridad, no comparta su usuario ni su contrase&ntilde;a.</p>"
+					+ Constantes.FIRMA_CORREO;
+			enviado = ec.com.antenasur.util.SendEmail.correoAdjunto(List.of(r.correo()),
+					"Designación como Presidente de Mesa", html, Constantes.getPathLogo());
+		} catch (Exception e) {
+			log.warn("No se pudo enviar el correo al Presidente de Mesa {}", r.usuario(), e);
+		}
+		if (enviado) {
+			JsfUtil.addInfoMessageFromBundle("mjrv.completar.correo.enviado", r.correo());
+		} else {
+			JsfUtil.addWarningMessageFromBundle("mjrv.completar.correo.fallido", r.correo());
+		}
+		try {
+			mjrvService.registrarNotificacionPresidente(r, enviado, JsfUtil.getIPAddress());
+		} catch (Exception e) {
+			log.warn("No se pudo registrar en la bitácora la notificación al Presidente", e);
+		}
+	}
+
+	private static String html(String valor) {
+		if (valor == null) {
+			return "";
+		}
+		return valor.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// Designación desde otra mesa: búsqueda por cédula, advertencia y aceptación expresa.
+	// Solo Administrador o Tribunal (el servicio vuelve a exigir el rol).
+	// ---------------------------------------------------------------------------------------
+
+	@Getter
+	@Setter
+	private String cedulaOtraMesa;
+
+	@Getter
+	private ec.com.antenasur.dto.CandidatoJrvDTO candidatoOtraMesa;
+
+	@Getter
+	@Setter
+	private Integer cargoOtraMesaId;
+
+	@Getter
+	@Setter
+	private boolean condicionOtraMesaAceptada;
+
+	public boolean isPuedeAgregarOtraMesa() {
+		if (!isMesaSeleccionadaValida() || isAsignacionBloqueada() || restringidoAMesaAsignada
+				|| loginBean == null || loginBean.getRoles() == null) {
+			return false;
+		}
+		return loginBean.getRoles().contains("SITEC-" + Constantes.getRolAdministrador())
+				|| loginBean.getRoles().contains("SITEC-" + Constantes.getRolTribunal());
+	}
+
+	/** El botón Designar del diálogo se habilita con persona, dignidad y, si es de otra mesa, la aceptación. */
+	public boolean isPuedeDesignarOtraMesa() {
+		return candidatoOtraMesa != null && cargoOtraMesaId != null
+				&& (candidatoOtraMesa.isMismaMesa() || condicionOtraMesaAceptada);
+	}
+
+	public void prepararOtraMesa() {
+		cedulaOtraMesa = null;
+		candidatoOtraMesa = null;
+		cargoOtraMesaId = null;
+		condicionOtraMesaAceptada = false;
+	}
+
+	public void buscarOtraMesa() {
+		candidatoOtraMesa = null;
+		condicionOtraMesaAceptada = false;
+		try {
+			candidatoOtraMesa = mjrvService.buscarCandidatoPorCedula(cedulaOtraMesa,
+					mesaSeleccionada != null ? mesaSeleccionada.getId() : null,
+					procesoSeleccionado != null ? procesoSeleccionado.getId() : null);
+		} catch (NegocioException e) {
+			JsfUtil.addErrorMessage(e.getMessage());
+		} catch (jakarta.ejb.EJBAccessException e) {
+			JsfUtil.addErrorMessageFromBundle("mjrv.otra.sin.permiso");
+		} catch (Exception e) {
+			log.error("Error al buscar persona por cédula para JRV", e);
+			JsfUtil.addErrorMessageFromBundle("mjrv.mensaje.error");
+		}
+	}
+
+	public void designarOtraMesa() {
+		if (candidatoOtraMesa == null) {
+			JsfUtil.addErrorMessageFromBundle("mjrv.otra.buscar.primero");
+			return;
+		}
+		try {
+			mjrvService.designarMiembroOtraMesa(candidatoOtraMesa.getIglesiaPersonaId(),
+					mesaSeleccionada != null ? mesaSeleccionada.getId() : null,
+					procesoSeleccionado != null ? procesoSeleccionado.getId() : null, cargoOtraMesaId,
+					condicionOtraMesaAceptada, JsfUtil.getIPAddress());
+			JsfUtil.addSuccessMessageFromBundle(candidatoOtraMesa.isMismaMesa() ? "mjrv.mensaje.asignado"
+					: "mjrv.otra.asignado");
+			prepararOtraMesa();
+			cargarDatosMesaSeleccionada();
+			org.primefaces.PrimeFaces.current().ajax().addCallbackParam("designado", true);
+		} catch (NegocioException e) {
+			JsfUtil.addErrorMessage(e.getMessage());
+		} catch (jakarta.ejb.EJBAccessException e) {
+			JsfUtil.addErrorMessageFromBundle("mjrv.otra.sin.permiso");
+		} catch (Exception e) {
+			log.error("Error al designar miembro JRV de otra mesa", e);
 			JsfUtil.addErrorMessageFromBundle("mjrv.mensaje.error");
 		}
 	}
@@ -503,6 +662,7 @@ public class JrvController implements Serializable {
 		juntaRegistradaComoCompletada = false;
 		iglesiaPersonaSeleccionadaId = null;
 		cargoSeleccionadoId = null;
+		prepararOtraMesa();
 	}
 
 	private List<IglesiaDTO> obtenerIglesiasAsignadas(List<PadronDTO> padrones) {

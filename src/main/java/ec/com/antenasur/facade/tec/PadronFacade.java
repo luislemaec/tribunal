@@ -204,6 +204,31 @@ public class PadronFacade extends AbstractFacade<Padron, Integer> {
         return null;
     }
 
+    /**
+     * Registros del padrón del proceso para una cédula, con persona habilitada (los mismos filtros
+     * que las personas disponibles de mjrv.xhtml): mesa, recinto, iglesia y persona cargados.
+     */
+    public List<Padron> buscarHabilitadoPorCedulaProceso(String cedula, Integer procesoId) {
+        if (cedula == null || cedula.isBlank() || procesoId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String sql = HQL
+                + " JOIN FETCH p.mesa m"
+                + " LEFT JOIN FETCH m.recinto r"
+                + " JOIN FETCH p.iglesiaPersona ip"
+                + " LEFT JOIN FETCH ip.iglesia i"
+                + " JOIN FETCH ip.persona prsn"
+                + " JOIN FETCH p.proceso pro"
+                + " WHERE prsn.documento = :cedula AND pro.id = :procesoId AND " + ACTIVOS
+                + " AND ip.estado = TRUE AND ip.habilitadoPadron = TRUE AND prsn.estado = TRUE"
+                + ORDENADO;
+        return super.getEntityManager().createQuery(sql, Padron.class)
+                .setParameter("cedula", cedula)
+                .setParameter("procesoId", procesoId)
+                .setMaxResults(2)
+                .getResultList();
+    }
+
     public Padron buscaPorPersonaProcesoIglesia(Integer idIglesiaPersona, Integer idProceso) {
         try {
             String sql = HQL

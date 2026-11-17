@@ -340,6 +340,14 @@ public final class CatalogoActividades {
 		// Reapertura de una junta completada (MiembroJRVService.reabrirJunta), con su motivo.
 		r.add(regla("Reabrió junta JRV", JRV, EXITOSO, DETALLE_ESTRUCTURADO,
 				firma("reabre_junta_jrv |", "resultado: exitoso")));
+		// Designación aceptada desde otra mesa del padrón (MiembroJRVService.designarMiembroOtraMesa).
+		r.add(regla("Designó miembro JRV de otra mesa", JRV, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("designa_jrv_otra_mesa |", "resultado: exitoso")));
+		// Correo al Presidente de Mesa al completar la junta (usuario y cambio de clave).
+		r.add(regla("Notificó al Presidente de Mesa", JRV, EXITOSO, DETALLE_ESTRUCTURADO,
+				firma("notifica_presidente_mesa |", "resultado: exitoso")));
+		r.add(regla("Notificó al Presidente de Mesa", JRV, FALLIDO, DETALLE_ESTRUCTURADO,
+				firma("notifica_presidente_mesa |", "resultado: fallido")));
 		// Resumen de HabilitacionMasivaService; cada miembro habilitado deja además su ACTUALIZA.
 		r.add(regla("Habilitación masiva de miembros", PERSONAS, EXITOSO, DETALLE_ESTRUCTURADO,
 				firma("habilitacion_masiva |", "resultado: exitoso")));

@@ -369,24 +369,66 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
 	@ec.com.antenasur.security.menu.AccesoPagina({"mjrv"})
 	public Usuario asegurarUsuarioConRol(Persona persona, Rol rol) {
+		return asegurarPresidente(persona, rol, null).getUsuario();
+	}
+
+	/**
+	 * Cuenta del Presidente de Mesa con su correo (obligatorio): lo valida, comprueba que no
+	 * pertenezca a otra cuenta y lo guarda. Indica si la cuenta se creó ahora (clave inicial =
+	 * cédula, cambio obligatorio) o si se reutilizó una existente.
+	 */
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
+	@ec.com.antenasur.security.menu.AccesoPagina({"mjrv"})
+	public ResultadoProvisionUsuarioDTO asegurarUsuarioConRol(Persona persona, Rol rol, String correo) {
+		return asegurarPresidente(persona, rol, normalizarCorreoObligatorio(correo));
+	}
+
+	/** Correo registrado en la cuenta de la persona (activa o no), o null si no tiene. */
+	@RolesAllowed({ "SITEC-Administrador", "SITEC-Tribunal", "SITEC-IglesiaAdmin", "SITEC-Presidente-mesa" })
+	@ec.com.antenasur.security.menu.AccesoPagina({"mjrv"})
+	public String obtenerCorreoDePersona(Persona persona) {
+		if (persona == null || persona.getDocumento() == null) {
+			return null;
+		}
+		Usuario usuario = persona.getId() != null ? usuarioFacade.findByPersonaIdIncluyendoInactivos(persona.getId())
+				: null;
+		if (usuario == null) {
+			usuario = usuarioFacade.findByUsuarioNameIncluyendoInactivos(persona.getDocumento());
+		}
+		return usuario != null ? usuario.getCorreo() : null;
+	}
+
+	private ResultadoProvisionUsuarioDTO asegurarPresidente(Persona persona, Rol rol, String correo) {
 		rol = resolverRolDerivado(rol, "SITEC-Presidente-mesa");
 		if (persona == null || persona.getDocumento() == null || persona.getDocumento().isBlank() || rol == null) {
 			throw new NegocioException("No se pudo crear el usuario porque faltan datos de la persona o del rol.");
 		}
 		Usuario usuario = usuarioFacade.findByUsuarioNameIncluyendoInactivos(persona.getDocumento());
+		if (correo != null) {
+			Usuario porCorreo = usuarioFacade.findByCorreoIncluyendoInactivos(correo);
+			if (porCorreo != null && (usuario == null || !porCorreo.getId().equals(usuario.getId()))) {
+				throw new NegocioException("usuarios.mensaje.correo.registrado");
+			}
+		}
+		boolean reutilizado = usuario != null;
+		boolean reactivado = false;
 		if (usuario == null) {
 			usuario = new Usuario();
 			usuario.setUsername(persona.getDocumento());
 			usuario.setPersonsa(persona);
+			usuario.setCorreo(correo);
 			usuario.setEstado(true);
 			usuario.setPermanente(false);
 			usuario.setContrasenia(passwordService.hashBcrypt(persona.getDocumento()));
 			usuario = usuarioFacade.create(usuario);
 		} else {
-			boolean reactivado = !Boolean.TRUE.equals(usuario.getEstado());
+			reactivado = !Boolean.TRUE.equals(usuario.getEstado());
 			usuario.setEstado(true);
 			if (usuario.getPersonsa() == null) {
 				usuario.setPersonsa(persona);
+			}
+			if (correo != null) {
+				usuario.setCorreo(correo);
 			}
 			usuario = usuarioFacade.edit(usuario);
 			if (reactivado) {
@@ -394,7 +436,7 @@ public class UsuarioService extends AbstractService<Usuario, Integer, UsuarioFac
 			}
 		}
 		asegurarRolActivo(usuario, rol);
-		return usuario;
+		return new ResultadoProvisionUsuarioDTO(usuario, reutilizado, reactivado);
 	}
 
 	/**

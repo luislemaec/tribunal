@@ -337,16 +337,24 @@
                                          actionListener="#{jrvController.designarMiembro}"
                                          process=":frmMJRV:tabsMJRV:pnlDesignacion"
                                          update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:btnIglesiasAsignadas :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"/>
+                        <!-- Completar: el diálogo pide el correo del Presidente (obligatorio). -->
                         <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle" styleClass="tec-btn ui-button-success"
                                          disabled="#{not jrvController.puedeCompletarJunta}"
-                                         actionListener="#{jrvController.completarJunta}"
-                                         process="@this"
-                                         update=":frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:btnIglesiasAsignadas :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados">
-                            <p:confirm header="#{msg['mjrv.confirmacion.titulo']}"
-                                       message="#{msg['mjrv.confirmacion.completar']}"
-                                       icon="pi pi-exclamation-triangle"/>
-                        </p:commandButton>
+                                         actionListener="#{jrvController.prepararCompletarJunta}"
+                                         process="@this" update=":frmMJRV:pnlCompletarJunta"
+                                         oncomplete="PF('dlgCompletarJunta').show()"/>
                         </div>
+                        <!-- Miembro de otra mesa del padrón: solo Administrador o Tribunal. -->
+                        <ui:fragment rendered="#{jrvController.puedeAgregarOtraMesa}">
+                        <div class="col-12 flex flex-wrap align-items-center gap-2">
+                            <p:commandButton value="#{msg['mjrv.otra.boton']}" icon="pi pi-search"
+                                             styleClass="tec-btn ui-button-outlined"
+                                             actionListener="#{jrvController.prepararOtraMesa}"
+                                             process="@this" update=":frmMJRV:pnlOtraMesa :frmMJRV:btnDesignarOtraMesa"
+                                             oncomplete="PF('dlgOtraMesa').show()"/>
+                            <small class="text-500">#{msg['mjrv.otra.boton.ayuda']}</small>
+                        </div>
+                        </ui:fragment>
                 </div>
                 </ui:fragment>
             </p:outputPanel>
@@ -406,6 +414,9 @@
                             <p:column headerText="#{msg['mjrv.tabla.persona']}" styleClass="tec-col-primary">
                                 <span class="font-medium text-900">#{miembro.iglesiaPersona.persona.nombres} #{miembro.iglesiaPersona.persona.apellidos}</span>
                                 <small class="block text-500">#{miembro.iglesiaPersona.persona.documento}</small>
+                                <p:tag value="#{msg['mjrv.otra.etiqueta']}" severity="warning" icon="pi pi-directions"
+                                       styleClass="mt-1" title="#{msg['mjrv.otra.etiqueta.ayuda']}"
+                                       rendered="#{miembro.otraMesa}"/>
                             </p:column>
                             <!-- Sin columna Estado: era el estado de la junta, igual en todas las filas;
                                  se muestra una vez en el resumen de Conformación de JRV. -->
@@ -452,6 +463,113 @@
                                          process=":frmMJRV:pnlReapertura @this"
                                          update=":frmMJRV:pnlReapertura :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"
                                          oncomplete="if (args &amp;&amp; args.juntaReabierta) PF('dlgReabrirJunta').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+
+            <!-- Completar junta: correo del Presidente de Mesa (usuario y cambio de contraseña). -->
+            <p:dialog header="#{msg['mjrv.completar.titulo']}" widgetVar="dlgCompletarJunta" modal="true"
+                      responsive="true" styleClass="tec-dialog tec-dialog--md" closeOnEscape="true">
+                <p:outputPanel id="pnlCompletarJunta" layout="block" styleClass="ui-fluid">
+                    <p class="mt-0 text-700">#{msg['mjrv.confirmacion.completar']}</p>
+                    <p class="text-700">#{msg['mjrv.completar.ayuda']}</p>
+                    <p:outputLabel for="correoPresidente" value="#{msg['mjrv.completar.correo']}"/>
+                    <p:inputText id="correoPresidente" value="#{jrvController.correoPresidente}" type="email"
+                                 maxlength="150" required="true" autocomplete="off"
+                                 requiredMessage="#{msg['usuarios.mensaje.correo.requerido']}"
+                                 validatorMessage="#{msg['usuarios.mensaje.correo.invalido']}">
+                        <f:validateRegex pattern="^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\s*$"/>
+                    </p:inputText>
+                    <p:message for="correoPresidente" display="text"/>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgCompletarJunta').hide()"/>
+                        <p:commandButton value="#{msg['mjrv.boton.completar']}" icon="pi pi-check-circle"
+                                         styleClass="tec-btn ui-button-success"
+                                         actionListener="#{jrvController.completarJunta}"
+                                         process=":frmMJRV:pnlCompletarJunta @this"
+                                         update=":frmMJRV:pnlCompletarJunta :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:btnIglesiasAsignadas :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"
+                                         oncomplete="if (args &amp;&amp; args.juntaCompletada) PF('dlgCompletarJunta').hide()"/>
+                    </div>
+                </f:facet>
+            </p:dialog>
+
+            <!-- Miembro de otra mesa: búsqueda por cédula en el padrón del proceso, advertencia y
+                 aceptación expresa (MiembroJRVService.designarMiembroOtraMesa la vuelve a exigir). -->
+            <p:dialog header="#{msg['mjrv.otra.titulo']}" widgetVar="dlgOtraMesa" modal="true"
+                      responsive="true" styleClass="tec-dialog tec-dialog--md" closeOnEscape="true">
+                <p:outputPanel id="pnlOtraMesa" layout="block" styleClass="tec-form">
+                    <p class="mt-0 text-700">#{msg['mjrv.otra.ayuda']}</p>
+                    <label for="cedulaOtraMesa" class="tec-field-label">#{msg['mjrv.otra.cedula']}</label>
+                    <div class="flex gap-2">
+                        <p:inputText id="cedulaOtraMesa" value="#{jrvController.cedulaOtraMesa}" maxlength="10"
+                                     styleClass="flex-1" autocomplete="off" inputmode="numeric"
+                                     placeholder="#{msg['mjrv.otra.cedula.placeholder']}"
+                                     onkeypress="if (event.keyCode === 13) { PF('wdBuscarOtraMesa').getJQ().click(); return false; }">
+                            <p:keyFilter mask="num"/>
+                        </p:inputText>
+                        <p:commandButton widgetVar="wdBuscarOtraMesa" value="#{msg['mjrv.otra.buscar']}" icon="pi pi-search"
+                                         styleClass="tec-btn" actionListener="#{jrvController.buscarOtraMesa}"
+                                         process=":frmMJRV:cedulaOtraMesa @this" update=":frmMJRV:pnlOtraMesa :frmMJRV:btnDesignarOtraMesa"/>
+                    </div>
+
+                    <ui:fragment rendered="#{jrvController.candidatoOtraMesa ne null}">
+                        <div class="surface-ground border-round-lg p-3 mt-3">
+                            <span class="block font-semibold text-900">#{jrvController.candidatoOtraMesa.nombres}</span>
+                            <small class="block text-500">#{jrvController.candidatoOtraMesa.cedula} · #{jrvController.candidatoOtraMesa.iglesia}</small>
+                            <span class="block text-700 text-sm mt-2">
+                                <i class="pi pi-map-marker mr-1" aria-hidden="true"/>#{msg['mjrv.otra.vota.en']}:
+                                <strong>#{jrvController.candidatoOtraMesa.mesaVotacion}</strong> — #{jrvController.candidatoOtraMesa.recintoVotacion}
+                            </span>
+                        </div>
+
+                        <p:outputPanel rendered="#{jrvController.candidatoOtraMesa.mismaMesa}" layout="block"
+                                       styleClass="callout callout--info mt-3">
+                            <i class="pi pi-info-circle" aria-hidden="true"/>#{msg['mjrv.otra.misma.mesa']}
+                        </p:outputPanel>
+
+                        <ui:fragment rendered="#{not jrvController.candidatoOtraMesa.mismaMesa}">
+                            <div class="callout callout--warning mt-3">
+                                <i class="pi pi-exclamation-triangle" aria-hidden="true"/>
+                                <span>
+                                    <strong>#{msg['mjrv.otra.advertencia.titulo']}</strong>
+                                    #{msg['mjrv.otra.advertencia']}
+                                </span>
+                            </div>
+                            <div class="flex align-items-center gap-2 mt-2">
+                                <p:selectBooleanCheckbox id="aceptaOtraMesa" value="#{jrvController.condicionOtraMesaAceptada}">
+                                    <p:ajax process="@this" update=":frmMJRV:btnDesignarOtraMesa"/>
+                                </p:selectBooleanCheckbox>
+                                <p:outputLabel for="aceptaOtraMesa" value="#{msg['mjrv.otra.acepto']}" styleClass="font-medium"/>
+                            </div>
+                        </ui:fragment>
+
+                        <div class="mt-3">
+                            <label for="cargoOtraMesa" class="tec-field-label">#{msg['mjrv.label.dignidad']}</label>
+                            <p:selectOneMenu id="cargoOtraMesa" value="#{jrvController.cargoOtraMesaId}" styleClass="w-full"
+                                             disabled="#{empty jrvController.dignidadesPendientes}">
+                                <f:selectItem itemLabel="#{msg['mjrv.placeholder.dignidad']}" itemValue=""/>
+                                <f:selectItems value="#{jrvController.dignidadesPendientes}" var="cargo"
+                                               itemLabel="#{cargo.nombre}" itemValue="#{cargo.id}"/>
+                                <p:ajax process="@this" update=":frmMJRV:btnDesignarOtraMesa"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </ui:fragment>
+                </p:outputPanel>
+                <f:facet name="footer">
+                    <div class="tec-filter-actions">
+                        <p:commandButton value="#{msg['btn.cancel']}" icon="pi pi-times" type="button"
+                                         styleClass="tec-btn ui-button-outlined ui-button-secondary"
+                                         onclick="PF('dlgOtraMesa').hide()"/>
+                        <p:commandButton id="btnDesignarOtraMesa" value="#{msg['mjrv.otra.designar']}" icon="pi pi-user-plus"
+                                         styleClass="tec-btn" disabled="#{not jrvController.puedeDesignarOtraMesa}"
+                                         actionListener="#{jrvController.designarOtraMesa}"
+                                         process=":frmMJRV:pnlOtraMesa @this"
+                                         update=":frmMJRV:pnlOtraMesa :frmMJRV:btnDesignarOtraMesa :frmMJRV:tabsMJRV:pnlResumen :frmMJRV:tabsMJRV:pnlDesignacion :frmMJRV:tabsMJRV:btnIglesiasAsignadas :frmMJRV:tabsMJRV:opIglesiasAsignadas :frmMJRV:tabsMJRV:pnlDisponibles :frmMJRV:tabsMJRV:tblDesignados :frmMJRV:tabsMJRV:tagTotalDesignados"
+                                         oncomplete="if (args &amp;&amp; args.designado) PF('dlgOtraMesa').hide()"/>
                     </div>
                 </f:facet>
             </p:dialog>

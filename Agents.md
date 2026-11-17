@@ -93,9 +93,9 @@ Reglas importantes:
 - Consultas de padron por mesa deben filtrar tambien por `proce_id`; no usar solo `mesa_id`, porque existen datos historicos de procesos anteriores.
 - La asignacion al padron solo debe considerar `IglesiaPersona.habilitadoPadron = true`.
 - Una iglesia asignada a una mesa dentro de un proceso no debe aparecer como disponible para otra mesa del mismo proceso.
-- JRV debe validar que la persona designada pertenezca al padron de la mesa y del proceso seleccionado.
+- JRV debe validar que la persona designada pertenezca al padron de la mesa y del proceso seleccionado. Excepcion: Administrador o Tribunal pueden designar por cedula a una persona habilitada en el padron del proceso en otra mesa, con aceptacion expresa (`MiembroJRVService.designarMiembroOtraMesa`): queda marcada `miem_otra_mesa` (V14), en la bitacora `DESIGNA_JRV_OTRA_MESA` y sigue votando en su mesa (no se toca el padron).
 - La mesa del Presidente de Mesa en `actaE.xhtml` se resuelve primero desde `miembros_jrv` por `personaId + proce_id + cargo PRESIDENTE`; `mesa.responsable` queda como compatibilidad.
-- Completar una JRV crea o reutiliza el usuario del presidente y asigna el rol `SITEC-Presidente-mesa`.
+- Completar una JRV exige el correo del Presidente, crea o reutiliza su usuario (cuenta nueva: clave inicial = cedula y cambio obligatorio), guarda el correo, asigna el rol `SITEC-Presidente-mesa` y le envia su acceso por correo (`NOTIFICA_PRESIDENTE_MESA` en la bitacora; un fallo del correo no deshace la junta).
 
 ## Seguridad y Login
 

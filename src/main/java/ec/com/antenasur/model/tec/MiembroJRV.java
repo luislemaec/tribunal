@@ -91,6 +91,28 @@ public class MiembroJRV extends EntidadAuditable implements Serializable {
     @JoinColumn(name = "cargo_id", nullable = false, foreignKey = @ForeignKey(name = "fk_miembros_jrv_cargo"))
     private CatalogoGeneral cargo;
 
+    /**
+     * Designado desde otra mesa del padrón del proceso, con la condición aceptada en mjrv.xhtml.
+     * La persona sigue votando en su mesa (V14).
+     */
+    @Setter
+    @Getter
+    @Column(name = "miem_otra_mesa", nullable = false)
+    private Boolean otraMesa = Boolean.FALSE;
+
+    /** Usuario que aceptó la designación desde otra mesa. */
+    @Setter
+    @Getter
+    @Column(name = "miem_acepta_usuario", length = 255)
+    private String aceptaUsuario;
+
+    /** Momento en que se aceptó la designación desde otra mesa. */
+    @Setter
+    @Getter
+    @Column(name = "miem_acepta_fecha")
+    @jakarta.persistence.Temporal(jakarta.persistence.TemporalType.TIMESTAMP)
+    private java.util.Date aceptaFecha;
+
     public MiembroJRV() {
     }
 
